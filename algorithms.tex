@@ -1,3 +1,4 @@
+%!TEX root = std.tex
 \rSec0[algorithms]{Algorithms library}
 
 \rSec1[algorithms.general]{General}
@@ -269,17 +270,20 @@ namespace std {
       ForwardIterator first, ForwardIterator middle,
       ForwardIterator last, OutputIterator result);
 
+  // \ref{depr.alg.random.shuffle}, random_shuffle (deprecated):
   template<class RandomAccessIterator>
     void random_shuffle(RandomAccessIterator first,
                         RandomAccessIterator last);
   template<class RandomAccessIterator, class RandomNumberGenerator>
     void random_shuffle(RandomAccessIterator first,
                         RandomAccessIterator last,
-                        RandomNumberGenerator&& rand);
+                        RandomNumberGenerator&& rng);
+
+  // \ref{alg.random.shuffle}, shuffle:
   template<class RandomAccessIterator, class UniformRandomNumberGenerator>
     void shuffle(RandomAccessIterator first,
                         RandomAccessIterator last,
-                        UniformRandomNumberGenerator&& rand);
+                        UniformRandomNumberGenerator&& g);
 
   // \ref{alg.partitions}, partitions:
   template <class InputIterator, class Predicate>
@@ -497,29 +501,29 @@ namespace std {
                                        Compare comp);
 
   // \ref{alg.min.max}, minimum and maximum:
-  template<class T> const T& min(const T& a, const T& b);
+  template<class T> constexpr const T& min(const T& a, const T& b);
   template<class T, class Compare>
-    const T& min(const T& a, const T& b, Compare comp);
+    constexpr const T& min(const T& a, const T& b, Compare comp);
   template<class T>
-    T min(initializer_list<T> t);
+    constexpr T min(initializer_list<T> t);
   template<class T, class Compare>
-    T min(initializer_list<T> t, Compare comp);
+    constexpr T min(initializer_list<T> t, Compare comp);
 
-  template<class T> const T& max(const T& a, const T& b);
+  template<class T> constexpr const T& max(const T& a, const T& b);
   template<class T, class Compare>
-    const T& max(const T& a, const T& b, Compare comp);
+    constexpr const T& max(const T& a, const T& b, Compare comp);
   template<class T>
-    T max(initializer_list<T> t);
+    constexpr T max(initializer_list<T> t);
   template<class T, class Compare>
-    T max(initializer_list<T> t, Compare comp);
+    constexpr T max(initializer_list<T> t, Compare comp);
 
-  template<class T> pair<const T&, const T&> minmax(const T& a, const T& b);
+  template<class T> constexpr pair<const T&, const T&> minmax(const T& a, const T& b);
   template<class T, class Compare>
-    pair<const T&, const T&> minmax(const T& a, const T& b, Compare comp);
+    constexpr pair<const T&, const T&> minmax(const T& a, const T& b, Compare comp);
   template<class T>
-    pair<T, T> minmax(initializer_list<T> t);
+    constexpr pair<T, T> minmax(initializer_list<T> t);
   template<class T, class Compare>
-    pair<T, T> minmax(initializer_list<T> t, Compare comp);
+    constexpr pair<T, T> minmax(initializer_list<T> t, Compare comp);
 
   template<class ForwardIterator>
     ForwardIterator min_element(ForwardIterator first, ForwardIterator last);
@@ -892,7 +896,7 @@ Finds a subsequence of equal values in a sequence.
 The last iterator
 \tcode{i}
 in the range \range{first1}{last1 - (last2 - first2)}
-such that for any non-negative integer
+such that for every non-negative integer
 \tcode{n < (last2 - first2)},
 the following corresponding conditions hold:
 \tcode{*(i + n) == *(\brk{}first2 + n), pred(*(i + n), *(first2 + n)) != false}.
@@ -1224,7 +1228,7 @@ Finds a subsequence of equal values in a sequence.
 The first iterator
 \tcode{i}
 in the range \range{first1}{last1 - (last2-first2)}
-such that for any non-negative integer
+such that for every non-negative integer
 \tcode{n}
 less than
 \tcode{last2 - first2}
@@ -1272,7 +1276,7 @@ Finds a subsequence of equal values in a sequence.
 The first iterator
 \tcode{i}
 in the range \range{first}{last-count}
-such that for any non-negative integer
+such that for every non-negative integer
 \tcode{n}
 less than
 \tcode{count}
@@ -1854,7 +1858,7 @@ The ranges
 \range{first}{last}
 and
 \range{result}{result + (last - first)}
-shall not overlap. The expression \tcode{*result = *first} shall ve valid.
+shall not overlap. The expression \tcode{*result = *first} shall be valid.
 
 \pnum
 \effects
@@ -2024,7 +2028,7 @@ Copies the range
 to the range
 \range{result}{result+(last-first)}
 such that
-for any non-negative integer
+for every non-negative integer
 \tcode{i < (last - first)}
 the following assignment takes place:
 \tcode{*(result + (last - first) - 1 - i) = *(first + i)}.
@@ -2136,20 +2140,10 @@ Exactly
 assignments.
 \end{itemdescr}
 
-\rSec2[alg.random.shuffle]{Random shuffle}
+\rSec2[alg.random.shuffle]{Shuffle}
 
-\indexlibrary{\idxcode{random_shuffle}}%
 \indexlibrary{\idxcode{shuffle}}%
 \begin{itemdecl}
-template<class RandomAccessIterator>
-  void random_shuffle(RandomAccessIterator first,
-                      RandomAccessIterator last);
-
-template<class RandomAccessIterator, class RandomNumberGenerator>
-  void random_shuffle(RandomAccessIterator first,
-                      RandomAccessIterator last,
-                      RandomNumberGenerator&& rand);
-
 template<class RandomAccessIterator, class UniformRandomNumberGenerator>
   void shuffle(RandomAccessIterator first,
                       RandomAccessIterator last,
@@ -2166,12 +2160,8 @@ such that each possible permutation of those elements has equal probability of a
 \pnum
 \requires
 \tcode{RandomAccessIterator} shall satisfy the requirements of
-\tcode{ValueSwappable}~(\ref{swappable.requirements}). The random number
-generating function object \tcode{rand} shall have a return type that is
-convertible to \tcode{iterator_traits<RandomAccessItera\-tor>::difference_type},
-and the call \tcode{rand(n)} shall return a randomly chosen value in the
-interval \range{0}{n}, for \tcode{n > 0} of type
-\tcode{iterator_traits<Random\-Access\-Itera\-tor>::difference_type}. The type
+\tcode{ValueSwappable}~(\ref{swappable.requirements}).
+The type
 \tcode{UniformRandomNumberGenerator} shall meet the requirements of a uniform
 random number generator~(\ref{rand.req.urng}) type whose return type is
 convertible to
@@ -2185,18 +2175,9 @@ swaps.
 
 \pnum
 \notes
-To the extent that the implementation of these functions makes use of random numbers, the implementation shall use the following sources of randomness:
-
-The underlying source of random numbers for the first form of the function
-is \impldef{underlying source of random numbers for \tcode{random_shuffle}}. An implementation may use the
-\tcode{rand}
-function from the standard C library.
-
-In the second form of the function, the
- function object
-\tcode{rand} shall serve as the implementation's source of randomness.
-
-In the third \tcode{shuffle} form of the function, the object \tcode{g} shall serve as the implementation's source of randomness.
+To the extent that the implementation of this function makes use of random
+numbers, the object \tcode{g} shall serve as the implementation's source of
+randomness.
 
 \end{itemdescr}
 
@@ -2234,7 +2215,9 @@ template<class ForwardIterator, class Predicate>
 \effects Places all the elements in the range \range{first}{last} that satisfy \tcode{pred} before all the elements that do not satisfy it.
 
 \pnum
-\returns An iterator \tcode{i} such that for any iterator \tcode{j} in the range \range{first}{i} \tcode{pred(*j) != false}, and for any iterator \tcode{k} in the range \range{i}{last}, \tcode{pred(*k) == false}.
+\returns An iterator \tcode{i} such that for every iterator \tcode{j} in the range
+\range{first}{i} \tcode{pred(*j) != false}, and for every iterator \tcode{k} in the
+range \range{i}{last}, \tcode{pred(*k) == false}.
 
 \pnum
 \requires
@@ -2267,12 +2250,12 @@ elements that do not satisfy it.
 \returns
 An iterator
 \tcode{i}
-such that for any iterator
+such that for every iterator
 \tcode{j}
 in the range
 \range{first}{i},
 \tcode{pred(*j) != false},
-and for any iterator
+and for every iterator
 \tcode{k}
 in the range
 \range{i}{last},
@@ -2310,7 +2293,10 @@ template <class InputIterator, class OutputIterator1,
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{InputIterator}'s value type shall be Assignable, and shall be writable to the \tcode{out_true} and \tcode{out_false} \tcode{OutputIterator}s, and shall be convertible to \tcode{Predicate}'s argument type. The input range shall not overlap with either of the output ranges.
+\requires \tcode{InputIterator}'s value type shall be \tcode{CopyAssignable}, and shall be
+writable to the \tcode{out_true} and \tcode{out_false} \tcode{OutputIterator}s, and shall be
+convertible to \tcode{Predicate}'s argument type. The input range shall not overlap with
+either of the output ranges.
 
 \pnum
 \effects For each iterator \tcode{i} in \range{first}{last}, copies \tcode{*i} to the output range beginning with \tcode{out_true} if \tcode{pred(*i)} is \tcode{true}, or to the output range beginning with \tcode{out_false} otherwise.
@@ -2430,9 +2416,9 @@ The induced relation is a strict total ordering.
 \pnum
 A sequence is
 \techterm{sorted with respect to a comparator}
-\tcode{comp} if for any iterator
+\tcode{comp} if for every iterator
 \tcode{i}
-pointing to the sequence and any non-negative integer
+pointing to the sequence and every non-negative integer
 \tcode{n}
 such that
 \tcode{i + n}
@@ -2702,12 +2688,12 @@ After
 \tcode{nth_element}
 the element in the position pointed to by \tcode{nth}
 is the element that would be
-in that position if the whole range were sorted.
-Also for any iterator
+in that position if the whole range were sorted, unless \tcode{nth == last}.
+Also for every iterator
 \tcode{i}
 in the range
 \range{first}{nth}
-and any iterator
+and every iterator
 \tcode{j}
 in the range
 \range{nth}{last}
@@ -2777,7 +2763,7 @@ The furthermost iterator
 \tcode{i}
 in the range
 \crange{first}{last}
-such that for any iterator
+such that for every iterator
 \tcode{j}
 in the range
 \range{first}{i}
@@ -2789,7 +2775,7 @@ or
 \pnum
 \complexity
 At most
-$\log_2(last - first) + \bigoh{1}$
+$\log_2(\tcode{last - first}) + \bigoh{1}$
 comparisons.
 \end{itemdescr}
 
@@ -2826,7 +2812,7 @@ The furthermost iterator
 \tcode{i}
 in the range
 \crange{first}{last}
-such that for any iterator
+such that for every iterator
 \tcode{j}
 in the range
 \range{first}{i}
@@ -2838,7 +2824,7 @@ or
 \pnum
 \complexity
 At most
-$\log_2(last - first) + \bigoh{1}$
+$\log_2(\tcode{last - first}) + \bigoh{1}$
 comparisons.
 \end{itemdescr}
 
@@ -2900,7 +2886,7 @@ make_pair(lower_bound(first, last, value, comp),
 \pnum
 \complexity
 At most
-$2 * \log_2(last - first) + \bigoh{1}$
+$2 * \log_2(\tcode{last - first}) + \bigoh{1}$
 comparisons.
 \end{itemdescr}
 
@@ -2959,7 +2945,7 @@ or
 \pnum
 \complexity
 At most
-\tcode{log2(last - first)} + \bigoh{1}
+$\log_2(\tcode{last - first}) + \bigoh{1}$
 comparisons.
 \end{itemdescr}
 
@@ -3559,9 +3545,9 @@ range \range{first}{i} is a heap.
 
 \indexlibrary{\idxcode{min}}%
 \begin{itemdecl}
-template<class T> const T& min(const T& a, const T& b);
+template<class T> constexpr const T& min(const T& a, const T& b);
 template<class T, class Compare>
-  const T& min(const T& a, const T& b, Compare comp);
+  constexpr const T& min(const T& a, const T& b, Compare comp);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3584,9 +3570,9 @@ Returns the first argument when the arguments are equivalent.
 \indexlibrary{\idxcode{min}}%
 \begin{itemdecl}
 template<class T>
-  T min(initializer_list<T> t);
+  constexpr T min(initializer_list<T> t);
 template<class T, class Compare>
-  T min(initializer_list<T> t, Compare comp);
+  constexpr T min(initializer_list<T> t, Compare comp);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3603,9 +3589,9 @@ template<class T, class Compare>
 
 \indexlibrary{\idxcode{max}}%
 \begin{itemdecl}
-template<class T> const T& max(const T& a, const T& b);
+template<class T> constexpr const T& max(const T& a, const T& b);
 template<class T, class Compare>
-  const T& max(const T& a, const T& b, Compare comp);
+  constexpr const T& max(const T& a, const T& b, Compare comp);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3628,9 +3614,9 @@ Returns the first argument when the arguments are equivalent.
 \indexlibrary{\idxcode{max}}%
 \begin{itemdecl}
 template<class T>
-  T max(initializer_list<T> t);
+  constexpr T max(initializer_list<T> t);
 template<class T, class Compare>
-  T max(initializer_list<T> t, Compare comp);
+  constexpr T max(initializer_list<T> t, Compare comp);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3646,9 +3632,9 @@ template<class T, class Compare>
 
 \indexlibrary{\idxcode{minmax}}%
 \begin{itemdecl}
-template<class T> pair<const T&, const T&> minmax(const T& a, const T& b);
+template<class T> constexpr pair<const T&, const T&> minmax(const T& a, const T& b);
 template<class T, class Compare>
-  pair<const T&, const T&> minmax(const T& a, const T& b, Compare comp);
+  constexpr pair<const T&, const T&> minmax(const T& a, const T& b, Compare comp);
 \end{itemdecl}
 
 
@@ -3678,9 +3664,9 @@ Exactly one comparison.
 \indexlibrary{\idxcode{minmax}}%
 \begin{itemdecl}
 template<class T>
-  pair<T, T> minmax(initializer_list<T> t);
+  constexpr pair<T, T> minmax(initializer_list<T> t);
 template<class T, class Compare>
-  pair<T, T> minmax(initializer_list<T> t, Compare comp);
+  constexpr pair<T, T> minmax(initializer_list<T> t, Compare comp);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3717,7 +3703,7 @@ The first iterator
 \tcode{i}
 in the range
 \range{first}{last}
-such that for any iterator
+such that for every iterator
 \tcode{j}
 in the range
 \range{first}{last}
@@ -3753,7 +3739,7 @@ The first iterator
 \tcode{i}
 in the range
 \range{first}{last}
-such that for any iterator
+such that for every iterator
 \tcode{j}
 in the range
 \range{first}{last}
