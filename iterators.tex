@@ -7,7 +7,7 @@
 This Clause describes components that \Cpp programs may use to perform
 iterations over containers (Clause \ref{containers}),
 streams~(\ref{iostream.format}),
-and stream buffers~(\ref{stream.buffers}).
+\removed{and} stream buffers~(\ref{stream.buffers})\added{, and ranges}.
 
 \pnum
 The following subclauses describe
@@ -77,9 +77,11 @@ function template
 that takes iterators
 works as well with regular pointers.
 This International Standard defines
-five categories of iterators, according to the operations
+\changed{five}{seven} categories of iterators, according to the operations
 defined on them:
+\added{\techterm{weak input iterators}, }
 \techterm{input iterators},
+\added{\techterm{weak output iterators}, }
 \techterm{output iterators},
 \techterm{forward iterators},
 \techterm{bidirectional iterators}
@@ -88,24 +90,25 @@ and
 as shown in Table~\ref{tab:iterators.relations}.
 
 \begin{floattable}{Relations among iterator categories}{tab:iterators.relations}
-{llll}
+{lllll}
 \topline
 \textbf{Random Access}          &   $\rightarrow$ \textbf{Bidirectional}    &
-$\rightarrow$ \textbf{Forward}  &   $\rightarrow$ \textbf{Input}            \\
-                        &   &   &   $\rightarrow$ \textbf{Output}           \\
+$\rightarrow$ \textbf{Forward}  &   $\rightarrow$ \textbf{Input}            & \added{   $\rightarrow$ \textbf{WeakInput}}           \\
+                        &   &   &   $\rightarrow$ \textbf{Output}           & \added{   $\rightarrow$ \textbf{WeakOutput}}          \\
 \end{floattable}
 
 \pnum
-Forward iterators satisfy all the requirements of input
-iterators and can be used whenever
-an input iterator is specified;
+\changed{Forward}{Input} iterators satisfy all the requirements of \added{weak }input
+iterators and can be used whenever \changed{an}{a weak} input iterator is specified;
+\added{Forward iterators also satisfy all the requirements of
+input iterators and can be used whenever an input iterator is specified;}
 Bidirectional iterators also satisfy all the requirements of
 forward iterators and can be used whenever a forward iterator is specified;
 Random access iterators also satisfy all the requirements of bidirectional
 iterators and can be used whenever a bidirectional iterator is specified.
 
 \pnum
-Iterators that further satisfy the requirements of output iterators are
+Iterators that further satisfy the requirements of \added{weak }output iterators are
 called \defn{mutable iterator}{s}. Nonmutable iterators are referred to
 as \defn{constant iterator}{s}.
 
@@ -136,8 +139,8 @@ must always be assumed to have a singular value of a pointer.
 Results of most expressions are undefined for singular values;
 the only exceptions are destroying an iterator that holds a singular value,
 the assignment of a non-singular value to
-an iterator that holds a singular value, and, for iterators that satisfy the
-\tcode{DefaultConstructible} requirements, using a value-initialized iterator
+an iterator that holds a singular value, and\removed{, for iterators that satisfy the
+\tcode{DefaultConstructible} requirements,} using a value-initialized iterator
 as the source of a copy or move operation. \enternote This guarantee is not
 offered for default initialization, although the distinction only matters for types
 with trivial default constructors such as pointers or aggregates holding pointers.
@@ -148,7 +151,7 @@ Dereferenceable
 values are always non-singular.
 
 \pnum
-An iterator
+An iterator\added{ or sentinel}
 \tcode{j}
 is called
 \term{reachable}
@@ -169,14 +172,14 @@ they refer to elements of the same sequence.
 Most of the library's algorithmic templates that operate on data structures have interfaces that use ranges.
 A
 \term{range}
-is a pair of iterators that designate the beginning and end of the computation.
+is a pair of iterators\added{ or an iterator and a sentinel} that designate the beginning and end of the computation.
 A range \range{i}{i}
 is an empty range;
 in general, a range \range{i}{j}
 refers to the elements in the data structure starting with the element
 pointed to by
 \tcode{i}
-and up to but not including the element pointed to by
+and up to but not including the element \changed{pointed to}{denoted} by
 \tcode{j}.
 Range \range{i}{j}
 is valid if and only if
@@ -186,14 +189,26 @@ is reachable from
 The result of the application of functions in the library to invalid ranges is
 undefined.
 
+\added{
+\pnum
+A
+\term{sentinel}
+is an abstraction of a past-the-end iterator. Sentinels are Regular types that can be used to denote
+the end of a range. A sentinel and an iterator denoting a range shall be EqualityComparable. A
+sentinel denotes an element when an iterator
+\tcode{i}
+compares equal to the sentinel, and
+\tcode{i}
+points to that element.}
+
 \pnum
 All the categories of iterators require only those functions that are realizable for a given category in
 constant time (amortized).
-Therefore, requirement tables for the iterators do not have a complexity column.
+\removed{Therefore, requirement tables for the iterators do not have a complexity column.}
 
 \pnum
 Destruction of an iterator may invalidate pointers and references
-previously obtained from that iterator.
+previously obtained from that iterator.\ednote{TODO, really?}
 
 \pnum
 An
@@ -228,78 +243,48 @@ denotes a value of
 denotes a value of value type
 \tcode{T},
 \tcode{o}
-denotes a value of some type that is writable to the output iterator.
+denotes a value of some type that is writable to the \added{weak }output iterator.
 \enternote For an iterator type \tcode{X} there must be an instantiation
 of \tcode{iterator_traits<X>}~(\ref{iterator.traits}). \exitnote
 
-\rSec2[iterator.iterators]{Iterator}
+\rSec2[weakiterator.iterators]{Weak iterators}
 
 \pnum
-The \tcode{Iterator} requirements form the basis of the iterator concept
-taxonomy; every iterator satisfies the \tcode{Iterator} requirements. This
-set of requirements specifies operations for dereferencing and incrementing
-an iterator. Most algorithms will require additional operations to
+The \added{\tcode{Weak}}\tcode{Iterator} \changed{requirements}{concept} form\added{s}
+the basis of the iterator concept taxonomy; every iterator satisfies the
+\added{\tcode{Weak}}\tcode{Iterator} requirements. This
+\changed{set of requirements}{concept} specifies operations for dereferencing and incrementing
+an iterator. Most algorithms will require additional operations
+\added{to compare iterators~(\ref{iterator.iterators}),} to
 read~(\ref{input.iterators}) or write~(\ref{output.iterators}) values, or
 to provide a richer set of iterator movements~(\ref{forward.iterators},
 \ref{bidirectional.iterators}, \ref{random.access.iterators}).)
 
-\pnum
-A type \tcode{X} satisfies the \tcode{Iterator} requirements if:
+\ednote{Remove para 2 and Table 106.}
 
-\begin{itemize}
-\item \tcode{X} satisfies the \tcode{CopyConstructible}, \tcode{CopyAssignable}, and
-\tcode{Destructible} requirements~(\ref{utility.arg.requirements}) and lvalues
-of type \tcode{X} are swappable (\ref{swappable.requirements}), and
+\begin{addedblock}
+\begin{codeblock}
+concept WeakIterator<typename I> =
+    WeaklyIncrementable<I> && Copyable<I> &&
+    requires(I i) {
+        { *i } -> auto&&; // pre: i is dereferenceable
+    };
+\end{codeblock}
 
-\item the expressions in Table~\ref{tab:iterator.requirements} are valid and have
-the indicated semantics.
-\end{itemize}
+\enternote The requirement that the result of dereferencing the iterator is deducable from
+\tcode{auto\&\&} effectively means that it cannot be \tcode{void}.\exitnote
+\end{addedblock}
 
-\begin{libreqtab4b}
-{Iterator requirements}
-{tab:iterator.requirements}
-\\ \topline
-\lhdr{Expression}   &   \chdr{Return type}  &   \chdr{Operational}  &   \rhdr{Assertion/note}       \\
-                    &                       &   \chdr{semantics}    &   \rhdr{pre-/post-condition}   \\ \capsep
-\endfirsthead
-\continuedcaption\\
-\hline
-\lhdr{Expression}   &   \chdr{Return type}  &   \chdr{Operational}  &   \rhdr{Assertion/note}       \\
-                    &                       &   \chdr{semantics}    &   \rhdr{pre-/post-condition}   \\ \capsep
-\endhead
-
-\tcode{*r}          &
-  \tcode{reference} &
-                            &
-  pre: \tcode{r} is dereferenceable.  \\ \rowsep
-
-\tcode{++r}         &
-  \tcode{X\&}       &
-                            &
-                    \\
-
-\end{libreqtab4b}
-
-\rSec2[input.iterators]{Input iterators}
+\begin{addedblock}
+\rSec2[iterator.iterators]{Iterators}
 
 \pnum
-A class or pointer type
-\tcode{X}
-satisfies the requirements of an input iterator for the value type
-\tcode{T}
-if
-X satisfies the \tcode{Iterator}~(\ref{iterator.iterators}) and
-\tcode{EqualityComparable} (Table~\ref{equalitycomparable}) requirements and
-the expressions in Table~\ref{tab:iterator.input.requirements} are valid and have
-the indicated semantics.
+The \tcode{Iterator} concept refines \tcode{WeakIterator}~(\ref{weakiterator.iterators}) and adds
+the requirement that the iterator is equality comparable.
 
 \pnum
-In Table~\ref{tab:iterator.input.requirements}, the term
-\techterm{the domain of \tcode{==}}
-is used in the ordinary mathematical sense to denote
-the set of values over which
-\tcode{==} is (required to be) defined.
-This set can change over time.
+In the \tcode{Iterator} concept, the set of values over which
+\tcode{==} is (required to be) defined can change over time.
 Each algorithm places additional requirements on the domain of
 \tcode{==} for the iterator values it uses.
 These requirements can be inferred from the uses that algorithm
@@ -322,53 +307,49 @@ has property
 \tcode{p}).
 \exitexample
 
-\begin{libreqtab4b}
-{Input iterator requirements (in addition to Iterator)}
-{tab:iterator.input.requirements}
-\\ \topline
-\lhdr{Expression}   &   \chdr{Return type}  &   \chdr{Operational}  &   \rhdr{Assertion/note}       \\
-                    &                       &   \chdr{semantics}    &   \rhdr{pre-/post-condition}   \\ \capsep
-\endfirsthead
-\continuedcaption\\
-\hline
-\lhdr{Expression}   &   \chdr{Return type}  &   \chdr{Operational}  &   \rhdr{Assertion/note}       \\
-                    &                       &   \chdr{semantics}    &   \rhdr{pre-/post-condition}   \\ \capsep
-\endhead
-\tcode{a != b}                  &
- contextually convertible to \tcode{bool}    &
- \tcode{!(a == b)}                              &
- pre: \orange{a}{b} is in the domain of \tcode{==}. \\ \rowsep
+\begin{codeblock}
+concept Iterator<typename I> =
+    WeakIterator<I> && EqualityComparable<I>;
+\end{codeblock}
 
-\tcode{*a}                      &
- convertible to \tcode{T}       &
-                                &
- pre: \tcode{a} is dereferenceable.\br
- The expression\br \tcode{(void)*a, *a} is equivalent to \tcode{*a}.\br
- If \tcode{a == b} and \orange{a}{b} is in the domain of \tcode{==}
- then \tcode{*a} is equivalent to \tcode{*b}.  \\ \rowsep
-\tcode{a->m}                    &
-                                &
- \tcode{(*a).m}                                &
- pre: \tcode{a} is dereferenceable. \\ \rowsep
-\tcode{++r}                     &
- \tcode{X\&}                    &
-                                &
- pre: \tcode{r} is dereferenceable.\br
- post: \tcode{r} is dereferenceable or \tcode{r} is past-the-end.\br
- post: any copies of the previous value of \tcode{r} are no longer
- required either to be dereferenceable or to be in the domain of \tcode{==}.    \\ \rowsep
+\rSec2[weakinput.iterators]{Weak input iterators}
 
-\tcode{(void)r++}               &
-                                &
-                                &
- equivalent to \tcode{(void)++r}    \\ \rowsep
+\pnum
+The \tcode{WeakInputIterator} concept is a refinement of
+\tcode{WeakIterator}~(\ref{weakiterator.iterators}). It
+defines requirements for a type whose referred to values can be read (from the requirement for
+\tcode{Readable} \ednote{TODO reference}) and which be both pre- and post-incremented. However,
+weak input iterators are not required to be compared for equality.
 
-\tcode{*r++}                    &
- convertible to \tcode{T}       &
- \tcode{\{ T tmp = *r;}\br
- \tcode{++r;}\br
- \tcode{return tmp; \}} & \\
-\end{libreqtab4b}
+\begin{codeblock}
+concept WeakInputIterator<WeakIterator I> =
+    Readable<I> &&
+    requires(I i) {
+        typename IteratorCategory<I>;
+        { i++ } -> Readable;
+        requires Derived<IteratorCategory<I>, weak_input_iterator_tag>;
+    };
+\end{codeblock}
+
+\end{addedblock}
+
+\rSec2[input.iterators]{Input iterators}
+
+\ednote{Remove para 1, 2 and Table 107}
+
+\begin{addedblock}
+\pnum
+The \tcode{InputIterator} concept is a refinement of \tcode{Iterator}~(\ref{iterator.iterators}) and
+\tcode{WeakInputIterator}~(\ref{weakinput.iterators}).
+
+\begin{codeblock}
+concept InputIterator<typename I> =
+    WeakInputIterator<I> &&
+    EqualityComparable<I> &&
+    Derived<IteratorCategory<I>, input_iterator_tag>;
+\end{codeblock}
+
+\end{addedblock}
 
 \pnum
 \enternote
@@ -387,54 +368,27 @@ These algorithms can be used with istreams as the source of the input data throu
 class template.
 \exitnote
 
-\rSec2[output.iterators]{Output iterators}
+\ednote{Section Output iterators renamed to Weak output iterators below:}
 
+\rSec2[weakoutput.iterators]{Weak output iterators}
+
+\ednote{Remove para 1 and Table 108}
+
+\begin{addedblock}
 \pnum
-A class or pointer type
-\tcode{X}
-satisfies the requirements of an output iterator
-if \tcode{X} satisfies the \tcode{Iterator} requirements~(\ref{iterator.iterators})
-and the expressions in Table~\ref{tab:iterator.output.requirements}
-are valid and have the indicated semantics.
+The \tcode{WeakOutputIterator} concept is a refinement of
+\tcode{WeakIterator}~(\ref{weakiterator.iterators}). It defines requirements for a type that
+can be used to write values (from the requirement for
+\tcode{Writable} \ednote{TODO reference}) and which be both pre- and post-incremented. However,
+weak output iterators are not required to be compared for equality.
 
-\begin{libreqtab4b}
-{Output iterator requirements (in addition to Iterator)}
-{tab:iterator.output.requirements}
-\\ \topline
-\lhdr{Expression}   &   \chdr{Return type}  &   \chdr{Operational}  &   \rhdr{Assertion/note}       \\
-                    &                       &   \chdr{semantics}    &   \rhdr{pre-/post-condition}   \\ \capsep
-\endfirsthead
-\continuedcaption\\
-\hline
-\lhdr{Expression}   &   \chdr{Return type}  &   \chdr{Operational}  &   \rhdr{Assertion/note}       \\
-                    &                       &   \chdr{semantics}    &   \rhdr{pre-/post-condition}   \\ \capsep
-\endhead
-\tcode{*r = o}      &
- result is not used &
-                    &
- \remark\ After this operation \tcode{r} is not required to be dereferenceable.\br
- post: \tcode{r} is incrementable. \\ \rowsep
+\begin{codeblock}
+concept WeakOutputIterator<typename I, typename T> =
+    WeakIterator<I> && Writable<I, T>;
+\end{codeblock}
+\end{addedblock}
 
-\tcode{++r}         &
- \tcode{X\&}        &
-                    &
- \tcode{\&r == \&++r}.\br
- \remark\ After this operation \tcode{r} is not required to be dereferenceable.\br
- post: \tcode{r} is incrementable. \\ \rowsep
-
-\tcode{r++}         &
- convertible to \tcode{const X\&}   &
- \tcode{\{ X tmp = r;}\br
- \tcode{  ++r;}\br
- \tcode{  return tmp; \}}   &
- \remark\ After this operation \tcode{r} is not required to be dereferenceable.\br
- post: \tcode{r} is incrementable. \\ \rowsep
-
-\tcode{*r++ = o}    &
- result is not used &&
- \remark\ After this operation \tcode{r} is not required to be dereferenceable.\br
- post: \tcode{r} is incrementable. \\
-\end{libreqtab4b}
+\ednote{TODO Say something about the post-conditions mentioned by Table 108, or is that part of the Writable concept? }
 
 \pnum
 \enternote
@@ -446,15 +400,35 @@ Algorithms on output iterators should never attempt to pass through the same ite
 They should be
 \term{single pass}
 algorithms.
-Equality and inequality might not be defined.
-Algorithms that take output iterators can be used with ostreams as the destination
+\removed{Equality and inequality might not be defined.}
+Algorithms that take \added{weak }output iterators can be used with ostreams as the destination
 for placing data through the
 \tcode{ostream_iterator}
 class as well as with insert iterators and insert pointers.
 \exitnote
 
+\begin{addedblock}
+\rSec2[output.iterators]{Output iterators}
+
+\pnum
+The \tcode{OutputIterator} concept is a refinement of \tcode{Iterator}~(\ref{iterator.iterators}) and
+\tcode{WeakOutputIterator}~(\ref{weakoutput.iterators}).
+
+\begin{codeblock}
+concept OutputIterator<typename I, typename T> =
+    WeakOutputIterator<I> && EqualityComparable<I>;
+\end{codeblock}
+
+\pnum
+\enternote Output iterators are used by single-pass
+algoritms that write into a bounded range, like \tcode{generate}.
+\exitnote
+
+\end{addedblock}
+
 \rSec2[forward.iterators]{Forward iterators}
 
+\begin{removedblock}
 \pnum
 A class or pointer type
 \tcode{X}
@@ -474,9 +448,23 @@ are valid and have the indicated semantics, and
 
 \item objects of type \tcode{X} offer the multi-pass guarantee, described below.
 \end{itemize}
+\end{removedblock}
+
+\begin{addedblock}
+\pnum
+The \tcode{ForwardIterator} concept refines \tcode{InputIterator}~(\ref{input.iterators})
+and adds the multi-pass guarantee, described below.
+
+\begin{codeblock}
+concept ForwardIterator<typename I> =
+    InputIterator<I> &&
+    Incrementable<I> &&
+    Derived<IteratorCategory<I>, forward_iterator_tag>;
+\end{codeblock}
+\end{addedblock}
 
 \pnum
-The domain of == for forward iterators is that of iterators over the same
+The domain of \tcode{==} for forward iterators is that of iterators over the same
 underlying sequence. However, value-initialized iterators may be compared and
 shall compare equal to other value-initialized iterators of the same type.
 \enternote value initialized iterators behave as if they refer past the end of
@@ -505,27 +493,7 @@ a mutable iterator
 allows the use of multi-pass one-directional algorithms with forward iterators.
 \exitnote
 
-\begin{libreqtab4b}
-{Forward iterator requirements (in addition to input iterator)}
-{tab:iterator.forward.requirements}
-\\ \topline
-\lhdr{Expression}   &   \chdr{Return type}  &   \chdr{Operational}  &   \rhdr{Assertion/note}       \\
-                    &                       &   \chdr{semantics}    &   \rhdr{pre-/post-condition}   \\ \capsep
-\endfirsthead
-\continuedcaption\\
-\hline
-\lhdr{Expression}   &   \chdr{Return type}  &   \chdr{Operational}  &   \rhdr{Assertion/note}       \\
-                    &                       &   \chdr{semantics}    &   \rhdr{pre-/post-condition}   \\ \capsep
-\endhead
-\tcode{r++}         &
- convertible to \tcode{const X\&}   &
- \tcode{\{ X tmp = r;}\br
- \tcode{  ++r;}\br
- \tcode{  return tmp; \}}&  \\ \rowsep
-
-\tcode{*r++}        &
- \tcode{reference}     &&  \\
-\end{libreqtab4b}
+\ednote{Remove Table 109}
 
 \pnum
 If \tcode{a} and \tcode{b} are equal, then either \tcode{a} and \tcode{b}
@@ -539,129 +507,120 @@ if and only if
 
 \rSec2[bidirectional.iterators]{Bidirectional iterators}
 
+\begin{removedblock}
 \pnum
 A class or pointer type
 \tcode{X}
 satisfies the requirements of a bidirectional iterator if,
 in addition to satisfying the requirements for forward iterators,
 the following expressions are valid as shown in Table~\ref{tab:iterator.bidirectional.requirements}.
+\end{removedblock}
 
-\begin{libreqtab4b}
-{Bidirectional iterator requirements (in addition to forward iterator)}
-{tab:iterator.bidirectional.requirements}
-\\ \topline
-\lhdr{Expression}   &   \chdr{Return type}  &   \chdr{Operational}  &   \rhdr{Assertion/note}       \\
-                    &                       &   \chdr{semantics}    &   \rhdr{pre-/post-condition}   \\ \capsep
-\endfirsthead
-\continuedcaption\\
-\hline
-\lhdr{Expression}   &   \chdr{Return type}  &   \chdr{Operational}  &   \rhdr{Assertion/note}       \\
-                    &                       &   \chdr{semantics}    &   \rhdr{pre-/post-condition}   \\ \capsep
-\endhead
-\tcode{\dcr r}      &
- \tcode{X\&}        &
-                    &
- pre: there exists \tcode{s} such that \tcode{r == ++s}.\br
- post: \tcode{r} is dereferenceable.\br
- \tcode{\dcr(++r) == r}.\br
- \tcode{\dcr r == \dcr s} implies \tcode{r == s}.\br
- \tcode{\&r == \&\dcr r}.   \\ \hline
+\begin{addedblock}
+\pnum
+The \tcode{BidirectionalIterator} concept refines \tcode{ForwardIterator}~(\ref{forward.iterators}),
+and adds the ability to move an iterator backward as well as forward.
 
-\tcode{r\dcr}           &
- convertible to \tcode{const X\&}   &
- \tcode{\{ X tmp = r;}\br
- \tcode{  \dcr r;}\br
- \tcode{  return tmp; \}}&  \\ \rowsep
+\begin{codeblock}
+concept BidirectionalIterator<typename I> =
+    ForwardIterator<I> &&
+    Derived<IteratorCategory<I>, bidirectional_iterator_tag> &&
+    requires decrement (I i, I j) {
+        { --i } -> I&;
+        { i-- } -> I;
+    };
+\end{codeblock}
+\end{addedblock}
 
-\tcode{*r\dcr}      &
- \tcode{reference}   &&  \\
-\end{libreqtab4b}
+\ednote{Remove table 110}
+\ednote{TODO pre- and post-conditions from Table 110}
 
+\begin{removedblock}
 \pnum
 \enternote
 Bidirectional iterators allow algorithms to move iterators backward as well as forward.
 \exitnote
+\end{removedblock}
 
 \rSec2[random.access.iterators]{Random access iterators}
 
+\begin{removedblock}
 \pnum
 A class or pointer type
 \tcode{X}
 satisfies the requirements of a random access iterator if,
 in addition to satisfying the requirements for bidirectional iterators,
 the following expressions are valid as shown in Table~\ref{tab:iterator.random.access.requirements}.
+\end{removedblock}
 
-\begin{libreqtab4b}
-{Random access iterator requirements (in addition to bidirectional iterator)}
-{tab:iterator.random.access.requirements}
-\\ \topline
-\lhdr{Expression}   &   \chdr{Return type}  &   \chdr{Operational}  &   \rhdr{Assertion/note}       \\
-                    &                       &   \chdr{semantics}    &   \rhdr{pre-/post-condition}   \\ \capsep
-\endfirsthead
-\continuedcaption\\
-\hline
-\lhdr{Expression}   &   \chdr{Return type}  &   \chdr{Operational}  &   \rhdr{Assertion/note}       \\
-                    &                       &   \chdr{semantics}    &   \rhdr{pre-/post-condition}   \\ \capsep
-\endhead
-\tcode{r += n}      &
- \tcode{X\&}        &
- \tcode{\{ difference_type m = n;}\br
- \tcode{  if (m >= 0)}\br
- \tcode{    while (m\dcr)}\br
- \tcode{      ++r;}\br
- \tcode{  else}\br
- \tcode{    while (m++)}\br
- \tcode{      \dcr r;}\br
- \tcode{  return r; \}}&    \\ \rowsep
+\begin{addedblock}
+The \tcode{RandomAccessIterator} concept refines \tcode{BidirectionalIterator}~(\ref{bidirectional.iterators})
+and adds support for constant-time advancement with \tcode{+=}, \tcode{+}, and \tcode{-=}, and the
+computation of distance in constant time with \tcode{-}. Random access iterators also support array
+notation via subscripting.
 
-\tcode{a + n}\br
-\tcode{n + a}       &
- \tcode{X}          &
- \tcode{\{ X tmp = a;}\br
- \tcode{  return tmp += n; \}}  &
- \tcode{a + n == n + a}.        \\ \rowsep
+\begin{codeblock}
+concept RandomAccessIterator<typename I> =
+    BidirectionalIterator<I> &&
+    TotallyOrdered<I> &&
+    Derived<IteratorCategory<I>, random_access_iterator_tag> &&
+    SignedIntegral<DistanceType<I>> &&
+    SizedIteratorRange<I, I> && // see below
+    requires advance (I i, I j, DifferenceType<I> n) {
+        { i += n } -> I&;
+        { i + n } -> I;
+        { n + i } -> I;
+        { i -= n } -> I&;
+        { i - n } -> I;
+        { i[n] } -> ValueType<I>;
+    };
+\end{codeblock}
+\end{addedblock}
 
-\tcode{r -= n}      &
- \tcode{X\&}        &
- \tcode{return r += -n;}    &   \\ \rowsep
+\ednote{Remove Table 111}
 
-\tcode{a - n}       &
- \tcode{X}          &
- \tcode{\{ X tmp = a;}\br
- \tcode{  return tmp -= n; \}}  &   \\ \rowsep
+\begin{addedblock}
 
-\tcode{b - a}       &
- \tcode{difference_type}   &
- \tcode{return n}   &
- pre: there exists a value \tcode{n} of type \tcode{difference_type} such that \tcode{a + n == b}.\br
- \tcode{b == a + (b - a)}.  \\ \rowsep
+\rSec1[iteratorranges]{Iterator range requirements}
 
-\tcode{a[n]}        &
- convertible to \tcode{reference}  &
- \tcode{*(a + n)}   &   \\ \rowsep
+\rSec2[iteratorrange.iteratorranges]{Iterator range}
 
-\tcode{a < b}       &
- contextually
- convertible to \tcode{bool}    &
- \tcode{b - a > 0}  &
- \tcode{<} is a total ordering relation \\ \rowsep
+The \tcode{IteratorRange} concept defines a pair of types (an
+\tcode{Iterator}~(\ref{iterator.iterators}) and a \tcode{Sentinel}), that can be compared for
+equality. This concept is the key that allows iterator ranges to be defined by pairs of types
+that are not the same.
 
-\tcode{a > b}       &
- contextually
- convertible to \tcode{bool}    &
- \tcode{b < a}      &
- \tcode{>} is a total ordering relation opposite to \tcode{<}.  \\ \rowsep
+\begin{codeblock}
+concept IteratorRange<typename I, typename S> =
+    Iterator<I> &&
+    Regular<S> &&
+    EqualityComparable<I, S>;
+\end{codeblock}
 
-\tcode{a >= b}      &
- contextually
- convertible to \tcode{bool}    &
- \tcode{!(a < b)}   &   \\ \rowsep
+\rSec2[sizediteratorrange.iteratorranges]{Sized Iterator range}
 
-\tcode{a <= b}      &
- contextually
- convertible to \tcode{bool}.    &
- \tcode{!(a > b)}   &   \\
-\end{libreqtab4b}
+The \tcode{SizedIteratorRange} refines \tcode{IteratorRange}~(\ref{iteratorrange.iteratorranges})
+and allows the use of the \tcode{-} operator to compute the distance
+between an \tcode{Iterator}~(\ref{iterator.iterators}) and a \tcode{Sentinel}.
+
+\begin{codeblock}
+concept SizedIteratorRange<typename I, typename S> =
+    IteratorRange<I, S> &&
+    requires difference (I i, S j) {
+        typename Distance_type<I>;
+        { i - i } -> Distance_type<I>;
+        { j - j } -> Distance_type<I>;
+        { i - j } -> Distance_type<I>;
+        { j - i } -> Distance_type<I>;
+        requires SignedIntegral<DifferenceType>;
+    };
+\end{codeblock}
+
+\enternote The \tcode{SizedIteratorRange} concept is modeled by pairs of
+\tcode{RandomAccessIterator}s(~\ref{random.access.iterators}) and by counted iterators and their
+sentinels. \ednote{TODO add reference here} \exitnote
+
+\end{addedblock}
 
 \rSec1[iterator.synopsis]{Header \tcode{<iterator>}\ synopsis}
 
@@ -733,7 +692,7 @@ namespace std {
     const reverse_iterator<Iterator>& x);
 
   template <class Iterator>
-    reverse_iterator<Iterator> make_reverse_iterator(Iterator i);    
+    reverse_iterator<Iterator> make_reverse_iterator(Iterator i);
 
   template <class Container> class back_insert_iterator;
   template <class Container>
@@ -1285,7 +1244,7 @@ namespace std {
       const reverse_iterator<Iterator>& x);
 
   template <class Iterator>
-    reverse_iterator<Iterator> make_reverse_iterator(Iterator i);      
+    reverse_iterator<Iterator> make_reverse_iterator(Iterator i);
 }
 \end{codeblock}
 
