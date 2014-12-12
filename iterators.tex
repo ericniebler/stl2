@@ -7,7 +7,8 @@
 This Clause describes components that \Cpp programs may use to perform
 iterations over containers (Clause \ref{containers}),
 streams~(\ref{iostream.format}),
-\removed{and} stream buffers~(\ref{stream.buffers})\added{, and ranges}.
+\removed{and} stream buffers~(\ref{stream.buffers})
+\added{, and ranges~(\ref{range.iterables})}.
 
 \pnum
 The following subclauses describe
@@ -23,6 +24,7 @@ as summarized in Table~\ref{tab:iterators.lib.summary}.
 \ref{iterator.primitives} & Iterator primitives   &   \tcode{<iterator>}      \\
 \ref{predef.iterators} & Predefined iterators     &                           \\
 \ref{stream.iterators} & Stream iterators         &                           \\
+\added{\ref{iterables}} & \added{Iterables}       &                           \\
 \end{libsumtab}
 
 
@@ -33,7 +35,7 @@ as summarized in Table~\ref{tab:iterators.lib.summary}.
 \pnum
 \indextext{requirements!iterator}%
 Iterators are a generalization of pointers that allow a \Cpp program to work with different data structures
-(containers) in a uniform manner.
+(containers\added{ and ranges}) in a uniform manner.
 To be able to construct template algorithms that work correctly and
 efficiently on different types of data structures, the library formalizes not just the interfaces but also the
 semantics and complexity assumptions of iterators.
@@ -310,6 +312,17 @@ has property
 \begin{codeblock}
 concept Iterator<typename I> =
     WeakIterator<I> && EqualityComparable<I>;
+\end{codeblock}
+
+\rSec2[sentinel.iterators]{Sentinels}
+
+The \tcode{Sentinel} concept defines requirements for a type that
+is an abstraction of the past-the-end iterator. Its values can be
+compared to an iterator for equality.
+
+\begin{codeblock}
+concept Sentinel<typename T, Iterator I> =
+    Regular<T> && EqualityComparable<T, I>;
 \end{codeblock}
 
 \rSec2[weakinput.iterators]{Weak input iterators}
@@ -2547,6 +2560,19 @@ move_iterator<Iterator> make_move_iterator(Iterator i);
 \returns \tcode{move_iterator<Iterator>(i)}.
 \end{itemdescr}
 
+\begin{addedblock}
+
+\rSec2[counted.iterators]{Counted iterators and sentinels}
+
+\ednote{TODO describe the counted_iterator and counted_sentinel types.}
+
+\rSec2[common.iterators]{Common iterators}
+
+\ednote{TODO describe the iterator used to turn non-bounded iterables into
+bounded iterables}
+
+\end{addedblock}
+
 \rSec1[stream.iterators]{Stream iterators}
 
 \pnum
@@ -3351,6 +3377,295 @@ or
 \tcode{false}
 otherwise.
 \end{itemdescr}
+
+\begin{addedblock}
+
+\rSec1[iterables]{Iterable concepts}
+
+\rSec2[iterables.general]{General}
+
+\pnum
+This subclause describes components for dealing with ranges of elements.
+
+\pnum
+The following subclauses describe
+iterable and range requirements, and
+components for
+iterable primitives,
+predefined ranges,
+and stream ranges,
+as summarized in Table~\ref{tab:iterables.lib.summary}.
+
+\begin{libsumtab}{Iterables library summary}{tab:iterables.lib.summary}
+  \ref{iterables.requirements} & Requirements       &                           \\ \rowsep
+  \ref{iterable.primitives} & Iterable primitives   &   \tcode{<iterator>}      \\
+  \ref{predef.range} & Predefined ranges            &                           \\
+  \ref{stream.ranges} & Stream ranges               &                           \\
+\end{libsumtab}
+
+\rSec2[iterables.requirements]{Iterable requirements}
+
+\rSec3[iterables.requirements.general]{In general}
+
+\pnum
+Iterables are an abstraction of containers that allow a C++ program to
+operate on elements of data structures uniformly. It their simplest form, an
+iterable object is one on which one can call \tcode{begin} and
+\tcode{end} to get an iterator~(\ref{iterator.iterators}) and a
+sentinel~(\ref{sentinel.iterators}) or an iterator. To be able to construct
+template algorithms and range adaptors that work correctly and efficiently on
+different types of sequences, the library formalizes not just the interfaces but
+also the semantics and complexity assumptions of iterables.
+
+\pnum
+This International Standard defines three fundamental categories of iterables
+based on the syntax and semantics supported by each: \techterm{iterable},
+\techterm{sized iterable} and \techterm{range}, as shown in
+Table~\ref{tab:iterables.relations}.
+
+\begin{floattable}{Relations among iterable categories}{tab:iterables.relations}
+  {lll}
+  \topline
+  \textbf{Sized Iterable} &            &                   \\
+                          & $\searrow$ &                   \\
+                          &            & \textbf{Iterable} \\
+                          & $\nearrow$ &                   \\
+  \textbf{Range}          &            &                   \\
+\end{floattable}
+
+\pnum
+The \tcode{Iterable} concept requires only that \tcode{begin} and \tcode{end}
+return an iterator and a sentinel or an iterator. The \tcode{SizedIterable}
+concept refines \tcode{Iterable} but adds the requirement that the number of
+elements in the iterable can be determined in constant time with the
+\tcode{size} function. The \tcode{Range} concept describes requirements on an
+iterable type with reference semantics to its elements.
+
+\pnum
+In addition to the three fundamental iterable categories, this standard defines
+a number of convenience refinements of iterable that group together requirements
+that turn up often in the concepts and range views. \techterm{Bounded iterables}
+are iterables for which \tcode{begin} and \tcode{end} return objects of the
+same type. \techterm{Random access iterables} are iterables for which
+\tcode{begin} returns a model of
+\tcode{RandomAccessIterator}~(\ref{random.access.iterators}). The iterable
+categories \techterm{bidirectional iterable}, \techterm{forward iterable},
+\techterm{input iterable} and \techterm{output iterable} are defined similarly.
+\enternote There is no \techterm{weak input iterable} or
+\techterm{weak output iterable} because of the \tcode{EqualityComparable}
+requirement on iterators and sentinels. \exitnote
+
+\rSec3[iterable.iterables]{Iterables}
+
+\pnum
+The \tcode{Iterable} concept defines the requirements of a type that allows
+iteration over its elements by providing a \tcode{begin} iterator and an
+\tcode{end} iterator or sentinel.
+
+\begin{codeblock}
+concept Iterable<typename T> =
+    requires(T t) {
+        typename IteratorType<T>;
+        typename SentinelType<T>;
+        { begin(t) } -> IteratorType<T>;
+        { end(t) } -> SentinelType<T>;
+        requires IteratorRange<IteratorType, SentinelType>;
+    }
+\end{codeblock}
+
+\tcode{begin} and \tcode{end} are required to be amortized constant time.
+\enternote Most algorithms requiring this concept simply forward to an
+Iterator-based algorithm by calling \tcode{begin} and \tcode{end}. \exitnote
+
+\rSec3[sized.iterables]{Sized iterables}
+
+\pnum
+The \tcode{SizedIterable} concept describes the requirements of an Iterable
+type that knows its size in constant time with the \tcode{size} function.
+
+\begin{codeblock}
+// For exposition only:
+concept SizedIterableLike_<Iterable T> =
+    requires(T t) {
+        typename SizeType<T>;
+        { size(t) } -> SizeType<T>;
+        requires Integral<SizeType>;
+    }
+
+concept SizedIterable<SizedIterableLike_ T> =
+    is_sized_iterable<T>::value;
+\end{codeblock}
+
+\pnum
+Any \tcode{Iterable} object \tcode{o} for which \tcode{size(o)} compiles and
+returns an \tcode{Integral} type is a \tcode{SizedIterable} by default. The
+\tcode{is_sized_iterable} trait allows users to override the default in the
+case of accidental conformance.
+
+\enternote
+A possible implementation for \tcode{is_sized_iterable} is given below:
+
+\begin{codeblock}
+// For exposition only:
+template<typename R>
+struct is_sized_iterable_impl_
+  : std::integral_constant< bool, SizedIterableLike_<R> >
+{};
+
+template<typename R>
+struct is_sized_iterable
+  : conditional<
+        is_same<R, remove_const_t<remove_reference_t<R>>>::value,
+        is_sized_iterable_impl_<R>,
+        is_sized_iterable<remove_const_t<remove_reference_t<R>>>
+    >::type
+{};
+\end{codeblock}
+\ednote{The handling of top-level reference here is inconsistent with the other
+type traits.}
+\exitnote
+
+\rSec3[range.iterables]{Ranges}
+
+\pnum
+The \tcode{Range} concept describes the requirements of an Iterable type that
+has constant time copy, move and assignment operators; that is, the cost of
+these operations is not proportional to the number of elements in the Range.
+
+\pnum
+\enterexample
+Examples of Ranges are:
+
+\begin{itemize}
+\item An Iterable type that wraps a pair of iterators.
+
+\item An Iterable type that hold its elements by \tcode{shared_ptr}
+and shares ownership with all its copies.
+
+\item An Iterable type that generates its elements on demand.
+\end{itemize}
+
+A container~(\ref{containers}) is not a Range since copying the
+container copies the elements.
+\exitexample
+
+\begin{codeblock}
+concept Range<typename T> =
+    Iterable<T> && Semiregular<T> && is_range<T>::value;
+\end{codeblock}
+
+\pnum
+Since the difference between Iterable and Range is largely semantic, the
+two are differentiated with the help of the \tcode{is_range} trait. Users may
+specialize the \tcode{is_range} trait. By default, \tcode{is_range} uses the
+following heuristics to determine whether an Iterable type \tcode{T} is a Range:
+
+\begin{itemize}
+\item If \tcode{T} derives from \tcode{range_base}, \tcode{is_range<T>::value}
+is true.
+\item If a top-level const changes \tcode{T}'s IteratorType's
+\tcode{reference_type}, \tcode{is_range<T>::value}
+is false. \enternote Deep constness implies element ownership, whereas shallow
+constness implies reference semantics. \exitnote
+\end{itemize}
+
+\pnum
+\enternote
+Below is a possible implementation of the \tcode{is_range} trait.
+
+\begin{codeblock}
+struct range_base
+{};
+
+// For exposition only:
+concept ContainerLike_<Iterable T> =
+    !Same<decltype(*begin(declval<T &>())),
+          decltype(*begin(declval<T const &>()))>;
+
+// For exposition only:
+template<typename T>
+struct is_range_impl_
+  : std::integral_constant<
+        bool,
+        Iterable<T> && (!ContainerLike_<T> || Derived<T, range_base>)
+    >
+{};
+
+template<typename T, typename Enable = void>
+struct is_range
+  : conditional<
+        is_same<T, remove_const_t<remove_reference_t<T>>>::value,
+        is_range_impl_<T>,
+        is_range<remove_const_t<remove_reference_t<T>>>
+    >::type
+{};
+\end{codeblock}
+\ednote{The handling of top-level reference here is inconsistent with the other
+type traits.}
+\exitnote
+
+\rSec3[bounded.iterables]{Bounded iterables}
+
+\pnum
+The \tcode{BoundedIterable} concept describes requirements of an Iterable type
+for which \tcode{begin} and \tcode{end} return objects of the same type.
+\enternote The standard containers~(\ref{containers}) are models of
+\tcode{BoundedIterable}. \exitnote
+
+\begin{codeblock}
+concept BoundedIterable<Iterable T> =
+    Same<IteratorType<T>, SentinelType<T>>;
+\end{codeblock}
+
+\rSec3[input.iterables]{Input iterables}
+
+\pnum
+The \tcode{InputIterable} concept describes requirements of an Iterable type
+for which \tcode{begin} returns a model of
+\tcode{InputIterator}~(\ref{input.iterators}).
+
+\begin{codeblock}
+concept InputIterable<Iterable T> =
+    InputIterator<IteratorType<T>>;
+\end{codeblock}
+
+\rSec3[forward.iterables]{Forward iterables}
+
+\pnum
+The \tcode{ForwardIterable} concept describes requirements of an
+InputIterable type for which \tcode{begin} returns a model of
+\tcode{ForwardIterator}~(\ref{forward.iterators}).
+
+\begin{codeblock}
+concept ForwardIterable<InputIterable T> =
+    ForwardIterator<IteratorType<T>>;
+\end{codeblock}
+
+\rSec3[bidirectional.iterables]{Bidirectional iterables}
+
+\pnum
+The \tcode{BidirectionalIterable} concept describes requirements of a
+ForwardIterable type for which \tcode{begin} returns a model of
+\tcode{BidirectionalIterator}~(\ref{bidirectional.iterators}).
+
+\begin{codeblock}
+concept BidirectionalIterable<ForwardIterable T> =
+    BidirectionalIterator<IteratorType<T>>;
+\end{codeblock}
+
+\rSec3[random.access.iterables]{Random access iterables}
+
+\pnum
+The \tcode{RandomAccessIterable} concept describes requirements of a
+BidirectionalIterable type for which \tcode{begin} returns a model of
+\tcode{RandomAccessIterator}~(\ref{random.access.iterators}).
+
+\begin{codeblock}
+concept RandomAccessIterable<BidirectionalIterable T> =
+    RandomAccessIterator<IteratorType<T>>;
+\end{codeblock}
+
+\end{addedblock}
 
 \rSec1[iterator.range]{range access}
 
