@@ -9,4 +9,93 @@
 \setcounter{subsection}{3}
 \rSec2[stmt.ranged]{The range-based \tcode{for} statement}
 
+Modify paragraph 1 to allow differently typed begin and end
+iterators.
+
+\begin{quote}
+\pnum
+For a range-based for statement of the form
+
+\begin{bnf}
+\terminal{for} \terminal{(} for-range-declaration \terminal{:} expression \terminal{)} statement
+\end{bnf}
+% 
+let \grammarterm{range-init} be equivalent to the expression surrounded by parentheses
+
+\begin{bnf}
+\terminal{(} expression \terminal{)}
+\end{bnf}
+% 
+and for a range-based for statement of the form
+
+\begin{bnf}
+\terminal{for} \terminal{(} for-range-declaration \terminal{:} braced-init-list \terminal{)} statement
+\end{bnf}
+% 
+let \grammarterm{range-init} be equivalent to the \grammarterm{braced-init-list}. 
+% 
+In each case, a range-based for statement is equivalent to
+\begin{removedblock}
+\begin{codeblock}
+{
+  auto && __range = range-init;
+  for ( auto __begin = begin-expr,
+             __end = end-expr;
+        __begin != __end;
+        ++__begin ) {
+    for-range-declaration = *__begin;
+    statement
+  }
+}
+\end{codeblock}
+\end{removedblock}
+\begin{addedblock}
+\begin{codeblock}
+{
+  auto && __range = @\grammarterm{range-init}@;
+  auto __begin = @\grammarterm{begin-expr}@;
+  auto __end = @\grammarterm{end-expr}@;
+  for ( ; __begin != __end; ++__begin ) {
+    @\grammarterm{for-range-declaration}@ = *__begin;
+    @\grammarterm{statement}@
+  }
+}
+\end{codeblock}
+\end{addedblock}
+% 
+where \tcode{__range}, \tcode{__begin}, and \tcode{__end} are variables defined for
+exposition only, and \tcode{_RangeT} is the type of the
+\grammarterm{}{expression}, and \textit{begin-expr} and \textit{end-expr} are
+determined as follows:
+
+\begin{itemize}
+\item if \tcode{_RangeT} is an array type, \textit{begin-expr} and \textit{end-expr} are
+\tcode{__range} and \tcode{__range + __bound}, respectively, where \tcode{__bound} is
+the array bound. If \tcode{_RangeT} is an array of unknown size or an array of
+incomplete type, the program is ill-formed;
+
+\item if \tcode{_RangeT} is a class type, the \grammarterm{unqualified-id}{s}
+\tcode{begin} and \tcode{end} are looked up in the scope of class \tcode{\mbox{_RangeT}}
+as if by class member access lookup~(\ref{basic.lookup.classref}), and if either
+(or both) finds at least one declaration, \grammarterm{begin-expr} and
+\grammarterm{end-expr} are \tcode{__range.begin()} and \tcode{__range.end()},
+respectively;
+
+\item otherwise, \textit{begin-expr} and \textit{end-expr} are \tcode{begin(__range)}
+and \tcode{end(__range)}, respectively, where \tcode{begin} and \tcode{end} are looked
+up in the associated namespaces~(\ref{basic.lookup.argdep}).
+\enternote Ordinary unqualified lookup~(\ref{basic.lookup.unqual}) is not
+performed. \exitnote
+\end{itemize}
+
+\enterexample
+\begin{codeblock}
+int array[5] = { 1, 2, 3, 4, 5 };
+for (int& x : array)
+  x *= 2;
+\end{codeblock}
+\exitexample%
+\indextext{statement!iteration|)}
+
+\end{quote}
 
