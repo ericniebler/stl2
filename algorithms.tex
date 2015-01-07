@@ -33,124 +33,103 @@ as summarized in Table~\ref{tab:algorithms.summary}.
 
 namespace std {
 
-  \end{codeblock}
-  \ednote{Still need to fix up return types here} \\
-  \ednote{Is the out-of-order but short form of \tcode{all_of} better than
-  the separate \tcode{requres} clause?}
-  \begin{codeblock}
-
   // \ref{alg.nonmodifying}, non-modifying sequence operations:
   template <InputIterator I, Sentinel<I> S, Invokable<ValueType<I>> Proj = identity,
       InvokablePredicate<ResultType<CallableType<Proj>, ValueType<I>> Pred>
     bool all_of(I first, S last, Pred pred, Proj proj = Proj{});
 
-  template <InputIterator I, Sentinel<I> S, class Pred,
-      Invokable<ValueType<I>> Proj = identity>
-    requires InvokablePredicate<Pred, ResultType<CallableType<Proj>, ValueType<I>>>
+  template <InputIterator I, Sentinel<I> S,
+      Invokable<ValueType<I>> Proj = identity,
+      InvokablePredicate<ResultType<CallableType<Proj>, ValueType<I>>> Pred>
     bool any_of(I first, S last, Pred pred, Proj proj = Proj{});
 
-  template <InputIterator I, Sentinel<I> S, class Pred,
-      Invokable<ValueType<I>> Proj = identity>
-    requires InvokablePredicate<Pred,
-      ResultType<CallableType<Proj>, ValueType<I>>>
+  template <InputIterator I, Sentinel<I> S,
+      Invokable<ValueType<I>> Proj = identity,
+      InvokablePredicate<ResultType<CallableType<Proj>, ValueType<I>>> Pred>
     bool none_of(I first, S last, Pred pred, Proj proj = Proj{});
 
-  template<InputIterator I, Sentinel<I> S, class Fun,
-      Invokable<ValueType<I>> Proj = identity>
-    requires InvokableFunction<Fun,
-      ResultType<CallableType<Proj>, ValueType<I>>>
-    Fun for_each(I first, S last, Fun f, Proj proj = Proj{});
+  template<InputIterator I, Sentinel<I> S,
+      Invokable<ValueType<I>> Proj = identity,
+      InvokableFunction<ResultType<CallableType<Proj>, ValueType<I>>> Fun>
+    pair<I, Fun>
+      for_each(I first, S last, Fun f, Proj proj = Proj{});
 
-  template<InputIterator I, Sentinel<I> S, class T,
-      Invokable<ValueType<I>> Proj = identity>
-    requires EqualityComparable<T,
-      ResultType<CallableType<Proj>, ValueType<I>>>
+  template<InputIterator I, Sentinel<I> S,
+      Invokable<ValueType<I>> Proj = identity,
+      EqualityComparable<ResultType<CallableType<Proj>, ValueType<I>>> T>
     I find(I first, S last, const T& value, Proj proj = Proj{});
 
-  template<InputIterator I, Sentinel<I> S, class Pred,
-      Invokable<ValueType<I>> Proj = identity>
-    requires InvokablePredicate<Pred,
-      ResultType<CallableType<Proj>, ValueType<I>>>
+  template<InputIterator I, Sentinel<I> S,
+      Invokable<ValueType<I>> Proj = identity,
+      InvokablePredicate<ResultType<CallableType<Proj>, ValueType<I>>> Pred>
     I find_if(I first, S last, Pred pred, Proj proj = Proj{});
 
-  template<InputIterator I, Sentinel<I> S, class Pred,
-      Invokable<ValueType<I>> Proj = identity>
-    requires InvokablePredicate<Pred,
-      ResultType<CallableType<Proj>, ValueType<I>>>
-    I find_if_not(I first, S last,
-                  Pred pred, Proj proj = Proj{});
+  template<InputIterator I, Sentinel<I> S,
+      Invokable<ValueType<I>> Proj = identity,
+      InvokablePredicate<ResultType<CallableType<Proj>, ValueType<I>>> Pred>
+    I find_if_not(I first, S last, Pred pred, Proj proj = Proj{});
 
   template<ForwardIterator I1, Sentinel<I1> S1, ForwardIterator I2,
-      Sentinel<I2> S2, class BinaryPred = equal_to<>,
-      Invokable<ValueType<I>> Proj = identity>
-    requires InvokableRelation<Pred, ValueType<I2>,
-      ResultType<CallableType<Proj>, ValueType<I>>>
+      Sentinel<I2> S2, Invokable<ValueType<I>> Proj = identity,
+      InvokableRelation<ValueType<I2>,
+        ResultType<CallableType<Proj>, ValueType<I>>> BinaryPred = equal_to<>>
     I1
-      find_end(I1 first1, S1 last1,
-               I2 first2, S2 last2,
+      find_end(I1 first1, S1 last1, I2 first2, S2 last2,
                BinaryPred pred = BinaryPred{}, Proj proj = Proj{});
 
   template<InputIterator I1, Sentinel<I1> S1,
-     ForwardIterator I2, Sentinel<I2> S2,
-     class BinaryPred = equal_to<>,
-     Invokable<ValueType<I1>> Proj1 = identity,
-     Invokable<ValueType<I2>> Proj2 = identity>
-    requires InvokablePredicate<Pred,
-      ResultType<CallableType<Proj1>, ValueType<I1>>,
-      ResultType<CallableType<Proj2>, ValueType<I2>>>
+      ForwardIterator I2, Sentinel<I2> S2,
+      Invokable<ValueType<I1>> Proj1 = identity,
+      Invokable<ValueType<I2>> Proj2 = identity,
+      InvokablePredicate<
+        ResultType<CallableType<Proj1>, ValueType<I1>>,
+        ResultType<CallableType<Proj2>, ValueType<I2>>> BinaryPred = equal_to<>>
     I1
-      find_first_of(I1 first1, S1 last1,
-                    I2 first2, S2 last2,
+      find_first_of(I1 first1, S1 last1, I2 first2, S2 last2,
                     BinaryPred pred = BinaryPred{},
-                    Proj1 proj1 = Proj1{},
-                    Proj2 proj2 = Proj2{});
+                    Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
 
   template<ForwardIterator I, Sentinel<I> S,
-     class BinaryPred = equal_to<>, Invokable<ValueType<I>> Proj = identity>
-    requires Invokable<Proj, ValueType<I>> &&
-      InvokableRelation<BinaryPred,
-        ResultType<CallableType<Proj>, ValueType<I>>>
+      Invokable<ValueType<I>> Proj = identity,
+      InvokableRelation<
+        ResultType<CallableType<Proj>, ValueType<I>>> BinaryPred = equal_to<>>
     I
-      adjacent_find(I first, S last,
-                    BinaryPred pred = BinaryPred{},
+      adjacent_find(I first, S last, BinaryPred pred = BinaryPred{},
                     Proj proj = Proj{});
 
-  template<InputIterator I, Sentinel<I> S, class T,
-      Invokable<ValueType<I>> Proj = identity>
-    requires EqualityComparable<T,
-      ResultType<CallableType<Proj>, ValueType<I>>>
+  template<InputIterator I, Sentinel<I> S,
+      Invokable<ValueType<I>> Proj = identity,
+      EqualityComparable<
+        ResultType<CallableType<Proj>, ValueType<I>>> T>
     iterator_difference_t<I>
       count(I first, S last, const T& value, Proj proj = Proj{});
 
-  template<InputIterator I, Sentinel<I> S, class Pred,
-      Invokable<ValueType<I>> Proj = identity>
-    requires InvokablePredicate<Pred,
-      ResultType<CallableType<Proj>, ValueType<I>>>
+  template<InputIterator I, Sentinel<I> S,
+      Invokable<ValueType<I>> Proj = identity,
+      InvokablePredicate<
+        ResultType<CallableType<Proj>, ValueType<I>>> Pred>
     iterator_difference_t<I>
       count_if(I first, S last, Pred pred, Proj proj = Proj{});
 
   template<InputIterator I1, Sentinel<I1> S1, WeakInputIterator I2,
-     class BinaryPred = equal_to<>,
-     Invokable<ValueType<I1>> Proj1 = identity,
-     Invokable<ValueType<I2>> Proj2 = identity>
-    requires InvokablePredicate<BinaryPred,
-      ResultType<CallableType<Proj>1, ValueType<I1>>,
-      ResultType<CallableType<Proj>2, ValueType<I2>>>
+      Invokable<ValueType<I1>> Proj1 = identity,
+      Invokable<ValueType<I2>> Proj2 = identity
+      InvokablePredicate<
+        ResultType<CallableType<Proj1>, ValueType<I1>>,
+        ResultType<CallableType<Proj2>, ValueType<I2>>> BinaryPred = equal_to<>>
     pair<I1, I2>
-      mismatch(I1 first1, S1 last1,
-               I2 first2, BinaryPred pred = BinaryPred{},
+      mismatch(I1 first1, S1 last1, I2 first2, BinaryPred pred = BinaryPred{},
                Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
 
   template<InputIterator I1, Sentinel<I1> S1, InputIterator I2,
-      Sentinel<I2> S2, class BinaryPred = equal_to<>,
+      Sentinel<I2> S2,
       Invokable<ValueType<I1>> Proj1 = identity,
-      Invokable<ValueType<I2>> Proj2 = identity>
-    requires InvokablePredicate<BinaryPred,
-        ResultType<CallableType<Proj>1, ValueType<I1>>,
-        ResultType<CallableType<Proj>2, ValueType<I2>>>
+      Invokable<ValueType<I2>> Proj2 = identity,
+      InvokablePredicate<
+        ResultType<CallableType<Proj1>, ValueType<I1>>,
+        ResultType<CallableType<Proj2>, ValueType<I2>>> BinaryPred = equal_to<>>
     pair<I1, I2>
-      mismatch(I1 first1, S1 last1,
-               I2 first2, S2 last2,
+      mismatch(I1 first1, S1 last1, I2 first2, S2 last2,
                BinaryPred pred = BinaryPred{},
                Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
 
@@ -160,8 +139,8 @@ namespace std {
       Invokable<ValueType<I1>> Proj1 = identity,
       Invokable<ValueType<I2>> Proj2 = identity> =
     InvokableRelation<BinaryPred,
-      ResultType<CallableType<Proj>1, ValueType<I1>>,
-      ResultType<CallableType<Proj>2, ValueType<I2>>>;
+      ResultType<CallableType<Proj1>, ValueType<I1>>,
+      ResultType<CallableType<Proj2>, ValueType<I2>>>;
 
   template<InputIterator I1, Sentinel<I1> S1, WeakInputIterator I2,
       class BinaryPred = equal_to<>,
@@ -177,8 +156,7 @@ namespace std {
       Invokable<ValueType<I1>> Proj1 = identity,
       Invokable<ValueType<I2>> Proj2 = identity>
     requires IndirectlyComparable<I1, I2, BinaryPred, Proj1, Proj2>
-    bool equal(I1 first1, S1 last1,
-               I2 first2, S2 last2,
+    bool equal(I1 first1, S1 last1, I2 first2, S2 last2,
                BinaryPred pred = BinaryPred{},
                Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
 
@@ -187,8 +165,8 @@ namespace std {
       Invokable<ValueType<I1>> Proj1 = identity,
       Invokable<ValueType<I2>> Proj2 = identity>
     requires IndirectlyComparable<I1, I2, BinaryPred, Proj1, Proj2>
-    bool is_permutation(I1 first1, S1 last1,
-                        I2 first2, BinaryPred pred = BinaryPred{},
+    bool is_permutation(I1 first1, S1 last1, I2 first2,
+                        BinaryPred pred = BinaryPred{},
                         Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
 
   template<ForwardIterator I1, Sentinel<I1> S1, ForwardIterator I2,
@@ -196,29 +174,26 @@ namespace std {
       Invokable<ValueType<I1>> Proj1 = identity,
       Invokable<ValueType<I2>> Proj2 = identity>
     requires IndirectlyComparable<I1, I2, BinaryPred, Proj1, Proj2>
-    bool is_permutation(I1 first1, S1 last1,
-                        I2 first2, S2 last2,
+    bool is_permutation(I1 first1, S1 last1, I2 first2, S2 last2,
                         BinaryPred pred = BinaryPred{},
                         Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
 
-  template<ForwardIterator I1, Sentinel<I1> S1, ForwardIterator I2, Sentinel<I2> S2,
-      class BinaryPred = equal_to<>,
+  template<ForwardIterator I1, Sentinel<I1> S1, ForwardIterator I2,
+      Sentinel<I2> S2, class BinaryPred = equal_to<>,
       Invokable<ValueType<I1>> Proj1 = identity,
       Invokable<ValueType<I2>> Proj2 = identity>
     requires IndirectlyComparable<I1, I2, BinaryPred, Proj1, Proj2>
-    I1 search(I1 first1, S1 last1,
-              I2 first2, S2 last2,
-              BinaryPred pred = BinaryPred{},
-              Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+    I1
+      search(I1 first1, S1 last1, I2 first2, S2 last2,
+             BinaryPred pred = BinaryPred{},
+             Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
 
   template<ForwardIterator I, Sentinel<I> S, class T,
-      class BinaryPred = equal_to<>,
-      Invokable<ValueType<I>> Proj = identity>
-    requires IndirectlyComparable<I1, const T*, BinaryPred, Proj1>
-    I search_n(I first, S last,
-               iterator_difference_t<I> count,
-               const T& value,
-               BinaryPred pred = BinaryPred{},
+      class BinaryPred = equal_to<>, Invokable<ValueType<I>> Proj = identity>
+    requires IndirectlyComparable<I1, const T*, BinaryPred, Proj>
+    I
+      search_n(I first, S last, iterator_difference_t<I> count,
+               const T& value, BinaryPred pred = BinaryPred{},
                Proj proj = Proj{});
 
   // \ref{alg.modifying.operations}, modifying sequence operations:
@@ -226,74 +201,63 @@ namespace std {
   template<InputIterator I, Sentinel<I> S, WeakIterator O,
       Invokable<ValueType<I>> Proj = identity>
     requires IndirectlyCopyable<I, O, Proj>
-    O copy(I first, S last, O result, Proj proj = Proj{});
+    pair<I, O>
+      copy(I first, S last, O result, Proj proj = Proj{});
 
   template<WeakInputIterator I, WeakIterator O,
       Invokable<ValueType<I>> Proj = identity>
     requires IndirectlyCopyable<I, O, Proj>
     pair<I, O>
-      copy_n(I first, iterator_distance_t<I> n,
-             O result, Proj proj = Proj{});
+      copy_n(I first, iterator_distance_t<I> n, O result,
+             Proj proj = Proj{});
 
   template<InputIterator I, Sentinel<I> S, WeakIterator O,
-      class Pred, Invokable<ValueType<I>> Proj = identity>
-    requires IndirectlyCopyable<I, O, Proj> &&
-      InvokablePredicate<Pred,
-        ResultType<CallableType<Proj>, ValueType<I>>>
-    O
-      copy_if(I first, S last,
-              O result, Pred pred, Proj proj = Proj{});
+      Invokable<ValueType<I>> Proj = identity,
+      InvokablePredicate<ResultType<CallableType<Proj>, ValueType<I>>> Pred>
+    requires IndirectlyCopyable<I, O, Proj>
+    pair<I, O>
+      copy_if(I first, S last, O result, Pred pred, Proj proj = Proj{});
 
   template<BidirectionalIterator I1, Sentinel<I1> S1,
-      BidirectionalIterator I2,
-      Invokable<ValueType<I>> Proj = identity>
+      BidirectionalIterator I2, Invokable<ValueType<I>> Proj = identity>
     requires IndirectlyCopyable<I1, I2, Proj>
-    I2
-      copy_backward(I1 first, I1 last, I2 result,
-                    Proj proj = Proj{});
+    pair<I1, I2>
+      copy_backward(I1 first, I1 last, I2 result, Proj proj = Proj{});
 
   // \ref{alg.move}, move:
   template<InputIterator I, Sentinel<I> S, WeakIterator O,
       Invokable<ValueType<I>> Proj = identity>
     requires IndirectlyMovable<I, O, Proj>
-    O
+    pair<I, O>
       move(I first, S last, O result, Proj proj = Proj{});
 
   template<BidirectionalIterator I1, Sentinel<I1> S1,
-      BidirectionalIterator I2,
-      Invokable<ValueType<I>> Proj = identity>
+      BidirectionalIterator I2, Invokable<ValueType<I>> Proj = identity>
     requires IndirectlyMovable<I, O, Proj>
-    I2
-      move_backward(I1 first, I1 last, I2 result,
-                    Proj jproj = Proj{});
+    pair<I1, I2>
+      move_backward(I1 first, I1 last, I2 result, Proj jproj = Proj{});
 
   // \ref{alg.swap}, swap:
-  template<ForwardIterator I1, Sentinel<I1> S1,
-      ForwardIterator I2>
+  template<ForwardIterator I1, Sentinel<I1> S1, ForwardIterator I2>
     requires IndirectlySwappable<I1, I2>
-    I2
+    pair<I1, I2>
       swap_ranges(I1 first1, S1 last1, I2 first2);
 
-  template<ForwardIterator I1, Sentinel<I1> S1,
-      ForwardIterator I2, Sentinel<I2> S2>
+  template<ForwardIterator I1, Sentinel<I1> S1, ForwardIterator I2,
+      Sentinel<I2> S2>
     requires IndirectlySwappable<I1, I2>
-    I2
-      swap_ranges(I1 first1, S1 last1,
-                  I2 first2, S2 last2);
+    pair<I1, I2>
+      swap_ranges(I1 first1, S1 last1, I2 first2, S2 last2);
 
   template<InputIterator I, Sentinel<I> S, WeakIterator O,
-      class UnaryOperation,
-      Invokable<ValueType<I>> Proj = identity>
-    requires Invokable<UnaryOperation,
-        ResultType<CallableType<Proj>, ValueType<I>>> &&
-      Writable<O, ResultType<CallableType<UnaryOperation>,
-        ResultType<CallableType<Proj>, ValueType<I>>>>
+      Invokable<ValueType<I>> Proj = identity,
+      Invokable<
+        ResultType<CallableType<Proj>, ValueType<I>>> F,
+      WeakOutputIterator<ResultType<CallableType<F>,
+        ResultType<CallableType<Proj>, ValueType<I>>>> O>
     pair<I, O>
-      transform(I first, S last, O result,
-                UnaryOperation op, Proj proj = Proj{});
-\end{codeblock}
-\ednote{Out-of-order parameters here as an experiment in reducing verbosity.}
-\begin{codeblock}
+      transform(I first, S last, O result, F op, Proj proj = Proj{});
+
     template<InputIterator I1, Sentinel<I1> S1, WeakInputIterator I2,
         Invokable<ValueType<I1>> Proj1 = identity,
         Invokable<ValueType<I2>> Proj2 = identity,
@@ -307,62 +271,53 @@ namespace std {
                   F binary_op, Proj1 proj1 = Proj1{}, proj2 proj2 = Proj2{});
 
   template<InputIterator I1, Sentinel<I1> S1,
-      InputIterator I2, Sentinel<I2> S2, WeakIterator O,
-      class BinaryOperation,
+      InputIterator I2, Sentinel<I2> S2,
       Invokable<ValueType<I1>> Proj1 = identity,
-      Invokable<ValueType<I2>> Proj2 = identity>
-    requires Invokable<BinaryOperation,
+      Invokable<ValueType<I2>> Proj2 = identity,
+      Invokable<
         ResultType<CallableType<Proj1>, ValueType<I1>>,
-        ResultType<CallableType<Proj2>, ValueType<I2>>> &&
-      Writable<O, ResultType<
-        CallableType<BinaryOperation>,
+        ResultType<CallableType<Proj2>, ValueType<I2>>> F,
+      WeakOutputIterator<ResultType<CallableType<F>,
         ResultType<CallableType<Proj1>, ValueType<I1>>,
-        ResultType<CallableType<Proj2>, ValueType<I2>>>>>
+        ResultType<CallableType<Proj2>, ValueType<I2>>>>> O>
     tuple<I1, I2, O>
-      transform(I1 first1, S1 last1,
-                I2 first2, S2 last2, O result,
-                BinaryOperation binary_op,
-                Proj1 proj1 = Proj1{}, proj2 proj2 = Proj2{});
+      transform(I1 first1, S1 last1, I2 first2, S2 last2, O result,
+                F binary_op, Proj1 proj1 = Proj1{}, proj2 proj2 = Proj2{});
 
   \end{codeblock}
   \ednote{In the Palo Alto proposal, \tcode{replace} requires only InputIterators.
       In C++14, it requires Forward. Resolve the conflict.}
   \begin{codeblock}
 
-  template<ForwardIterator I, Sentinel<I> S, class T1, Semiregular T2,
-      Invokable<ValueType<I>> Proj = identity>
-    requires Writable<I, T2> && EqualityComparable<T1,
-        ResultType<CallableType<Proj>, ValueType<I>>>
+  template<ForwardIterator I, Sentinel<I> S, Semiregular T2,
+      Invokable<ValueType<I>> Proj = identity,
+      EqualityComparable<ResultType<CallableType<Proj>, ValueType<I>>> T1>
+    requires Writable<I, T2>
     I
-      replace(I first, S last,
-              const T1& old_value, const T2& new_value);
+      replace(I first, S last, const T1& old_value, const T2& new_value);
 
-  template<ForwardIterator I, Sentinel<I> S, class Pred, Semiregular T,
-      Invokable<ValueType<I>> Proj = identity>
-    requires Writable<I, T> && InvokablePredicate<Pred,
-        ResultType<CallableType<Proj>, ValueType<I>>>
+  template<ForwardIterator I, Sentinel<I> S, Semiregular T,
+      Invokable<ValueType<I>> Proj = identity,
+      InvokablePredicate<ResultType<CallableType<Proj>, ValueType<I>>> Pred>
+    requires Writable<I, T>
     I
-      replace_if(I first, S last,
-                 Pred pred, const T& new_value,
+      replace_if(I first, S last, Pred pred, const T& new_value,
                  Proj proj = Proj{});
 
-  template<InputIterator I, Sentinel<I> S, WeakIterator O, class T1,
-      Semiregular T2, Invokable<ValueType<I>> Proj = identity>
-    requires Writable<O, T2> && EqualityComparable<T1,
-        ResultType<CallableType<Proj>, ValueType<I>>>
-    O
-      replace_copy(I first, S last, O result,
-                   const T1& old_value, const T2& new_value,
-                   Proj proj = Proj{});
+  template<InputIterator I, Sentinel<I> S, Semiregular T2,
+      WeakOutputIterator<T2> O, Invokable<ValueType<I>> Proj = identity,
+      EqualityComparable<ResultType<CallableType<Proj>, ValueType<I>>> T1>
+      requires IndirectCopyable<I, O>
+    pair<I, O>
+      replace_copy(I first, S last, O result, const T1& old_value,
+                   const T2& new_value, Proj proj = Proj{});
 
-  template<InputIterator I, Sentinel<I> S, WeakIterator O,
-      class Pred, Semiregular T,
-      Invokable<ValueType<I>> Proj = identity>
-    requires Writable<O, T> && InvokablePredicate<Pred,
-        ResultType<CallableType<Proj>, ValueType<I>>>
-    O
-      replace_copy_if(I first, S last,
-                      O result, Pred pred, const T& new_value,
+  template<InputIterator I, Sentinel<I> S, Semiregular T,
+      WeakOutputIterator<T> O, Invokable<ValueType<I>> Proj = identity,
+      InvokablePredicate<ResultType<CallableType<Proj>, ValueType<I>>> Pred>
+      requires IndirectCopyable<I, O>
+    pair<I, O>
+      replace_copy_if(I first, S last, O result, Pred pred, const T& new_value,
                       Proj proj = Proj{});
 
   template<Semiregular T, OutputIterator<T> O, Sentinel<I> S>
@@ -447,11 +402,23 @@ namespace std {
     requires Permutable<I>
     I stable_partition(I first, S last, Pred pred, Proj proj = Proj{});
 
-  template<InputIterator I, Sentinel<I> S, WeakOutputIterator<ValueType<I>> O1,
-      WeakOutputIterator<ValueType<I>> O2, Invokable<ValueType<I>> Proj = identity,
+  template<InputIterator I, Sentinel<I> S, WeakIterator O1, WeakIterator O2,
+      Invokable<ValueType<I>> Proj = identity,
       InvokablePredicate<ResultType<CallableType<Proj>, ValueType<I>>> Pred>
+    requires IndirectlyCopyable<I, O1> && IndirectlyCopyable<I, O2>
     tuple<I, O1, O2>
       partition_copy(I first, S last, O1 out_true, O2 out_false, Pred pred,
+                     Proj proj = Proj{});
+
+  \end{codeblock}
+    \ednote{A new algorithm, needed by stable_partition.}
+  \begin{codeblock}
+  template<InputIterator I, Sentinel<I> S, WeakIterator O1,
+      WeakIterator O2, Invokable<ValueType<I>> Proj = identity,
+      InvokablePredicate<ResultType<CallableType<Proj>, ValueType<I>>> Pred>
+    requires IndirectlyMovable<I, O1> && IndirectlyMovable<I, O2>
+    tuple<I, O1, O2>
+      partition_move(I first, S last, O1 out_true, O2 out_false, Pred pred,
                      Proj proj = Proj{});
 
   template<ForwardIterator I, Sentinel<I> S, Invokable<ValueType<I>> Proj = identity,
@@ -478,8 +445,9 @@ namespace std {
   template<InputIterator I1, Sentinel<I> S1, RandomAccessIterator I2, Sentinel<I> S2,
       Semiregular R = less<>, Invokable<ValueType<I>> Proj = identity>
       requires IndirectlyCopyable<I1, I2> && Sortable<I2, Comp, Proj>
-    I2 partial_sort_copy(I1 first, S1 last, I2 result_first, S2 result_last,
-                         Comp comp = Comp{}, Proj proj = Proj{});
+    I2
+      partial_sort_copy(I1 first, S1 last, I2 result_first, S2 result_last,
+                        Comp comp = Comp{}, Proj proj = Proj{});
 
   template<ForwardIterator I, Sentinel<I> S, Invokable<ValueType<I>> Proj = identity,
       Relation<ResultType<CallableType<Proj>, ValueType<I>>> Comp = less<>>
@@ -492,7 +460,7 @@ namespace std {
   template<RandomAccessIterator I, Sentinel<I> S, Semiregular Comp = less<>,
       Invokable<ValueType<I>> Proj = identity>
     requires Sortable<I, Comp, Proj>
-    void nth_element(I first, I nth, S last, Comp comp, Proj proj = Proj{});
+    I nth_element(I first, I nth, S last, Comp comp, Proj proj = Proj{});
 
   // \ref{alg.binary.search}, binary search:
   template<ForwardIterator I, Sentinel<I> S, TotallyOrdered T,
@@ -535,6 +503,18 @@ namespace std {
     tuple<I0, I1, O>
       merge(I1 first1, S1 last1, I2 first2, S2 last2, O result,
             Comp comp = Comp{}, Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+
+  \end{codeblock}
+    \ednote{A new algorithm, needed by inplace_merge and stable_sort. Document MergeMovable.}
+  \begin{codeblock}
+  template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
+      Incrementable O, Semiregular Comp = less<>,
+      Invokable<ValueType<I1>> Proj1 = identity,
+      Invokable<ValueType<I2>> Proj2 = identity>
+    requires MergeMovable<I1, I2, O, Comp, Proj1, Proj2>
+    tuple<I0, I1, O>
+      merge_move(I1 first1, S1 last1, I2 first2, S2 last2, O result,
+                 Comp comp = Comp{}, Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
 
   template<BidirectionalIterator I, Sentinel<I> S, Semiregular Comp = less<>,
       Invokable<ValueType<I>> Proj = identity>
@@ -710,6 +690,7 @@ For purposes of determining the existence of data races, algorithms shall
 not modify objects referenced through an iterator argument unless the
 specification requires such modification.
 
+\begin{removedblock}
 \pnum
 Throughout this Clause, the names of template parameters
 are used to express type requirements.
@@ -748,6 +729,7 @@ or
 \tcode{RandomAccessIterator2},
 the actual template argument shall satisfy the requirements
 of a random-access iterator~(\ref{random.access.iterators}).
+\end{removedblock}
 
 \pnum
 If an algorithm's
