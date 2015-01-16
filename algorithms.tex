@@ -34,7 +34,7 @@ as summarized in Table~\ref{tab:algorithms.summary}.
 namespace std {
 
   // \ref{alg.nonmodifying}, non-modifying sequence operations:
-  template <InputIterator I, Sentinel<I> S, Invokable<ValueType<I>> Proj = identity,
+  template<InputIterator I, Sentinel<I> S, Invokable<ValueType<I>> Proj = identity,
       InvokablePredicate<ResultType<CallableType<Proj>, ValueType<I>> Pred>
     bool all_of(I first, S last, Pred pred, Proj proj = Proj{});
 
@@ -42,7 +42,7 @@ namespace std {
       InvokablePredicate<ResultType<CallableType<Proj>, ValueType<IteratorType<Rng>>> Pred>
     bool all_of(Rng&& rng, Pred pred, Proj proj = Proj{});
 
-  template <InputIterator I, Sentinel<I> S,
+  template<InputIterator I, Sentinel<I> S,
       Invokable<ValueType<I>> Proj = identity,
       InvokablePredicate<ResultType<CallableType<Proj>, ValueType<I>>> Pred>
     bool any_of(I first, S last, Pred pred, Proj proj = Proj{});
@@ -52,7 +52,7 @@ namespace std {
       InvokablePredicate<ResultType<CallableType<Proj>, ValueType<IteratorType<Rng>>>> Pred>
     bool any_of(Rng&& rng, Pred pred, Proj proj = Proj{});
 
-  template <InputIterator I, Sentinel<I> S,
+  template<InputIterator I, Sentinel<I> S,
       Invokable<ValueType<I>> Proj = identity,
       InvokablePredicate<ResultType<CallableType<Proj>, ValueType<I>>> Pred>
     bool none_of(I first, S last, Pred pred, Proj proj = Proj{});
@@ -704,7 +704,7 @@ namespace std {
       shuffle(Rng& rng, Gen&& rand);
 
   // \ref{alg.partitions}, partitions:
-  template <InputIterator I, Sentinel<I> S, Invokable<ValueType<I>> Proj = identity,
+  template<InputIterator I, Sentinel<I> S, Invokable<ValueType<I>> Proj = identity,
       InvokablePredicate<ResultType<CallableType<Proj>, ValueType<I>>> Pred>
     bool is_partitioned(I first, S last, Pred pred, Proj proj = Proj{});
 
@@ -1300,6 +1300,9 @@ For purposes of determining the existence of data races, algorithms shall
 not modify objects referenced through an iterator argument unless the
 specification requires such modification.
 
+\ednote{The following paragraphs are redundant; these requirements are now
+enforced in code by the concept checks.}
+
 \begin{removedblock}
 \pnum
 Throughout this Clause, the names of template parameters
@@ -1339,7 +1342,6 @@ or
 \tcode{RandomAccessIterator2},
 the actual template argument shall satisfy the requirements
 of a random-access iterator~(\ref{random.access.iterators}).
-\end{removedblock}
 
 \pnum
 If an algorithm's
@@ -1357,6 +1359,7 @@ or
 \tcode{OutputIterator2},
 because output iterators must always be mutable.
 \exitnote
+\end{removedblock}
 
 \pnum
 Both in-place and copying versions are provided for certain
@@ -1369,6 +1372,7 @@ When such a version is provided for \textit{algorithm} it is called
 \textit{algorithm\tcode{_copy}}. Algorithms that take predicates end with the
 suffix \tcode{_if} (which follows the suffix \tcode{_copy}).
 
+\begin{removedblock}
 \pnum
 The
 \tcode{Predicate}
@@ -1415,6 +1419,20 @@ correctly in the
 construct \tcode{binary_pred(*first1, value)} contextually converted to \tcode{bool} (Clause~\ref{conv}).
 \tcode{binary_pred} shall not
 apply any non-constant function through the dereferenced iterators.
+\end{removedblock}
+
+\begin{addedblock}
+\pnum
+\enternote
+Projections and predicates are typically used as follows:
+
+\begin{codeblock}
+auto&& proj_ = callable(proj);
+auto&& pred_ = callable(pred);
+if(pred_(proj_(*first))) // ...
+\end{codeblock}
+\exitnote
+\end{addedblock}
 
 \pnum
 \enternote
@@ -1424,11 +1442,13 @@ identity is important should consider using a wrapper class that points to a
 noncopied implementation object such as \tcode{reference_wrapper<T>}~(\ref{refwrap}), or some equivalent solution.
 \exitnote
 
+\begin{removedblock}
 \pnum
 When the description of an algorithm gives an expression such as
 \tcode{*first == value}
 for a condition, the expression shall evaluate to
 either true or false in boolean contexts.
+\end{removedblock}
 
 \pnum
 In the description of the algorithms operators
@@ -1455,97 +1475,181 @@ is the same as of
 return distance(a, b);
 \end{codeblock}
 
+\begin{addedblock}
+\pnum
+Overloads of algorithms that take \tcode{Iterable} arguments~(\ref{iterable.iterables})
+behave as if they are implemented by calling \tcode{begin} and \tcode{end} on
+the \tcode{Iterable} and dispatching to the overload that takes separate
+iterator and sentinel arguments.
+\end{addedblock}
+
 \rSec1[alg.nonmodifying]{Non-modifying sequence operations}
 
 \rSec2[alg.all_of]{All of}
 
 \indexlibrary{\idxcode{all_of}}%
+\begin{removedblock}
 \begin{itemdecl}
-template <class InputIterator, class Predicate>
+template<class InputIterator, class Predicate>
   bool all_of(InputIterator first, InputIterator last, Predicate pred);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<InputIterator I, Sentinel<I> S, Invokable<ValueType<I>> Proj = identity,
+    InvokablePredicate<ResultType<CallableType<Proj>, ValueType<I>> Pred>
+  bool all_of(I first, S last, Pred pred, Proj proj = Proj{});
+
+template<InputIterable Rng, Invokable<ValueType<IteratorType<Rng>>> Proj = identity,
+    InvokablePredicate<ResultType<CallableType<Proj>, ValueType<IteratorType<Rng>>> Pred>
+  bool all_of(Rng&& rng, Pred pred, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
 \returns \tcode{true} if
 \range{first}{last} is empty or if
-\tcode{pred(*i)} is \tcode{true} for every iterator \tcode{i} in the range \range{first}{last}, and \tcode{false} otherwise.
+\changed{\tcode{pred(*i)}}{\tcode{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *i))}}
+is \tcode{true} for every iterator \tcode{i} in the range \range{first}{last},
+and \tcode{false} otherwise.
 
 \pnum
-\complexity At most \tcode{last - first} applications of the predicate.
+\complexity At most \tcode{last - first} applications of the predicate
+\added{ and \tcode{last - first} applications of the projection}.
 \end{itemdescr}
 
 \rSec2[alg.any_of]{Any of}
 
 \indexlibrary{\idxcode{any_of}}%
+\begin{removedblock}
 \begin{itemdecl}
-template <class InputIterator, class Predicate>
+template<class InputIterator, class Predicate>
   bool any_of(InputIterator first, InputIterator last, Predicate pred);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<InputIterator I, Sentinel<I> S,
+    Invokable<ValueType<I>> Proj = identity,
+    InvokablePredicate<ResultType<CallableType<Proj>, ValueType<I>>> Pred>
+  bool any_of(I first, S last, Pred pred, Proj proj = Proj{});
+
+template<InputIterable Rng,
+    Invokable<ValueType<IteratorType<Rng>>> Proj = identity,
+    InvokablePredicate<ResultType<CallableType<Proj>, ValueType<IteratorType<Rng>>>> Pred>
+  bool any_of(Rng&& rng, Pred pred, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
 \returns \tcode{false} if \range{first}{last} is empty or
 if there is no iterator \tcode{i} in the range
-\range{first}{last} such that \tcode{pred(*i)} is \tcode{true}, and \tcode{true} otherwise.
+\range{first}{last} such that
+\changed{\tcode{pred(*i)}}{\tcode{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *i))}}
+is \tcode{true}, and \tcode{true} otherwise.
 
 \pnum
-\complexity At most \tcode{last - first} applications of the predicate.
+\complexity At most \tcode{last - first} applications of the predicate
+\added{ and \tcode{last - first} applications of the projection}.
 \end{itemdescr}
 
 \rSec2[alg.none_of]{None of}
 
 \indexlibrary{\idxcode{none_of}}%
+\begin{removedblock}
 \begin{itemdecl}
-template <class InputIterator, class Predicate>
+template<class InputIterator, class Predicate>
   bool none_of(InputIterator first, InputIterator last, Predicate pred);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<InputIterator I, Sentinel<I> S,
+    Invokable<ValueType<I>> Proj = identity,
+    InvokablePredicate<ResultType<CallableType<Proj>, ValueType<I>>> Pred>
+  bool none_of(I first, S last, Pred pred, Proj proj = Proj{});
+
+template<InputIterable Rng,
+    Invokable<ValueType<IteratorType<Rng>>> Proj = identity,
+    InvokablePredicate<ResultType<CallableType<Proj>, ValueType<IteratorType<Rng>>>> Pred>
+  bool none_of(Rng&& rng, Pred pred, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
 \returns \tcode{true} if
 \range{first}{last} is empty or if
-\tcode{pred(*i)} is \tcode{false} for every iterator \tcode{i} in the range \range{first}{last}, and \tcode{false} otherwise.
+\changed{\tcode{pred(*i)}}{\tcode{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *i))}}
+is \tcode{false} for every iterator \tcode{i} in the range \range{first}{last},
+and \tcode{false} otherwise.
 
 \pnum
-\complexity At most \tcode{last - first} applications of the predicate.
+\complexity At most \tcode{last - first} applications of the predicate
+\added{ and \tcode{last - first} applications of the projection}.
 \end{itemdescr}
 
 \rSec2[alg.foreach]{For each}
 
 \indexlibrary{\idxcode{for_each}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class InputIterator, class Function>
   Function for_each(InputIterator first, InputIterator last, Function f);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<InputIterator I, Sentinel<I> S,
+    Invokable<ValueType<I>> Proj = identity,
+    InvokableFunction<ResultType<CallableType<Proj>, ValueType<I>>> Fun>
+  pair<I, Fun>
+    for_each(I first, S last, Fun f, Proj proj = Proj{});
+
+template<InputIterable Rng,
+    Invokable<ValueType<IteratorType<Rng>>> Proj = identity,
+    InvokableFunction<ResultType<CallableType<Proj>, ValueType<IteratorType<Rng>>>> Fun>
+  pair<IteratorType<Rng>, Fun>
+    for_each(Rng& rng, Fun f, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+\begin{removedblock}
 \pnum
 \requires \tcode{Function} shall meet the requirements of
 \tcode{MoveConstructible} (Table~\ref{moveconstructible}).
 \enternote \tcode{Function} need not meet the requirements of
 \tcode{CopyConstructible} (Table~\ref{copyconstructible}). \exitnote
+\end{removedblock}
 
 \pnum
 \effects
-Applies
-\tcode{f} to the result of dereferencing every iterator in the range
+\changed{Applies
+\tcode{f} to the result of dereferencing every iterator}{Calls
+\tcode{\textit{INVOKE}(f, \textit{INVOKE}(proj, *i))} for every iterator
+\tcode{i}} in the range
 \range{first}{last},
 starting from
 \tcode{first}
 and proceeding to
 \tcode{last - 1}.
-\enternote If the type of \tcode{first} satisfies the
-requirements of a mutable iterator, \tcode{f} may apply nonconstant
-functions through the dereferenced iterator.\exitnote
+\enternote If the \changed{type of \tcode{first} satisfies the
+requirements of a mutable iterator}{result of
+\tcode{\textit{INVOKE}(proj, *i)} is a mutable reference}, \tcode{f} may apply
+nonconstant functions\removed{ through the dereferenced iterator}.\exitnote
 
 \pnum
 \returns
-\tcode{std::move(f)}.
+\changed{\tcode{std::move(f)}}{
+\tcode{\{\textit{last'}, std::move(f)\}}, where \tcode{\textit{last'}} is an
+iterator such that \tcode{\textit{last'} == last}}.
 
 \pnum
 \complexity
-Applies \tcode{f}
+Applies \tcode{f}\added{ and \tcode{proj}}
 exactly
 \tcode{last - first}
 times.
@@ -1560,6 +1664,7 @@ If \tcode{f} returns a result, the result is ignored.
 \indexlibrary{\idxcode{find}}%
 \indexlibrary{\idxcode{find_if}}%
 \indexlibrary{\idxcode{find_if_not}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class InputIterator, class T>
   InputIterator find(InputIterator first, InputIterator last,
@@ -1572,6 +1677,43 @@ template<class InputIterator, class Predicate>
   InputIterator find_if_not(InputIterator first, InputIterator last,
                             Predicate pred);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<InputIterator I, Sentinel<I> S,
+    Invokable<ValueType<I>> Proj = identity,
+    EqualityComparable<ResultType<CallableType<Proj>, ValueType<I>>> T>
+  I find(I first, S last, const T& value, Proj proj = Proj{});
+
+template<InputIterable Rng,
+    Invokable<ValueType<IteratorType<Rng>>> Proj = identity,
+    EqualityComparable<ResultType<CallableType<Proj>, ValueType<IteratorType<Rng>>>> T>
+  IteratorType<Rng>
+    find(Rng& rng, const T& value, Proj proj = Proj{});
+
+template<InputIterator I, Sentinel<I> S,
+    Invokable<ValueType<I>> Proj = identity,
+    InvokablePredicate<ResultType<CallableType<Proj>, ValueType<I>>> Pred>
+  I find_if(I first, S last, Pred pred, Proj proj = Proj{});
+
+template<InputIterable Rng,
+    Invokable<ValueType<IteratorType<Rng>>> Proj = identity,
+    InvokablePredicate<ResultType<CallableType<Proj>, ValueType<IteratorType<Rng>>>> Pred>
+  IteratorType<Rng>
+    find_if(Rng& rng, Pred pred, Proj proj = Proj{});
+
+template<InputIterator I, Sentinel<I> S,
+    Invokable<ValueType<I>> Proj = identity,
+    InvokablePredicate<ResultType<CallableType<Proj>, ValueType<I>>> Pred>
+  I find_if_not(I first, S last, Pred pred, Proj proj = Proj{});
+
+template<InputIterable Rng,
+    Invokable<ValueType<IteratorType<Rng>>> Proj = identity,
+    InvokablePredicate<ResultType<CallableType<Proj>, ValueType<IteratorType<Rng>>>> Pred>
+  IteratorType<Rng>
+    find_if_not(Rng& rng, Pred pred, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -1582,19 +1724,24 @@ in the range
 \range{first}{last}
 for which the following corresponding
 conditions hold:
-\tcode{*i == value}, \tcode{pred(*i) != false}, \tcode{pred(*i) == false}.
-Returns \tcode{last} if no such iterator is found.
+\changed{\tcode{*i == value}, \tcode{pred(*i) != false}, \tcode{pred(*i) == false}}
+{\tcode{\textit{INVOKE}(proj, *i) == value},
+\tcode{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *i)) != false},
+\tcode{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *i)) == false}}.
+Returns \changed{\tcode{last}}{\tcode{\textit{last'}}} if no such iterator is found
+\added{, where \tcode{\textit{last'}} is an iterator such that \tcode{\textit{last'} == last}}.
 
 \pnum
 \complexity
 At most
 \tcode{last - first}
-applications of the corresponding predicate.
+applications of the corresponding predicate\added{ and projection}.
 \end{itemdescr}
 
 \rSec2[alg.find.end]{Find end}
 
 \indexlibrary{\idxcode{find_end}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class ForwardIterator1, class ForwardIterator2>
   ForwardIterator1
@@ -1608,6 +1755,26 @@ template<class ForwardIterator1, class ForwardIterator2,
              ForwardIterator2 first2, ForwardIterator2 last2,
              BinaryPredicate pred);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<ForwardIterator I1, Sentinel<I1> S1, ForwardIterator I2,
+    Sentinel<I2> S2, Invokable<ValueType<I>> Proj = identity,
+    InvokableRelation<ValueType<I2>,
+      ResultType<CallableType<Proj>, ValueType<I>>> Pred = equal_to<>>
+  I1
+    find_end(I1 first1, S1 last1, I2 first2, S2 last2,
+             Pred pred = Pred{}, Proj proj = Proj{});
+
+template<ForwardIterable Rng1, ForwardIterable Rng2,
+    Invokable<ValueType<IteratorType<Rng>>> Proj = identity,
+    InvokableRelation<ValueType<IteratorType<Rng2>>,
+      ResultType<CallableType<Proj>, ValueType<IteratorType<Rng>>>> Pred = equal_to<>>
+  IteratorType<Rng1>
+    find_end(Rng1& rng1, Rng2&& rng2,
+             Pred pred = Pred{}, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -1621,23 +1788,26 @@ The last iterator
 in the range \range{first1}{last1 - (last2 - first2)}
 such that for every non-negative integer
 \tcode{n < (last2 - first2)},
-the following corresponding conditions hold:
-\tcode{*(i + n) == *(\brk{}first2 + n), pred(*(i + n), *(first2 + n)) != false}.
-Returns \tcode{last1}
+the following \removed{corresponding }condition\removed{s} hold\added{s}:
+\tcode{\removed{*(i + n) == *(first2 + n), pred(*(i + n), *(first2 + n)) != false}
+\added{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *(i + n)), *(first2 + n)) != false}}.
+Returns \changed{\tcode{last1}}{\tcode{\textit{last1'}}}
 if
 \range{first2}{last2} is empty or if
-no such iterator is found.
+no such iterator is found\added{, where \tcode{\textit{last1'}} is an iterator
+such that \tcode{\textit{last1'} == last1}}.
 
 \pnum
 \complexity
 At most
 \tcode{(last2 - first2) * (last1 - first1 - (last2 - first2) + 1)}
-applications of the corresponding predicate.
+applications of the corresponding predicate\added{ and projection}.
 \end{itemdescr}
 
 \rSec2[alg.find.first.of]{Find first}
 
 \indexlibrary{\idxcode{find_first_of}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class InputIterator, class ForwardIterator>
   InputIterator
@@ -1651,6 +1821,31 @@ template<class InputIterator, class ForwardIterator,
                   ForwardIterator first2, ForwardIterator last2,
                   BinaryPredicate pred);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<InputIterator I1, Sentinel<I1> S1,
+    ForwardIterator I2, Sentinel<I2> S2,
+    Invokable<ValueType<I1>> Proj1 = identity,
+    Invokable<ValueType<I2>> Proj2 = identity,
+    InvokablePredicate<
+      ResultType<CallableType<Proj1>, ValueType<I1>>,
+      ResultType<CallableType<Proj2>, ValueType<I2>>> Pred = equal_to<>>
+  I1
+    find_first_of(I1 first1, S1 last1, I2 first2, S2 last2, Pred pred = Pred{},
+                  Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+
+template<InputIterable Rng1, ForwardIterable Rng2,
+    Invokable<ValueType<IteratorType<Rng1>>> Proj1 = identity,
+    Invokable<ValueType<IteratorType<Rng2>>> Proj2 = identity,
+    InvokablePredicate<
+      ResultType<CallableType<Proj1>, ValueType<IteratorType<Rng1>>>,
+      ResultType<CallableType<Proj2>, ValueType<IteratorType<Rng2>>>> Pred = equal_to<>>
+  IteratorType<Rng1>
+    find_first_of(Rng1& rng1, Rng2&& rng2, Pred pred = Pred{},
+                  Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -1666,22 +1861,25 @@ such that for some
 iterator
 \tcode{j}
 in the range \range{first2}{last2}
-the following conditions hold:
-\tcode{*i == *j, pred(*i,*j) != false}.
-Returns \tcode{last1}
-if \range{first2}{last2} is empty or
-if no such iterator is found.
+the following condition\removed{s} hold\added{s}:
+\tcode{\removed{*i == *j, pred(*i,*j) != false}
+\added{\textit{INVOKE}(pred,}\brk\added{ \textit{INVOKE}(proj1, *i), \textit{INVOKE}(proj2, *j)) != false}}.
+Returns \changed{\tcode{last1}}{\tcode{\textit{last1'}}}
+if \range{first2}{last2} is empty or if
+no such iterator is found\added{, where \tcode{\textit{last1'}} is an iterator
+such that \tcode{\textit{last1'} == last1}}.
 
 \pnum
 \complexity
 At most
 \tcode{(last1-first1) * (last2-first2)}
-applications of the corresponding predicate.
+applications of the corresponding predicate\added{ and the two projections}.
 \end{itemdescr}
 
 \rSec2[alg.adjacent.find]{Adjacent find}
 
 \indexlibrary{\idxcode{adjacent_find}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class ForwardIterator>
   ForwardIterator adjacent_find(ForwardIterator first, ForwardIterator last);
@@ -1690,6 +1888,25 @@ template<class ForwardIterator, class BinaryPredicate>
   ForwardIterator adjacent_find(ForwardIterator first, ForwardIterator last,
                               BinaryPredicate pred);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<ForwardIterator I, Sentinel<I> S,
+    Invokable<ValueType<I>> Proj = identity,
+    InvokableRelation<
+      ResultType<CallableType<Proj>, ValueType<I>>> Pred = equal_to<>>
+  I
+    adjacent_find(I first, S last, Pred pred = Pred{},
+                  Proj proj = Proj{});
+
+template<ForwardIterable Rng,
+    Invokable<ValueType<IteratorType<Rng>>> Proj = identity,
+    InvokableRelation<
+      ResultType<CallableType<Proj>, ValueType<IteratorType<Rng>>>> Pred = equal_to<>>
+  IteratorType<Rng>
+    adjacent_find(Rng& rng, Pred pred = Pred{}, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -1704,10 +1921,12 @@ are in
 the range
 \range{first}{last}
 for which
-the following corresponding conditions hold:
-\tcode{*i == *(i + 1), pred(*i, *(i + 1)) != false}.
-Returns \tcode{last}
-if no such iterator is found.
+the following corresponding condition\removed{s} hold\added{s}:
+\tcode{\removed{*i == *(i + 1), pred(*i, *(i + 1)) != false}
+\added{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *i), \textit{INVOKE}(proj, *(i + 1))) != false}}.
+Returns \tcode{\changed{last}{\textit{last'}}}
+if no such iterator is found\added{, where \tcode{\textit{last'}} is an iterator
+such that \tcode{\textit{last'} == last}}.
 
 \pnum
 \complexity
@@ -1715,7 +1934,7 @@ For a nonempty range, exactly
 \tcode{min((i - first) + 1, (last - first) - 1)}
 applications of the corresponding predicate, where \tcode{i} is
 \tcode{adjacent_find}'s
-return value.
+return value\added{, and no more than twice as many applications of the projection}.
 \end{itemdescr}
 
 \rSec2[alg.count]{Count}
@@ -1769,7 +1988,7 @@ template<class InputIterator1, class InputIterator2>
     mismatch(InputIterator1 first1, InputIterator1 last1,
              InputIterator2 first2, InputIterator2 last2);
 
-template <class InputIterator1, class InputIterator2,
+template<class InputIterator1, class InputIterator2,
            class BinaryPredicate>
   pair<InputIterator1, InputIterator2>
     mismatch(InputIterator1 first1, InputIterator1 last1,
@@ -2908,7 +3127,7 @@ randomness.
 
 \indexlibrary{\idxcode{is_partitioned}}%
 \begin{itemdecl}
-template <class InputIterator, class Predicate>
+template<class InputIterator, class Predicate>
   bool is_partitioned(InputIterator first, InputIterator last, Predicate pred);
 \end{itemdecl}
 
@@ -3005,7 +3224,7 @@ applications of the predicate.
 
 \indexlibrary{\idxcode{partition_copy}}%
 \begin{itemdecl}
-template <class InputIterator, class OutputIterator1,
+template<class InputIterator, class OutputIterator1,
           class OutputIterator2, class Predicate>
   pair<OutputIterator1, OutputIterator2>
   partition_copy(InputIterator first, InputIterator last,
