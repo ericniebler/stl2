@@ -1941,6 +1941,7 @@ return value\added{, and no more than twice as many applications of the projecti
 
 \indexlibrary{\idxcode{count}}%
 \indexlibrary{\idxcode{count_if}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class InputIterator, class T>
     typename iterator_traits<InputIterator>::difference_type
@@ -1950,6 +1951,38 @@ template<class InputIterator, class Predicate>
     typename iterator_traits<InputIterator>::difference_type
       count_if(InputIterator first, InputIterator last, Predicate pred);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<InputIterator I, Sentinel<I> S,
+    Invokable<ValueType<I>> Proj = identity,
+    EqualityComparable<
+      ResultType<CallableType<Proj>, ValueType<I>>> T>
+  iterator_difference_t<I>
+    count(I first, S last, const T& value, Proj proj = Proj{});
+
+template<InputIterable Rng,
+    Invokable<ValueType<IteratorType<Rng>>> Proj = identity,
+    EqualityComparable<
+      ResultType<CallableType<Proj>, ValueType<IteratorType<Rng>>>> T>
+  iterator_difference_t<IteratorType<Rng>>
+    count(Rng&& rng, const T& value, Proj proj = Proj{});
+
+template<InputIterator I, Sentinel<I> S,
+    Invokable<ValueType<I>> Proj = identity,
+    InvokablePredicate<
+      ResultType<CallableType<Proj>, ValueType<I>>> Pred>
+  iterator_difference_t<I>
+    count_if(I first, S last, Pred pred, Proj proj = Proj{});
+
+template<InputIterable Rng,
+    Invokable<ValueType<IteratorType<Rng>>> Proj = identity,
+    InvokablePredicate<
+      ResultType<CallableType<Proj>, ValueType<IteratorType<Rng>>>> Pred>
+  iterator_difference_t<IteratorType<Rng>>
+    count_if(Rng&& rng, Pred pred, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -1959,18 +1992,20 @@ Returns the number of iterators
 in the range \range{first}{last}
 for which the following corresponding
 conditions hold:
-\tcode{*i == value, pred(*i) != false}.
+\tcode{\changed{*i == value, pred(*i) != false}
+{\textit{INVOKE}(proj, *i) == value, \textit{INVOKE}(pred, \textit{INVOKE}(proj, *i)) != false}}.
 
 \pnum
 \complexity
 Exactly
 \tcode{last - first}
-applications of the corresponding predicate.
+applications of the corresponding predicate\added{ and projection}.
 \end{itemdescr}
 
 \rSec2[mismatch]{Mismatch}
 
 \indexlibrary{\idxcode{mismatch}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class InputIterator1, class InputIterator2>
   pair<InputIterator1, InputIterator2>
@@ -1995,6 +2030,52 @@ template<class InputIterator1, class InputIterator2,
              InputIterator2 first2, InputIterator2 last2,
              BinaryPredicate pred);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<InputIterator I1, Sentinel<I1> S1, WeakInputIterator I2,
+    Invokable<ValueType<I1>> Proj1 = identity,
+    Invokable<ValueType<I2>> Proj2 = identity
+    InvokablePredicate<
+      ResultType<CallableType<Proj1>, ValueType<I1>>,
+      ResultType<CallableType<Proj2>, ValueType<I2>>> Pred = equal_to<>>
+  pair<I1, I2>
+    mismatch(I1 first1, S1 last1, I2 first2, Pred pred = Pred{},
+             Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+
+template<InputIterable Rng1, WeakInputIterator I2,
+    Invokable<ValueType<IteratorType<Rng1>>> Proj1 = identity,
+    Invokable<ValueType<I2>> Proj2 = identity
+    InvokablePredicate<
+      ResultType<CallableType<Proj1>, ValueType<IteratorType<Rng1>>>,
+      ResultType<CallableType<Proj2>, ValueType<I2>>> Pred = equal_to<>>
+  pair<IteratorType<Rng1>, I2>
+    mismatch(Rng1& rng1, I2 first2, Pred pred = Pred{},
+             Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+
+template<InputIterator I1, Sentinel<I1> S1, InputIterator I2,
+    Sentinel<I2> S2,
+    Invokable<ValueType<I1>> Proj1 = identity,
+    Invokable<ValueType<I2>> Proj2 = identity,
+    InvokablePredicate<
+      ResultType<CallableType<Proj1>, ValueType<I1>>,
+      ResultType<CallableType<Proj2>, ValueType<I2>>> Pred = equal_to<>>
+  pair<I1, I2>
+    mismatch(I1 first1, S1 last1, I2 first2, S2 last2,
+             Pred pred = Pred{},
+             Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+
+template<InputIterable Rng1, InputIterable Rng2,
+    Invokable<ValueType<IteratorType<Rng1>>> Proj1 = identity,
+    Invokable<ValueType<IteratorType<Rng2>>> Proj2 = identity,
+    InvokablePredicate<
+      ResultType<CallableType<Proj1>, ValueType<IteratorType<Rng1>>>,
+      ResultType<CallableType<Proj2>, ValueType<IteratorType<Rng2>>>> Pred = equal_to<>>
+  pair<IteratorType<Rng1>, IteratorType<Rng2>>
+    mismatch(Rng1& rng1, Rng2& rng2, Pred pred = Pred{},
+             Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -2017,8 +2098,11 @@ for which the following corresponding conditions hold:
 
 \begin{itemize}
 \item \tcode{j} is in the range \tcode{[first2, last2)}.
+\begin{removedblock}
 \item \tcode{!(*i == *(first2 + (i - first1)))}
-\item \tcode{pred(*i, *(first2 + (i - first1))) == false}
+\end{removedblock}
+\item \tcode{\changed{pred(*i, *(first2 + (i - first1))) == false}
+{\textit{INVOKE}(pred, \textit{INVOKE}(proj1, *i), \textit{INVOKE}(proj2, *(first2 + (i - first1)))) == false}}
 \end{itemize}
 
 Returns the pair
@@ -2033,12 +2117,13 @@ is not found.
 \complexity
 At most
 \tcode{last1 - first1}
-applications of the corresponding predicate.
+applications of the corresponding predicate\added{ and both projections}.
 \end{itemdescr}
 
 \rSec2[alg.equal]{Equal}
 
 \indexlibrary{\idxcode{equal}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class InputIterator1, class InputIterator2>
   bool equal(InputIterator1 first1, InputIterator1 last1,
@@ -2059,6 +2144,43 @@ template<class InputIterator1, class InputIterator2,
              InputIterator2 first2, InputIterator2 last2,
              BinaryPredicate pred);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<InputIterator I1, Sentinel<I1> S1, WeakInputIterator I2,
+    class Pred = equal_to<>,
+    Invokable<ValueType<I1>> Proj1 = identity,
+    Invokable<ValueType<I2>> Proj2 = identity>
+  requires IndirectlyComparable<I1, I2, Pred, Proj1, Proj2>
+  bool equal(I1 first1, S1 last1,
+             I2 first2, Pred pred = Pred{},
+             Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+
+template<InputIterable Rng1, WeakInputIterator I2,
+    class Pred = equal_to<>,
+    Invokable<ValueType<IteratorType<Rng1>>> Proj1 = identity,
+    Invokable<ValueType<I2>> Proj2 = identity>
+  requires IndirectlyComparable<IteratorType<Rng1>, I2, Pred, Proj1, Proj2>
+  bool equal(Rng1&& rng1, I2 first2, Pred pred = Pred{},
+             Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+
+template<InputIterator I1, Sentinel<I1> S1, InputIterator I2,
+    Sentinel<I2> S2, class Pred = equal_to<>,
+    Invokable<ValueType<I1>> Proj1 = identity,
+    Invokable<ValueType<I2>> Proj2 = identity>
+  requires IndirectlyComparable<I1, I2, Pred, Proj1, Proj2>
+  bool equal(I1 first1, S1 last1, I2 first2, S2 last2,
+             Pred pred = Pred{},
+             Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+
+template<InputIterable Rng1, InputIterable Rng2, class Pred = equal_to<>,
+    Invokable<ValueType<IteratorType<Rng1>>> Proj1 = identity,
+    Invokable<ValueType<IteratorType<Rng2>>> Proj2 = identity>
+  requires IndirectlyComparable<IteratorType<Rng1>, IteratorType<Rng2>, Pred, Proj1, Proj2>
+  bool equal(Rng1&& rng1, Rng2&& rng2, Pred pred = Pred{},
+             Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -2076,27 +2198,34 @@ Otherwise return
 if for every iterator
 \tcode{i}
 in the range \range{first1}{last1}
-the following corresponding conditions hold:
-\tcode{*i == *(first2 + (i - first1)), pred(*i, *(first2 + (i - first1))) != false}.
+the following\removed{ corresponding} condition\removed{s} hold\added{s}:
+\tcode{\changed{*i == *(first2 + (i - first1)), pred(*i, *(first2 + (i - first1))) != false}
+{\textit{INVOKE}(pred, \textit{INVOKE}(proj1, *i), \textit{INVOKE}(proj2, *(first2 + (i - first1)))) != false}}.
 Otherwise, returns
 \tcode{false}.
 
 \pnum
 \complexity
-No applications of the corresponding predicate if
+No applications of the corresponding predicate\added{ and projections} if
+\changed{
 \tcode{InputIterator1}
 and
 \tcode{InputIterator2}
-meet the requirements of random access iterators and
+meet the requirements of random access iterators}{
+\tcode{I1} and \tcode{S1} model \tcode{SizedIteratorRange}, and
+\tcode{I2} and \tcode{S2} model \tcode{SizedIteratorRange},
+}
+and
 \tcode{last1 - first1 != last2 - first2}.
 Otherwise, at most
 \tcode{min(last1 - first1, last2 - first2)}
-applications of the corresponding predicate.
+applications of the corresponding predicate\added{ and projections}.
 \end{itemdescr}
 
 \rSec2[alg.is_permutation]{Is permutation}
 
 \indexlibrary{\idxcode{is_permutation}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class ForwardIterator1, class ForwardIterator2>
   bool is_permutation(ForwardIterator1 first1, ForwardIterator1 last1,
@@ -2114,11 +2243,49 @@ template<class ForwardIterator1, class ForwardIterator2,
                       ForwardIterator2 first2, ForwardIterator2 last2,
                       BinaryPredicate pred);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<ForwardIterator I1, Sentinel<I1> S1, ForwardIterator I2,
+    class Pred = equal_to<>,
+    Invokable<ValueType<I1>> Proj1 = identity,
+    Invokable<ValueType<I2>> Proj2 = identity>
+  requires IndirectlyComparable<I1, I2, Pred, Proj1, Proj2>
+  bool is_permutation(I1 first1, S1 last1, I2 first2,
+                      Pred pred = Pred{},
+                      Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+
+template<ForwardIterable Rng1, ForwardIterator I2, class Pred = equal_to<>,
+    Invokable<ValueType<IteratorType<Rng1>>> Proj1 = identity,
+    Invokable<ValueType<I2>> Proj2 = identity>
+  requires IndirectlyComparable<IteratorType<Rng1>, I2, Pred, Proj1, Proj2>
+  bool is_permutation(Rng1&& rng1, I2 first2, Pred pred = Pred{},
+                      Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+
+template<ForwardIterator I1, Sentinel<I1> S1, ForwardIterator I2,
+    Sentinel<I2> S2, class Pred = equal_to<>,
+    Invokable<ValueType<I1>> Proj1 = identity,
+    Invokable<ValueType<I2>> Proj2 = identity>
+  requires IndirectlyComparable<I1, I2, Pred, Proj1, Proj2>
+  bool is_permutation(I1 first1, S1 last1, I2 first2, S2 last2,
+                      Pred pred = Pred{},
+                      Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+
+template<ForwardIterable Rng1, ForwardIterable Rng2, class Pred = equal_to<>,
+    Invokable<ValueType<IteratorType<Rng1>>> Proj1 = identity,
+    Invokable<ValueType<IteratorType<Rng2>>> Proj2 = identity>
+  requires IndirectlyComparable<IteratorType<Rng1>, IteratorType<Rng2>, Pred, Proj1, Proj2>
+  bool is_permutation(Rng1&& rng1, Rng2&& rng2, Pred pred = Pred{},
+                      Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+\begin{removedblock}
 \pnum
 \requires \tcode{ForwardIterator1} and \tcode{ForwardIterator2} shall have the same
 value type. The comparison function shall be an equivalence relation.
+\end{removedblock}
 
 \pnum
 \remarks If \tcode{last2} was not given in the argument list, it denotes
@@ -2127,25 +2294,36 @@ value type. The comparison function shall be an equivalence relation.
 \pnum
 \returns If \tcode{last1 - first1 != last2 - first2}, return \tcode{false}.
 Otherwise return \tcode{true} if there exists a permutation of the elements in the
-range \range{first2}{first2 + (last1 - first1)}, beginning with \tcode{ForwardIterator2
-begin}, such that \tcode{equal(first1, last1, begin)} returns \tcode{true} or
-\tcode{equal(first1, last1, begin, pred)} returns \tcode{true}; otherwise, returns
+range \range{first2}{first2 + (last1 - first1)}, beginning with
+\tcode{\changed{ForwardIterator2}{I2} begin}, such that
+\tcode{equal(first1, last1, begin\added{, pred, proj1, proj2})} returns \tcode{true}
+\removed{ or
+\tcode{equal(first1, last1, begin, pred)} returns \tcode{true}}; otherwise, returns
 \tcode{false}.
 
 \pnum
-\complexity No applications of the corresponding predicate if \tcode{ForwardIterator1}
-and \tcode{ForwardIter\-ator2} meet the requirements of random access iterators and
-\tcode{last1 - first1 != last2 - first2}.
+\complexity
+No applications of the corresponding predicate\added{ and projections} if
+\changed{
+\tcode{ForwardIterator1}
+and
+\tcode{ForwardIter\-ator2}
+meet the requirements of random access iterators}{
+\tcode{I1} and \tcode{S1} model \tcode{SizedIterator\-Range}, and
+\tcode{I2} and \tcode{S2} model \tcode{SizedIteratorRange},
+} and \tcode{last1 - first1 != last2 - first2}.
 Otherwise, exactly \tcode{distance(first1, last1)} applications of the
-corresponding predicate if \tcode{equal(\brk{}first1, last1, first2, last2)}
-would return \tcode{true} if \tcode{pred} was not given in the argument list
-or \tcode{equal(first1, last1, first2, last2, pred)} would return \tcode{true} if pred was given in the argument list; otherwise, at
+corresponding predicate\added{ and projections} if
+\tcode{equal(\brk{}first1, last1, first2, last2\added{, pred, proj1, proj2})}
+would return \tcode{true}\removed{ if \tcode{pred} was not given in the argument list
+or \tcode{equal(first1, last1, first2, last2, pred)} would return \tcode{true} if pred was given in the argument list}; otherwise, at
 worst \bigoh{N^2}, where $N$ has the value \tcode{distance(first1, last1)}.
 \end{itemdescr}
 
 \rSec2[alg.search]{Search}
 
 \indexlibrary{\idxcode{search}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class ForwardIterator1, class ForwardIterator2>
   ForwardIterator1
@@ -2159,6 +2337,28 @@ template<class ForwardIterator1, class ForwardIterator2,
            ForwardIterator2 first2, ForwardIterator2 last2,
            BinaryPredicate pred);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<ForwardIterator I1, Sentinel<I1> S1, ForwardIterator I2,
+    Sentinel<I2> S2, class Pred = equal_to<>,
+    Invokable<ValueType<I1>> Proj1 = identity,
+    Invokable<ValueType<I2>> Proj2 = identity>
+  requires IndirectlyComparable<I1, I2, Pred, Proj1, Proj2>
+  I1
+    search(I1 first1, S1 last1, I2 first2, S2 last2,
+           Pred pred = Pred{},
+           Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+
+template<ForwardIterable Rng1, ForwardIterable Rng2, class Pred = equal_to<>,
+    Invokable<ValueType<IteratorType<Rng1>>> Proj1 = identity,
+    Invokable<ValueType<IteratorType<Rng2>>> Proj2 = identity>
+  requires IndirectlyComparable<IteratorType<Rng1>, IteratorType<Rng2>, Pred, Proj1, Proj2>
+  IteratorType<Rng1>
+    search(Rng1& rng1, Rng2&& rng2, Pred pred = Pred{},
+           Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -2174,21 +2374,24 @@ such that for every non-negative integer
 \tcode{n}
 less than
 \tcode{last2 - first2}
-the following corresponding conditions hold:
-\tcode{*(i + n) == *(first2 + n), pred(*(i + n), *(first2 + n)) != false}.
+the following\removed{ corresponding} condition\removed{s} hold\added{s}:
+\tcode{\changed{*(i + n) == *(first2 + n), pred(*(i + n), *(first2 + n)) != false}
+{\textit{INVOKE}(pred, \textit{INVOKE}(proj1, *(i + n)), \textit{INVOKE}(proj2, *(first2 + n))) != false}}.
 Returns \tcode{first1}
 if \range{first2}{last2} is empty,
-otherwise returns \tcode{last1}
-if no such iterator is found.
+otherwise returns \tcode{\changed{last1}{\textit{last1'}}}
+if no such iterator is found\added{, where \tcode{\textit{last1'}} is an
+iterator such that \tcode{\textit{last1'} == last1}}.
 
 \pnum
 \complexity
 At most
 \tcode{(last1 - first1) * (last2 - first2)}
-applications of the corresponding predicate.
+applications of the corresponding predicate\added{ and projections}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{search_n}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class ForwardIterator, class Size, class T>
   ForwardIterator
@@ -2201,13 +2404,34 @@ template<class ForwardIterator, class Size, class T,
     search_n(ForwardIterator first, ForwardIterator last, Size count,
            const T& value, BinaryPredicate pred);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<ForwardIterator I, Sentinel<I> S, class T,
+    class Pred = equal_to<>, Invokable<ValueType<I>> Proj = identity>
+  requires IndirectlyComparable<I1, const T*, Pred, Proj>
+  I
+    search_n(I first, S last, iterator_difference_t<I> count,
+             const T& value, Pred pred = Pred{},
+             Proj proj = Proj{});
+
+template<ForwardIterable Rng, class T, class Pred = equal_to<>,
+    Invokable<ValueType<IteratorType<Rng>>> Proj = identity>
+  requires IndirectlyComparable<IteratorType<Rng1>, const T*, Pred, Proj>
+  IteratorType<Rng>
+    search_n(Rng& rng, iterator_difference_t<IteratorType<Rng>> count,
+             const T& value, Pred pred = Pred{}, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+\begin{removedblock}
 \pnum
 \requires
 The type
 \tcode{Size}
 shall be convertible to integral type~(\ref{conv.integral}, \ref{class.conv}).
+\end{removedblock}
 
 \pnum
 \effects
@@ -2222,16 +2446,18 @@ such that for every non-negative integer
 \tcode{n}
 less than
 \tcode{count}
-the following corresponding conditions hold:
-\tcode{*(i + n) == value, pred(*(i + n),value) != false}.
-Returns \tcode{last}
-if no such iterator is found.
+the following\removed{ corresponding} condition\removed{s} hold\added{s}:
+\tcode{\changed{*(i + n) == value, pred(*(i + n),value) != false}
+{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *(i + n)), value) != false}}.
+Returns \tcode{\changed{last}{\textit{last'}}}
+if no such iterator is found\added{ where \tcode{\textit{last'}} is an iterator
+such that \tcode{\textit{last'} == last}}.
 
 \pnum
 \complexity
 At most
 \tcode{last - first}
-applications of the corresponding predicate.
+applications of the corresponding predicate\added{ and projection}.
 \end{itemdescr}
 
 \rSec1[alg.modifying.operations]{Mutating sequence operations}
