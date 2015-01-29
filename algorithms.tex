@@ -92,12 +92,12 @@ namespace std {
     pair<IteratorType<Rng>, Fun>
       for_each(Rng& rng, Fun f, Proj proj = Proj{});
 
-  template<InputIterator I, Sentinel<I> S, Semiregular Proj = identity,
-      EqualityComparable<ResultType<CallableType<Proj>, ValueType<I>>> T>
+  template<InputIterator I, Sentinel<I> S, class T, Semiregular Proj = identity>
+    requires IndirectRelation<equal_to<>, Projected<I, Proj>, const T *>
     I find(I first, S last, const T& value, Proj proj = Proj{});
 
-  template<InputIterable Rng, Semiregular Proj = identity,
-      EqualityComparable<ResultType<CallableType<Proj>, ValueType<IteratorType<Rng>>>> T>
+  template<InputIterable Rng, class T, Semiregular Proj = identity>
+    requires IndirectRelation<equal_to<>, Projected<IteratorType<Rng>, Proj>, const T *>
     IteratorType<Rng>
       find(Rng& rng, const T& value, Proj proj = Proj{});
 
@@ -160,14 +160,13 @@ namespace std {
     IteratorType<Rng>
       adjacent_find(Rng& rng, Pred pred = Pred{}, Proj proj = Proj{});
 
-  template<InputIterator I, Sentinel<I> S, Invokable<ValueType<I>> Proj = identity,
-      EqualityComparable<ResultType<CallableType<Proj>, ValueType<I>>> T>
+  template<InputIterator I, Sentinel<I> S, class T, Semiregular Proj = identity>
+    requires IndirectRelation<equal_to<>, Projected<I, Proj>, const T *>
     iterator_difference_t<I>
       count(I first, S last, const T& value, Proj proj = Proj{});
 
-  template<InputIterable Rng, Invokable<ValueType<IteratorType<Rng>>> Proj = identity,
-      EqualityComparable<
-        ResultType<CallableType<Proj>, ValueType<IteratorType<Rng>>>> T>
+  template<InputIterable Rng, class T, Semiregular Proj = identity>
+    requires IndirectRelation<equal_to<>, Projected<IteratorType<Rng>, Proj>, const T *>
     iterator_difference_t<IteratorType<Rng>>
       count(Rng&& rng, const T& value, Proj proj = Proj{});
 
@@ -298,66 +297,63 @@ namespace std {
 
   // \ref{alg.modifying.operations}, modifying sequence operations:
   // \ref{alg.copy}, copy:
-  template<InputIterator I, Sentinel<I> S, WeakIterator O, Semiregular Proj = identity>
-    requires IndirectlyCopyable<I, O, Proj>
+  template<InputIterator I, Sentinel<I> S, WeakIterator O>
+    requires IndirectlyCopyable<I, O>
     pair<I, O>
-      copy(I first, S last, O result, Proj proj = Proj{});
+      copy(I first, S last, O result);
 
-  template<InputIterable Rng, WeakIterator O, Semiregular Proj = identity>
-    requires IndirectlyCopyable<IteratorType<Rng>, O, Proj>
+  template<InputIterable Rng, WeakIterator O>
+    requires IndirectlyCopyable<IteratorType<Rng>, O>
     pair<IteratorType<Rng>, O>
-      copy(Rng& rng, O result, Proj proj = Proj{});
+      copy(Rng& rng, O result);
 
-  template<WeakInputIterator I, WeakIterator O, Semiregular Proj = identity>
-    requires IndirectlyCopyable<I, O, Proj>
+  template<WeakInputIterator I, WeakIterator O>
+    requires IndirectlyCopyable<I, O>
     pair<I, O>
-      copy_n(I first, iterator_distance_t<I> n, O result,
-             Proj proj = Proj{});
+      copy_n(I first, iterator_distance_t<I> n, O result);
 
   template<InputIterator I, Sentinel<I> S, WeakIterator O, Semiregular Proj = identity,
       IndirectInvokablePredicate<Projected<I, Proj>> Pred>
-    requires IndirectlyCopyable<I, O, Proj>
+    requires IndirectlyCopyable<I, O>
     pair<I, O>
       copy_if(I first, S last, O result, Pred pred, Proj proj = Proj{});
 
   template<InputIterable Rng, WeakIterator O, Semiregular Proj = identity,
       IndirectInvokablePredicate<Projected<IteratorType<Rng>, Proj>> Pred>
-    requires IndirectlyCopyable<IteratorType<Rng>, O, Proj>
+    requires IndirectlyCopyable<IteratorType<Rng>, O>
     pair<IteratorType<Rng>, O>
       copy_if(Rng& rng, O result, Pred pred, Proj proj = Proj{});
 
-  template<BidirectionalIterator I1, Sentinel<I1> S1, BidirectionalIterator I2,
-      Semiregular Proj = identity>
-    requires IndirectlyCopyable<I1, I2, Proj>
+  template<BidirectionalIterator I1, Sentinel<I1> S1, BidirectionalIterator I2>
+    requires IndirectlyCopyable<I1, I2>
     pair<I1, I2>
-      copy_backward(I1 first, I1 last, I2 result, Proj proj = Proj{});
+      copy_backward(I1 first, I1 last, I2 result);
 
-  template<BidirectionalIterable Rng, BidirectionalIterator I, Semiregular Proj = identity>
-    requires IndirectlyCopyable<IteratorType<Rng>, I, Proj>
+  template<BidirectionalIterable Rng, BidirectionalIterator I>
+    requires IndirectlyCopyable<IteratorType<Rng>, I>
     pair<IteratorType<Rng>, I>
-      copy_backward(Rng& rng, I result, Proj proj = Proj{});
+      copy_backward(Rng& rng, I result);
 
   // \ref{alg.move}, move:
-  template<InputIterator I, Sentinel<I> S, WeakIterator O, Semiregular Proj = identity>
-    requires IndirectlyMovable<I, O, Proj>
+  template<InputIterator I, Sentinel<I> S, WeakIterator O>
+    requires IndirectlyMovable<I, O>
     pair<I, O>
-      move(I first, S last, O result, Proj proj = Proj{});
+      move(I first, S last, O result);
 
-  template<InputIterable Rng, WeakIterator O, Semiregular Proj = identity>
-    requires IndirectlyMovable<IteratorType<Rng>, O, Proj>
+  template<InputIterable Rng, WeakIterator O>
+    requires IndirectlyMovable<IteratorType<Rng>, O>
     pair<IteratorType<Rng>, O>
-      move(Rng& rng, O result, Proj proj = Proj{});
+      move(Rng& rng, O result);
 
-  template<BidirectionalIterator I1, Sentinel<I1> S1, BidirectionalIterator I2,
-      Semiregular Proj = identity>
-    requires IndirectlyMovable<I1, I2, Proj>
+  template<BidirectionalIterator I1, Sentinel<I1> S1, BidirectionalIterator I2>
+    requires IndirectlyMovable<I1, I2>
     pair<I1, I2>
-      move_backward(I1 first, I1 last, I2 result, Proj proj = Proj{});
+      move_backward(I1 first, I1 last, I2 result);
 
-  template<BidirectionalIterable Rng, BidirectionalIterator I, Semiregular Proj = identity>
-    requires IndirectlyMovable<IteratorType<Rng>, I, Proj>
+  template<BidirectionalIterable Rng, BidirectionalIterator I>
+    requires IndirectlyMovable<IteratorType<Rng>, I>
     pair<IteratorType<Rng>, I>
-      move_backward(Rng& rng, I result, Proj proj = Proj{});
+      move_backward(Rng& rng, I result);
 
   // \ref{alg.swap}, swap:
   template<ForwardIterator I1, Sentinel<I1> S1, ForwardIterator I2>
@@ -440,15 +436,15 @@ namespace std {
       In C++14, it requires Forward. Resolve the conflict.}
   \begin{codeblock}
 
-  template<ForwardIterator I, Sentinel<I> S, Semiregular T2, Semiregular Proj = identity,
-      EqualityComparable<ResultType<CallableType<Proj>, ValueType<I>>> T1>
-    requires Writable<I, T2>
+  template<ForwardIterator I, Sentinel<I> S, class T1, Semiregular T2, Semiregular Proj = identity>
+    requires Writable<I, T2> &&
+      IndirectRelation<equal_to<>, Projected<I, Proj>, const T1 *>
     I
-      replace(I first, S last, const T1& old_value, const T2& new_value);
+      replace(I first, S last, const T1& old_value, const T2& new_value, Proj proj = Proj{});
 
-  template<ForwardIterable Rng, Semiregular T2, Semiregular Proj = identity,
-      EqualityComparable<ResultType<CallableType<Proj>, ValueType<IteratorType<Rng>>>> T1>
-    requires Writable<IteratorType<Rng>, T2>
+  template<ForwardIterable Rng, class T1, Semiregular T2, Semiregular Proj = identity>
+    requires Writable<IteratorType<Rng>, T2> &&
+      IndirectRelation<equal_to<>, Projected<IteratorType<Rng>, Proj>, const T1 *>
     IteratorType<Rng>
       replace(Rng& rng, const T1& old_value, const T2& new_value);
 
@@ -456,8 +452,7 @@ namespace std {
       IndirectInvokablePredicate<Projected<I, Proj>> Pred>
     requires Writable<I, T>
     I
-      replace_if(I first, S last, Pred pred, const T& new_value,
-                 Proj proj = Proj{});
+      replace_if(I first, S last, Pred pred, const T& new_value, Proj proj = Proj{});
 
   template<ForwardIterable Rng, Semiregular T, Semiregular Proj = identity,
       IndirectInvokablePredicate<Projected<IteratorType<Rng>, Proj>> Pred>
@@ -465,31 +460,32 @@ namespace std {
     IteratorType<Rng>
       replace_if(Rng& rng, Pred pred, const T& new_value, Proj proj = Proj{});
 
-  template<InputIterator I, Sentinel<I> S, Semiregular T2, WeakOutputIterator<T2> O,
-      Semiregular Proj = identity,
-      EqualityComparable<ResultType<CallableType<Proj>, ValueType<I>>> T1>
-      requires IndirectCopyable<I, O>
+  template<InputIterator I, Sentinel<I> S, class T1, Semiregular T2, WeakOutputIterator<T2> O,
+      Semiregular Proj = identity>
+    requires IndirectlyCopyable<I, O> &&
+      IndirectRelation<equal_to<>, Projected<I, Proj>, const T1 *>
     pair<I, O>
-      replace_copy(I first, S last, O result, const T1& old_value,
-                   const T2& new_value, Proj proj = Proj{});
+      replace_copy(I first, S last, O result, const T1& old_value, const T2& new_value,
+                   Proj proj = Proj{});
 
-  template<InputIterable Rng, Semiregular T2, WeakOutputIterator<T2> O, Semiregular Proj = identity,
-      EqualityComparable<ResultType<CallableType<Proj>, ValueType<IteratorType<Rng>>>> T1>
-      requires IndirectCopyable<IteratorType<Rng>, O>
+  template<InputIterable Rng, class T1, Semiregular T2, WeakOutputIterator<T2> O,
+      Semiregular Proj = identity>
+    requires IndirectlyCopyable<IteratorType<Rng>, O> &&
+      IndirectRelation<equal_to<>, Projected<IteratorType<Rng>, Proj>, const T1 *>
     pair<IteratorType<Rng>, O>
-      replace_copy(Rng& rng, O result, const T1& old_value,
-                   const T2& new_value, Proj proj = Proj{});
+      replace_copy(Rng& rng, O result, const T1& old_value, const T2& new_value,
+                   Proj proj = Proj{});
 
   template<InputIterator I, Sentinel<I> S, Semiregular T, WeakOutputIterator<T> O,
       Semiregular Proj = identity, IndirectInvokablePredicate<Projected<I, Proj>> Pred>
-      requires IndirectCopyable<I, O>
+    requires IndirectlyCopyable<I, O>
     pair<I, O>
       replace_copy_if(I first, S last, O result, Pred pred, const T& new_value,
                       Proj proj = Proj{});
 
   template<InputIterable Rng, Semiregular T, WeakOutputIterator<T> O, Semiregular Proj = identity,
       IndirectInvokablePredicate<Projected<IteratorType<Rng>, Proj>> Pred>
-      requires IndirectCopyable<IteratorType<Rng>, O, Proj>
+    requires IndirectlyCopyable<IteratorType<Rng>, O>
     pair<IteratorType<Rng>, O>
       replace_copy_if(Rng& rng, O result, Pred pred, const T& new_value,
                       Proj proj = Proj{});
@@ -518,40 +514,49 @@ namespace std {
   template<Function F, WeakOutputIterator<ResultType<F>> O>
     O generate_n(O first, DistanceType<O> n, F gen);
 
-  template<ForwardIterator I, Sentinel<I> S, EqualityComparable<ValueType<I>> T>
-    I remove(I first, S last, const T& value);
+  template<ForwardIterator I, Sentinel<I> S, class T, Semiregular Proj = identity>
+    requires Permutable<I> &&
+      IndirectRelation<equal_to<>, Projected<I, Proj>, const T *>
+    I remove(I first, S last, const T& value, Proj proj = Proj{});
 
-  template<ForwardIterable Rng, EqualityComparable<ValueType<IteratorType<Rng>>> T>
+  template<ForwardIterable Rng, class T, Semiregular Proj = identity>
+    requires Permutable<I> &&
+      IndirectRelation<equal_to<>, Projected<IteratorType<Rng>, Proj>, const T *>
     IteratorType<Rng>
-      remove(Rng& rng, const T& value);
+      remove(Rng& rng, const T& value, Proj proj = Proj{});
 
   template<ForwardIterator I, Sentinel<I> S, Semiregular Proj = identity,
       IndirectInvokablePredicate<Projected<I, Proj>> Pred>
+    requires Permutable<I>
     I remove_if(I first, S last, Pred pred, Proj proj = Proj{});
 
   template<ForwardIterable Rng, Semiregular Proj = identity,
       IndirectInvokablePredicate<Projected<IteratorType<Rng>, Proj>> Pred>
+    requires Permutable<I>
     IteratorType<Rng>
       remove_if(Rng& rng, Pred pred, Proj proj = Proj{});
 
-  template<InputIterator I, Sentinel<I> S, WeakOutputIterator<ValueType<I>> O,
-      Semiregular Proj = identity,
-      EqualityComparable<ResultType<CallableType<Proj>, ValueType<I>>> T>
+  template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O, class T,
+      Semiregular Proj = identity>
+    requires IndirectlyCopyable<I, O> &&
+      IndirectRelation<equal_to<>, Projected<I, Proj>, const T *>
     pair<I, O> remove_copy(I first, S last, O result, const T& value, Proj proj = Proj{});
 
-  template<InputIterable Rng, WeakOutputIterator<ValueType<IteratorType<Rng>>> O,
-      EqualityComparable<ResultType<CallableType<Proj>, ValueType<IteratorType<Rng>>>> T>
+  template<InputIterable Rng, WeaklyIncrementable O, class T, Semiregular Proj = identity>
+    requires IndirectlyCopyable<IteratorType<Rng>, O> &&
+      IndirectRelation<equal_to<>, Projected<IteratorType<Rng>, Proj>, const T *>
     pair<IteratorType<Rng>, O>
       remove_copy(Rng& rng, O result, const T& value, Proj proj = Proj{});
 
-  template<InputIterator I, Sentinel<I> S, WeakOutputIterator<ValueType<I>> O,
+  template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O,
       Semiregular Proj = identity, IndirectInvokablePredicate<Projected<I, Proj>> Pred>
+    requires IndirectlyCopyable<I, O>
     pair<I, O>
       remove_copy_if(I first, S last, O result, Pred pred, Proj proj = Proj{});
 
-  template<InputIterable Rng, WeakOutputIterator<ValueType<IteratorType<Rng>>> O,
-      Semiregular Proj = identity,
+  template<InputIterable Rng, WeaklyIncrementable O, Semiregular Proj = identity,
       IndirectInvokablePredicate<Projected<IteratorType<Rng>, Proj>> Pred>
+    requires IndirectlyCopyable<IteratorType<Rng>, O>
     pair<IteratorType<Rng>, O>
       remove_copy_if(Rng& rng, O result, Pred pred, Proj proj = Proj{});
 
@@ -566,23 +571,24 @@ namespace std {
     IteratorType<Rng>
       unique(Rng& rng, R comp = R{}, Proj proj = Proj{});
 
-  template<InputIterator I, Sentinel<I> S, WeakOutputIterator<ValueType<I>> O,
+  template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O,
       Semiregular Proj = identity, IndirectInvokableRelation<Projected<I, Proj>> R = equal_to<>>
+    requires IndirectlyCopyable<I, O>
     pair<I, O>
       unique_copy(I first, S last, O result, R comp = R{}, Proj proj = Proj{});
 
-  template<InputIterable Rng, WeakOutputIterator<ValueType<IteratorType<Rng>>> O,
-      Semiregular Proj = identity,
+  template<InputIterable Rng, WeaklyIncrementable O, Semiregular Proj = identity,
       IndirectInvokableRelation<Projected<IteratorType<Rng>, Proj>> R = equal_to<>>
+    requires IndirectlyCopyable<IteratorType<Rng>, O>
     pair<IteratorType<Rng>, O>
       unique_copy(Rng& rng, O result, R comp = R{}, Proj proj = Proj{});
 
   template<BidirectionalIterator I, Sentinel<I> S>
-      requires Permutable<I>
+    requires Permutable<I>
     I reverse(I first, S last);
 
   template<BidirectionalIterable Rng>
-      requires Permutable<IteratorType<Rng>>
+    requires Permutable<IteratorType<Rng>>
     IteratorType<Rng>
       reverse(Rng& rng);
 
@@ -598,20 +604,20 @@ namespace std {
   \ednote{Could return a \tcode{range} instead of a \tcode{pair}}
   \begin{codeblock}
   template<ForwardIterator I, Sentinel<I> S>
-      requires Permutable<I>
+    requires Permutable<I>
     pair<I, I> rotate(I first, I middle, S last);
 
   template<ForwardIterable Rng>
-      requires Permutable<IteratorType<Rng>>
+    requires Permutable<IteratorType<Rng>>
     pair<IteratorType<Rng>, IteratorType<Rng>>
       rotate(Rng& rng, IteratorType<Rng> middle);
 
-  template<ForwardIterator I, Sentinel<I> S, Semiregular Proj = identity,
-      WeakOutputIterator<ResultType<CallableType<Proj>, ValueType<I>>> O>
+  template<ForwardIterator I, Sentinel<I> S, WeaklyIncrementable O>
+    requires IndirectlyCopyable<I, O>
     pair<I, O> rotate_copy(I first, I middle, S last, O result, Proj proj = Proj{});
 
-  template<ForwardIterable Rng, Semiregular Proj = identity,
-      WeakOutputIterator<ResultType<CallableType<Proj>, ValueType<IteratorType<Rng>>>> O>
+  template<ForwardIterable Rng, WeaklyIncrementable O>
+    requires IndirectlyCopyable<IteratorType<Rng>, O>
     pair<IteratorType<Rng>, O>
       rotate_copy(Rng& rng, IteratorType<Rng> middle, O result, Proj proj = Proj{});
 
@@ -773,23 +779,23 @@ namespace std {
 
   // \ref{alg.binary.search}, binary search:
   template<ForwardIterator I, Sentinel<I> S, TotallyOrdered T, Semiregular Proj = identity,
-      IndirectInvokableRelation<T const *, Projected<I, Proj>> Comp = less<>>
+      IndirectInvokableRelation<const T *, Projected<I, Proj>> Comp = less<>>
     I
       lower_bound(I first, S last, const T& value, Comp comp = Comp{},
                   Proj proj = Proj{});
 
   template<ForwardIterable Rng, TotallyOrdered T, Semiregular Proj = identity,
-      IndirectInvokableRelation<T const *, Projected<IteratorType<Rng>, Proj>> Comp = less<>>
+      IndirectInvokableRelation<const T *, Projected<IteratorType<Rng>, Proj>> Comp = less<>>
     IteratorType<Rng>
       lower_bound(Rng& rng, const T& value, Comp comp = Comp{}, Proj proj = Proj{});
 
   template<ForwardIterator I, Sentinel<I> S, TotallyOrdered T, Semiregular Proj = identity,
-      IndirectInvokableRelation<T const *, Projected<I, Proj>> Comp = less<>>
+      IndirectInvokableRelation<const T *, Projected<I, Proj>> Comp = less<>>
     I
       upper_bound(I first, S last, const T& value, Comp comp = Comp{}, Proj proj = Proj{});
 
   template<ForwardIterable Rng, TotallyOrdered T, Semiregular Proj = identity,
-      IndirectInvokableRelation<T const *, Projected<IteratorType<Rng>, Proj>> Comp = less<>>
+      IndirectInvokableRelation<const T *, Projected<IteratorType<Rng>, Proj>> Comp = less<>>
     IteratorType<Rng>
       upper_bound(Rng& rng, const T& value, Comp comp = Comp{}, Proj proj = Proj{});
 
@@ -797,24 +803,24 @@ namespace std {
   \ednote{Could return a range<I>}
   \begin{codeblock}
   template<ForwardIterator I, Sentinel<I> S, TotallyOrdered T, Semiregular Proj = identity,
-      IndirectInvokableRelation<T const *, Projected<I, Proj>> Comp = less<>>
+      IndirectInvokableRelation<const T *, Projected<I, Proj>> Comp = less<>>
     pair<I, I>
       equal_range(I first, S last, const T& value, Comp comp = Comp{}, Proj proj = Proj{});
 
   template<ForwardIterable Rng, TotallyOrdered T, Semiregular Proj = identity,
-      IndirectInvokableRelation<T const *, Projected<IteratorType<Rng>, Proj>> Comp = less<>>
+      IndirectInvokableRelation<const T *, Projected<IteratorType<Rng>, Proj>> Comp = less<>>
     pair<IteratorType<Rng>, IteratorType<Rng>>
       equal_range(Rng& rng, const T& value, Comp comp = Comp{},
                   Proj proj = Proj{});
 
   template<ForwardIterator I, Sentinel<I> S, TotallyOrdered T, Semiregular Proj = identity,
-      IndirectInvokableRelation<T const *, Projected<I, Proj>> Comp = less<>>
+      IndirectInvokableRelation<const T *, Projected<I, Proj>> Comp = less<>>
     bool
       binary_search(I first, S last, const T& value, Comp comp = Comp{},
                     Proj proj = Proj{});
 
   template<ForwardIterable Rng, TotallyOrdered T, Semiregular Proj = identity,
-      IndirectInvokableRelation<T const *, Projected<IteratorType<Rng>, Proj>> Comp = less<>>
+      IndirectInvokableRelation<const T *, Projected<IteratorType<Rng>, Proj>> Comp = less<>>
     bool
       binary_search(Rng& rng, const T& value, Comp comp = Comp{},
                     Proj proj = Proj{});
@@ -1128,23 +1134,23 @@ namespace std {
   // \ref{alg.permutation.generators}, permutations:
   template<BidirectionalIterator I, Sentinel<I> S, Semiregular Proj = identity,
       IndirectInvokableRelation<Projected<I, Proj>> Comp = less<>>
-      requires Sortable<I, Comp, Proj>
+    requires Sortable<I, Comp, Proj>
     bool next_permutation(I first, S last, Comp comp = Comp{}, Proj proj = Proj{});
 
   template<BidirectionalIterable Rng, Semiregular Proj = identity,
       IndirectInvokableRelation<Projected<IteratorType<Rng>, Proj>> Comp = less<>>
-      requires Sortable<IteratorType<Rng>, Comp, Proj>
+    requires Sortable<IteratorType<Rng>, Comp, Proj>
     bool
       next_permutation(Rng&& rng, Comp comp = Comp{}, Proj proj = Proj{});
 
   template<BidirectionalIterator I, Sentinel<I> S, Semiregular Proj = identity,
       IndirectInvokableRelation<Projected<I, Proj>> Comp = less<>>
-      requires Sortable<I, Comp, Proj>
+    requires Sortable<I, Comp, Proj>
     bool prev_permutation(I first, S last, Comp comp = Comp{}, Proj proj = Proj{});
 
   template<BidirectionalIterable Rng, Semiregular Proj = identity,
       IndirectInvokableRelation<Projected<IteratorType<Rng>, Proj>> Comp = less<>>
-      requires Sortable<IteratorType<Rng>, Comp, Proj>
+    requires Sortable<IteratorType<Rng>, Comp, Proj>
     bool
       prev_permutation(Rng&& rng, Comp comp = Comp{}, Proj proj = Proj{});
 }
@@ -1536,12 +1542,12 @@ template<class InputIterator, class Predicate>
 \end{removedblock}
 \begin{addedblock}
 \begin{itemdecl}
-template<InputIterator I, Sentinel<I> S, Semiregular Proj = identity,
-    EqualityComparable<ResultType<CallableType<Proj>, ValueType<I>>> T>
+template<InputIterator I, Sentinel<I> S, class T, Semiregular Proj = identity>
+  requires IndirectRelation<equal_to<>, Projected<I, Proj>, const T *>
   I find(I first, S last, const T& value, Proj proj = Proj{});
 
-template<InputIterable Rng, Semiregular Proj = identity,
-    EqualityComparable<ResultType<CallableType<Proj>, ValueType<IteratorType<Rng>>>> T>
+template<InputIterable Rng, class T, Semiregular Proj = identity>
+  requires IndirectRelation<equal_to<>, Projected<IteratorType<Rng>, Proj>, const T *>
   IteratorType<Rng>
     find(Rng& rng, const T& value, Proj proj = Proj{});
 
@@ -1792,14 +1798,13 @@ template<class InputIterator, class Predicate>
 \end{removedblock}
 \begin{addedblock}
 \begin{itemdecl}
-template<InputIterator I, Sentinel<I> S, Invokable<ValueType<I>> Proj = identity,
-    EqualityComparable<ResultType<CallableType<Proj>, ValueType<I>>> T>
+template<InputIterator I, Sentinel<I> S, class T, Semiregular Proj = identity>
+  requires IndirectRelation<equal_to<>, Projected<I, Proj>, const T *>
   iterator_difference_t<I>
     count(I first, S last, const T& value, Proj proj = Proj{});
 
-template<InputIterable Rng, Invokable<ValueType<IteratorType<Rng>>> Proj = identity,
-    EqualityComparable<
-      ResultType<CallableType<Proj>, ValueType<IteratorType<Rng>>>> T>
+template<InputIterable Rng, class T, Semiregular Proj = identity>
+  requires IndirectRelation<equal_to<>, Projected<IteratorType<Rng>, Proj>, const T *>
   iterator_difference_t<IteratorType<Rng>>
     count(Rng&& rng, const T& value, Proj proj = Proj{});
 
