@@ -297,28 +297,28 @@ namespace std {
 
   // \ref{alg.modifying.operations}, modifying sequence operations:
   // \ref{alg.copy}, copy:
-  template<InputIterator I, Sentinel<I> S, WeakIterator O>
+  template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O>
     requires IndirectlyCopyable<I, O>
     pair<I, O>
       copy(I first, S last, O result);
 
-  template<InputIterable Rng, WeakIterator O>
+  template<InputIterable Rng, WeaklyIncrementable O>
     requires IndirectlyCopyable<IteratorType<Rng>, O>
     pair<IteratorType<Rng>, O>
       copy(Rng& rng, O result);
 
-  template<WeakInputIterator I, WeakIterator O>
+  template<WeakInputIterator I, WeaklyIncrementable O>
     requires IndirectlyCopyable<I, O>
     pair<I, O>
       copy_n(I first, iterator_distance_t<I> n, O result);
 
-  template<InputIterator I, Sentinel<I> S, WeakIterator O, Semiregular Proj = identity,
+  template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O, Semiregular Proj = identity,
       IndirectInvokablePredicate<Projected<I, Proj>> Pred>
     requires IndirectlyCopyable<I, O>
     pair<I, O>
       copy_if(I first, S last, O result, Pred pred, Proj proj = Proj{});
 
-  template<InputIterable Rng, WeakIterator O, Semiregular Proj = identity,
+  template<InputIterable Rng, WeaklyIncrementable O, Semiregular Proj = identity,
       IndirectInvokablePredicate<Projected<IteratorType<Rng>, Proj>> Pred>
     requires IndirectlyCopyable<IteratorType<Rng>, O>
     pair<IteratorType<Rng>, O>
@@ -335,12 +335,12 @@ namespace std {
       copy_backward(Rng& rng, I result);
 
   // \ref{alg.move}, move:
-  template<InputIterator I, Sentinel<I> S, WeakIterator O>
+  template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O>
     requires IndirectlyMovable<I, O>
     pair<I, O>
       move(I first, S last, O result);
 
-  template<InputIterable Rng, WeakIterator O>
+  template<InputIterable Rng, WeaklyIncrementable O>
     requires IndirectlyMovable<IteratorType<Rng>, O>
     pair<IteratorType<Rng>, O>
       move(Rng& rng, O result);
@@ -376,49 +376,49 @@ namespace std {
     pair<IteratorType<Rng1>, IteratorType<Rng2>>
       swap_ranges(Rng1& rng1, Rng2& rng2);
 
-  template<InputIterator I, Sentinel<I> S, WeakIterator O, Semiregular Proj = identity,
+  template<InputIterator I, Sentinel<I> S, Semiregular Proj = identity,
       IndirectInvokable<Projected<I, Proj>> F,
       WeakOutputIterator<ResultType<CallableType<F>,
         ResultType<CallableType<Proj>, ValueType<I>>>> O>
     pair<I, O>
-      transform(I first, S last, O result, F op, Proj proj = Proj{});
+    transform(I first, S last, O result, F op, Proj proj = Proj{});
 
-  template<InputIterable Rng, WeakIterator O, Semiregular Proj = identity,
+  template<InputIterable Rng, Semiregular Proj = identity,
       IndirectInvokable<Projected<IteratorType<Rng>, Proj>> F,
       WeakOutputIterator<ResultType<CallableType<F>,
-        ResultType<CallableType<Proj>, ValueType<IteratorType<Rng>>>>> O>
+      ResultType<CallableType<Proj>, ValueType<IteratorType<Rng>>>>> O>
     pair<IteratorType<Rng>, O>
       transform(Rng& rng, O result, F op, Proj proj = Proj{});
 
-    template<InputIterator I1, Sentinel<I1> S1, WeakInputIterator I2,
-        Semiregular Proj1 = identity, Semiregular Proj2 = identity,
-        IndirectInvokable<Projected<I1, Proj1>, Projected<I2, Proj2>> F,
-        WeakOutputIterator<ResultType<CallableType<F>,
-          ResultType<CallableType<Proj1>, ValueType<I1>>,
-          ResultType<CallableType<Proj2>, ValueType<I2>>>> O>
-      tuple<I1, I2, O>
-        transform(I1 first1, S1 last1, I2 first2, O result,
-                  F binary_op, Proj1 proj1 = Proj1{}, proj2 proj2 = Proj2{});
+  template<InputIterator I1, Sentinel<I1> S1, WeakInputIterator I2,
+    Semiregular Proj1 = identity, Semiregular Proj2 = identity,
+      IndirectInvokable<Projected<I1, Proj1>, Projected<I2, Proj2>> F,
+      WeakOutputIterator<ResultType<CallableType<F>,
+        ResultType<CallableType<Proj1>, ValueType<I1>>,
+        ResultType<CallableType<Proj2>, ValueType<I2>>>> O>
+  tuple<I1, I2, O>
+      transform(I1 first1, S1 last1, I2 first2, O result,
+                F binary_op, Proj1 proj1 = Proj1{}, proj2 proj2 = Proj2{});
 
-    template<InputIterable Rng, WeakInputIterator I,
-        Semiregular Proj1 = identity, Semiregular Proj2 = identity,
-        IndirectInvokable<Projected<IteratorType<Rng>, Proj1>, Projected<I, Proj2>> F,
-        WeakOutputIterator<ResultType<CallableType<F>,
-          ResultType<CallableType<Proj1>, ValueType<IteratorType<Rng>>>,
-          ResultType<CallableType<Proj2>, ValueType<I>>>> O>
-      tuple<IteratorType<Rng>, I, O>
-        transform(Rng& rng1, I first2, O result,
-                  F binary_op, Proj1 proj1 = Proj1{}, proj2 proj2 = Proj2{});
+  template<InputIterable Rng, WeakInputIterator I,
+      Semiregular Proj1 = identity, Semiregular Proj2 = identity,
+    IndirectInvokable<Projected<IteratorType<Rng>, Proj1>, Projected<I, Proj2>> F,
+      WeakOutputIterator<ResultType<CallableType<F>,
+        ResultType<CallableType<Proj1>, ValueType<IteratorType<Rng>>>,
+        ResultType<CallableType<Proj2>, ValueType<I>>>> O>
+    tuple<IteratorType<Rng>, I, O>
+    transform(Rng& rng1, I first2, O result,
+                F binary_op, Proj1 proj1 = Proj1{}, proj2 proj2 = Proj2{});
 
   template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
       Semiregular Proj1 = identity, Semiregular Proj2 = identity,
-      IndirectInvokable<Projected<I1, Proj1>, Projected<I2, Proj2>> F,
+    IndirectInvokable<Projected<I1, Proj1>, Projected<I2, Proj2>> F,
       WeakOutputIterator<ResultType<CallableType<F>,
         ResultType<CallableType<Proj1>, ValueType<I1>>,
         ResultType<CallableType<Proj2>, ValueType<I2>>>>> O>
     tuple<I1, I2, O>
-      transform(I1 first1, S1 last1, I2 first2, S2 last2, O result,
-                F binary_op, Proj1 proj1 = Proj1{}, proj2 proj2 = Proj2{});
+    transform(I1 first1, S1 last1, I2 first2, S2 last2, O result,
+              F binary_op, Proj1 proj1 = Proj1{}, proj2 proj2 = Proj2{});
 
   template<InputIterable Rng1, InputIterable Rng2,
       Semiregular Proj1 = identity, Semiregular Proj2 = identity,
@@ -503,7 +503,7 @@ namespace std {
   template<Semiregular T, WeakOutputIterator<T> O>
     O fill_n(I first, iterator_difference_t<O> n, const T& value);
 
-  template<Function F, WeakOutputIterator<ResultType<F>> O,
+  template<Function F, OutputIterator<ResultType<F>> O,
       Sentinel<O> S>
     O generate(O first, S last, F gen);
 
@@ -661,14 +661,14 @@ namespace std {
     IteratorType<Rng>
       stable_partition(Rng& rng, Pred pred, Proj proj = Proj{});
 
-  template<InputIterator I, Sentinel<I> S, WeakIterator O1, WeakIterator O2,
+  template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O1, WeaklyIncrementable O2,
       Semiregular Proj = identity, IndirectInvokablePredicate<Projected<I, Proj>> Pred>
     requires IndirectlyCopyable<I, O1> && IndirectlyCopyable<I, O2>
     tuple<I, O1, O2>
       partition_copy(I first, S last, O1 out_true, O2 out_false, Pred pred,
                      Proj proj = Proj{});
 
-  template<InputIterable Rng, WeakIterator O1, WeakIterator O2, Semiregular Proj = identity,
+  template<InputIterable Rng, WeaklyIncrementable O1, WeaklyIncrementable O2, Semiregular Proj = identity,
       IndirectInvokablePredicate<Projected<IteratorType<Rng>, Proj>> Pred>
     requires IndirectlyCopyable<IteratorType<Rng>, O1> && IndirectlyCopyable<IteratorType<Rng>, O2>
     tuple<IteratorType<Rng>, O1, O2>
@@ -677,7 +677,7 @@ namespace std {
   \end{codeblock}
     \ednote{A new algorithm, needed by stable_partition.}
   \begin{codeblock}
-  template<InputIterator I, Sentinel<I> S, WeakIterator O1, WeakIterator O2,
+  template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O1, WeaklyIncrementable O2,
       Semiregular Proj = identity,
       IndirectInvokablePredicate<Projected<I, Proj>> Pred>
     requires IndirectlyMovable<I, O1> && IndirectlyMovable<I, O2>
@@ -685,7 +685,7 @@ namespace std {
       partition_move(I first, S last, O1 out_true, O2 out_false, Pred pred,
                      Proj proj = Proj{});
 
-  template<InputIterable Rng, WeakIterator O1, WeakIterator O2, Semiregular Proj = identity,
+  template<InputIterable Rng, WeaklyIncrementable O1, WeaklyIncrementable O2, Semiregular Proj = identity,
       IndirectInvokablePredicate<Projected<IteratorType<Rng>, Proj>> Pred>
     requires IndirectlyMovable<IteratorType<Rng>, O1> && IndirectlyMovable<IteratorType<Rng>, O2>
     tuple<IteratorType<Rng>, O1, O2>
@@ -1344,6 +1344,18 @@ return distance(a, b);
 \end{codeblock}
 
 \begin{addedblock}
+\pnum
+In the description of algorithm return values, sentinel values are sometimes
+returned where an iterator is expected. In these cases, the semantics are as
+if the sentinel is converted into an iterator as follows:
+
+\begin{codeblock}
+I tmp = first;
+while(tmp != last)
+  ++tmp;
+return tmp;
+\end{codeblock}
+
 \pnum
 Overloads of algorithms that take \tcode{Iterable} arguments~(\ref{iterable.iterables})
 behave as if they are implemented by calling \tcode{begin} and \tcode{end} on
@@ -2275,18 +2287,36 @@ applications of the corresponding predicate\added{ and projection}.
 \rSec2[alg.copy]{Copy}
 
 \indexlibrary{\idxcode{copy}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class InputIterator, class OutputIterator>
   OutputIterator copy(InputIterator first, InputIterator last,
                       OutputIterator result);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O>
+  requires IndirectlyCopyable<I, O>
+  pair<I, O>
+    copy(I first, S last, O result);
+
+template<InputIterable Rng, WeaklyIncrementable O>
+  requires IndirectlyCopyable<IteratorType<Rng>, O>
+  pair<IteratorType<Rng>, O>
+    copy(Rng& rng, O result);
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
-\effects Copies elements in the range \range{first}{last} into the range \range{result}{result + (last - first)} starting from \tcode{first} and proceeding to \tcode{last}. For each non-negative integer \tcode{n < (last - first)}, performs \tcode{*(result + n) = *(first + n)}.
+\effects Copies elements in the range \range{first}{last} into the range
+\range{result}{result + (last - first)} starting from \tcode{first} and
+proceeding to \tcode{last}. For each non-negative integer
+\tcode{n < (last - first)}, performs \tcode{*(result + n) = *(first + n)}.
 
 \pnum
-\returns \tcode{result + (last - first)}.
+\returns \tcode{\changed{result + (last - first)}{\{last, result + (last - first)\}}}.
 
 \pnum
 \requires \tcode{result} shall not be in the range \range{first}{last}.
@@ -2296,12 +2326,21 @@ template<class InputIterator, class OutputIterator>
 \end{itemdescr}
 
 \indexlibrary{\idxcode{copy_n}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class InputIterator, class Size, class OutputIterator>
   OutputIterator copy_n(InputIterator first, Size n,
                         OutputIterator result);
 \end{itemdecl}
-
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<WeakInputIterator I, WeaklyIncrementable O>
+  requires IndirectlyCopyable<I, O>
+  pair<I, O>
+    copy_n(I first, iterator_distance_t<I> n, O result);
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -2309,19 +2348,35 @@ template<class InputIterator, class Size, class OutputIterator>
 $i < n$, performs \tcode{*(result + i) = *(first + i)}.
 
 \pnum
-\returns \tcode{result + n}.
+\returns \tcode{\changed{result + n}{\{first + n, result + n\}}}.
 
 \pnum
 \complexity Exactly \tcode{n} assignments.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{copy_n}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class InputIterator, class OutputIterator, class Predicate>
   OutputIterator copy_if(InputIterator first, InputIterator last,
                          OutputIterator result, Predicate pred);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O, Semiregular Proj = identity,
+    IndirectInvokablePredicate<Projected<I, Proj>> Pred>
+  requires IndirectlyCopyable<I, O>
+  pair<I, O>
+    copy_if(I first, S last, O result, Pred pred, Proj proj = Proj{});
 
+template<InputIterable Rng, WeaklyIncrementable O, Semiregular Proj = identity,
+    IndirectInvokablePredicate<Projected<IteratorType<Rng>, Proj>> Pred>
+  requires IndirectlyCopyable<IteratorType<Rng>, O>
+  pair<IteratorType<Rng>, O>
+    copy_if(Rng& rng, O result, Pred pred, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -2329,10 +2384,10 @@ template<class InputIterator, class OutputIterator, class Predicate>
 
 \pnum
 \effects Copies all of the elements referred to by the iterator \tcode{i} in the range \range{first}{last}
-for which \tcode{pred(*i)} is \tcode{true}.
+for which \tcode{\changed{pred(*i)}{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *i))}} is \tcode{true}.
 
 \pnum
-\returns The end of the resulting range.
+\returns \changed{The end of the resulting range}{\tcode{\{last, result + (last - first)\}}}.
 
 \pnum
 \complexity Exactly \tcode{last - first} applications of the corresponding predicate.
@@ -2343,6 +2398,7 @@ for which \tcode{pred(*i)} is \tcode{true}.
 
 
 \indexlibrary{\idxcode{copy_backward}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class BidirectionalIterator1, class BidirectionalIterator2>
   BidirectionalIterator2
@@ -2350,6 +2406,20 @@ template<class BidirectionalIterator1, class BidirectionalIterator2>
                   BidirectionalIterator1 last,
                   BidirectionalIterator2 result);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<BidirectionalIterator I1, Sentinel<I1> S1, BidirectionalIterator I2>
+  requires IndirectlyCopyable<I1, I2>
+  pair<I1, I2>
+    copy_backward(I1 first, I1 last, I2 result);
+
+template<BidirectionalIterable Rng, BidirectionalIterator I>
+  requires IndirectlyCopyable<IteratorType<Rng>, I>
+  pair<IteratorType<Rng>, I>
+    copy_backward(Rng& rng, I result);
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -2377,7 +2447,7 @@ shall not be in the range
 
 \pnum
 \returns
-\tcode{result - (last - first)}.
+\tcode{\changed{result - (last - first)}{\{last, result - (last - first)\}}}.
 
 \pnum
 \complexity
@@ -2389,12 +2459,26 @@ assignments.
 \rSec2[alg.move]{Move}
 
 \indexlibrary{move\tcode{move}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class InputIterator, class OutputIterator>
   OutputIterator move(InputIterator first, InputIterator last,
                       OutputIterator result);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O>
+  requires IndirectlyMovable<I, O>
+  pair<I, O>
+    move(I first, S last, O result);
 
+template<InputIterable Rng, WeaklyIncrementable O>
+  requires IndirectlyMovable<IteratorType<Rng>, O>
+  pair<IteratorType<Rng>, O>
+    move(Rng& rng, O result);
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -2409,7 +2493,7 @@ performs
 
 \pnum
 \returns
-\tcode{result + (last - first)}.
+\tcode{\changed{result + (last - first)}{\{last, result + (last - first)\}}}.
 
 \pnum
 \requires
@@ -2425,6 +2509,7 @@ move assignments.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{move_backward}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class BidirectionalIterator1, class BidirectionalIterator2>
   BidirectionalIterator2
@@ -2432,7 +2517,20 @@ template<class BidirectionalIterator1, class BidirectionalIterator2>
                   BidirectionalIterator1 last,
                   BidirectionalIterator2 result);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<BidirectionalIterator I1, Sentinel<I1> S1, BidirectionalIterator I2>
+  requires IndirectlyMovable<I1, I2>
+  pair<I1, I2>
+    move_backward(I1 first, I1 last, I2 result);
 
+template<BidirectionalIterable Rng, BidirectionalIterator I>
+  requires IndirectlyMovable<IteratorType<Rng>, I>
+  pair<IteratorType<Rng>, I>
+    move_backward(Rng& rng, I result);
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -2460,7 +2558,7 @@ shall not be in the range
 
 \pnum
 \returns
-\tcode{result - (last - first)}.
+\tcode{\changed{result - (last - first)}{\{last, result - (last - first)\}}}.
 
 \pnum
 \complexity
@@ -2472,19 +2570,44 @@ assignments.
 \rSec2[alg.swap]{swap}
 
 \indexlibrary{\idxcode{swap_ranges}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class ForwardIterator1, class ForwardIterator2>
   ForwardIterator2
     swap_ranges(ForwardIterator1 first1, ForwardIterator1 last1,
                 ForwardIterator2 first2);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<ForwardIterator I1, Sentinel<I1> S1, ForwardIterator I2>
+  requires IndirectlySwappable<I1, I2>
+  pair<I1, I2>
+    swap_ranges(I1 first1, S1 last1, I2 first2);
 
+template<ForwardIterable Rng, ForwardIterator I>
+  requires IndirectlySwappable<IteratorType<Rng>, I>
+  pair<IteratorType<Rng>, I>
+    swap_ranges(Rng& rng1, I first2);
+
+template<ForwardIterator I1, Sentinel<I1> S1, ForwardIterator I2, Sentinel<I2> S2>
+  requires IndirectlySwappable<I1, I2>
+  pair<I1, I2>
+    swap_ranges(I1 first1, S1 last1, I2 first2, S2 last2);
+
+template<ForwardIterable Rng1, ForwardIterable Rng2>
+  requires IndirectlySwappable<IteratorType<Rng1>, IteratorType<Rng2>>
+  pair<IteratorType<Rng1>, IteratorType<Rng2>>
+    swap_ranges(Rng1& rng1, Rng2& rng2);
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
 \effects
-For each non-negative integer
-\tcode{n < (last1 - first1)}
+\added{For the first two overloads, let \tcode{last2} be \tcode{first2 + (last1 - first1)}. }
+For each non-negative integer \tcode{\removed{n < (last1 - first1)}}
+\tcode{\added{n < min(last1 - first1, last2 - first2)}}
 performs:
 \tcode{swap(*(first1 + n), \brk{}*(first2 + n))}.
 
@@ -2492,22 +2615,24 @@ performs:
 \requires
 The two ranges \range{first1}{last1}
 and
-\range{first2}{first2 + (last1 - first1)}
+\removed{\range{first2}{first2 + (last1 - first1)}}\brk{}\added{\range{first2}{last2}}
 shall not overlap.
 \tcode{*(first1 + n)} shall be swappable with~(\ref{swappable.requirements})
 \tcode{*(first2 + n)}.
 
 \pnum
 \returns
-\tcode{first2 + (last1 - first1)}.
+\tcode{\changed{first2 + (last1 - first1)}{\{first1 + n, first2 + n\}}}\added{, where
+\tcode{n} is }\tcode{\added{min(last1 - first1, last2 - first2)}}.
 
 \pnum
 \complexity
 Exactly
-\tcode{last1 - first1}
+\tcode{\changed{last1 - first1}{min(last1 - first1, last2 - first2)}}
 swaps.
 \end{itemdescr}
 
+\begin{removedblock}
 \indexlibrary{\idxcode{iter_swap}}%
 \begin{itemdecl}
 template<class ForwardIterator1, class ForwardIterator2>
@@ -2525,10 +2650,12 @@ template<class ForwardIterator1, class ForwardIterator2>
 \tcode{a} and \tcode{b} shall be dereferenceable. \tcode{*a} shall be
 swappable with~(\ref{swappable.requirements}) \tcode{*b}.
 \end{itemdescr}
+\end{removedblock}
 
 \rSec2[alg.transform]{Transform}
 
 \indexlibrary{\idxcode{transform}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class InputIterator, class OutputIterator,
          class UnaryOperation>
@@ -2543,45 +2670,114 @@ template<class InputIterator1, class InputIterator2,
               InputIterator2 first2, OutputIterator result,
               BinaryOperation binary_op);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<InputIterator I, Sentinel<I> S, Semiregular Proj = identity,
+    IndirectInvokable<Projected<I, Proj>> F,
+    WeakOutputIterator<ResultType<CallableType<F>,
+      ResultType<CallableType<Proj>, ValueType<I>>>> O>
+  pair<I, O>
+  transform(I first1, S last1, O result, F op, Proj proj = Proj{});
+
+template<InputIterable Rng, Semiregular Proj = identity,
+    IndirectInvokable<Projected<IteratorType<Rng>, Proj>> F,
+    WeakOutputIterator<ResultType<CallableType<F>,
+    ResultType<CallableType<Proj>, ValueType<IteratorType<Rng>>>>> O>
+  pair<IteratorType<Rng>, O>
+    transform(Rng& rng, O result, F op, Proj proj = Proj{});
+
+template<InputIterator I1, Sentinel<I1> S1, WeakInputIterator I2,
+  Semiregular Proj1 = identity, Semiregular Proj2 = identity,
+    IndirectInvokable<Projected<I1, Proj1>, Projected<I2, Proj2>> F,
+    WeakOutputIterator<ResultType<CallableType<F>,
+      ResultType<CallableType<Proj1>, ValueType<I1>>,
+      ResultType<CallableType<Proj2>, ValueType<I2>>>> O>
+tuple<I1, I2, O>
+    transform(I1 first1, S1 last1, I2 first2, O result,
+              F binary_op, Proj1 proj1 = Proj1{}, proj2 proj2 = Proj2{});
+
+template<InputIterable Rng, WeakInputIterator I,
+    Semiregular Proj1 = identity, Semiregular Proj2 = identity,
+  IndirectInvokable<Projected<IteratorType<Rng>, Proj1>, Projected<I, Proj2>> F,
+    WeakOutputIterator<ResultType<CallableType<F>,
+      ResultType<CallableType<Proj1>, ValueType<IteratorType<Rng>>>,
+      ResultType<CallableType<Proj2>, ValueType<I>>>> O>
+  tuple<IteratorType<Rng>, I, O>
+  transform(Rng& rng1, I first2, O result,
+            F binary_op, Proj1 proj1 = Proj1{}, proj2 proj2 = Proj2{});
+
+template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
+    Semiregular Proj1 = identity, Semiregular Proj2 = identity,
+  IndirectInvokable<Projected<I1, Proj1>, Projected<I2, Proj2>> F,
+    WeakOutputIterator<ResultType<CallableType<F>,
+      ResultType<CallableType<Proj1>, ValueType<I1>>,
+      ResultType<CallableType<Proj2>, ValueType<I2>>>>> O>
+  tuple<I1, I2, O>
+  transform(I1 first1, S1 last1, I2 first2, S2 last2, O result,
+            F binary_op, Proj1 proj1 = Proj1{}, proj2 proj2 = Proj2{});
+
+template<InputIterable Rng1, InputIterable Rng2,
+    Semiregular Proj1 = identity, Semiregular Proj2 = identity,
+    IndirectInvokable<Projected<IteratorType<Rng1>, Proj1>,
+      Projected<IteratorType<Rng2>, Proj2>> F,
+    WeakOutputIterator<ResultType<CallableType<F>,
+      ResultType<CallableType<Proj1>, ValueType<IteratorType<Rng1>>>,
+      ResultType<CallableType<Proj2>, ValueType<IteratorType<Rng2>>>>>> O>
+  tuple<IteratorType<Rng1>, IteratorType<Rng2>, O>
+    transform(Rng1& rng1, Rng2& rng2, O result,
+              F binary_op, Proj1 proj1 = Proj1{}, proj2 proj2 = Proj2{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+\begin{addedblock}
+\pnum
+For binary transforms that do not take \tcode{last2}, let \tcode{last2}
+be \tcode{first2 + (last1 - first1)}. Let \tcode{N} be \tcode{(last1 - first1)}
+for unary transforms, or \tcode{min(last1 - first1, last2 - first2) for binary
+transforms.}
+\end{addedblock}
+
 \pnum
 \effects
 Assigns through every iterator
 \tcode{i}
 in the range
-\range{result}{result + (last1 - first1)}
+\range{result}{result + \changed{(last1 - first1)}{N}}
 a new
 corresponding value equal to
-\tcode{op(*(first1 + (i - result))}
+\tcode{\changed{op(*(first1 + (i - result)))}{\textit{INVOKE}(op, \textit{INVOKE}(proj, *(first1 + (i - result))))}}
 or
-\tcode{binary_op(*(first1 + (i - result)), *(first2 + (i - result)))}.
+\tcode{\changed{binary_op(*(first1 + (i - result)), *(first2 + (i - result)))}
+{\textit{INVOKE}(\brk{}binary_op, \textit{INVOKE}(proj1, *(first1 + (i - result))), \textit{INVOKE}(proj2, *(first2 + (i - result))))}}.
 
 \pnum
 \requires
 \tcode{op} and \tcode{binary_op}
 shall not invalidate iterators or subranges, or modify elements in the ranges
-\crange{first1}{last1},
-\crange{first2}{first2 + (last1 - first1)},
+\crange{first1}{\changed{last1}{first1 + N}},
+\crange{first2}{first2 + \changed{(last1 - first1)}{N}},
 and
 \crange{result}
-{result + (last1 - first1)}.\footnote{The use of fully
+{result + \changed{(last1 - first1)}{N}}.\footnote{The use of fully
 closed ranges is intentional.}
 
 \pnum
 \returns
-\tcode{result + (last1 - first1)}.
+\tcode{\changed{result + (last1 - first1)}{make_pair(first1 + N, result + N)}}
+\added{ or }\tcode{\added{make_tuple(first1 + N, first2 + N, result + N)}}.
 
 \pnum
 \complexity
 Exactly
-\tcode{last1 - first1}
+\tcode{\changed{last1 - first1}{N}}
 applications of
 \tcode{op} or \tcode{binary_op}.
 
 \pnum
 \notes
-\tcode{result} may be equal to \tcode{first}
+\tcode{result} may be equal to \tcode{first\added{1}}
 in case of unary transform,
 or to \tcode{first1} or \tcode{first2}
 in case of binary transform.
@@ -2591,6 +2787,7 @@ in case of binary transform.
 
 \indexlibrary{\idxcode{replace}}%
 \indexlibrary{\idxcode{replace_if}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class ForwardIterator, class T>
   void replace(ForwardIterator first, ForwardIterator last,
@@ -2600,13 +2797,43 @@ template<class ForwardIterator, class Predicate, class T>
   void replace_if(ForwardIterator first, ForwardIterator last,
                   Predicate pred, const T& new_value);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<ForwardIterator I, Sentinel<I> S, class T1, Semiregular T2, Semiregular Proj = identity>
+  requires Writable<I, T2> &&
+    IndirectRelation<equal_to<>, Projected<I, Proj>, const T1 *>
+  I
+    replace(I first, S last, const T1& old_value, const T2& new_value, Proj proj = Proj{});
+
+template<ForwardIterable Rng, class T1, Semiregular T2, Semiregular Proj = identity>
+  requires Writable<IteratorType<Rng>, T2> &&
+    IndirectRelation<equal_to<>, Projected<IteratorType<Rng>, Proj>, const T1 *>
+  IteratorType<Rng>
+    replace(Rng& rng, const T1& old_value, const T2& new_value);
+
+template<ForwardIterator I, Sentinel<I> S, Semiregular T, Semiregular Proj = identity,
+    IndirectInvokablePredicate<Projected<I, Proj>> Pred>
+  requires Writable<I, T>
+  I
+    replace_if(I first, S last, Pred pred, const T& new_value, Proj proj = Proj{});
+
+template<ForwardIterable Rng, Semiregular T, Semiregular Proj = identity,
+    IndirectInvokablePredicate<Projected<IteratorType<Rng>, Proj>> Pred>
+  requires Writable<IteratorType<Rng>, T>
+  IteratorType<Rng>
+    replace_if(Rng& rng, Pred pred, const T& new_value, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+\begin{removedblock}
 \pnum
 \requires
 The expression
 \tcode{*first = new_value}
 shall be valid.
+\end{removedblock}
 
 \pnum
 \effects
@@ -2615,17 +2842,25 @@ Substitutes elements referred by the iterator
 in the range \range{first}{last}
 with \tcode{new_value},
 when the following corresponding conditions hold:
-\tcode{*i == old_value}, \tcode{pred(*i) != false}.
+\tcode{\changed{*i == old_value}{\textit{INVOKE}(proj, *i) == old_value}},
+\tcode{\changed{pred(*i) != false}{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *i)) != false}}.
+
+\begin{addedblock}
+\pnum
+\returns
+\tcode{last}.
+\end{addedblock}
 
 \pnum
 \complexity
 Exactly
 \tcode{last - first}
-applications of the corresponding predicate.
+applications of the corresponding predicate\added{ and projection}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{replace_copy}}%
 \indexlibrary{\idxcode{replace_copy_if}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class InputIterator, class OutputIterator, class T>
   OutputIterator
@@ -2639,17 +2874,51 @@ template<class InputIterator, class OutputIterator, class Predicate, class T>
                     OutputIterator result,
                     Predicate pred, const T& new_value);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<InputIterator I, Sentinel<I> S, class T1, Semiregular T2, WeakOutputIterator<T2> O,
+    Semiregular Proj = identity>
+  requires IndirectlyCopyable<I, O> &&
+    IndirectRelation<equal_to<>, Projected<I, Proj>, const T1 *>
+  pair<I, O>
+    replace_copy(I first, S last, O result, const T1& old_value, const T2& new_value,
+                 Proj proj = Proj{});
+
+template<InputIterable Rng, class T1, Semiregular T2, WeakOutputIterator<T2> O,
+    Semiregular Proj = identity>
+  requires IndirectlyCopyable<IteratorType<Rng>, O> &&
+    IndirectRelation<equal_to<>, Projected<IteratorType<Rng>, Proj>, const T1 *>
+  pair<IteratorType<Rng>, O>
+    replace_copy(Rng& rng, O result, const T1& old_value, const T2& new_value,
+                 Proj proj = Proj{});
+
+template<InputIterator I, Sentinel<I> S, Semiregular T, WeakOutputIterator<T> O,
+    Semiregular Proj = identity, IndirectInvokablePredicate<Projected<I, Proj>> Pred>
+  requires IndirectlyCopyable<I, O>
+  pair<I, O>
+    replace_copy_if(I first, S last, O result, Pred pred, const T& new_value,
+                    Proj proj = Proj{});
+
+template<InputIterable Rng, Semiregular T, WeakOutputIterator<T> O, Semiregular Proj = identity,
+    IndirectInvokablePredicate<Projected<IteratorType<Rng>, Proj>> Pred>
+  requires IndirectlyCopyable<IteratorType<Rng>, O>
+  pair<IteratorType<Rng>, O>
+    replace_copy_if(Rng& rng, O result, Pred pred, const T& new_value,
+                    Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
 \requires
-The results of the expressions
+\removed{The results of the expressions
 \tcode{*first}
 and
 \tcode{new_value}
 shall be writable to the
 \tcode{result}
-output iterator.
+output iterator.}
 The ranges
 \range{first}{last}
 and
@@ -2669,26 +2938,35 @@ or
 \tcode{*\brk(first + (i - result))}
 depending on whether the following corresponding conditions hold:
 
+\begin{removedblock}
 \begin{codeblock}
 *(first + (i - result)) == old_value
 pred(*(first + (i - result))) != false
 \end{codeblock}
+\end{removedblock}
+\begin{addedblock}
+\begin{codeblock}
+@\textit{INVOKE}@(proj, *(first + (i - result))) == old_value
+@\textit{INVOKE}@(pred, @\textit{INVOKE}@(proj, *(first + (i - result)))) != false
+\end{codeblock}
+\end{addedblock}
 
 \pnum
 \returns
-\tcode{result + (last - first)}.
+\tcode{\{last, result + (last - first)\}}.
 
 \pnum
 \complexity
 Exactly
 \tcode{last - first}
-applications of the corresponding predicate.
+applications of the corresponding predicate\added{ and projection}.
 \end{itemdescr}
 
 \rSec2[alg.fill]{Fill}
 
 \indexlibrary{\idxcode{fill}}%
 \indexlibrary{\idxcode{fill_n}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class ForwardIterator, class T>
   void fill(ForwardIterator first, ForwardIterator last, const T& value);
@@ -2696,8 +2974,23 @@ template<class ForwardIterator, class T>
 template<class OutputIterator, class Size, class T>
   OutputIterator fill_n(OutputIterator first, Size n, const T& value);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<Semiregular T, OutputIterator<T> O, Sentinel<I> S>
+  O fill(O first, S last, const T& value);
+
+template<Semiregular T, OutputIterable<T> Rng>
+  IteratorType<Rng>
+    fill(Rng& rng, const T& value);
+
+template<Semiregular T, WeakOutputIterator<T> O>
+  O fill_n(I first, iterator_difference_t<O> n, const T& value);
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+\begin{removedblock}
 \pnum
 \requires
 The expression
@@ -2705,17 +2998,18 @@ The expression
 shall be writable to the output iterator. The type
 \tcode{Size}
 shall be convertible to an integral type~(\ref{conv.integral}, \ref{class.conv}).
+\end{removedblock}
 
 \pnum
 \effects
-The first algorithm assigns \tcode{value} through all the iterators in the range
-\range{first}{last}. The second algorithm assigns \tcode{value}
-through all the iterators in the range \range{first}{first + n}
+\changed{The first algorithm}{\tcode{fill}} assigns \tcode{value} through all the
+iterators in the range \range{first}{last}. \changed{The second algorithm}{\tcode{fill_n}}
+assigns \tcode{value} through all the iterators in the range \range{first}{first + n}
 if \tcode{n} is positive, otherwise it does nothing.
 
 \pnum
-\returns \tcode{fill_n} returns \tcode{first + n} for non-negative values of \tcode{n}
-and \tcode{first} for negative values.
+\returns \added{\tcode{fill} returns \tcode{last}. }\tcode{fill_n} returns \tcode{first + n}
+for non-negative values of \tcode{n} and \tcode{first} for negative values.
 
 \pnum
 \complexity
@@ -2728,6 +3022,7 @@ Exactly
 
 \indexlibrary{\idxcode{generate}}%
 \indexlibrary{\idxcode{generate_n}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class ForwardIterator, class Generator>
   void generate(ForwardIterator first, ForwardIterator last,
@@ -2736,26 +3031,43 @@ template<class ForwardIterator, class Generator>
 template<class OutputIterator, class Size, class Generator>
   OutputIterator generate_n(OutputIterator first, Size n, Generator gen);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<Function F, OutputIterator<ResultType<F>> O,
+    Sentinel<O> S>
+  O generate(O first, S last, F gen);
+
+template<Function F, OutputIterable<ResultType<F>> Rng>
+  IteratorType<Rng>
+    generate(Rng& rng, F gen);
+
+template<Function F, WeakOutputIterator<ResultType<F>> O>
+  O generate_n(O first, DistanceType<O> n, F gen);
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
 \effects
-The first algorithm invokes the function object \tcode{gen} and assigns the return
-value of \tcode{gen} through all the iterators in the range
-\range{first}{last}. The second algorithm invokes the function object
-\tcode{gen} and assigns the return value of \tcode{gen} through all the iterators in
-the range \range{first}{first + n} if \tcode{n} is positive,
+\changed{The first algorithm}{\tcode{generate}} invokes the function object \tcode{gen}
+and assigns the return value of \tcode{gen} through all the iterators in the range
+\range{first}{last}. \changed{The second algorithm}{\tcode{generate_n}} invokes the
+function object \tcode{gen} and assigns the return value of \tcode{gen} through all
+the iterators in the range \range{first}{first + n} if \tcode{n} is positive,
 otherwise it does nothing.
 
+\begin{removedblock}
 \pnum
 \requires
 \tcode{gen} takes no arguments,
 \tcode{Size}
 shall be convertible to an integral type~(\ref{conv.integral}, \ref{class.conv}).
+\end{removedblock}
 
 \pnum
-\returns \tcode{generate_n} returns \tcode{first + n} for non-negative values of \tcode{n}
-and \tcode{first} for negative values.
+\returns \added{\tcode{generate} returns \tcode{last}. }\tcode{generate_n} returns
+\tcode{first + n} for non-negative values of \tcode{n} and \tcode{first} for negative values.
 
 \pnum
 \complexity
@@ -2769,23 +3081,43 @@ invocations of \tcode{gen} and assignments, respectively.
 
 \indexlibrary{\idxcode{remove}}%
 \indexlibrary{\idxcode{remove_if}}%
+\begin{removedblock}
+\end{removedblock}
+\begin{addedblock}
 \begin{itemdecl}
-template<class ForwardIterator, class T>
-  ForwardIterator remove(ForwardIterator first, ForwardIterator last,
-                         const T& value);
+template<ForwardIterator I, Sentinel<I> S, class T, Semiregular Proj = identity>
+  requires Permutable<I> &&
+    IndirectRelation<equal_to<>, Projected<I, Proj>, const T *>
+  I remove(I first, S last, const T& value, Proj proj = Proj{});
 
-template<class ForwardIterator, class Predicate>
-  ForwardIterator remove_if(ForwardIterator first, ForwardIterator last,
-                            Predicate pred);
+template<ForwardIterable Rng, class T, Semiregular Proj = identity>
+  requires Permutable<I> &&
+    IndirectRelation<equal_to<>, Projected<IteratorType<Rng>, Proj>, const T *>
+  IteratorType<Rng>
+    remove(Rng& rng, const T& value, Proj proj = Proj{});
+
+template<ForwardIterator I, Sentinel<I> S, Semiregular Proj = identity,
+    IndirectInvokablePredicate<Projected<I, Proj>> Pred>
+  requires Permutable<I>
+  I remove_if(I first, S last, Pred pred, Proj proj = Proj{});
+
+template<ForwardIterable Rng, Semiregular Proj = identity,
+    IndirectInvokablePredicate<Projected<IteratorType<Rng>, Proj>> Pred>
+  requires Permutable<I>
+  IteratorType<Rng>
+    remove_if(Rng& rng, Pred pred, Proj proj = Proj{});
 \end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+\begin{removedblock}
 \pnum
 \requires
 The type of
 \tcode{*first}
 shall satisfy the \tcode{MoveAssignable}
 requirements (Table~\ref{moveassignable}).
+\end{removedblock}
 
 \pnum
 \effects
@@ -2793,7 +3125,8 @@ Eliminates all the elements referred to by iterator
 \tcode{i}
 in the range \range{first}{last}
 for which the following corresponding conditions hold:
-\tcode{*i == value, pred(*i) != false}.
+\tcode{\changed{*i == value}{\textit{INVOKE}(proj, *i) == value}},
+\tcode{\changed{pred(*i) != false}{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *i)) != false}}.
 
 \pnum
 \returns
@@ -2806,7 +3139,7 @@ The end of the resulting range.
 \complexity
 Exactly
 \tcode{last - first}
-applications of the corresponding predicate.
+applications of the corresponding predicate\added{ and projection}.
 
 \pnum
 \realnote each element in the range \range{ret}{last}, where \tcode{ret} is
@@ -2817,6 +3150,7 @@ in that range.
 
 \indexlibrary{\idxcode{remove_copy}}%
 \indexlibrary{\idxcode{remove_copy_if}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class InputIterator, class OutputIterator, class T>
   OutputIterator
@@ -2828,6 +3162,34 @@ template<class InputIterator, class OutputIterator, class Predicate>
     remove_copy_if(InputIterator first, InputIterator last,
                    OutputIterator result, Predicate pred);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O, class T,
+    Semiregular Proj = identity>
+  requires IndirectlyCopyable<I, O> &&
+    IndirectRelation<equal_to<>, Projected<I, Proj>, const T *>
+  pair<I, O> remove_copy(I first, S last, O result, const T& value, Proj proj = Proj{});
+
+template<InputIterable Rng, WeaklyIncrementable O, class T, Semiregular Proj = identity>
+  requires IndirectlyCopyable<IteratorType<Rng>, O> &&
+    IndirectRelation<equal_to<>, Projected<IteratorType<Rng>, Proj>, const T *>
+  pair<IteratorType<Rng>, O>
+    remove_copy(Rng& rng, O result, const T& value, Proj proj = Proj{});
+
+template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O,
+    Semiregular Proj = identity, IndirectInvokablePredicate<Projected<I, Proj>> Pred>
+  requires IndirectlyCopyable<I, O>
+  pair<I, O>
+    remove_copy_if(I first, S last, O result, Pred pred, Proj proj = Proj{});
+
+template<InputIterable Rng, WeaklyIncrementable O, Semiregular Proj = identity,
+    IndirectInvokablePredicate<Projected<IteratorType<Rng>, Proj>> Pred>
+  requires IndirectlyCopyable<IteratorType<Rng>, O>
+  pair<IteratorType<Rng>, O>
+    remove_copy_if(Rng& rng, O result, Pred pred, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -2836,7 +3198,7 @@ The ranges
 \range{first}{last}
 and
 \range{result}{result + (last - first)}
-shall not overlap. The expression \tcode{*result = *first} shall be valid.
+shall not overlap.\removed{ The expression \tcode{*result = *first} shall be valid.}
 
 \pnum
 \effects
@@ -2845,17 +3207,18 @@ Copies all the elements referred to by the iterator
 in the range
 \range{first}{last}
 for which the following corresponding conditions do not hold:
-\tcode{*i == value, pred(*i) != false}.
+\tcode{\changed{*i == value}{\textit{INVOKE}(proj, *i) == value}},
+\tcode{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *i)) != false}.
 
 \pnum
 \returns
-The end of the resulting range.
+\changed{T}{A pair consisting of \tcode{last} and t}he end of the resulting range.
 
 \pnum
 \complexity
 Exactly
 \tcode{last - first}
-applications of the corresponding predicate.
+applications of the corresponding predicate\added{ and projection}.
 
 \pnum
 \remarks Stable~(\ref{algorithm.stable}).
@@ -2864,6 +3227,7 @@ applications of the corresponding predicate.
 \rSec2[alg.unique]{Unique}
 
 \indexlibrary{\idxcode{unique}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class ForwardIterator>
   ForwardIterator unique(ForwardIterator first, ForwardIterator last);
@@ -2872,6 +3236,21 @@ template<class ForwardIterator, class BinaryPredicate>
   ForwardIterator unique(ForwardIterator first, ForwardIterator last,
                          BinaryPredicate pred);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<ForwardIterator I, Sentinel<I> S, Semiregular Proj = identity,
+    IndirectInvokableRelation<Projected<I, Proj>> R = equal_to<>>
+  requires Permutable<I>
+  I unique(I first, S last, R comp = R{}, Proj proj = Proj{});
+
+template<ForwardIterable Rng, Semiregular Proj = identity,
+    IndirectInvokableRelation<Projected<IteratorType<Rng>, Proj>> R = equal_to<>>
+  requires Permutable<IteratorType<Rng>>
+  IteratorType<Rng>
+    unique(Rng& rng, R comp = R{}, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -2882,15 +3261,17 @@ consecutive group of equivalent elements referred to by the iterator
 in the range
 \range{first + 1}{last}
 for which the following conditions hold:
-\tcode{*(i - 1) == *i}
+\tcode{\changed{*(i - 1) == *i}{\textit{INVOKE}(proj, *(i - 1)) == \textit{INVOKE}(proj, *i)}}
 or
-\tcode{pred(*(i - 1), *i) != false}.
+\tcode{\changed{pred(*(i - 1), *i) != false}{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *(i - 1)), \textit{INVOKE}(proj, *i)) != false}}.
 
+\begin{removedblock}
 \pnum
 \requires
 The comparison function shall be an equivalence relation.
 The type of \tcode{*first} shall satisfy the
 \tcode{MoveAssignable} requirements (Table~\ref{moveassignable}).
+\end{removedblock}
 
 \pnum
 \returns
@@ -2900,10 +3281,12 @@ The end of the resulting range.
 \complexity
 For nonempty ranges, exactly
 \tcode{(last - first) - 1}
-applications of the corresponding predicate.
+applications of the corresponding predicate\added{ and no more than twice as many
+applications of the projection}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{unique_copy}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class InputIterator, class OutputIterator>
   OutputIterator
@@ -2916,19 +3299,34 @@ template<class InputIterator, class OutputIterator,
     unique_copy(InputIterator first, InputIterator last,
                 OutputIterator result, BinaryPredicate pred);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O,
+    Semiregular Proj = identity, IndirectInvokableRelation<Projected<I, Proj>> R = equal_to<>>
+  requires IndirectlyCopyable<I, O>
+  pair<I, O>
+    unique_copy(I first, S last, O result, R comp = R{}, Proj proj = Proj{});
 
+template<InputIterable Rng, WeaklyIncrementable O, Semiregular Proj = identity,
+    IndirectInvokableRelation<Projected<IteratorType<Rng>, Proj>> R = equal_to<>>
+  requires IndirectlyCopyable<IteratorType<Rng>, O>
+  pair<IteratorType<Rng>, O>
+    unique_copy(Rng& rng, O result, R comp = R{}, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
 \requires
-The comparison function shall be an equivalence relation.
+\removed{The comparison function shall be an equivalence relation.}
 The ranges
 \range{first}{last}
 and
 \range{result}{result+(last-first)}
-shall not overlap. The expression
+shall not overlap.\removed{ The expression
 \tcode{*result = *first}
-shall be valid. If neither
+shall be valid.} If neither
 \tcode{InputIterator}
 nor
 \tcode{OutputIterator}
@@ -2946,19 +3344,20 @@ the iterator
 in the range
 \range{first}{last}
 for which the following corresponding conditions hold:
-\tcode{*i == *(i - 1)}
+\tcode{\changed{*i == *(i - 1)}{\textit{INVOKE}(proj, *i) == \textit{INVOKE}(proj, *(i - 1))}}
 or
-\tcode{pred(*i, *(i - 1)) != false}.
+\tcode{\changed{pred(*i, *(i - 1)) != false}{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *i), \textit{INVOKE}(proj, *(i - 1))) != false}}.
 
 \pnum
 \returns
-The end of the resulting range.
+\changed{T}{A pair consisting of \tcode{last} and t}he end of the resulting range.
 
 \pnum
 \complexity
 For nonempty ranges, exactly
 \tcode{last - first - 1}
-applications of the corresponding predicate.
+applications of the corresponding predicate\added{ and no more than twice as many
+applications of the projection}.
 \end{itemdescr}
 
 \rSec2[alg.reverse]{Reverse}
