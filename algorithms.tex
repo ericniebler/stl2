@@ -592,11 +592,12 @@ namespace std {
     IteratorType<Rng>
       reverse(Rng& rng);
 
-  template<BidirectionalIterator I, Sentinel<I> S, WeakOutputIterator<ValueType<I>> O>
+  template<BidirectionalIterator I, Sentinel<I> S, WeaklyIncrementable O>
+    requires IndirectlyCopyable<I, O>
     pair<I, O> reverse_copy(I first, S last, O result);
 
-  template<BidirectionalIterable Rng,
-      WeakOutputIterator<ValueType<IteratorType<Rng>>> O>
+  template<BidirectionalIterable Rng, WeaklyIncrementable O>
+    requires IndirectlyCopyable<IteratorType<Rng>, O>
     pair<IteratorType<Rng>, O>
       reverse_copy(Rng& rng, O result);
 
@@ -614,20 +615,23 @@ namespace std {
 
   template<ForwardIterator I, Sentinel<I> S, WeaklyIncrementable O>
     requires IndirectlyCopyable<I, O>
-    pair<I, O> rotate_copy(I first, I middle, S last, O result, Proj proj = Proj{});
+    pair<I, O>
+      rotate_copy(I first, I middle, S last, O result);
 
   template<ForwardIterable Rng, WeaklyIncrementable O>
     requires IndirectlyCopyable<IteratorType<Rng>, O>
     pair<IteratorType<Rng>, O>
-      rotate_copy(Rng& rng, IteratorType<Rng> middle, O result, Proj proj = Proj{});
+      rotate_copy(Rng& rng, IteratorType<Rng> middle, O result);
 
   // \ref{alg.random.shuffle}, shuffle:
   template<RandomAccessIterator I, Sentinel<I> S, UniformRandomNumberGenerator Gen>
-    I shuffle(I first, S last, Gen&& rand);
+    requires Permutable<I> && Convertible<ResultType<Gen>, DifferenceType<I>>
+    I shuffle(I first, S last, Gen&& g);
 
   template<RandomAccessIterable Rng, UniformRandomNumberGenerator Gen>
+    requires Permutable<I> && Convertible<ResultType<Gen>, DifferenceType<I>>
     IteratorType<Rng>
-      shuffle(Rng& rng, Gen&& rand);
+      shuffle(Rng& rng, Gen&& g);
 
   // \ref{alg.partitions}, partitions:
   template<InputIterator I, Sentinel<I> S, Semiregular Proj = identity,
@@ -668,9 +672,11 @@ namespace std {
       partition_copy(I first, S last, O1 out_true, O2 out_false, Pred pred,
                      Proj proj = Proj{});
 
-  template<InputIterable Rng, WeaklyIncrementable O1, WeaklyIncrementable O2, Semiregular Proj = identity,
+  template<InputIterable Rng, WeaklyIncrementable O1, WeaklyIncrementable O2,
+      Semiregular Proj = identity,
       IndirectInvokablePredicate<Projected<IteratorType<Rng>, Proj>> Pred>
-    requires IndirectlyCopyable<IteratorType<Rng>, O1> && IndirectlyCopyable<IteratorType<Rng>, O2>
+    requires IndirectlyCopyable<IteratorType<Rng>, O1> &&
+      IndirectlyCopyable<IteratorType<Rng>, O2>
     tuple<IteratorType<Rng>, O1, O2>
       partition_copy(Rng& rng, O1 out_true, O2 out_false, Pred pred, Proj proj = Proj{});
 
@@ -685,9 +691,11 @@ namespace std {
       partition_move(I first, S last, O1 out_true, O2 out_false, Pred pred,
                      Proj proj = Proj{});
 
-  template<InputIterable Rng, WeaklyIncrementable O1, WeaklyIncrementable O2, Semiregular Proj = identity,
+  template<InputIterable Rng, WeaklyIncrementable O1, WeaklyIncrementable O2,
+      Semiregular Proj = identity,
       IndirectInvokablePredicate<Projected<IteratorType<Rng>, Proj>> Pred>
-    requires IndirectlyMovable<IteratorType<Rng>, O1> && IndirectlyMovable<IteratorType<Rng>, O2>
+    requires IndirectlyMovable<IteratorType<Rng>, O1> &&
+      IndirectlyMovable<IteratorType<Rng>, O2>
     tuple<IteratorType<Rng>, O1, O2>
       partition_move(Rng& rng, O1 out_true, O2 out_false, Pred pred,
                      Proj proj = Proj{});
@@ -3363,10 +3371,24 @@ applications of the projection}.
 \rSec2[alg.reverse]{Reverse}
 
 \indexlibrary{\idxcode{reverse}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class BidirectionalIterator>
   void reverse(BidirectionalIterator first, BidirectionalIterator last);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<BidirectionalIterator I, Sentinel<I> S>
+  requires Permutable<I>
+  I reverse(I first, S last);
+
+template<BidirectionalIterable Rng>
+  requires Permutable<IteratorType<Rng>>
+  IteratorType<Rng>
+    reverse(Rng& rng);
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -3378,9 +3400,16 @@ applies
 to all pairs of iterators
 \tcode{first + i, (last - i) - 1}.
 
+\begin{removedblock}
 \pnum
 \requires
 \tcode{*first} shall be swappable~(\ref{swappable.requirements}).
+\end{removedblock}
+
+\begin{addedblock}
+\pnum
+\returns \tcode{last}.
+\end{addedblock}
 
 \pnum
 \complexity
@@ -3390,12 +3419,26 @@ swaps.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{reverse_copy}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class BidirectionalIterator, class OutputIterator>
   OutputIterator
     reverse_copy(BidirectionalIterator first,
                  BidirectionalIterator last, OutputIterator result);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<BidirectionalIterator I, Sentinel<I> S, WeaklyIncrementable O>
+  requires IndirectlyCopyable<I, O>
+  pair<I, O> reverse_copy(I first, S last, O result);
+
+template<BidirectionalIterable Rng, WeaklyIncrementable O>
+  requires IndirectlyCopyable<IteratorType<Rng>, O>
+  pair<IteratorType<Rng>, O>
+    reverse_copy(Rng& rng, O result);
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -3420,7 +3463,7 @@ shall not overlap.
 
 \pnum
 \returns
-\tcode{result + (last - first)}.
+\tcode{\changed{result + (last - first)}{\{last, result + (last - first)\}}}.
 
 \pnum
 \complexity
@@ -3432,11 +3475,25 @@ assignments.
 \rSec2[alg.rotate]{Rotate}
 
 \indexlibrary{\idxcode{rotate}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class ForwardIterator>
   ForwardIterator rotate(ForwardIterator first, ForwardIterator middle,
               ForwardIterator last);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<ForwardIterator I, Sentinel<I> S>
+  requires Permutable<I>
+  pair<I, I> rotate(I first, I middle, S last);
+
+template<ForwardIterable Rng>
+  requires Permutable<IteratorType<Rng>>
+  pair<IteratorType<Rng>, IteratorType<Rng>>
+    rotate(Rng& rng, IteratorType<Rng> middle);
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -3448,8 +3505,10 @@ places the element from the position
 into position
 \tcode{first + (i + (last - middle)) \% (last - first)}.
 
+\ednote{Review the return value here}
+
 \pnum
-\returns \tcode{first + (last - middle)}.
+\returns \tcode{\changed{first + (last - middle)}{\{first + (last - middle), last\}}}.
 
 \pnum
 \notes
@@ -3461,14 +3520,14 @@ This is a left rotate.
 and
 \range{middle}{last}
 shall be valid ranges.
+\removed{
 \tcode{ForwardIterator} shall satisfy the requirements of
 \tcode{ValueSwappable}~(\ref{swappable.requirements}). The type of \tcode{*first} shall satisfy
 the requirements of \tcode{MoveConstructible}
 (Table~\ref{moveconstructible}) and the
 requirements of
 \tcode{MoveAssignable}
-(Table~\ref{moveassignable}).
-
+(Table~\ref{moveassignable})}.
 
 \pnum
 \complexity
@@ -3478,12 +3537,27 @@ swaps.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{rotate_copy}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class ForwardIterator, class OutputIterator>
   OutputIterator
     rotate_copy(ForwardIterator first, ForwardIterator middle,
                 ForwardIterator last, OutputIterator result);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<ForwardIterator I, Sentinel<I> S, WeaklyIncrementable O>
+  requires IndirectlyCopyable<I, O>
+  pair<I, O>
+    rotate_copy(I first, I middle, S last, O result);
+
+template<ForwardIterable Rng, WeaklyIncrementable O>
+  requires IndirectlyCopyable<IteratorType<Rng>, O>
+  pair<IteratorType<Rng>, O>
+    rotate_copy(Rng& rng, IteratorType<Rng> middle, O result);
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -3500,7 +3574,7 @@ the following assignment takes place:
 
 \pnum
 \returns
-\tcode{result + (last - first)}.
+\tcode{\changed{result + (last - first)}{\{last, result + (last - first)\}}}.
 
 \pnum
 \requires
@@ -3520,12 +3594,26 @@ assignments.
 \rSec2[alg.random.shuffle]{Shuffle}
 
 \indexlibrary{\idxcode{shuffle}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class RandomAccessIterator, class UniformRandomNumberGenerator>
   void shuffle(RandomAccessIterator first,
                       RandomAccessIterator last,
                       UniformRandomNumberGenerator&& g);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<RandomAccessIterator I, Sentinel<I> S, UniformRandomNumberGenerator Gen>
+  requires Permutable<I> && Convertible<ResultType<Gen>, DifferenceType<I>>
+  I shuffle(I first, S last, Gen&& g);
+
+template<RandomAccessIterable Rng, UniformRandomNumberGenerator Gen>
+  requires Permutable<I> && Convertible<ResultType<Gen>, DifferenceType<I>>
+  IteratorType<Rng>
+    shuffle(Rng& rng, Gen&& g);
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -3534,6 +3622,7 @@ Permutes the elements in the range
 \range{first}{last}
 such that each possible permutation of those elements has equal probability of appearance.
 
+\begin{removedblock}
 \pnum
 \requires
 \tcode{RandomAccessIterator} shall satisfy the requirements of
@@ -3543,12 +3632,18 @@ The type
 random number generator~(\ref{rand.req.urng}) type whose return type is
 convertible to
 \tcode{iterator_traits<Random\-Access\-Itera\-tor>::difference_type}.
+\end{removedblock}
 
 \pnum
 \complexity
 Exactly
 \tcode{(last - first) - 1}
 swaps.
+
+\begin{addedblock}
+\pnum
+\returns \tcode{last}
+\end{addedblock}
 
 \pnum
 \notes
@@ -3561,67 +3656,140 @@ randomness.
 \rSec2[alg.partitions]{Partitions}
 
 \indexlibrary{\idxcode{is_partitioned}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class InputIterator, class Predicate>
   bool is_partitioned(InputIterator first, InputIterator last, Predicate pred);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<InputIterator I, Sentinel<I> S, Semiregular Proj = identity,
+    IndirectInvokablePredicate<Projected<I, Proj>> Pred>
+  bool is_partitioned(I first, S last, Pred pred, Proj proj = Proj{});
+
+template<InputIterable Rng, Semiregular Proj = identity,
+    IndirectInvokablePredicate<Projected<IteratorType<Rng>, Proj>> Pred>
+  bool
+    is_partitioned(Rng&& rng, Pred pred, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+\begin{removedblock}
 \pnum
 \requires \tcode{InputIterator}'s value type shall be convertible to \tcode{Predicate}'s argument type.
+\end{removedblock}
 
 \pnum
 \returns \tcode{true} if
 \range{first}{last} is empty or if
-\range{first}{last} is partitioned by \tcode{pred}, i.e. if all elements that satisfy \tcode{pred} appear before those that do not.
+\range{first}{last} is partitioned by \tcode{pred}\added{ and \tcode{proj}}, i.e. if all
+\changed{elements that satisfy \tcode{pred} appear}{iterators \tcode{i} for which
+\tcode{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *i)) != false} come} before those that do not\added{,
+for every \tcode{i} in \range{first}{last}}.
 
 \pnum
-\complexity Linear. At most \tcode{last - first} applications of \tcode{pred}.
+\complexity Linear. At most \tcode{last - first} applications of \tcode{pred}\added{ and \tcode{proj}}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{partition}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class ForwardIterator, class Predicate>
   ForwardIterator
     partition(ForwardIterator first,
               ForwardIterator last, Predicate pred);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<ForwardIterator I, Sentinel<I> S, Semiregular Proj = identity,
+    IndirectInvokablePredicate<Projected<I, Proj>> Pred>
+  requires Permutable<I>
+  I partition(I first, S last, Pred pred, Proj proj = Proj{});
+
+template<ForwardIterable Rng, Semiregular Proj = identity,
+    IndirectInvokablePredicate<Projected<IteratorType<Rng>, Proj>> Pred>
+  requires Permutable<IteratorType<Rng>>
+  IteratorType<Rng>
+    partition(Rng& rng, Pred pred, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
-\effects Places all the elements in the range \range{first}{last} that satisfy \tcode{pred} before all the elements that do not satisfy it.
+\begin{removedblock}
+\effects Places all the elements in the range \range{first}{last} that satisfy
+\tcode{pred} before all the elements that do not satisfy it.
+\end{removedblock}
+
+\begin{addedblock}
+\effects Permutes the elements in the range \range{first}{last} such that there exists and iterator \tcode{i}
+such that for every iterator \tcode{j} in the range \range{first}{i}
+\tcode{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *j)) != false}, and for every iterator \tcode{k} in the
+range \range{i}{last}, \tcode{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *k)) == false}
+\end{addedblock}
 
 \pnum
-\returns An iterator \tcode{i} such that for every iterator \tcode{j} in the range
-\range{first}{i} \tcode{pred(*j) != false}, and for every iterator \tcode{k} in the
-range \range{i}{last}, \tcode{pred(*k) == false}.
+\returns An iterator \tcode{i} such that for every iterator \tcode{j} in the range \range{first}{i}
+\tcode{\changed{pred(*j) != false}{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *j)) != false}},
+and for every iterator \tcode{k} in the range \range{i}{last},
+\tcode{\changed{pred(*k) == false}{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *k)) == false}}.
 
+\begin{removedblock}
 \pnum
 \requires
 \tcode{ForwardIterator} shall satisfy the requirements of
 \tcode{ValueSwappable}~(\ref{swappable.requirements}).
+\end{removedblock}
 
 \pnum
-\complexity If ForwardIterator meets the requirements for a BidirectionalIterator, at most
+\complexity If \changed{ForwardIterator}{I} meets the requirements for a BidirectionalIterator, at most
 \tcode{(last - first) / 2} swaps are done; otherwise at most \tcode{last - first} swaps
-are done. Exactly \tcode{last - first} applications of the predicate are done.
+are done. Exactly \tcode{last - first} applications of the predicate\added{ and projection} are done.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{stable_partition}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class BidirectionalIterator, class Predicate>
   BidirectionalIterator
     stable_partition(BidirectionalIterator first,
                      BidirectionalIterator last, Predicate pred);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<BidirectionalIterator I, Sentinel<I> S, Semiregular Proj = identity,
+    IndirectInvokablePredicate<Projected<I, Proj>> Pred>
+  requires Permutable<I>
+  I stable_partition(I first, S last, Pred pred, Proj proj = Proj{});
+
+template<BidirectionalIterable Rng, Semiregular Proj = identity,
+    IndirectInvokablePredicate<Projected<IteratorType<Rng>, Proj>> Pred>
+  requires Permutable<IteratorType<Rng>>
+  IteratorType<Rng>
+    stable_partition(Rng& rng, Pred pred, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
+\begin{removedblock}
 \effects
 Places all the elements in the range
 \range{first}{last}
 that satisfy \tcode{pred} before all the
 elements that do not satisfy it.
+\end{removedblock}
+
+\begin{addedblock}
+\effects Permutes the elements in the range \range{first}{last} such that there exists and iterator \tcode{i}
+such that for every iterator \tcode{j} in the range \range{first}{i}
+\tcode{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *j)) != false}, and for every iterator \tcode{k} in the
+range \range{i}{last}, \tcode{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *k)) == false}
+\end{addedblock}
 
 \pnum
 \returns
@@ -3631,14 +3799,15 @@ such that for every iterator
 \tcode{j}
 in the range
 \range{first}{i},
-\tcode{pred(*j) != false},
+\tcode{\changed{pred(*j) != false}{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *j)) != false}},
 and for every iterator
 \tcode{k}
 in the range
 \range{i}{last},
-\tcode{pred(*k) == false}.
+\tcode{\changed{pred(*k) == false}{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *k)) == false}}.
 The relative order of the elements in both groups is preserved.
 
+\begin{removedblock}
 \pnum
 \requires
 \tcode{BidirectionalIterator} shall satisfy the requirements of
@@ -3646,6 +3815,7 @@ The relative order of the elements in both groups is preserved.
 of \tcode{*first} shall satisfy the requirements of
 \tcode{MoveConstructible} (Table~\ref{moveconstructible}) and of
 \tcode{MoveAssignable} (Table~\ref{moveassignable}).
+\end{removedblock}
 
 \pnum
 \complexity
@@ -3654,10 +3824,11 @@ At most
 swaps, but only linear number of swaps if there is enough extra memory.
 Exactly
 \tcode{last - first}
-applications of the predicate.
+applications of the predicate\added{ and projection}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{partition_copy}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class InputIterator, class OutputIterator1,
           class OutputIterator2, class Predicate>
@@ -3666,43 +3837,128 @@ template<class InputIterator, class OutputIterator1,
                  OutputIterator1 out_true, OutputIterator2 out_false,
                  Predicate pred);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O1, WeaklyIncrementable O2,
+    Semiregular Proj = identity, IndirectInvokablePredicate<Projected<I, Proj>> Pred>
+  requires IndirectlyCopyable<I, O1> && IndirectlyCopyable<I, O2>
+  tuple<I, O1, O2>
+    partition_copy(I first, S last, O1 out_true, O2 out_false, Pred pred,
+                   Proj proj = Proj{});
 
+template<InputIterable Rng, WeaklyIncrementable O1, WeaklyIncrementable O2,
+    Semiregular Proj = identity,
+    IndirectInvokablePredicate<Projected<IteratorType<Rng>, Proj>> Pred>
+  requires IndirectlyCopyable<IteratorType<Rng>, O1> &&
+    IndirectlyCopyable<IteratorType<Rng>, O2>
+  tuple<IteratorType<Rng>, O1, O2>
+    partition_copy(Rng& rng, O1 out_true, O2 out_false, Pred pred, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{InputIterator}'s value type shall be \tcode{CopyAssignable}, and shall be
+\requires \removed{\tcode{InputIterator}'s value type shall be \tcode{CopyAssignable}, and shall be
 writable to the \tcode{out_true} and \tcode{out_false} \tcode{OutputIterator}s, and shall be
-convertible to \tcode{Predicate}'s argument type. The input range shall not overlap with
+convertible to \tcode{Predicate}'s argument type. }The input range shall not overlap with
 either of the output ranges.
 
 \pnum
-\effects For each iterator \tcode{i} in \range{first}{last}, copies \tcode{*i} to the output range beginning with \tcode{out_true} if \tcode{pred(*i)} is \tcode{true}, or to the output range beginning with \tcode{out_false} otherwise.
+\effects For each iterator \tcode{i} in \range{first}{last}, copies \tcode{*i} to the output range
+beginning with \tcode{out_true} if
+\tcode{\changed{pred(*i)}{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *i))}} is \tcode{true}, or to
+the output range beginning with \tcode{out_false} otherwise.
 
 \pnum
-\returns A pair \tcode{p} such that \tcode{p.first} is the end of the output range beginning at \tcode{out_true} and \tcode{p.second} is the end of the output range beginning at \tcode{out_false}.
+\returns A \changed{pair}{tuple} \tcode{p} such that\added{ \tcode{get<0>(p)} is \tcode{last}},
+\tcode{\changed{p.first}{get<1>(p)}} is the end of the output range beginning at \tcode{out_true}
+and \tcode{\changed{p.second}{get<2>(p)}} is the end of the output range beginning at \tcode{out_false}.
 
 \pnum
-\complexity Exactly \tcode{last - first} applications of \tcode{pred}.
+\complexity Exactly \tcode{last - first} applications of \tcode{pred}\added{ and \tcode{proj}}.
 \end{itemdescr}
 
+
+\begin{addedblock}
+\indexlibrary{\idxcode{partition_move}}%
+\begin{itemdecl}
+template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O1, WeaklyIncrementable O2,
+    Semiregular Proj = identity,
+    IndirectInvokablePredicate<Projected<I, Proj>> Pred>
+  requires IndirectlyMovable<I, O1> && IndirectlyMovable<I, O2>
+  tuple<I, O1, O2>
+    partition_move(I first, S last, O1 out_true, O2 out_false, Pred pred,
+                   Proj proj = Proj{});
+
+template<InputIterable Rng, WeaklyIncrementable O1, WeaklyIncrementable O2,
+    Semiregular Proj = identity,
+    IndirectInvokablePredicate<Projected<IteratorType<Rng>, Proj>> Pred>
+  requires IndirectlyMovable<IteratorType<Rng>, O1> &&
+    IndirectlyMovable<IteratorType<Rng>, O2>
+  tuple<IteratorType<Rng>, O1, O2>
+    partition_move(Rng& rng, O1 out_true, O2 out_false, Pred pred,
+                   Proj proj = Proj{});
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires The input range shall not overlap with either of the output ranges.
+
+\pnum
+\effects For each iterator \tcode{i} in \range{first}{last}, moves \tcode{*i} to the output range
+beginning with \tcode{out_true} if
+\tcode{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *i))} is \tcode{true}, or to
+the output range beginning with \tcode{out_false} otherwise.
+
+\pnum
+\returns A tuple \tcode{p} such that \tcode{get<0>(p)} is \tcode{last},
+\tcode{get<1>(p)} is the end of the output range beginning at \tcode{out_true}
+and \tcode{get<2>(p)} is the end of the output range beginning at \tcode{out_false}.
+
+\pnum
+\complexity Exactly \tcode{last - first} applications of \tcode{pred} and \tcode{proj}.
+\end{itemdescr}
+\end{addedblock}
+
+
 \indexlibrary{\idxcode{partition_point}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class ForwardIterator, class Predicate>
   ForwardIterator partition_point(ForwardIterator first,
                                   ForwardIterator last,
                                   Predicate pred);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<ForwardIterator I, Sentinel<I> S, Semiregular Proj = identity,
+    IndirectInvokablePredicate<Projected<I, Proj>> Pred>
+  I partition_point(I first, S last, Pred pred, Proj proj = Proj{});
 
+template<ForwardIterable Rng, Semiregular Proj = identity,
+    IndirectInvokablePredicate<Projected<IteratorType<Rng>, Proj>> Pred>
+  IteratorType<Rng>
+    partition_point(Rng& rng, Pred pred, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{ForwardIterator}'s value type shall be convertible to \tcode{Predicate}'s argument type. \range{first}{last} shall be partitioned by \tcode{pred}, i.e. all elements that satisfy \tcode{pred} shall appear before those that do not.
+\requires \removed{\tcode{ForwardIterator}'s value type shall be convertible to \tcode{Predicate}'s argument
+type. }\range{first}{last} shall be partitioned by \tcode{pred}\added{ and \tcode{proj}}, i.e.
+\removed{all elements that satisfy \tcode{pred} shall appear before those that do not}
+\added{there should be an iterator \tcode{mid} such that }
+\tcode{\added{all_of(first, mid, pred, proj)}}\added{ and }\tcode{\added{none_of(mid, last, pred, proj)}}
+\added{ are both true}.
 
 \pnum
-\returns An iterator \tcode{mid} such that \tcode{all_of(first, mid, pred)} and \tcode{none_of(mid, last, pred)} are both true.
+\returns An iterator \tcode{mid} such that \tcode{all_of(first, mid, pred\added{, proj})} and
+\tcode{none_of(mid, last, pred\added{, proj})} are both true.
 
 \pnum
-\complexity \bigoh{log(last - first)} applications of \tcode{pred}.
+\complexity \bigoh{log(last - first)} applications of \tcode{pred}\added{ and \tcode{proj}}.
 \end{itemdescr}
 
 
