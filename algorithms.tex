@@ -3965,28 +3965,30 @@ type. }\range{first}{last} shall be partitioned by \tcode{pred}\added{ and \tcod
 \rSec1[alg.sorting]{Sorting and related operations}
 
 \pnum
-All the operations in~\ref{alg.sorting} have two versions: one that takes a function object of type
+All the operations in~\ref{alg.sorting} \changed{have two versions: one that takes a function object of type
 \tcode{Compare}
 and one that uses an
-\tcode{operator<}.
+\tcode{operator<}}{take an optional binary invokable predicate of type \tcode{Comp} that defaults to \tcode{less<>}}.
 
 \pnum
-\tcode{Compare}
-is a function object
-type~(\ref{function.objects}). The return value of the function call operation applied to
-an object of type \tcode{Compare}, when contextually converted to
+\tcode{\changed{Compare}{Comp}}
+is \changed{a function object
+type~(\ref{function.objects})}{an invokable object~(\ref{func.require})}. The return value of \changed{the
+function call operation}{the \tcode{\textit{INVOKE}} operation} applied to
+an object of type \tcode{\changed{Compare}{Comp}}, when contextually converted to
 \tcode{bool} (Clause~\ref{conv}),
 yields \tcode{true} if the first argument of the call
 is less than the second, and
 \tcode{false}
 otherwise.
-\tcode{Compare comp}
+\tcode{\changed{Compare}{Comp} comp}
 is used throughout for algorithms assuming an ordering relation.
 It is assumed that
 \tcode{comp}
 will not apply any non-constant function through the dereferenced iterator.
 
 \pnum
+\removed{
 For all algorithms that take
 \tcode{Compare},
 there is a version that uses
@@ -3995,7 +3997,7 @@ instead.
 That is,
 \tcode{comp(*i, *j) != false}
 defaults to
-\tcode{*i < *j != false}.
+\tcode{*i < *j != false}.}
 For algorithms other than those described in~\ref{alg.binary.search} to work correctly,
 \tcode{comp} has to induce a strict weak ordering on the values.
 
@@ -4003,7 +4005,7 @@ For algorithms other than those described in~\ref{alg.binary.search} to work cor
 The term
 \techterm{strict}
 refers to the
-requirement of an irreflexive relation (\tcode{!comp(x, x)} for all \tcode{x}),
+requirement of an irreflexive relation (\tcode{\changed{!comp(x, x)}{!\textit{INVOKE}(comp, x, x)}} for all \tcode{x}),
 and the term
 \techterm{weak}
 to requirements that are not as strong as
@@ -4013,18 +4015,18 @@ ordering.
 If we define
 \tcode{equiv(a, b)}
 as
-\tcode{!comp(a, b) \&\& !comp(b, a)},
+\tcode{\changed{!comp(a, b) \&\& !comp(b, a)}{!\textit{INVOKE}(comp, a, b) \&\& !\textit{INVOKE}(comp, b, a)}},
 then the requirements are that
 \tcode{comp}
 and
 \tcode{equiv}
-both be transitive  relations:
+both be transitive relations:
 
 \begin{itemize}
 \item
-\tcode{comp(a, b) \&\& comp(b, c)}
+\tcode{\changed{comp(a, b) \&\& comp(b, c)}{\textit{INVOKE}(comp, a, b) \&\& \textit{INVOKE}(comp, b, c)}}
 implies
-\tcode{comp(a, c)}
+\tcode{\changed{comp(a, c)}{\textit{INVOKE}(comp, a, c)}}
 \item
 \tcode{equiv(a, b) \&\& equiv(b, c)}
 implies
@@ -4048,15 +4050,15 @@ The induced relation is a strict total ordering.
 
 \pnum
 A sequence is
-\techterm{sorted with respect to a comparator}
-\tcode{comp} if for every iterator
+\techterm{sorted with respect to a comparator\added{ and projection}}
+\tcode{comp}\added{ and \tcode{proj}} if for every iterator
 \tcode{i}
 pointing to the sequence and every non-negative integer
 \tcode{n}
 such that
 \tcode{i + n}
 is a valid iterator pointing to an element of the sequence,
-\tcode{comp(*(i + n), *i) == false}.
+\tcode{\changed{comp(*(i + n), *i) == false}{\textit{INVOKE}(comp, \textit{INVOKE}(proj, *(i + n)), \textit{INVOKE}(proj, *i)) == false}}.
 
 \pnum
 A sequence
@@ -4090,6 +4092,7 @@ are considered equivalent if and only if
 \rSec3[sort]{\tcode{sort}}
 
 \indexlibrary{\idxcode{sort}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class RandomAccessIterator>
   void sort(RandomAccessIterator first, RandomAccessIterator last);
@@ -4098,6 +4101,20 @@ template<class RandomAccessIterator, class Compare>
   void sort(RandomAccessIterator first, RandomAccessIterator last,
             Compare comp);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<RandomAccessIterator I, Sentinel<I> S, Semiregular Comp = less<>,
+    Semiregular Proj = identity>
+  requires Sortable<I, Comp, Proj>
+  I sort(I first, S last, Comp comp = Comp{}, Proj proj = Proj{});
+
+template<RandomAccessIterable Rng, Semiregular Comp = less<>, Semiregular Proj = identity>
+  requires Sortable<IteratorType<Rng>, Comp, Proj>
+  IteratorType<Rng>
+    sort(Rng& rng, Comp comp = Comp{}, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -4105,6 +4122,7 @@ template<class RandomAccessIterator, class Compare>
 Sorts the elements in the range
 \range{first}{last}.
 
+\begin{removedblock}
 \pnum
 \requires
 \tcode{RandomAccessIterator} shall satisfy the requirements of
@@ -4112,6 +4130,7 @@ Sorts the elements in the range
 of \tcode{*first} shall satisfy the requirements of
 \tcode{MoveConstructible} (Table~\ref{moveconstructible}) and of
 \tcode{MoveAssignable} (Table~\ref{moveassignable}).
+\end{removedblock}
 
 \pnum
 \complexity
@@ -4124,6 +4143,7 @@ comparisons.
 \rSec3[stable.sort]{\tcode{stable_sort}}
 
 \indexlibrary{\idxcode{stable_sort}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class RandomAccessIterator>
   void stable_sort(RandomAccessIterator first, RandomAccessIterator last);
@@ -4132,12 +4152,27 @@ template<class RandomAccessIterator, class Compare>
   void stable_sort(RandomAccessIterator first, RandomAccessIterator last,
                    Compare comp);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<RandomAccessIterator I, Sentinel<I> S, Semiregular Comp = less<>,
+    Semiregular Proj = identity>
+  requires Sortable<I, Comp, Proj>
+  I stable_sort(I first, S last, Comp comp = Comp{}, Proj proj = Proj{});
+
+template<RandomAccessIterable Rng, Semiregular Comp = less<>, Semiregular Proj = identity>
+  requires Sortable<IteratorType<Rng>, Comp, Proj>
+  IteratorType<Rng>
+    stable_sort(Rng& rng, Comp comp = Comp{}, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
 \effects
 Sorts the elements in the range \range{first}{last}.
 
+\begin{removedblock}
 \pnum
 \requires
 \tcode{RandomAccessIterator} shall satisfy the requirements of
@@ -4145,7 +4180,7 @@ Sorts the elements in the range \range{first}{last}.
 of \tcode{*first} shall satisfy the requirements of
 \tcode{MoveConstructible} (Table~\ref{moveconstructible}) and of
 \tcode{MoveAssignable} (Table~\ref{moveassignable}).
-
+\end{removedblock}
 
 \pnum
 \complexity
@@ -4162,6 +4197,7 @@ $N \log(N)$.
 \rSec3[partial.sort]{\tcode{partial_sort}}
 
 \indexlibrary{\idxcode{partial_sort}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class RandomAccessIterator>
   void partial_sort(RandomAccessIterator first,
@@ -4174,6 +4210,21 @@ template<class RandomAccessIterator, class Compare>
                     RandomAccessIterator last,
                     Compare comp);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<RandomAccessIterator I, Sentinel<I> S, Semiregular Comp = less<>,
+    Semiregular Proj = identity>
+  requires Sortable<I, Comp, Proj>
+  I partial_sort(I first, I middle, S last, Comp comp = Comp{}, Proj proj = Proj{});
+
+template<RandomAccessIterable Rng, Semiregular Comp = less<>, Semiregular Proj = identity>
+  requires Sortable<IteratorType<Rng>, Comp, Proj>
+  IteratorType<Rng>
+    partial_sort(Rng& rng, IteratorType<Rng> middle, Comp comp = Comp{},
+                 Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -4189,6 +4240,7 @@ The rest of the elements in the range
 are placed in an unspecified order.
 \indextext{unspecified}%
 
+\begin{removedblock}
 \pnum
 \requires
 \tcode{RandomAccessIterator} shall satisfy the requirements of
@@ -4196,7 +4248,7 @@ are placed in an unspecified order.
 of \tcode{*first} shall satisfy the requirements of
 \tcode{MoveConstructible} (Table~\ref{moveconstructible}) and of
 \tcode{MoveAssignable} (Table~\ref{moveassignable}).
-
+\end{removedblock}
 
 \pnum
 \complexity
@@ -4208,6 +4260,7 @@ comparisons.
 \rSec3[partial.sort.copy]{\tcode{partial_sort_copy}}
 
 \indexlibrary{\idxcode{partial_sort_copy}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class InputIterator, class RandomAccessIterator>
   RandomAccessIterator
@@ -4223,6 +4276,25 @@ template<class InputIterator, class RandomAccessIterator,
                       RandomAccessIterator result_last,
                       Compare comp);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<InputIterator I1, Sentinel<I> S1, RandomAccessIterator I2, Sentinel<I> S2,
+    Semiregular R = less<>, Semiregular Proj = identity>
+  requires IndirectlyCopyable<I1, I2> && Sortable<I2, Comp, Proj>
+  I2
+    partial_sort_copy(I1 first, S1 last, I2 result_first, S2 result_last,
+                      Comp comp = Comp{}, Proj proj = Proj{});
+
+template<InputIterable Rng1, RandomAccessIterable Rng2, Semiregular R = less<>,
+    Semiregular Proj = identity>
+  requires IndirectlyCopyable<IteratorType<Rng1>, IteratorType<Rng2>> &&
+      Sortable<IteratorType<Rng2>, Comp, Proj>
+  IteratorType<Rng2>
+    partial_sort_copy(Rng1& rng, Rng2& result_rng, Comp comp = Comp{},
+                      Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -4238,6 +4310,7 @@ The smaller of:
 \tcode{result_last} or
 \tcode{result_first + (last - first)}.
 
+\begin{removedblock}
 \pnum
 \requires
 \tcode{RandomAccessIterator} shall satisfy the requirements of
@@ -4245,7 +4318,7 @@ The smaller of:
 of \tcode{*result_first} shall satisfy the requirements of
 \tcode{MoveConstructible} (Table~\ref{moveconstructible}) and of
 \tcode{Move\-Assignable} (Table~\ref{moveassignable}).
-
+\end{removedblock}
 
 \pnum
 \complexity
@@ -4257,17 +4330,31 @@ comparisons.
 \rSec3[is.sorted]{\tcode{is_sorted}}
 
 \indexlibrary{\idxcode{is_sorted}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class ForwardIterator>
   bool is_sorted(ForwardIterator first, ForwardIterator last);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<ForwardIterator I, Sentinel<I> S, Semiregular Proj = identity,
+    IndirectInvokableRelation<Projected<I, Proj>> Comp = less<>>
+  bool is_sorted(I first, S last, Comp comp = Comp{}, Proj proj = Proj{});
 
+template<ForwardIterable Rng, Semiregular Proj = identity,
+    IndirectInvokableRelation<Projected<IteratorType<Rng>, Proj>> Comp = less<>>
+  bool
+    is_sorted(Rng&& rng, Comp comp = Comp{}, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
-\returns \tcode{is_sorted_until(first, last) == last}
+\returns \tcode{is_sorted_until(first, last\added{, comp, proj}) == last}
 \end{itemdescr}
 
+\begin{removedblock}
 \indexlibrary{\idxcode{is_sorted}}%
 \begin{itemdecl}
 template<class ForwardIterator, class Compare>
@@ -4275,13 +4362,14 @@ template<class ForwardIterator, class Compare>
     Compare comp);
 \end{itemdecl}
 
-
 \begin{itemdescr}
 \pnum
 \returns \tcode{is_sorted_until(first, last, comp) == last}
 \end{itemdescr}
+\end{removedblock}
 
 \indexlibrary{\idxcode{is_sorted_until}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class ForwardIterator>
   ForwardIterator is_sorted_until(ForwardIterator first, ForwardIterator last);
@@ -4289,7 +4377,19 @@ template<class ForwardIterator, class Compare>
   ForwardIterator is_sorted_until(ForwardIterator first, ForwardIterator last,
     Compare comp);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<ForwardIterator I, Sentinel<I> S, Semiregular Proj = identity,
+    IndirectInvokableRelation<Projected<I, Proj>> Comp = less<>>
+  I is_sorted_until(I first, S last, Comp comp = Comp{}, Proj proj = Proj{});
 
+template<ForwardIterable Rng, Semiregular Proj = identity,
+    IndirectInvokableRelation<Projected<IteratorType<Rng>, Proj>> Comp = less<>>
+  IteratorType<Rng>
+    is_sorted_until(Rng& rng, Comp comp = Comp{}, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -4305,6 +4405,7 @@ range \range{first}{i} is sorted.
 \rSec2[alg.nth.element]{Nth element}
 
 \indexlibrary{\idxcode{nth_element}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class RandomAccessIterator>
   void nth_element(RandomAccessIterator first, RandomAccessIterator nth,
@@ -4314,6 +4415,20 @@ template<class RandomAccessIterator, class Compare>
   void nth_element(RandomAccessIterator first, RandomAccessIterator nth,
                    RandomAccessIterator last,  Compare comp);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<RandomAccessIterator I, Sentinel<I> S, Semiregular Comp = less<>,
+    Semiregular Proj = identity>
+  requires Sortable<I, Comp, Proj>
+  I nth_element(I first, I nth, S last, Comp comp, Proj proj = Proj{});
+
+template<RandomAccessIterable Rng, Semiregular Comp = less<>, Semiregular Proj = identity>
+  requires Sortable<IteratorType<Rng>, Comp, Proj>
+  IteratorType<Rng>
+    nth_element(Rng& rng, IteratorType<Rng> nth, Comp comp, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -4330,11 +4445,13 @@ and every iterator
 \tcode{j}
 in the range
 \range{nth}{last}
-it holds that:
+it holds that:\changed{
 \tcode{!(*j < *i)}
 or
-\tcode{comp(*j, *i) == false}.
+\tcode{comp(*j, *i) == false}}{
+\tcode{\textit{INVOKE}(comp, \textit{INVOKE}(proj, *j), \textit{INVOKE}(proj, *i)) == false}}.
 
+\begin{removedblock}
 \pnum
 \requires
 \tcode{RandomAccessIterator} shall satisfy the requirements of
@@ -4342,6 +4459,7 @@ or
 of \tcode{*first} shall satisfy the requirements of
 \tcode{MoveConstructible} (Table~\ref{moveconstructible}) and of
 \tcode{MoveAssignable} (Table~\ref{moveassignable}).
+\end{removedblock}
 
 
 \pnum
