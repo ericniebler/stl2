@@ -4987,6 +4987,7 @@ to contain the minimum, and so on.
 \rSec3[includes]{\tcode{includes}}
 
 \indexlibrary{\idxcode{includes}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class InputIterator1, class InputIterator2>
   bool includes(InputIterator1 first1, InputIterator1 last1,
@@ -4997,6 +4998,25 @@ template<class InputIterator1, class InputIterator2, class Compare>
                 InputIterator2 first2, InputIterator2 last2,
                 Compare comp);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
+    Semiregular Proj1 = identity, Semiregular Proj2 = identity,
+    IndirectInvokableRelation<Projected<I1, Proj1>, Projected<I2, Proj2>> Comp = less<>>
+  bool
+    includes(I1 first1, S1 last1, I2 first2, S2 last2, Comp comp = Comp{},
+             Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+
+template<InputIterable Rng1, InputIterable Rng2, Semiregular Proj1 = identity,
+    Semiregular Proj2 = identity,
+    IndirectInvokableRelation<Projected<IteratorType<Rng1>, Proj1>,
+      Projected<IteratorType<Rng2>, Proj2>> Comp = less<>>
+  bool
+    includes(Rng1&& rng1, Rng2&& rng2, Comp comp = Comp{},
+             Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -5015,12 +5035,13 @@ otherwise.
 \complexity
 At most
 \tcode{2 * ((last1 - first1) + (last2 - first2)) - 1}
-comparisons.
+\changed{comparisons}{applications of the comparison function and projections}.
 \end{itemdescr}
 
 \rSec3[set.union]{\tcode{set_union}}
 
 \indexlibrary{\idxcode{set_union}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class InputIterator1, class InputIterator2,
          class OutputIterator>
@@ -5036,6 +5057,27 @@ template<class InputIterator1, class InputIterator2,
               InputIterator2 first2, InputIterator2 last2,
               OutputIterator result, Compare comp);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
+    WeaklyIncrementable O, Semiregular Proj1 = identity, Semiregular Proj2 = identity,
+    IndirectInvokableRelation<Projected<I1, Proj1>, Projected<I2, Proj2>> Comp = less<>>
+  requires Mergeable<I1, I2, O, Comp, Proj1, Proj2>
+  tuple<I1, I2, O>
+    set_union(I1 first1, S1 last1, I2 first2, S2 last2, O result, Comp comp = Comp{},
+              Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+
+template<InputIterable Rng1, InputIterable Rng2, WeaklyIncrementable O,
+    Semiregular Proj1 = identity, Semiregular Proj2 = identity,
+    IndirectInvokableRelation<Projected<IteratorType<Rng1>, Proj1>,
+      Projected<IteratorType<Rng2>, Proj2>> Comp = less<>>
+  requires Mergeable<IteratorType<Rng1>, IteratorType<Rng2>, O, Comp, Proj1, Proj2>
+  tuple<IteratorType<Rng1>, IteratorType<Rng2>, O>
+    set_union(Rng1& rng1, Rng2& rng2, O result, Comp comp = Comp{},
+              Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -5049,13 +5091,15 @@ The resulting range shall not overlap with either of the original ranges.
 
 \pnum
 \returns
-The end of the constructed range.
+\removed{The end of the constructed range}
+\tcode{\added{make_tuple(last1, last2, result + $n$)}}\added{, where \tcode{$n$} is
+the number of elements in the constructed range}.
 
 \pnum
 \complexity
 At most
 \tcode{2 * ((last1 - first1) + (last2 - first2)) - 1}
-comparisons.
+\changed{comparisons}{applications of the comparison function and projections}.
 
 \pnum
 \notes If \range{first1}{last1} contains $m$ elements that are equivalent to
@@ -5068,6 +5112,7 @@ be copied to the output range, in order.
 \rSec3[set.intersection]{\tcode{set_intersection}}
 
 \indexlibrary{\idxcode{set_intersection}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class InputIterator1, class InputIterator2,
          class OutputIterator>
@@ -5083,6 +5128,27 @@ template<class InputIterator1, class InputIterator2,
                      InputIterator2 first2, InputIterator2 last2,
                      OutputIterator result, Compare comp);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
+    WeaklyIncrementable O, Semiregular Proj1 = identity, Semiregular Proj2 = identity,
+    IndirectInvokableRelation<Projected<I1, Proj1>, Projected<I2, Proj2>> Comp = less<>>
+  requires Mergeable<I1, I2, O, Comp, Proj1, Proj2>
+  O
+    set_intersection(I1 first1, S1 last1, I2 first2, S2 last2, O result,
+                     Comp comp = Comp{}, Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+
+template<InputIterable Rng1, InputIterable Rng2, WeaklyIncrementable O,
+    Semiregular Proj1 = identity, Semiregular Proj2 = identity,
+    IndirectInvokableRelation<Projected<IteratorType<Rng1>, Proj1>,
+      Projected<IteratorType<Rng2>, Proj2>> Comp = less<>>
+  requires Mergeable<IteratorType<Rng1>, IteratorType<Rng2>, O, Comp, Proj1, Proj2>
+  O
+    set_intersection(Rng1&& rng1, Rng2&& rng2, O result,
+                     Comp comp = Comp{}, Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -5102,7 +5168,7 @@ The end of the constructed range.
 \complexity
 At most
 \tcode{2 * ((last1 - first1) + (last2 - first2)) - 1}
-comparisons.
+\changed{comparisons}{applications of the comparison function and projections}.
 
 \pnum
 \notes If \range{first1}{last1} contains $m$ elements that are equivalent to
@@ -5114,6 +5180,7 @@ to the output range, in order.
 \rSec3[set.difference]{\tcode{set_difference}}
 
 \indexlibrary{\idxcode{set_difference}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class InputIterator1, class InputIterator2,
          class OutputIterator>
@@ -5129,6 +5196,27 @@ template<class InputIterator1, class InputIterator2,
                    InputIterator2 first2, InputIterator2 last2,
                    OutputIterator result, Compare comp);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
+    WeaklyIncrementable O, Semiregular Proj1 = identity, Semiregular Proj2 = identity,
+    IndirectInvokableRelation<Projected<I1, Proj1>, Projected<I2, Proj2>> Comp = less<>>
+  requires Mergeable<I1, I2, O, Comp, Proj1, Proj2>
+  pair<I1, O>
+    set_difference(I1 first1, S1 last1, I2 first2, S2 last2, O result,
+                   Comp comp = Comp{}, Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+
+template<InputIterable Rng1, InputIterable Rng2, WeaklyIncrementable O,
+    Semiregular Proj1 = identity, Semiregular Proj2 = identity,
+    IndirectInvokableRelation<Projected<IteratorType<Rng1>, Proj1>,
+      Projected<IteratorType<Rng2>, Proj2>> Comp = less<>>
+  requires Mergeable<IteratorType<Rng1>, IteratorType<Rng2>, O, Comp, Proj1, Proj2>
+  pair<IteratorType<Rng1>, O>
+    set_difference(Rng1& rng1, Rng2&& rng2, O result,
+                   Comp comp = Comp{}, Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -5147,13 +5235,14 @@ The resulting range shall not overlap with either of the original ranges.
 
 \pnum
 \returns
-The end of the constructed range.
+\removed{The end of the constructed range}\tcode{\added{make_pair(last1, result + $n$)}, where $n$
+is the number of elements in the constructed range}.
 
 \pnum
 \complexity
 At most
 \tcode{2 * ((last1 - first1) + (last2 - first2)) - 1}
-comparisons.
+\changed{comparisons}{applications of the comparison function and projections}.
 
 \pnum
 \notes
@@ -5173,6 +5262,7 @@ shall be copied to the output range.
 \rSec3[set.symmetric.difference]{\tcode{set_symmetric_difference}}
 
 \indexlibrary{\idxcode{set_symmetric_difference}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class InputIterator1, class InputIterator2,
          class OutputIterator>
@@ -5188,6 +5278,28 @@ template<class InputIterator1, class InputIterator2,
                              InputIterator2 first2, InputIterator2 last2,
                              OutputIterator result, Compare comp);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
+    WeaklyIncrementable O, Semiregular Proj1 = identity, Semiregular Proj2 = identity,
+    IndirectInvokableRelation<Projected<I1, Proj1>, Projected<I2, Proj2>> Comp = less<>>
+  requires Mergeable<I1, I2, O, Comp, Proj1, Proj2>
+  tuple<I1, I2, O>
+    set_symmetric_difference(I1 first1, S1 last1, I2 first2, S2 last2, O result,
+                             Comp comp = Comp{}, Proj1 proj1 = Proj1{},
+                             Proj2 proj2 = Proj2{});
+
+template<InputIterable Rng1, InputIterable Rng2, WeaklyIncrementable O,
+    Semiregular Proj1 = identity, Semiregular Proj2 = identity,
+    IndirectInvokableRelation<Projected<IteratorType<Rng1>, Proj1>,
+      Projected<IteratorType<Rng2>, Proj2>> Comp = less<>>
+  requires Mergeable<IteratorType<Rng1>, IteratorType<Rng2>, O, Comp, Proj1, Proj2>
+  tuple<IteratorType<Rng1>, IteratorType<Rng2>, O>
+    set_symmetric_difference(Rng1& rng1, Rng2& rng2, O result, Comp comp = Comp{},
+                             Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -5210,13 +5322,15 @@ The resulting range shall not overlap with either of the original ranges.
 
 \pnum
 \returns
-The end of the constructed range.
+\removed{The end of the constructed range}
+\tcode{\added{make_tuple(last1, last2, result + $n$)}}\added{, where \tcode{$n$} is
+the number of elements in the constructed range}.
 
 \pnum
 \complexity
 At most
 \tcode{2 * ((last1 - first1) + (last2 - first2)) - 1}
-comparisons.
+\changed{comparisons}{applications of the comparison function and projections}.
 
 \pnum
 \notes
@@ -5262,6 +5376,7 @@ turns a heap into a sorted sequence.
 \rSec3[push.heap]{\tcode{push_heap}}
 
 \indexlibrary{\idxcode{push_heap}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class RandomAccessIterator>
   void push_heap(RandomAccessIterator first, RandomAccessIterator last);
@@ -5270,6 +5385,20 @@ template<class RandomAccessIterator, class Compare>
   void push_heap(RandomAccessIterator first, RandomAccessIterator last,
                  Compare comp);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<RandomAccessIterator I, Sentinel<I> S, Semiregular Comp = less<>,
+    Semiregular Proj = identity>
+  requires Sortable<I, Comp, Proj>
+  I push_heap(I first, S last, Comp comp = Comp{}, Proj proj = Proj{});
+
+template<RandomAccessIterable Rng, Semiregular Comp = less<>, Semiregular Proj = identity>
+  requires Sortable<IteratorType<Rng>, Comp, Proj>
+  IteratorType<Rng>
+    push_heap(Rng& rng, Comp comp = Comp{}, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -5284,23 +5413,28 @@ into the resulting heap
 The range
 \range{first}{last - 1}
 shall be a valid heap.
-The type of \tcode{*first} shall satisfy
+\removed{The type of \tcode{*first} shall satisfy
 the \tcode{MoveConstructible} requirements
 (Table~\ref{moveconstructible}) and the
 \tcode{MoveAssignable} requirements
-(Table~\ref{moveassignable}).
+(Table~\ref{moveassignable})}.
 
+\begin{addedblock}
+\pnum
+\returns \tcode{last}
+\end{addedblock}
 
 \pnum
 \complexity
 At most
 \tcode{log(last - first)}
-comparisons.
+\changed{comparisons}{applications of the comparison function and projection}.
 \end{itemdescr}
 
 \rSec3[pop.heap]{\tcode{pop_heap}}
 
 \indexlibrary{\idxcode{pop_heap}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class RandomAccessIterator>
   void pop_heap(RandomAccessIterator first, RandomAccessIterator last);
@@ -5309,6 +5443,20 @@ template<class RandomAccessIterator, class Compare>
   void pop_heap(RandomAccessIterator first, RandomAccessIterator last,
                 Compare comp);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<RandomAccessIterator I, Sentinel<I> S, Semiregular Comp = less<>,
+    Semiregular Proj = identity>
+  requires Sortable<I, Comp, Proj>
+  I pop_heap(I first, S last, Comp comp = Comp{}, Proj proj = Proj{});
+
+template<RandomAccessIterable Rng, Semiregular Comp = less<>, Semiregular Proj = identity>
+  requires Sortable<IteratorType<Rng>, Comp, Proj>
+  IteratorType<Rng>
+    pop_heap(Rng& rng, Comp comp = Comp{}, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -5316,12 +5464,11 @@ template<class RandomAccessIterator, class Compare>
 The range
 \range{first}{last}
 shall be a valid non-empty heap.
-\tcode{RandomAccessIterator} shall satisfy the requirements of
+\removed{\tcode{RandomAccessIterator} shall satisfy the requirements of
 \tcode{ValueSwappable}~(\ref{swappable.requirements}). The type
 of \tcode{*first} shall satisfy the requirements of
 \tcode{MoveConstructible} (Table~\ref{moveconstructible}) and of
-\tcode{MoveAssignable} (Table~\ref{moveassignable}).
-
+\tcode{MoveAssignable} (Table~\ref{moveassignable})}.
 
 \pnum
 \effects
@@ -5332,16 +5479,22 @@ and makes
 \range{first}{last - 1}
 into a heap.
 
+\begin{addedblock}
+\pnum
+\returns \tcode{last}
+\end{addedblock}
+
 \pnum
 \complexity
 At most
 \tcode{2 * log(last - first)}
-comparisons.
+\changed{comparisons}{applications of the comparison function and projection}.
 \end{itemdescr}
 
 \rSec3[make.heap]{\tcode{make_heap}}
 
 \indexlibrary{\idxcode{make_heap}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class RandomAccessIterator>
   void make_heap(RandomAccessIterator first, RandomAccessIterator last);
@@ -5350,6 +5503,20 @@ template<class RandomAccessIterator, class Compare>
   void make_heap(RandomAccessIterator first, RandomAccessIterator last,
                  Compare comp);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<RandomAccessIterator I, Sentinel<I> S, Semiregular Comp = less<>,
+    Semiregular Proj = identity>
+  requires Sortable<I, Comp, Proj>
+  I make_heap(I first, S last, Comp comp = Comp{}, Proj proj = Proj{});
+
+template<RandomAccessIterable Rng, Semiregular Comp = less<>, Semiregular Proj = identity>
+  requires Sortable<IteratorType<Rng>, Comp, Proj>
+  IteratorType<Rng>
+    make_heap(Rng& rng, Comp comp = Comp{}, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -5357,23 +5524,31 @@ template<class RandomAccessIterator, class Compare>
 Constructs a heap out of the range
 \range{first}{last}.
 
+\begin{removedblock}
 \pnum
 \requires The type of \tcode{*first} shall satisfy
 the \tcode{MoveConstructible} requirements
 (Table~\ref{moveconstructible}) and the
 \tcode{MoveAssignable} requirements
 (Table~\ref{moveassignable}).
+\end{removedblock}
+
+\begin{addedblock}
+\pnum
+\returns \tcode{last}
+\end{addedblock}
 
 \pnum
 \complexity
 At most
 \tcode{3 * (last - first)}
-comparisons.
+\changed{comparisons}{applications of the comparison function and projection}.
 \end{itemdescr}
 
 \rSec3[sort.heap]{\tcode{sort_heap}}
 
 \indexlibrary{\idxcode{sort_heap}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class RandomAccessIterator>
   void sort_heap(RandomAccessIterator first, RandomAccessIterator last);
@@ -5382,6 +5557,20 @@ template<class RandomAccessIterator, class Compare>
   void sort_heap(RandomAccessIterator first, RandomAccessIterator last,
                  Compare comp);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<RandomAccessIterator I, Sentinel<I> S, Semiregular Comp = less<>,
+    Semiregular Proj = identity>
+  requires Sortable<I, Comp, Proj>
+  I sort_heap(I first, S last, Comp comp = Comp{}, Proj proj = Proj{});
+
+template<RandomAccessIterable Rng, Semiregular Comp = less<>, Semiregular Proj = identity>
+  requires Sortable<IteratorType<Rng>, Comp, Proj>
+  IteratorType<Rng>
+    sort_heap(Rng& rng, Comp comp = Comp{}, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -5391,12 +5580,16 @@ Sorts elements in the heap
 
 \pnum
 \requires The range \range{first}{last} shall be a valid heap.
-\tcode{RandomAccessIterator} shall satisfy the requirements of
+\removed{\tcode{RandomAccessIterator} shall satisfy the requirements of
 \tcode{ValueSwappable}~(\ref{swappable.requirements}). The type
 of \tcode{*first} shall satisfy the requirements of
 \tcode{MoveConstructible} (Table~\ref{moveconstructible}) and of
-\tcode{MoveAssignable} (Table~\ref{moveassignable}).
+\tcode{MoveAssignable} (Table~\ref{moveassignable})}.
 
+\begin{addedblock}
+\pnum
+\returns \tcode{last}
+\end{addedblock}
 
 \pnum
 \complexity
@@ -5408,30 +5601,45 @@ comparisons (where
 \rSec3[is.heap]{\tcode{is_heap}}
 
 \indexlibrary{\idxcode{is_heap}}%
+\begin{removedblock}
 \begin{itemdecl}
   template<class RandomAccessIterator>
     bool is_heap(RandomAccessIterator first, RandomAccessIterator last);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<RandomAccessIterator I, Sentinel<I> S, Semiregular Proj = identity,
+    IndirectInvokableRelation<Projected<I, Proj>> Comp = less<>>
+  bool is_heap(I first, S last, Comp comp = Comp{}, Proj proj = Proj{});
 
+template<RandomAccessIterable Rng, Semiregular Proj = identity,
+    IndirectInvokableRelation<Projected<IteratorType<Rng>, Proj>> Comp = less<>>
+  bool
+    is_heap(Rng&& rng, Comp comp = Comp{}, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
-\returns \tcode{is_heap_until(first, last) == last}
+\returns \tcode{is_heap_until(first, last\added{, comp, proj}) == last}
 \end{itemdescr}
 
+\begin{removedblock}
 \indexlibrary{\idxcode{is_heap}}%
 \begin{itemdecl}
   template<class RandomAccessIterator, class Compare>
     bool is_heap(RandomAccessIterator first, RandomAccessIterator last, Compare comp);
 \end{itemdecl}
 
-
 \begin{itemdescr}
 \pnum
 \returns \tcode{is_heap_until(first, last, comp) == last}
 \end{itemdescr}
+\end{removedblock}
 
 \indexlibrary{\idxcode{is_heap_until}}%
+\begin{removedblock}
 \begin{itemdecl}
   template<class RandomAccessIterator>
     RandomAccessIterator is_heap_until(RandomAccessIterator first, RandomAccessIterator last);
@@ -5439,7 +5647,19 @@ comparisons (where
     RandomAccessIterator is_heap_until(RandomAccessIterator first, RandomAccessIterator last,
       Compare comp);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<RandomAccessIterator I, Sentinel<I> S, Semiregular Proj = identity,
+    IndirectInvokableRelation<Projected<I, Proj>> Comp = less<>>
+  I is_heap_until(I first, S last, Comp comp = Comp{}, Proj proj = Proj{});
 
+template<RandomAccessIterable Rng, Semiregular Proj = identity,
+    IndirectInvokableRelation<Projected<IteratorType<Rng>, Proj>> Comp = less<>>
+  IteratorType<Rng>
+    is_heap_until(Rng& rng, Comp comp = Comp{}, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -5451,7 +5671,6 @@ range \range{first}{i} is a heap.
 \pnum
 \complexity Linear.
 \end{itemdescr}
-
 
 \rSec2[alg.min.max]{Minimum and maximum}
 
