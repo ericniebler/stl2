@@ -818,8 +818,7 @@ namespace std {
   template<ForwardIterable Rng, TotallyOrdered T, Semiregular Proj = identity,
       IndirectInvokableRelation<const T *, Projected<IteratorType<Rng>, Proj>> Comp = less<>>
     pair<IteratorType<Rng>, IteratorType<Rng>>
-      equal_range(Rng& rng, const T& value, Comp comp = Comp{},
-                  Proj proj = Proj{});
+      equal_range(Rng& rng, const T& value, Comp comp = Comp{}, Proj proj = Proj{});
 
   template<ForwardIterator I, Sentinel<I> S, TotallyOrdered T, Semiregular Proj = identity,
       IndirectInvokableRelation<const T *, Projected<I, Proj>> Comp = less<>>
@@ -834,6 +833,9 @@ namespace std {
                     Proj proj = Proj{});
 
   // \ref{alg.merge}, merge:
+  \end{codeblock}
+    \ednote{Why does the Palo Alto TR require Incrementable instead of WeaklyIncrementable?}
+  \begin{codeblock}
   template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
       Incrementable O, Semiregular Comp = less<>, Semiregular Proj1 = identity,
       Semiregular Proj2 = identity>
@@ -871,8 +873,7 @@ namespace std {
       Semiregular Proj = identity>
     requires Sortable<I, Comp, Proj>
     I
-      inplace_merge(I first, I middle, S last, Comp comp = Comp{},
-                    Proj proj = Proj{});
+      inplace_merge(I first, I middle, S last, Comp comp = Comp{}, Proj proj = Proj{});
 
   template<BidirectionalIterable Rng, Semiregular Comp = less<>, Semiregular Proj = identity>
     requires Sortable<IteratorType<Rng>, Comp, Proj>
@@ -4461,7 +4462,6 @@ of \tcode{*first} shall satisfy the requirements of
 \tcode{MoveAssignable} (Table~\ref{moveassignable}).
 \end{removedblock}
 
-
 \pnum
 \complexity
 Linear on average.
@@ -4473,7 +4473,7 @@ Linear on average.
 All of the algorithms in this section are versions of binary search
 and assume that the sequence being searched is partitioned with respect to
 an expression formed by binding the search key to an argument of the
-implied or explicit comparison function.
+\removed{implied or explicit} comparison function\added{ and projection}.
 They work on non-random access iterators minimizing the number of comparisons,
 which will be logarithmic for all types of iterators.
 They are especially appropriate for random access iterators,
@@ -4484,6 +4484,7 @@ For non-random access iterators they execute a linear number of steps.
 \rSec3[lower.bound]{\tcode{lower_bound}}
 
 \indexlibrary{\idxcode{lower_bound}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class ForwardIterator, class T>
   ForwardIterator
@@ -4495,6 +4496,21 @@ template<class ForwardIterator, class T, class Compare>
     lower_bound(ForwardIterator first, ForwardIterator last,
                 const T& value, Compare comp);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<ForwardIterator I, Sentinel<I> S, TotallyOrdered T, Semiregular Proj = identity,
+    IndirectInvokableRelation<const T *, Projected<I, Proj>> Comp = less<>>
+  I
+    lower_bound(I first, S last, const T& value, Comp comp = Comp{},
+                Proj proj = Proj{});
+
+template<ForwardIterable Rng, TotallyOrdered T, Semiregular Proj = identity,
+    IndirectInvokableRelation<const T *, Projected<IteratorType<Rng>, Proj>> Comp = less<>>
+  IteratorType<Rng>
+    lower_bound(Rng& rng, const T& value, Comp comp = Comp{}, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -4504,9 +4520,9 @@ The elements
 of
 \range{first}{last}
 shall be partitioned with respect to the expression
-\tcode{e < value}
-or
-\tcode{comp(e, value)}.
+\tcode{\changed{e < value}{\textit{INVOKE}(comp, \textit{INVOKE}(proj, e), value)}}
+\removed{or
+\tcode{comp(e, value)}}.
 
 \pnum
 \returns
@@ -4519,20 +4535,21 @@ such that for every iterator
 in the range
 \range{first}{i}
 the following corresponding conditions hold:
-\tcode{*j < value}
-or
-\tcode{comp(*j, value) != false}.
+\removed{\tcode{*j < value}
+or}
+\tcode{\changed{comp(*j, value) != false}{\textit{INVOKE}(comp, \textit{INVOKE}(proj, *j), value) != false}}.
 
 \pnum
 \complexity
 At most
 $\log_2(\tcode{last - first}) + \bigoh{1}$
-comparisons.
+\changed{comparisons}{applications of the comparison function and projection}.
 \end{itemdescr}
 
 \rSec3[upper.bound]{\tcode{upper_bound}}
 
 \indexlibrary{\idxcode{upper_bound}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class ForwardIterator, class T>
   ForwardIterator
@@ -4544,6 +4561,20 @@ template<class ForwardIterator, class T, class Compare>
     upper_bound(ForwardIterator first, ForwardIterator last,
                 const T& value, Compare comp);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<ForwardIterator I, Sentinel<I> S, TotallyOrdered T, Semiregular Proj = identity,
+    IndirectInvokableRelation<const T *, Projected<I, Proj>> Comp = less<>>
+  I
+    upper_bound(I first, S last, const T& value, Comp comp = Comp{}, Proj proj = Proj{});
+
+template<ForwardIterable Rng, TotallyOrdered T, Semiregular Proj = identity,
+    IndirectInvokableRelation<const T *, Projected<IteratorType<Rng>, Proj>> Comp = less<>>
+  IteratorType<Rng>
+    upper_bound(Rng& rng, const T& value, Comp comp = Comp{}, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -4553,9 +4584,10 @@ The elements
 of
 \range{first}{last}
 shall be partitioned with respect to the expression
-\tcode{!(value < e)}
+\tcode{\changed{!(value < e)}{!\textit{INVOKE}(comp, value, \textit{INVOKE}(proj, e))}}
+\removed{
 or
-\tcode{!comp(\brk{}value, e)}.
+\tcode{!comp(\brk{}value, e)}}.
 
 \pnum
 \returns
@@ -4568,20 +4600,21 @@ such that for every iterator
 in the range
 \range{first}{i}
 the following corresponding conditions hold:
-\tcode{!(value < *j)}
-or
-\tcode{comp(value, *j) == false}.
+\removed{\tcode{!(value < *j)}
+or}
+\tcode{\changed{comp(value, *j) == false}{\textit{INVOKE}(comp, value, \textit{INVOKE}(proj, *j)) == false}}.
 
 \pnum
 \complexity
 At most
 $\log_2(\tcode{last - first}) + \bigoh{1}$
-comparisons.
+\changed{comparisons}{applications of the comparison function and projection}.
 \end{itemdescr}
 
 \rSec3[equal.range]{\tcode{equal_range}}
 
 \indexlibrary{\idxcode{equal_range}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class ForwardIterator, class T>
   pair<ForwardIterator, ForwardIterator>
@@ -4594,6 +4627,20 @@ template<class ForwardIterator, class T, class Compare>
                 ForwardIterator last, const T& value,
                 Compare comp);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<ForwardIterator I, Sentinel<I> S, TotallyOrdered T, Semiregular Proj = identity,
+    IndirectInvokableRelation<const T *, Projected<I, Proj>> Comp = less<>>
+  pair<I, I>
+    equal_range(I first, S last, const T& value, Comp comp = Comp{}, Proj proj = Proj{});
+
+template<ForwardIterable Rng, TotallyOrdered T, Semiregular Proj = identity,
+    IndirectInvokableRelation<const T *, Projected<IteratorType<Rng>, Proj>> Comp = less<>>
+  pair<IteratorType<Rng>, IteratorType<Rng>>
+    equal_range(Rng& rng, const T& value, Comp comp = Comp{}, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -4603,47 +4650,50 @@ The elements
 of
 \range{first}{last}
 shall be partitioned with respect to the expressions
-\tcode{e < value}
+\tcode{\changed{e < value}{\textit{INVOKE}(comp, \textit{INVOKE}(proj, e), value)}}
 and
-\tcode{!(value < e)}
-or
+\tcode{\changed{!(value < e)}{!\textit{INVOKE}(comp, value, \textit{INVOKE}(proj, e))}}
+\removed{or
 \tcode{comp(e, value)}
 and
-\tcode{!comp(value, e)}.
+\tcode{!comp(value, e)}}.
 Also, for all elements
 \tcode{e}
 of
 \tcode{[first, last)},
-\tcode{e < value}
+\tcode{\changed{e < value}{\textit{INVOKE}(comp, \textit{INVOKE}(proj, e), value)}}
 shall imply
-\tcode{!(value < e)}
-or
+\tcode{\changed{!(value < e)}{!\textit{INVOKE}(comp, value, \textit{INVOKE}(proj, e))}}
+\removed{or
 \tcode{comp(e, value)}
 shall imply
-\tcode{!comp(value, e)}.
+\tcode{!comp(value, e)}}.
 
 \pnum
 \returns
+\begin{removedblock}
 \begin{codeblock}
 make_pair(lower_bound(first, last, value),
           upper_bound(first, last, value))
 \end{codeblock}
 or
+\end{removedblock}
 \begin{codeblock}
-make_pair(lower_bound(first, last, value, comp),
-          upper_bound(first, last, value, comp))
+make_pair(lower_bound(first, last, value, comp@\added{, proj}@),
+          upper_bound(first, last, value, comp@\added{, proj}@))
 \end{codeblock}
 
 \pnum
 \complexity
 At most
 $2 * \log_2(\tcode{last - first}) + \bigoh{1}$
-comparisons.
+\changed{comparisons}{applications of the comparison function and projection}.
 \end{itemdescr}
 
 \rSec3[binary.search]{\tcode{binary_search}}
 
 \indexlibrary{\idxcode{binary_search}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class ForwardIterator, class T>
   bool binary_search(ForwardIterator first, ForwardIterator last,
@@ -4653,6 +4703,22 @@ template<class ForwardIterator, class T, class Compare>
   bool binary_search(ForwardIterator first, ForwardIterator last,
                      const T& value, Compare comp);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<ForwardIterator I, Sentinel<I> S, TotallyOrdered T, Semiregular Proj = identity,
+    IndirectInvokableRelation<const T *, Projected<I, Proj>> Comp = less<>>
+  bool
+    binary_search(I first, S last, const T& value, Comp comp = Comp{},
+                  Proj proj = Proj{});
+
+template<ForwardIterable Rng, TotallyOrdered T, Semiregular Proj = identity,
+    IndirectInvokableRelation<const T *, Projected<IteratorType<Rng>, Proj>> Comp = less<>>
+  bool
+    binary_search(Rng& rng, const T& value, Comp comp = Comp{},
+                  Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -4662,24 +4728,24 @@ The elements
 of
 \range{first}{last}
 are partitioned with respect to the expressions
-\tcode{e < value}
+\tcode{\changed{e < value}{\textit{INVOKE}(comp, \textit{INVOKE}(proj, e), value)}}
 and
-\tcode{!(value < e)}
-or
+\tcode{\changed{!(value < e)}{!\textit{INVOKE}(comp, value, \textit{INVOKE}(proj, e))}}
+\removed{or
 \tcode{comp(e, value)}
 and
-\tcode{!comp(value, e)}.
+\tcode{!comp(value, e)}}.
 Also, for all elements
 \tcode{e}
 of
 \tcode{[first, last)},
-\tcode{e < value}
-implies
-\tcode{!(value < e)}
-or
+\tcode{\changed{e < value}{\textit{INVOKE}(comp, \textit{INVOKE}(proj, e), value)}}
+shall imply
+\tcode{\changed{!(value < e)}{!\textit{INVOKE}(comp, value, \textit{INVOKE}(proj, e))}}
+\removed{or
 \tcode{comp(e, value)}
-implies
-\tcode{!comp(value, e)}.
+shall imply
+\tcode{!comp(value, e)}}.
 
 \pnum
 \returns
@@ -4689,20 +4755,23 @@ if there is an iterator
 in the range
 \range{first}{last}
 that satisfies the corresponding conditions:
-\tcode{!(*i < value) \&\& !(value < *i)}
-or
-\tcode{comp(*i, value) == false \&\& comp(value, *i) == false}.
+\tcode{\changed{!(*i < value) \&\& !(value < *i)}{
+\textit{INVOKE}(comp, \textit{INVOKE}(proj, *i), value) == false \&\&
+\textit{INVOKE}(comp, value, \textit{INVOKE}(proj, *i)) == false}}
+\removed{or}
+\tcode{\removed{comp(*i, value) == false \&\& comp(value, *i) == false}}.
 
 \pnum
 \complexity
 At most
 $\log_2(\tcode{last - first}) + \bigoh{1}$
-comparisons.
+\changed{comparisons}{applications of the comparison function and projection}.
 \end{itemdescr}
 
 \rSec2[alg.merge]{Merge}
 
 \indexlibrary{\idxcode{merge}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class InputIterator1, class InputIterator2,
          class OutputIterator>
@@ -4718,34 +4787,104 @@ template<class InputIterator1, class InputIterator2,
           InputIterator2 first2, InputIterator2 last2,
           OutputIterator result, Compare comp);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
+    Incrementable O, Semiregular Comp = less<>, Semiregular Proj1 = identity,
+    Semiregular Proj2 = identity>
+  requires Mergeable<I1, I2, O, Comp, Proj1, Proj2>
+  tuple<I1, I2, O>
+    merge(I1 first1, S1 last1, I2 first2, S2 last2, O result,
+          Comp comp = Comp{}, Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+
+template<InputIterable Rng1, InputIterable Rng2, Incrementable O, Semiregular Comp = less<>,
+    Semiregular Proj1 = identity, Semiregular Proj2 = identity>
+  requires Mergeable<IteratorType<Rng1>, IteratorType<Rng2>, O, Comp, Proj1, Proj2>
+  tuple<IteratorType<Rng1>, IteratorType<Rng2>, O>
+    merge(Rng1& rng1, Rng2& rng2, O result,
+          Comp comp = Comp{}, Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
 \effects\ Copies all the elements of the two ranges \range{first1}{last1} and
 \range{first2}{last2} into the range \range{result}{result_last}, where \tcode{result_last}
 is \tcode{result + (last1 - first1) + (last2 - first2)}, such that the resulting range satisfies
-\tcode{is_sorted(result, result_last)} or \tcode{is_sorted(result, result_last, comp)}, respectively.
+\tcode{\removed{is_sorted(result, result_last)}}\removed{ or}
+\ednote{The following postcondition isn't well-formed:}
+\tcode{is_sorted(result, result_last, comp)}\removed{, respectively}.
 
 \pnum
 \requires The ranges \range{first1}{last1} and \range{first2}{last2} shall be
-sorted with respect to \tcode{operator<} or \tcode{comp}.
+sorted with respect to \tcode{\removed{operator<}}\removed{ or} \tcode{comp}\added{, \tcode{proj1}, and \tcode{proj2}}.
 The resulting range shall not overlap with either of the original ranges.
 
 \pnum
 \returns
-\tcode{result + (last1 - first1) + (last2 - first2)}.
+\tcode{\changed{result + (last1 - first1) + (last2 - first2)}{
+make_tuple(last1, last2, result + (last1 - first1) + (last2 - first2))}}.
 
 \pnum
 \complexity
 At most
 \tcode{(last1 - first1) + (last2 - first2) - 1}
-comparisons.
+\changed{comparisons}{applications of the comparison function and each projection}.
 
 \pnum
 \remarks Stable~(\ref{algorithm.stable}).
 \end{itemdescr}
 
+\begin{addedblock}
+\indexlibrary{\idxcode{merge_move}}%
+\begin{itemdecl}
+template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
+    Incrementable O, Semiregular Comp = less<>, Semiregular Proj1 = identity,
+    Semiregular Proj2 = identity>
+  requires MergeMovable<I1, I2, O, Comp, Proj1, Proj2>
+  tuple<I1, I2, O>
+    merge_move(I1 first1, S1 last1, I2 first2, S2 last2, O result,
+          Comp comp = Comp{}, Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+
+template<InputIterable Rng1, InputIterable Rng2, Incrementable O, Semiregular Comp = less<>,
+    Semiregular Proj1 = identity, Semiregular Proj2 = identity>
+  requires MergeMovable<IteratorType<Rng1>, IteratorType<Rng2>, O, Comp, Proj1, Proj2>
+  tuple<IteratorType<Rng1>, IteratorType<Rng2>, O>
+    merge_move(Rng1& rng1, Rng2& rng2, O result,
+          Comp comp = Comp{}, Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects\ Moves all the elements of the two ranges \range{first1}{last1} and
+\range{first2}{last2} into the range \range{result}{result_last}, where \tcode{result_last}
+is \tcode{result + (last1 - first1) + (last2 - first2)}, such that the resulting range satisfies
+\ednote{The following postcondition isn't well-formed:}
+\tcode{is_sorted(result, result_last, comp)}.
+
+\pnum
+\requires The ranges \range{first1}{last1} and \range{first2}{last2} shall be
+sorted with respect to \tcode{comp}, \tcode{proj1}, and \tcode{proj2}.
+The resulting range shall not overlap with either of the original ranges.
+
+\pnum
+\returns
+\tcode{make_tuple(last1, last2, result + (last1 - first1) + (last2 - first2))}.
+
+\pnum
+\complexity
+At most
+\tcode{(last1 - first1) + (last2 - first2) - 1}
+applications of the comparison function and each projection.
+
+\pnum
+\remarks Stable~(\ref{algorithm.stable}).
+\end{itemdescr}
+\end{addedblock}
+
 \indexlibrary{\idxcode{inplace_merge}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class BidirectionalIterator>
   void inplace_merge(BidirectionalIterator first,
@@ -4757,6 +4896,22 @@ template<class BidirectionalIterator, class Compare>
                      BidirectionalIterator middle,
                      BidirectionalIterator last, Compare comp);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<BidirectionalIterator I, Sentinel<I> S, Semiregular Comp = less<>,
+    Semiregular Proj = identity>
+  requires Sortable<I, Comp, Proj>
+  I
+    inplace_merge(I first, I middle, S last, Comp comp = Comp{}, Proj proj = Proj{});
+
+template<BidirectionalIterable Rng, Semiregular Comp = less<>, Semiregular Proj = identity>
+  requires Sortable<IteratorType<Rng>, Comp, Proj>
+  IteratorType<Rng>
+    inplace_merge(Rng& rng, IteratorType<Rng> middle, Comp comp = Comp{},
+                  Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -4775,27 +4930,33 @@ in
 other than
 \tcode{first},
 the condition
-\tcode{*i < *(i - 1)}
-or, respectively,
-\tcode{comp(*i, *(i - 1))}
+\removed{\tcode{*i < *(i - 1)}
+or, respectively,}
+\tcode{\changed{comp(*i, *(i - 1))}{
+\textit{INVOKE}(comp, \textit{INVOKE}(proj, *i), \textit{INVOKE}(proj, *(i - 1)))}}
 will be false.
 
 \pnum
 \requires
 The ranges \range{first}{middle} and \range{middle}{last} shall be
-sorted with respect to \tcode{operator<} or \tcode{comp}.
-\tcode{BidirectionalIterator} shall satisfy the requirements of
+sorted with respect to \tcode{\removed{operator<}}\removed{ or} \tcode{comp}\added{ and
+\tcode{proj}}.
+\removed{\tcode{BidirectionalIterator} shall satisfy the requirements of
 \tcode{ValueSwappable}~(\ref{swappable.requirements}). The type
 of \tcode{*first} shall satisfy the requirements of
 \tcode{MoveConstructible} (Table~\ref{moveconstructible}) and of
-\tcode{MoveAssignable} (Table~\ref{moveassignable}).
+\tcode{MoveAssignable} (Table~\ref{moveassignable})}.
 
+\begin{addedblock}
+\pnum
+\returns \tcode{last}
+\end{addedblock}
 
 \pnum
 \complexity
 When enough additional memory is available,
 \tcode{(last - first) - 1}
-comparisons.
+\changed{comparisons}{applications of the comparison function and projection}.
 If no additional memory is available, an algorithm with complexity
 $N \log(N)$
 (where
