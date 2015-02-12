@@ -1132,16 +1132,19 @@ namespace std {
       minmax_element(Rng& rng, Comp comp = Comp{}, Proj proj = Proj{});
 
   template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
-      Semiregular Proj = identity, IndirectInvokableRelation<Projected<I, Proj>> Comp = less<>>
+      Semiregular Proj1 = identity, Semiregular Proj2 = identity,
+      IndirectInvokableRelation<Projected<I1, Proj1>, Projected<I2, Proj2>> Comp = less<>>
     bool
       lexicographical_compare(I1 first1, S1 last1, I2 first2, S2 last2,
-                              Comp comp = Comp{}, Proj proj = Proj{});
+                              Comp comp = Comp{}, Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
 
-  template<InputIterable Rng1, InputIterable Rng2, Semiregular Proj = identity,
-      IndirectInvokableRelation<Projected<IteratorType<Rng>, Proj>> Comp = less<>>
+  template<InputIterable Rng1, InputIterable Rng2, Semiregular Proj1 = identity,
+      Semiregular Proj2 = identity,
+      IndirectInvokableRelation<Projected<IteratorType<Rng1>, Proj1>,
+        Projected<IteratorType<Rng2>, Proj2>> Comp = less<>>
     bool
-      lexicographical_compare(Rng1&& rng1, Rng2&& rng2,
-                              Comp comp = Comp{}, Proj proj = Proj{});
+      lexicographical_compare(Rng1&& rng1, Rng2&& rng2, Comp comp = Comp{},
+                              Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
 
   // \ref{alg.permutation.generators}, permutations:
   template<BidirectionalIterator I, Sentinel<I> S, Semiregular Proj = identity,
@@ -6079,6 +6082,7 @@ where $N$ is \tcode{distance(first, last)}.
 \rSec2[alg.lex.comparison]{Lexicographical comparison}
 
 \indexlibrary{\idxcode{lexicographical_compare}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class InputIterator1, class InputIterator2>
   bool
@@ -6091,6 +6095,25 @@ template<class InputIterator1, class InputIterator2, class Compare>
                             InputIterator2 first2, InputIterator2 last2,
                             Compare comp);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
+    Semiregular Proj1 = identity, Semiregular Proj2 = identity,
+    IndirectInvokableRelation<Projected<I1, Proj1>, Projected<I2, Proj2>> Comp = less<>>
+  bool
+    lexicographical_compare(I1 first1, S1 last1, I2 first2, S2 last2,
+                            Comp comp = Comp{}, Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+
+template<InputIterable Rng1, InputIterable Rng2, Semiregular Proj1 = identity,
+    Semiregular Proj2 = identity,
+    IndirectInvokableRelation<Projected<IteratorType<Rng1>, Proj1>,
+      Projected<IteratorType<Rng2>, Proj2>> Comp = less<>>
+  bool
+    lexicographical_compare(Rng1&& rng1, Rng2&& rng2, Comp comp = Comp{},
+                            Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -6107,7 +6130,7 @@ otherwise.
 \complexity
 At most
 \tcode{2*min((last1 - first1), (last2 - first2))}
-applications of the corresponding comparison.
+applications of the corresponding comparison\added{ and projection}.
 
 \pnum
 \notes
@@ -6120,6 +6143,7 @@ Otherwise, the lexicographical comparison of the sequences yields the same
 result as the comparison of the first corresponding pair of
 elements that are not equivalent.
 
+\begin{removedblock}
 \begin{codeblock}
 for ( ; first1 != last1 && first2 != last2 ; ++first1, ++first2) {
   if (*first1 < *first2) return true;
@@ -6127,6 +6151,19 @@ for ( ; first1 != last1 && first2 != last2 ; ++first1, ++first2) {
 }
 return first1 == last1 && first2 != last2;
 \end{codeblock}
+\end{removedblock}
+\begin{addedblock}
+\begin{codeblock}
+using namespace placeholders;
+auto&& cmp1 = bind(comp, bind(proj1, _1), bind(proj2, _2));
+auto&& cmp2 = bind(comp, bind(proj2, _1), bind(proj1, _2));
+for ( ; first1 != last1 && first2 != last2 ; ++first1, ++first2) {
+  if (cmp1(*first1, *first2)) return true;
+  if (cmp2(*first2, *first1)) return false;
+}
+return first1 == last1 && first2 != last2;
+\end{codeblock}
+\end{addedblock}
 
 \pnum
 \remarks\ An empty sequence is lexicographically less than any non-empty sequence, but
@@ -6137,6 +6174,7 @@ not less than any empty sequence.
 \rSec2[alg.permutation.generators]{Permutation generators}
 
 \indexlibrary{\idxcode{next_permutation}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class BidirectionalIterator>
   bool next_permutation(BidirectionalIterator first,
@@ -6146,6 +6184,21 @@ template<class BidirectionalIterator, class Compare>
   bool next_permutation(BidirectionalIterator first,
                         BidirectionalIterator last, Compare comp);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<BidirectionalIterator I, Sentinel<I> S, Semiregular Proj = identity,
+    IndirectInvokableRelation<Projected<I, Proj>> Comp = less<>>
+  requires Sortable<I, Comp, Proj>
+  bool next_permutation(I first, S last, Comp comp = Comp{}, Proj proj = Proj{});
+
+template<BidirectionalIterable Rng, Semiregular Proj = identity,
+    IndirectInvokableRelation<Projected<IteratorType<Rng>, Proj>> Comp = less<>>
+  requires Sortable<IteratorType<Rng>, Comp, Proj>
+  bool
+    next_permutation(Rng&& rng, Comp comp = Comp{}, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -6155,19 +6208,20 @@ Takes a sequence defined by the range
 and transforms it into the next permutation.
 The next permutation is found by assuming that the set of all permutations is
 lexicographically sorted with respect to
-\tcode{operator<}
-or \tcode{comp}.
+\removed{\tcode{operator<}
+or} \tcode{comp}\added{ and \tcode{proj}}.
 If such a permutation exists, it returns
 \tcode{true}.
 Otherwise, it transforms the sequence into the smallest permutation,
 that is, the ascendingly sorted one, and returns
 \tcode{false}.
 
+\begin{removedblock}
 \pnum
 \requires
 \tcode{BidirectionalIterator} shall satisfy the requirements of
 \tcode{ValueSwappable}~(\ref{swappable.requirements}).
-
+\end{removedblock}
 
 \pnum
 \complexity
@@ -6177,6 +6231,7 @@ swaps.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{prev_permutation}}%
+\begin{removedblock}
 \begin{itemdecl}
 template<class BidirectionalIterator>
   bool prev_permutation(BidirectionalIterator first,
@@ -6186,6 +6241,21 @@ template<class BidirectionalIterator, class Compare>
   bool prev_permutation(BidirectionalIterator first,
                         BidirectionalIterator last, Compare comp);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template<BidirectionalIterator I, Sentinel<I> S, Semiregular Proj = identity,
+    IndirectInvokableRelation<Projected<I, Proj>> Comp = less<>>
+  requires Sortable<I, Comp, Proj>
+  bool prev_permutation(I first, S last, Comp comp = Comp{}, Proj proj = Proj{});
+
+template<BidirectionalIterable Rng, Semiregular Proj = identity,
+    IndirectInvokableRelation<Projected<IteratorType<Rng>, Proj>> Comp = less<>>
+  requires Sortable<IteratorType<Rng>, Comp, Proj>
+  bool
+    prev_permutation(Rng&& rng, Comp comp = Comp{}, Proj proj = Proj{});
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -6195,8 +6265,8 @@ Takes a sequence defined by the range
 and transforms it into the previous permutation.
 The previous permutation is found by assuming that the set of all permutations is
 lexicographically sorted with respect to
-\tcode{operator<}
-or \tcode{comp}.
+\removed{\tcode{operator<}
+or} \tcode{comp}\added{ and \tcode{proj}}.
 
 \pnum
 \returns
@@ -6206,11 +6276,12 @@ Otherwise, it transforms the sequence into the largest permutation,
 that is, the descendingly sorted one, and returns
 \tcode{false}.
 
+\begin{removedblock}
 \pnum
 \requires
 \tcode{BidirectionalIterator} shall satisfy the requirements of
 \tcode{ValueSwappable}~(\ref{swappable.requirements}).
-
+\end{removedblock}
 
 \pnum
 \complexity
