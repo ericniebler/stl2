@@ -323,7 +323,7 @@ is an abstraction of the past-the-end iterator. Its values can be
 compared to an iterator for equality.
 
 \begin{codeblock}
-concept Sentinel<typename T, Iterator I> =
+concept Sentinel<typename T, WeakIterator I> =
     Regular<T> && EqualityComparable<T, I>;
 \end{codeblock}
 
@@ -643,19 +643,37 @@ sentinels. \ednote{TODO add reference here} \exitnote
 \begin{codeblock}
 namespace std {
   // \ref{iterator.primitives}, primitives:
+\end{codeblock}
+\begin{removedblock}
+\begin{codeblock}
   template<class Iterator> struct iterator_traits;
   template<class T> struct iterator_traits<T*>;
 
   template<class Category, class T, class Distance = ptrdiff_t,
        class Pointer = T*, class Reference = T&> struct iterator;
+\end{codeblock}
+\end{removedblock}
 
-  struct input_iterator_tag { };
+\begin{addedblock}
+\begin{codeblock}
+  template <class WeaklyIncrementable> struct DifferenceType;
+  template <class WeakIterator> struct IteratorCategory;
+  template <class WeakInputIterator> struct ValueType;
+
+  struct weak_input_iterator_tag { };
+\end{codeblock}
+\end{addedblock}
+\begin{codeblock}
+  struct input_iterator_tag @\added{: public weak_input_iterator_tag }@{ };
   struct output_iterator_tag { };
   struct forward_iterator_tag: public input_iterator_tag { };
   struct bidirectional_iterator_tag: public forward_iterator_tag { };
   struct random_access_iterator_tag: public bidirectional_iterator_tag { };
 
   // \ref{iterator.operations}, iterator operations:
+\end{codeblock}
+\begin{removedblock}
+\begin{codeblock}
   template <class InputIterator, class Distance>
     void advance(InputIterator& i, Distance n);
   template <class InputIterator>
@@ -667,47 +685,79 @@ namespace std {
   template <class BidirectionalIterator>
     BidirectionalIterator prev(BidirectionalIterator x,
       typename std::iterator_traits<BidirectionalIterator>::difference_type n = 1);
+\end{codeblock}
+\end{removedblock}
+\begin{addedblock}
+\begin{codeblock}
+  template <WeakInputIterator I>
+    void advance(I& i, DifferenceType<I> n);
+  template <WeakInputIterator I, Sentinel<I> S>
+    void advance(I& i, S bound);
+  template <WeakInputIterator I, Sentinel<I> S>
+    DifferenceType<I> advance(I& i, DifferenceType<I> n, S bound);
+  template <WeakInputIterator I, Sentinel<I> S>
+    DifferenceType<I> distance(I first, S last);
+  template <WeakInputIterator I>
+    I next(I x, DifferenceType<I> n = 1);
+  template <WeakInputIterator I, Sentinel<I> S>
+    I next(I x, S bound);
+  template <WeakInputIterator I, Sentinel<I> S>
+    I next(I x, DifferenceType<I> n, S bound);
+  template <BidirectionalIterator I>
+    I prev(I x, DifferenceType<I> n = 1);
+  template <BidirectionalIterator I>
+    I prev(I x, DifferenceType<I> n, I bound);
+\end{codeblock}
+\end{addedblock}
 
+\begin{codeblock}
   // \ref{predef.iterators}, predefined iterators:
-  template <class Iterator> class reverse_iterator;
+  template <@\changed{class Iterator}{BidirectionalIterator I}@> class reverse_iterator;
 
-  template <class Iterator1, class Iterator2>
+  template <@\changed{class Iterator1}{BidirectionalIterator I1}@, @\changed{class Iterator2}{BidirectionalIterator I2}@>
+      @\added{requires EqualityComparable<I1, I2>}@
     bool operator==(
-      const reverse_iterator<Iterator1>& x,
-      const reverse_iterator<Iterator2>& y);
-  template <class Iterator1, class Iterator2>
+      const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
+      const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
+  template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
+      @\added{requires TotallyOrdered<I1, I2>}@
     bool operator<(
-      const reverse_iterator<Iterator1>& x,
-      const reverse_iterator<Iterator2>& y);
-  template <class Iterator1, class Iterator2>
+      const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
+      const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
+  template <@\changed{class Iterator1}{BidirectionalIterator I1}@, @\changed{class Iterator2}{BidirectionalIterator I2}@>
+      @\added{requires EqualityComparable<I1, I2>}@
     bool operator!=(
-      const reverse_iterator<Iterator1>& x,
-      const reverse_iterator<Iterator2>& y);
-  template <class Iterator1, class Iterator2>
+      const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
+      const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
+  template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
+      @\added{requires TotallyOrdered<I1, I2>}@
     bool operator>(
-      const reverse_iterator<Iterator1>& x,
-      const reverse_iterator<Iterator2>& y);
-  template <class Iterator1, class Iterator2>
+      const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
+      const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
+  template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
+      @\added{requires TotallyOrdered<I1, I2>}@
     bool operator>=(
-      const reverse_iterator<Iterator1>& x,
-      const reverse_iterator<Iterator2>& y);
-  template <class Iterator1, class Iterator2>
+      const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
+      const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
+  template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
+      @\added{requires TotallyOrdered<I1, I2>}@
     bool operator<=(
-      const reverse_iterator<Iterator1>& x,
-      const reverse_iterator<Iterator2>& y);
+      const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
+      const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
 
-  template <class Iterator1, class Iterator2>
-    auto operator-(
-      const reverse_iterator<Iterator1>& x,
-      const reverse_iterator<Iterator2>& y) ->decltype(y.base() - x.base());
-  template <class Iterator>
-    reverse_iterator<Iterator>
+  template <@\changed{class Iterator1}{BidirectionalIterator I1}@, @\changed{class Iterator2}{BidirectionalIterator I2}@>
+      @\added{requires SizedIteratorRange<I2, I1>}@
+    @\changed{auto}{DifferenceType<I2>}@ operator-(
+      const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
+      const reverse_iterator<@\changed{Iterator2}{I2}@>& y)@\removed{ ->decltype(y.base() - x.base())}@;
+  template <@\changed{class Iterator}{RandomAccessIterator I}@>
+    reverse_iterator<@\changed{Iterator}{I}@>
       operator+(
-    typename reverse_iterator<Iterator>::difference_type n,
-    const reverse_iterator<Iterator>& x);
+    @\changed{typename reverse_iterator<Iterator>::difference_type}{DifferenceType<I>}@ n,
+    const reverse_iterator<@\changed{Iterator}{I}@>& x);
 
-  template <class Iterator>
-    reverse_iterator<Iterator> make_reverse_iterator(Iterator i);
+  template <@\changed{class Iterator}{BidirectionalIterator I}@>
+    reverse_iterator<@\changed{Iterator}{I}@> make_reverse_iterator(@\changed{Iterator}{I}@ i);
 
   template <class Container> class back_insert_iterator;
   template <class Container>
@@ -719,37 +769,149 @@ namespace std {
 
   template <class Container> class insert_iterator;
   template <class Container>
-    insert_iterator<Container> inserter(Container& x, typename Container::iterator i);
+    insert_iterator<Container> inserter(Container& x, @\removed{typename Container::iterator}@
+      @\added{IteratorType<Container>}@ i);
 
-  template <class Iterator> class move_iterator;
-  template <class Iterator1, class Iterator2>
+  template <@\changed{class Iterator}{WeakInputIterator I}@> class move_iterator;
+  template <@\changed{class Iterator1}{InputIterator I1}@, @\changed{class Iterator2}{InputIterator I2}@>
+      @\added{requires EqualityComparable<I1, I2>}@
     bool operator==(
-      const move_iterator<Iterator1>& x, const move_iterator<Iterator2>& y);
-  template <class Iterator1, class Iterator2>
+      const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
+  template <@\changed{class Iterator1}{InputIterator I1}@, @\changed{class Iterator2}{InputIterator I2}@>
+      @\added{requires EqualityComparable<I1, I2>}@
     bool operator!=(
-      const move_iterator<Iterator1>& x, const move_iterator<Iterator2>& y);
-  template <class Iterator1, class Iterator2>
+      const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
+  template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
+      @\added{requires TotallyOrdered<I1, I2>}@
     bool operator<(
-      const move_iterator<Iterator1>& x, const move_iterator<Iterator2>& y);
-  template <class Iterator1, class Iterator2>
+      const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
+  template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
+      @\added{requires TotallyOrdered<I1, I2>}@
     bool operator<=(
-      const move_iterator<Iterator1>& x, const move_iterator<Iterator2>& y);
-  template <class Iterator1, class Iterator2>
+      const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
+  template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
+      @\added{requires TotallyOrdered<I1, I2>}@
     bool operator>(
-      const move_iterator<Iterator1>& x, const move_iterator<Iterator2>& y);
-  template <class Iterator1, class Iterator2>
+      const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
+  template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
+      @\added{requires TotallyOrdered<I1, I2>}@
     bool operator>=(
-      const move_iterator<Iterator1>& x, const move_iterator<Iterator2>& y);
+      const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
 
-  template <class Iterator1, class Iterator2>
-    auto operator-(
-    const move_iterator<Iterator1>& x,
-    const move_iterator<Iterator2>& y) -> decltype(x.base() - y.base());
-  template <class Iterator>
-    move_iterator<Iterator> operator+(
-      typename move_iterator<Iterator>::difference_type n, const move_iterator<Iterator>& x);
-  template <class Iterator>
-    move_iterator<Iterator> make_move_iterator(Iterator i);
+  template <@\changed{class Iterator1}{WeakInputIterator I1}@, @\changed{class Iterator2}{WeakInputIterator I2}@>
+      @\added{requires SizedIteratorRange<I2, I1>}@
+    @\changed{auto}{DifferenceType<I2>}@ operator-(
+      const move_iterator<@\changed{Iterator1}{I1}@>& x,
+      const move_iterator<@\changed{Iterator2}{I2}@>& y)@\removed{ ->decltype(y.base() - x.base())}@;
+  template <@\changed{class Iterator}{RandomAccessIterator I}@>
+    move_iterator<@\changed{Iterator}{I}@>
+      operator+(
+    @\changed{typename move_iterator<Iterator>::difference_type}{DifferenceType<I>}@ n,
+    const move_iterator<@\changed{Iterator}{I}@>& x);
+  template <@\changed{class Iterator}{WeakInputIterator I}@>
+    move_iterator<@\changed{Iterator}{I}@> make_move_iterator(@\changed{Iterator}{I}@ i);
+\end{codeblock}
+
+\begin{addedblock}
+\begin{codeblock}
+  template <WeakInputIterator I> class counted_iterator;
+  class counted_sentinel;
+
+  template <WeakInputIterator I1, WeakInputIterator I2>
+    bool operator==(
+      const counted_iterator<I1>& x, const counted_iterator<I2>& y);
+  template <WeakInputIterator I>
+    bool operator==(
+      const counted_iterator<I>& x, counted_sentinel y);
+  template <WeakInputIterator I>
+    bool operator==(
+      counted_sentinel x, const counted_iterator<I>& y);
+  bool operator==(counted_sentinel x, counted_sentinel y);
+  template <WeakInputIterator I1, WeakInputIterator I2>
+    bool operator!=(
+      const counted_iterator<I1>& x, const counted_iterator<I2>& y);
+  template <WeakInputIterator I>
+    bool operator!=(
+      const counted_iterator<I>& x, counted_sentinel y);
+  template <WeakInputIterator I>
+    bool operator!=(
+      counted_sentinel x, const counted_iterator<I>& y);
+  bool operator!=(counted_sentinel x, counted_sentinel y);
+
+  template <WeakInputIterator I1, WeakInputIterator I2>
+    bool operator<(
+      const counted_iterator<I1>& x, const counted_iterator<I2>& y);
+  template <WeakInputIterator I>
+    bool operator<(
+      const counted_iterator<I>& x, counted_sentinel y);
+  template <WeakInputIterator I>
+    bool operator<(
+      counted_sentinel x, const counted_iterator<I>& y);
+  bool operator<(counted_sentinel x, counted_sentinel y);
+  template <WeakInputIterator I1, WeakInputIterator I2>
+    bool operator<=(
+      const counted_iterator<I1>& x, const counted_iterator<I2>& y);
+  template <WeakInputIterator I>
+    bool operator<=(
+      const counted_iterator<I>& x, counted_sentinel y);
+  template <WeakInputIterator I>
+    bool operator<=(
+      counted_sentinel x, const counted_iterator<I>& y);
+  bool operator<=(counted_sentinel x, counted_sentinel y);
+  template <WeakInputIterator I1, WeakInputIterator I2>
+    bool operator>(
+      const counted_iterator<I1>& x, const counted_iterator<I2>& y);
+  template <WeakInputIterator I>
+    bool operator>(
+      const counted_iterator<I>& x, counted_sentinel y);
+  template <WeakInputIterator I>
+    bool operator>(
+      counted_sentinel x, const counted_iterator<I>& y);
+  bool operator>(counted_sentinel x, counted_sentinel y);
+  template <WeakInputIterator I1, WeakInputIterator I2>
+    bool operator>=(
+      const counted_iterator<I1>& x, const counted_iterator<I2>& y);
+  template <WeakInputIterator I>
+    bool operator>=(
+      const counted_iterator<I>& x, counted_sentinel y);
+  template <WeakInputIterator I>
+    bool operator>=(
+      counted_sentinel x, const counted_iterator<I>& y);
+  bool operator>=(counted_sentinel x, counted_sentinel y);
+
+  template <WeakInputIterator I1, WeakInputIterator I2>
+    common_type_t<DifferenceType<I1>, DifferenceType<I2>> operator-(
+      const counted_iterator<I1>& x, const counted_iterator<I2>& y);
+  template <WeakInputIterator I>
+    DifferenceType<I> operator-(
+      const counted_iterator<I>& x, counted_sentinel y);
+  template <WeakInputIterator I>
+    DifferenceType<I> operator-(
+      counted_sentinel x, const counted_iterator<I>& y);
+  ptrdiff_t operator-(counted_sentinel x, counted_sentinel y);
+  template <RandomAccessIterator I>
+    counted_iterator<I>
+      operator+(DifferenceType<I> n, const counted_iterator<I>& x);
+  template <WeakInputIterator I>
+    counted_iterator<I> make_counted_iterator(I i, DifferenceType<I> n);
+
+  template <WeakInputIterator I>
+    void advance(counted_iterator<I>& i, DifferenceType<I> n);
+
+  template <WeakInputIterator I, Sentinel<I> S> class common_iterator;
+  template <WeakInputIterator I1, Sentinel<I1> S1,
+            WeakInputIterator I2, Sentinel<I2> S2>
+      requires EqualityComparable<I1, I2> && EqualityComparable<S1, S2>
+    bool operator==(
+      const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
+  template <WeakInputIterator I1, Sentinel<I1> S1,
+            WeakInputIterator I2, Sentinel<I2> S2>
+      requires EqualityComparable<I1, I2> && EqualityComparable<S1, S2>
+    bool operator!=(
+      const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
+\end{codeblock}
+\end{addedblock}
+\begin{codeblock}
 
   // \ref{stream.iterators}, stream iterators:
   template <class T, class charT = char, class traits = char_traits<charT>,
