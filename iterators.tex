@@ -643,27 +643,29 @@ sentinels. \ednote{TODO add reference here} \exitnote
 \begin{codeblock}
 namespace std {
   // \ref{iterator.primitives}, primitives:
-\end{codeblock}
-\begin{removedblock}
-\begin{codeblock}
-  template<class Iterator> struct iterator_traits;
-  template<class T> struct iterator_traits<T*>;
+  template<class Iterator> @\changed{struct}{using}@ iterator_traits@\added{ = \seebelow}@;
+  @\removed{template<class T> struct iterator_traits<T*>;}@
 
   template<class Category, class T, class Distance = ptrdiff_t,
        class Pointer = T*, class Reference = T&> struct iterator;
 \end{codeblock}
-\end{removedblock}
 
 \begin{addedblock}
 \begin{codeblock}
-  template <class WeaklyIncrementable> struct DifferenceType;
-  template <class WeakIterator> struct IteratorCategory;
-  template <class WeakInputIterator> struct ValueType;
+  template <class, class = void> struct difference_type;
+  template <class, class = void> struct value_type;
+  template <class, class = void> struct iterator_category;
+  template <class WeaklyIncrementable> using DifferenceType
+    = typename difference_type<WeaklyIncrementable>::type;
+  template <class Readable> using ValueType
+    = typename value_type<Readable>::type;
+  template <class WeakInputIterator> using IteratorCategory
+    = typename iterator_category<WeakInputIterator>::type;
 
-  struct weak_input_iterator_tag { };
 \end{codeblock}
 \end{addedblock}
 \begin{codeblock}
+  @\added{struct weak_input_iterator_tag \{ \};}@
   struct input_iterator_tag @\added{: public weak_input_iterator_tag }@{ };
   struct output_iterator_tag { };
   struct forward_iterator_tag: public input_iterator_tag { };
@@ -711,7 +713,7 @@ namespace std {
 \end{addedblock}
 
 \begin{codeblock}
-  // \ref{predef.iterators}, predefined iterators:
+  // \ref{predef.iterators}, predefined iterators\added{ and sentinels}:
   template <@\changed{class Iterator}{BidirectionalIterator I}@> class reverse_iterator;
 
   template <@\changed{class Iterator1}{BidirectionalIterator I1}@, @\changed{class Iterator2}{BidirectionalIterator I2}@>
@@ -909,6 +911,18 @@ namespace std {
       requires EqualityComparable<I1, I2> && EqualityComparable<S1, S2>
     bool operator!=(
       const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
+
+  struct unreachable { };
+  template <WeakIterator I>
+    constexpr bool operator==(I const &, unreachable) noexcept;
+  template <WeakIterator I>
+    constexpr bool operator==(unreachable, I const &) noexcept;
+  constexpr bool operator==(unreachable, unreachable) noexcept;
+  template <WeakIterator I>
+    constexpr bool operator!=(I const &, unreachable) noexcept;
+  template <WeakIterator I>
+    constexpr bool operator!=(unreachable, I const &) noexcept;
+  constexpr bool operator!=(unreachable, unreachable) noexcept;
 \end{codeblock}
 \end{addedblock}
 \begin{codeblock}
@@ -960,6 +974,15 @@ namespace std {
   template <class E> reverse_iterator<const E*> rend(initializer_list<E> il);
   template <class C> auto crbegin(const C& c) -> decltype(std::rbegin(c));
   template <class C> auto crend(const C& c) -> decltype(std::rend(c));
+\end{codeblock}
+\begin{addedblock}
+\begin{codeblock}
+  template <class C> auto size(const C& c) -> decltype(c.size());
+  template <class T, size_t N> constexpr size_t begin(T (&array)[N]) noexcept;
+  template <class E> size_t size(initializer_list<E> il) noexcept;
+\end{codeblock}
+\end{addedblock}
+\begin{codeblock}
 }
 \end{codeblock}
 
@@ -969,26 +992,46 @@ namespace std {
 To simplify the task of defining iterators, the library provides
 several classes and functions:
 
-\rSec2[iterator.traits]{Iterator traits}
+\rSec2[iterator.assoc]{Iterator \textcolor{remclr}{traits}\textcolor{addclr}{associated types}}
 
 \pnum
 To implement algorithms only in terms of iterators, it is often necessary to
 determine the value and
 difference types that correspond to a particular iterator type.
 Accordingly, it is required that if
-\tcode{Iterator}
-is the type of an iterator,
-the types
+\removed{\tcode{Iterator}
+is the type of an iterator}\added{\tcode{WeaklyIncrementable} is the name of a type that models the
+WeaklyIncrementable concept(~\ref{TODO Reference}), \tcode{Readable} is the name of a type that
+models the Readable concept(~\ref{TODO Reference}), and \tcode{WeakInputIterator} is the name of a
+type that models the WeakInputIterator(~\ref{weakinput.iterators}) concept}, the types
 
+\begin{removedblock}
 \begin{codeblock}
 iterator_traits<Iterator>::difference_type
 iterator_traits<Iterator>::value_type
 iterator_traits<Iterator>::iterator_category
 \end{codeblock}
+\end{removedblock}
+\begin{addedblock}
+\begin{codeblock}
+DifferenceType<WeaklyIncrementable>
+ValueType<Readable>
+IteratorCategory<WeakInputIterator>
+\end{codeblock}
+\end{addedblock}
 
 be defined as the iterator's difference type, value type and iterator category, respectively.
-In addition, the types
+In addition, the type\removed{s}
 
+\begin{addedblock}
+\begin{codeblock}
+ReferenceType<Readable>
+\end{codeblock}
+
+shall be an alias for \tcode{decltype(*declval<Readable>())}.
+\end{addedblock}
+
+\begin{removedblock}
 \begin{codeblock}
 iterator_traits<Iterator>::reference
 iterator_traits<Iterator>::pointer
@@ -1052,6 +1095,79 @@ namespace std {
   };
 }
 \end{codeblock}
+\end{removedblock}
+
+\begin{addedblock}
+\pnum
+\tcode{DifferenceType<T>} is implemented as if:
+
+\begin{codeblock}
+  template <class, class = void> struct difference_type { };
+  template <class T> struct difference_type<T*> {
+    using type = ptrdiff_t;
+  };
+  template <> struct difference_type<nullptr_t> {
+    using type = ptrdiff_t;
+  };
+  template <class T> struct difference_type<T[]> {
+    using type = ptrdiff_t;
+  };
+  template <class T, size_t N> struct difference_type<T[N]> {
+    using type = ptrdiff_t;
+  };
+  template <class T>
+  struct difference_type<T, void_t<typename T::difference_type>> {
+    using type = typename T::difference_type;
+  }
+  template <class T>
+  struct difference_type<T, enable_if_t<is_integral<T>::value>> {
+    using type = decltype(declval<T>() - declval<T>());
+  };
+  template <class T>
+    using DifferenceType = typename difference_type<T>::type;
+\end{codeblock}
+
+\pnum
+\tcode{ValueType<T>} is implemented as if:
+
+\begin{codeblock}
+  template <class, class = void> struct value_type { };
+  template <class T>
+    struct value_type<T*> : remove_cv<T> { };
+  template <class T>
+    struct value_type<T[]> : remove_cv<T> { };
+  template <class T, size_t N>
+    struct value_type<T[N]> : remove_cv<T> { };
+  template <class T>
+    struct value_type<T, void_t<typename T::value_type>>
+      : enable_if<!is_void<typename T::value_type>::value, typename T::value_type> { };
+  template <class T>
+    struct value_type<T, void_t<typename T::element_type>>
+      : enable_if<!is_void<typename T::element_type>::value, typename T::element_type> { };
+  template <class T>
+  struct value_type<T, enable_if_t<is_base_of<T, ios_base>::value>> {
+    using type = typename T::char_type;
+  };
+  template <class T>
+    using ValueType = typename value_type<T>::type;
+\end{codeblock}
+
+\pnum
+\tcode{IteratorCategory<T>} is implemented as if:
+
+\begin{codeblock}
+  template <class, class = void> struct iterator_category { };
+  template <class T> struct iterator_category<T*> {
+    using type = random_access_iterator_tag;
+  };
+  template <class T>
+  struct iterator_category<T, void_t<typename T::iterator_category>> {
+    using type = typename T::iterator_category;
+  };
+  template <class T>
+    using IteratorCategory = typename iterator_category<T>::type;
+\end{codeblock}
+\end{addedblock}
 
 \pnum
 \enternote
@@ -1063,6 +1179,7 @@ is of type
 \tcode{long},
 an implementation may define
 
+\begin{removedblock}
 \begin{codeblock}
   template<class T> struct iterator_traits<T @\xname{far}@*> {
     typedef long difference_type;
@@ -1072,7 +1189,64 @@ an implementation may define
     typedef random_access_iterator_tag iterator_category;
   };
 \end{codeblock}
+\end{removedblock}
+\begin{addedblock}
+\begin{codeblock}
+  template<class T> struct difference_type<T @\xname{far}@*> {
+    using type = long;
+  };
+  template<class T> struct value_type<T @\xname{far}@*> : remove_cv<T> { };
+  template<class T> struct iterator_category<T @\xname{far}@*> {
+    using type = random_access_iterator_tag;
+  };
+\end{codeblock}
+\end{addedblock}
 \exitnote
+
+\begin{addedblock}
+\pnum
+For the sake of backwards compatibility, this standard specifies the existence of an \tcode{iterator_traits}
+alias that collects an iterator's associated types. It is defined as if:
+
+\ednote{Think through the implications here.}
+
+\begin{codeblock}
+  template <WeakInputIterator I, class = void> struct @\xname{pointer_type}@ {
+    using type = add_pointer_t<ReferenceType<I>>;
+  };
+  template <WeakInputIterator I>
+  struct @\xname{pointer_type}@<I, void_t<decltype(declval<I>().operator->())>> {
+    using type = decltype(declval<I>().operator->());
+  };
+  template <WeaklyIncrementable I> struct @\xname{iterator_traits2}@ {
+    using difference_type = DifferenceType<I>;
+    using value_type = void;
+    using reference = void;
+    using pointer = void;
+    using iterator_category = output_iterator_tag;
+  };
+  @\ednote{Is this syntax right?}@
+  template <WeakInputIterator I> struct @\xname{iterator_traits2}@ {
+    using difference_type = DifferenceType<I>;
+    using value_type = ValueType<I>;
+    using reference = ReferenceType<I>;
+    using pointer = typename @\xname{pointer_type}@<I>::type;
+    using iterator_category = IteratorCategory<I>;
+  };
+  template <class, class = void> struct @\xname{iterator_traits}@ { };
+  template <class I, enable_if_t<WeaklyIncrementable<I>>>
+  struct @\xname{iterator_traits}@ : @\xname{iterator_traits2}@<I> { };
+  template <class I>
+    using iterator_traits = @\xname{iterator_traits2}@<I>;
+\end{codeblock}
+
+\pnum
+\enternote
+\tcode{iterator_traits} is a template alias to intentionally break code that tries to specialize
+it.
+\exitnote
+
+\end{addedblock}
 
 \pnum
 \enterexample
@@ -1081,14 +1255,14 @@ To implement a generic
 function, a \Cpp program can do the following:
 
 \begin{codeblock}
-template <class BidirectionalIterator>
-void reverse(BidirectionalIterator first, BidirectionalIterator last) {
-  typename iterator_traits<BidirectionalIterator>::difference_type n =
+template <@\removed{class }@BidirectionalIterator@\added{ I}@>
+void reverse(@\changed{BidirectionalIterator}{I}@ first, @\changed{BidirectionalIterator}{I}@ last) {
+  @\changed{typename iterator_traits<BidirectionalIterator>::difference_type}{DifferenceType<I>}@ n =
     distance(first, last);
   --n;
   while(n > 0) {
-    typename iterator_traits<BidirectionalIterator>::value_type
-     tmp = *first;
+    @\changed{typename iterator_traits<BidirectionalIterator>::value_type}{ValueType<I>}@
+      tmp = *first;
     *first++ = *--last;
     *last = tmp;
     n -= 2;
@@ -1119,9 +1293,17 @@ namespace std {
 }
 \end{codeblock}
 
+\begin{addedblock}
+\pnum
+\enternote The \tcode{Pointer} and \tcode{Reference} template parameters, and the nested \tcode{pointer}
+and \tcode{reference} type aliases are for backward compatibility only; they are never used by any
+other part of this standard.\exitnote
+\end{addedblock}
+
 \rSec2[std.iterator.tags]{Standard iterator tags}
 
 \pnum
+\indexlibrary{\idxcode{weak_input_iterator_tag}}%
 \indexlibrary{\idxcode{input_iterator_tag}}%
 \indexlibrary{\idxcode{output_iterator_tag}}%
 \indexlibrary{\idxcode{forward_iterator_tag}}%
@@ -1134,23 +1316,27 @@ argument, so that the function can select the most efficient algorithm at compil
 To facilitate this, the
 library introduces
 \techterm{category tag}
-classes which are used as compile time tags for algorithm selection.
-They are:
+classes which \changed{are}{can be} used as compile time tags for algorithm selection.
+\added{\enternote The preferred way to dispatch to more specialized algorithm implementations is
+with concept-based overloading.\exitnote}
+\changed{They}{The category tags} are:
+\tcode{\added{weak_input_iterator_tag}},
 \tcode{input_iterator_tag},
 \tcode{output_iterator_tag},
 \tcode{forward_iterator_tag},
 \tcode{bidirectional_iterator_tag}
 and
 \tcode{random_access_iterator_tag}.
-For every iterator of type
+For every \added{weak input }iterator of type
 \tcode{Iterator},
-\tcode{iterator_traits<Iterator>::it\-er\-a\-tor_ca\-te\-go\-ry}
+\tcode{\changed{iterator_traits<Iterator>::it\-er\-a\-tor_ca\-te\-go\-ry}{It\-er\-a\-tor\-Ca\-te\-go\-ry<Iterator>}}
 shall be defined to be the most specific category tag that describes the
 iterator's behavior.
 
 \begin{codeblock}
 namespace std {
-  struct input_iterator_tag { };
+  @\added{struct weak_input_iterator_tag \{ \};}@
+  struct input_iterator_tag@\added{: weak_input_iterator_tag}@ { };
   struct output_iterator_tag { };
   struct forward_iterator_tag: public input_iterator_tag { };
   struct bidirectional_iterator_tag: public forward_iterator_tag { };
@@ -1158,8 +1344,16 @@ namespace std {
 }
 \end{codeblock}
 
+\begin{addedblock}
+\pnum
+\enternote
+The \tcode{output_iterator_tag} is provided for the sake of backward compatibility.
+\exitnote
+\end{addedblock}
+
 \pnum
 \indexlibrary{\idxcode{empty}}%
+\indexlibrary{\idxcode{weak_input_iterator_tag}}%
 \indexlibrary{\idxcode{input_iterator_tag}}%
 \indexlibrary{\idxcode{output_iterator_tag}}%
 \indexlibrary{\idxcode{forward_iterator_tag}}%
@@ -1170,9 +1364,10 @@ For a program-defined iterator
 \tcode{BinaryTreeIterator},
 it could be included
 into the bidirectional iterator category by specializing the
-\tcode{iterator_traits}
-template:
+\tcode{\removed{iterator_traits}}\tcode{\added{difference_type}}\added{, }\tcode{\added{value_type}}\added{, and }
+\tcode{\added{iterator_category}} template\added{s}:
 
+\begin{removedblock}
 \begin{codeblock}
 template<class T> struct iterator_traits<BinaryTreeIterator<T> > {
   typedef std::ptrdiff_t difference_type;
@@ -1182,6 +1377,20 @@ template<class T> struct iterator_traits<BinaryTreeIterator<T> > {
   typedef bidirectional_iterator_tag iterator_category;
 };
 \end{codeblock}
+\end{removedblock}
+\begin{addedblock}
+\begin{codeblock}
+template<class T> struct difference_type<BinaryTreeIterator<T> > {
+  using type = std::ptrdiff_t;
+};
+template<class T> struct value_type<BinaryTreeIterator<T> > {
+  using type = T;
+};
+template<class T> struct iterator_category<BinaryTreeIterator<T> > {
+  using type = bidirectional_iterator_tag;
+};
+\end{codeblock}
+\end{addedblock}
 
 Typically, however, it would be easier to derive
 \tcode{BinaryTreeIterator<T>}
@@ -1194,14 +1403,16 @@ from
 If
 \tcode{evolve()}
 is well defined for bidirectional iterators, but can be implemented more
-efficiently for random access iterators, then the implementation is as follows:
+efficiently for random access iterators, then \changed{the}{one possible} implementation is as
+follows:
 
 \begin{codeblock}
 template <class BidirectionalIterator>
 inline void
 evolve(BidirectionalIterator first, BidirectionalIterator last) {
   evolve(first, last,
-    typename iterator_traits<BidirectionalIterator>::iterator_category());
+    @\removed{typename iterator_traits<BidirectionalIterator>::iterator_category()}@
+    @\added{IteratorCategory<BidirectionalIterator>\{\}}@);
 }
 
 template <class BidirectionalIterator>
@@ -1234,8 +1445,8 @@ class MyIterator :
 
 \pnum
 Then there is no need to specialize the
-\tcode{iterator_traits}
-template.
+\tcode{\removed{iterator_traits}}\tcode{\added{difference_type}}\added{, }
+\tcode{\added{value_type}}\added{, or } \tcode{\added{iterator_category}} template\added{s}.
 \exitexample
 
 \rSec2[iterator.operations]{Iterator operations}
