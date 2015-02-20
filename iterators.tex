@@ -691,19 +691,19 @@ namespace std {
 \end{removedblock}
 \begin{addedblock}
 \begin{codeblock}
-  template <WeakInputIterator I>
+  template <WeakIterator I>
     void advance(I& i, DifferenceType<I> n);
-  template <WeakInputIterator I, Sentinel<I> S>
+  template <Iterator I, Sentinel<I> S>
     void advance(I& i, S bound);
-  template <WeakInputIterator I, Sentinel<I> S>
+  template <Iterator I, Sentinel<I> S>
     DifferenceType<I> advance(I& i, DifferenceType<I> n, S bound);
-  template <WeakInputIterator I, Sentinel<I> S>
+  template <Iterator I, Sentinel<I> S>
     DifferenceType<I> distance(I first, S last);
-  template <WeakInputIterator I>
+  template <WeakIterator I>
     I next(I x, DifferenceType<I> n = 1);
-  template <WeakInputIterator I, Sentinel<I> S>
+  template <Iterator I, Sentinel<I> S>
     I next(I x, S bound);
-  template <WeakInputIterator I, Sentinel<I> S>
+  template <Iterator I, Sentinel<I> S>
     I next(I x, DifferenceType<I> n, S bound);
   template <BidirectionalIterator I>
     I prev(I x, DifferenceType<I> n = 1);
@@ -1336,7 +1336,7 @@ iterator's behavior.
 \begin{codeblock}
 namespace std {
   @\added{struct weak_input_iterator_tag \{ \};}@
-  struct input_iterator_tag@\added{: weak_input_iterator_tag}@ { };
+  struct input_iterator_tag@\added{: public weak_input_iterator_tag}@ { };
   struct output_iterator_tag { };
   struct forward_iterator_tag: public input_iterator_tag { };
   struct bidirectional_iterator_tag: public forward_iterator_tag { };
@@ -1395,7 +1395,7 @@ template<class T> struct iterator_category<BinaryTreeIterator<T> > {
 Typically, however, it would be easier to derive
 \tcode{BinaryTreeIterator<T>}
 from
-\tcode{iterator<bidirectional_iterator_tag,T,ptrdiff_t,T*,T\&>}.
+\tcode{iterator<bidirectional_iterator_tag,T,ptrdiff_t\removed{,T*,T\&}>}.
 \exitexample
 
 \pnum
@@ -1438,7 +1438,7 @@ works on a large memory model of the implementation, it can do so with:
 
 \begin{codeblock}
 class MyIterator :
-  public iterator<bidirectional_iterator_tag, double, long, T*, T&> {
+  public iterator<bidirectional_iterator_tag, double, long@\removed{, T*, T\&}@> {
   // code implementing \tcode{++}, etc.
 };
 \end{codeblock}
@@ -1452,11 +1452,10 @@ Then there is no need to specialize the
 \rSec2[iterator.operations]{Iterator operations}
 
 \pnum
-Since only random access iterators provide
-\tcode{+}
-and
+Since only \changed{random access iterators}{models of \tcode{RandomAccessIterator}} provide
+\added{the }\tcode{+} \changed{and}{operator, and models of \tcode{SizedIteratorRange} provide the}
 \tcode{-}
-operators, the library provides two
+operator\removed{s}, the library provides two
 function templates
 \tcode{advance}
 and
@@ -1467,17 +1466,25 @@ use
 \tcode{+}
 and
 \tcode{-}
-for random access iterators (and are, therefore, constant
+for random access iterators\added{ and sized iterator ranges, respectively} (and are, therefore, constant
 time for them); for input, forward and bidirectional iterators they use
 \tcode{++}
 to provide linear time
 implementations.
 
 \indexlibrary{\idxcode{advance}}%
+\begin{removedblock}
 \begin{itemdecl}
 template <class InputIterator, class Distance>
   void advance(InputIterator& i, Distance n);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template <WeakIterator I>
+  void advance(I& i, DifferenceType<I> n);
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -1495,17 +1502,85 @@ by
 \tcode{n}.
 \end{itemdescr}
 
+\begin{addedblock}
+\begin{itemdecl}
+template <Iterator I, Sentinel<I> S>
+  void advance(I& i, S bound);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires
+\tcode{bound} shall be reachable from \tcode{i}.
+
+\pnum
+\effects
+Increments iterator reference \tcode{i} until
+\tcode{i == bound}.
+
+\pnum
+If \tcode{I} and \tcode{S} are the same type, this function
+is constant time.
+
+\pnum
+If \tcode{I} and \tcode{S} model the concept \tcode{SizedIteratorRange}, this
+function shall dispatch to \tcode{advance(i, bound - i)}.
+\end{itemdescr}
+
+\begin{itemdecl}
+template <Iterator I, Sentinel<I> S>
+  DifferenceType<I> advance(I& i, DifferenceType<I> n, S bound);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires
+\tcode{n}
+shall be negative only for bidirectional and random access iterators. If \tcode{n} is
+negative, \tcode{i} shall be reachable from \tcode{bound}; otherwise, \tcode{bound}
+shall be reachable from \tcode{i}.
+
+\pnum
+\effects
+Increments (or decrements for negative \tcode{n}) iterator reference \tcode{i} either
+\tcode{n} times or until \tcode{i == bound}, whichever comes first.
+
+\pnum
+If \tcode{I} and \tcode{S} model \tcode{SizedIteratorRange}:
+
+\begin{itemize}
+\item If \tcode{(0 <= n ? n >= $D$ : n <= $D$)} is true, where $D$ is \tcode{bound - i},
+this function dispatches to \tcode{advance(i, $D$)},
+\item Otherwise, this function dispatches to \tcode{advance(i, n)}.
+\end{itemize}
+
+\pnum
+\returns
+\tcode{n - $M$}, where $M$ is the distance from the starting position of \tcode{i} to
+the ending position.
+\end{itemdescr}
+\end{addedblock}
+
 \indexlibrary{\idxcode{distance}}%
+\begin{removedblock}
 \begin{itemdecl}
   template<class InputIterator>
       typename iterator_traits<InputIterator>::difference_type
          distance(InputIterator first, InputIterator last);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template <Iterator I, Sentinel<I> S>
+  DifferenceType<I> distance(I first, S last);
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
 \effects
-If \tcode{InputIterator} meets the requirements of random access iterator,
+If \tcode{\changed{InputIterator}{I}}\added{ and \tcode{S}} \changed{meets the
+requirements of random access iterator}{model \tcode{SizedIteratorRange}},
 returns \tcode{(last - first)}; otherwise, returns
 the number of increments needed to get from
 \tcode{first}
@@ -1514,7 +1589,8 @@ to
 
 \pnum
 \requires
-If \tcode{InputIterator} meets the requirements of random access iterator,
+If \tcode{\changed{InputIterator}{I}}\added{ and \tcode{S}} \changed{meets the
+requirements of random access iterator}{model \tcode{SizedIteratorRange}},
 \tcode{last} shall be reachable from \tcode{first} or \tcode{first} shall be
 reachable from \tcode{last}; otherwise,
 \tcode{last}
@@ -1523,28 +1599,78 @@ shall be reachable from
 \end{itemdescr}
 
 \indexlibrary{\idxcode{next}}%
+\begin{removedblock}
 \begin{itemdecl}
 template <class ForwardIterator>
   ForwardIterator next(ForwardIterator x,
     typename std::iterator_traits<ForwardIterator>::difference_type n = 1);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template <WeakIterator I>
+  I next(I x, DifferenceType<I> n = 1);
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
 \effects Equivalent to \tcode{advance(x, n); return x;}
 \end{itemdescr}
 
+\begin{addedblock}
+\begin{itemdecl}
+template <Iterator I, Sentinel<I> S>
+  I next(I x, S bound);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to \tcode{advance(x, bound); return x;}
+\end{itemdescr}
+
+\begin{itemdecl}
+template <Iterator I, Sentinel<I> S>
+  I next(I x, DifferenceType<I> n, S bound);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to \tcode{advance(x, n, bound); return x;}
+\end{itemdescr}
+\end{addedblock}
+
 \indexlibrary{\idxcode{prev}}%
+\begin{removedblock}
 \begin{itemdecl}
 template <class BidirectionalIterator>
   BidirectionalIterator prev(BidirectionalIterator x,
     typename std::iterator_traits<BidirectionalIterator>::difference_type n = 1);
 \end{itemdecl}
+\end{removedblock}
+\begin{addedblock}
+\begin{itemdecl}
+template <BidirectionalIterator I>
+  I prev(I x, DifferenceType<I> n = 1);
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
 \effects Equivalent to \tcode{advance(x, -n); return x;}
 \end{itemdescr}
+
+\begin{addedblock}
+\begin{itemdecl}
+template <BidirectionalIterator I>
+  I prev(I x, DifferenceType<I> n, I bound);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to \tcode{advance(x, -n, bound); return x;}
+\end{itemdescr}
+\end{addedblock}
 
 \rSec1[predef.iterators]{Iterator adaptors}
 
