@@ -816,6 +816,7 @@ namespace std {
 
 \begin{addedblock}
 \begin{codeblock}
+  @\ednote{Why not WeakIterator?}@
   template <WeakInputIterator I> class counted_iterator;
   class counted_sentinel;
 
@@ -890,7 +891,7 @@ namespace std {
   template <WeakInputIterator I>
     DifferenceType<I> operator-(
       counted_sentinel x, const counted_iterator<I>& y);
-  ptrdiff_t operator-(counted_sentinel x, counted_sentinel y);
+  constexpr ptrdiff_t operator-(counted_sentinel x, counted_sentinel y);
   template <RandomAccessIterator I>
     counted_iterator<I>
       operator+(DifferenceType<I> n, const counted_iterator<I>& x);
@@ -1550,7 +1551,7 @@ If \tcode{I} and \tcode{S} model \tcode{SizedIteratorRange}:
 
 \begin{itemize}
 \item If \tcode{(0 <= n ? n >= $D$ : n <= $D$)} is true, where $D$ is \tcode{bound - i},
-this function dispatches to \tcode{advance(i, $D$)},
+this function dispatches to \tcode{advance(i, bound)},
 \item Otherwise, this function dispatches to \tcode{advance(i, n)}.
 \end{itemize}
 
@@ -1688,82 +1689,109 @@ is established by the identity:
 \indexlibrary{\idxcode{reverse_iterator}}%
 \begin{codeblock}
 namespace std {
-  template <class Iterator>
-  class reverse_iterator : public
+  template <@\changed{class Iterator}{BidirectionalIterator I}@>
+  class reverse_iterator @\changed{: public}{\{}@
+\end{codeblock}\begin{removedblock}\begin{codeblock}
         iterator<typename iterator_traits<Iterator>::iterator_category,
         typename iterator_traits<Iterator>::value_type,
         typename iterator_traits<Iterator>::difference_type,
         typename iterator_traits<Iterator>::pointer,
         typename iterator_traits<Iterator>::reference> {
+\end{codeblock}\end{removedblock}\begin{codeblock}
   public:
+\end{codeblock}\begin{removedblock}\begin{codeblock}
     typedef Iterator                                            iterator_type;
     typedef typename iterator_traits<Iterator>::difference_type difference_type;
     typedef typename iterator_traits<Iterator>::reference       reference;
     typedef typename iterator_traits<Iterator>::pointer         pointer;
+\end{codeblock}\end{removedblock}\begin{addedblock}\begin{codeblock}
+    using iterator_type = I;
+    using difference_type = DifferenceType<I>;
+    using value_type = ValueType<I>;
+    using iterator_category = IteratorCategory<I>;
+    using reference = ReferenceType<I>;
+\end{codeblock}\end{addedblock}\begin{codeblock}
+    reverse_iterator()@\added{ = default}@;
+    explicit reverse_iterator(@\changed{Iterator}{I}@ x);
+    template <@\changed{class}{BidirectionalIterator}@ U>
+      @\added{requires Convertible<U, I>}@
+        reverse_iterator(const reverse_iterator<U>& u);
+    template <@\changed{class}{BidirectionalIterator}@ U>
+      @\added{requires Convertible<U, I>}@
+        reverse_iterator& operator=(const reverse_iterator<U>& u);
 
-    reverse_iterator();
-    explicit reverse_iterator(Iterator x);
-    template <class U> reverse_iterator(const reverse_iterator<U>& u);
-    template <class U> reverse_iterator& operator=(const reverse_iterator<U>& u);
-
-    Iterator base() const;      // explicit
+    @\changed{Iterator}{I}@ base() const;      // explicit
     reference operator*() const;
-    pointer   operator->() const;
+    @\removed{pointer   operator->() const;}@
 
     reverse_iterator& operator++();
     reverse_iterator  operator++(int);
     reverse_iterator& operator--();
     reverse_iterator  operator--(int);
 
-    reverse_iterator  operator+ (difference_type n) const;
-    reverse_iterator& operator+=(difference_type n);
-    reverse_iterator  operator- (difference_type n) const;
-    reverse_iterator& operator-=(difference_type n);
-    @\unspec@ operator[](difference_type n) const;
+    @\added{requires RandomAccessIterator<I>}@
+      reverse_iterator  operator+ (difference_type n) const;
+    @\added{requires RandomAccessIterator<I>}@
+      reverse_iterator& operator+=(difference_type n);
+    @\added{requires RandomAccessIterator<I>}@
+      reverse_iterator  operator- (difference_type n) const;
+    @\added{requires RandomAccessIterator<I>}@
+      reverse_iterator& operator-=(difference_type n);
+    @\added{requires RandomAccessIterator<I>}@
+      @\unspec@ operator[](difference_type n) const;
   protected:
-    Iterator current;
+    @\changed{Iterator}{I}@ current;
   };
 
-  template <class Iterator1, class Iterator2>
+  template <@\changed{class Iterator1}{BidirectionalIterator I1}@, @\changed{class Iterator2}{BidirectionalIterator I2}@>
+      @\added{requires EqualityComparable<I1, I2>}@
     bool operator==(
-      const reverse_iterator<Iterator1>& x,
-      const reverse_iterator<Iterator2>& y);
-  template <class Iterator1, class Iterator2>
+      const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
+      const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
+  template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
+      @\added{requires TotallyOrdered<I1, I2>}@
     bool operator<(
-      const reverse_iterator<Iterator1>& x,
-      const reverse_iterator<Iterator2>& y);
-  template <class Iterator1, class Iterator2>
+      const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
+      const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
+  template <@\changed{class Iterator1}{BidirectionalIterator I1}@, @\changed{class Iterator2}{BidirectionalIterator I2}@>
+      @\added{requires EqualityComparable<I1, I2>}@
     bool operator!=(
-      const reverse_iterator<Iterator1>& x,
-      const reverse_iterator<Iterator2>& y);
-  template <class Iterator1, class Iterator2>
+      const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
+      const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
+  template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
+      @\added{requires TotallyOrdered<I1, I2>}@
     bool operator>(
-      const reverse_iterator<Iterator1>& x,
-      const reverse_iterator<Iterator2>& y);
-  template <class Iterator1, class Iterator2>
+      const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
+      const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
+  template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
+      @\added{requires TotallyOrdered<I1, I2>}@
     bool operator>=(
-      const reverse_iterator<Iterator1>& x,
-      const reverse_iterator<Iterator2>& y);
-  template <class Iterator1, class Iterator2>
+      const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
+      const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
+  template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
+      @\added{requires TotallyOrdered<I1, I2>}@
     bool operator<=(
-      const reverse_iterator<Iterator1>& x,
-      const reverse_iterator<Iterator2>& y);
-  template <class Iterator1, class Iterator2>
-    auto operator-(
-      const reverse_iterator<Iterator1>& x,
-      const reverse_iterator<Iterator2>& y) -> decltype(y.base() - x.base());
-  template <class Iterator>
-    reverse_iterator<Iterator> operator+(
-      typename reverse_iterator<Iterator>::difference_type n,
-      const reverse_iterator<Iterator>& x);
+      const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
+      const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
+  template <@\changed{class Iterator1}{BidirectionalIterator I1}@, @\changed{class Iterator2}{BidirectionalIterator I2}@>
+      @\added{requires SizedIteratorRange<I2, I1>}@
+    @\changed{auto}{DifferenceType<I2>}@ operator-(
+      const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
+      const reverse_iterator<@\changed{Iterator2}{I2}@>& y)@\removed{ ->decltype(y.base() - x.base())}@;
+  template <@\changed{class Iterator}{RandomAccessIterator I}@>
+    reverse_iterator<@\changed{Iterator}{I}@>
+      operator+(
+    @\changed{typename reverse_iterator<Iterator>::difference_type}{DifferenceType<I>}@ n,
+    const reverse_iterator<@\changed{Iterator}{I}@>& x);
 
-  template <class Iterator>
-    reverse_iterator<Iterator> make_reverse_iterator(Iterator i);
+  template <@\changed{class Iterator}{BidirectionalIterator I}@>
+    reverse_iterator<@\changed{Iterator}{I}@> make_reverse_iterator(@\changed{Iterator}{I}@ i);
 }
 \end{codeblock}
 
 \rSec3[reverse.iter.requirements]{\tcode{reverse_iterator} requirements}
 
+\begin{removedblock}
 \pnum
 The template parameter
 \tcode{Iterator}
@@ -1788,12 +1816,14 @@ or the global operators
 or
 \tcode{operator+}~(\ref{reverse.iter.opsum})
 are referenced in a way that requires instantiation~(\ref{temp.inst}).
+\end{removedblock}
 
 \rSec3[reverse.iter.ops]{\tcode{reverse_iterator} operations}
 
 \rSec4[reverse.iter.cons]{\tcode{reverse_iterator} constructor}
 
 \indexlibrary{\idxcode{reverse_iterator}!\tcode{reverse_iterator}}%
+\begin{removedblock}
 \begin{itemdecl}
 reverse_iterator();
 \end{itemdecl}
@@ -1807,11 +1837,12 @@ Iterator operations applied to the resulting iterator have defined behavior
 if and only if the corresponding operations are defined on a value-initialized iterator of type
 \tcode{Iterator}.
 \end{itemdescr}
+\end{removedblock}
 
 \indexlibrary{\idxcode{reverse_iterator}!constructor}%
 
 \begin{itemdecl}
-explicit reverse_iterator(Iterator x);
+explicit reverse_iterator(@\changed{Iterator}{I}@ x);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -1825,7 +1856,9 @@ with \tcode{x}.
 \indexlibrary{\idxcode{reverse_iterator}!constructor}%
 
 \begin{itemdecl}
-template <class U> reverse_iterator(const reverse_iterator<U> &u);
+template <@\changed{class}{BidirectionalIterator}@ U>
+  @\added{requires Convertible<U, I>}@
+reverse_iterator(const reverse_iterator<U>& u);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -1841,7 +1874,8 @@ with
 
 \indexlibrary{\idxcode{operator=}!\tcode{reverse_iterator}}%
 \begin{itemdecl}
-template <class U>
+template <@\changed{class}{BidirectionalIterator}@ U>
+  @\added{requires Convertible<U, I>}@
 reverse_iterator&
   operator=(const reverse_iterator<U>& u);
 \end{itemdecl}
@@ -1849,7 +1883,7 @@ reverse_iterator&
 \begin{itemdescr}
 \pnum
 \effects
-Assigns \tcode{u.base()} to current.
+Assigns \tcode{u.base()} to \tcode{current}.
 
 \pnum
 \returns
@@ -1861,7 +1895,7 @@ Assigns \tcode{u.base()} to current.
 \indexlibrary{\idxcode{base}!\idxcode{reverse_iterator}}%
 \indexlibrary{\idxcode{reverse_iterator}!\idxcode{base}}%
 \begin{itemdecl}
-Iterator base() const;          // explicit
+@\changed{Iterator}{I} base() const;          // explicit
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -1887,6 +1921,7 @@ return *--tmp;
 
 \end{itemdescr}
 
+\begin{removedblock}
 \rSec4[reverse.iter.opref]{\tcode{operator->}}
 
 \indexlibrary{\idxcode{operator->}!\idxcode{reverse_iterator}}%
@@ -1898,6 +1933,7 @@ pointer operator->() const;
 \pnum
 \returns \tcode{std::addressof(operator*())}.
 \end{itemdescr}
+\end{removedblock}
 
 \rSec4[reverse.iter.op++]{\tcode{operator++}}
 
@@ -1969,8 +2005,9 @@ return tmp;
 
 \indexlibrary{\idxcode{operator+}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
+@\added{requires RandomAccessIterator<I>}@
 reverse_iterator
-operator+(typename reverse_iterator<Iterator>::difference_type n) const;
+operator+(typename reverse_iterator<@\changed{Iterator}{I}@>::difference_type n) const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -1983,8 +2020,9 @@ operator+(typename reverse_iterator<Iterator>::difference_type n) const;
 
 \indexlibrary{\idxcode{operator+=}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
+@\added{requires RandomAccessIterator<I>}@
 reverse_iterator&
-operator+=(typename reverse_iterator<Iterator>::difference_type n);
+operator+=(typename reverse_iterator<@\changed{Iterator}{I}@>::difference_type n);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2001,8 +2039,9 @@ operator+=(typename reverse_iterator<Iterator>::difference_type n);
 
 \indexlibrary{\idxcode{operator-}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
+@\added{requires RandomAccessIterator<I>}@
 reverse_iterator
-operator-(typename reverse_iterator<Iterator>::difference_type n) const;
+operator-(typename reverse_iterator<@\changed{Iterator}{I}@>::difference_type n) const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2015,8 +2054,9 @@ operator-(typename reverse_iterator<Iterator>::difference_type n) const;
 
 \indexlibrary{\idxcode{operator-=}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
+@\added{requires RandomAccessIterator<I>}@
 reverse_iterator&
-operator-=(typename reverse_iterator<Iterator>::difference_type n);
+operator-=(typename reverse_iterator<@\changed{Iterator}{I}@>::difference_type n);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2033,8 +2073,9 @@ operator-=(typename reverse_iterator<Iterator>::difference_type n);
 
 \indexlibrary{\idxcode{operator[]}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
+@\added{requires RandomAccessIterator<I>}@
 @\unspec@ operator[](
-    typename reverse_iterator<Iterator>::difference_type n) const;
+    typename reverse_iterator<@\changed{Iterator}{I}@>::difference_type n) const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2047,10 +2088,11 @@ operator-=(typename reverse_iterator<Iterator>::difference_type n);
 
 \indexlibrary{\idxcode{operator==}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
-template <class Iterator1, class Iterator2>
+template <@\changed{class Iterator1}{BidirectionalIterator I1}@, @\changed{class Iterator2}{BidirectionalIterator I2}@>
+    @\added{requires EqualityComparable<I1, I2>}@
   bool operator==(
-    const reverse_iterator<Iterator1>& x,
-    const reverse_iterator<Iterator2>& y);
+    const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
+    const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2063,10 +2105,11 @@ template <class Iterator1, class Iterator2>
 
 \indexlibrary{\idxcode{operator<}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
-template <class Iterator1, class Iterator2>
+template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
+    @\added{requires TotallyOrdered<I1, I2>}@
   bool operator<(
-    const reverse_iterator<Iterator1>& x,
-    const reverse_iterator<Iterator2>& y);
+    const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
+    const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2079,10 +2122,11 @@ template <class Iterator1, class Iterator2>
 
 \indexlibrary{\idxcode{operator"!=}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
-template <class Iterator1, class Iterator2>
+template <@\changed{class Iterator1}{BidirectionalIterator I1}@, @\changed{class Iterator2}{BidirectionalIterator I2}@>
+    @\added{requires EqualityComparable<I1, I2>}@
   bool operator!=(
-    const reverse_iterator<Iterator1>& x,
-    const reverse_iterator<Iterator2>& y);
+    const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
+    const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2095,10 +2139,11 @@ template <class Iterator1, class Iterator2>
 
 \indexlibrary{\idxcode{operator>}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
-template <class Iterator1, class Iterator2>
+template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
+    @\added{requires TotallyOrdered<I1, I2>}@
   bool operator>(
-    const reverse_iterator<Iterator1>& x,
-    const reverse_iterator<Iterator2>& y);
+    const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
+    const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2111,10 +2156,11 @@ template <class Iterator1, class Iterator2>
 
 \indexlibrary{\idxcode{operator>=}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
-template <class Iterator1, class Iterator2>
+template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
+    @\added{requires TotallyOrdered<I1, I2>}@
   bool operator>=(
-    const reverse_iterator<Iterator1>& x,
-    const reverse_iterator<Iterator2>& y);
+    const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
+    const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2127,10 +2173,11 @@ template <class Iterator1, class Iterator2>
 
 \indexlibrary{\idxcode{operator<=}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
-template <class Iterator1, class Iterator2>
+template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
+    @\added{requires TotallyOrdered<I1, I2>}@
   bool operator<=(
-    const reverse_iterator<Iterator1>& x,
-    const reverse_iterator<Iterator2>& y);
+    const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
+    const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2143,10 +2190,11 @@ template <class Iterator1, class Iterator2>
 
 \indexlibrary{\idxcode{operator-}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
-template <class Iterator1, class Iterator2>
-    auto operator-(
-    const reverse_iterator<Iterator1>& x,
-    const reverse_iterator<Iterator2>& y) -> decltype(y.base() - x.base());
+template <@\changed{class Iterator1}{BidirectionalIterator I1}@, @\changed{class Iterator2}{BidirectionalIterator I2}@>
+    @\added{requires SizedIteratorRange<I2, I1>}@
+  @\changed{auto}{DifferenceType<I2>}@ operator-(
+    const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
+    const reverse_iterator<@\changed{Iterator2}{I2}@>& y)@\removed{ ->decltype(y.base() - x.base())}@;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2159,16 +2207,17 @@ template <class Iterator1, class Iterator2>
 
 \indexlibrary{\idxcode{operator+}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
-template <class Iterator>
-  reverse_iterator<Iterator> operator+(
-    typename reverse_iterator<Iterator>::difference_type n,
-    const reverse_iterator<Iterator>& x);
+template <@\changed{class Iterator}{RandomAccessIterator I}@>
+  reverse_iterator<@\changed{Iterator}{I}@>
+    operator+(
+  @\changed{typename reverse_iterator<Iterator>::difference_type}{DifferenceType<I>}@ n,
+  const reverse_iterator<@\changed{Iterator}{I}@>& x);
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
 \returns
-\tcode{reverse_iterator<Iterator> (x.current - n)}.
+\tcode{reverse_iterator<\changed{Iterator}{I}> (x.current - n)}.
 \end{itemdescr}
 
 \rSec4[reverse.iter.make]{Non-member function \tcode{make_reverse_iterator()}}
@@ -2176,14 +2225,14 @@ template <class Iterator>
 \indexlibrary{\idxcode{reverse_iterator}!\idxcode{make_reverse_iterator}~non-member~function}
 \indexlibrary{\idxcode{make_reverse_iterator}}%
 \begin{itemdecl}
-template <class Iterator>
-  reverse_iterator<Iterator> make_reverse_iterator(Iterator i);
+template <@\changed{class Iterator}{BidirectionalIterator I}@>
+  reverse_iterator<@\changed{Iterator}{I}@> make_reverse_iterator(@\changed{Iterator}{I}@ i);
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
 \returns
-\tcode{reverse_iterator<Iterator>(i)}.
+\tcode{reverse_iterator<\changed{Iterator}{I}>(i)}.
 \end{itemdescr}
 
 \rSec2[insert.iterators]{Insert iterators}
