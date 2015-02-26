@@ -1715,10 +1715,10 @@ namespace std {
     explicit reverse_iterator(@\changed{Iterator}{I}@ x);
     template <@\changed{class}{BidirectionalIterator}@ U>
       @\added{requires Convertible<U, I>}@
-        reverse_iterator(const reverse_iterator<U>& u);
+    reverse_iterator(const reverse_iterator<U>& u);
     template <@\changed{class}{BidirectionalIterator}@ U>
       @\added{requires Convertible<U, I>}@
-        reverse_iterator& operator=(const reverse_iterator<U>& u);
+    reverse_iterator& operator=(const reverse_iterator<U>& u);
 
     @\changed{Iterator}{I}@ base() const;      // explicit
     reference operator*() const;
@@ -2720,7 +2720,8 @@ with the same behavior as the underlying iterator except that its
 indirection operator implicitly converts the value returned by the
 underlying iterator's indirection operator to an rvalue reference.
 Some generic algorithms can be called with move iterators to replace
-copying with moving.
+copying with moving. \ednote{Pretty sure this is untrue now given how
+the algorithms that do copying are constrained with IndirectlyCopyable.}
 
 \pnum
 \enterexample
@@ -2740,71 +2741,101 @@ vector<string> v2(make_move_iterator(s.begin()),
 \indexlibrary{\idxcode{move_iterator}}%
 \begin{codeblock}
 namespace std {
-  template <class Iterator>
+  template <@\changed{class Iterator}{WeakInputIterator I}@>
+    @\added{requires Same<ReferenceType<I>, ValueType<I>\&>}@
   class move_iterator {
   public:
+\end{codeblock}\begin{removedblock}\begin{codeblock}
     typedef Iterator                                              iterator_type;
     typedef typename iterator_traits<Iterator>::difference_type   difference_type;
     typedef Iterator                                              pointer;
     typedef typename iterator_traits<Iterator>::value_type        value_type;
     typedef typename iterator_traits<Iterator>::iterator_category iterator_category;
     typedef value_type&&                                          reference;
+\end{codeblock}\end{removedblock}\begin{addedblock}\begin{codeblock}
+    using iterator_type = I;
+    using difference_type = DifferenceType<I>;
+    using value_type = ValueType<I>;
+    using iterator_category = IteratorCategory<I>;
+    using reference = ValueType<I>&&;
+\end{codeblock}\end{addedblock}\begin{codeblock}
 
-    move_iterator();
-    explicit move_iterator(Iterator i);
-    template <class U> move_iterator(const move_iterator<U>& u);
-    template <class U> move_iterator& operator=(const move_iterator<U>& u);
+    move_iterator()@\added{ = default}@;
+    explicit move_iterator(@\changed{Iterator}{I}@ i);
+    template <@\changed{class}{WeakInputIterator}@ U>
+      @\added{requires Convertible<U, I>}@
+    move_iterator(const move_iterator<U>& u);
+    template <@\changed{class}{WeakInputIterator}@ U>
+      @\added{requires Convertible<U, I>}@
+    move_iterator& operator=(const move_iterator<U>& u);
 
     iterator_type base() const;
     reference operator*() const;
-    pointer operator->() const;
+    @\removed{pointer operator->() const;}@
 
     move_iterator& operator++();
     move_iterator operator++(int);
-    move_iterator& operator--();
-    move_iterator operator--(int);
+    @\added{requires BidirectionalIterator<I>}@
+      move_iterator& operator--();
+    @\added{requires BidirectionalIterator<I>}@
+      move_iterator operator--(int);
 
-    move_iterator operator+(difference_type n) const;
-    move_iterator& operator+=(difference_type n);
-    move_iterator operator-(difference_type n) const;
-    move_iterator& operator-=(difference_type n);
-    @\unspec@ operator[](difference_type n) const;
+    @\added{requires RandomAccessIterator<I>}@
+      move_iterator operator+(difference_type n) const;
+    @\added{requires RandomAccessIterator<I>}@
+      move_iterator& operator+=(difference_type n);
+    @\added{requires RandomAccessIterator<I>}@
+      move_iterator operator-(difference_type n) const;
+    @\added{requires RandomAccessIterator<I>}@
+      move_iterator& operator-=(difference_type n);
+    @\added{requires RandomAccessIterator<I>}@
+      @\unspec@ operator[](difference_type n) const;
 
   private:
-    Iterator current;   // \expos
+    @\changed{Iterator}{I}@ current;   // \expos
   };
 
-  template <class Iterator1, class Iterator2>
+  template <@\changed{class Iterator1}{InputIterator I1}@, @\changed{class Iterator2}{InputIterator I2}@>
+      @\added{requires EqualityComparable<I1, I2>}@
     bool operator==(
-      const move_iterator<Iterator1>& x, const move_iterator<Iterator2>& y);
-  template <class Iterator1, class Iterator2>
+      const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
+  template <@\changed{class Iterator1}{InputIterator I1}@, @\changed{class Iterator2}{InputIterator I2}@>
+      @\added{requires EqualityComparable<I1, I2>}@
     bool operator!=(
-      const move_iterator<Iterator1>& x, const move_iterator<Iterator2>& y);
-  template <class Iterator1, class Iterator2>
+      const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
+  template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
+      @\added{requires TotallyOrdered<I1, I2>}@
     bool operator<(
-      const move_iterator<Iterator1>& x, const move_iterator<Iterator2>& y);
-  template <class Iterator1, class Iterator2>
+      const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
+  template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
+      @\added{requires TotallyOrdered<I1, I2>}@
     bool operator<=(
-      const move_iterator<Iterator1>& x, const move_iterator<Iterator2>& y);
-  template <class Iterator1, class Iterator2>
+      const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
+  template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
+      @\added{requires TotallyOrdered<I1, I2>}@
     bool operator>(
-      const move_iterator<Iterator1>& x, const move_iterator<Iterator2>& y);
-  template <class Iterator1, class Iterator2>
+      const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
+  template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
+      @\added{requires TotallyOrdered<I1, I2>}@
     bool operator>=(
-      const move_iterator<Iterator1>& x, const move_iterator<Iterator2>& y);
+      const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
 
-  template <class Iterator1, class Iterator2>
-    auto operator-(
-      const move_iterator<Iterator1>& x,
-      const move_iterator<Iterator2>& y) -> decltype(x.base() - y.base());
-  template <class Iterator>
-    move_iterator<Iterator> operator+(
-      typename move_iterator<Iterator>::difference_type n, const move_iterator<Iterator>& x);
-  template <class Iterator>
-    move_iterator<Iterator> make_move_iterator(Iterator i);
+  template <@\changed{class Iterator1}{WeakInputIterator I1}@, @\changed{class Iterator2}{WeakInputIterator I2}@>
+      @\added{requires SizedIteratorRange<I2, I1>}@
+    @\changed{auto}{DifferenceType<I2>}@ operator-(
+      const move_iterator<@\changed{Iterator1}{I1}@>& x,
+      const move_iterator<@\changed{Iterator2}{I2}@>& y)@\removed{ ->decltype(y.base() - x.base())}@;
+  template <@\changed{class Iterator}{RandomAccessIterator I}@>
+    move_iterator<@\changed{Iterator}{I}@>
+      operator+(
+        @\changed{typename move_iterator<Iterator>::difference_type}{DifferenceType<I>}@ n,
+        const move_iterator<@\changed{Iterator}{I}@>& x);
+  template <@\changed{class Iterator}{WeakInputIterator I}@>
+    move_iterator<@\changed{Iterator}{I}@> make_move_iterator(@\changed{Iterator}{I}@ i);
 }
 \end{codeblock}
 
+\begin{removedblock}
 \rSec3[move.iter.requirements]{\tcode{move_iterator} requirements}
 
 \pnum
@@ -2814,6 +2845,7 @@ Additionally, if any of the bidirectional or random access traversal
 functions are instantiated, the template parameter shall meet the
 requirements for a Bidirectional Iterator~(\ref{bidirectional.iterators})
 or a Random Access Iterator~(\ref{random.access.iterators}), respectively.
+\end{removedblock}
 
 \rSec3[move.iter.ops]{\tcode{move_iterator} operations}
 
@@ -2821,21 +2853,21 @@ or a Random Access Iterator~(\ref{random.access.iterators}), respectively.
 
 \indexlibrary{\idxcode{move_iterator}!\idxcode{move_iterator}}%
 \begin{itemdecl}
-move_iterator();
+move_iterator()@\added{ = default}@;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects Constructs a \tcode{move_iterator}, value
+\effects Constructs a \tcode{move_iterator}, \changed{value}{default}
 initializing \tcode{current}. Iterator operations applied to the resulting
 iterator have defined behavior if and only if the corresponding operations are defined
-on a value-initialized iterator of type \tcode{Iterator}.
+on a \changed{value}{default}-initialized iterator of type \tcode{\changed{Iterator}{I}}.
 \end{itemdescr}
 
 
 \indexlibrary{\idxcode{move_iterator}!constructor}%
 \begin{itemdecl}
-explicit move_iterator(Iterator i);
+explicit move_iterator(@\changed{Iterator}{I}@ i);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2847,7 +2879,9 @@ explicit move_iterator(Iterator i);
 
 \indexlibrary{\idxcode{move_iterator}!constructor}%
 \begin{itemdecl}
-template <class U> move_iterator(const move_iterator<U>& u);
+template <@\changed{class}{WeakInputIterator}@ U>
+  @\added{requires Convertible<U, I>}@
+move_iterator(const move_iterator<U>& u);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2855,9 +2889,11 @@ template <class U> move_iterator(const move_iterator<U>& u);
 \effects Constructs a \tcode{move_iterator}, initializing
 \tcode{current} with \tcode{u.base()}.
 
+\begin{removedblock}
 \pnum
 \requires \tcode{U} shall be convertible to
 \tcode{Iterator}.
+\end{removedblock}
 \end{itemdescr}
 
 \rSec4[move.iter.op=]{\tcode{move_iterator::operator=}}
@@ -2865,7 +2901,9 @@ template <class U> move_iterator(const move_iterator<U>& u);
 \indexlibrary{\idxcode{operator=}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator=}}%
 \begin{itemdecl}
-template <class U> move_iterator& operator=(const move_iterator<U>& u);
+template <@\changed{class}{WeakInputIterator}@ U>
+  @\added{requires Convertible<U, I>}@
+move_iterator& operator=(const move_iterator<U>& u);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2873,9 +2911,11 @@ template <class U> move_iterator& operator=(const move_iterator<U>& u);
 \effects Assigns \tcode{u.base()} to
 \tcode{current}.
 
+\begin{removedblock}
 \pnum
 \requires \tcode{U} shall be convertible to
 \tcode{Iterator}.
+\end{removedblock}
 \end{itemdescr}
 
 \rSec4[move.iter.op.conv]{\tcode{move_iterator} conversion}
@@ -2883,7 +2923,7 @@ template <class U> move_iterator& operator=(const move_iterator<U>& u);
 \indexlibrary{\idxcode{base}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{base}}%
 \begin{itemdecl}
-Iterator base() const;
+@\changed{Iterator}{I} base() const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2901,9 +2941,10 @@ reference operator*() const;
 
 \begin{itemdescr}
 \pnum
-\returns \tcode{std::move(}*current).
+\returns \tcode{std::move(*current)}.
 \end{itemdescr}
 
+\begin{removedblock}
 \rSec4[move.iter.op.ref]{\tcode{move_iterator::operator->}}
 
 \indexlibrary{\idxcode{operator->}!\idxcode{move_iterator}}%
@@ -2916,6 +2957,7 @@ pointer operator->() const;
 \pnum
 \returns \tcode{current}.
 \end{itemdescr}
+\end{removedblock}
 
 \rSec4[move.iter.op.incr]{\tcode{move_iterator::operator++}}
 
@@ -2954,7 +2996,8 @@ return tmp;
 \indexlibrary{\idxcode{operator\dcr}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator\dcr}}%
 \begin{itemdecl}
-move_iterator& operator--();
+@\added{requires BidirectionalIterator<I>}@
+  move_iterator& operator--();
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2968,7 +3011,8 @@ move_iterator& operator--();
 \indexlibrary{\idxcode{operator\dcr}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator\dcr}}%
 \begin{itemdecl}
-move_iterator operator--(int);
+@\added{requires BidirectionalIterator<I>}@
+  move_iterator operator--(int);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2986,7 +3030,8 @@ return tmp;
 \indexlibrary{\idxcode{operator+}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator+}}%
 \begin{itemdecl}
-move_iterator operator+(difference_type n) const;
+@\added{requires RandomAccessIterator<I>}@
+  move_iterator operator+(difference_type n) const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2999,7 +3044,8 @@ move_iterator operator+(difference_type n) const;
 \indexlibrary{\idxcode{operator+=}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator+=}}%
 \begin{itemdecl}
-move_iterator& operator+=(difference_type n);
+@\added{requires RandomAccessIterator<I>}@
+  move_iterator& operator+=(difference_type n);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3015,7 +3061,8 @@ move_iterator& operator+=(difference_type n);
 \indexlibrary{\idxcode{operator-}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator-}}%
 \begin{itemdecl}
-move_iterator operator-(difference_type n) const;
+@\added{requires RandomAccessIterator<I>}@
+  move_iterator operator-(difference_type n) const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3028,7 +3075,8 @@ move_iterator operator-(difference_type n) const;
 \indexlibrary{\idxcode{operator-=}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator-=}}%
 \begin{itemdecl}
-move_iterator& operator-=(difference_type n);
+@\added{requires RandomAccessIterator<I>}@
+  move_iterator& operator-=(difference_type n);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3044,12 +3092,13 @@ move_iterator& operator-=(difference_type n);
 \indexlibrary{\idxcode{operator[]}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator[]}}%
 \begin{itemdecl}
-@\unspec@ operator[](difference_type n) const;
+@\added{requires RandomAccessIterator<I>}@
+  @\unspec@ operator[](difference_type n) const;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\returns \tcode{std::move(}current[n]).
+\returns \tcode{std::move(current[n])}.
 \end{itemdescr}
 
 \rSec4[move.iter.op.comp]{\tcode{move_iterator} comparisons}
@@ -3057,8 +3106,10 @@ move_iterator& operator-=(difference_type n);
 \indexlibrary{\idxcode{operator==}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator==}}%
 \begin{itemdecl}
-template <class Iterator1, class Iterator2>
-bool operator==(const move_iterator<Iterator1>& x, const move_iterator<Iterator2>& y);
+template <@\changed{class Iterator1}{InputIterator I1}@, @\changed{class Iterator2}{InputIterator I2}@>
+    @\added{requires EqualityComparable<I1, I2>}@
+  bool operator==(
+    const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3069,8 +3120,10 @@ bool operator==(const move_iterator<Iterator1>& x, const move_iterator<Iterator2
 \indexlibrary{\idxcode{operator"!=}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator"!=}}%
 \begin{itemdecl}
-template <class Iterator1, class Iterator2>
-bool operator!=(const move_iterator<Iterator1>& x, const move_iterator<Iterator2>& y);
+template <@\changed{class Iterator1}{InputIterator I1}@, @\changed{class Iterator2}{InputIterator I2}@>
+    @\added{requires EqualityComparable<I1, I2>}@
+  bool operator!=(
+    const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3081,8 +3134,10 @@ bool operator!=(const move_iterator<Iterator1>& x, const move_iterator<Iterator2
 \indexlibrary{\idxcode{operator<}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator<}}%
 \begin{itemdecl}
-template <class Iterator1, class Iterator2>
-bool operator<(const move_iterator<Iterator1>& x, const move_iterator<Iterator2>& y);
+template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
+    @\added{requires TotallyOrdered<I1, I2>}@
+  bool operator<(
+    const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3093,8 +3148,10 @@ bool operator<(const move_iterator<Iterator1>& x, const move_iterator<Iterator2>
 \indexlibrary{\idxcode{operator<=}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator<=}}%
 \begin{itemdecl}
-template <class Iterator1, class Iterator2>
-bool operator<=(const move_iterator<Iterator1>& x, const move_iterator<Iterator2>& y);
+template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
+    @\added{requires TotallyOrdered<I1, I2>}@
+  bool operator<=(
+    const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3105,8 +3162,10 @@ bool operator<=(const move_iterator<Iterator1>& x, const move_iterator<Iterator2
 \indexlibrary{\idxcode{operator>}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator>}}%
 \begin{itemdecl}
-template <class Iterator1, class Iterator2>
-bool operator>(const move_iterator<Iterator1>& x, const move_iterator<Iterator2>& y);
+template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
+    @\added{requires TotallyOrdered<I1, I2>}@
+  bool operator>(
+    const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3117,8 +3176,10 @@ bool operator>(const move_iterator<Iterator1>& x, const move_iterator<Iterator2>
 \indexlibrary{\idxcode{operator>=}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator>=}}%
 \begin{itemdecl}
-template <class Iterator1, class Iterator2>
-bool operator>=(const move_iterator<Iterator1>& x, const move_iterator<Iterator2>& y);
+template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
+    @\added{requires TotallyOrdered<I1, I2>}@
+  bool operator>=(
+    const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3131,10 +3192,11 @@ bool operator>=(const move_iterator<Iterator1>& x, const move_iterator<Iterator2
 \indexlibrary{\idxcode{operator-}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator-}}%
 \begin{itemdecl}
-template <class Iterator1, class Iterator2>
-    auto operator-(
-    const move_iterator<Iterator1>& x,
-    const move_iterator<Iterator2>& y) -> decltype(x.base() - y.base());
+template <@\changed{class Iterator1}{WeakInputIterator I1}@, @\changed{class Iterator2}{WeakInputIterator I2}@>
+    @\added{requires SizedIteratorRange<I2, I1>}@
+  @\changed{auto}{DifferenceType<I2>}@ operator-(
+    const move_iterator<@\changed{Iterator1}{I1}@>& x,
+    const move_iterator<@\changed{Iterator2}{I2}@>& y)@\removed{ ->decltype(y.base() - x.base())}@;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3145,9 +3207,11 @@ template <class Iterator1, class Iterator2>
 \indexlibrary{\idxcode{operator+}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator+}}%
 \begin{itemdecl}
-template <class Iterator>
-  move_iterator<Iterator> operator+(
-    typename move_iterator<Iterator>::difference_type n, const move_iterator<Iterator>& x);
+template <@\changed{class Iterator}{RandomAccessIterator I}@>
+  move_iterator<@\changed{Iterator}{I}@>
+    operator+(
+      @\changed{typename move_iterator<Iterator>::difference_type}{DifferenceType<I>}@ n,
+      const move_iterator<@\changed{Iterator}{I}@>& x);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3157,18 +3221,38 @@ template <class Iterator>
 
 \indexlibrary{\idxcode{make_move_iterator}}%
 \begin{itemdecl}
-template <class Iterator>
-move_iterator<Iterator> make_move_iterator(Iterator i);
+template <@\changed{class Iterator}{WeakInputIterator I}@>
+  move_iterator<@\changed{Iterator}{I}@> make_move_iterator(@\changed{Iterator}{I}@ i);
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\returns \tcode{move_iterator<Iterator>(i)}.
+\returns \tcode{move_iterator<\changed{Iterator}{I}>(i)}.
 \end{itemdescr}
 
 \begin{addedblock}
 
 \rSec2[counted.iterators]{Counted iterators and sentinels}
+
+\pnum
+Class template \tcode{counted_iterator} is an iterator adaptor
+with the same behavior as the underlying iterator except that it
+keeps track of its distance from its starting position. It can be
+used together with class \tcode{counted_sentinel} in calls to generic
+algorithms to operate on a range of $N$ elements starting at a given
+position without needing to know the end position \textit{a priori}.
+
+\pnum
+\enterexample
+
+\begin{codeblock}
+list<string> s;
+// populate the list \tcode{s}
+vector<string> v(make_counted_iterator(s.begin(), 10),
+                 counted_sentinel()); // copies 10 strings into \tcode{v}
+\end{codeblock}
+
+\exitexample
 
 \ednote{TODO describe the counted_iterator and counted_sentinel types.}
 
