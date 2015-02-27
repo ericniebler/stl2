@@ -1,4 +1,4 @@
-%!TEX root = std.tex
+TEX root = std.tex
 
 \setcounter{chapter}{23}
 \rSec0[iterators]{Iterators library}
@@ -714,6 +714,8 @@ namespace std {
 
 \begin{codeblock}
   // \ref{predef.iterators}, predefined iterators\added{ and sentinels}:
+
+  @\added{\itshape{\rmfamily{// \ref{reverse.iterators} Reverse iterators}}}@
   template <@\changed{class Iterator}{BidirectionalIterator I}@> class reverse_iterator;
 
   template <@\changed{class Iterator1}{BidirectionalIterator I1}@, @\changed{class Iterator2}{BidirectionalIterator I2}@>
@@ -761,6 +763,7 @@ namespace std {
   template <@\changed{class Iterator}{BidirectionalIterator I}@>
     reverse_iterator<@\changed{Iterator}{I}@> make_reverse_iterator(@\changed{Iterator}{I}@ i);
 
+  @\added{\itshape{\rmfamily{// \ref{insert.iterators} Insert iterators}}}@
   template <class Container> class back_insert_iterator;
   template <class Container>
     back_insert_iterator<Container> back_inserter(Container& x);
@@ -774,6 +777,7 @@ namespace std {
     insert_iterator<Container> inserter(Container& x, @\removed{typename Container::iterator}@
       @\added{IteratorType<Container>}@ i);
 
+  @\added{\itshape{\rmfamily{// \ref{move.iterators} Move iterators}}}@
   template <@\changed{class Iterator}{WeakInputIterator I}@> class move_iterator;
   template <@\changed{class Iterator1}{InputIterator I1}@, @\changed{class Iterator2}{InputIterator I2}@>
       @\added{requires EqualityComparable<I1, I2>}@
@@ -816,18 +820,36 @@ namespace std {
 
 \begin{addedblock}
 \begin{codeblock}
-  template <WeakInputIterator I, Sentinel<I> S> class common_iterator;
-  template <WeakInputIterator I1, Sentinel<I1> S1,
-            WeakInputIterator I2, Sentinel<I2> S2>
-      requires EqualityComparable<I1, I2> && EqualityComparable<S1, S2>
-    bool operator==(
-      const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
-  template <WeakInputIterator I1, Sentinel<I1> S1,
-            WeakInputIterator I2, Sentinel<I2> S2>
-      requires EqualityComparable<I1, I2> && EqualityComparable<S1, S2>
-    bool operator!=(
-      const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
+  // \ref{common.iterators} Common iterators
+  template<typename A, typename B>
+  concept bool WeaklyEqualityComparable;  // \expos
+  template<Iterator I, Regular S>
+  concept bool WeakSentinel;              // \expos
 
+  template <InputIterator I, WeakSentinel<I> S> class common_iterator;
+  template <InputIterator I1, WeakSentinel<I1> S1,
+            InputIterator I2, WeakSentinel<I2> S2>
+    requires EqualityComparable<I1, I2> && WeaklyEqualityComparable<I1, S2> &&
+      WeaklyEqualityComparable<I2, S1>
+  bool operator==(
+    const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
+  template <InputIterator I1, WeakSentinel<I1> S1,
+            InputIterator I2, WeakSentinel<I2> S2>
+    requires EqualityComparable<I1, I2> && WeaklyEqualityComparable<I1, S2> &&
+      WeaklyEqualityComparable<I2, S1>
+  bool operator!=(
+    const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
+
+  template <InputIterator I1, WeakSentinel<I1> S1,
+            InputIterator I2, WeakSentinel<I2> S2>
+    requires SizedIteratorRange<I1, I1> && SizedIteratorRange<I2, I2> &&
+      requires (I1 a, I2 b) { {a-b}->DifferenceType<I2>; {b-a}->DifferenceType<I2>; }
+      requires (I1 i, S2 s) { {i-s}->DifferenceType<I2>; {s-i}->DifferenceType<I2>; }
+      requires (I2 i, S1 s) { {i-s}->DifferenceType<I2>; {s-i}->DifferenceType<I2>; }
+  DifferenceType<I2> operator-(
+    const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
+
+  // \ref{counted.iterators} Counted iterators and sentinels
   @\ednote{Why not WeakIterator?}@
   template <WeakInputIterator I> class counted_iterator;
   class counted_sentinel;
@@ -923,6 +945,7 @@ namespace std {
   template<WeakInputIterator I>
     struct common_type<counted_sentinel, counted_iterator<I>>;
 
+  // \ref{unreachable.sentinels} Unreachable sentinels
   struct unreachable { };
   template <WeakIterator I>
     constexpr bool operator==(I const &, unreachable) noexcept;
@@ -935,6 +958,7 @@ namespace std {
     constexpr bool operator!=(unreachable, I const &) noexcept;
   constexpr bool operator!=(unreachable, unreachable) noexcept;
 
+  // \ref{unreachable.traits.specializations} \tcode{common_type} specializations
   template<WeakIterator I>
     struct common_type<I, unreachable>;
   template<WeakIterator I>
@@ -3249,8 +3273,343 @@ template <@\changed{class Iterator}{WeakInputIterator I}@>
 
 \rSec2[common.iterators]{Common iterators}
 
-\ednote{TODO describe the iterator used to turn non-bounded iterables into
-bounded iterables}
+\pnum
+Class template \tcode{common_iterator} is an iterator/sentinel adaptor that is
+capable of representing a non-bounded range of elements (where the types of the
+iterator and sentinel differ) as a bounded range (where they are the same). It
+does this by holding either an iterator or a sentinel, and implementing the
+equality comparison operators appropriately.
+
+\pnum
+\enternote The \tcode{common_iterator} type is useful for interfacing with legacy
+code that expects the begin and end of a range to have the same type, and for
+use in \tcode{common_type} specializations that are required to make
+iterator/sentinel pairs model the \tcode{EqualityComparable} concept.\exitnote
+
+\pnum
+\enterexample
+\begin{codeblock}
+template<class ForwardIterator>
+void fun(ForwardIterator begin, ForwardIterator end);
+
+list<int> s;
+// populate the list \tcode{s}
+using CI =
+  common_iterator<counted_iterator<list<int>::iterator>,
+                  counted_sentinel>;
+// call \tcode{fun} on a range of 10 ints
+fun(CI(make_counted_iterator(s.begin(), 10)),
+    CI(counted_sentinel()));
+\end{codeblock}
+\exitexample
+
+\rSec3[common.iterator]{Class template \tcode{common_iterator}}
+
+\indexlibrary{\idxcode{counted_iterator}}%
+\begin{codeblock}
+namespace std {
+  // \expos
+  template<typename A, typename B>
+  concept bool WeaklyEqualityComparable =
+    EqualityComparable<A> && EqualityComparable<B> &&
+    requires(A a, B b) {
+      {a==b} -> bool;
+      {a!=b} -> bool;
+      {b==a} -> bool;
+      {b!=a} -> bool;
+    };
+  // \expos
+  template<Iterator I, Regular S>
+  concept bool WeakSentinel =
+    WeaklyEqualityComparable<I, S>;
+
+  template <InputIterator I, WeakSentinel<I> S>
+    requires !Same<I, S>
+  class common_iterator {
+  public:
+    using difference_type = DifferenceType<I>;
+    using value_type = ValueType<I>;
+    using iterator_category =
+      conditional_t<ForwardIterator<I>,
+                    std::forward_iterator_tag,
+                    std::input_iterator_tag>;
+    using reference = ReferenceType<I>;
+
+    common_iterator();
+    common_iterator(I i);
+    common_iterator(S s);
+    template <InputIterator U, WeakSentinel<U> V>
+      requires Convertible<U, I> && Convertible<V, S>
+    common_iterator(const common_iterator<U, V>& u);
+    template <InputIterator U, WeakSentinel<U> V>
+      requires Convertible<U, I> && Convertible<V, S>
+    common_iterator& operator=(const common_iterator<U, V>& u);
+
+    ~common_iterator();
+
+    reference operator*() const;
+
+    common_iterator& operator++();
+    common_iterator operator++(int);
+
+  private:
+    bool is_sentinel; // \expos
+    I iter;           // \expos
+    S sent;           // \expos
+  };
+
+  template <InputIterator I1, WeakSentinel<I1> S1,
+            InputIterator I2, WeakSentinel<I2> S2>
+    requires EqualityComparable<I1, I2> && WeaklyEqualityComparable<I1, S2> &&
+      WeaklyEqualityComparable<I2, S1>
+  bool operator==(
+    const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
+  template <InputIterator I1, WeakSentinel<I1> S1,
+            InputIterator I2, WeakSentinel<I2> S2>
+    requires EqualityComparable<I1, I2> && WeaklyEqualityComparable<I1, S2> &&
+      WeaklyEqualityComparable<I2, S1>
+  bool operator!=(
+    const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
+
+  template <InputIterator I1, WeakSentinel<I1> S1,
+            InputIterator I2, WeakSentinel<I2> S2>
+    requires SizedIteratorRange<I1, I1> && SizedIteratorRange<I2, I2> &&
+      requires (I1 a, I2 b) { {a-b}->DifferenceType<I2>; {b-a}->DifferenceType<I2>; }
+      requires (I1 i, S2 s) { {i-s}->DifferenceType<I2>; {s-i}->DifferenceType<I2>; }
+      requires (I2 i, S1 s) { {i-s}->DifferenceType<I2>; {s-i}->DifferenceType<I2>; }
+  DifferenceType<I2> operator-(
+    const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
+}
+\end{codeblock}
+
+\pnum
+\enternote The use of the expository \tcode{WeaklyEqualityComparable} and
+\tcode{WeakSentinel} concepts is avoid the self-referential requirements that
+would happen if parameters \tcode{I} and \tcode{S} use \tcode{common_iterator<I, S>}
+as their common type.\exitnote
+
+\pnum
+\enternote The ad hoc constraints on \tcode{common_iterator}'s \tcode{operator-}
+exist for the same reason..\exitnote
+
+\pnum
+\enternote It is unspecified whether \tcode{common_iterator}'s members
+\tcode{iter} and \tcode{sent} have distinct addresses or not.\exitnote
+
+\rSec3[common.iter.ops]{\tcode{common_iterator} operations}
+
+\rSec4[common.iter.op.const]{\tcode{common_iterator} constructors}
+
+\indexlibrary{\idxcode{common_iterator}!\idxcode{common_iterator}}%
+\begin{itemdecl}
+common_iterator();
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Constructs a \tcode{common_iterator}, value-initializing \tcode{is_sentinel}
+and \tcode{iter}. It is unspecified whether any initialization is performed for
+\tcode{sent}. Iterator operations applied to the resulting iterator have defined
+behavior if and only if the corresponding operations are defined on a
+value-initialized iterator of type \tcode{I}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{common_iterator}!constructor}%
+\begin{itemdecl}
+common_iterator(I i);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Constructs a \tcode{common_iterator}, initializing
+\tcode{is_sentinel} with \tcode{false} and \tcode{iter} with \tcode{i}. It is
+unspecified whether any initialization is performed for \tcode{sent}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{common_iterator}!constructor}%
+\begin{itemdecl}
+common_iterator(S s);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Constructs a \tcode{common_iterator}, initializing
+\tcode{is_sentinel} with \tcode{true} and \tcode{sent} with \tcode{s}. It is
+unspecified whether any initialization is performed for \tcode{iter}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{common_iterator}!constructor}%
+\begin{itemdecl}
+template <InputIterator U, WeakSentinel<U> V>
+  requires Convertible<U, I> && Convertible<V, S>
+common_iterator(const common_iterator<U, V>& u);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Constructs a \tcode{common_iterator}, initializing
+\tcode{is_sentinel} with \tcode{u.is_sentinel}.
+\begin{itemize}
+\item If \tcode{u.is_sentinel} is true, \tcode{sent} is initialized with \tcode{u.sent}.
+It is unspecified whether any initialization is performed for \tcode{iter}.
+\item If \tcode{u.is_sentinel} is false, \tcode{iter} is initialized with \tcode{u.iter}.
+It is unspecified whether any initialization is performed for \tcode{sent}.
+\end{itemize}
+\end{itemdescr}
+
+\rSec4[common.iter.op=]{\tcode{common_iterator::operator=}}
+
+\indexlibrary{\idxcode{operator=}!\idxcode{common_iterator}}%
+\indexlibrary{\idxcode{common_iterator}!\idxcode{operator=}}%
+\begin{itemdecl}
+template <InputIterator U, WeakSentinel<U> V>
+  requires Convertible<U, I> && Convertible<V, S>
+common_iterator& operator=(const common_iterator<U, V>& u);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Assigns \tcode{u.is_sentinel} to \tcode{is_sentinel}.
+\begin{itemize}
+\item If \tcode{u.is_sentinel} is true, assigns \tcode{u.sent} to \tcode{sent}.
+It is unspecified whether any operation is performed on \tcode{iter}.
+\item If \tcode{u.is_sentinel} is false, assigns \tcode{u.iter} to \tcode{iter}.
+It is unspecified whether any operation is performed on \tcode{sent}.
+\end{itemize}
+
+\returns \tcode{*this}
+\end{itemdescr}
+
+\indexlibrary{\idxcode{common_iterator}!destructor}%
+\begin{itemdecl}
+~common_iterator();
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Runs the destructor(s) for any members that are currently initialized.
+\end{itemdescr}
+
+\rSec4[common.iter.op.star]{\tcode{common_iterator::operator*}}
+
+\indexlibrary{\idxcode{operator*}!\idxcode{common_iterator}}%
+\indexlibrary{\idxcode{common_iterator}!\idxcode{operator*}}%
+\begin{itemdecl}
+reference operator*() const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{!is_sentinel}
+
+\pnum
+\returns \tcode{*iter}.
+\end{itemdescr}
+
+\rSec4[common.iter.op.incr]{\tcode{common_iterator::operator++}}
+
+\indexlibrary{\idxcode{operator++}!\idxcode{common_iterator}}%
+\indexlibrary{\idxcode{common_iterator}!\idxcode{operator++}}%
+\begin{itemdecl}
+common_iterator& operator++();
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{!is_sentinel}
+
+\pnum
+\effects \tcode{++iter}.
+
+\pnum
+\returns \tcode{*this}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator++}!\idxcode{common_iterator}}%
+\indexlibrary{\idxcode{common_iterator}!\idxcode{operator++}}%
+\begin{itemdecl}
+common_iterator operator++(int);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{!is_sentinel}
+
+\pnum
+\effects
+\begin{codeblock}
+common_iterator tmp = *this;
+++iter;
+return tmp;
+\end{codeblock}
+\end{itemdescr}
+
+\rSec4[common.iter.op.comp]{\tcode{common_iterator} comparisons}
+
+\indexlibrary{\idxcode{operator==}!\idxcode{common_iterator}}%
+\indexlibrary{\idxcode{common_iterator}!\idxcode{operator==}}%
+\begin{itemdecl}
+template <InputIterator I1, WeakSentinel<I1> S1,
+          InputIterator I2, WeakSentinel<I2> S2>
+  requires EqualityComparable<I1, I2> && WeaklyEqualityComparable<I1, S2> &&
+    WeaklyEqualityComparable<I2, S1>
+bool operator==(
+  const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns
+\begin{codeblock}
+x.is_sentinel ?
+    (y.is_sentinel || y.iter == x.sent) :
+    (y.is_sentinel ?
+        x.iter == y.sent :
+        x.iter == y.iter;
+\end{codeblock}
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator!=}!\idxcode{common_iterator}}%
+\indexlibrary{\idxcode{common_iterator}!\idxcode{operator!=}}%
+\begin{itemdecl}
+template <InputIterator I1, WeakSentinel<I1> S1,
+          InputIterator I2, WeakSentinel<I2> S2>
+  requires EqualityComparable<I1, I2> && WeaklyEqualityComparable<I1, S2> &&
+    WeaklyEqualityComparable<I2, S1>
+bool operator!=(
+  const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{!(x == y)}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator-}!\idxcode{common_iterator}}%
+\indexlibrary{\idxcode{common_iterator}!\idxcode{operator-}}%
+\begin{itemdecl}
+template <InputIterator I1, WeakSentinel<I1> S1,
+          InputIterator I2, WeakSentinel<I2> S2>
+  requires SizedIteratorRange<I1, I1> && SizedIteratorRange<I2, I2> &&
+    requires (I1 a, I2 b) { {a-b}->DifferenceType<I2>; {b-a}->DifferenceType<I2>; }
+    requires (I1 i, S2 s) { {i-s}->DifferenceType<I2>; {s-i}->DifferenceType<I2>; }
+    requires (I2 i, S1 s) { {i-s}->DifferenceType<I2>; {s-i}->DifferenceType<I2>; }
+DifferenceType<I2> operator-(
+  const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns
+\begin{codeblock}
+x.is_sentinel ?
+    (y.is_sentinel ? 0 : x.sent - y.iter) :
+    (y.is_sentinel ?
+         x.iter - y.sent :
+         x.iter - y.iter;
+\end{codeblock}
+\end{itemdescr}
 
 \rSec2[counted.iterators]{Counted iterators and sentinels}
 
@@ -3285,7 +3644,10 @@ namespace std {
     using iterator_type = I;
     using difference_type = DifferenceType<I>;
     using value_type = ValueType<I>;
-    using iterator_category = IteratorCategory<I>;
+    using iterator_category =
+      conditional_t<ForwardIterator<I>,
+                    IteratorCategory<I>,
+                    std::input_iterator_tag>;
     using reference = ReferenceType<I>;
 
     counted_iterator() = default;
@@ -3293,7 +3655,7 @@ namespace std {
     template <WeakInputIterator U>
       requires Convertible<U, I>
     counted_iterator(const counted_iterator<U>& u);
-    template <WeakInputIteratorU>
+    template <WeakInputIterator U>
       requires Convertible<U, I>
     counted_iterator& operator=(const counted_iterator<U>& u);
 
@@ -3556,7 +3918,7 @@ return tmp;
 \rSec4[counted.iter.op.decr]{\tcode{counted_iterator::operator-{-}}}
 
 \indexlibrary{\idxcode{operator\dcr}!\idxcode{counted_iterator}}%
-\indexlibrary{\idxcode{move_iterator}!\idxcode{operator\dcr}}%
+\indexlibrary{\idxcode{counted_iterator}!\idxcode{operator\dcr}}%
 \begin{itemdecl}
 requires BidirectionalIterator<I>
   counted_iterator& operator--();
@@ -3636,7 +3998,7 @@ cnt -= n;
 \rSec4[counted.iter.op.-]{\tcode{counted_iterator::operator-}}
 
 \indexlibrary{\idxcode{operator-}!\idxcode{counted_iterator}}%
-\indexlibrary{\idxcode{move_iterator}!\idxcode{operator-}}%
+\indexlibrary{\idxcode{counted_iterator}!\idxcode{operator-}}%
 \begin{itemdecl}
 requires RandomAccessIterator<I>
   counted_iterator operator-(difference_type n) const;
@@ -3998,9 +4360,32 @@ and \tcode{counted_sentinel} can satisfy the \tcode{Common} requirement of the
 \tcode{EqualityComparable} concept.\exitnote
 \end{itemdescr}
 
-\rSec2[unreachable.iterators]{Unreachable sentinel}
+\rSec2[unreachable.sentinels]{Unreachable sentinel}
 
 \ednote{TODO describe the unreachable sentinel}
+
+\rSec3[unreachable.traits.specializations]{Specializations of \tcode{common_type}}
+
+\indexlibrary{\idxcode{common_type}}%
+\begin{itemdecl}
+namespace std {
+  template<WeakIterator I>
+  struct common_type<I, unreachable> {
+    using type = common_iterator<I, unreachable>;
+  };
+  template<WeakIterator I>
+  struct common_type<unreachable, I> {
+    using type = common_iterator<I, unreachable>;
+  };
+}
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\enternote By specializing \tcode{common_type} this way, any iterator and
+\tcode{unreachable} can satisfy the \tcode{Common} requirement of the
+\tcode{EqualityComparable} concept.\exitnote
+\end{itemdescr}
 
 \end{addedblock}
 
@@ -4139,7 +4524,6 @@ construction or the first time it is referenced.
 \pnum
 \postcondition \tcode{in_stream == \&s}.
 \end{itemdescr}
-
 
 \indexlibrary{\idxcode{istream_iterator}!constructor}%
 \begin{itemdecl}
@@ -4870,7 +5254,7 @@ return an iterator and a sentinel. \enternote An iterator is a valid sentinel.
 \exitnote The \tcode{SizedIterable} concept refines \tcode{Iterable} but adds
 the requirement that the number of elements in the iterable can be determined
 in constant time with the \tcode{size} function. The \tcode{Range} concept describes
-requirements on an iterable type with constant-time copy, move and assignment
+requirements on an iterable type with constant-time copy, WeakInputIterator and assignment
 operators.
 
 \pnum
