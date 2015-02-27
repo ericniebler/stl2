@@ -816,6 +816,18 @@ namespace std {
 
 \begin{addedblock}
 \begin{codeblock}
+  template <WeakInputIterator I, Sentinel<I> S> class common_iterator;
+  template <WeakInputIterator I1, Sentinel<I1> S1,
+            WeakInputIterator I2, Sentinel<I2> S2>
+      requires EqualityComparable<I1, I2> && EqualityComparable<S1, S2>
+    bool operator==(
+      const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
+  template <WeakInputIterator I1, Sentinel<I1> S1,
+            WeakInputIterator I2, Sentinel<I2> S2>
+      requires EqualityComparable<I1, I2> && EqualityComparable<S1, S2>
+    bool operator!=(
+      const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
+
   @\ednote{Why not WeakIterator?}@
   template <WeakInputIterator I> class counted_iterator;
   class counted_sentinel;
@@ -841,49 +853,53 @@ namespace std {
       counted_sentinel x, const counted_iterator<I>& y);
   bool operator!=(counted_sentinel x, counted_sentinel y);
 
-  template <WeakInputIterator I1, WeakInputIterator I2>
+  template <RandomAccessIterator I1, RandomAccessIterator I2>
+      requires TotallyOrdered<I1, I2>
     bool operator<(
       const counted_iterator<I1>& x, const counted_iterator<I2>& y);
-  template <WeakInputIterator I>
+  template <RandomAccessIterator I>
     bool operator<(
       const counted_iterator<I>& x, counted_sentinel y);
-  template <WeakInputIterator I>
+  template <RandomAccessIterator I>
     bool operator<(
       counted_sentinel x, const counted_iterator<I>& y);
   bool operator<(counted_sentinel x, counted_sentinel y);
-  template <WeakInputIterator I1, WeakInputIterator I2>
+  template <RandomAccessIterator I1, RandomAccessIterator I2>
+      requires TotallyOrdered<I1, I2>
     bool operator<=(
       const counted_iterator<I1>& x, const counted_iterator<I2>& y);
-  template <WeakInputIterator I>
+  template <RandomAccessIterator I>
     bool operator<=(
       const counted_iterator<I>& x, counted_sentinel y);
-  template <WeakInputIterator I>
+  template <RandomAccessIterator I>
     bool operator<=(
       counted_sentinel x, const counted_iterator<I>& y);
   bool operator<=(counted_sentinel x, counted_sentinel y);
-  template <WeakInputIterator I1, WeakInputIterator I2>
+  template <RandomAccessIterator I1, RandomAccessIterator I2>
+      requires TotallyOrdered<I1, I2>
     bool operator>(
       const counted_iterator<I1>& x, const counted_iterator<I2>& y);
-  template <WeakInputIterator I>
+  template <RandomAccessIterator I>
     bool operator>(
       const counted_iterator<I>& x, counted_sentinel y);
-  template <WeakInputIterator I>
+  template <RandomAccessIterator I>
     bool operator>(
       counted_sentinel x, const counted_iterator<I>& y);
   bool operator>(counted_sentinel x, counted_sentinel y);
-  template <WeakInputIterator I1, WeakInputIterator I2>
+  template <RandomAccessIterator I1, RandomAccessIterator I2>
+      requires TotallyOrdered<I1, I2>
     bool operator>=(
       const counted_iterator<I1>& x, const counted_iterator<I2>& y);
-  template <WeakInputIterator I>
+  template <RandomAccessIterator I>
     bool operator>=(
       const counted_iterator<I>& x, counted_sentinel y);
-  template <WeakInputIterator I>
+  template <RandomAccessIterator I>
     bool operator>=(
       counted_sentinel x, const counted_iterator<I>& y);
   bool operator>=(counted_sentinel x, counted_sentinel y);
 
   template <WeakInputIterator I1, WeakInputIterator I2>
-    common_type_t<DifferenceType<I1>, DifferenceType<I2>> operator-(
+    DifferenceType<I2> operator-(
       const counted_iterator<I1>& x, const counted_iterator<I2>& y);
   template <WeakInputIterator I>
     DifferenceType<I> operator-(
@@ -891,7 +907,7 @@ namespace std {
   template <WeakInputIterator I>
     DifferenceType<I> operator-(
       counted_sentinel x, const counted_iterator<I>& y);
-  constexpr ptrdiff_t operator-(counted_sentinel x, counted_sentinel y);
+  ptrdiff_t operator-(counted_sentinel x, counted_sentinel y);
   template <RandomAccessIterator I>
     counted_iterator<I>
       operator+(DifferenceType<I> n, const counted_iterator<I>& x);
@@ -901,17 +917,11 @@ namespace std {
   template <WeakInputIterator I>
     void advance(counted_iterator<I>& i, DifferenceType<I> n);
 
-  template <WeakInputIterator I, Sentinel<I> S> class common_iterator;
-  template <WeakInputIterator I1, Sentinel<I1> S1,
-            WeakInputIterator I2, Sentinel<I2> S2>
-      requires EqualityComparable<I1, I2> && EqualityComparable<S1, S2>
-    bool operator==(
-      const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
-  template <WeakInputIterator I1, Sentinel<I1> S1,
-            WeakInputIterator I2, Sentinel<I2> S2>
-      requires EqualityComparable<I1, I2> && EqualityComparable<S1, S2>
-    bool operator!=(
-      const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
+  // \ref{counted.traits.specializations} \tcode{common_type} specializations
+  template<WeakInputIterator I>
+    struct common_type<counted_iterator<I>, counted_sentinel>;
+  template<WeakInputIterator I>
+    struct common_type<counted_sentinel, counted_iterator<I>>;
 
   struct unreachable { };
   template <WeakIterator I>
@@ -924,6 +934,11 @@ namespace std {
   template <WeakIterator I>
     constexpr bool operator!=(unreachable, I const &) noexcept;
   constexpr bool operator!=(unreachable, unreachable) noexcept;
+
+  template<WeakIterator I>
+    struct common_type<I, unreachable>;
+  template<WeakIterator I>
+    struct common_type<unreachable, I>;
 \end{codeblock}
 \end{addedblock}
 \begin{codeblock}
@@ -3232,6 +3247,11 @@ template <@\changed{class Iterator}{WeakInputIterator I}@>
 
 \begin{addedblock}
 
+\rSec2[common.iterators]{Common iterators}
+
+\ednote{TODO describe the iterator used to turn non-bounded iterables into
+bounded iterables}
+
 \rSec2[counted.iterators]{Counted iterators and sentinels}
 
 \pnum
@@ -3254,12 +3274,733 @@ vector<string> v(make_counted_iterator(s.begin(), 10),
 
 \exitexample
 
-\ednote{TODO describe the counted_iterator and counted_sentinel types.}
+\rSec3[counted.iterator]{Class template \tcode{counted_iterator}}
 
-\rSec2[common.iterators]{Common iterators}
+\indexlibrary{\idxcode{counted_iterator}}%
+\begin{codeblock}
+namespace std {
+  template <WeakInputIterator I>
+  class counted_iterator {
+  public:
+    using iterator_type = I;
+    using difference_type = DifferenceType<I>;
+    using value_type = ValueType<I>;
+    using iterator_category = IteratorCategory<I>;
+    using reference = ReferenceType<I>;
 
-\ednote{TODO describe the iterator used to turn non-bounded iterables into
-bounded iterables}
+    counted_iterator() = default;
+    counted_iterator(I x, DifferenceType<I> n);
+    template <WeakInputIterator U>
+      requires Convertible<U, I>
+    counted_iterator(const counted_iterator<U>& u);
+    template <WeakInputIteratorU>
+      requires Convertible<U, I>
+    counted_iterator& operator=(const counted_iterator<U>& u);
+
+    I base() const;
+    DifferenceType<I> count() const;
+    reference operator*() const;
+
+    counted_iterator& operator++();
+    counted_iterator operator++(int);
+    requires BidirectionalIterator<I>
+      counted_iterator& operator--();
+    requires BidirectionalIterator<I>
+      counted_iterator operator--(int);
+
+    requires RandomAccessIterator<I>
+      counted_iterator  operator+ (difference_type n) const;
+    requires RandomAccessIterator<I>
+      counted_iterator& operator+=(difference_type n);
+    requires RandomAccessIterator<I>
+      counted_iterator  operator- (difference_type n) const;
+    requires RandomAccessIterator<I>
+      counted_iterator& operator-=(difference_type n);
+    requires RandomAccessIterator<I>
+      @\unspec@ operator[](difference_type n) const;
+  protected:
+    I current;
+    DifferenceType<I> cnt;
+  };
+
+  template <WeakInputIterator I1, WeakInputIterator I2>
+    bool operator==(
+      const counted_iterator<I1>& x, const counted_iterator<I2>& y);
+  template <WeakInputIterator I>
+    bool operator==(
+      const counted_iterator<I>& x, counted_sentinel y);
+  template <WeakInputIterator I>
+    bool operator==(
+      counted_sentinel x, const counted_iterator<I>& y);
+  bool operator==(counted_sentinel x, counted_sentinel y);
+  template <WeakInputIterator I1, WeakInputIterator I2>
+    bool operator!=(
+      const counted_iterator<I1>& x, const counted_iterator<I2>& y);
+  template <WeakInputIterator I>
+    bool operator!=(
+      const counted_iterator<I>& x, counted_sentinel y);
+  template <WeakInputIterator I>
+    bool operator!=(
+      counted_sentinel x, const counted_iterator<I>& y);
+  bool operator!=(counted_sentinel x, counted_sentinel y);
+
+  template <RandomAccessIterator I1, RandomAccessIterator I2>
+      requires TotallyOrdered<I1, I2>
+    bool operator<(
+      const counted_iterator<I1>& x, const counted_iterator<I2>& y);
+  template <RandomAccessIterator I>
+    bool operator<(
+      const counted_iterator<I>& x, counted_sentinel y);
+  template <RandomAccessIterator I>
+    bool operator<(
+      counted_sentinel x, const counted_iterator<I>& y);
+  bool operator<(counted_sentinel x, counted_sentinel y);
+  template <RandomAccessIterator I1, RandomAccessIterator I2>
+      requires TotallyOrdered<I1, I2>
+    bool operator<=(
+      const counted_iterator<I1>& x, const counted_iterator<I2>& y);
+  template <RandomAccessIterator I>
+    bool operator<=(
+      const counted_iterator<I>& x, counted_sentinel y);
+  template <RandomAccessIterator I>
+    bool operator<=(
+      counted_sentinel x, const counted_iterator<I>& y);
+  bool operator<=(counted_sentinel x, counted_sentinel y);
+  template <RandomAccessIterator I1, RandomAccessIterator I2>
+      requires TotallyOrdered<I1, I2>
+    bool operator>(
+      const counted_iterator<I1>& x, const counted_iterator<I2>& y);
+  template <RandomAccessIterator I>
+    bool operator>(
+      const counted_iterator<I>& x, counted_sentinel y);
+  template <RandomAccessIterator I>
+    bool operator>(
+      counted_sentinel x, const counted_iterator<I>& y);
+  bool operator>(counted_sentinel x, counted_sentinel y);
+  template <RandomAccessIterator I1, RandomAccessIterator I2>
+      requires TotallyOrdered<I1, I2>
+    bool operator>=(
+      const counted_iterator<I1>& x, const counted_iterator<I2>& y);
+  template <RandomAccessIterator I>
+    bool operator>=(
+      const counted_iterator<I>& x, counted_sentinel y);
+  template <RandomAccessIterator I>
+    bool operator>=(
+      counted_sentinel x, const counted_iterator<I>& y);
+  bool operator>=(counted_sentinel x, counted_sentinel y);
+
+  template <WeakInputIterator I1, WeakInputIterator I2>
+    DifferenceType<I2> operator-(
+      const counted_iterator<I1>& x, const counted_iterator<I2>& y);
+  template <WeakInputIterator I>
+    DifferenceType<I> operator-(
+      const counted_iterator<I>& x, counted_sentinel y);
+  template <WeakInputIterator I>
+    DifferenceType<I> operator-(
+      counted_sentinel x, const counted_iterator<I>& y);
+  ptrdiff_t operator-(counted_sentinel x, counted_sentinel y);
+  template <RandomAccessIterator I>
+    counted_iterator<I>
+      operator+(DifferenceType<I> n, const counted_iterator<I>& x);
+  template <WeakInputIterator I>
+    counted_iterator<I> make_counted_iterator(I i, DifferenceType<I> n);
+
+  template <WeakInputIterator I>
+    void advance(counted_iterator<I>& i, DifferenceType<I> n);
+}
+\end{codeblock}
+
+\rSec3[counted.iter.ops]{\tcode{counted_iterator} operations}
+
+\rSec4[counted.iter.op.const]{\tcode{counted_iterator} constructors}
+
+\indexlibrary{\idxcode{counted_iterator}!\idxcode{counted_iterator}}%
+\begin{itemdecl}
+counted_iterator() = default;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Constructs a \tcode{counted_iterator}, default
+initializing \tcode{current} and \tcode{cnt}. Iterator operations applied to the
+resulting iterator have defined behavior if and only if the corresponding operations
+are defined on a default-initialized iterator of type \tcode{I}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{counted_iterator}!constructor}%
+\begin{itemdecl}
+counted_iterator(I i, DifferenceType<I> n);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{n >= 0}
+
+\pnum
+\effects Constructs a \tcode{counted_iterator}, initializing
+\tcode{current} with \tcode{i} and \tcode{cnt} with \tcode{n}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{counted_iterator}!constructor}%
+\begin{itemdecl}
+template <WeakInputIterator U>
+  requires Convertible<U, I>
+count_iterator(const counted_iterator<U>& u);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Constructs a \tcode{counted_iterator}, initializing
+\tcode{current} with \tcode{u.base()} and \tcode{cnt} with \tcode{u.count()}.
+\end{itemdescr}
+
+\rSec4[counted.iter.op=]{\tcode{counted_iterator::operator=}}
+
+\indexlibrary{\idxcode{operator=}!\idxcode{counted_iterator}}%
+\indexlibrary{\idxcode{counted_iterator}!\idxcode{operator=}}%
+\begin{itemdecl}
+template <WeakInputIterator U>
+  requires Convertible<U, I>
+counted_iterator& operator=(const counted_iterator<U>& u);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Assigns \tcode{u.base()} to
+\tcode{current} and \tcode{u.count()} to \tcode{cnt}.
+
+\end{itemdescr}
+
+\rSec4[counted.iter.op.conv]{\tcode{counted_iterator} conversion}
+
+\indexlibrary{\idxcode{base}!\idxcode{counted_iterator}}%
+\indexlibrary{\idxcode{counted_iterator}!\idxcode{base}}%
+\begin{itemdecl}
+I base() const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{current}.
+\end{itemdescr}
+
+\rSec4[counted.iter.op.cnt]{\tcode{counted_iterator} count}
+
+\indexlibrary{\idxcode{count}!\idxcode{counted_iterator}}%
+\indexlibrary{\idxcode{counted_iterator}!\idxcode{count}}%
+\begin{itemdecl}
+DifferenceType<I> count() const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{cnt}.
+\end{itemdescr}
+
+\rSec4[counted.iter.op.star]{\tcode{count_iterator::operator*}}
+
+\indexlibrary{\idxcode{operator*}!\idxcode{counted_iterator}}%
+\indexlibrary{\idxcode{counted_iterator}!\idxcode{operator*}}%
+\begin{itemdecl}
+reference operator*() const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{*current}.
+\end{itemdescr}
+
+\rSec4[counted.iter.op.incr]{\tcode{counted_iterator::operator++}}
+
+\indexlibrary{\idxcode{operator++}!\idxcode{counted_iterator}}%
+\indexlibrary{\idxcode{counted_iterator}!\idxcode{operator++}}%
+\begin{itemdecl}
+counted_iterator& operator++();
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{cnt > 0}
+
+\pnum
+\effects
+\begin{codeblock}
+++current;
+@\dcr@cnt;
+\end{codeblock}
+
+\pnum
+\returns \tcode{*this}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator++}!\idxcode{counted_iterator}}%
+\indexlibrary{\idxcode{counted_iterator}!\idxcode{operator++}}%
+\begin{itemdecl}
+counted_iterator operator++(int);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{cnt > 0}
+
+\pnum
+\effects
+\begin{codeblock}
+counted_iterator tmp = *this;
+++current;
+@\dcr@cnt;
+return tmp;
+\end{codeblock}
+\end{itemdescr}
+
+\rSec4[counted.iter.op.decr]{\tcode{counted_iterator::operator-{-}}}
+
+\indexlibrary{\idxcode{operator\dcr}!\idxcode{counted_iterator}}%
+\indexlibrary{\idxcode{move_iterator}!\idxcode{operator\dcr}}%
+\begin{itemdecl}
+requires BidirectionalIterator<I>
+  counted_iterator& operator--();
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+\begin{codeblock}
+--current;
+++cnt;
+\end{codeblock}
+
+\pnum
+\returns \tcode{*this}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator\dcr}!\idxcode{counted_iterator}}%
+\indexlibrary{\idxcode{counted_iterator}!\idxcode{operator\dcr}}%
+\begin{itemdecl}
+requires BidirectionalIterator<I>
+  counted_iterator operator--(int);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+\begin{codeblock}
+counted_iterator tmp = *this;
+--current;
+++cnt;
+return tmp;
+\end{codeblock}
+\end{itemdescr}
+
+\rSec4[counted.iter.op.+]{\tcode{counted_iterator::operator+}}
+
+\indexlibrary{\idxcode{operator+}!\idxcode{counted_iterator}}%
+\indexlibrary{\idxcode{counted_iterator}!\idxcode{operator+}}%
+\begin{itemdecl}
+requires RandomAccessIterator<I>
+  counted_iterator operator+(difference_type n) const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{n <= cnt}
+
+\pnum
+\returns \tcode{counted_iterator(current + n, cnt - n)}.
+\end{itemdescr}
+
+\rSec4[counted.iter.op.+=]{\tcode{counted_iterator::operator+=}}
+
+\indexlibrary{\idxcode{operator+=}!\idxcode{counted_iterator}}%
+\indexlibrary{\idxcode{counted_iterator}!\idxcode{operator+=}}%
+\begin{itemdecl}
+requires RandomAccessIterator<I>
+  counted_iterator& operator+=(difference_type n);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{n <= cnt}
+
+\pnum
+\effects
+\begin{codeblock}
+current += n;
+cnt -= n;
+\end{codeblock}
+
+\pnum
+\returns \tcode{*this}.
+\end{itemdescr}
+
+\rSec4[counted.iter.op.-]{\tcode{counted_iterator::operator-}}
+
+\indexlibrary{\idxcode{operator-}!\idxcode{counted_iterator}}%
+\indexlibrary{\idxcode{move_iterator}!\idxcode{operator-}}%
+\begin{itemdecl}
+requires RandomAccessIterator<I>
+  counted_iterator operator-(difference_type n) const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{-n <= cnt}
+
+\pnum
+\returns \tcode{counted_iterator(current - n, cnt + n)}.
+\end{itemdescr}
+
+\rSec4[counted.iter.op.-=]{\tcode{counted_iterator::operator-=}}
+
+\indexlibrary{\idxcode{operator-=}!\idxcode{counted_iterator}}%
+\indexlibrary{\idxcode{counted_iterator}!\idxcode{operator-=}}%
+\begin{itemdecl}
+requires RandomAccessIterator<I>
+  counted_iterator& operator-=(difference_type n);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{-n <= cnt}
+
+\pnum
+\effects
+\begin{codeblock}
+current -= n;
+cnt += n;
+\end{codeblock}
+
+\pnum
+\returns \tcode{*this}.
+\end{itemdescr}
+
+\rSec4[counted.iter.op.index]{\tcode{counted_iterator::operator[]}}
+
+\indexlibrary{\idxcode{operator[]}!\idxcode{counted_iterator}}%
+\indexlibrary{\idxcode{counted_iterator}!\idxcode{operator[]}}%
+\begin{itemdecl}
+requires RandomAccessIterator<I>
+  @\unspec@ operator[](difference_type n) const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{n <= cnt}
+
+\pnum
+\returns \tcode{current[n]}.
+\end{itemdescr}
+
+\rSec4[counted.iter.op.comp]{\tcode{counted_iterator} comparisons}
+
+\indexlibrary{\idxcode{operator==}!\idxcode{counted_iterator}}%
+\indexlibrary{\idxcode{counted_iterator}!\idxcode{operator==}}%
+\begin{itemdecl}
+template <WeakInputIterator I1, WeakInputIterator I2>
+  bool operator==(
+    const counted_iterator<I1>& x, const counted_iterator<I2>& y);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{x.base() == y.base()} if \tcode{EqualityComparable<I1, I2>};
+  otherwise, \tcode{x.count() == y.count()}.
+\end{itemdescr}
+
+\begin{itemdecl}
+template <WeakInputIterator I>
+  bool operator==(
+    const counted_iterator<I>& x, counted_sentinel y);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{x.count() == 0}.
+\end{itemdescr}
+
+\begin{itemdecl}
+template <WeakInputIterator I>
+  bool operator==(
+    counted_sentinel x, const counted_iterator<I>& y);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{y.count() == 0}.
+\end{itemdescr}
+
+\begin{itemdecl}
+bool operator==(counted_sentinel x, counted_sentinel y);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{true}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator!=}!\idxcode{counted_iterator}}%
+\indexlibrary{\idxcode{counted_iterator}!\idxcode{operator!=}}%
+\begin{itemdecl}
+template <WeakInputIterator I1, WeakInputIterator I2>
+  bool operator!=(
+    const counted_iterator<I1>& x, const counted_iterator<I2>& y);
+template <WeakInputIterator I>
+  bool operator!=(
+    const counted_iterator<I>& x, counted_sentinel y);
+template <WeakInputIterator I>
+  bool operator!=(
+    counted_sentinel x, const counted_iterator<I>& y);
+bool operator!=(counted_sentinel x, counted_sentinel y);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{!(x == y)}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator<}!\idxcode{counted_iterator}}%
+\indexlibrary{\idxcode{counted_iterator}!\idxcode{operator<}}%
+\begin{itemdecl}
+template <RandomAccessIterator I1, RandomAccessIterator I2>
+    requires TotallyOrdered<I1, I2>
+  bool operator<(
+    const counted_iterator<I1>& x, const counted_iterator<I2>& y);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{x.base() < y.base()}.
+\end{itemdescr}
+
+\begin{itemdecl}
+template <RandomAccessIterator I>
+  bool operator<(
+    const counted_iterator<I>& x, counted_sentinel y);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{x.count() != 0}.
+\end{itemdescr}
+
+\begin{itemdecl}
+template <RandomAccessIterator I>
+  bool operator<(
+    counted_sentinel x, const counted_iterator<I>& y);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{false}.
+\end{itemdescr}
+
+\begin{itemdecl}
+bool operator<(counted_sentinel x, counted_sentinel y);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{false}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator<=}!\idxcode{counted_iterator}}%
+\indexlibrary{\idxcode{counted_iterator}!\idxcode{operator<=}}%
+\begin{itemdecl}
+template <RandomAccessIterator I1, RandomAccessIterator I2>
+    requires TotallyOrdered<I1, I2>
+  bool operator<=(
+    const counted_iterator<I1>& x, const counted_iterator<I2>& y);
+template <RandomAccessIterator I>
+  bool operator<=(
+    const counted_iterator<I>& x, counted_sentinel y);
+template <RandomAccessIterator I>
+  bool operator<=(
+    counted_sentinel x, const counted_iterator<I>& y);
+bool operator<=(counted_sentinel x, counted_sentinel y);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{!(y < x)}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator>}!\idxcode{counted_iterator}}%
+\indexlibrary{\idxcode{counted_iterator}!\idxcode{operator>}}%
+\begin{itemdecl}
+template <RandomAccessIterator I1, RandomAccessIterator I2>
+    requires TotallyOrdered<I1, I2>
+  bool operator>(
+    const counted_iterator<I1>& x, const counted_iterator<I2>& y);
+template <RandomAccessIterator I>
+  bool operator>(
+    const counted_iterator<I>& x, counted_sentinel y);
+template <RandomAccessIterator I>
+  bool operator>(
+    counted_sentinel x, const counted_iterator<I>& y);
+bool operator>(counted_sentinel x, counted_sentinel y);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{y < x}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator>=}!\idxcode{counted_iterator}}%
+\indexlibrary{\idxcode{counted_iterator}!\idxcode{operator>=}}%
+\begin{itemdecl}
+template <RandomAccessIterator I1, RandomAccessIterator I2>
+    requires TotallyOrdered<I1, I2>
+  bool operator>=(
+    const counted_iterator<I1>& x, const counted_iterator<I2>& y);
+template <RandomAccessIterator I>
+  bool operator>=(
+    const counted_iterator<I>& x, counted_sentinel y);
+template <RandomAccessIterator I>
+  bool operator>=(
+    counted_sentinel x, const counted_iterator<I>& y);
+bool operator>=(counted_sentinel x, counted_sentinel y);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{!(x < y)}.
+\end{itemdescr}
+
+\rSec4[counted.iter.nonmember]{\tcode{counted_iterator} non-member functions}
+
+\indexlibrary{\idxcode{operator-}!\idxcode{counted_iterator}}%
+\indexlibrary{\idxcode{counted_iterator}!\idxcode{operator-}}%
+\begin{itemdecl}
+template <WeakInputIterator I1, WeakInputIterator I2>
+  DifferenceType<I2> operator-(
+    const counted_iterator<I1>& x, const counted_iterator<I2>& y);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{x.base() - y.base()} if \tcode{SizedIteratorRange<I2, I1>};
+otherwise, \tcode{y.count() - x.count()}.
+\end{itemdescr}
+
+\begin{itemdecl}
+template <WeakInputIterator I>
+  DifferenceType<I> operator-(
+    const counted_iterator<I>& x, counted_sentinel y);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{-x.count()}.
+\end{itemdescr}
+
+\begin{itemdecl}
+template <WeakInputIterator I>
+  DifferenceType<I> operator-(
+    counted_sentinel x, const counted_iterator<I>& y);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{y.count()}.
+\end{itemdescr}
+
+\begin{itemdecl}
+ptrdiff_t operator-(counted_sentinel x, counted_sentinel y);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{0}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator+}!\idxcode{counted_iterator}}%
+\indexlibrary{\idxcode{counted_iterator}!\idxcode{operator+}}%
+\begin{itemdecl}
+template <RandomAccessIterator I>
+  counted_iterator<I>
+    operator+(DifferenceType<I> n, const counted_iterator<I>& x);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{n <= x.count()}.
+
+\pnum
+\returns \tcode{x + n}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{make_counted_iterator}}%
+\begin{itemdecl}
+template <WeakInputIterator I>
+  counted_iterator<I> make_counted_iterator(I i, DifferenceType<I> n);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{n >= 0}.
+
+\pnum
+\returns \tcode{counted_iterator<I>(i, n)}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{advance}}%
+\begin{itemdecl}
+template <WeakInputIterator I>
+  void advance(counted_iterator<I>& i, DifferenceType<I> n);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{n <= i.count()}.
+
+\pnum
+\effects
+\begin{codeblock}
+i = make_counted_iterator(next(i.base(), n), i.count() - n);
+\end{codeblock}
+\end{itemdescr}
+
+\rSec3[counted.sentinel]{Counted sentinel}
+
+\pnum
+Class \tcode{counted_sentinel} is an empty type used to represent the end of a counted
+range. It is used together with class template
+\tcode{counted_iterator}(~\ref{counted.iterator}) to denote a range of elements that
+starts at a known position and includes the subsequent $N$ elements.
+
+\indexlibrary{\idxcode{counted_sentinel}}%
+\begin{itemdecl}
+namespace std {
+  class counted_sentinel { };
+}
+\end{itemdecl}
+
+\rSec3[counted.traits.specializations]{Specializations of \tcode{common_type}}
+
+\indexlibrary{\idxcode{common_type}}%
+\begin{itemdecl}
+namespace std {
+  template<WeakInputIterator I>
+  struct common_type<counted_iterator<I>, counted_sentinel> {
+    using type = common_iterator<counted_iterator<I>, counted_sentinel>;
+  };
+  template<WeakInputIterator I>
+  struct common_type<counted_sentinel, counted_iterator<I>> {
+    using type = common_iterator<counted_iterator<I>, counted_sentinel>;
+  };
+}
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\enternote By specializing \tcode{common_type} this way, \tcode{counted_iterator}
+and \tcode{counted_sentinel} can satisfy the \tcode{Common} requirement of the
+\tcode{EqualityComparable} concept.\exitnote
+\end{itemdescr}
+
+\rSec2[unreachable.iterators]{Unreachable sentinel}
+
+\ednote{TODO describe the unreachable sentinel}
 
 \end{addedblock}
 
