@@ -1,4 +1,4 @@
-TEX root = std.tex
+%!TEX root = std.tex
 
 \setcounter{chapter}{23}
 \rSec0[iterators]{Iterators library}
@@ -947,21 +947,21 @@ namespace std {
 
   // \ref{unreachable.sentinels} Unreachable sentinels
   struct unreachable { };
-  template <WeakIterator I>
+  template <Iterator I>
     constexpr bool operator==(I const &, unreachable) noexcept;
-  template <WeakIterator I>
+  template <Iterator I>
     constexpr bool operator==(unreachable, I const &) noexcept;
   constexpr bool operator==(unreachable, unreachable) noexcept;
-  template <WeakIterator I>
+  template <Iterator I>
     constexpr bool operator!=(I const &, unreachable) noexcept;
-  template <WeakIterator I>
+  template <Iterator I>
     constexpr bool operator!=(unreachable, I const &) noexcept;
   constexpr bool operator!=(unreachable, unreachable) noexcept;
 
   // \ref{unreachable.traits.specializations} \tcode{common_type} specializations
-  template<WeakIterator I>
+  template<Iterator I>
     struct common_type<I, unreachable>;
-  template<WeakIterator I>
+  template<Iterator I>
     struct common_type<unreachable, I>;
 \end{codeblock}
 \end{addedblock}
@@ -3477,6 +3477,7 @@ It is unspecified whether any operation is performed on \tcode{iter}.
 It is unspecified whether any operation is performed on \tcode{sent}.
 \end{itemize}
 
+\pnum
 \returns \tcode{*this}
 \end{itemdescr}
 
@@ -3570,8 +3571,8 @@ x.is_sentinel ?
 \end{codeblock}
 \end{itemdescr}
 
-\indexlibrary{\idxcode{operator!=}!\idxcode{common_iterator}}%
-\indexlibrary{\idxcode{common_iterator}!\idxcode{operator!=}}%
+\indexlibrary{\idxcode{operator"!=}!\idxcode{common_iterator}}%
+\indexlibrary{\idxcode{common_iterator}!\idxcode{operator"!=}}%
 \begin{itemdecl}
 template <InputIterator I1, WeakSentinel<I1> S1,
           InputIterator I2, WeakSentinel<I2> S2>
@@ -4100,8 +4101,8 @@ bool operator==(counted_sentinel x, counted_sentinel y);
 \returns \tcode{true}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{operator!=}!\idxcode{counted_iterator}}%
-\indexlibrary{\idxcode{counted_iterator}!\idxcode{operator!=}}%
+\indexlibrary{\idxcode{operator"!=}!\idxcode{counted_iterator}}%
+\indexlibrary{\idxcode{counted_iterator}!\idxcode{operator"!=}}%
 \begin{itemdecl}
 template <WeakInputIterator I1, WeakInputIterator I2>
   bool operator!=(
@@ -4362,18 +4363,97 @@ and \tcode{counted_sentinel} can satisfy the \tcode{Common} requirement of the
 
 \rSec2[unreachable.sentinels]{Unreachable sentinel}
 
-\ednote{TODO describe the unreachable sentinel}
+\rSec3[unreachable.sentinel]{Class \tcode{unreachable} sentinel}
+
+\pnum
+\indexlibrary{\idxcode{unreachable}}%
+Class \tcode{unreachable} is a sentinel type that can be used with any
+\tcode{Iterator} to denote an infinite range. Comparing an iterator for equality with
+an object of type \tcode{unreachable} always returns \tcode{false}.
+
+\enterexample
+\begin{codeblock}
+char* p;
+// set \tcode{p} to point to a character buffer containing newlines
+char* nl = find(p, unreachable(), '@\textbackslash@n');
+\end{codeblock}
+
+Provided a newline character really exists in the buffer, the use of \tcode{unreachable}
+above potentially make the call to \tcode{find} more efficient since the loop test against
+the sentinel does not require a conditional branch.
+\exitexample
+
+\begin{codeblock}
+namespace std {
+  class unreachable { };
+  template <Iterator I>
+    constexpr bool operator==(I const &, unreachable) noexcept;
+  template <Iterator I>
+    constexpr bool operator==(unreachable, I const &) noexcept;
+  constexpr bool operator==(unreachable, unreachable) noexcept;
+  template <Iterator I>
+    constexpr bool operator!=(I const &, unreachable) noexcept;
+  template <Iterator I>
+    constexpr bool operator!=(unreachable, I const &) noexcept;
+  constexpr bool operator!=(unreachable, unreachable) noexcept;
+}
+\end{codeblock}
+
+\rSec3[unreachable.sentinel.ops]{\tcode{unreachable} operations}
+
+\rSec4[unreachable.sentinel.op==]{\tcode{operator==}}
+
+\indexlibrary{\idxcode{operator==}!\idxcode{unreachable}}%
+\indexlibrary{\idxcode{unreachable}!\idxcode{operator==}}%
+\begin{itemdecl}
+template <Iterator I>
+  constexpr bool operator==(I const &, unreachable) noexcept;
+template <Iterator I>
+  constexpr bool operator==(unreachable, I const &) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{false}.
+\end{itemdescr}
+
+\begin{itemdecl}
+constexpr bool operator==(unreachable, unreachable) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{true}.
+\end{itemdescr}
+
+\rSec4[unreachable.sentinel.op!=]{\tcode{operator!=}}
+
+\indexlibrary{\idxcode{operator"!=}!\idxcode{unreachable}}%
+\indexlibrary{\idxcode{unreachable}!\idxcode{operator"!=}}%
+\begin{itemdecl}
+template <Iterator I>
+  constexpr bool operator!=(I const & x, unreachable y) noexcept;
+template <Iterator I>
+  constexpr bool operator!=(unreachable x, I const & y) noexcept;
+constexpr bool operator!=(unreachable x, unreachable y) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns
+\tcode{!(x == y)}
+\end{itemdescr}
 
 \rSec3[unreachable.traits.specializations]{Specializations of \tcode{common_type}}
 
 \indexlibrary{\idxcode{common_type}}%
 \begin{itemdecl}
 namespace std {
-  template<WeakIterator I>
+  template<Iterator I>
   struct common_type<I, unreachable> {
     using type = common_iterator<I, unreachable>;
   };
-  template<WeakIterator I>
+  template<Iterator I>
   struct common_type<unreachable, I> {
     using type = common_iterator<I, unreachable>;
   };
