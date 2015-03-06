@@ -1,0 +1,627 @@
+%!TEX root = std.tex
+
+\begin{addedblock}
+\setcounter{chapter}{18}
+\rSec0[concepts.lib]{Fundamental concepts library}
+
+\rSec1[concepts.lib.general]{General}
+
+\pnum
+This Clause describes library components that \Cpp programs may use to perform
+compile-time validation of template parameters and perform function dispatch
+based on properties of types.
+
+\pnum
+The following subclauses describe core language concepts, foundational concepts,
+function concepts, iterator concepts, and rearrangement concepts
+as summarized in Table~\ref{tab:concepts.lib.summary}.
+
+\begin{libsumtab}{Fundamental concepts library summary}{tab:concepts.lib.summary}
+\ref{concepts.lib.corelang}       & Core language concepts  &   \tcode{<concepts>}      \\
+\ref{concepts.lib.foundational}   & Foundational concepts   &                           \\
+\ref{concepts.lib.function}       & Function concepts       &                           \\
+\ref{concepts.lib.iterator}       & Iterator concepts       &                           \\
+\ref{concepts.lib.rearrangement}  & Rearrangement concepts  &                           \\
+\end{libsumtab}
+
+\pnum
+In this Clause, \tcode{CamelCase} identifiers ending with "\tcode{Type}" denote
+template aliases.
+
+\pnum
+A \techterm{regular function} is a function that returns equal output when passed
+equal input. A regular function that returns a value may copy or move the returned
+object, or it may return it by reference. Regular functions are allowed to have
+side-effects and preconditions that, when violated, make the function non-regular.
+\enternote A function that returns \tcode{void} is necessarily a regular function.
+\exitnote
+
+In this Clause, object \tcode{a} equals \tcode{b} if for every regular function
+\tcode{f}, \tcode{f(a)} equals \tcode{f(b)}.
+
+\rSec1[concepts.lib.corelang]{Core language concepts}
+
+\rSec2[concepts.lib.corelang.general]{In general}
+
+\pnum
+\ednote{TODO anything to say here?}
+
+\rSec2[concepts.lib.same]{Concept Same}
+
+\indexlibrary{\idxcode{Same}}%
+\begin{itemdecl}
+template <class T, class U>
+concept bool Same = @\impdef@;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+The \tcode{Same} concept is used when requiring that two types are the same.
+
+\pnum
+\tcode{Same<T, U>} is an alias for \tcode{true} when \tcode{T} and \tcode{U}
+denote the same time after the elimination of aliases; otherwise, it is an alias for
+\tcode{false}. \tcode{Same<T, U>} shall have the same value as
+\tcode{is_same<T, U>::value}.
+
+\pnum
+\remarks For the purposes of constraint checking, \tcode{Same<T, U>} implies
+\tcode{Same<U, T>}.
+\end{itemdescr}
+
+\rSec2[concepts.lib.derived]{Concept Derived}
+
+\indexlibrary{\idxcode{Derived}}%
+\begin{itemdecl}
+template <class T, class U>
+concept bool Derived = is_base_of<U, T>::value;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+The \tcode{Derived} concept is used when requiring that a type \tcode{T} is derived
+from \tcode{U}.
+
+\pnum
+\tcode{Derived<T, U>} is an alias for \tcode{is_base_of<U, T>::value}.
+\end{itemdescr}
+
+\rSec2[concepts.lib.convertible]{Concept Convertible}
+
+\indexlibrary{\idxcode{Convertible}}%
+\begin{itemdecl}
+namespace std {
+  template <class T, class U>
+  concept bool Convertible = is_convertible<T, U>::value;
+}
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+The \tcode{Convertible} concept concept expresses the requirement that a type
+\tcode{T} can be implicitly converted to a \tcode{U}.
+
+\pnum
+\tcode{Convertible<T, U>} is an alias for \tcode{is_convertible<T, U>::value}.
+\end{itemdescr}
+
+\rSec2[concepts.lib.common]{Concept Common}
+
+\pnum
+Two types \tcode{T} and \tcode{U} are \techterm{unambiguously convertible} if
+there exists a unique, explicit conversion from \tcode{T} to \tcode{U}, or from
+from \tcode{U} to \tcode{T}, but not both. \enternote This is trivially true
+when \tcode{T} and \tcode{U} are the same type since no conversion would be
+required.\exitnote
+
+\pnum
+If \tcode{T} and \tcode{U} can both be unambiguously converted to a third type,
+\tcode{C}, we say that \tcode{T} and \tcode{U} share a \techterm{common type},
+\tcode{C}. \enternote \tcode{C} could be the same as \tcode{T}, or \tcode{U}, or
+it could be a different type.\exitnote This notion is encapsulated by the
+\tcode{CommonType} alias and the \tcode{Common} concept.
+
+\ednote{TODO Andrew, review?}
+
+\indexlibrary{\idxcode{Common}}%
+\begin{itemdecl}
+template <class T, class U>
+using CommonType = common_type_t<T, U>;
+
+template <class T, class U>
+concept bool Common =
+  requires (T t, U u) {
+    typename CommonType<T, U>;
+    {CommonType<T, U>{(T &&) t}};
+    {CommonType<T, U>{(U &&) u}};
+  };
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+Two types \tcode{T} and \tcode{U} model the \tcode{Common} concept when the type
+alias \tcode{CommonType<T, U>} is well-formed, and when objects of types \tcode{T}
+and \tcode{U} can be explicitly converted to the common type.
+
+\pnum
+Let \tcode{C} be \tcode{CommonType<T, U>}. Let \tcode{t1} and \tcode{t2} be objects
+of type \tcode{T}. \tcode{t1} equals \tcode{t2} if and only if \tcode{C\{t1\}} equals
+\tcode{C\{t2\}}. Let \tcode{u1} and \tcode{u2} be object of type \tcode{U}. \tcode{u1}
+equals \tcode{u2} if and only if \tcode{C\{u1\}} equals \tcode{C\{u2\}}.
+
+\end{itemdescr}
+
+\rSec2[concepts.lib.integral]{Concept Integral}
+
+\indexlibrary{\idxcode{Integral}}%
+\begin{itemdecl}
+template <class T>
+concept bool Integral = is_integral<T>::value;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+The \tcode{Integral} concept is used when requiring that a type \tcode{T} is an
+integral type~(\ref{basic.fundamental}).
+
+\pnum
+\tcode{Integral<T>} is an alias for \tcode{is_integral<T>::value}~(\ref{meta.unary.prop}).
+\end{itemdescr}
+
+\rSec2[concepts.lib.signedintegral]{Concept SignedIntegral}
+
+\indexlibrary{\idxcode{SignedIntegral}}%
+\begin{itemdecl}
+template <class T>
+concept bool SignedIntegral =
+  Integral<T> && is_signed<T>::value;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+The \tcode{SignedIntegral} concept is used when requiring that a type \tcode{T} is a
+signed integral type~(\ref{basic.fundamental}).
+
+\end{itemdescr}
+
+\rSec2[concepts.lib.signedintegral]{Concept UnsignedIntegral}
+
+\indexlibrary{\idxcode{UnsignedIntegral}}%
+\begin{itemdecl}
+template <class T>
+concept bool UnsignedIntegral =
+  Integral<T> && !SignedIntegral<T>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+The \tcode{UnsignedIntegral} concept is used when requiring that a type \tcode{T} is an
+unsigned integral type~(\ref{basic.fundamental}).
+\end{itemdescr}
+
+\rSec2[concepts.lib.defaultconstructible]{Concept DefaultConstructible}
+\ednote{Remove table [defaultconstructible] in [utility.arg.requirements]. Replace
+references to [defaultconstructible] with references to
+[concepts.lib.defaultconstructible].}
+
+\indexlibrary{\idxcode{DefaultConstructible}}%
+\begin{itemdecl}
+template <class T>
+concept bool DefaultConstructible =
+  is_default_constructible<T>::value;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+A type \tcode{T} models \tcode{DefaultConstructible} if and only if
+
+\begin{itemize}
+\item The declaration \tcode{T t;} default-initializes~(\ref{dcl.init})
+object \tcode{t}.
+\item The declaration \tcode{T u\{\};} value-initializes~(\ref{dcl.init})
+object \tcode{u}.
+\item The expressions \tcode{T()} and \tcode{T\{\}} value-initialize~(\ref{dcl.init})
+temporary objects of type \tcode{T}.
+\end{itemize}
+\end{itemdescr}
+
+\rSec2[concepts.lib.moveconstructible]{Concept MoveConstructible}
+\ednote{Remove table [moveconstructible] in [utility.arg.requirements]. Replace
+references to [moveconstructible] with references to
+[concepts.lib.moveconstructible].}
+
+\indexlibrary{\idxcode{MoveConstructible}}%
+\begin{itemdecl}
+template <class T>
+concept bool MoveConstructible =
+  is_move_constructible<T>::value;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+Let \tcode{rv} be an rvalue of type \tcode{T}. Then a type \tcode{T} models
+\tcode{MoveConstructible} if and only if
+
+\begin{itemize}
+\item After the declaration \tcode{T u = rv;}, \tcode{u} is equal to the value of
+\tcode{rv} before the construction.
+\item \tcode{T(rv)} is equal to the value of \tcode{rv} before the construction.
+\end{itemize}
+
+\pnum
+\tcode{rv}'s state is unspecified. \enternote \tcode{rv} must still meet the
+requirements of the library component that is using it. The operations listed
+in those requirements must work as specified whether \tcode{rv} has been moved
+from or not.\exitnote
+\end{itemdescr}
+
+\rSec2[concepts.lib.copyconstructible]{Concept CopyConstructible}
+\ednote{Remove table [copyconstructible] in [utility.arg.requirements]. Replace
+references to [copyconstructible] with references to
+[concepts.lib.copyconstructible].}
+
+\indexlibrary{\idxcode{CopyConstructible}}%
+\begin{itemdecl}
+template <class T>
+concept bool CopyConstructible =
+  MoveConstructible<T> && is_copy_constructible<T>::value;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+Let \tcode{v} be an lvalue of type (possibly \tcode{const}) \tcode{T} or an rvalue
+of type \tcode{const T}. Then a type \tcode{T} models \tcode{CopyConstructible} if
+and only if
+
+\begin{itemize}
+\item After the declaration \tcode{T u = v;}, \tcode{v} is unchanged and is equal
+to \tcode{u}.
+\item \tcode{T(v)} is equal to \tcode{v} and \tcode{v} is unchanged.
+\end{itemize}
+\end{itemdescr}
+
+\rSec2[concepts.lib.constructible]{Concept Constructible}
+
+\indexlibrary{\idxcode{Constructible}}%
+\begin{itemdecl}
+template <class T, class ...Args>
+concept bool Constructible =
+  is_constructible<T, Args...>::value;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+The \tcode{Constructible} concept is used when requiring that a type \tcode{T} is
+constructible with arguments of types \tcode{Args...}.
+\end{itemdescr}
+
+\rSec2[concepts.lib.destructible]{Concept Destructible}
+\ednote{Remove table [destructible] in [utility.arg.requirements]. Replace
+references to [destructible] with references to
+[concepts.lib.destructible].}
+
+\indexlibrary{\idxcode{Destructible}}%
+\begin{itemdecl}
+template <class T>
+concept bool Destructible =
+  is_destructible<T>::value;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+A type \tcode{T} models \tcode{Destructible} if and only if
+
+\begin{itemize}
+\item After the expression \tcode{u.$\sim$T()}, all resources owned by \tcode{u} are
+reclaimed and no exception is propagated.
+\end{itemize}
+\end{itemdescr}
+
+\rSec2[concepts.lib.moveassignable]{Concept MoveAssignable}
+\ednote{Remove table [moveassignable] in [utility.arg.requirements]. Replace
+references to [moveassignable] with references to
+[concepts.lib.moveassignable].}
+
+\indexlibrary{\idxcode{MoveAssignable}}%
+\begin{itemdecl}
+template <class T>
+concept bool MoveAssignable =
+  is_move_assignable<T>::value;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+Let \tcode{rv} be an rvalue of type \tcode{T}. Then a type \tcode{T} models
+\tcode{MoveAssignable} if and only if
+
+\begin{itemize}
+\item The expression \tcode{t = rv} has type \tcode{T\&}, the expression returns
+a reference to \tcode{t}, and after the assignment \tcode{t} is equal to the value
+of \tcode{rv} before the assignment.
+\end{itemize}
+
+\pnum
+\tcode{rv}'s state is unspecified. \enternote \tcode{rv} must still meet the
+requirements of the library component that is using it. The operations listed
+in those requirements must work as specified whether \tcode{rv} has been moved
+from or not.\exitnote
+\end{itemdescr}
+
+\rSec2[concepts.lib.copyassignable]{Concept CopyAssignable}
+\ednote{Remove table [copyassignable] in [utility.arg.requirements]. Replace
+references to [copyassignable] with references to
+[concepts.lib.copyassignable].}
+
+\indexlibrary{\idxcode{CopyAssignable}}%
+\begin{itemdecl}
+template <class T>
+concept bool CopyAssignable =
+  MoveAssignable<T> && is_copy_assignable<T>::value;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+Let \tcode{v} be an lvalue of type (possibly \tcode{const}) \tcode{T} or an rvalue
+of type \tcode{const T}. Then a type \tcode{T} models \tcode{CopyAssignable} if
+and only if
+
+\begin{itemize}
+\item The expression \tcode{t = v} has type \tcode{T\&}, the expression returns
+a reference to \tcode{t}, \tcode{v} is unchanged, and after the assignment
+\tcode{t} is equal to \tcode{v}.
+\end{itemize}
+\end{itemdescr}
+
+\rSec2[concepts.lib.swappable]{Concept Swappable}
+\ednote{Remove subclause [swappable.requirements]. Replace references to
+[swappable.requirements] with [concepts.lib.swappable].}
+
+\indexlibrary{\idxcode{Swappable}}%
+\begin{itemdecl}
+template <class T, class U = T>
+concept bool Swappable =
+  requires(T t, U t) {
+    swap((T&&) t, (U&&) u);
+    swap((U&&) u, (T&&) t);
+  };
+\end{itemdecl}
+
+\begin{itemdescr}
+\ednote{copied almost verbatim from [swappable.requirements]}
+
+\pnum
+This subclause provides definitions for swappable types and expressions. In these
+definitions, let \tcode{t} denote an expression of type \tcode{T}, and let \tcode{u}
+denote an expression of type \tcode{U}.
+
+\pnum
+An object \tcode{t} is \defn{swappable with} an object \tcode{u} if and only if
+types \tcode{T} and \tcode{U} model \tcode{Swappable}. Types \tcode{T} and \tcode{U}
+model \tcode{Swappable} if and only if:
+
+\begin{itemize}
+\item the requires clause above is evaluated in the context described below, and
+
+\item these expressions have the following effects:
+
+\begin{itemize}
+\item the object referred to by \tcode{t} has the value originally held by \tcode{u} and
+\item the object referred to by \tcode{u} has the value originally held by \tcode{t}.
+\end{itemize}
+\end{itemize}
+
+\pnum
+The context in which the requires clause is evaluated shall
+ensure that a binary non-member function named ``swap'' is selected via overload
+resolution~(\ref{over.match}) on a candidate set that includes:
+
+\begin{itemize}
+\item the two \tcode{swap} function templates defined in
+\tcode{<utility>}~(\ref{utility}) and
+
+\item the lookup set produced by argument-dependent lookup~(\ref{basic.lookup.argdep}).
+\end{itemize}
+
+\enternote If \tcode{T} and \tcode{U} are both fundamental types or arrays of
+fundamental types and the declarations from the header \tcode{<utility>} are in
+scope, the overall lookup set described above is equivalent to that of the
+qualified name lookup applied to the expression \tcode{std::swap(t, u)} or
+\tcode{std::swap(u, t)} as appropriate. \exitnote
+
+\enternote It is unspecified whether a library component that has a swappable
+requirement includes the header \tcode{<utility>} to ensure an appropriate
+evaluation context. \exitnote
+
+\pnum
+An rvalue or lvalue \tcode{t} is \defn{swappable} if and only if \tcode{t} is
+swappable with any rvalue or lvalue, respectively, of type \tcode{T}.
+
+\enterexample User code can ensure that the evaluation of \tcode{swap} calls
+is performed in an appropriate context under the various conditions as follows:
+\begin{codeblock}
+#include <utility>
+
+// Requires: \tcode{std::forward<T>(t)} shall be swappable with \tcode{std::forward<U>(u)}.
+template <class T, class U>
+void value_swap(T&& t, U&& u) {
+  using std::swap;
+  swap(std::forward<T>(t), std::forward<U>(u)); // OK: uses ``swappable with'' conditions
+                                                // for rvalues and lvalues
+}
+
+// Requires: lvalues of \tcode{T} shall be swappable.
+template <class T>
+void lv_swap(T& t1 T& t2) {
+  using std::swap;
+  swap(t1, t2);                                 // OK: uses swappable conditions for
+}                                               // lvalues of type \tcode{T}
+
+namespace N {
+  struct A { int m; };
+  struct Proxy { A* a; };
+  Proxy proxy(A& a) { return Proxy{ &a }; }
+
+  void swap(A& x, Proxy p) {
+    std::swap(x.m, p.a->m);                     // OK: uses context equivalent to swappable
+                                                // conditions for fundamental types
+  }
+  void swap(Proxy p, A& x) { swap(x, p); }      // satisfy symmetry constraint
+}
+
+int main() {
+  int i = 1, j = 2;
+  lv_swap(i, j);
+  assert(i == 2 && j == 1);
+
+  N::A a1 = { 5 }, a2 = { -5 };
+  value_swap(a1, proxy(a2));
+  assert(a1.m == -5 && a2.m == 5);
+}
+\end{codeblock}
+\exitexample
+\end{itemdescr}
+
+\rSec1[concepts.lib.foundational]{Foundational concepts}
+
+\rSec2[concepts.lib.foundational.general]{In general}
+
+\pnum
+\ednote{TODO anything to say here?}
+
+\rSec2[concepts.lib.equalitycomparable]{Concept EqualityComparable}
+
+\pnum
+EqualityComparable
+
+\rSec2[concepts.lib.semiregular]{Concept Semiregular}
+
+\pnum
+Semiregular
+
+\rSec2[concepts.lib.regular]{Concept Regular}
+
+\pnum
+Regular
+
+\rSec2[concepts.lib.totallyordered]{Concept TotallyOrdered}
+
+\pnum
+TotallyOrdered
+
+\rSec1[concepts.lib.function]{Function concepts}
+
+\rSec2[concepts.lib.function.general]{In general}
+
+\pnum
+\ednote{TODO anything to say here?}
+
+\rSec2[concepts.lib.function]{Concept Function}
+
+\pnum
+Function
+
+\rSec2[concepts.lib.regularfunction]{Concept RegularFunction}
+
+\pnum
+RegularFunction
+
+\rSec2[concepts.lib.predicate]{Concept Predicate}
+
+\pnum
+Predicate
+
+\rSec2[concepts.lib.relation]{Concept Relation}
+
+\pnum
+Relation
+
+\rSec2[concepts.lib.invokable]{Concept Invokable}
+
+\pnum
+Invokable
+
+\rSec2[concepts.lib.invokablepredicate]{Concept InvokablePredicate}
+
+\pnum
+InvokablePredicate
+
+\rSec2[concepts.lib.invokablerelation]{Concept InvokableRelation}
+
+\pnum
+InvokableRelation
+
+\rSec1[concepts.lib.iterator]{Iterator concepts}
+
+\rSec2[concepts.lib.iterator.general]{In general}
+
+\pnum
+\ednote{TODO anything to say here?}
+
+\rSec2[concepts.lib.readable]{Concept Readable}
+
+\pnum
+Readable
+
+\rSec2[concepts.lib.movewritable]{Concept MoveWritable}
+
+\pnum
+MoveWritable
+
+\rSec2[concepts.lib.writable]{Concept Writable}
+
+\pnum
+Writable
+
+\rSec2[concepts.lib.indirectlymovable]{Concept IndirectlyMovable}
+
+\pnum
+IndirectlyMovable
+
+\rSec2[concepts.lib.indirectlycopyable]{Concept IndirectlyCopyable}
+
+\pnum
+IndirectlyCopyable
+
+\rSec2[concepts.lib.indirectlycomparable]{Concept IndirectlyComparable}
+
+\pnum
+IndirectlyComparable (takes two optional projections and an optional predicate)
+
+\rSec2[concepts.lib.indirectlyswappable]{Concept IndirectlySwappable}
+
+\pnum
+IndirectlySwappable
+
+\rSec2[concepts.lib.weaklyincrementable]{Concept WeaklyIncrementable}
+
+\pnum
+WeaklyIncrementable
+
+\rSec2[concepts.lib.incrementable]{Concept Incrementable}
+
+\pnum
+Incrementable
+
+\rSec1[concepts.lib.rearrangement]{Rearrangement concepts}
+
+\rSec2[concepts.lib.rearrangement.general]{In general}
+
+\pnum
+\ednote{TODO anything to say here?}
+
+\rSec2[concepts.lib.permutable]{Concept Permutable}
+
+\pnum
+Permutable
+
+\rSec2[concepts.lib.mergeable]{Concept Mergeable}
+
+\pnum
+Mergeable
+
+\rSec2[concepts.lib.sortable]{Concept Sortable}
+
+\pnum
+Sortable
+
+\end{addedblock}
