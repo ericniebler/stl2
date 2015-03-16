@@ -490,8 +490,65 @@ int main() {
 
 \rSec2[concepts.lib.equalitycomparable]{Concept EqualityComparable}
 
+\ednote{Remove table [equalitycomparable] in [utility.arg.requirements]. Replace references to
+[equalitycomparable] with [concepts.lib.equalitycomparable].}
+
+\indexlibrary{\idxcode{EqualityComparable}}%
+\begin{itemdecl}
+template <class T>
+concept bool EqualityComparable() {
+  requires(T a, T b) {
+    {a == b} -> bool;
+    {a != b} -> bool;
+  }
+}
+\end{itemdecl}
+
+\begin{itemdescr}
 \pnum
-EqualityComparable
+Let \tcode{a}, \tcode{b}, and \tcode{c} be well-formed objects of type \tcode{T}. Then type
+\tcode{T} models \tcode{EqualityComparable} if and only if
+
+\begin{itemize}
+\item \tcode{(a == a) != false}.
+\item \tcode{(a == b) != false} if an only if \tcode{(b == a) != false}.
+\item \tcode{(a != b) != false} if an only if \tcode{(a == b) == false}.
+\item \tcode{(a == b) != false \&\& (b == c) != false} if an only if \tcode{(a == c) != false}.
+\end{itemize}
+
+\pnum
+\enternote Not all arguments will be well-formed for a given type. For example, $NaN$ is not a
+well-formed floating point value, and many types' moved-from states are not well-formed. This
+does not mean that the type does not model \tcode{EqualityComparable}.\exitnote
+\end{itemdescr}
+
+\begin{itemdecl}
+template <EqualityComparable T, EqualityComparable U>
+concept bool EqualityComparable() {
+  Common<T, U> &&
+  EqualityComparable<CommonType<T, U>>() &&
+  requires(T a, U b) {
+    {a == b} -> bool;
+    {b == a} -> bool;
+    {a != b} -> bool;
+    {b != a} -> bool;
+  }
+}
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+Let \tcode{a} be an object of type T, \tcode{b} be an object of type \tcode{U}, and \tcode{C} be
+\tcode{CommonType<T, U>}. Then types \tcode{T} and \tcode{U} model \tcode{EqualityComparable} if
+and only if
+
+\begin{itemize}
+\item \tcode{(a == b) != false} if and only if \tcode{(C\{a\} == C\{b\}) != false}.
+\item \tcode{(a != b) != false} if and only if \tcode{(C\{a\} != C\{b\}) != false}.
+\item \tcode{(b == a) != false} if and only if \tcode{(C\{b\} == C\{a\}) != false}.
+\item \tcode{(b != a) != false} if and only if \tcode{(C\{b\} != C\{a\}) != false}.
+\end{itemize}
+\end{itemdescr}
 
 \rSec2[concepts.lib.semiregular]{Concept Semiregular}
 
