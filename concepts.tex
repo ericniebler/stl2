@@ -608,7 +608,7 @@ built-in types like \tcode{int} and that are comparable with \tcode{==}.\exitnot
 
 \ednote{Remove table [lessthancomparable] in [utility.arg.requirements]. Replace uses of
 \tcode{LessThanComparable} with \tcode{TotallyOrdered} (acknowledging that this is a breaking
-change that makes types requirements stricter). Replace references to [lessthancomparable] with
+change that makes type requirements stricter). Replace references to [lessthancomparable] with
 references to [concepts.lib.totallyordered]}
 
 \indexlibrary{\idxcode{TotallyOrdered}}%
@@ -627,7 +627,7 @@ concept bool TotallyOrdered() {
 \begin{itemdescr}
 \pnum
 Let \tcode{a}, \tcode{b}, and \tcode{c} be well-formed objects of type \tcode{T}. Then type
-\tcode{T} models \tcode{EqualityComparable} if and only if
+\tcode{T} models \tcode{TotallyOrdered} if and only if
 
 \begin{itemize}
 \item \tcode{(a < a) == false}.
@@ -647,6 +647,43 @@ well-formed floating point value, and many types' moved-from states are not well
 does not mean that the type does not model \tcode{TotallyOrdered}.\exitnote
 \end{itemdescr}
 
+\begin{itemdecl}
+template <TotallyOrdered T, TotallyOrdered U>
+concept bool TotallyOrdered() {
+  return Common<T, U> &&
+    TotallyOrdered<CommonType<T, U>> &&
+    EqualityComparable<T, U> &&
+    requires (T a, U b) {
+      { a < b } -> bool;
+      { a > b } -> bool;
+      { a <= b } -> bool;
+      { a >= b } -> bool;
+      { b < a } -> bool;
+      { b > a } -> bool;
+      { b <= a } -> bool;
+      { b >= a } -> bool;
+    };
+}
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+Let \tcode{a} be an object of type T, \tcode{b} be an object of type \tcode{U}, and \tcode{C} be
+\tcode{CommonType<T, U>}. Then types \tcode{T} and \tcode{U} model \tcode{EqualityComparable} if
+and only if
+
+\begin{itemize}
+\item \tcode{(a < b) != false} if and only if \tcode{(C\{a\} < C\{b\}) != false}.
+\item \tcode{(a > b) != false} if and only if \tcode{(C\{a\} > C\{b\}) != false}.
+\item \tcode{(a <= b) != false} if and only if \tcode{(C\{a\} <= C\{b\}) != false}.
+\item \tcode{(a >= b) != false} if and only if \tcode{(C\{a\} >= C\{b\}) != false}.
+\item \tcode{(b < a) != false} if and only if \tcode{(C\{b\} < C\{a\}) != false}.
+\item \tcode{(b > a) != false} if and only if \tcode{(C\{b\} > C\{a\}) != false}.
+\item \tcode{(b <= a) != false} if and only if \tcode{(C\{b\} <= C\{a\}) != false}.
+\item \tcode{(b >= a) != false} if and only if \tcode{(C\{b\} >= C\{a\}) != false}.
+\end{itemize}
+\end{itemdescr}
+
 \rSec1[concepts.lib.function]{Function concepts}
 
 \rSec2[concepts.lib.function.general]{In general}
@@ -656,13 +693,67 @@ does not mean that the type does not model \tcode{TotallyOrdered}.\exitnote
 
 \rSec2[concepts.lib.function]{Concept Function}
 
+\indexlibrary{\idxcode{Function}}%
+\begin{itemdecl}
+template <class T, class...Args>
+using ResultType = result_of_t<F(Args...)>;
+
+template <class F, class...Args>
+concept bool Function =
+  Destructible<T> &&
+  CopyConstructible<T> &&
+  requires (F f, Args...args) {
+    typename ResultType<F, Args...>;
+    Same<F*, decltype(&f)>;
+    { f.~F() } noexcept;
+    Same<F*, decltype(new F)>;
+    { delete new F };
+    { f(args...) };
+    Same<ResultType<F, Args...>, decltype(f(args...))>;
+  };
+\end{itemdecl}
+
+\begin{itemdescr}
 \pnum
-Function
+Let \tcode{f} be any object of type \tcode{F}, and \tcode{args} be any function parameter pack with
+the pattern \tcode{Args}. Then types \tcode{F} and \tcode{Args...} model \tcode{Function} if an only
+if
+
+\begin{itemize}
+\item \tcode{(\&f == addressof(f)) != false}.
+\end{itemize}
+
+\pnum
+There is no requirement that the function call operator be equality-preserving. That is, function
+\tcode{f} is allowed to return non-equal objects when called with equal arguments, and still model
+\tcode{Function}.
+
+\pnum
+\enternote Since models of \tcode{Function} are allowed to be non-equality-preserving, a
+function that generates random numbers may model \tcode{Function}.\exitnote
+\end{itemdescr}
 
 \rSec2[concepts.lib.regularfunction]{Concept RegularFunction}
 
+\indexlibrary{\idxcode{RegularFunction}}%
+\begin{itemdecl}
+template <class F, class...Args>
+concept bool RegularFunction =
+  Function<F, Args...>;
+\end{itemdecl}
+
+\begin{itemdescr}
 \pnum
-RegularFunction
+Models of \tcode{RegularFunction} are required to be equality-preserving; that is, when passed
+equal arguments, they are required to return equal objects.
+
+\pnum
+\enternote A random-number generator is not a model of \tcode{RegularFunction}.\exitnote
+
+\pnum
+\enternote There is no syntactic difference between \tcode{Function} and
+\tcode{RegularFunction}.\exitnote
+\end{itemdescr}
 
 \rSec2[concepts.lib.predicate]{Concept Predicate}
 
