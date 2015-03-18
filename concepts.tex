@@ -497,10 +497,10 @@ int main() {
 \begin{itemdecl}
 template <class T>
 concept bool EqualityComparable() {
-  requires(T a, T b) {
+  return requires(T a, T b) {
     {a == b} -> bool;
     {a != b} -> bool;
-  }
+  };
 }
 \end{itemdecl}
 
@@ -552,18 +552,100 @@ and only if
 
 \rSec2[concepts.lib.semiregular]{Concept Semiregular}
 
+\indexlibrary{\idxcode{Semiregular}}%
+\begin{itemdecl}
+template <class T>
+concept bool Semiregular =
+  DefaultConstructible<T> &&
+  CopyConstructible<T> &&
+  Destructible<T> &&
+  CopyAssignable<T> &&
+  requires(T a, size_t n) {
+    // Object
+    Same<T*, decltype(&a)>;
+    // Destruction
+    { a.~T() } noexcept;
+    // Allocation
+    Same<T*, decltype(new T)>;
+    Same<T*, decltype(new T[n])>;
+    // Deallocation
+    { delete new T };
+    { delete new T[n] };
+  };
+\end{itemdecl}
+
+\begin{itemdescr}
 \pnum
-Semiregular
+Let \tcode{a} be any well-formed object of type \tcode{T}. Then type \tcode{T} models
+\tcode{Semiregular} if and only if
+
+\begin{itemize}
+\item \tcode{(\&a == addressof(a)) != false}.
+\item \tcode{(a == a) != false}; that is, if the value of \tcode{a} is not volatile.
+\end{itemize}
+
+\pnum
+\enternote The \tcode{Semiregular} concept is modeled by types that have behave similarly
+built-in types like \tcode{int}, except that they may not be comparable with \tcode{==}.\exitnote
+\end{itemdescr}
 
 \rSec2[concepts.lib.regular]{Concept Regular}
 
+\indexlibrary{\idxcode{Regular}}%
+\begin{itemdecl}
+template <Semiregular T>
+concept bool Regular =
+  EqualtiyComparable<T>;
+\end{itemdecl}
+
+\begin{itemdescr}
 \pnum
-Regular
+\enternote The \tcode{Regular} concept is modeled by types that have behave similarly
+built-in types like \tcode{int} and that are comparable with \tcode{==}.\exitnote
+\end{itemdescr}
 
 \rSec2[concepts.lib.totallyordered]{Concept TotallyOrdered}
 
+\ednote{Remove table [lessthancomparable] in [utility.arg.requirements]. Replace uses of
+\tcode{LessThanComparable} with \tcode{TotallyOrdered} (acknowledging that this is a breaking
+change that makes types requirements stricter). Replace references to [lessthancomparable] with
+references to [concepts.lib.totallyordered]}
+
+\indexlibrary{\idxcode{TotallyOrdered}}%
+\begin{itemdecl}
+template <EqualityComparable T>
+concept bool TotallyOrdered() {
+  return requires (T a, T b) {
+    { a < b } -> bool;
+    { a > b } -> bool;
+    { a <= b } -> bool;
+    { a >= b } -> bool;
+  };
+}
+\end{itemdecl}
+
+\begin{itemdescr}
 \pnum
-TotallyOrdered
+Let \tcode{a}, \tcode{b}, and \tcode{c} be well-formed objects of type \tcode{T}. Then type
+\tcode{T} models \tcode{EqualityComparable} if and only if
+
+\begin{itemize}
+\item \tcode{(a < a) == false}.
+\item If \tcode{(a < b) != false}, then \tcode{(b < a) == false}.
+\item If \tcode{(a < b) != false} and \tcode{(b < c) != false}, then
+      \tcode{(a < c) != false}.
+\item \tcode{(a < b) != false}, or \tcode{(b < a) != false}, or
+      \tcode{(a == b) != false}.
+\item \tcode{(a > b) != false} if and only if \tcode{(b < a) != false}.
+\item \tcode{(a <= b) != false} if and only if \tcode{(b < a) == false}.
+\item \tcode{(a >= b) != false} if and only if \tcode{(b > a) == false}.
+\end{itemize}
+
+\pnum
+\enternote Not all arguments will be well-formed for a given type. For example, $NaN$ is not a
+well-formed floating point value, and many types' moved-from states are not well-formed. This
+does not mean that the type does not model \tcode{TotallyOrdered}.\exitnote
+\end{itemdescr}
 
 \rSec1[concepts.lib.function]{Function concepts}
 
@@ -591,7 +673,6 @@ Predicate
 
 \pnum
 Relation
-
 \rSec2[concepts.lib.invokable]{Concept Invokable}
 
 \pnum
