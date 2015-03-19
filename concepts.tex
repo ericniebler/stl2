@@ -715,18 +715,17 @@ concept bool Function =
 
 \begin{itemdescr}
 \pnum
-Let \tcode{f} be any object of type \tcode{F}, and \tcode{args} be any function parameter pack with
-the pattern \tcode{Args}. Then types \tcode{F} and \tcode{Args...} model \tcode{Function} if an only
-if
+Let \tcode{f} be any object of type \tcode{F}. Then types \tcode{F} and \tcode{Args...} model
+\tcode{Function} if an only if
 
 \begin{itemize}
 \item \tcode{(\&f == addressof(f)) != false}.
 \end{itemize}
 
 \pnum
-There is no requirement that the function call operator be equality-preserving. That is, function
-\tcode{f} is allowed to return non-equal objects when called with equal arguments, and still model
-\tcode{Function}.
+The function call expression need not be equality-preserving; that is, the expression
+\tcode{f(args...)} is allowed to return non-equal objects when called with equal arguments,
+and still model \tcode{Function}.
 
 \pnum
 \enternote Since models of \tcode{Function} are allowed to be non-equality-preserving, a
@@ -744,8 +743,8 @@ concept bool RegularFunction =
 
 \begin{itemdescr}
 \pnum
-Models of \tcode{RegularFunction} are required to be equality-preserving; that is, when passed
-equal arguments, they are required to return equal objects.
+Models of \tcode{RegularFunction} shall be equality-preserving; that is, when passed
+equal arguments, they shall return equal objects.
 
 \pnum
 \enternote A random-number generator is not a model of \tcode{RegularFunction}.\exitnote
@@ -757,27 +756,116 @@ equal arguments, they are required to return equal objects.
 
 \rSec2[concepts.lib.predicate]{Concept Predicate}
 
-\pnum
-Predicate
+\indexlibrary{\idxcode{Predicate}}%
+\begin{itemdecl}
+template <class F, class...Args>
+concept bool Predicate =
+  RegularFunction<F, Args...> &&
+  Convertible<ResultType<F, Args...>, bool>;
+\end{itemdecl}
 
 \rSec2[concepts.lib.relation]{Concept Relation}
 
+\indexlibrary{\idxcode{Relation}}%
+\begin{itemdecl}
+template <class F, class T>
+concept bool Relation() {
+  return Predicate<F, T, T>;
+}
+
+template <class R, class T, class U>
+concept bool Relation() {
+  return Relation<R, T>() &&
+    Relation<R, U>() &&
+    Common<T, U> &&
+    Relation<R, CommonType<T, U>>() &&
+    requires (R r, T a, U b) {
+      { r(a, b) } -> bool;
+      { r(b, a) } -> bool;
+    };
+}
+\end{itemdecl}
+
+\begin{itemdescr}
 \pnum
-Relation
+Let \tcode{r} be any well-forned object of type \tcode{R}, \tcode{a} be any well-formed object of
+type \tcode{T}, \tcode{b} be any well-formed object of type \tcode{U}, and \tcode{C} be
+\tcode{CommonType<T, U>}. Then types \tcode{R}, \tcode{T}, and \tcode{U} model \tcode{Relation} if
+and only if
+
+\begin{itemize}
+\item \tcode{r(a, b) != false} if and only if \tcode{r(C\{a\}, C\{b\}) != false}.
+\item \tcode{r(b, a) != false} if and only if \tcode{r(C\{b\}, C\{a\}) != false}.
+\end{itemize}
+\end{itemdescr}
+
 \rSec2[concepts.lib.invokable]{Concept Invokable}
 
+\indexlibrary{\idxcode{Invokable}}%
+\begin{itemdecl}
+// Exposition only
+template <class R, class T>
+auto __as_callable(R T::* p) ->
+  decltype(mem_fn(p))
+{
+  return mem_fn(p);
+}
+template <class T>
+auto __as_callable(T&& t) ->
+  enable_if_t<!is_member_pointer<decay_t<T>>::value, T>
+{
+  return forward<T>(t);
+}
+
+template <class T>
+using CallableType =
+  decltype(__as_callable(declval<T>()));
+
+template <class F, class... Args>
+concept bool Invokable =
+  Function<CallableType<F>, Args...>;
+\end{itemdecl}
+
+\begin{itemdescr}
 \pnum
-Invokable
+\enternote The \tcode{Invokable} concept is used to describe types that can be used in arguments to
+\tcode{\textit{INVOKE}}~(\ref{func.require}).\exitnote
+\end{itemdescr}
+
+\rSec2[concepts.lib.regularinvokable]{Concept RegularInvokable}
+
+\indexlibrary{\idxcode{RegularInvokable}}%
+\begin{itemdecl}
+template <class F, class...Args>
+concept bool RegularInvokable =
+  RegularFunction<CallableType<F>, Args...>;
+\end{itemdecl}
 
 \rSec2[concepts.lib.invokablepredicate]{Concept InvokablePredicate}
 
-\pnum
-InvokablePredicate
+\indexlibrary{\idxcode{InvokablePredicate}}%
+\begin{itemdecl}
+template <class F, class...Args>
+concept bool InvokablePredicate =
+  RegularInvokable<F, Args...> &&
+  Convertible<ResultType<CallableType<F>, Args...>, bool>;
+\end{itemdecl}
 
 \rSec2[concepts.lib.invokablerelation]{Concept InvokableRelation}
 
-\pnum
-InvokableRelation
+\indexlibrary{\idxcode{InvokableRelation}}%
+\begin{itemdecl}
+template <class F, class T>
+concept bool InvokableRelation() {
+  return InvokablePredicate<F, T, T> &&
+    Relation<CallableType<R>, T>();
+}
+
+template <class F, class T, class U>
+concept bool InvokableRelation() {
+  return Relation<CallableType<R>, T, U>();
+}
+\end{itemdecl}
 
 \rSec1[concepts.lib.iterator]{Iterator concepts}
 
