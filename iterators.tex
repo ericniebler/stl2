@@ -251,6 +251,301 @@ denotes a value of some type that is writable to the \added{weak }output iterato
 \enternote For an iterator type \tcode{X} there must be an instantiation
 of \tcode{iterator_traits<X>}~(\ref{iterator.traits}). \exitnote
 
+\begin{addedblock}
+\rSec2[readable.iterators]{Readable types}
+
+\pnum
+The \tcode{Readable} concept is modeled by types that are readable by applying \tcode{operator*}
+including pointers, smart pointers, and iterators.
+
+\indexlibrary{\idxcode{Readable}}%
+\begin{codeblock}
+  template <Semiregular I>
+  concept bool Readable =
+    requires (I i) {
+      typename ValueType<I>;
+      { *i } -> const ValueType<I>&; // pre: i is dereferencable
+    };
+\end{codeblock}
+
+\pnum
+A \tcode{Readable} type has an associated value type that can be accessed with the \tcode{ValueType}
+alias template.
+
+\indexlibrary{\idxcode{ValueType}}%
+\begin{codeblock}
+  template <class, class = void> struct value_type { };
+  template <class T>
+  struct value_type<T*>
+    : enable_if<!is_void<T>::value, remove_cv_t<T>> { };
+  template <class T>
+  struct value_type<T[]> : remove_cv<T> { };
+  template <class T, size_t N>
+  struct value_type<T[N]> : remove_cv<T> { };
+  template <class T>
+  struct value_type<T, void_t<typename T::value_type>>
+    : enable_if<!is_void<typename T::value_type>::value, typename T::value_type> { };
+  template <class T>
+  struct value_type<T, void_t<typename T::element_type>>
+    : enable_if<!is_void<typename T::element_type>::value, typename T::element_type> { };
+
+  template <class T>
+  using ValueType = typename value_type<T>::type;
+\end{codeblock}
+
+\pnum
+If a type \tcode{I} has an associated value type, then \tcode{value_type<I>::type} shall name the
+value type. Otherwise, there shall be no nested type \tcode{type}.
+
+\pnum
+The \tcode{value_type} class template may be specialized on user-defined types.
+
+\pnum
+When instantiated with a type \tcode{I} that has a nested type \tcode{value_type},
+\tcode{value_type<I>::type} names that type, unless it is \tcode{void} in which case
+\tcode{value_type<I>} shall have no nested type \tcode{type}. \enternote Some legacy output
+iterators define a nested type named \tcode{value_type} that is an alias for \tcode{void}. These
+types are not \tcode{Readable} and have no associated value types.\exitnote
+
+\pnum
+When instantiated with a type \tcode{I} that has a nested type \tcode{element_type},
+\tcode{value_type<I>::type} names that type, unless it is \tcode{void} in which case
+\tcode{value_type<I>} shall have no nested type \tcode{type}. \enternote Smart pointers like
+\tcode{shared_ptr<int>} are \tcode{Readable} and have an associated value type. But a smart pointer
+like \tcode{shared_ptr<void>} is not \tcode{Readable} and has no associated value type.\exitnote
+
+\rSec2[movewritable.iterators]{MoveWritable types}
+
+\pnum
+\ednote{TODO description}
+
+\indexlibrary{\idxcode{MoveWritable}}%
+\begin{codeblock}
+  template <Semiregular Out, class T>
+  concept bool MoveWritable =
+    requires (Out o, T value) {
+      { *o = move(value) };
+    };
+\end{codeblock}
+
+\pnum
+Let \tcode{value} be an rvalue or a non-const lvalue of type \tcode{T}, and let \tcode{o} be an
+object of type \tcode{Out}. Then types \tcode{T} and \tcode{Out} model \tcode{MoveWritable} if and
+only if
+
+\begin{itemize}
+\item If \tcode{o} is dereferencable, then after the assignment \tcode{*o = move(value)}, the value
+referred to by \tcode{*o} is equal to the value of \tcode{value} before the assignment.
+\end{itemize}
+
+\pnum
+\tcode{value}'s state is unspecified. \enternote \tcode{value} must still meet the
+requirements of the library component that is using it. The operations listed
+in those requirements must work as specified whether \tcode{value} has been moved
+from or not.\exitnote
+
+\pnum
+\enternote
+The only valid use of an \tcode{operator*} is on the left side of the assignment statement.
+\textit{Assignment through the same value of the writable type happens only once.}
+\exitnote
+
+\rSec2[writable.iterators]{Writable types}
+
+\pnum
+\ednote{TODO description}
+
+\indexlibrary{\idxcode{Writable}}%
+\begin{codeblock}
+  template <Semiregular Out, class T>
+  concept bool Writable =
+    MoveWritable<Out, T> &&
+    requires (Out o, T value) {
+      { *o = value };
+    };
+\end{codeblock}
+
+\pnum
+Let \tcode{value} be an lvalue of type (possibly \tcode{const}) \tcode{T} or an rvalue
+of type \tcode{const T}, and let \tcode{o} be an object of type \tcode{Out}. Then types
+\tcode{T} and \tcode{Out} model \tcode{Writable} if and only if
+
+\begin{itemize}
+\item After the assignment \tcode{*o = value}, the value referred to by \tcode{*o} is equal to
+the value of \tcode{value} and \tcode{value} is unchanged.
+\end{itemize}
+
+\rSec2[indirectlymovable.iterators]{IndirectlyMovable types}
+
+\pnum
+The \tcode{IndirectlyMovable} concept describes the move relationship between a \tcode{Readable}
+type and a \tcode{MoveWritable} type.
+
+\indexlibrary{\idxcode{IndirectlyMovable}}%
+\begin{codeblock}
+  template <Readable I, Semiregular Out>
+  concept bool IndirectlyMovable =
+    MoveWritable<Out, ValueType<I>>;
+\end{codeblock}
+
+\pnum
+Let \tcode{i} be an object of type \tcode{I}, and let \tcode{o} be an object of type \tcode{Out}.
+Then types \tcode{I} and \tcode{Out} model \tcode{IndirectlyMovable} if and only if
+
+\begin{itemize}
+\item After the assignment \tcode{*o = move(*i)}, the value referred to by \tcode{*o} is equal to
+the value of \tcode{*i} before the assignment.
+\end{itemize}
+
+\rSec2[indirectlycopyable.iterators]{IndirectlyCopyable types}
+
+\pnum
+The \tcode{IndirectlyCopyable} concept describes the copy relationship between a \tcode{Readable}
+type and a \tcode{Writable} type.
+
+\indexlibrary{\idxcode{IndirectlyCopyable}}%
+\begin{codeblock}
+  template <Readable I, Semiregular Out>
+  concept bool IndirectlyCopyable =
+    IndirectlyMovable<I, Out> &&
+    Writable<Out, ValueType<I>>;
+\end{codeblock}
+
+\pnum
+Let \tcode{i} be an object of type \tcode{I}, and let \tcode{o} be an object of type \tcode{Out}.
+Then types \tcode{I} and \tcode{Out} model \tcode{IndirectlyCopyable} if and only if
+
+\begin{itemize}
+\item After the assignment \tcode{*o = *i}, the value referred to by \tcode{*o} is equal to
+the value of \tcode{*i} and the value of \tcode{*i} is unchanged.
+\end{itemize}
+
+\rSec2[indirectlycomparable.iterators]{IndirectlyComparable types}
+
+\pnum
+The \tcode{IndirectlyComparable} concept describes an relation between
+two \tcode{Readable} types and (optionally) a \tcode{Relation} and two projections.
+
+\indexlibrary{\idxcode{IndirectlyComparable}}%
+\begin{codeblock}
+  template <Readable I1, Readable I2,
+    class R = equal_to<>,
+    RegularInvokable<ValueType<I1>> P1 = identity,
+    RegularInvokable<ValueType<I2>> P2 = identity>
+  concept bool IndirectlyComparable =
+    InvokableRelation<R,
+      ResultType<CallableType<P1>, ValueType<I1>>,
+      ResultType<CallableType<P2>, ValueType<I2>>>;
+\end{codeblock}
+
+\pnum
+Let \tcode{i1} be an object of type \tcode{I1},
+\tcode{i2} be an object of type \tcode{I2},
+\tcode{r} be an object of type \tcode{R},
+\tcode{p1} be an object of type \tcode{P1},
+\tcode{p2} be an object of type \tcode{P2}.
+Then types \tcode{I1}, \tcode{I2}, \tcode{R}, \tcode{P1}, and \tcode{P2} model
+\tcode{IndirectlyComparable} if and only if
+
+\begin{itemize}
+\item \tcode{\textit{INVOKE}(r, \textit{INVOKE}(p1, *i1), \textit{INVOKE}(p2, *i2))}
+is a relation.
+\end{itemize}
+
+\rSec2[indirectlyswappable.iterators]{IndirectlySwappable types}
+
+\pnum
+The \tcode{IndirectlySwappable} concept describes a swappable relationship between the
+value types of two \tcode{Readable} types.
+
+\indexlibrary{\idxcode{IndirectlySwappable}}%
+\begin{codeblock}
+  template <Readable I1, Readable I2 = I1>
+  concept bool IndirectlySwappable =
+    Swappable<ValueType<I1>, ValueType<I2>> &&
+    Swappable<ValueType<I1>> &&
+    Swappable<ValueType<I2>>;
+\end{codeblock}
+
+\rSec2[weaklyincrementable.iterators]{WeaklyIncrementable types}
+
+The \tcode{WeaklyIncrementable} concept describes types that can be incremented with the pre-
+and post-increment operators. The increment operations are not required to be equality-preserving,
+nor is the type required to be \tcode{EqualityComparable}.
+
+\indexlibrary{\idxcode{WeaklyIncrementable}}%
+\begin{codeblock}
+  template <Semiregular I>
+  concept bool WeaklyIncrementable =
+    requires (I i) {
+      typename DifferenceType<I>;
+      SignedIntegral<DifferenceType<I>>;
+      { ++i };
+      Same<I&, decltype(++i)>;
+      { i++ };
+    };
+\end{codeblock}
+
+\pnum
+Not all arguments will be incrementable for a given type. For example $NaN$ is not a well-formed
+floating point value and hence is not incrementable. Likewise, past-the-end iterators are also not
+incrementable. This does not mean that the type does not model \tcode{WeaklyIncrementable}.
+
+\pnum
+Let \tcode{i} be an object of type \tcode{I}.
+Then the type \tcode{I} models \tcode{WeaklyIncrementable} if and only if
+
+\begin{itemize}
+\item If \tcode{i} is incrementable, then \tcode{++i} moves \tcode{i} to the next element.
+\item If \tcode{i} is incrementable, then \tcode{(\&++i == \&i) != false}.
+\item If \tcode{i} is incrementable, then \tcode{i++} moves \tcode{i} to the next element.
+\item \tcode{++i} is valid if and only if \tcode{i++} is valid.
+\end{itemize}
+
+\ednote{Copied almost verbatim from the InputIterator description. Remove this wording there.}
+
+\pnum
+\enternote For \tcode{WeaklyIncrementable} types, \tcode{a} equals \tcode{b} does imply that \tcode{++a}
+equals \tcode{++b}. (Equality does not guarantee the substitution property or referential
+transparency.) Algorithms on weakly incrementable types should never attempt to pass
+through the same incrementable value twice. They should be single pass algorithms. These algorithms
+can be used with istreams as the source of the input data through the \tcode{istream_iterator} class
+template.\exitnote
+
+\rSec2[incrementable.iterators]{Incrementable types}
+
+The \tcode{Incrementable} concept describes types that can be incremented with the pre-
+and post-increment operators. The increment operations are required to be equality-preserving,
+and the type is required to be \tcode{EqualityComparable}.
+
+\indexlibrary{\idxcode{Incrementable}}%
+\begin{codeblock}
+  template <Regular I>
+  concept bool Incrementable =
+    WeaklyIncrementable<I> &&
+    Same<I, decltype(i++)>;
+\end{codeblock}
+
+\pnum
+Let \tcode{a} and \tcode{b} be incrementable objects of type \tcode{I}.
+Then the type \tcode{I} models \tcode{Incrementable} if and only if
+
+\begin{itemize}
+\item If \tcode{(a == b) != false} then \tcode{(++a == ++b) != false}.
+\item If \tcode{(a == b) != false} then \tcode{(a++, a) == (b++, b) != false}.
+\item If \tcode{(a == b) != false} then \tcode{(a++ == b) != false}.
+\item If \tcode{(a == b) != false} then \tcode{((a++, a) == ++b) != false}.
+\end{itemize}
+
+\ednote{Copied in part from the ForwardIterator description. Remove this wording there.}
+
+\pnum
+\enternote The requirement that \tcode{a} equals \tcode{b} implies \tcode{++a} equals \tcode{++b}
+(which is not true for weakly incrementable types) allows the use of multi-pass one-directional
+algorithms with types that model \tcode{Incrementable}.\exitnote
+
+\end{addedblock}
+
 \rSec2[weakiterator.iterators]{Weak iterators}
 
 \pnum
@@ -268,11 +563,11 @@ to provide a richer set of iterator movements~(\ref{forward.iterators},
 
 \begin{addedblock}
 \begin{codeblock}
-concept WeakIterator<typename I> =
-    WeaklyIncrementable<I> && Copyable<I> &&
-    requires(I i) {
-        { *i } -> auto&&; // pre: i is dereferenceable
-    };
+template <WeaklyIncrementable I>
+concept bool WeakIterator =
+  requires(I i) {
+    { *i } -> auto&&; // pre: i is dereferenceable
+  };
 \end{codeblock}
 
 \enternote The requirement that the result of dereferencing the iterator is deducable from
@@ -312,8 +607,9 @@ has property
 \exitexample
 
 \begin{codeblock}
-concept Iterator<typename I> =
-    WeakIterator<I> && EqualityComparable<I>();
+template <WeakIterator I>
+concept bool Iterator<typename I> =
+  EqualityComparable<I>();
 \end{codeblock}
 
 \rSec2[sentinel.iterators]{Sentinels}
@@ -323,8 +619,9 @@ is an abstraction of the past-the-end iterator. Its values can be
 compared to an iterator for equality.
 
 \begin{codeblock}
-concept Sentinel<typename T, WeakIterator I> =
-    Regular<T> && EqualityComparable<T, I>();
+template <Regular T, WeakIterator I>
+concept bool Sentinel =
+    EqualityComparable<T, I>();
 \end{codeblock}
 
 \rSec2[weakinput.iterators]{Weak input iterators}
@@ -333,17 +630,18 @@ concept Sentinel<typename T, WeakIterator I> =
 The \tcode{WeakInputIterator} concept is a refinement of
 \tcode{WeakIterator}~(\ref{weakiterator.iterators}). It
 defines requirements for a type whose referred to values can be read (from the requirement for
-\tcode{Readable} \ednote{TODO reference}) and which be both pre- and post-incremented. However,
-weak input iterators are not required to be compared for equality.
+\tcode{Readable}~(\ref{readable.iterators})) and which can be both pre- and post-incremented. However,
+weak input iterators are not required to be comparable for equality.
 
 \begin{codeblock}
-concept WeakInputIterator<WeakIterator I> =
-    Readable<I> &&
-    requires(I i) {
-        typename IteratorCategory<I>;
-        { i++ } -> Readable;
-        requires Derived<IteratorCategory<I>, weak_input_iterator_tag>;
-    };
+template <WeakIterator I>
+concept bool WeakInputIterator =
+  Readable<I> &&
+  requires(I i) {
+    typename IteratorCategory<I>;
+    { i++ } -> Readable;
+    requires Derived<IteratorCategory<I>, weak_input_iterator_tag>;
+  };
 \end{codeblock}
 
 \end{addedblock}
@@ -358,10 +656,10 @@ The \tcode{InputIterator} concept is a refinement of \tcode{Iterator}~(\ref{iter
 \tcode{WeakInputIterator}~(\ref{weakinput.iterators}).
 
 \begin{codeblock}
-concept InputIterator<typename I> =
-    WeakInputIterator<I> &&
-    EqualityComparable<I>() &&
-    Derived<IteratorCategory<I>, input_iterator_tag>;
+template <WeakInputIterator I>
+concept bool InputIterator =
+  Iterator<I>() &&
+  Derived<IteratorCategory<I>, input_iterator_tag>;
 \end{codeblock}
 
 \end{addedblock}
@@ -377,7 +675,7 @@ Algorithms on input iterators should never attempt to pass through the same iter
 They should be
 \term{single pass}
 algorithms.
-Value type T is not required to be a \tcode{CopyAssignable} type (Table~\ref{copyassignable}).
+Value type T is not required to be a \tcode{CopyAssignable} type (\removed{Table}~\ref{concepts.lib.copyassignable}).
 These algorithms can be used with istreams as the source of the input data through the
 \tcode{istream_iterator}
 class template.
@@ -394,16 +692,18 @@ class template.
 The \tcode{WeakOutputIterator} concept is a refinement of
 \tcode{WeakIterator}~(\ref{weakiterator.iterators}). It defines requirements for a type that
 can be used to write values (from the requirement for
-\tcode{Writable} \ednote{TODO reference}) and which be both pre- and post-incremented. However,
+\tcode{Writable}~(\ref{writable.iterators})) and which be both pre- and post-incremented. However,
 weak output iterators are not required to be compared for equality.
 
 \begin{codeblock}
-concept WeakOutputIterator<typename I, typename T> =
-    WeakIterator<I> && Writable<I, T>;
+template <WeakIterator I, class T>
+concept bool WeakOutputIterator =
+  Writable<I, T>;
 \end{codeblock}
 \end{addedblock}
 
-\ednote{TODO Say something about the post-conditions mentioned by Table 108, or is that part of the Writable concept? }
+\ednote{TODO Say something about the post-conditions mentioned by Table 108, or is that part of the
+Writable concept? }
 
 \pnum
 \enternote
@@ -430,8 +730,9 @@ The \tcode{OutputIterator} concept is a refinement of \tcode{Iterator}~(\ref{ite
 \tcode{WeakOutputIterator}~(\ref{weakoutput.iterators}).
 
 \begin{codeblock}
-concept OutputIterator<typename I, typename T> =
-    WeakOutputIterator<I> && EqualityComparable<I>();
+template <class I, class T>
+concept bool OutputIterator =
+  WeakOutputIterator<I, T> && Iterator<I>();
 \end{codeblock}
 
 \pnum
@@ -471,10 +772,10 @@ The \tcode{ForwardIterator} concept refines \tcode{InputIterator}~(\ref{input.it
 and adds the multi-pass guarantee, described below.
 
 \begin{codeblock}
-concept ForwardIterator<typename I> =
-    InputIterator<I> &&
-    Incrementable<I> &&
-    Derived<IteratorCategory<I>, forward_iterator_tag>;
+template <InputIterator I>
+concept bool ForwardIterator =
+  Incrementable<I> &&
+  Derived<IteratorCategory<I>, forward_iterator_tag>;
 \end{codeblock}
 \end{addedblock}
 
@@ -537,13 +838,15 @@ The \tcode{BidirectionalIterator} concept refines \tcode{ForwardIterator}~(\ref{
 and adds the ability to move an iterator backward as well as forward.
 
 \begin{codeblock}
-concept BidirectionalIterator<typename I> =
-    ForwardIterator<I> &&
-    Derived<IteratorCategory<I>, bidirectional_iterator_tag> &&
-    requires decrement (I i, I j) {
-        { --i } -> I&;
-        { i-- } -> I;
-    };
+template <ForwardIterator I>
+concept bool BidirectionalIterator =
+  Derived<IteratorCategory<I>, bidirectional_iterator_tag> &&
+  requires decrement (I i, I j) {
+      { --i };
+      Same<I&, decltype(--i)>;
+      { i-- };
+      Same<I, decltype(i--)>;
+  };
 \end{codeblock}
 \end{addedblock}
 
@@ -575,19 +878,23 @@ computation of distance in constant time with \tcode{-}. Random access iterators
 notation via subscripting.
 
 \begin{codeblock}
-concept RandomAccessIterator<typename I> =
-    BidirectionalIterator<I> &&
+template <BidirectionalIterator I>
+concept bool RandomAccessIterator =
     TotallyOrdered<I>() &&
     Derived<IteratorCategory<I>, random_access_iterator_tag> &&
-    SignedIntegral<DistanceType<I>> &&
     SizedIteratorRange<I, I> && // see below
     requires advance (I i, I j, DifferenceType<I> n) {
-        { i += n } -> I&;
-        { i + n } -> I;
-        { n + i } -> I;
-        { i -= n } -> I&;
-        { i - n } -> I;
-        { i[n] } -> ValueType<I>;
+        { i += n };
+        { i + n };
+        { n + i };
+        { i -= n };
+        { i - n };
+        Same<decltype(i += n), I&>;
+        Same<decltype(i + n), I>;
+        Same<decltype(n + i), I>;
+        Same<decltype(i -= n), I&>;
+        Same<decltype(i - n), I>;
+        { i[n] } -> const ValueType<I>&;
     };
 \end{codeblock}
 \end{addedblock}
@@ -606,10 +913,9 @@ equality. This concept is the key that allows iterator ranges to be defined by p
 that are not the same.
 
 \begin{codeblock}
-concept IteratorRange<typename I, typename S> =
-    Iterator<I> &&
-    Regular<S> &&
-    EqualityComparable<I, S>();
+template <Iterator I, Regular S>
+concept bool IteratorRange =
+  EqualityComparable<I, S>();
 \end{codeblock}
 
 \rSec2[sizediteratorrange.iteratorranges]{Sized Iterator range}
@@ -619,16 +925,15 @@ and allows the use of the \tcode{-} operator to compute the distance
 between an \tcode{Iterator}~(\ref{iterator.iterators}) and a \tcode{Sentinel}.
 
 \begin{codeblock}
-concept SizedIteratorRange<typename I, typename S> =
-    IteratorRange<I, S> &&
-    requires difference (I i, S j) {
-        typename Distance_type<I>;
-        { i - i } -> Distance_type<I>;
-        { j - j } -> Distance_type<I>;
-        { i - j } -> Distance_type<I>;
-        { j - i } -> Distance_type<I>;
-        requires SignedIntegral<DifferenceType>;
-    };
+template <Iterator I, Regular S>
+concept bool SizedIteratorRange =
+  IteratorRange<I, S> &&
+  requires (I i, S j) {
+    { i - i } -> DifferenceType<I>;
+    { j - j } -> DifferenceType<I>;
+    { i - j } -> DifferenceType<I>;
+    { j - i } -> DifferenceType<I>;
+  };
 \end{codeblock}
 
 \enternote The \tcode{SizedIteratorRange} concept is modeled by pairs of
@@ -1165,31 +1470,6 @@ namespace std {
   };
   template <class T>
     using DifferenceType = typename difference_type<T>::type;
-\end{codeblock}
-
-\pnum
-\tcode{ValueType<T>} is implemented as if:
-
-\begin{codeblock}
-  template <class, class = void> struct value_type { };
-  template <class T>
-    struct value_type<T*> : remove_cv<T> { };
-  template <class T>
-    struct value_type<T[]> : remove_cv<T> { };
-  template <class T, size_t N>
-    struct value_type<T[N]> : remove_cv<T> { };
-  template <class T>
-    struct value_type<T, void_t<typename T::value_type>>
-      : enable_if<!is_void<typename T::value_type>::value, typename T::value_type> { };
-  template <class T>
-    struct value_type<T, void_t<typename T::element_type>>
-      : enable_if<!is_void<typename T::element_type>::value, typename T::element_type> { };
-  template <class T>
-  struct value_type<T, enable_if_t<is_base_of<T, ios_base>::value>> {
-    using type = typename T::char_type;
-  };
-  template <class T>
-    using ValueType = typename value_type<T>::type;
 \end{codeblock}
 
 \pnum
@@ -5360,14 +5640,15 @@ iteration over its elements by providing a \tcode{begin} iterator and an
 \tcode{end} iterator or sentinel.
 
 \begin{codeblock}
-concept Iterable<typename T> =
-    requires(T t) {
-        typename IteratorType<T>;
-        typename SentinelType<T>;
-        { begin(t) } -> IteratorType<T>;
-        { end(t) } -> SentinelType<T>;
-        requires IteratorRange<IteratorType, SentinelType>;
-    }
+template <class T>
+concept bool Iterable =
+  requires(T t) {
+    typename IteratorType<T>;
+    typename SentinelType<T>;
+    { begin(t) } -> IteratorType<T>;
+    { end(t) } -> SentinelType<T>;
+    IteratorRange<IteratorType, SentinelType>;
+  };
 \end{codeblock}
 
 \tcode{begin} and \tcode{end} are required to be amortized constant time.
@@ -5382,15 +5663,17 @@ type that knows its size in constant time with the \tcode{size} function.
 
 \begin{codeblock}
 // For exposition only:
-concept SizedIterableLike_<Iterable T> =
-    requires(T t) {
-        typename SizeType<T>;
-        { size(t) } -> SizeType<T>;
-        requires Integral<SizeType>;
-    }
+template <Iterator T>
+concept bool SizedIterableLike_ =
+  requires(T t) {
+    typename SizeType<T>;
+    { size(t) } -> SizeType<T>;
+    Integral<SizeType>;
+  };
 
-concept SizedIterable<SizedIterableLike_ T> =
-    is_sized_iterable<T>::value;
+template <SizedIterableLike_ T>
+concept bool SizedIterable =
+  is_sized_iterable<T>::value;
 \end{codeblock}
 
 \pnum
@@ -5447,8 +5730,9 @@ container copies the elements, which cannot be done in constant time.
 \exitexample
 
 \begin{codeblock}
-concept Range<typename T> =
-    Iterable<T> && Semiregular<T> && is_range<T>::value;
+template <Iterable T>
+concept bool Range =
+  Semiregular<T> && is_range<T>::value;
 \end{codeblock}
 
 \pnum
@@ -5475,25 +5759,26 @@ struct range_base
 {};
 
 // For exposition only:
-concept ContainerLike_<Iterable T> =
-    !Same<decltype(*begin(declval<T &>())),
-          decltype(*begin(declval<T const &>()))>;
+template <Iterable T>
+concept bool ContainerLike_ =
+  !Same<decltype(*begin(declval<T &>())),
+        decltype(*begin(declval<T const &>()))>;
 
 // For exposition only:
 template<typename T>
 struct is_range_impl_
   : std::integral_constant<
-        bool,
-        Iterable<T> && (!ContainerLike_<T> || Derived<T, range_base>)
+      bool,
+      Iterable<T> && (!ContainerLike_<T> || Derived<T, range_base>)
     >
 {};
 
 template<typename T, typename Enable = void>
 struct is_range
   : conditional<
-        is_same<T, remove_const_t<remove_reference_t<T>>>::value,
-        is_range_impl_<T>,
-        is_range<remove_const_t<remove_reference_t<T>>>
+      is_same<T, remove_const_t<remove_reference_t<T>>>::value,
+      is_range_impl_<T>,
+      is_range<remove_const_t<remove_reference_t<T>>>
     >::type
 {};
 \end{codeblock}
@@ -5510,8 +5795,9 @@ for which \tcode{begin} and \tcode{end} return objects of the same type.
 \tcode{BoundedIterable}. \exitnote
 
 \begin{codeblock}
-concept BoundedIterable<Iterable T> =
-    Same<IteratorType<T>, SentinelType<T>>;
+template <Iterable T>
+concept bool BoundedIterable =
+  Same<IteratorType<T>, SentinelType<T>>;
 \end{codeblock}
 
 \rSec3[input.iterables]{Input iterables}
@@ -5522,8 +5808,9 @@ for which \tcode{begin} returns a model of
 \tcode{InputIterator}~(\ref{input.iterators}).
 
 \begin{codeblock}
-concept InputIterable<Iterable T> =
-    InputIterator<IteratorType<T>>;
+template <Iterable T>
+concept bool InputIterable =
+  InputIterator<IteratorType<T>>;
 \end{codeblock}
 
 \rSec3[forward.iterables]{Forward iterables}
@@ -5534,8 +5821,9 @@ InputIterable type for which \tcode{begin} returns a model of
 \tcode{ForwardIterator}~(\ref{forward.iterators}).
 
 \begin{codeblock}
-concept ForwardIterable<InputIterable T> =
-    ForwardIterator<IteratorType<T>>;
+template <InputIterable T>
+concept bool ForwardIterable =
+  ForwardIterator<IteratorType<T>>;
 \end{codeblock}
 
 \rSec3[bidirectional.iterables]{Bidirectional iterables}
@@ -5546,8 +5834,9 @@ ForwardIterable type for which \tcode{begin} returns a model of
 \tcode{BidirectionalIterator}~(\ref{bidirectional.iterators}).
 
 \begin{codeblock}
-concept BidirectionalIterable<ForwardIterable T> =
-    BidirectionalIterator<IteratorType<T>>;
+template <ForwardIterable T>
+concept bool BidirectionalIterable =
+  BidirectionalIterator<IteratorType<T>>;
 \end{codeblock}
 
 \rSec3[random.access.iterables]{Random access iterables}
@@ -5558,8 +5847,9 @@ BidirectionalIterable type for which \tcode{begin} returns a model of
 \tcode{RandomAccessIterator}~(\ref{random.access.iterators}).
 
 \begin{codeblock}
-concept RandomAccessIterable<BidirectionalIterable T> =
-    RandomAccessIterator<IteratorType<T>>;
+template <BidirectionalIterable T>
+concept bool RandomAccessIterable =
+  RandomAccessIterator<IteratorType<T>>;
 \end{codeblock}
 
 \end{addedblock}
