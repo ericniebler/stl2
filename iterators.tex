@@ -422,6 +422,8 @@ the value of \tcode{*i} and the value of \tcode{*i} is unchanged.
 
 \rSec2[indirectlycomparable.iterators]{IndirectlyComparable types}
 
+\ednote{TODO this gets defined later on in terms of \tcode{Projected}. Unify.}
+
 \pnum
 The \tcode{IndirectlyComparable} concept describes an relation between
 two \tcode{Readable} types and (optionally) a \tcode{Relation} and two projections.
@@ -902,6 +904,130 @@ concept bool RandomAccessIterator =
 \ednote{Remove Table 111}
 
 \begin{addedblock}
+
+\rSec1[indirectfunctions]{Indirect function requirements}
+
+\rSec2[indirectfunctions.general]{In general}
+
+\pnum
+There are several concepts that group requirements of the higher-order algorithms; that is,
+algorithms that take functions as arguments.
+
+\ednote{Specifying the algorithms in terms of these indirect invokable concepts would ease
+the transition should we ever decide to support proxy iterators in the future. See the
+Future Work appendix~(\ref{future}).}
+
+\rSec2[projected.indirectfunctions]{Projected iterator}
+
+\pnum
+The \tcode{Projected} class template is intended for use when specifying the constraints of
+higher-order algorithms that accept optional projections. It bundles a \tcode{Readable} type
+\tcode{I} and a projection function \tcode{Proj} into a new \tcode{Readable} type whose
+\tcode{reference} type is the result of applying \tcode{Proj} to the \tcode{reference} type
+of \tcode{I}.
+
+\begin{codeblock}
+  template <Readable I, RegularInvokable<ValueType<I>> Proj>
+  struct Projected {
+    using value_type = decay_t<ResultType<CallableType<Proj>, ValueType<I>>>;
+    using reference = ResultType<CallableType<Proj>, decltype(*std::declval<I>())>;
+    using pointer = add_pointer_t<reference>;
+    reference operator*() const;
+  };
+\end{codeblock}
+
+\pnum
+\enternote \tcode{Projected} is only used to ease constraints specification. Its
+member functions need not be defined.\exitnote
+
+\rSec2[indirectfunc.indirectfuncs]{Indirect functions}
+
+\pnum
+TODO This is a description.
+
+\begin{codeblock}
+  template <class F, Readable...Is>
+  concept bool IndirectInvokable =
+    Invokable<F, ValueType<Is>...>;
+
+  template <class F, Readable...Is>
+  concept bool IndirectInvokablePredicate =
+    InvokablePredicate<F, ValueType<Is>...>;
+
+  template <class F, Readable I1, Readable I2 = I1>
+  concept bool IndirectInvokableRelation =
+    InvokableRelation<F, ValueType<I1>, ValueType<I2>>();
+
+  template <Readable I1, Readable I2, class Pred = equal_to<>,
+      class Proj1 = identity, class Proj2 = identity>
+  concept bool IndirectlyComparable =
+    IndirectInvokableRelation<Pred, Projected<I1, Proj1>, Projected<I2, Proj2>>();
+\end{codeblock}
+
+\rSec1[rearrangements]{Rearrangement requirements}
+
+\rSec2[rearrangement.general]{In general}
+
+\pnum
+There are several additional iterator concepts that are commonly applied to families of algorithms.
+These are the so-called \techterm{rearrangement} concepts. They group together iterator requirements
+of algorithm families. There are 3 relational concepts for rearrangements: \tcode{Permutable},
+\tcode{Mergeable}, and \tcode{Sortable}.
+
+\rSec2[permutable.rearrangements]{Permutable iterators}
+
+\pnum
+The \tcode{Permutable} concept specifies the common requirements of algorithms that reorder
+elements in place by moving or swapping them.
+
+\indexlibrary{\idxcode{Permutable}}%
+\begin{codeblock}
+  template <ForwardIterator I>
+  concept bool Permutable =
+    Semiregular<ValueType<I>> &&
+    IndirectlyMovable<I>;
+\end{codeblock}
+
+\ednote{\tcode{Semiregular} here overconstrains by adding a default-constructibility requirement.
+See Appendix D of the ``The Palo Alto'' report for an alternate design.}
+
+\rSec2[mergeable.rearrangements]{Mergeable iterators}
+
+\pnum
+The \tcode{Mergeable} concept describes the requirements of algorithms that merge sorted sequences
+into an output sequence.
+
+\indexlibrary{\idxcode{Permutable}}%
+\begin{codeblock}
+  template <InputIterator I1, InputIterator I2, WeaklyIncrementable Out,
+      class R = less<>, class P1 = identity, class P2 = identity>
+  concept bool Mergeable =
+    IndirectlyCopyable<I1, Out> &&
+    IndirectlyCopyable<I2, Out> &&
+    IndirectlyComparable<I1, I2, R, P1, P2>;
+\end{codeblock}
+
+\pnum
+\enternote When \tcode{less<>} is used as the
+relation, the value type must model \tcode{TotallyOrdered}.\exitnote
+
+\rSec2[sortable.rearrangements]{Sortable iterators}
+
+\pnum
+The \tcode{Sortable} concept describes the common requirements of algorithms that permute sequences
+of iterators into an ordered sequence (e.g., \tcode{sort}).
+
+\indexlibrary{\idxcode{Permutable}}%
+\begin{codeblock}
+  template <ForwardIterator I, class R = less<>, class P = identity>
+  concept bool Sortable =
+    Permutable<I> &&
+    IndirectInvokableRelation<R, Projected<I, P>>;
+\end{codeblock}
+
+\pnum
+\enternote When \tcode{less<>} is used as the
+relation, the value type must model \tcode{TotallyOrdered}.\exitnote
 
 \rSec1[iteratorranges]{Iterator range requirements}
 
