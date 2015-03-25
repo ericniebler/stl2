@@ -13,12 +13,12 @@
 
 FIGURES = $(patsubst %.dot,%.pdf,$(wildcard *.dot))
 
-TSPDF = pdflatex stl2-ts | grep -v "^Overfull"
+TSPDF = pdflatex D4382 | grep -v "^Overfull"
 
 default: rebuild
 
 clean:
-	rm -f *.aux std.pdf *.idx *.ilg *.ind *.log *.lot *.lof *.tmp *.out
+	rm -f *.aux D4382.pdf *.idx *.ilg *.ind *.log *.lot *.lof *.tmp *.out
 
 refresh:
 	$(TSPDF)
@@ -34,20 +34,20 @@ full: $(FIGURES) grammar xrefs reindex
 	dot -o $@ -Tpdf $<
 
 grammar:
-	sh ../tools/makegram
+	sh ./tools/makegram
 
 xrefs:
-	sh ../tools/makexref
+	sh ./tools/makexref
 
-# reindex:
-# 	$(TSPDF)
-# 	$(TSPDF)
-# 	$(TSPDF)
-# 	makeindex generalindex
-# 	makeindex libraryindex
-# 	makeindex grammarindex
-# 	makeindex impldefindex
-# 	$(TSPDF)
-# 	$(TSPDF)
+reindex:
+	$(TSPDF)
+	$(TSPDF)
+	$(TSPDF)
+	makeindex generalindex
+	makeindex libraryindex
+	makeindex grammarindex
+	makeindex impldefindex
+	$(TSPDF)
+	$(TSPDF)
 
 ### Makefile ends here
