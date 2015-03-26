@@ -212,7 +212,7 @@ constant time (amortized).
 
 \pnum
 Destruction of an iterator may invalidate pointers and references
-previously obtained from that iterator.\ednote{TODO, really?}
+previously obtained from that iterator.
 
 \pnum
 An
@@ -317,7 +317,8 @@ like \tcode{shared_ptr<void>} is not \tcode{Readable} and has no associated valu
 \rSec2[movewritable.iterators]{MoveWritable types}
 
 \pnum
-\ednote{TODO description}
+The \tcode{MoveWritable} concept describes a requirements for moving a value into an iterator's
+referenced object.
 
 \indexlibrary{\idxcode{MoveWritable}}%
 \begin{codeblock}
@@ -339,6 +340,9 @@ referred to by \tcode{*o} is equal to the value of \tcode{value} before the assi
 \end{itemize}
 
 \pnum
+After the expression \tcode{*o = move(value)}, object \tcode{o} is not required to be dereferencable.
+
+\pnum
 \tcode{value}'s state is unspecified. \enternote \tcode{value} must still meet the
 requirements of the library component that is using it. The operations listed
 in those requirements must work as specified whether \tcode{value} has been moved
@@ -353,7 +357,8 @@ The only valid use of an \tcode{operator*} is on the left side of the assignment
 \rSec2[writable.iterators]{Writable types}
 
 \pnum
-\ednote{TODO description}
+The \tcode{Writable} concept describes a requirements for copying a value into an iterator's
+referenced object.
 
 \indexlibrary{\idxcode{Writable}}%
 \begin{codeblock}
@@ -422,11 +427,9 @@ the value of \tcode{*i} and the value of \tcode{*i} is unchanged.
 
 \rSec2[indirectlycomparable.iterators]{IndirectlyComparable types}
 
-\ednote{TODO this gets defined later on in terms of \tcode{Projected}. Unify.}
-
 \pnum
 The \tcode{IndirectlyComparable} concept describes an relation between
-two \tcode{Readable} types and (optionally) a \tcode{Relation} and two projections.
+two \tcode{Readable} types and (optionally) a relation and two projections.
 
 \indexlibrary{\idxcode{IndirectlyComparable}}%
 \begin{codeblock}
@@ -483,7 +486,7 @@ nor is the type required to be \tcode{EqualityComparable}.
       typename DifferenceType<I>;
       requires SignedIntegral<DifferenceType<I>>;
       { ++i };
-      Same<I&, decltype(++i)>;
+      requires Same<I&, decltype(++i)>;
       { i++ };
     };
 \end{codeblock}
@@ -564,12 +567,13 @@ to provide a richer set of iterator movements~(\ref{forward.iterators},
 \ednote{Remove para 2 and Table 106.}
 
 \begin{addedblock}
+\indexlibrary{\idxcode{WeakIterator}}%
 \begin{codeblock}
-template <WeaklyIncrementable I>
-concept bool WeakIterator =
-  requires(I i) {
-    { *i } -> auto&&; // pre: i is dereferenceable
-  };
+  template <WeaklyIncrementable I>
+  concept bool WeakIterator =
+    requires(I i) {
+      { *i } -> auto&&; // pre: i is dereferenceable
+    };
 \end{codeblock}
 
 \enternote The requirement that the result of dereferencing the iterator is deducable from
@@ -608,10 +612,11 @@ has property
 \tcode{p}).
 \exitexample
 
+\indexlibrary{\idxcode{Iterator}}%
 \begin{codeblock}
-template <WeakIterator I>
-concept bool Iterator<typename I> =
-  EqualityComparable<I>();
+  template <WeakIterator I>
+  concept bool Iterator<typename I> =
+    EqualityComparable<I>();
 \end{codeblock}
 
 \rSec2[sentinel.iterators]{Sentinels}
@@ -620,10 +625,11 @@ The \tcode{Sentinel} concept defines requirements for a type that
 is an abstraction of the past-the-end iterator. Its values can be
 compared to an iterator for equality.
 
+\indexlibrary{\idxcode{Sentinel}}%
 \begin{codeblock}
-template <Regular T, WeakIterator I>
-concept bool Sentinel =
-    EqualityComparable<T, I>();
+  template <Regular T, WeakIterator I>
+  concept bool Sentinel =
+      EqualityComparable<T, I>();
 \end{codeblock}
 
 \rSec2[weakinput.iterators]{Weak input iterators}
@@ -635,6 +641,7 @@ defines requirements for a type whose referred to values can be read (from the r
 \tcode{Readable}~(\ref{readable.iterators})) and which can be both pre- and post-incremented. However,
 weak input iterators are not required to be comparable for equality.
 
+\indexlibrary{\idxcode{WeakInputIterator}}%
 \begin{codeblock}
 template <WeakIterator I>
 concept bool WeakInputIterator =
@@ -657,11 +664,12 @@ concept bool WeakInputIterator =
 The \tcode{InputIterator} concept is a refinement of \tcode{Iterator}~(\ref{iterator.iterators}) and
 \tcode{WeakInputIterator}~(\ref{weakinput.iterators}).
 
+\indexlibrary{\idxcode{InputIterator}}%
 \begin{codeblock}
-template <WeakInputIterator I>
-concept bool InputIterator =
-  Iterator<I>() &&
-  Derived<IteratorCategory<I>, input_iterator_tag>;
+  template <WeakInputIterator I>
+  concept bool InputIterator =
+    Iterator<I>() &&
+    Derived<IteratorCategory<I>, input_iterator_tag>;
 \end{codeblock}
 
 \end{addedblock}
@@ -697,22 +705,20 @@ can be used to write values (from the requirement for
 \tcode{Writable}~(\ref{writable.iterators})) and which be both pre- and post-incremented. However,
 weak output iterators are not required to be compared for equality.
 
+\indexlibrary{\idxcode{WeakOutputIterator}}%
 \begin{codeblock}
-template <WeakIterator I, class T>
-concept bool WeakOutputIterator =
-  Writable<I, T>;
+  template <WeakIterator I, class T>
+  concept bool WeakOutputIterator =
+    Writable<I, T>;
 \end{codeblock}
 \end{addedblock}
 
-\ednote{TODO Say something about the post-conditions mentioned by Table 108, or is that part of the
-Writable concept? }
-
 \pnum
 \enternote
-The only valid use of an
+\removed{The only valid use of an
 \tcode{operator*}
 is on the left side of the assignment statement.
-\textit{Assignment through the same value of the iterator happens only once.}
+\textit{Assignment through the same value of the iterator happens only once.}}
 Algorithms on output iterators should never attempt to pass through the same iterator twice.
 They should be
 \term{single pass}
@@ -731,10 +737,11 @@ class as well as with insert iterators and insert pointers.
 The \tcode{OutputIterator} concept is a refinement of \tcode{Iterator}~(\ref{iterator.iterators}) and
 \tcode{WeakOutputIterator}~(\ref{weakoutput.iterators}).
 
+\indexlibrary{\idxcode{OutputIterator}}%
 \begin{codeblock}
-template <class I, class T>
-concept bool OutputIterator =
-  WeakOutputIterator<I, T> && Iterator<I>();
+  template <class I, class T>
+  concept bool OutputIterator =
+    WeakOutputIterator<I, T> && Iterator<I>();
 \end{codeblock}
 
 \pnum
@@ -773,11 +780,12 @@ are valid and have the indicated semantics, and
 The \tcode{ForwardIterator} concept refines \tcode{InputIterator}~(\ref{input.iterators})
 and adds the multi-pass guarantee, described below.
 
+\indexlibrary{\idxcode{ForwardIterator}}%
 \begin{codeblock}
-template <InputIterator I>
-concept bool ForwardIterator =
-  Incrementable<I> &&
-  Derived<IteratorCategory<I>, forward_iterator_tag>;
+  template <InputIterator I>
+  concept bool ForwardIterator =
+    Incrementable<I> &&
+    Derived<IteratorCategory<I>, forward_iterator_tag>;
 \end{codeblock}
 \end{addedblock}
 
@@ -839,21 +847,41 @@ the following expressions are valid as shown in Table~\ref{tab:iterator.bidirect
 The \tcode{BidirectionalIterator} concept refines \tcode{ForwardIterator}~(\ref{forward.iterators}),
 and adds the ability to move an iterator backward as well as forward.
 
+\indexlibrary{\idxcode{BidirectionalIterator}}%
 \begin{codeblock}
-template <ForwardIterator I>
-concept bool BidirectionalIterator =
-  Derived<IteratorCategory<I>, bidirectional_iterator_tag> &&
-  requires decrement (I i, I j) {
+  template <ForwardIterator I>
+  concept bool BidirectionalIterator =
+    Derived<IteratorCategory<I>, bidirectional_iterator_tag> &&
+    requires (I i, I j) {
       { --i };
-      Same<I&, decltype(--i)>;
+      requires Same<I&, decltype(--i)>;
       { i-- };
-      Same<I, decltype(i--)>;
-  };
+      requires Same<I, decltype(i--)>;
+    };
 \end{codeblock}
 \end{addedblock}
 
 \ednote{Remove table 110}
-\ednote{TODO pre- and post-conditions from Table 110}
+
+\begin{addedblock}
+\pnum
+A bidirectional iterator \tcode{r} is decrementable only if there exists some \tcode{s} such that
+\tcode{++s == r}. The expressions \tcode{\dcr{}r} and \tcode{r\dcr{}} are only valid if \tcode{r} is
+decrementable.
+
+\pnum
+Let \tcode{a} and \tcode{b} be decrementable objects of type \tcode{I}. Then \tcode{I} models
+\tcode{BidirectionalIterator} if and only if:
+
+\begin{itemize}
+\item \tcode{\&\dcr{}a == \&a}.
+\item If \tcode{(a == b) != false}, then \tcode{(a\dcr{} == j) != false}.
+\item If \tcode{(a == b) != false}, then \tcode{((a\dcr{}, a) == \dcr{}j) != false}.
+\item If \tcode{a} is incrementable and \tcode{(a == b) != false}, then
+      \tcode{(\dcr{}(++a) == j) != false}.
+\item If \tcode{(a == b) != false}, then \tcode{(++(\dcr{}a) == j) != false}.
+\end{itemize}
+\end{addedblock}
 
 \begin{removedblock}
 \pnum
@@ -879,24 +907,25 @@ and adds support for constant-time advancement with \tcode{+=}, \tcode{+}, and \
 computation of distance in constant time with \tcode{-}. Random access iterators also support array
 notation via subscripting.
 
+\indexlibrary{\idxcode{RandomAccessIterator}}%
 \begin{codeblock}
-template <BidirectionalIterator I>
-concept bool RandomAccessIterator =
+  template <BidirectionalIterator I>
+  concept bool RandomAccessIterator =
     TotallyOrdered<I>() &&
     Derived<IteratorCategory<I>, random_access_iterator_tag> &&
     SizedIteratorRange<I, I> && // see below
-    requires advance (I i, I j, DifferenceType<I> n) {
-        { i += n };
-        { i + n };
-        { n + i };
-        { i -= n };
-        { i - n };
-        Same<decltype(i += n), I&>;
-        Same<decltype(i + n), I>;
-        Same<decltype(n + i), I>;
-        Same<decltype(i -= n), I&>;
-        Same<decltype(i - n), I>;
-        { i[n] } -> const ValueType<I>&;
+    requires (I i, I j, DifferenceType<I> n) {
+      { i += n };
+      { i + n };
+      { n + i };
+      { i -= n };
+      { i - n };
+      requires Same<decltype(i += n), I&>;
+      requires Same<decltype(i + n), I>;
+      requires Same<decltype(n + i), I>;
+      requires Same<decltype(i -= n), I&>;
+      requires Same<decltype(i - n), I>;
+      { i[n] } -> const ValueType<I>&;
     };
 \end{codeblock}
 \end{addedblock}
@@ -904,6 +933,26 @@ concept bool RandomAccessIterator =
 \ednote{Remove Table 111}
 
 \begin{addedblock}
+\pnum
+Let \tcode{a} and \tcode{b} be valid iterators of type \tcode{I} such that \tcode{b} is reachable
+from \tcode{a}. Let \tcode{n} be an object of type \tcode{DifferenceType<I>} such that after
+\tcode{n} applications of \tcode{++a}, \tcode{(a == b) != false}. Then \tcode{I} models
+\tcode{RandomAccessIterator} if and only if:
+
+\begin{itemize}
+\item \tcode{(a += n) == b}.
+\item \tcode{\&(a += n) == \&a}.
+\item \tcode{(a + n) == (a += n)}.
+\item For any two positive integers \tcode{x} and \tcode{y}, if \tcode{a + (x + y)} is valid, then
+\tcode{a + (x + y) == (a + x) + y}.
+\item \tcode{a + 0 == a}.
+\item If \tcode{(a + (n - 1))} is valid, then \tcode{a + n == ++(a + (n - 1))}.
+\item \tcode{(b += -n) == a}.
+\item \tcode{(b -= n) == a}.
+\item \tcode{\&(b -= n) == \&b}.
+\item \tcode{(b - n) == (b -= n)}.
+\item If \tcode{b} is dereferenceable, then \tcode{a[n]} is valid and is equal to \tcode{*b}.
+\end{itemize}
 
 \rSec1[indirectfunctions]{Indirect function requirements}
 
@@ -926,6 +975,7 @@ higher-order algorithms that accept optional projections. It bundles a \tcode{Re
 \tcode{reference} type is the result of applying \tcode{Proj} to the \tcode{reference} type
 of \tcode{I}.
 
+\indexlibrary{\idxcode{Projected}}%
 \begin{codeblock}
   template <Readable I, RegularInvokable<ValueType<I>> Proj>
   struct Projected {
@@ -943,8 +993,13 @@ member functions need not be defined.\exitnote
 \rSec2[indirectfunc.indirectfuncs]{Indirect functions}
 
 \pnum
-TODO This is a description.
+The indirect invokable concepts are used to constrain those algorithms that accept
+functions as arguments.
 
+\indexlibrary{\idxcode{IndirectInvokable}}%
+\indexlibrary{\idxcode{IndirectRegularInvokable}}%
+\indexlibrary{\idxcode{IndirectInvokablePredicate}}%
+\indexlibrary{\idxcode{IndirectInvokableRelation}}%
 \begin{codeblock}
   template <class F, Readable...Is>
   concept bool IndirectInvokable =
@@ -961,12 +1016,10 @@ TODO This is a description.
   template <class F, Readable I1, Readable I2 = I1>
   concept bool IndirectInvokableRelation =
     InvokableRelation<F, ValueType<I1>, ValueType<I2>>();
-
-  template <Readable I1, Readable I2, class Pred = equal_to<>,
-      class Proj1 = identity, class Proj2 = identity>
-  concept bool IndirectlyComparable =
-    IndirectInvokableRelation<Pred, Projected<I1, Proj1>, Projected<I2, Proj2>>();
 \end{codeblock}
+
+\pnum
+\ednote{TODO description here}
 
 \rSec1[rearrangements]{Rearrangement requirements}
 
@@ -1042,33 +1095,51 @@ The \tcode{IteratorRange} concept defines a pair of types (an
 equality. This concept is the key that allows iterator ranges to be defined by pairs of types
 that are not the same.
 
+\indexlibrary{\idxcode{IteratorRange}}%
 \begin{codeblock}
-template <Iterator I, Regular S>
-concept bool IteratorRange =
-  EqualityComparable<I, S>();
+  template <Iterator I, Regular S>
+  concept bool IteratorRange =
+    EqualityComparable<I, S>();
 \end{codeblock}
+
+\pnum
+Let {a} be a valid iterator of type \tcode{I} and let \tcode{b} be a valid sentinel of type
+\tcode{S}. Then \tcode{I} and \tcode{S} model concept \tcode{IteratorRange} if and only if
+\tcode{b} is reachable from \tcode{a}.
 
 \rSec2[sizediteratorrange.iteratorranges]{Sized Iterator range}
 
-The \tcode{SizedIteratorRange} refines \tcode{IteratorRange}~(\ref{iteratorrange.iteratorranges})
+The \tcode{SizedIteratorRange} concept refines \tcode{IteratorRange}~(\ref{iteratorrange.iteratorranges})
 and allows the use of the \tcode{-} operator to compute the distance
-between an \tcode{Iterator}~(\ref{iterator.iterators}) and a \tcode{Sentinel}.
+between an \tcode{Iterator}~(\ref{iterator.iterators}) and a \tcode{Sentinel} in constant time.
 
+\indexlibrary{\idxcode{SizedIteratorRange}}%
 \begin{codeblock}
-template <Iterator I, Regular S>
-concept bool SizedIteratorRange =
-  IteratorRange<I, S> &&
-  requires (I i, S j) {
-    { i - i } -> DifferenceType<I>;
-    { j - j } -> DifferenceType<I>;
-    { i - j } -> DifferenceType<I>;
-    { j - i } -> DifferenceType<I>;
-  };
+  template <Iterator I, Regular S>
+  concept bool SizedIteratorRange =
+    IteratorRange<I, S> &&
+    requires (I i, S j) {
+      { i - i } -> DifferenceType<I>;
+      { j - j } -> DifferenceType<I>;
+      { i - j } -> DifferenceType<I>;
+      { j - i } -> DifferenceType<I>;
+    };
 \end{codeblock}
+
+\pnum
+Let \tcode{a} be a valid iterator of type \tcode{I} and \tcode{b} be a valid sentinel of type
+\tcode{S}. Let \tcode{n} be an object of type \tcode{DifferenceType<I>} such that after
+\tcode{n} applications of \tcode{++a}, \tcode{(a == b) != false}. Then types \tcode{I} and
+\tcode{S} model \tcode{SizedIteratorRange} if and only if:
+
+\begin{itemize}
+\item \tcode{(b - a) == n}.
+\item \tcode{(a - b) == -n}.
+\end{itemize}
 
 \enternote The \tcode{SizedIteratorRange} concept is modeled by pairs of
 \tcode{RandomAccessIterator}s(~\ref{random.access.iterators}) and by counted iterators and their
-sentinels. \ednote{TODO add reference here} \exitnote
+sentinels~(\ref{counted.iterator}).\exitnote
 
 \end{addedblock}
 
@@ -1476,8 +1547,8 @@ difference types that correspond to a particular iterator type.
 Accordingly, it is required that if
 \removed{\tcode{Iterator}
 is the type of an iterator}\added{\tcode{WeaklyIncrementable} is the name of a type that models the
-WeaklyIncrementable concept(~\ref{TODO Reference}), \tcode{Readable} is the name of a type that
-models the Readable concept(~\ref{TODO Reference}), and \tcode{WeakInputIterator} is the name of a
+WeaklyIncrementable concept(~\ref{weaklyincrementable.iterators}), \tcode{Readable} is the name of a type that
+models the Readable concept(~\ref{readable.iterators}), and \tcode{WeakInputIterator} is the name of a
 type that models the WeakInputIterator(~\ref{weakinput.iterators}) concept}, the types
 
 \begin{removedblock}
@@ -1574,8 +1645,10 @@ namespace std {
 
 \begin{addedblock}
 \pnum
+\indexlibrary{\idxcode{DifferenceType}}%
 \tcode{DifferenceType<T>} is implemented as if:
 
+\indexlibrary{\idxcode{difference_type}}%
 \begin{codeblock}
   template <class, class = void> struct difference_type { };
   template <class T> struct difference_type<T*> {
@@ -1603,8 +1676,10 @@ namespace std {
 \end{codeblock}
 
 \pnum
+\indexlibrary{\idxcode{IteratorCategory}}%
 \tcode{IteratorCategory<T>} is implemented as if:
 
+\indexlibrary{\idxcode{iterator_category}}%
 \begin{codeblock}
   template <class, class = void> struct iterator_category { };
   template <class T> struct iterator_category<T*> {
@@ -1658,8 +1733,9 @@ an implementation may define
 For the sake of backwards compatibility, this standard specifies the existence of an \tcode{iterator_traits}
 alias that collects an iterator's associated types. It is defined as if:
 
-\ednote{Think through the implications here.}
+\ednote{TODO Think through the implications here.}
 
+\indexlibrary{\idxcode{iterator_traits}}%
 \begin{codeblock}
   template <WeakInputIterator I, class = void> struct @\xname{pointer_type}@ {
     using type = add_pointer_t<ReferenceType<I>>;
@@ -1729,6 +1805,7 @@ The
 template may be used as a base class to ease the definition of required types
 for new iterators.
 
+\indexlibrary{\idxcode{iterator}}%
 \begin{codeblock}
 namespace std {
   template<class Category, class T, class Distance = ptrdiff_t,
