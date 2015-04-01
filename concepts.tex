@@ -19,11 +19,11 @@ as summarized in Table~\ref{tab:concepts.lib.summary}.
 \begin{libsumtab}{Fundamental concepts library summary}{tab:concepts.lib.summary}
 \ref{concepts.lib.corelang}       & Core language concepts  &   \tcode{<concepts>}      \\
 \ref{concepts.lib.foundational}   & Foundational concepts   &                           \\
-\ref{concepts.lib.function}       & Function concepts       &                           \\
+\ref{concepts.lib.functions}      & Function concepts       &                           \\
 \end{libsumtab}
 
 \pnum
-In this Clause, \tcode{CamelCase} identifiers ending with "\tcode{Type}" denote
+In this Clause, \tcode{CamelCase} identifiers ending with ``\tcode{Type}'' denote
 template aliases.
 
 \pnum
@@ -33,9 +33,6 @@ object, or it may return it by reference. Regular functions are allowed to have
 side-effects and preconditions that, when violated, make the function non-regular.
 \enternote A function that returns \tcode{void} is necessarily a regular function.
 \exitnote
-
-In this Clause, object \tcode{a} equals \tcode{b} if for every regular function
-\tcode{f}, \tcode{f(a)} equals \tcode{f(b)}.
 
 \rSec1[concepts.lib.corelang]{Core language concepts}
 
@@ -49,7 +46,7 @@ In this Clause, object \tcode{a} equals \tcode{b} if for every regular function
 \indexlibrary{\idxcode{Same}}%
 \begin{itemdecl}
 template <class T, class U>
-concept bool Same = @\impdef@;
+concept bool Same = @\seebelow@;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -146,6 +143,10 @@ Let \tcode{C} be \tcode{CommonType<T, U>}. Let \tcode{t1} and \tcode{t2} be obje
 of type \tcode{T}. \tcode{t1} equals \tcode{t2} if and only if \tcode{C\{t1\}} equals
 \tcode{C\{t2\}}. Let \tcode{u1} and \tcode{u2} be object of type \tcode{U}. \tcode{u1}
 equals \tcode{u2} if and only if \tcode{C\{u1\}} equals \tcode{C\{u2\}}.
+
+\pnum
+\enternote Users are free to specialize \text{common_type} when at least one parameter is a
+user-defined type. Those specializations are considered by the \tcode{Common} concept.\exitnote
 
 \end{itemdescr}
 
@@ -509,9 +510,10 @@ Let \tcode{a}, \tcode{b}, and \tcode{c} be well-formed objects of type \tcode{T}
 
 \begin{itemize}
 \item \tcode{(a == a) != false}.
-\item \tcode{(a == b) != false} if an only if \tcode{(b == a) != false}.
-\item \tcode{(a != b) != false} if an only if \tcode{(a == b) == false}.
-\item \tcode{(a == b) != false \&\& (b == c) != false} if an only if \tcode{(a == c) != false}.
+\item \tcode{(a == b) != false} if and only if \tcode{a} is equal to \tcode{b}.
+\item \tcode{(a == b) != false} if and only if \tcode{(b == a) != false}.
+\item \tcode{(a != b) != false} if and only if \tcode{(a == b) == false}.
+\item \tcode{(a == b) != false \&\& (b == c) != false} if and only if \tcode{(a == c) != false}.
 \end{itemize}
 
 \pnum
@@ -523,14 +525,14 @@ does not mean that the type does not model \tcode{EqualityComparable}.\exitnote
 \begin{itemdecl}
 template <EqualityComparable T, EqualityComparable U>
 concept bool EqualityComparable() {
-  Common<T, U> &&
-  EqualityComparable<CommonType<T, U>>() &&
-  requires(T a, U b) {
-    {a == b} -> bool;
-    {b == a} -> bool;
-    {a != b} -> bool;
-    {b != a} -> bool;
-  }
+  return Common<T, U> &&
+    EqualityComparable<CommonType<T, U>>() &&
+    requires(T a, U b) {
+      {a == b} -> bool;
+      {b == a} -> bool;
+      {a != b} -> bool;
+      {b != a} -> bool;
+    };
 }
 \end{itemdecl}
 
@@ -685,9 +687,9 @@ and only if
 \end{itemize}
 \end{itemdescr}
 
-\rSec1[concepts.lib.function]{Function concepts}
+\rSec1[concepts.lib.functions]{Function concepts}
 
-\rSec2[concepts.lib.function.general]{In general}
+\rSec2[concepts.lib.functions.general]{In general}
 
 \pnum
 \ednote{TODO anything to say here?}
@@ -717,7 +719,7 @@ concept bool Function =
 \begin{itemdescr}
 \pnum
 Let \tcode{f} be any object of type \tcode{F}. Then types \tcode{F} and \tcode{Args...} model
-\tcode{Function} if an only if
+\tcode{Function} if and only if
 
 \begin{itemize}
 \item \tcode{(\&f == addressof(f)) != false}.

@@ -4,38 +4,195 @@
 \rSec1[diff.cpp]{\Cpp and Ranges}
 
 \pnum
+This section details the known breaking changes likely to effect user code when being ported to the
+version of the Standard Library described in this document.
 
-\ednote{TODO describe all the breaking changes suggested herein.}
+\rSec2[diff.cpp.algo_return]{Algorithm Return Types}
 
-\begin{itemize}
-\item Different algorithm return types
-\item Stricter type constraints for the algorithms (e.g., replacing \tcode{LessThanComparable} with
-\tcode{TotallyOrdered}, \tcode{EqualityComparable} requires \tcode{op!=}.)
-\item The standard function objects get constraints.
-\item Iterators must be default constructible.
-\item \tcode{iterator_traits} cannot be specialized.
-\item Thing 1
-\item Thing 2
-\item Thing 3
-\item All the Things!
-\end{itemize}
+\pnum
+The algorithms described in this document permit the type of the end sentinel to differ from the
+type of the begin iterator. This is so that the algorithms can operate on ranges for which the
+physical end position is not yet known.
+
+\pnum
+The physical end position of the input range is determined during the execution of many of the
+algorithms. Rather than lose that potentially useful information, the design presented here has such
+algorithms return the iterator position of the end of the range. In many cases, this is a breaking
+change. Some algorithms that return iterators in today's STL are changed to return pairs, and
+algorithms that return pairs today are changed to return tuples. This is likely to be the most
+noticeable breaking change.
+
+\pnum
+Alternate designs that were less impactful were considered and dismissed. See Section 3.3.6 in
+N4128~(\ref{intro.refs}) for a discussion of the issues.
+
+\rSec2[diff.cpp.constraints]{Stronger Constraints}
+
+\pnum
+In this proposal, many algorithms and utilities get stricter type checking. For example, algorithms
+constrained with \tcode{LessThanComparable} today are constrained by \tcode{TotallyOrdered} in this
+document. This concept requires types to provide \textit{all} the relational operators, not just
+\tcode{operator<}.
+
+\pnum
+The use of coarser-grained, higher-level concepts in algorithm constraints is to make the type
+checks more semantic in nature and less syntactic. It also has the benefit of being less verbose
+while giving algorithm implementors greater implementation freedom. This approach is in contrast to
+the previous effort to add concepts to the Standard Library in the C++0x timeframe, which saw a
+proliferation of small, purely syntactic concepts and algorithm constraints that merely restated the
+algorithms' implementation details more verbosely in the algorithms' function signatures.
+
+\pnum
+The potential for breakage must be carefully weighed against the integrity and complexity of the
+constraints system. The coarseness of the concepts may need to change in response to real-world
+usage.
+
+\rSec2[diff.cpp.functional]{Constrained Functional Objects}
+
+\pnum
+The algorithm design described in this document assumes that the function objects
+\tcode{std::equal_to} and \tcode{std::less} get constraints added to their function call operators.
+(The former is constrained with \tcode{Equality\-Comparable} and the latter with
+\tcode{TotallyOrdered}). Similar constraints may eventually be added to the other function objects
+in \tcode{<functional>}. As with the coarsely-grained algorithm constraints, these function object
+constraints are likely to cause user code to break.
+
+\pnum
+Real-world experience is needed to assess the seriousness of the breakage. From a correctness point
+of view, the constraints are logical and valuable, but it's possible that for the sake of
+compatibility we provide both constrained and unconstrained functional objects.
+
+\rSec2[diff.cpp.defaultconstruct]{Iterators and Default-Constructibility}
+
+\pnum
+In today's STL, iterators need not be default-constructible. The \tcode{Iterator} concept described
+in this document requires default-constructibility. This could potentially cause breakage in users'
+code. Also, it makes the implementation of some types of iterators more complicated. Any iterator
+that has members that are not default constructible (e.g., an iterator that contains a lambda that
+has captured by reference) must take special steps to provide default-constructibility (e.g.,
+by wrapping non-default-constructible types in \tcode{std::optional}). This can weaken class
+invariants.
+
+\pnum
+The guarantee of default-constructibility simplifies the implementation of much iterator- and
+range-based code that would otherwise need to wrap iterators in \tcode{std::optional}. But the
+needs of backward-compatibliity, the extra complexity to iterator implementors, and the weakened
+invariants may prove to be too great a burden.
+
+\pnum
+We may in fact go even farther and remove the requirement of default-constructibility from the
+\tcode{Semiregular} concept. Time and experience will give us guidance here.
+
+\rSec2[diff.cpp.iteratortraits]{iterator_traits cannot be specialized}
+
+\pnum
+In this STL design, \tcode{iterator_traits} changes from being a class template to being an
+alias template. This is to intentionally break any code that tries to specialize it. In its place
+are the three class templates \tcode{difference_type}, \tcode{value_type}, and
+\tcode{iterator_category}. The need for this traits balkanization is because the associated types
+belong to separate concepts: \tcode{difference_type} belongs to \tcode{WeaklyIncrementable};
+\tcode{value_type} belongs to \tcode{Readable}; and \tcode{iterator_category} belongs to
+\tcode{WeakInputIterator}.
+
+\pnum
+This breakage is intentional and inherent in the decomposition of the iterator concepts established
+by The Palo Alto report~(\ref{intro.refs}).
 
 \rSec1[diff.n3351]{Ranges and the Palo Alto TR (N3351)}
 
 \pnum
+The Palo Alto report~(\ref{intro.refs}) presents a comprehensive design for the Standard Template
+Library constrained with concepts. It served both as a basis for the Concepts Lite language feature
+and for this document. However, this document diverges from the Palo Alto report in small ways. The
+differences are in the interests of backwards compatability, to avoid confusing a large installed
+base of programmers already familiar with the STL, and to keep the scope of this document as small
+as possible. This section describes the ways in which the two suggested designs differ.
 
-\ednote{TODO describe the salient differences between this proposal and the Palo
-Alto TR.}
+\rSec2[diff.n3351.sentinels]{Sentinels}
 
-... in the interests of backwards compatability, and to avoid confusing a large installed base of
-programmers already familiar with the STL ...
+\pnum
+In the design presented in this document, the type of a range's end delimitter may differ from the
+iterator representing the range's start position. The reasons for this change are discribed in
+N4128~(\ref{intro.refs}). This causes a number of difference from the Palo Alto report:
 
 \begin{itemize}
-\item No DistanceType as distinct from DifferenceType.
-\item Correlary: Keep distance(a,b) O(1) for RandomAccessIterators
-\item Addition of OutputIterator concepts
-\item Addition of invokables and projections
-\item No EoP-ification of the algorithms. (E.g., \tcode{sort} still requires random access
-      iterators, \tcode{inplace_merge} still takes bidirectional iterators, etc.)
-\item Others?
+\item The algorithms get an additional constraint for the sentinel.
+\item The return types of the algorithms are changed as described above~(\ref{diff.cpp.algo_return}).
+\item Some algorithms have operational semantics that require them to know the
+physical end position (e.g., \tcode{reverse}). Those algorithms must make an \bigoh{N} probe for
+the end position before proceeding. This does not change the operational semantics of any code that
+is valid today (the probe is unnecessary when the types of the begin and end are the
+same), and even when the probe is needed, in no cases does this change the compexity guarantee of
+any algorithm.
 \end{itemize}
+
+\rSec2[diff.n3351.invok_proj]{Invokables and Projections}
+
+\pnum
+Adobe's Source Libraries~(\ref{TODO}) pioneered the use of \techterm{invokables} and
+\techterm{projections} in the standard algorithms. Invokables let users pass member pointers
+where the algorithms expect callables, saving users the trouble of using a binder or a lambda.
+Projections are extra optional arguments that give users a way to trivially transform input data
+on the fly during the execution of the algorithms. Neither significantly changes the operational
+semantics of the algorithms, but they do change the form of the algorithm constraints. To deal with
+the extra complexity of the constraints, the design presented here adds higher-level composite
+concepts for concisely expressing the necessary relationships between invokables, iterators, and
+projections.
+
+\rSec2[diff.n3351.distance_type]{No Distinct DistanceType Associated Type}
+
+\pnum
+In the Palo Alto report, the \tcode{WeaklyIncrementable} concept has an associated type called
+\tcode{DistanceType}, and the \tcode{RandomAccessIterator} concepts adds another associated type
+called \tcode{DifferenceType}. The latter is required to be convertible to the former, but they are
+not required to be the same type. (\tcode{DifferenceType} is required to be a signed integral type,
+but \tcode{DistanceType} need not be signed.) Although sensible from a soundness point of view,
+the author of this paper feels this is potentially a rich source of confusion. This paper hews
+closer to the current standard by having only one associated type, \tcode{DifferenceType}, and
+requiring it to be signed.
+
+\rSec2[diff.n3351.distance_algo]{Distance Primitive is O(1) for Random Access Iterators}
+
+\pnum
+In the Palo Alto report, the \tcode{distance} iterator primitive for computing the distance from one
+iterator position to another is not immplemented in terms of \tcode{operator-} for random access
+iterators. \tcode{distance}, according to the report, should always be \bigoh{N}. It reads:
+
+\begin{quote}
+The standard mandates a different definition for random access iterators:
+\tcode{distance(i, j) == j - i}. We see this as a specification error; the guarantees of the
+\tcode{distance} operation have been weakened for an iterator specialization.
+
+In our design, we consider the two operations to be distinct.
+\end{quote}
+
+The design presented in this document keeps the specialization for random access iterators. To do
+otherwise would be to silently break complexity guarantees in an unknown amount of working code.
+
+To address the concern about weakened guarantees of the \tcode{distance} primitive, the design
+presented here requires that random access iterators model
+\tcode{SizedIteratorRange}~(\ref{sizediteratorrange.iteratorranges}). The \tcode{SizedIteratorRange}
+concept requires that \tcode{b - a} return the number of times \tcode{a} would have to be
+incremented to make it compare equal to \tcode{b}. Any type purporting to be a random access
+iterator that fails to meet that requirement is by definition not a valid random access iterator.
+
+\rSec2[diff.n3351.output_iters]{Output Iterators}
+
+\pnum
+The Palo Alto report does not define concepts for output iterators, making do with
+\tcode{WeaklyIncrementable}, \tcode{Writable}, and (where needed) \tcode{EqualityComparable}. The
+author of this document sees little downside to grouping these into the familiar
+\tcode{OutputIterator} concept and the more freequently-needed \tcode{WeakOutputIterator}. Even
+if they are not strictly needed, their absence would be surprising.
+
+\rSec2[diff.n3351.no_eop_algos]{No Algorithm Reformulations}
+
+\pnum
+Between the standardization of the Standard Library and the Palo Alto report, much new research was
+done to further generalize the standard algorithms
+(see ``Element of Programming'', Stepanov, McJones~(\ref{TODO})). The algorithms presented in
+The Palo Alto report reflect the results of that research in the algorithm constraints, some of which
+(e.g., \tcode{sort}, \tcode{inplace_merge}) take iterators with weaker categories than they do in
+the current standard. The design presented in this document does not reflect those changes. Although
+those changes are desirable, generalizing the algoritms as described in The Palo Alto report
+feels like it would be best done in a separate proposal.
