@@ -5016,12 +5016,12 @@ on an end-of-stream iterator is not defined.
 For any other iterator value a
 \tcode{const T\&}
 is returned.
-The result of
+\removed{The result of
 \tcode{operator->}
 on an end-of-stream iterator is not defined.
 For any other iterator value a
 \tcode{const T*}
-is returned.
+is returned.}
 The behavior of a program that applies \tcode{operator++()} to an end-of-stream
 iterator is undefined.
 It is impossible to store things into istream iterators.
@@ -5036,9 +5036,13 @@ Two non-end-of-stream iterators are equal when they are constructed from the sam
 namespace std {
   template <class T, class charT = char, class traits = char_traits<charT>,
       class Distance = ptrdiff_t>
-  class istream_iterator:
-    public iterator<input_iterator_tag, T, Distance, const T*, const T&> {
+  class istream_iterator@\removed{:}@
+    @\removed{public iterator<input_iterator_tag, T, Distance, const T*, const T\&>}@ {
   public:
+    @\added{typedef input_iterator_tag iterator_category;}@
+    @\added{typedef Distance difference_type;}@
+    @\added{typedef T value_type;}@
+    @\added{typedef const T\& reference;}@
     typedef charT char_type;
     typedef traits traits_type;
     typedef basic_istream<charT,traits> istream_type;
@@ -5048,7 +5052,7 @@ namespace std {
    ~istream_iterator() = default;
 
     const T& operator*() const;
-    const T* operator->() const;
+    @\removed{const T* operator->() const;}@
     istream_iterator<T,charT,traits,Distance>& operator++();
     istream_iterator<T,charT,traits,Distance>  operator++(int);
   private:
@@ -5138,6 +5142,7 @@ const T& operator*() const;
 \textit{value}.
 \end{itemdescr}
 
+\begin{removedblock}
 \indexlibrary{\idxcode{operator->}!\idxcode{istream_iterator}}%
 \indexlibrary{\idxcode{istream_iterator}!\idxcode{operator->}}%
 \begin{itemdecl}
@@ -5149,6 +5154,7 @@ const T* operator->() const;
 \returns
 \tcode{\&(operator*())}.
 \end{itemdescr}
+\end{removedblock}
 
 \indexlibrary{\idxcode{operator++}!\idxcode{istream_iterator}}%
 \indexlibrary{\idxcode{istream_iterator}!\idxcode{operator++}}%
@@ -5248,12 +5254,15 @@ is defined as:
 \begin{codeblock}
 namespace std {
   template <class T, class charT = char, class traits = char_traits<charT> >
-  class ostream_iterator:
-    public iterator<output_iterator_tag, void, void, void, void> {
+  class ostream_iterator@\removed{:}@
+    @\removed{public iterator<output_iterator_tag, void, void, void, void>}@ {
   public:
+    @\added{typedef output_iterator_tag iterator_category;}@
+    @\added{typedef ptrdiff_t difference_type;}@
     typedef charT char_type;
     typedef traits traits_type;
     typedef basic_ostream<charT,traits> ostream_type;
+    @\added{constexpr ostream_iterator() noexcept;}@
     ostream_iterator(ostream_type& s);
     ostream_iterator(ostream_type& s, const charT* delimiter);
     ostream_iterator(const ostream_iterator<T,charT,traits>& x);
@@ -5272,6 +5281,18 @@ namespace std {
 
 \rSec3[ostream.iterator.cons.des]{\tcode{ostream_iterator} constructors and destructor}
 
+\begin{addedblock}
+\indexlibrary{\idxcode{ostream_iterator}!constructor}%
+\begin{itemdecl}
+constexpr ostream_iterator() noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Initializes \textit{out_stream} and \tcode{delim} with null.
+\end{itemdescr}
+\end{addedblock}
 
 \indexlibrary{\idxcode{ostream_iterator}!constructor}%
 \begin{itemdecl}
@@ -5336,6 +5357,11 @@ if(delim != 0)
   *@\textit{out_stream}@ << @\textit{delim}@;
 return (*this);
 \end{codeblock}
+
+\begin{addedblock}
+\pnum
+\requires \tcode{out_stream!= 0}.
+\end{addedblock}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{operator*}!\idxcode{ostream_iterator}}%
@@ -5375,7 +5401,7 @@ reads successive
 from the streambuf for which it was constructed.
 \tcode{operator*}
 provides access to the current input character, if any.
-\enternote \tcode{operator->} may return a proxy. \exitnote
+\removed{\enternote \tcode{operator->} may return a proxy. \exitnote}
 Each time
 \tcode{operator++}
 is evaluated, the iterator advances to the next input character.
@@ -5408,9 +5434,13 @@ It is impossible to assign a character via an input iterator.
 namespace std {
   template<class charT, class traits = char_traits<charT> >
   class istreambuf_iterator
-     : public iterator<input_iterator_tag, charT,
-                       typename traits::off_type, @\unspec@, charT> {
+     @\removed{: public iterator<input_iterator_tag, charT,}@
+                       @\removed{typename traits::off_type, \unspec, charT>}@ {
   public:
+    @\added{typedef input_iterator_tag            iterator_category;}@
+    @\added{typedef charT                         value_type;}@
+    @\added{typedef typename traits::off_type     difference_type;}@
+    @\added{typedef charT                         reference;}@
     typedef charT                         char_type;
     typedef traits                        traits_type;
     typedef typename traits::int_type     int_type;
@@ -5426,7 +5456,7 @@ namespace std {
     istreambuf_iterator(streambuf_type* s) noexcept;
     istreambuf_iterator(const proxy& p) noexcept;
     charT operator*() const;
-    pointer operator->() const;
+    @\removed{pointer operator->() const;}@
     istreambuf_iterator<charT,traits>& operator++();
     proxy operator++(int);
     bool equal(const istreambuf_iterator& b) const;
@@ -5629,15 +5659,18 @@ template <class charT, class traits>
 \begin{codeblock}
 namespace std {
   template <class charT, class traits = char_traits<charT> >
-  class ostreambuf_iterator :
-    public iterator<output_iterator_tag, void, void, void, void> {
+  class ostreambuf_iterator @\removed{:}@
+    @\removed{public iterator<output_iterator_tag, void, void, void, void>}@ {
   public:
+    @\added{typedef output_iterator_tag           iterator_category;}@
+    @\added{typedef ptrdiff_t                     difference_type;}@
     typedef charT                         char_type;
     typedef traits                        traits_type;
     typedef basic_streambuf<charT,traits> streambuf_type;
     typedef basic_ostream<charT,traits>   ostream_type;
 
   public:
+    @\added{constexpr ostreambuf_iterator() noexcept;}@
     ostreambuf_iterator(ostream_type& s) noexcept;
     ostreambuf_iterator(streambuf_type* s) noexcept;
     ostreambuf_iterator& operator=(charT c);
@@ -5664,6 +5697,18 @@ It is not possible to get a character value out of the output iterator.
 
 \rSec3[ostreambuf.iter.cons]{\tcode{ostreambuf_iterator} constructors}
 
+\begin{addedblock}
+\indexlibrary{\idxcode{ostreambuf_iterator}!constructor}%
+\begin{itemdecl}
+constexpr ostreambuf_iterator() noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Initializes \tcode{sbuf_} with null.
+\end{itemdescr}
+\end{addedblock}
 
 \indexlibrary{\idxcode{ostreambuf_iterator}!constructor}%
 \begin{itemdecl}
@@ -5719,6 +5764,11 @@ calls
 \tcode{sbuf_->sputc(c)};
 otherwise has no effect.
 
+\begin{addedblock}
+\pnum
+\requires \tcode{sbuf_ != 0}.
+\end{addedblock}
+
 \pnum
 \returns
 \tcode{*this}.
@@ -5765,6 +5815,11 @@ returned
 or
 \tcode{false}
 otherwise.
+
+\begin{addedblock}
+\pnum
+\requires \tcode{sbuf_ != 0}.
+\end{addedblock}
 \end{itemdescr}
 
 \begin{addedblock}
@@ -5882,7 +5937,7 @@ concept bool SizedIterableLike_ =
   requires(T t) {
     typename SizeType<T>;
     { size(t) } -> SizeType<T>;
-    requires Integral<SizeType>;
+    requires Integral<SizeType<T>>;
   };
 
 template <SizedIterableLike_ T>
