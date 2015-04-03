@@ -1,32 +1,142 @@
 %!TEX root = stl2-ts.tex
 \infannex{future}{Future Work}
 
+\pnum
+This document brings ranges and concepts to a minimal useful subset of the Standard Library.
+A proper and full implementation has many more moving parts. In addition, we can use the opportunity
+this work presents to address long-standing shortcomings in the Standard Library. Some of these
+future work items are described below.
+
+\rSec1[future.experience]{Implementation Experience with Concepts}
+
+\pnum
+The ideas presented here have been vetted in the range-v3~(\ref{TODO}) library, which has seen both heavy
+development and heavy use over the past year and a half. However, this library is implemented in
+C++11 with the help of a library-based emulation layer for Concepts Lite. Andrew Sutton's origin~(\ref{TODO})
+library implements many of these ideas using real concepts, but it's a subset of the work presented
+here. A critically important piece of this work will be to fully implement this design in C++17 with
+a compiler that supports Concepts.
+
 \rSec1[future.rvalrngs]{Algorithms and Rvalue Ranges}
 
 \pnum
+As presented in this document, the vast majority of algorithms do not accept rvalue Iterables.
+This shortcoming becomes more painful with the addition of range views~(\ref{future.views}).
+The issue is one of safety. Those algorithms that return iterators into the input range, like
+\tcode{find}, can return iterators that will immediately be made invalid once the temporary
+Iterable they point into gets destroyed -- but not for \textit{all} Iterables. For an Iterable that
+is little more than a pair of iterators, it is perfectly safe to use an iterator into the Iterable
+after the Iterable has been destroyed. The iterator's validity is not tied to the Iterable's
+lifetime at all.
 
-\ednote{TODO}
+\pnum
+The range-v3 library~(\ref{TODO}) on which this proposal is based has recently implemented an
+experimental solution to this problem. The library provides a wrapper called \tcode{dangling}
+that the algorithms can use to mark returned iterators that point into rvalue ranges. It works
+as follows:
+
+\begin{codeblock}
+  template <class T>
+  struct dangling {
+    dangling() = default;
+    dangling(T t) : t_(t) {}            // implicit
+    T get_unsafe() const { return t_; } // explicit
+  private:
+    T t_;
+  };
+
+  template <Iterable Rng>
+  using safe_iterator_t =
+    std::conditional_t<
+      std::is_lvalue_reference<Rng>::value,
+      IteratorType<Rng>,
+      dangling<IteratorType<Rng>>>;
+
+  template <InputIterable Rng, class T, class Proj = identity>
+    requires //...
+    safe_iterator_t<Rng>
+      find(Rng&& rng, const T& value, Proj proj = Proj{}) {
+        return find(begin(rng), end(rng), value, std::move(proj));
+      }
+\end{codeblock}
+
+\pnum
+Of particular note is that a \tcode{dangling<Iterator>} is \textit{not} an iterator. In order to
+obtain an iterator into an expired Iterable, the user must explicitly call a method called
+\tcode{get_unsafe}. That makes it impossible for a user to accidentally use an iterator that may be
+invalid.
+
+\pnum
+An extension of this idea would be to define \tcode{safe_iterator_t} in terms of a trait that can be
+specialized on user-defined Iterable types. That way, Iterables that guarantee their iterators can
+outlive the Iterable will never have their iterators wrapped in \tcode{dangling}.
+
+\pnum
+If time shows that the range-v3 solution is workable, a future paper can integrate the new
+functionality into this document.
 
 \rSec1[future.proxy]{Proxy Iterators}
 
 \pnum
+As early at 1998 when Herb Sutter published his ``When is a Container not a Container''~(\ref{TODO})
+article, it was known that proxy iterators were a challenge that the current iterator concept
+hierarchy could not meet. The problem stems from the fact that the ForwardIterator concept as
+specified in the current standard requires the iterator's reference type to be a true reference, not
+a proxy. The Palo Alto report lifts this restriction in its respecification of the iterator
+concepts but doesn't actually solve the problem. The majority of algorithms, once you study the
+constraints, do not accept many interesting proxy iterator types.
 
-\ednote{TODO}
+\pnum
+The author of this document has researched a possible library-only solution to the problem and
+implemented it in the range-v3 library. (The details of that solution are described in a series of
+blog posts beginning with ``To Be or Not to Be (an Iterator),'' Niebler, 2015~(\ref{TODO}).) This
+document does not reflect the results of that research.
+
+Whether and how to best support proxy iterators is left as future work.
+
+\rSec1[future.iterator_range]{Iterator Range Type}
+
+\pnum
+This paper does not define a concrete type for storing an iterator and a sentinel that models the
+\tcode{Range} concept. Such a type, like that presented in ``A minimal std::range<Iter>,''~(\ref{TODO})
+by J. Yasskin would be an obvious addition. Algorithms like \tcode{equal_range} and
+\tcode{rotate} could use a concrete range type instead of \tcode{pair} as their return type,
+improving composability. It would also be useful to implement a \tcode{view::all} range view that
+yields a lightweight range object that refers to all the elements of a container.
+
+\pnum
+A future paper will propose such a type.
+
+http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3350.html
 
 \rSec1[future.views]{Range Views}
 
 \pnum
-
-\ednote{TODO}
+The vast majority of the power of ranges comes from their composability. Views on existing Iterables
+can combine in chains of operations that evaluate lazily, giving programmers a concise and efficient
+way to express rich transformations on data. This paper is narrowly focused on the concepts and the
+algorithms, leaving range views as critically important future work.
 
 \rSec1[future.views]{Range Actions}
 
 \pnum
-
-\ednote{TODO}
+If range views are composable, non-mutating, lazy algorithms over ranges, then range \tcode{actions}
+are composable, (potentially) mutating, eager algorithms over ranges. Such actions would allow users
+to send a container through a pipeline to sort it and remove the non-unique elements, for instance.
+This is something the range views cannot do. Range actions sit along side the views in the
+programmers toolbox.
 
 \rSec1[future.facade]{Range Facade and Adaptor Utilities}
 
 \pnum
+Until it becomes trivial for users to create their own iterator types, the full potential of
+iterators will remain unrealized. The range abstraction makes that achievable. With the right library
+components, it should be possible for users to define a range with a minimal interface
+(e.g., \tcode{current}, \tcode{done}, and \tcode{next} members), and have iterator types
+automatically generated. Such a range \textit{facade} class template is left as future work.
 
-\ednote{TODO}
+\pnum
+Another common need is to adapt an existing range. For instance, a lazy \tcode{transform} view
+should be as simple as writing an adaptor that customizes the behavior of a range by passing each
+element through a transformation function. The specification of a range \textit{adaptor} class
+template is also left as future work.
