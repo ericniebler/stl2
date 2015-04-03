@@ -157,15 +157,14 @@ namespace std {
       count_if(Rng&& rng, Pred pred, Proj proj = Proj{});
 
   template<InputIterator I1, Sentinel<I1> S1, WeakInputIterator I2,
-      class Proj1 = identity, class Proj2 = identity
+      class Proj1 = identity, class Proj2 = identity,
       IndirectInvokablePredicate<Projected<I1, Proj1>, Projected<I2, Proj2>> Pred = equal_to<>>
     pair<I1, I2>
       mismatch(I1 first1, S1 last1, I2 first2, Pred pred = Pred{},
                Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
 
-  \end{codeblock}\ednote{Add extra overloads here}\begin{codeblock}
   template<InputIterable Rng1, WeakInputIterator I2,
-      class Proj1 = identity, class Proj2 = identity
+      class Proj1 = identity, class Proj2 = identity,
       IndirectInvokablePredicate<Projected<IteratorType<Rng1>, Proj1>,
         Projected<I2, Proj2>> Pred = equal_to<>>
     pair<IteratorType<Rng1>, I2>
@@ -408,8 +407,8 @@ namespace std {
                 F binary_op, Proj1 proj1 = Proj1{}, proj2 proj2 = Proj2{});
 
   \end{codeblock}
-  \ednote{In the Palo Alto proposal, \tcode{replace} requires only InputIterators.
-      In C++14, it requires Forward. Resolve the conflict.}
+  \ednote{REVIEW: In the Palo Alto proposal, \tcode{replace} requires only InputIterators.
+      In C++14, it requires Forward.}
   \begin{codeblock}
 
   template<ForwardIterator I, Sentinel<I> S, class T1, Semiregular T2, class Proj = identity>
@@ -467,7 +466,7 @@ namespace std {
                       Proj proj = Proj{});
 
   \end{codeblock}
-  \ednote{TODO: N3351 only requires WeaklyIncrementable for fill and generate}
+  \ednote{REVIEW: N3351 only requires WeaklyIncrementable for fill and generate}
   \begin{codeblock}
   template<Semiregular T, OutputIterator<T> O, Sentinel<I> S>
     O fill(O first, S last, const T& value);
@@ -578,7 +577,8 @@ namespace std {
       reverse_copy(Rng& rng, O result);
 
   \end{codeblock}
-  \ednote{Could return a \tcode{range} instead of a \tcode{pair}}
+  \ednote{Could return a \tcode{range} instead of a \tcode{pair}.
+    See Future Work annex~(\ref{future.iterator_range}).}
   \begin{codeblock}
   template<ForwardIterator I, Sentinel<I> S>
     requires Permutable<I>
@@ -784,7 +784,8 @@ namespace std {
       upper_bound(Rng& rng, const T& value, Comp comp = Comp{}, Proj proj = Proj{});
 
   \end{codeblock}
-  \ednote{Could return a range<I>}
+  \ednote{This could return a \tcode{range} instead of a \tcode{pair}.
+    See the Future Work annex~(\ref{future.iterator_range}).}
   \begin{codeblock}
   template<ForwardIterator I, Sentinel<I> S, TotallyOrdered T, class Proj = identity,
       IndirectInvokableRelation<const T *, Projected<I, Proj>> Comp = less<>>
@@ -810,7 +811,8 @@ namespace std {
 
   // \ref{alg.merge}, merge:
   \end{codeblock}
-    \ednote{Why does the Palo Alto TR require Incrementable instead of WeaklyIncrementable?}
+    \ednote{REVIEW: Why does the Palo Alto TR require \tcode{Incrementable} instead of
+      \tcode{WeaklyIncrementable}?}
   \begin{codeblock}
   template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
       Incrementable O, class Comp = less<>, class Proj1 = identity,
@@ -1009,7 +1011,8 @@ namespace std {
     constexpr const T& min(const T& a, const T& b, Comp comp);
 
 \end{codeblock}
-\ednote{N3351 returns by const ref here but the std returns by value. Resolve.}
+\ednote{REVIEW: The Palo Alto report returns by const reference here but the
+  current standard returns by value.}
 \begin{codeblock}
   template<TotallyOrdered T>
     requires Semiregular<T>
@@ -1160,7 +1163,7 @@ not modify objects referenced through an iterator argument unless the
 specification requires such modification.
 
 \ednote{The following paragraphs are redundant; these requirements are now
-enforced in code by the concept checks.}
+enforced in code by the requires clauses.}
 
 \begin{removedblock}
 \pnum
@@ -1510,9 +1513,7 @@ nonconstant functions\removed{ through the dereferenced iterator}.\exitnote
 
 \pnum
 \returns
-\changed{\tcode{std::move(f)}}{
-\tcode{\{\textit{last'}, std::move(f)\}}, where \tcode{\textit{last'}} is an
-iterator such that \tcode{\textit{last'} == last}}.
+\changed{\tcode{std::move(f)}}{\tcode{\{last, std::move(f)\}}}.
 
 \pnum
 \complexity
@@ -1589,8 +1590,7 @@ conditions hold:
 {\tcode{\textit{INVOKE}(proj, *i) == value},
 \tcode{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *i)) != false},
 \tcode{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *i)) == false}}.
-Returns \changed{\tcode{last}}{\tcode{\textit{last'}}} if no such iterator is found
-\added{, where \tcode{\textit{last'}} is an iterator such that \tcode{\textit{last'} == last}}.
+Returns \tcode{last} if no such iterator is found.
 
 \pnum
 \complexity
@@ -1650,11 +1650,10 @@ such that for every non-negative integer
 the following \removed{corresponding }condition\removed{s} hold\added{s}:
 \tcode{\removed{*(i + n) == *(first2 + n), pred(*(i + n), *(first2 + n)) != false}
 \added{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *(i + n)), *(first2 + n)) != false}}.
-Returns \changed{\tcode{last1}}{\tcode{\textit{last1'}}}
+Returns \tcode{last1}
 if
 \range{first2}{last2} is empty or if
-no such iterator is found\added{, where \tcode{\textit{last1'}} is an iterator
-such that \tcode{\textit{last1'} == last1}}.
+no such iterator is found.
 
 \pnum
 \complexity
@@ -1717,10 +1716,9 @@ in the range \range{first2}{last2}
 the following condition\removed{s} hold\added{s}:
 \tcode{\removed{*i == *j, pred(*i,*j) != false}
 \added{\textit{INVOKE}(pred,}\brk\added{ \textit{INVOKE}(proj1, *i), \textit{INVOKE}(proj2, *j)) != false}}.
-Returns \changed{\tcode{last1}}{\tcode{\textit{last1'}}}
+Returns \tcode{last1}
 if \range{first2}{last2} is empty or if
-no such iterator is found\added{, where \tcode{\textit{last1'}} is an iterator
-such that \tcode{\textit{last1'} == last1}}.
+no such iterator is found.
 
 \pnum
 \complexity
@@ -1773,9 +1771,8 @@ for which
 the following corresponding condition\removed{s} hold\added{s}:
 \tcode{\removed{*i == *(i + 1), pred(*i, *(i + 1)) != false}
 \added{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *i), \textit{INVOKE}(proj, *(i + 1))) != false}}.
-Returns \tcode{\changed{last}{\textit{last'}}}
-if no such iterator is found\added{, where \tcode{\textit{last'}} is an iterator
-such that \tcode{\textit{last'} == last}}.
+Returns \tcode{last}
+if no such iterator is found.
 
 \pnum
 \complexity
@@ -2194,9 +2191,8 @@ the following\removed{ corresponding} condition\removed{s} hold\added{s}:
 {\textit{INVOKE}(pred, \textit{INVOKE}(proj1, *(i + n)), \textit{INVOKE}(proj2, *(first2 + n))) != false}}.
 Returns \tcode{first1}
 if \range{first2}{last2} is empty,
-otherwise returns \tcode{\changed{last1}{\textit{last1'}}}
-if no such iterator is found\added{, where \tcode{\textit{last1'}} is an
-iterator such that \tcode{\textit{last1'} == last1}}.
+otherwise returns \tcode{last1}
+if no such iterator is found.
 
 \pnum
 \complexity
@@ -2264,9 +2260,8 @@ less than
 the following\removed{ corresponding} condition\removed{s} hold\added{s}:
 \tcode{\changed{*(i + n) == value, pred(*(i + n),value) != false}
 {\textit{INVOKE}(pred, \textit{INVOKE}(proj, *(i + n)), value) != false}}.
-Returns \tcode{\changed{last}{\textit{last'}}}
-if no such iterator is found\added{ where \tcode{\textit{last'}} is an iterator
-such that \tcode{\textit{last'} == last}}.
+Returns \tcode{last}
+if no such iterator is found.
 
 \pnum
 \complexity
@@ -3489,8 +3484,6 @@ places the element from the position
 \tcode{first + i}
 into position
 \tcode{first + (i + (last - middle)) \% (last - first)}.
-
-\ednote{Review the return value here}
 
 \pnum
 \returns \tcode{\changed{first + (last - middle)}{\{first + (last - middle), last\}}}.
@@ -5897,7 +5890,7 @@ template<InputIterable Rng, IndirectInvokableRelation<IteratorType<Rng>> Comp>
 \begin{itemdescr}
 \pnum
 \requires \removed{\tcode{T} is \tcode{LessThanComparable} and \tcode{CopyConstructible} and
-\tcode{t.size() > 0}}\tcode{\added{distance(begin(rng), end(rng) > 0)}}.
+\tcode{t.size() > 0}}\tcode{\added{distance(begin(rng), end(rng)) > 0}}.
 
 \pnum
 \returns \tcode{pair<T, T>(x, y)}, where \tcode{x} has the smallest and \tcode{y} has the
