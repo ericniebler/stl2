@@ -10,9 +10,9 @@ future work items are described below.
 \rSec1[future.experience]{Implementation Experience with Concepts}
 
 \pnum
-The ideas presented here have been vetted in the range-v3~(\ref{TODO}) library, which has seen both heavy
+The ideas presented here have been vetted in the range-v3~(\cite{range-v3}) library, which has seen both heavy
 development and heavy use over the past year and a half. However, this library is implemented in
-C++11 with the help of a library-based emulation layer for Concepts Lite. Andrew Sutton's origin~(\ref{TODO})
+C++11 with the help of a library-based emulation layer for Concepts Lite. Andrew Sutton's origin~(\cite{origin})
 library implements many of these ideas using real concepts, but it's a subset of the work presented
 here. A critically important piece of this work will be to fully implement this design in C++17 with
 a compiler that supports Concepts.
@@ -30,7 +30,7 @@ after the Iterable has been destroyed. The iterator's validity is not tied to th
 lifetime at all.
 
 \pnum
-The range-v3 library~(\ref{TODO}) on which this proposal is based has recently implemented an
+The range-v3 library~(\cite{range-v3}) on which this proposal is based has recently implemented an
 experimental solution to this problem. The library provides a wrapper called \tcode{dangling}
 that the algorithms can use to mark returned iterators that point into rvalue ranges. It works
 as follows:
@@ -78,7 +78,7 @@ functionality into this document.
 \rSec1[future.proxy]{Proxy Iterators}
 
 \pnum
-As early at 1998 when Herb Sutter published his ``When is a Container not a Container''~(\ref{TODO})
+As early at 1998 when Herb Sutter published his ``When is a Container not a Container''~\cite{Sutter1998}
 article, it was known that proxy iterators were a challenge that the current iterator concept
 hierarchy could not meet. The problem stems from the fact that the ForwardIterator concept as
 specified in the current standard requires the iterator's reference type to be a true reference, not
@@ -89,7 +89,7 @@ constraints, do not accept many interesting proxy iterator types.
 \pnum
 The author of this document has researched a possible library-only solution to the problem and
 implemented it in the range-v3 library. (The details of that solution are described in a series of
-blog posts beginning with ``To Be or Not to Be (an Iterator),'' Niebler, 2015~(\ref{TODO}).) This
+blog posts beginning with ``To Be or Not to Be (an Iterator),'' Niebler, 2015~\cite{niebler2015}.) This
 document does not reflect the results of that research.
 
 Whether and how to best support proxy iterators is left as future work.
@@ -140,3 +140,80 @@ Another common need is to adapt an existing range. For instance, a lazy \tcode{t
 should be as simple as writing an adaptor that customizes the behavior of a range by passing each
 element through a transformation function. The specification of a range \textit{adaptor} class
 template is also left as future work.
+
+\rSec1[future.infrng]{Infinite Ranges}
+
+\pnum
+It is not hard to define a type that represents an ``infinite'' range. Imagine a random number
+generator that keeps generating new random numbers for every application of \tcode{operator++}
+and \tcode{operator*} of its iterator. Indeed, the very existence of the \tcode{unreachable}
+sentinel type -- which this document proposes -- encourages users to think about some ranges as
+``infinite''. The sad reality is that infinite ranges are disallowed by the iterator concept
+hierarchy as defined in this document.
+
+\pnum
+The problem with infinite ranges is the requirement that \tcode{WeaklyIncrementable} types have an
+associated \tcode{DifferenceType}. The \tcode{DifferenceType} must be a built-in integral type, and
+it must be large enough to hold the distance between any two valid iterators. This is implicit in
+the fact that the \tcode{distance} iterator primitive returns objects of type
+\tcode{DifferenceType}.
+
+\pnum
+Given the fact that there are no infinite precision built-in integral types, the presence of
+\tcode{DifferenceType} in the concept requirements places a hard upper limit on how big ranges can
+be. This is a severe limitation.
+
+\pnum
+Some observations:
+
+\begin{itemize}
+\item Not all possible ranges have finitely countable elements.
+\item Even a range with finitely countable elements may not be countable within the precision of the
+built-in integral types.
+\item Not all algorithms require the ability to count increments. Algorithms like \tcode{distance}
+and \tcode{count} require finitely countable iterators, but \tcode{find} and \tcode{accumulate} do
+not.
+\end{itemize}
+
+\pnum
+The above above observations suggest that there is a factorization of the existing concept hierarchy
+that could solve the problem. Some \tcode{Incrementable}s are finitely countable with a built-in
+integral \tcode{DifferenceType}, and some are not. The algorithms that require countability must
+say so with an extra requirement.
+
+\pnum
+Obviously, some algorithms like \tcode{accumulate} should never be asked to operate on a truly
+infinite sequence, even if they don't actually maintain counters internally. Such algorithms could
+still be used with ``possibly'' infinite sequences. Note that the standard already defines such
+possibly infinite sequences; for instance, there is no limit in principle to the number of elements
+in a range delimited with \tcode{istream_iterator}s. It's not hard to imagine other useful possibly-
+infinite range types: an infinite range that is delimited with a predicate or a sentinel value, for
+instance. The algorithm requirements should merely enforce that there is no integer overflow
+possible if the range happens to be larger than can be represented, not necessarily whether the
+algorithm will terminate or not.
+
+\rSec1[future.commontype]{Common Type}
+
+\pnum
+The all-important \tcode{Common} concept relies on the existence of a SFINAE-friendly
+\tcode{common_type} trait, which did not make it into C++14. Solving the outstanding issues
+(active issues: \#2450, \#2460, \#2465) (defects: \#2408) with \tcode{common_type} is left as future
+work on which the correctness of this document depends.
+
+\rSec1[future.numcont]{Numeric Algorithms and Containers}
+
+\pnum
+The numeric algorithms must also be constrained, and additional range-based overloads must be added.
+Also, the containers should be made range-aware; that is, they should have constructors and insert
+and append member functions that accept range arguments. These things can be done in a separate
+proposal.
+
+
+\rSec1[future.constraints]{Verbosity in Algorithm Constraints}
+
+\pnum
+The constraints of some of the algorithms are verbose. Some composite concepts exist that group
+constraints together to increase uniformity, aid comprehensibility, and reduce verbosity for those
+algorithms that use them. See \tcode{Sortable}, \tcode{Mergeable}, and \tcode{Permutable}, for
+instance. There may be other useful clusters of concepts for other algorithm groups. Finding them
+and using them to improve the algorithm constraints is an important work item.

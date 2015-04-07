@@ -25,6 +25,7 @@ refresh:
 
 rebuild:
 	$(TSPDF)
+	bibtex D4382
 	$(TSPDF)
 	$(TSPDF)
 
