@@ -436,12 +436,12 @@ two \tcode{Readable} types and (optionally) a relation and two projections.
 \begin{codeblock}
   template <Readable I1, Readable I2,
     class R = equal_to<>,
-    RegularInvokable<ValueType<I1>> P1 = identity,
-    RegularInvokable<ValueType<I2>> P2 = identity>
+    RegularCallable<ValueType<I1>> P1 = identity,
+    RegularCallable<ValueType<I2>> P2 = identity>
   concept bool IndirectlyComparable =
-    InvokableRelation<R,
-      ResultType<CallableType<P1>, ValueType<I1>>,
-      ResultType<CallableType<P2>, ValueType<I2>>>;
+    CallableRelation<R,
+      ResultType<FunctionType<P1>, ValueType<I1>>,
+      ResultType<FunctionType<P2>, ValueType<I2>>>;
 \end{codeblock}
 
 \pnum
@@ -963,7 +963,7 @@ from \tcode{a}. Let \tcode{n} be an object of type \tcode{DifferenceType<I>} suc
 There are several concepts that group requirements of the higher-order algorithms; that is,
 algorithms that take functions as arguments.
 
-\ednote{Specifying the algorithms in terms of these indirect invokable concepts would ease
+\ednote{Specifying the algorithms in terms of these indirect callable concepts would ease
 the transition should we ever decide to support proxy iterators in the future. See the
 Future Work appendix~(\ref{future}).}
 
@@ -978,10 +978,10 @@ of \tcode{I}.
 
 \indexlibrary{\idxcode{Projected}}%
 \begin{codeblock}
-  template <Readable I, RegularInvokable<ValueType<I>> Proj>
+  template <Readable I, RegularCallable<ValueType<I>> Proj>
   struct Projected {
-    using value_type = decay_t<ResultType<CallableType<Proj>, ValueType<I>>>;
-    using reference = ResultType<CallableType<Proj>, decltype(*std::declval<I>())>;
+    using value_type = decay_t<ResultType<FunctionType<Proj>, ValueType<I>>>;
+    using reference = ResultType<FunctionType<Proj>, decltype(*std::declval<I>())>;
     using pointer = add_pointer_t<reference>;
     reference operator*() const;
   };
@@ -994,29 +994,29 @@ member functions need not be defined.\exitnote
 \rSec2[indirectfunc.indirectfuncs]{Indirect functions}
 
 \pnum
-The indirect invokable concepts are used to constrain those algorithms that accept
+The indirect callable concepts are used to constrain those algorithms that accept
 functions as arguments.
 
-\indexlibrary{\idxcode{IndirectInvokable}}%
-\indexlibrary{\idxcode{IndirectRegularInvokable}}%
-\indexlibrary{\idxcode{IndirectInvokablePredicate}}%
-\indexlibrary{\idxcode{IndirectInvokableRelation}}%
+\indexlibrary{\idxcode{IndirectCallable}}%
+\indexlibrary{\idxcode{IndirectRegularCallable}}%
+\indexlibrary{\idxcode{IndirectCallablePredicate}}%
+\indexlibrary{\idxcode{IndirectCallableRelation}}%
 \begin{codeblock}
   template <class F, Readable...Is>
-  concept bool IndirectInvokable =
-    Invokable<F, ValueType<Is>...>;
+  concept bool IndirectCallable =
+    Callable<F, ValueType<Is>...>;
 
   template <class F, Readable...Is>
-  concept bool IndirectRegularInvokable =
-    RegularInvokable<F, ValueType<Is>...>;
+  concept bool IndirectRegularCallable =
+    RegularCallable<F, ValueType<Is>...>;
 
   template <class F, Readable...Is>
-  concept bool IndirectInvokablePredicate =
-    InvokablePredicate<F, ValueType<Is>...>;
+  concept bool IndirectCallablePredicate =
+    CallablePredicate<F, ValueType<Is>...>;
 
   template <class F, Readable I1, Readable I2 = I1>
-  concept bool IndirectInvokableRelation =
-    InvokableRelation<F, ValueType<I1>, ValueType<I2>>();
+  concept bool IndirectCallableRelation =
+    CallableRelation<F, ValueType<I1>, ValueType<I2>>();
 \end{codeblock}
 
 \pnum
@@ -1080,7 +1080,7 @@ of iterators into an ordered sequence (e.g., \tcode{sort}).
   template <ForwardIterator I, class R = less<>, class P = identity>
   concept bool Sortable =
     Permutable<I> &&
-    IndirectInvokableRelation<R, Projected<I, P>>;
+    IndirectCallableRelation<R, Projected<I, P>>;
 \end{codeblock}
 
 \pnum

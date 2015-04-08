@@ -798,71 +798,69 @@ and only if
 \end{itemize}
 \end{itemdescr}
 
-\rSec2[concepts.lib.invokable]{Concept Invokable}
+\rSec2[concepts.lib.callable]{Concept Callable}
 
-\indexlibrary{\idxcode{Invokable}}%
+\indexlibrary{\idxcode{Callable}}%
 \begin{itemdecl}
 // Exposition only
-template <class R, class T>
-auto __as_callable(R T::* p) ->
-  decltype(mem_fn(p))
+template <class T>
+auto __as_function(T&& t, std::true_type)
 {
-  return mem_fn(p);
+  return mem_fn(t);
 }
 template <class T>
-auto __as_callable(T&& t) ->
-  enable_if_t<!is_member_pointer<decay_t<T>>::value, T>
+T __as_function(T&& t, std::false_type)
 {
   return forward<T>(t);
 }
 
 template <class T>
-using CallableType =
-  decltype(__as_callable(declval<T>()));
+using FunctionType =
+  decltype(__as_function(declval<T>(), is_member_pointer<decay_t<T>>{}));
 
 template <class F, class... Args>
-concept bool Invokable =
-  Function<CallableType<F>, Args...>;
+concept bool Callable =
+  Function<FunctionType<F>, Args...>;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\enternote The \tcode{Invokable} concept is used to describe types that can be used in arguments to
+\enternote The \tcode{Callable} concept is used to describe types that can be used in arguments to
 \tcode{\textit{INVOKE}}~(\cxxref{func.require}).\exitnote
 \end{itemdescr}
 
-\rSec2[concepts.lib.regularinvokable]{Concept RegularInvokable}
+\rSec2[concepts.lib.regularcallable]{Concept RegularCallable}
 
-\indexlibrary{\idxcode{RegularInvokable}}%
+\indexlibrary{\idxcode{RegularCallable}}%
 \begin{itemdecl}
 template <class F, class...Args>
-concept bool RegularInvokable =
-  RegularFunction<CallableType<F>, Args...>;
+concept bool RegularCallable =
+  RegularFunction<FunctionType<F>, Args...>;
 \end{itemdecl}
 
-\rSec2[concepts.lib.invokablepredicate]{Concept InvokablePredicate}
+\rSec2[concepts.lib.callablepredicate]{Concept CallablePredicate}
 
-\indexlibrary{\idxcode{InvokablePredicate}}%
+\indexlibrary{\idxcode{CallablePredicate}}%
 \begin{itemdecl}
 template <class F, class...Args>
-concept bool InvokablePredicate =
-  RegularInvokable<F, Args...> &&
-  Convertible<ResultType<CallableType<F>, Args...>, bool>;
+concept bool CallablePredicate =
+  RegularCallable<F, Args...> &&
+  Convertible<ResultType<FunctionType<F>, Args...>, bool>;
 \end{itemdecl}
 
-\rSec2[concepts.lib.invokablerelation]{Concept InvokableRelation}
+\rSec2[concepts.lib.callablerelation]{Concept CallableRelation}
 
-\indexlibrary{\idxcode{InvokableRelation}}%
+\indexlibrary{\idxcode{CallableRelation}}%
 \begin{itemdecl}
 template <class F, class T>
-concept bool InvokableRelation() {
-  return InvokablePredicate<F, T, T> &&
-    Relation<CallableType<R>, T>();
+concept bool CallableRelation() {
+  return CallablePredicate<F, T, T> &&
+    Relation<FunctionType<R>, T>();
 }
 
 template <class F, class T, class U>
-concept bool InvokableRelation() {
-  return Relation<CallableType<R>, T, U>();
+concept bool CallableRelation() {
+  return Relation<FunctionType<R>, T, U>();
 }
 \end{itemdecl}
 
