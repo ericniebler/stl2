@@ -261,8 +261,9 @@ including pointers, smart pointers, and iterators.
 
 \indexlibrary{\idxcode{Readable}}%
 \begin{codeblock}
-  template <Semiregular I>
+  template <class I>
   concept bool Readable =
+    Semiregular<I> &&
     requires (I i) {
       typename ValueType<I>;
       { *i } -> const ValueType<I>&; // pre: i is dereferencable
@@ -323,8 +324,9 @@ referenced object.
 
 \indexlibrary{\idxcode{MoveWritable}}%
 \begin{codeblock}
-  template <Semiregular Out, class T>
+  template <class Out, class T>
   concept bool MoveWritable =
+    Semiregular<Out> &&
     requires (Out o, T value) {
       { *o = move(value) };
     };
@@ -363,8 +365,9 @@ referenced object.
 
 \indexlibrary{\idxcode{Writable}}%
 \begin{codeblock}
-  template <Semiregular Out, class T>
+  template <class Out, class T>
   concept bool Writable =
+    Semiregular<Out> &&
     MoveWritable<Out, T> &&
     requires (Out o, T value) {
       { *o = value };
@@ -389,8 +392,10 @@ type and a \tcode{MoveWritable} type.
 
 \indexlibrary{\idxcode{IndirectlyMovable}}%
 \begin{codeblock}
-  template <Readable I, Semiregular Out>
+  template <class I, class Out>
   concept bool IndirectlyMovable =
+    Readable<I> &&
+    Semiregular<Out> &&
     MoveWritable<Out, ValueType<I>>;
 \end{codeblock}
 
@@ -411,8 +416,10 @@ type and a \tcode{Writable} type.
 
 \indexlibrary{\idxcode{IndirectlyCopyable}}%
 \begin{codeblock}
-  template <Readable I, Semiregular Out>
+  template <class I, class Out>
   concept bool IndirectlyCopyable =
+    Readable<I> &&
+    Semiregular<I> &&
     IndirectlyMovable<I, Out> &&
     Writable<Out, ValueType<I>>;
 \end{codeblock}
@@ -434,11 +441,15 @@ two \tcode{Readable} types and (optionally) a relation and two projections.
 
 \indexlibrary{\idxcode{IndirectlyComparable}}%
 \begin{codeblock}
-  template <Readable I1, Readable I2,
+  template < I1, Readable I2,
     class R = equal_to<>,
-    RegularCallable<ValueType<I1>> P1 = identity,
-    RegularCallable<ValueType<I2>> P2 = identity>
+    class P1 = identity,
+    class P2 = identity>
   concept bool IndirectlyComparable =
+    Readable<I1> &&
+    Readable<I2> &&
+    RegularCallable<P1, ValueType<I1>> &&
+    RegularCallable<P2, ValueType<I2>> &&
     CallableRelation<R,
       ResultType<FunctionType<P1>, ValueType<I1>>,
       ResultType<FunctionType<P2>, ValueType<I2>>>;
@@ -466,8 +477,10 @@ value types of two \tcode{Readable} types.
 
 \indexlibrary{\idxcode{IndirectlySwappable}}%
 \begin{codeblock}
-  template <Readable I1, Readable I2 = I1>
+  template <class I1, class I2 = I1>
   concept bool IndirectlySwappable =
+    Readable<I1> && 
+    Readable<I2> &&
     Swappable<ValueType<I1>, ValueType<I2>> &&
     Swappable<ValueType<I1>> &&
     Swappable<ValueType<I2>>;
@@ -481,8 +494,9 @@ nor is the type required to be \tcode{EqualityComparable}.
 
 \indexlibrary{\idxcode{WeaklyIncrementable}}%
 \begin{codeblock}
-  template <Semiregular I>
+  template <class I>
   concept bool WeaklyIncrementable =
+    Semiregular<I> &&
     requires (I i) {
       typename DifferenceType<I>;
       requires SignedIntegral<DifferenceType<I>>;
@@ -526,8 +540,9 @@ and the type is required to be \tcode{EqualityComparable}.
 
 \indexlibrary{\idxcode{Incrementable}}%
 \begin{codeblock}
-  template <Regular I>
+  template <class I>
   concept bool Incrementable =
+    Regular<I> &&
     WeaklyIncrementable<I> &&
     Same<I, decltype(i++)>;
 \end{codeblock}
@@ -570,8 +585,9 @@ to provide a richer set of iterator movements~(\ref{forward.iterators},
 \begin{addedblock}
 \indexlibrary{\idxcode{WeakIterator}}%
 \begin{codeblock}
-  template <WeaklyIncrementable I>
+  template <class I>
   concept bool WeakIterator =
+    WeaklyIncrementable<I>
     requires(I i) {
       { *i } -> auto&&; // pre: i is dereferenceable
     };
@@ -615,8 +631,9 @@ has property
 
 \indexlibrary{\idxcode{Iterator}}%
 \begin{codeblock}
-  template <WeakIterator I>
+  template <class I>
   concept bool Iterator =
+    WeakIterator<I>
     EqualityComparable<I>();
 \end{codeblock}
 
@@ -628,9 +645,11 @@ compared to an iterator for equality.
 
 \indexlibrary{\idxcode{Sentinel}}%
 \begin{codeblock}
-  template <Regular T, Iterator I>
+  template <class T, class I>
   concept bool Sentinel =
-      EqualityComparable<T, I>();
+    Regular<T>
+    Iterator<I>
+    EqualityComparable<T, I>();
 \end{codeblock}
 
 \rSec2[weakinput.iterators]{Weak input iterators}
@@ -644,16 +663,16 @@ weak input iterators are not required to be comparable for equality.
 
 \indexlibrary{\idxcode{WeakInputIterator}}%
 \begin{codeblock}
-template <WeakIterator I>
-concept bool WeakInputIterator =
-  Readable<I> &&
-  requires(I i) {
-    typename IteratorCategory<I>;
-    { i++ } -> Readable;
-    requires Derived<IteratorCategory<I>, weak_input_iterator_tag>;
-  };
+  template <class I>
+  concept bool WeakInputIterator =
+    WeakIterator<I> &&
+    Readable<I> &&
+    requires(I i) {
+      typename IteratorCategory<I>;
+      { i++ } -> Readable;
+      requires Derived<IteratorCategory<I>, weak_input_iterator_tag>;
+    };
 \end{codeblock}
-
 \end{addedblock}
 
 \rSec2[input.iterators]{Input iterators}
@@ -667,9 +686,10 @@ The \tcode{InputIterator} concept is a refinement of \tcode{Iterator}~(\ref{iter
 
 \indexlibrary{\idxcode{InputIterator}}%
 \begin{codeblock}
-  template <WeakInputIterator I>
+  template <class I>
   concept bool InputIterator =
-    Iterator<I>() &&
+    WeakInputIterator<I> &&
+    Iterator<I> &&
     Derived<IteratorCategory<I>, input_iterator_tag>;
 \end{codeblock}
 
@@ -708,9 +728,9 @@ However, weak output iterators are not required to be comparable for equality.
 
 \indexlibrary{\idxcode{WeakOutputIterator}}%
 \begin{codeblock}
-  template <WeakIterator I, class T>
+  template <class I, class T>
   concept bool WeakOutputIterator =
-    Writable<I, T>;
+    WeakIterator<I> && Writable<I, T>;
 \end{codeblock}
 \end{addedblock}
 
@@ -742,7 +762,7 @@ The \tcode{OutputIterator} concept is a refinement of \tcode{Iterator}~(\ref{ite
 \begin{codeblock}
   template <class I, class T>
   concept bool OutputIterator =
-    WeakOutputIterator<I, T> && Iterator<I>();
+    WeakOutputIterator<I, T> && Iterator<I>;
 \end{codeblock}
 
 \pnum
@@ -783,8 +803,9 @@ and adds the multi-pass guarantee, described below.
 
 \indexlibrary{\idxcode{ForwardIterator}}%
 \begin{codeblock}
-  template <InputIterator I>
+  template <class I>
   concept bool ForwardIterator =
+    InputIterator<I> &&
     Incrementable<I> &&
     Derived<IteratorCategory<I>, forward_iterator_tag>;
 \end{codeblock}
@@ -850,8 +871,9 @@ and adds the ability to move an iterator backward as well as forward.
 
 \indexlibrary{\idxcode{BidirectionalIterator}}%
 \begin{codeblock}
-  template <ForwardIterator I>
+  template <class I>
   concept bool BidirectionalIterator =
+    ForwardIterator<I> &&
     Derived<IteratorCategory<I>, bidirectional_iterator_tag> &&
     requires (I i, I j) {
       { --i };
@@ -910,8 +932,9 @@ notation via subscripting.
 
 \indexlibrary{\idxcode{RandomAccessIterator}}%
 \begin{codeblock}
-  template <BidirectionalIterator I>
+  template <class I>
   concept bool RandomAccessIterator =
+    BidirectionalIterator<I> &&
     TotallyOrdered<I>() &&
     Derived<IteratorCategory<I>, random_access_iterator_tag> &&
     SizedIteratorRange<I, I> && // see below
@@ -1002,20 +1025,25 @@ functions as arguments.
 \indexlibrary{\idxcode{IndirectCallablePredicate}}%
 \indexlibrary{\idxcode{IndirectCallableRelation}}%
 \begin{codeblock}
-  template <class F, Readable...Is>
+  template <class F, class...Is>
   concept bool IndirectCallable =
+    (Readable<Is> && ...) &&
     Callable<F, ValueType<Is>...>;
 
-  template <class F, Readable...Is>
+  template <class F, class...Is>
   concept bool IndirectRegularCallable =
+    (Readable<Is> && ...) &&
     RegularCallable<F, ValueType<Is>...>;
 
-  template <class F, Readable...Is>
+  template <class F, class...Is>
   concept bool IndirectCallablePredicate =
+    (Readable<Is> && ...) &&
     CallablePredicate<F, ValueType<Is>...>;
 
-  template <class F, Readable I1, Readable I2 = I1>
+  template <class F, class I1, class I2 = I1>
   concept bool IndirectCallableRelation =
+    Readable<I1> &&
+    Readable<I2> &&
     CallableRelation<F, ValueType<I1>, ValueType<I2>>();
 \end{codeblock}
 
@@ -1040,8 +1068,9 @@ elements in place by moving or swapping them.
 
 \indexlibrary{\idxcode{Permutable}}%
 \begin{codeblock}
-  template <ForwardIterator I>
+  template <class I>
   concept bool Permutable =
+    ForwardIterator<I>
     Semiregular<ValueType<I>> &&
     IndirectlyMovable<I>;
 \end{codeblock}
@@ -1057,9 +1086,12 @@ into an output sequence.
 
 \indexlibrary{\idxcode{Permutable}}%
 \begin{codeblock}
-  template <InputIterator I1, InputIterator I2, WeaklyIncrementable Out,
+  template <class I1, class I2, class Out,
       class R = less<>, class P1 = identity, class P2 = identity>
   concept bool Mergeable =
+    InputIterator<I1> &&
+    InputIterator<I2> &&
+    WeaklyIncrementable<I2> &&
     IndirectlyCopyable<I1, Out> &&
     IndirectlyCopyable<I2, Out> &&
     IndirectlyComparable<I1, I2, R, P1, P2>;
@@ -1077,8 +1109,9 @@ of iterators into an ordered sequence (e.g., \tcode{sort}).
 
 \indexlibrary{\idxcode{Permutable}}%
 \begin{codeblock}
-  template <ForwardIterator I, class R = less<>, class P = identity>
+  template <class I, class R = less<>, class P = identity>
   concept bool Sortable =
+    ForwardIterator<I> &&
     Permutable<I> &&
     IndirectCallableRelation<R, Projected<I, P>>;
 \end{codeblock}
@@ -1098,8 +1131,10 @@ that are not the same.
 
 \indexlibrary{\idxcode{IteratorRange}}%
 \begin{codeblock}
-  template <Iterator I, Regular S>
+  template <class I, class S>
   concept bool IteratorRange =
+    Iterator<I> &&
+    Regular<S> &&
     EqualityComparable<I, S>();
 \end{codeblock}
 
@@ -1116,8 +1151,10 @@ between an \tcode{Iterator}~(\ref{iterator.iterators}) and a \tcode{Sentinel} in
 
 \indexlibrary{\idxcode{SizedIteratorRange}}%
 \begin{codeblock}
-  template <Iterator I, Regular S>
+  template <class I, class S>
   concept bool SizedIteratorRange =
+    Iterator<I> &&
+    Regular<S> &&
     IteratorRange<I, S> &&
     requires (I i, S j) {
       { i - i } -> DifferenceType<I>;

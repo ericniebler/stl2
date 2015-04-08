@@ -519,9 +519,11 @@ does not mean that the type does not model \tcode{EqualityComparable}.\exitnote
 \end{itemdescr}
 
 \begin{itemdecl}
-template <EqualityComparable T, EqualityComparable U>
+template <class T, class U>
 concept bool EqualityComparable() {
   return Common<T, U> &&
+    EqualityComparable<T>() &&
+    EqualityComparable<U>() &&
     EqualityComparable<CommonType<T, U>>() &&
     requires(T a, U b) {
       {a == b} -> bool;
@@ -592,9 +594,9 @@ built-in types like \tcode{int}, except that they may not be comparable with \tc
 
 \indexlibrary{\idxcode{Regular}}%
 \begin{itemdecl}
-template <Semiregular T>
+template <class T>
 concept bool Regular =
-  EqualtiyComparable<T>;
+  Semiregular<T>() && EqualtiyComparable<T>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -612,14 +614,15 @@ references to [concepts.lib.totallyordered]}
 
 \indexlibrary{\idxcode{TotallyOrdered}}%
 \begin{itemdecl}
-template <EqualityComparable T>
+template <class T>
 concept bool TotallyOrdered() {
-  return requires (T a, T b) {
-    { a < b } -> bool;
-    { a > b } -> bool;
-    { a <= b } -> bool;
-    { a >= b } -> bool;
-  };
+  return EqualityComparable<T>() && 
+    requires (T a, T b) {
+      { a < b } -> bool;
+      { a > b } -> bool;
+      { a <= b } -> bool;
+      { a >= b } -> bool;
+    };
 }
 \end{itemdecl}
 
@@ -647,9 +650,11 @@ does not mean that the type does not model \tcode{TotallyOrdered}.\exitnote
 \end{itemdescr}
 
 \begin{itemdecl}
-template <TotallyOrdered T, TotallyOrdered U>
+template <class T, class U>
 concept bool TotallyOrdered() {
   return Common<T, U> &&
+    TotallyOrdered<T>() &&
+    TotallyOrdered<U>() &&
     TotallyOrdered<CommonType<T, U>> &&
     EqualityComparable<T, U> &&
     requires (T a, U b) {
