@@ -64,6 +64,35 @@ denote the same time after the elimination of aliases; otherwise, it is an alias
 \tcode{Same<U, T>}.
 \end{itemdescr}
 
+\rSec2[concepts.lib.corelang.boolean]{Concept Boolean}
+
+\indexlibrary{\idxcode{Boolean}}%
+\begin{itemdecl}
+template <class B>
+concept bool Boolean =
+  requires(B b1, B b2) {
+    { bool(b1) };
+    { !b1 } -> Boolean;
+    requires Same<decltype(b1 && b2), bool>;
+    requires Same<decltype(b1 || b2), bool>;
+  };
+\end{itemdecl}
+
+\pnum
+The \tcode{Boolean} concept describes the requirements on a type that is
+usable in Boolean contexts.
+
+Given values \tcode{b1} and \tcode{b2} of type \tcode{B}, and a value \tcode{t1} of
+type \tcode{bool}, then type \tcode{B} models \tcode{Boolean} if and only if
+
+\begin{itemize}
+\item \tcode{bool(b1) == t1} for every value \tcode{b1} implicitly converted to
+      \tcode{t1}.
+\item \tcode{bool(b1) == !bool(!b1)} for every value \tcode{b1}.
+\item \tcode{(b1 \&\& b2) == (bool(b1) \&\& bool(b2))}.
+\item \tcode{(b1 || b2) == (bool(b1) || bool(b2))}.
+\end{itemize}
+
 \rSec2[concepts.lib.corelang.derived]{Concept Derived}
 
 \indexlibrary{\idxcode{Derived}}%
@@ -75,13 +104,10 @@ concept bool Derived = is_base_of<U, T>::value;
 \begin{itemdescr}
 \pnum
 The \tcode{Derived} concept is used when requiring that a type \tcode{T} is derived
-from \tcode{U}.
-
-\pnum
-\tcode{Derived<T, U>} is an alias for \tcode{is_base_of<U, T>::value}.
+from \tcode{U}, or the same type as \tcode{U}.
 \end{itemdescr}
 
-\rSec2[concepts.lib.corelangconvertible]{Concept Convertible}
+\rSec2[concepts.lib.corelang.convertible]{Concept Convertible}
 
 \indexlibrary{\idxcode{Convertible}}%
 \begin{itemdecl}
@@ -92,24 +118,21 @@ concept bool Convertible = is_convertible<T, U>::value;
 \begin{itemdescr}
 \pnum
 The \tcode{Convertible} concept concept expresses the requirement that a type
-\tcode{T} can be implicitly converted to a \tcode{U}.
-
-\pnum
-\tcode{Convertible<T, U>} is an alias for \tcode{is_convertible<T, U>::value}.
+\tcode{T} can be implicitly converted to type \tcode{U}.
 \end{itemdescr}
 
-\rSec2[concepts.lib.corelangcommon]{Concept Common}
+\rSec2[concepts.lib.corelang.common]{Concept Common}
 
 \pnum
 Two types \tcode{T} and \tcode{U} are \techterm{unambiguously convertible} if
 there exists a unique, explicit conversion from \tcode{T} to \tcode{U}, or from
-from \tcode{U} to \tcode{T}, but not both. \enternote This is trivially true
+\tcode{U} to \tcode{T}, but not both. \enternote This is trivially true
 when \tcode{T} and \tcode{U} are the same type since no conversion would be
 required.\exitnote
 
 \pnum
 If \tcode{T} and \tcode{U} can both be unambiguously converted to a third type,
-\tcode{C}, we say that \tcode{T} and \tcode{U} share a \techterm{common type},
+\tcode{C}, \tcode{T} and \tcode{U} share a \techterm{common type},
 \tcode{C}. \enternote \tcode{C} could be the same as \tcode{T}, or \tcode{U}, or
 it could be a different type.\exitnote This notion is encapsulated by the
 \tcode{CommonType} alias and the \tcode{Common} concept.
@@ -123,8 +146,8 @@ template <class T, class U>
 concept bool Common =
   requires (T t, U u) {
     typename CommonType<T, U>;
-    {CommonType<T, U>{(T &&) t}};
-    {CommonType<T, U>{(U &&) u}};
+    {CommonType<T, U>{forward<T>(t)}};
+    {CommonType<T, U>{forward<U>(u)}};
   };
 \end{itemdecl}
 
@@ -141,12 +164,12 @@ of type \tcode{T}. \tcode{t1} equals \tcode{t2} if and only if \tcode{C\{t1\}} e
 equals \tcode{u2} if and only if \tcode{C\{u1\}} equals \tcode{C\{u2\}}.
 
 \pnum
-\enternote Users are free to specialize \text{common_type} when at least one parameter is a
+\enternote Users are free to specialize \tcode{common_type} when at least one parameter is a
 user-defined type. Those specializations are considered by the \tcode{Common} concept.\exitnote
 
 \end{itemdescr}
 
-\rSec2[concepts.lib.corelangintegral]{Concept Integral}
+\rSec2[concepts.lib.corelang.integral]{Concept Integral}
 
 \indexlibrary{\idxcode{Integral}}%
 \begin{itemdecl}
@@ -158,12 +181,9 @@ concept bool Integral = is_integral<T>::value;
 \pnum
 The \tcode{Integral} concept is used when requiring that a type \tcode{T} is an
 integral type~(\cxxref{basic.fundamental}).
-
-\pnum
-\tcode{Integral<T>} is an alias for \tcode{is_integral<T>::value}~(\cxxref{meta.unary.prop}).
 \end{itemdescr}
 
-\rSec2[concepts.lib.corelangsignedintegral]{Concept SignedIntegral}
+\rSec2[concepts.lib.corelang.signedintegral]{Concept SignedIntegral}
 
 \indexlibrary{\idxcode{SignedIntegral}}%
 \begin{itemdecl}
@@ -174,12 +194,16 @@ concept bool SignedIntegral =
 
 \begin{itemdescr}
 \pnum
-The \tcode{SignedIntegral} concept is used when requiring that a type \tcode{T} is a
-signed integral type~(\cxxref{basic.fundamental}).
+The \tcode{SignedIntegral} concept is used when requiring that a type \tcode{T} is an
+integral type that is signed.
 
+\pnum
+\enternote \tcode{SignedIntegral<T>} may be true even for types that are not signed
+integral types~(\cxxref{basic.fundamental}).
+\exitnote
 \end{itemdescr}
 
-\rSec2[concepts.lib.corelangsignedintegral]{Concept UnsignedIntegral}
+\rSec2[concepts.lib.corelang.unsignedintegral]{Concept UnsignedIntegral}
 
 \indexlibrary{\idxcode{UnsignedIntegral}}%
 \begin{itemdecl}
@@ -191,10 +215,15 @@ concept bool UnsignedIntegral =
 \begin{itemdescr}
 \pnum
 The \tcode{UnsignedIntegral} concept is used when requiring that a type \tcode{T} is an
-unsigned integral type~(\cxxref{basic.fundamental}).
+integral type that is unsigned.
+
+\pnum
+\enternote \tcode{UnsignedIntegral<T>} may be true even for types that are not unsigned
+integral types~(\cxxref{basic.fundamental}).
+\exitnote
 \end{itemdescr}
 
-\rSec2[concepts.lib.corelangdefaultconstructible]{Concept DefaultConstructible}
+\rSec2[concepts.lib.corelang.defaultconstructible]{Concept DefaultConstructible}
 \ednote{Remove table [defaultconstructible] in [utility.arg.requirements]. Replace
 references to [defaultconstructible] with references to
 [concepts.lib.defaultconstructible].}
@@ -211,16 +240,19 @@ concept bool DefaultConstructible =
 A type \tcode{T} models \tcode{DefaultConstructible} if and only if
 
 \begin{itemize}
-\item The declaration \tcode{T t;} default-initializes~(\cxxref{dcl.init})
+\item The definition \tcode{T t;} default-initializes~(\cxxref{dcl.init})
 object \tcode{t}.
-\item The declaration \tcode{T u\{\};} value-initializes~(\cxxref{dcl.init})
+\item The definition \tcode{T u\{\};} value-initializes~(\cxxref{dcl.init})
 object \tcode{u}.
 \item The expressions \tcode{T()} and \tcode{T\{\}} value-initialize~(\cxxref{dcl.init})
 temporary objects of type \tcode{T}.
 \end{itemize}
+
+\ednote{REVIEW: Stephan T. Lavavej wonders if we need to say anything special about
+aggregates.}
 \end{itemdescr}
 
-\rSec2[concepts.lib.corelangmoveconstructible]{Concept MoveConstructible}
+\rSec2[concepts.lib.corelang.moveconstructible]{Concept MoveConstructible}
 \ednote{Remove table [moveconstructible] in [utility.arg.requirements]. Replace
 references to [moveconstructible] with references to
 [concepts.lib.moveconstructible].}
@@ -238,7 +270,7 @@ Let \tcode{rv} be an rvalue of type \tcode{T}. Then a type \tcode{T} models
 \tcode{MoveConstructible} if and only if
 
 \begin{itemize}
-\item After the declaration \tcode{T u = rv;}, \tcode{u} is equal to the value of
+\item After the definition \tcode{T u = rv;}, \tcode{u} is equal to the value of
 \tcode{rv} before the construction.
 \item \tcode{T(rv)} is equal to the value of \tcode{rv} before the construction.
 \end{itemize}
@@ -250,7 +282,7 @@ in those requirements must work as specified whether \tcode{rv} has been moved
 from or not.\exitnote
 \end{itemdescr}
 
-\rSec2[concepts.lib.corelangcopyconstructible]{Concept CopyConstructible}
+\rSec2[concepts.lib.corelang.copyconstructible]{Concept CopyConstructible}
 \ednote{Remove table [copyconstructible] in [utility.arg.requirements]. Replace
 references to [copyconstructible] with references to
 [concepts.lib.copyconstructible].}
@@ -269,13 +301,13 @@ of type \tcode{const T}. Then a type \tcode{T} models \tcode{CopyConstructible} 
 and only if
 
 \begin{itemize}
-\item After the declaration \tcode{T u = v;}, \tcode{v} is unchanged and is equal
+\item After the definition \tcode{T u = v;}, \tcode{v} is unchanged and is equal
 to \tcode{u}.
 \item \tcode{T(v)} is equal to \tcode{v} and \tcode{v} is unchanged.
 \end{itemize}
 \end{itemdescr}
 
-\rSec2[concepts.lib.corelangconstructible]{Concept Constructible}
+\rSec2[concepts.lib.corelang.constructible]{Concept Constructible}
 
 \indexlibrary{\idxcode{Constructible}}%
 \begin{itemdecl}
@@ -290,7 +322,7 @@ The \tcode{Constructible} concept is used when requiring that a type \tcode{T} i
 constructible with arguments of types \tcode{Args...}.
 \end{itemdescr}
 
-\rSec2[concepts.lib.corelangdestructible]{Concept Destructible}
+\rSec2[concepts.lib.corelang.destructible]{Concept Destructible}
 \ednote{Remove table [destructible] in [utility.arg.requirements]. Replace
 references to [destructible] with references to
 [concepts.lib.destructible].}
@@ -312,7 +344,7 @@ reclaimed and no exception is propagated.
 \end{itemize}
 \end{itemdescr}
 
-\rSec2[concepts.lib.corelangmoveassignable]{Concept MoveAssignable}
+\rSec2[concepts.lib.corelang.moveassignable]{Concept MoveAssignable}
 \ednote{Remove table [moveassignable] in [utility.arg.requirements]. Replace
 references to [moveassignable] with references to
 [concepts.lib.moveassignable].}
@@ -330,7 +362,7 @@ Let \tcode{rv} be an rvalue of type \tcode{T}. Then a type \tcode{T} models
 \tcode{MoveAssignable} if and only if
 
 \begin{itemize}
-\item The expression \tcode{t = rv} has type \tcode{T\&}, the expression returns
+\item The expression \tcode{t = rv} is an lvalue of type (non-const) \tcode{T}, the expression returns
 a reference to \tcode{t}, and after the assignment \tcode{t} is equal to the value
 of \tcode{rv} before the assignment.
 \end{itemize}
@@ -342,7 +374,7 @@ in those requirements must work as specified whether \tcode{rv} has been moved
 from or not.\exitnote
 \end{itemdescr}
 
-\rSec2[concepts.lib.corelangcopyassignable]{Concept CopyAssignable}
+\rSec2[concepts.lib.corelang.copyassignable]{Concept CopyAssignable}
 \ednote{Remove table [copyassignable] in [utility.arg.requirements]. Replace
 references to [copyassignable] with references to
 [concepts.lib.copyassignable].}
@@ -361,13 +393,13 @@ of type \tcode{const T}. Then a type \tcode{T} models \tcode{CopyAssignable} if
 and only if
 
 \begin{itemize}
-\item The expression \tcode{t = v} has type \tcode{T\&}, the expression returns
-a reference to \tcode{t}, \tcode{v} is unchanged, and after the assignment
-\tcode{t} is equal to \tcode{v}.
+\item The expression \tcode{t = v} is an lvalue of type (non-\tcode{const}) \tcode{T},
+the expression returns a reference to \tcode{t}, \tcode{v} is unchanged, and after the
+assignment \tcode{t} is equal to \tcode{v}.
 \end{itemize}
 \end{itemdescr}
 
-\rSec2[concepts.lib.corelangswappable]{Concept Swappable}
+\rSec2[concepts.lib.corelang.swappable]{Concept Swappable}
 \ednote{Remove subclause [swappable.requirements]. Replace references to
 [swappable.requirements] with [concepts.lib.swappable].}
 
@@ -407,7 +439,7 @@ model \tcode{Swappable} if and only if:
 
 \pnum
 The context in which the requires clause is evaluated shall
-ensure that a binary non-member function named ``swap'' is selected via overload
+ensure that a binary non-member function named ``\tcode{swap}'' is selected via overload
 resolution~(\cxxref{over.match}) on a candidate set that includes:
 
 \begin{itemize}
@@ -493,8 +525,8 @@ int main() {
 template <class T>
 concept bool EqualityComparable() {
   return requires(T a, T b) {
-    {a == b} -> bool;
-    {a != b} -> bool;
+    {a == b} -> Boolean;
+    {a != b} -> Boolean;
   };
 }
 \end{itemdecl}
@@ -526,17 +558,17 @@ concept bool EqualityComparable() {
     EqualityComparable<U>() &&
     EqualityComparable<CommonType<T, U>>() &&
     requires(T a, U b) {
-      {a == b} -> bool;
-      {b == a} -> bool;
-      {a != b} -> bool;
-      {b != a} -> bool;
+      {a == b} -> Boolean;
+      {b == a} -> Boolean;
+      {a != b} -> Boolean;
+      {b != a} -> Boolean;
     };
 }
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-Let \tcode{a} be an object of type T, \tcode{b} be an object of type \tcode{U}, and \tcode{C} be
+Let \tcode{a} be an object of type \tcode{T}, \tcode{b} be an object of type \tcode{U}, and \tcode{C} be
 \tcode{CommonType<T, U>}. Then types \tcode{T} and \tcode{U} model \tcode{EqualityComparable} if
 and only if
 
@@ -582,7 +614,7 @@ Let \tcode{a} be any well-formed object of type \tcode{T}. Then type \tcode{T} m
 
 \begin{itemize}
 \item \tcode{(\&a == addressof(a)) != false}.
-\item \tcode{a} equals \tcode{a}; that is, if the value of \tcode{a} is not volatile.
+\item \tcode{a} is not a volatile object or const volatile object~(\cxxref{basic.type.qualifier}).
 \end{itemize}
 
 \pnum
@@ -596,12 +628,12 @@ built-in types like \tcode{int}, except that they may not be comparable with \tc
 \begin{itemdecl}
 template <class T>
 concept bool Regular =
-  Semiregular<T>() && EqualtiyComparable<T>;
+  Semiregular<T>() && EqualitiyComparable<T>;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\enternote The \tcode{Regular} concept is modeled by types that have behave similarly
+\enternote The \tcode{Regular} concept is modeled by types that behave similarly to
 built-in types like \tcode{int} and that are comparable with \tcode{==}.\exitnote
 \end{itemdescr}
 
@@ -618,10 +650,10 @@ template <class T>
 concept bool TotallyOrdered() {
   return EqualityComparable<T>() && 
     requires (T a, T b) {
-      { a < b } -> bool;
-      { a > b } -> bool;
-      { a <= b } -> bool;
-      { a >= b } -> bool;
+      { a < b } -> Boolean;
+      { a > b } -> Boolean;
+      { a <= b } -> Boolean;
+      { a >= b } -> Boolean;
     };
 }
 \end{itemdecl}
@@ -636,8 +668,8 @@ Let \tcode{a}, \tcode{b}, and \tcode{c} be well-formed objects of type \tcode{T}
 \item If \tcode{(a < b) != false}, then \tcode{(b < a) == false}.
 \item If \tcode{(a < b) != false} and \tcode{(b < c) != false}, then
       \tcode{(a < c) != false}.
-\item \tcode{(a < b) != false}, or \tcode{(b < a) != false}, or
-      \tcode{(a == b) != false}.
+\item Exactly one of the following is true: \tcode{(a < b) != false}, or
+      \tcode{(b < a) != false}, or \tcode{(a == b) != false}.
 \item \tcode{(a > b) != false} if and only if \tcode{(b < a) != false}.
 \item \tcode{(a <= b) != false} if and only if \tcode{(b < a) == false}.
 \item \tcode{(a >= b) != false} if and only if \tcode{(b > a) == false}.
@@ -658,14 +690,14 @@ concept bool TotallyOrdered() {
     TotallyOrdered<CommonType<T, U>> &&
     EqualityComparable<T, U> &&
     requires (T a, U b) {
-      { a < b } -> bool;
-      { a > b } -> bool;
-      { a <= b } -> bool;
-      { a >= b } -> bool;
-      { b < a } -> bool;
-      { b > a } -> bool;
-      { b <= a } -> bool;
-      { b >= a } -> bool;
+      { a < b } -> Boolean;
+      { a > b } -> Boolean;
+      { a <= b } -> Boolean;
+      { a >= b } -> Boolean;
+      { b < a } -> Boolean;
+      { b > a } -> Boolean;
+      { b <= a } -> Boolean;
+      { b >= a } -> Boolean;
     };
 }
 \end{itemdecl}
@@ -712,8 +744,9 @@ concept bool Function =
     { f.~F() } noexcept;
     requires Same<F*, decltype(new F)>;
     { delete new F };
-    { f(args...) };
-    requires Same<ResultType<F, Args...>, decltype(f(args...))>;
+    { f(forward<Args>(args)...) };
+    requires Same<ResultType<F, Args...>,
+                  decltype(f(forward<Args>(args)...))>;
   };
 \end{itemdecl}
 
@@ -751,7 +784,7 @@ Models of \tcode{RegularFunction} shall be equality-preserving; that is, when pa
 equal arguments, they shall return equal objects.
 
 \pnum
-\enternote A random-number generator is not a model of \tcode{RegularFunction}.\exitnote
+\enternote A random number generator is not a model of \tcode{RegularFunction}.\exitnote
 
 \pnum
 \enternote There is no syntactic difference between \tcode{Function} and
@@ -784,8 +817,8 @@ concept bool Relation() {
     Common<T, U> &&
     Relation<R, CommonType<T, U>>() &&
     requires (R r, T a, U b) {
-      { r(a, b) } -> bool;
-      { r(b, a) } -> bool;
+      { r(a, b) } -> Boolean;
+      { r(b, a) } -> Boolean;
     };
 }
 \end{itemdecl}

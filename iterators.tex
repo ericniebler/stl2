@@ -197,8 +197,8 @@ undefined.
 \pnum
 A
 \term{sentinel}
-is an abstraction of a past-the-end iterator. Sentinels are Regular types that can be used to denote
-the end of a range. A sentinel and an iterator denoting a range shall be EqualityComparable. A
+is an abstraction of a past-the-end iterator. Sentinels are \tcode{Regular} types that can be used to denote
+the end of a range. A sentinel and an iterator denoting a range shall be \tcode{EqualityComparable}. A
 sentinel denotes an element when an iterator
 \tcode{i}
 compares equal to the sentinel, and
@@ -319,7 +319,7 @@ like \tcode{shared_ptr<void>} is not \tcode{Readable} and has no associated valu
 \rSec2[movewritable.iterators]{MoveWritable types}
 
 \pnum
-The \tcode{MoveWritable} concept describes a requirements for moving a value into an iterator's
+The \tcode{MoveWritable} concept describes the requirements for moving a value into an iterator's
 referenced object.
 
 \indexlibrary{\idxcode{MoveWritable}}%
@@ -327,28 +327,28 @@ referenced object.
   template <class Out, class T>
   concept bool MoveWritable =
     Semiregular<Out> &&
-    requires (Out o, T value) {
-      { *o = move(value) };
+    requires (Out o, T v) {
+      { *o = move(v) };
     };
 \end{codeblock}
 
 \pnum
-Let \tcode{value} be an rvalue or a non-const lvalue of type \tcode{T}, and let \tcode{o} be an
+Let \tcode{v} be an rvalue or a lvalue of type (possibly \tcode{const}) \tcode{T}, and let \tcode{o} be an
 object of type \tcode{Out}. Then types \tcode{T} and \tcode{Out} model \tcode{MoveWritable} if and
 only if
 
 \begin{itemize}
-\item If \tcode{o} is dereferencable, then after the assignment \tcode{*o = move(value)}, the value
-referred to by \tcode{*o} is equal to the value of \tcode{value} before the assignment.
+\item If \tcode{o} is dereferencable, then after the assignment \tcode{*o = move(v)}, the value
+referred to by \tcode{*o} is equal to the value of \tcode{v} before the assignment.
 \end{itemize}
 
 \pnum
-After the expression \tcode{*o = move(value)}, object \tcode{o} is not required to be dereferencable.
+After the expression \tcode{*o = move(v)}, object \tcode{o} is not required to be dereferencable.
 
 \pnum
-\tcode{value}'s state is unspecified. \enternote \tcode{value} must still meet the
+\tcode{v}'s state is unspecified. \enternote \tcode{v} must still meet the
 requirements of the library component that is using it. The operations listed
-in those requirements must work as specified whether \tcode{value} has been moved
+in those requirements must work as specified whether \tcode{v} has been moved
 from or not.\exitnote
 
 \pnum
@@ -360,7 +360,7 @@ The only valid use of an \tcode{operator*} is on the left side of the assignment
 \rSec2[writable.iterators]{Writable types}
 
 \pnum
-The \tcode{Writable} concept describes a requirements for copying a value into an iterator's
+The \tcode{Writable} concept describes the requirements for copying a value into an iterator's
 referenced object.
 
 \indexlibrary{\idxcode{Writable}}%
@@ -369,19 +369,19 @@ referenced object.
   concept bool Writable =
     Semiregular<Out> &&
     MoveWritable<Out, T> &&
-    requires (Out o, T value) {
-      { *o = value };
+    requires (Out o, T v) {
+      { *o = v };
     };
 \end{codeblock}
 
 \pnum
-Let \tcode{value} be an lvalue of type (possibly \tcode{const}) \tcode{T} or an rvalue
+Let \tcode{v} be an lvalue of type (possibly \tcode{const}) \tcode{T} or an rvalue
 of type \tcode{const T}, and let \tcode{o} be an object of type \tcode{Out}. Then types
 \tcode{T} and \tcode{Out} model \tcode{Writable} if and only if
 
 \begin{itemize}
-\item After the assignment \tcode{*o = value}, the value referred to by \tcode{*o} is equal to
-the value of \tcode{value} and \tcode{value} is unchanged.
+\item After the assignment \tcode{*o = v}, the value referred to by \tcode{*o} is equal to
+the value of \tcode{v} and \tcode{v} is unchanged.
 \end{itemize}
 
 \rSec2[indirectlymovable.iterators]{IndirectlyMovable types}
@@ -590,7 +590,7 @@ or if
 and
 \tcode{++i}
 has property
-\tcode{p}).
+\textit{p}).
 \exitexample
 
 \indexlibrary{\idxcode{Iterator}}%
@@ -670,7 +670,7 @@ Algorithms on input iterators should never attempt to pass through the same iter
 They should be
 \term{single pass}
 algorithms.
-Value type T is not required to be a \tcode{CopyAssignable} type (\removed{Table}~\ref{concepts.lib.copyassignable}).
+Value type T is not required to be a \tcode{CopyAssignable} type (\removed{Table}~\ref{concepts.lib.corelang.copyassignable}).
 These algorithms can be used with istreams as the source of the input data through the
 \tcode{istream_iterator}
 class template.
@@ -1137,7 +1137,7 @@ that are not the same.
 \end{codeblock}
 
 \pnum
-Let {a} be a valid iterator of type \tcode{I} and let \tcode{b} be a valid sentinel of type
+Let \tcode{a} be a valid iterator of type \tcode{I} and let \tcode{b} be a valid sentinel of type
 \tcode{S}. Then \tcode{I} and \tcode{S} model concept \tcode{IteratorRange} if and only if
 \tcode{b} is reachable from \tcode{a}.
 
@@ -1736,6 +1736,7 @@ Users may specialize \tcode{difference_type} on user-defined types.
 Users may specialize \tcode{iterator_category} on user-defined types.
 \end{addedblock}
 
+\begin{removedblock}
 \pnum
 \enternote
 If there is an additional pointer type
@@ -1746,7 +1747,6 @@ is of type
 \tcode{long},
 an implementation may define
 
-\begin{removedblock}
 \begin{codeblock}
   template<class T> struct iterator_traits<T @\xname{far}@*> {
     typedef long difference_type;
@@ -1756,19 +1756,8 @@ an implementation may define
     typedef random_access_iterator_tag iterator_category;
   };
 \end{codeblock}
-\end{removedblock}
-\begin{addedblock}
-\begin{codeblock}
-  template<class T> struct difference_type<T @\xname{far}@*> {
-    using type = long;
-  };
-  template<class T> struct value_type<T @\xname{far}@*> : remove_cv<T> { };
-  template<class T> struct iterator_category<T @\xname{far}@*> {
-    using type = random_access_iterator_tag;
-  };
-\end{codeblock}
-\end{addedblock}
 \exitnote
+\end{removedblock}
 
 \begin{addedblock}
 \pnum
@@ -2274,7 +2263,7 @@ namespace std {
     using iterator_category = IteratorCategory<I>;
     using reference = ReferenceType<I>;
 \end{codeblock}\end{addedblock}\begin{codeblock}
-    reverse_iterator()@\added{ = default}@;
+    reverse_iterator();
     explicit reverse_iterator(@\changed{Iterator}{I}@ x);
     template <@\changed{class}{BidirectionalIterator}@ U>
       @\added{requires Convertible<U, I>}@
@@ -2387,17 +2376,17 @@ are referenced in a way that requires instantiation~(\cxxref{temp.inst}).
 
 \indexlibrary{\idxcode{reverse_iterator}!\tcode{reverse_iterator}}%
 \begin{itemdecl}
-reverse_iterator()@\added{ = default}@;
+reverse_iterator();
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
 \effects
-\changed{Value}{Default} initializes
+Value initializes
 \tcode{current}.
 Iterator operations applied to the resulting iterator have defined behavior
 if and only if the corresponding operations are defined on a
-\changed{value}{default}-initialized iterator of type
+value-initialized iterator of type
 \tcode{\changed{Iterator}{I}}.\added{If \tcode{I} is a literal type, then this
 constructor shall be a trivial constructor.}
 \end{itemdescr}
@@ -2863,7 +2852,7 @@ namespace std {
     @\changed{typedef Container}{using}@ container_type@\added{ = Container}@;
     @\added{using difference_type = ptrdiff_t;}@
     @\added{using iterator_category = output_iterator_tag;}@
-    @\added{back_insert_iterator() = default;}@
+    @\added{back_insert_iterator();}@
     explicit back_insert_iterator(Container& x);
     back_insert_iterator<Container>&
       operator=(const typename Container::value_type& value);
@@ -2887,13 +2876,13 @@ namespace std {
 \indexlibrary{\idxcode{back_insert_iterator}!\idxcode{back_insert_iterator}}%
 \begin{addedblock}
 \begin{itemdecl}
-back_insert_iterator() = default;
+back_insert_iterator();
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
 \effects
-Default-initializes
+Value-initializes
 \tcode{container}. This constructor shall be a trivial constructor.
 \end{itemdescr}
 \end{addedblock}
@@ -3002,7 +2991,7 @@ namespace std {
     @\changed{typedef Container}{using}@ container_type@\added{ = Container}@;
     @\added{using difference_type = ptrdiff_t;}@
     @\added{using iterator_category = output_iterator_tag;}@
-    @\added{front_insert_iterator() = default;}@
+    @\added{front_insert_iterator();}@
     explicit front_insert_iterator(Container& x);
     front_insert_iterator<Container>&
       operator=(const typename Container::value_type& value);
@@ -3026,13 +3015,13 @@ namespace std {
 \indexlibrary{\idxcode{front_insert_iterator}!\idxcode{front_insert_iterator}}%
 \begin{addedblock}
 \begin{itemdecl}
-front_insert_iterator() = default;
+front_insert_iterator();
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
 \effects
-Default-initializes
+Value-initializes
 \tcode{container}. This constructor shall be a trivial constructor.
 \end{itemdescr}
 \end{addedblock}
@@ -3142,7 +3131,7 @@ namespace std {
     @\changed{typedef Container}{using}@ container_type@\added{ = Container}@;
     @\added{using difference_type = ptrdiff_t;}@
     @\added{using iterator_category = output_iterator_tag;}@
-    @\added{insert_iterator() = default;}@
+    @\added{insert_iterator();}@
     insert_iterator(Container& x, typename Container::iterator i);
     insert_iterator<Container>&
       operator=(const typename Container::value_type& value);
@@ -3166,13 +3155,13 @@ namespace std {
 \indexlibrary{\idxcode{insert_iterator}!\idxcode{insert_iterator}}%
 \begin{addedblock}
 \begin{itemdecl}
-insert_iterator() = default;
+insert_iterator();
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
 \effects
-Default-initializes
+Value-initializes
 \tcode{container} and \tcode{iter}. If \tcode{Container::iterator} is a literal
 type, then this constructor shall be a trivial constructor.
 \end{itemdescr}
@@ -3323,7 +3312,7 @@ namespace std {
     using reference = ValueType<I>&&;
 \end{codeblock}\end{addedblock}\begin{codeblock}
 
-    move_iterator()@\added{ = default}@;
+    move_iterator();
     explicit move_iterator(@\changed{Iterator}{I}@ i);
     template <@\changed{class}{WeakInputIterator}@ U>
       @\added{requires Convertible<U, I>}@
@@ -3416,15 +3405,15 @@ or a Random Access Iterator~(\ref{random.access.iterators}), respectively.
 
 \indexlibrary{\idxcode{move_iterator}!\idxcode{move_iterator}}%
 \begin{itemdecl}
-move_iterator()@\added{ = default}@;
+move_iterator();
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects Constructs a \tcode{move_iterator}, \changed{value}{default}
+\effects Constructs a \tcode{move_iterator}, value
 initializing \tcode{current}. Iterator operations applied to the resulting
 iterator have defined behavior if and only if the corresponding operations are defined
-on a \changed{value}{default}-initialized iterator of type \tcode{\changed{Iterator}{I}}.
+on a value-initialized iterator of type \tcode{\changed{Iterator}{I}}.
 \end{itemdescr}
 
 
@@ -3837,10 +3826,10 @@ namespace std {
   concept bool WeaklyEqualityComparable =
     EqualityComparable<A>() && EqualityComparable<B>() &&
     requires(A a, B b) {
-      {a==b} -> bool;
-      {a!=b} -> bool;
-      {b==a} -> bool;
-      {b!=a} -> bool;
+      {a==b} -> Boolean;
+      {a!=b} -> Boolean;
+      {b==a} -> Boolean;
+      {b!=a} -> Boolean;
     };
   // \expos
   template<Iterator I, Regular S>
@@ -4175,7 +4164,7 @@ namespace std {
                     std::input_iterator_tag>;
     using reference = ReferenceType<I>;
 
-    counted_iterator() = default;
+    counted_iterator();
     counted_iterator(I x, DifferenceType<I> n);
     template <WeakInputIterator U>
       requires Convertible<U, I>
@@ -4304,15 +4293,15 @@ namespace std {
 
 \indexlibrary{\idxcode{counted_iterator}!\idxcode{counted_iterator}}%
 \begin{itemdecl}
-counted_iterator() = default;
+counted_iterator();
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects Constructs a \tcode{counted_iterator}, default
+\effects Constructs a \tcode{counted_iterator}, value
 initializing \tcode{current} and \tcode{cnt}. Iterator operations applied to the
 resulting iterator have defined behavior if and only if the corresponding operations
-are defined on a default-initialized iterator of type \tcode{I}.
+are defined on a value-initialized iterator of type \tcode{I}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{counted_iterator}!constructor}%
