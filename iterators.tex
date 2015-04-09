@@ -433,42 +433,6 @@ Then types \tcode{I} and \tcode{Out} model \tcode{IndirectlyCopyable} if and onl
 the value of \tcode{*i} and the value of \tcode{*i} is unchanged.
 \end{itemize}
 
-\rSec2[indirectlycomparable.iterators]{IndirectlyComparable types}
-
-\pnum
-The \tcode{IndirectlyComparable} concept describes an relation between
-two \tcode{Readable} types and (optionally) a relation and two projections.
-
-\indexlibrary{\idxcode{IndirectlyComparable}}%
-\begin{codeblock}
-  template < class I1, class I2,
-    class R = equal_to<>,
-    class P1 = identity,
-    class P2 = identity>
-  concept bool IndirectlyComparable =
-    Readable<I1> &&
-    Readable<I2> &&
-    RegularCallable<P1, ValueType<I1>> &&
-    RegularCallable<P2, ValueType<I2>> &&
-    CallableRelation<R,
-      ResultType<FunctionType<P1>, ValueType<I1>>,
-      ResultType<FunctionType<P2>, ValueType<I2>>>;
-\end{codeblock}
-
-\pnum
-Let \tcode{i1} be an object of type \tcode{I1},
-\tcode{i2} be an object of type \tcode{I2},
-\tcode{r} be an object of type \tcode{R},
-\tcode{p1} be an object of type \tcode{P1},
-\tcode{p2} be an object of type \tcode{P2}.
-Then types \tcode{I1}, \tcode{I2}, \tcode{R}, \tcode{P1}, and \tcode{P2} model
-\tcode{IndirectlyComparable} if and only if
-
-\begin{itemize}
-\item \tcode{\textit{INVOKE}(r, \textit{INVOKE}(p1, *i1), \textit{INVOKE}(p2, *i2))}
-is a relation.
-\end{itemize}
-
 \rSec2[indirectlyswappable.iterators]{IndirectlySwappable types}
 
 \pnum
@@ -990,6 +954,29 @@ algorithms that take functions as arguments.
 the transition should we ever decide to support proxy iterators in the future. See the
 Future Work appendix~(\ref{future}).}
 
+\rSec2[functiontype.indirectfunctions]{Function type}
+
+\pnum
+The \tcode{FunctionType} is an alias used to turn a callable type~(\cxxref{func.def}) into a function
+object type~(\ref{function.objects}).
+
+\indexlibrary{\idxcode{FunctionType}}%
+\begin{codeblock}
+  // Exposition only
+  template <class T>
+  auto @\xname{as_fun_obj}@(T&& t, std::true_type) {
+    return mem_fn(t);
+  }
+  template <class T>
+  T @\xname{as_fun_obj}@(T&& t, std::false_type) {
+    return forward<T>(t);
+  }
+
+  template <class T>
+  using FunctionType =
+    decltype(@\xname{as_fun_obj}@(declval<T>(), is_member_pointer<decay_t<T>>{}));
+\end{codeblock}
+
 \rSec2[projected.indirectfunctions]{Projected iterator}
 
 \pnum
@@ -1001,24 +988,24 @@ of \tcode{I}.
 
 \indexlibrary{\idxcode{Projected}}%
 \begin{codeblock}
-  template <Readable I, RegularCallable<ValueType<I>> Proj>
+  template <Readable I, class Proj>
+    requires RegularFunction<FunctionType<Proj>, ValueType<I>>
   struct Projected {
+    using difference_type = DifferenceType<I>;
     using value_type = decay_t<ResultType<FunctionType<Proj>, ValueType<I>>>;
-    using reference = ResultType<FunctionType<Proj>, decltype(*std::declval<I>())>;
-    using pointer = add_pointer_t<reference>;
-    reference operator*() const;
+    ResultType<FunctionType<Proj>, ReferenceType<I>> operator*() const;
   };
 \end{codeblock}
 
 \pnum
 \enternote \tcode{Projected} is only used to ease constraints specification. Its
-member functions need not be defined.\exitnote
+member function need not be defined.\exitnote
 
-\rSec2[indirectfunc.indirectfuncs]{Indirect functions}
+\rSec2[indirectfunc.indirectcallables]{Indirect callables}
 
 \pnum
 The indirect callable concepts are used to constrain those algorithms that accept
-functions as arguments.
+callable objects~(\cxxref{func.def}) as arguments.
 
 \indexlibrary{\idxcode{IndirectCallable}}%
 \indexlibrary{\idxcode{IndirectRegularCallable}}%
@@ -1028,39 +1015,50 @@ functions as arguments.
   template <class F, class...Is>
   concept bool IndirectCallable =
     (Readable<Is> && ...) &&
-    Callable<F, ValueType<Is>...>;
+    Function<FunctionType<F>, ValueType<Is>...>;
 
   template <class F, class...Is>
   concept bool IndirectRegularCallable =
     (Readable<Is> && ...) &&
-    RegularCallable<F, ValueType<Is>...>;
+    RegularFunction<FunctionType<F>, ValueType<Is>...>;
 
   template <class F, class...Is>
   concept bool IndirectCallablePredicate =
     (Readable<Is> && ...) &&
-    CallablePredicate<F, ValueType<Is>...>;
+    Predicate<FunctionType<F>, ValueType<Is>...>;
 
   template <class F, class I1, class I2 = I1>
   concept bool IndirectCallableRelation =
     Readable<I1> &&
     Readable<I2> &&
-    CallableRelation<F, ValueType<I1>, ValueType<I2>>();
+    Relation<FunctionType<F>, ValueType<I1>, ValueType<I2>>();
 \end{codeblock}
 
-\pnum
-\ednote{TODO description here}
+\rSec1[commmonalgoreq]{Common algorithm requirements}
 
-\rSec1[rearrangements]{Rearrangement requirements}
-
-\rSec2[rearrangement.general]{In general}
+\rSec2[commmonalgoreq.general]{In general}
 
 \pnum
 There are several additional iterator concepts that are commonly applied to families of algorithms.
-These are the so-called \techterm{rearrangement} concepts. They group together iterator requirements
-of algorithm families. There are 3 relational concepts for rearrangements: \tcode{Permutable},
-\tcode{Mergeable}, and \tcode{Sortable}.
+These group together iterator requirements of algorithm families. There are three relational concepts
+for rearrangements: \tcode{Permutable}, \tcode{Mergeable}, and \tcode{Sortable}. There is one
+relational concept for comparing values from different sequences: \tcode{IndirectlyComparable}.
 
-\rSec2[permutable.rearrangements]{Permutable iterators}
+\rSec2[indirectlycomparable.commmonalgoreq]{Indirectly comparable iterators}
+
+\pnum
+The \tcode{IndirectlyComparable} concept specifies the common requirements of algorithms that
+compare values from two different sequences.
+
+\indexlibrary{\idxcode{IndirectlyComparable}}%
+\begin{codeblock}
+  template <class I1, class I2, class R = equal_to<>, class P1 = identity,
+    class P2 = identity>
+  concept bool IndirectlyComparable =
+    IndirectCallableRelation<R, Projected<I1, P1>, Projected<I2, P2>>;
+\end{codeblock}
+
+\rSec2[permutable.commmonalgoreq]{Permutable iterators}
 
 \pnum
 The \tcode{Permutable} concept specifies the common requirements of algorithms that reorder
@@ -1078,7 +1076,7 @@ elements in place by moving or swapping them.
 \ednote{\tcode{Semiregular} here overconstrains by adding a default-constructibility requirement.
 See Appendix D of the ``The Palo Alto'' report for an alternate design.}
 
-\rSec2[mergeable.rearrangements]{Mergeable iterators}
+\rSec2[mergeable.commmonalgoreq]{Mergeable iterators}
 
 \pnum
 The \tcode{Mergeable} concept describes the requirements of algorithms that merge sorted sequences
@@ -1101,7 +1099,7 @@ into an output sequence.
 \enternote When \tcode{less<>} is used as the
 relation, the value type must model \tcode{TotallyOrdered}.\exitnote
 
-\rSec2[sortable.rearrangements]{Sortable iterators}
+\rSec2[sortable.commmonalgoreq]{Sortable iterators}
 
 \pnum
 The \tcode{Sortable} concept describes the common requirements of algorithms that permute sequences
@@ -1786,26 +1784,23 @@ alias that collects an iterator's associated types. It is defined as if:
   struct @\xname{pointer_type}@<I, void_t<decltype(declval<I>().operator->())>> {
     using type = decltype(declval<I>().operator->());
   };
-  struct @\xname{iterator_traits_none}@ { };
-  template <WeakIterator I> struct @\xname{iterator_traits_output}@ {
+  template <class> struct @\xname{iterator_traits}@ { };
+  template <WeakIterator I> struct @\xname{iterator_traits}@<I> {
     using difference_type = DifferenceType<I>;
     using value_type = void;
     using reference = void;
     using pointer = void;
     using iterator_category = output_iterator_tag;
   };
-  template <WeakInputIterator I> struct @\xname{iterator_traits_input}@ {
+  template <WeakInputIterator I> struct @\xname{iterator_traits}@<I> {
     using difference_type = DifferenceType<I>;
     using value_type = ValueType<I>;
     using reference = ReferenceType<I>;
     using pointer = typename @\xname{pointer_type}@<I>::type;
     using iterator_category = IteratorCategory<I>;
   };
-  template<class> @\xname{iterator_traits_none}@ @iter_traits@();
-  template<WeakIterator O> @\xname{iterator_traits_output}@<O> @iter_traits@();
-  template<WeakInputIterator I> @\xname{iterator_traits_input}@<I> @iter_traits@();
   template <class I>
-    using iterator_traits = decltype(@\xname{iter_traits}@<I>());
+    using iterator_traits = @\xname{iterator_traits}@<I>;
 \end{codeblock}
 
 \pnum
