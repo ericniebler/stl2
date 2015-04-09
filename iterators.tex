@@ -441,7 +441,7 @@ two \tcode{Readable} types and (optionally) a relation and two projections.
 
 \indexlibrary{\idxcode{IndirectlyComparable}}%
 \begin{codeblock}
-  template < I1, Readable I2,
+  template < class I1, class I2,
     class R = equal_to<>,
     class P1 = identity,
     class P2 = identity>
@@ -633,7 +633,7 @@ has property
 \begin{codeblock}
   template <class I>
   concept bool Iterator =
-    WeakIterator<I>
+    WeakIterator<I> &&
     EqualityComparable<I>();
 \end{codeblock}
 
@@ -647,8 +647,8 @@ compared to an iterator for equality.
 \begin{codeblock}
   template <class T, class I>
   concept bool Sentinel =
-    Regular<T>
-    Iterator<I>
+    Regular<T> &&
+    Iterator<I> &&
     EqualityComparable<T, I>();
 \end{codeblock}
 
@@ -1070,7 +1070,7 @@ elements in place by moving or swapping them.
 \begin{codeblock}
   template <class I>
   concept bool Permutable =
-    ForwardIterator<I>
+    ForwardIterator<I> &&
     Semiregular<ValueType<I>> &&
     IndirectlyMovable<I>;
 \end{codeblock}
@@ -1777,8 +1777,6 @@ an implementation may define
 For the sake of backwards compatibility, this standard specifies the existence of an \tcode{iterator_traits}
 alias that collects an iterator's associated types. It is defined as if:
 
-\ednote{TODO Think through the implications here.}
-
 \indexlibrary{\idxcode{iterator_traits}}%
 \begin{codeblock}
   template <WeakInputIterator I, class = void> struct @\xname{pointer_type}@ {
@@ -1788,26 +1786,26 @@ alias that collects an iterator's associated types. It is defined as if:
   struct @\xname{pointer_type}@<I, void_t<decltype(declval<I>().operator->())>> {
     using type = decltype(declval<I>().operator->());
   };
-  template <WeaklyIncrementable I> struct @\xname{iterator_traits2}@ {
+  struct @\xname{iterator_traits_none}@ { };
+  template <WeakIterator I> struct @\xname{iterator_traits_output}@ {
     using difference_type = DifferenceType<I>;
     using value_type = void;
     using reference = void;
     using pointer = void;
     using iterator_category = output_iterator_tag;
   };
-  @\ednote{Is this syntax right?}@
-  template <WeakInputIterator I> struct @\xname{iterator_traits2}@ {
+  template <WeakInputIterator I> struct @\xname{iterator_traits_input}@ {
     using difference_type = DifferenceType<I>;
     using value_type = ValueType<I>;
     using reference = ReferenceType<I>;
     using pointer = typename @\xname{pointer_type}@<I>::type;
     using iterator_category = IteratorCategory<I>;
   };
-  template <class, class = void> struct @\xname{iterator_traits}@ { };
-  template <class I, enable_if_t<WeaklyIncrementable<I>>>
-  struct @\xname{iterator_traits}@ : @\xname{iterator_traits2}@<I> { };
+  template<class> @\xname{iterator_traits_none}@ @iter_traits@();
+  template<WeakIterator O> @\xname{iterator_traits_output}@<O> @iter_traits@();
+  template<WeakInputIterator I> @\xname{iterator_traits_input}@<I> @iter_traits@();
   template <class I>
-    using iterator_traits = @\xname{iterator_traits}@<I>;
+    using iterator_traits = decltype(@\xname{iter_traits}@<I>());
 \end{codeblock}
 
 \pnum
