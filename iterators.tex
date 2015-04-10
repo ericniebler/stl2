@@ -486,7 +486,8 @@ Then the type \tcode{I} models \tcode{WeaklyIncrementable} if and only if
 \item \tcode{++i} is valid if and only if \tcode{i++} is valid.
 \end{itemize}
 
-\ednote{Copied almost verbatim from the InputIterator description. Remove this wording there.}
+\ednote{Copied almost verbatim from the InputIterator description. This wording is removed
+there.}
 
 \pnum
 \enternote For \tcode{WeaklyIncrementable} types, \tcode{a} equals \tcode{b} does imply that \tcode{++a}
@@ -522,7 +523,8 @@ Then the type \tcode{I} models \tcode{Incrementable} if and only if
 \item If \tcode{(a == b) != false} then \tcode{((a++, a) == ++b) != false}.
 \end{itemize}
 
-\ednote{Copied in part from the ForwardIterator description. Remove this wording there.}
+\ednote{Copied in part from the ForwardIterator description. This wording is removed
+there.}
 
 \pnum
 \enternote The requirement that \tcode{a} equals \tcode{b} implies \tcode{++a} equals \tcode{++b}
@@ -942,19 +944,19 @@ from \tcode{a}. Let \tcode{n} be an object of type \tcode{DifferenceType<I>} suc
 \item If \tcode{b} is dereferenceable, then \tcode{a[n]} is valid and is equal to \tcode{*b}.
 \end{itemize}
 
-\rSec1[indirectfunctions]{Indirect function requirements}
+\rSec1[indirectcallables]{Indirect callable requirements}
 
-\rSec2[indirectfunctions.general]{In general}
+\rSec2[indirectcallables.general]{In general}
 
 \pnum
-There are several concepts that group requirements of the higher-order algorithms; that is,
-algorithms that take functions as arguments.
+There are several concepts that group requirements of algorithms that take callable
+objects~(\cxxref{func.require}) as arguments.
 
 \ednote{Specifying the algorithms in terms of these indirect callable concepts would ease
 the transition should we ever decide to support proxy iterators in the future. See the
-Future Work appendix~(\ref{future}).}
+Future Work appendix~(\ref{future.proxy}).}
 
-\rSec2[functiontype.indirectfunctions]{Function type}
+\rSec2[functiontype.indirectcallables]{Function type}
 
 \pnum
 The \tcode{FunctionType} is an alias used to turn a callable type~(\cxxref{func.def}) into a function
@@ -977,13 +979,13 @@ object type~(\ref{function.objects}).
     decltype(@\xname{as_fun_obj}@(declval<T>(), is_member_pointer<decay_t<T>>{}));
 \end{codeblock}
 
-\rSec2[projected.indirectfunctions]{Projected iterator}
+\rSec2[projected.indirectcallables]{Projected iterator}
 
 \pnum
 The \tcode{Projected} class template is intended for use when specifying the constraints of
-higher-order algorithms that accept optional projections. It bundles a \tcode{Readable} type
+algorithms that accept callable objects and projections. It bundles a \tcode{Readable} type
 \tcode{I} and a projection function \tcode{Proj} into a new \tcode{Readable} type whose
-\tcode{reference} type is the result of applying \tcode{Proj} to the \tcode{reference} type
+\tcode{reference} type is the result of applying \tcode{Proj} to the \tcode{ReferenceType}
 of \tcode{I}.
 
 \indexlibrary{\idxcode{Projected}}%
@@ -1040,9 +1042,9 @@ callable objects~(\cxxref{func.def}) as arguments.
 
 \pnum
 There are several additional iterator concepts that are commonly applied to families of algorithms.
-These group together iterator requirements of algorithm families. There are three relational concepts
-for rearrangements: \tcode{Permutable}, \tcode{Mergeable}, and \tcode{Sortable}. There is one
-relational concept for comparing values from different sequences: \tcode{IndirectlyComparable}.
+These group together iterator requirements of algorithm families. There are four relational concepts
+for rearrangements: \tcode{Permutable}, \tcode{Mergeable}, \tcode{MergeMovable}, and \tcode{Sortable}.
+There is one relational concept for comparing values from different sequences: \tcode{IndirectlyComparable}.
 
 \rSec2[indirectlycomparable.commmonalgoreq]{Indirectly comparable iterators}
 
@@ -1073,27 +1075,56 @@ elements in place by moving or swapping them.
     IndirectlyMovable<I>;
 \end{codeblock}
 
-\ednote{\tcode{Semiregular} here overconstrains by adding a default-constructibility requirement.
+\ednote{REVIEW: \tcode{Semiregular} here overconstrains by adding a default-constructibility requirement.
 See Appendix D of the ``The Palo Alto'' report for an alternate design.}
 
 \rSec2[mergeable.commmonalgoreq]{Mergeable iterators}
 
 \pnum
 The \tcode{Mergeable} concept describes the requirements of algorithms that merge sorted sequences
-into an output sequence.
+into an output sequence by copying elements.
 
-\indexlibrary{\idxcode{Permutable}}%
+\indexlibrary{\idxcode{Mergeable}}%
 \begin{codeblock}
   template <class I1, class I2, class Out,
       class R = less<>, class P1 = identity, class P2 = identity>
   concept bool Mergeable =
     InputIterator<I1> &&
     InputIterator<I2> &&
-    WeaklyIncrementable<I2> &&
+    WeaklyIncrementable<Out> &&
     IndirectlyCopyable<I1, Out> &&
     IndirectlyCopyable<I2, Out> &&
     IndirectlyComparable<I1, I2, R, P1, P2>;
 \end{codeblock}
+
+\pnum
+The relation \tcode{R} must represent a strict weak ordering.
+
+\pnum
+\enternote When \tcode{less<>} is used as the
+relation, the value type must model \tcode{TotallyOrdered}.\exitnote
+
+\rSec2[mergemovable.commmonalgoreq]{MergeMovable iterators}
+
+\pnum
+The \tcode{MergeMovable} concept describes the requirements of algorithms that merge sorted sequences
+into an output sequence by moving elements.
+
+\indexlibrary{\idxcode{MergeMovable}}%
+\begin{codeblock}
+  template <class I1, class I2, class Out,
+      class R = less<>, class P1 = identity, class P2 = identity>
+  concept bool MergeMovable =
+    InputIterator<I1> &&
+    InputIterator<I2> &&
+    WeaklyIncrementable<Out> &&
+    IndirectlyMovable<I1, Out> &&
+    IndirectlyMovable<I2, Out> &&
+    IndirectlyComparable<I1, I2, R, P1, P2>;
+\end{codeblock}
+
+\pnum
+The relation \tcode{R} must represent a strict weak ordering.
 
 \pnum
 \enternote When \tcode{less<>} is used as the
@@ -1105,7 +1136,7 @@ relation, the value type must model \tcode{TotallyOrdered}.\exitnote
 The \tcode{Sortable} concept describes the common requirements of algorithms that permute sequences
 of iterators into an ordered sequence (e.g., \tcode{sort}).
 
-\indexlibrary{\idxcode{Permutable}}%
+\indexlibrary{\idxcode{Sortable}}%
 \begin{codeblock}
   template <class I, class R = less<>, class P = identity>
   concept bool Sortable =
@@ -1113,6 +1144,9 @@ of iterators into an ordered sequence (e.g., \tcode{sort}).
     Permutable<I> &&
     IndirectCallableRelation<R, Projected<I, P>>;
 \end{codeblock}
+
+\pnum
+The relation \tcode{R} must represent a strict weak ordering.
 
 \pnum
 \enternote When \tcode{less<>} is used as the
@@ -1174,7 +1208,7 @@ Let \tcode{a} be a valid iterator of type \tcode{I} and \tcode{b} be a valid sen
 \end{itemize}
 
 \enternote The \tcode{SizedIteratorRange} concept is modeled by pairs of
-\tcode{RandomAccessIterator}s(~\ref{random.access.iterators}) and by counted iterators and their
+\tcode{RandomAccessIterator}s~(\ref{random.access.iterators}) and by counted iterators and their
 sentinels~(\ref{counted.iterator}).\exitnote
 
 \end{addedblock}
@@ -1392,7 +1426,7 @@ namespace std {
     const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
 
   // \ref{counted.iterators} Counted iterators and sentinels
-  @\ednote{Why not WeakIterator?}@
+  @\ednote{TODO: Why not WeakIterator?}@
   template <WeakInputIterator I> class counted_iterator;
   class counted_sentinel;
 
@@ -2839,7 +2873,7 @@ functions making the insert iterators out of a container.
 \rSec3[back.insert.iterator]{Class template \tcode{back_insert_iterator}}
 
 \indexlibrary{\idxcode{back_insert_iterator}}%
-\ednote{Specify this in terms of a Container concept? Or Iterable? Or leave it?}
+\ednote{REVIEW: Re-specify this in terms of a Container concept? Or Iterable? Or leave it?}
 \begin{codeblock}
 namespace std {
   template <class Container>
@@ -3271,9 +3305,10 @@ Class template \tcode{move_iterator} is an iterator adaptor
 with the same behavior as the underlying iterator except that its
 indirection operator implicitly converts the value returned by the
 underlying iterator's indirection operator to an rvalue reference.
-Some generic algorithms can be called with move iterators to replace
-copying with moving. \ednote{Pretty sure this is untrue now given how
-the algorithms that do copying are constrained with IndirectlyCopyable.}
+\removed{Some generic algorithms can be called with move iterators to replace
+copying with moving.} \ednote{This is untrue now. The algorithms that do
+copying are constrained with \tcode{IndirectlyCopyable}, which will reject
+\tcode{mov_iterator}s.}
 
 \pnum
 \enterexample
@@ -5918,7 +5953,7 @@ categories \techterm{bidirectional iterable}, \techterm{forward iterable},
 \techterm{input iterable} and \techterm{output iterable} are defined similarly.
 \enternote There is no \techterm{weak input iterable} or
 \techterm{weak output iterable} because of the \tcode{EqualityComparable}
-requirement on iterators and sentinels. \exitnote \ednote{Rethink that because
+requirement on iterators and sentinels. \exitnote \ednote{TODO: Rethink that because
 a weak input iterable would not require (strongly) incrementable iterators.}
 
 \rSec3[iterable.iterables]{Iterables}
@@ -5990,7 +6025,7 @@ struct is_sized_iterable
     >::type
 {};
 \end{codeblock}
-\ednote{The handling of top-level reference here is inconsistent with the other
+\ednote{REVIEW: The handling of top-level reference here is inconsistent with the other
 type traits.}
 \exitnote
 
@@ -6071,7 +6106,7 @@ struct is_range
     >::type
 {};
 \end{codeblock}
-\ednote{The handling of top-level reference here is inconsistent with the other
+\ednote{REVIEW: The handling of top-level reference here is inconsistent with the other
 type traits.}
 \exitnote
 
