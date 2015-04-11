@@ -101,6 +101,19 @@ $\rightarrow$ \textbf{Forward}  &   $\rightarrow$ \textbf{Input}            & \a
                         &   &   &   $\rightarrow$ \textbf{Output}           & \added{   $\rightarrow$ \textbf{WeakOutput}}          \\
 \end{floattable}
 
+\begin{addedblock}
+\pnum
+The seven categories of iterators correspond to the iterator concepts
+\tcode{WeakInputIterator},
+\tcode{InputIterator},
+\tcode{WeakOutputIterator},
+\tcode{OutputIterator},
+\tcode{ForwardIterator},
+\tcode{BidirectionalIterator}, and
+\tcode{RandomAccess\-Iterator}, respectively. The generic term \techterm{iterator} refers to
+any type that models \tcode{WeakIterator}.
+\end{addedblock}
+
 \pnum
 \changed{Forward}{Input} iterators satisfy all the requirements of \added{weak }input
 iterators and can be used whenever \changed{an}{a weak} input iterator is specified;
@@ -445,9 +458,9 @@ value types of two \tcode{Readable} types.
   concept bool IndirectlySwappable =
     Readable<I1> && 
     Readable<I2> &&
-    Swappable<ValueType<I1>, ValueType<I2>> &&
-    Swappable<ValueType<I1>> &&
-    Swappable<ValueType<I2>>;
+    Swappable<ReferenceType<I1>, ReferenceType<I2>> &&
+    Swappable<ReferenceType<I1>> &&
+    Swappable<ReferenceType<I2>>;
 \end{codeblock}
 
 \rSec2[weaklyincrementable.iterators]{WeaklyIncrementable types}
@@ -486,7 +499,7 @@ Then the type \tcode{I} models \tcode{WeaklyIncrementable} if and only if
 \item \tcode{++i} is valid if and only if \tcode{i++} is valid.
 \end{itemize}
 
-\ednote{Copied almost verbatim from the InputIterator description. This wording is removed
+\ednote{Copied almost verbatim from the \tcode{InputIterator} description. This wording is removed
 there.}
 
 \pnum
@@ -523,7 +536,7 @@ Then the type \tcode{I} models \tcode{Incrementable} if and only if
 \item If \tcode{(a == b) != false} then \tcode{((a++, a) == ++b) != false}.
 \end{itemize}
 
-\ednote{Copied in part from the ForwardIterator description. This wording is removed
+\ednote{Copied in part from the \tcode{ForwardIterator} description. This wording is removed
 there.}
 
 \pnum
@@ -841,7 +854,7 @@ and adds the ability to move an iterator backward as well as forward.
   concept bool BidirectionalIterator =
     ForwardIterator<I> &&
     Derived<IteratorCategory<I>, bidirectional_iterator_tag> &&
-    requires (I i, I j) {
+    requires (I i) {
       { --i };
       requires Same<I&, decltype(--i)>;
       { i-- };
@@ -867,8 +880,8 @@ Let \tcode{a} and \tcode{b} be decrementable objects of type \tcode{I}. Then \tc
 \item If \tcode{(a == b) != false}, then \tcode{(a\dcr{} == j) != false}.
 \item If \tcode{(a == b) != false}, then \tcode{((a\dcr{}, a) == \dcr{}j) != false}.
 \item If \tcode{a} is incrementable and \tcode{(a == b) != false}, then
-      \tcode{(\dcr{}(++a) == j) != false}.
-\item If \tcode{(a == b) != false}, then \tcode{(++(\dcr{}a) == j) != false}.
+      \tcode{(\dcr{}(++a) == b) != false}.
+\item If \tcode{(a == b) != false}, then \tcode{(++(\dcr{}a) == b) != false}.
 \end{itemize}
 \end{addedblock}
 
@@ -1397,27 +1410,27 @@ namespace std {
 \begin{addedblock}
 \begin{codeblock}
   // \ref{common.iterators} Common iterators
-  template<typename A, typename B>
-  concept bool WeaklyEqualityComparable;  // \expos
-  template<Iterator I, Regular S>
-  concept bool WeakSentinel;              // \expos
+  template<class A, classB>
+  concept bool @\xname{WeaklyEqualityComparable}@;  // \expos
+  template<class I, class S>
+  concept bool @\xname{WeakSentinel}@;              // \expos
 
-  template <InputIterator I, WeakSentinel<I> S> class common_iterator;
-  template <InputIterator I1, WeakSentinel<I1> S1,
-            InputIterator I2, WeakSentinel<I2> S2>
-    requires EqualityComparable<I1, I2>() && WeaklyEqualityComparable<I1, S2> &&
-      WeaklyEqualityComparable<I2, S1>
+  template <InputIterator I, @\xname{WeakSentinel}@<I> S> class common_iterator;
+  template <InputIterator I1, @\xname{WeakSentinel}@<I1> S1,
+            InputIterator I2, @\xname{WeakSentinel}@<I2> S2>
+    requires EqualityComparable<I1, I2>() && @\xname{WeaklyEqualityComparable}@<I1, S2> &&
+      @\xname{WeaklyEqualityComparable}@<I2, S1>
   bool operator==(
     const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
-  template <InputIterator I1, WeakSentinel<I1> S1,
-            InputIterator I2, WeakSentinel<I2> S2>
-    requires EqualityComparable<I1, I2>() && WeaklyEqualityComparable<I1, S2> &&
-      WeaklyEqualityComparable<I2, S1>
+  template <InputIterator I1, @\xname{WeakSentinel}@<I1> S1,
+            InputIterator I2, @\xname{WeakSentinel}@<I2> S2>
+    requires EqualityComparable<I1, I2>() && @\xname{WeaklyEqualityComparable}@<I1, S2> &&
+      @\xname{WeaklyEqualityComparable}@<I2, S1>
   bool operator!=(
     const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
 
-  template <InputIterator I1, WeakSentinel<I1> S1,
-            InputIterator I2, WeakSentinel<I2> S2>
+  template <InputIterator I1, @\xname{WeakSentinel}@<I1> S1,
+            InputIterator I2, @\xname{WeakSentinel}@<I2> S2>
     requires SizedIteratorRange<I1, I1> && SizedIteratorRange<I2, I2> &&
       requires (I1 a, I2 b) { {a-b}->DifferenceType<I2>; {b-a}->DifferenceType<I2>; }
       requires (I1 i, S2 s) { {i-s}->DifferenceType<I2>; {s-i}->DifferenceType<I2>; }
@@ -1738,8 +1751,8 @@ namespace std {
     using type = typename T::difference_type;
   }
   template <class T>
-  struct difference_type<T, enable_if_t<is_integral<T>::value>> {
-    using type = decltype(declval<T>() - declval<T>());
+  struct difference_type<T, enable_if_t<is_integral<T>::value>>
+    : make_unsigned< decltype(declval<T>() - declval<T>()) > {
   };
   template <class T>
     using DifferenceType = typename difference_type<T>::type;
@@ -3857,8 +3870,8 @@ fun(CI(make_counted_iterator(s.begin(), 10)),
 \begin{codeblock}
 namespace std {
   // \expos
-  template<typename A, typename B>
-  concept bool WeaklyEqualityComparable =
+  template<class A, class B>
+  concept bool @\xname{WeaklyEqualityComparable}@ =
     EqualityComparable<A>() && EqualityComparable<B>() &&
     requires(A a, B b) {
       {a==b} -> Boolean;
@@ -3867,11 +3880,12 @@ namespace std {
       {b!=a} -> Boolean;
     };
   // \expos
-  template<Iterator I, Regular S>
-  concept bool WeakSentinel =
-    WeaklyEqualityComparable<I, S>;
+  template<class I, class S>
+  concept bool @\xname{WeakSentinel}@ =
+    Iterator<I> && Regular<S> &&
+    @\xname{WeaklyEqualityComparable}@<I, S>;
 
-  template <InputIterator I, WeakSentinel<I> S>
+  template <InputIterator I, @\xname{WeakSentinel}@<I> S>
     requires !Same<I, S>
   class common_iterator {
   public:
@@ -3886,10 +3900,10 @@ namespace std {
     common_iterator();
     common_iterator(I i);
     common_iterator(S s);
-    template <InputIterator U, WeakSentinel<U> V>
+    template <InputIterator U, @\xname{WeakSentinel}@<U> V>
       requires Convertible<U, I> && Convertible<V, S>
     common_iterator(const common_iterator<U, V>& u);
-    template <InputIterator U, WeakSentinel<U> V>
+    template <InputIterator U, @\xname{WeakSentinel}@<U> V>
       requires Convertible<U, I> && Convertible<V, S>
     common_iterator& operator=(const common_iterator<U, V>& u);
 
@@ -3906,21 +3920,21 @@ namespace std {
     S sent;           // \expos
   };
 
-  template <InputIterator I1, WeakSentinel<I1> S1,
-            InputIterator I2, WeakSentinel<I2> S2>
-    requires EqualityComparable<I1, I2>() && WeaklyEqualityComparable<I1, S2> &&
-      WeaklyEqualityComparable<I2, S1>
+  template <InputIterator I1, @\xname{WeakSentinel}@<I1> S1,
+            InputIterator I2, @\xname{WeakSentinel}@<I2> S2>
+    requires EqualityComparable<I1, I2>() && @\xname{WeaklyEqualityComparable}@<I1, S2> &&
+      @\xname{WeaklyEqualityComparable}@<I2, S1>
   bool operator==(
     const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
-  template <InputIterator I1, WeakSentinel<I1> S1,
-            InputIterator I2, WeakSentinel<I2> S2>
-    requires EqualityComparable<I1, I2>() && WeaklyEqualityComparable<I1, S2> &&
-      WeaklyEqualityComparable<I2, S1>
+  template <InputIterator I1, @\xname{WeakSentinel}@<I1> S1,
+            InputIterator I2, @\xname{WeakSentinel}@<I2> S2>
+    requires EqualityComparable<I1, I2>() && @\xname{WeaklyEqualityComparable}@<I1, S2> &&
+      @\xname{WeaklyEqualityComparable}@<I2, S1>
   bool operator!=(
     const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
 
-  template <InputIterator I1, WeakSentinel<I1> S1,
-            InputIterator I2, WeakSentinel<I2> S2>
+  template <InputIterator I1, @\xname{WeakSentinel}@<I1> S1,
+            InputIterator I2, @\xname{WeakSentinel}@<I2> S2>
     requires SizedIteratorRange<I1, I1> && SizedIteratorRange<I2, I2> &&
       requires (I1 a, I2 b) { {a-b}->DifferenceType<I2>; {b-a}->DifferenceType<I2>; }
       requires (I1 i, S2 s) { {i-s}->DifferenceType<I2>; {s-i}->DifferenceType<I2>; }
@@ -3931,8 +3945,8 @@ namespace std {
 \end{codeblock}
 
 \pnum
-\enternote The use of the expository \tcode{WeaklyEqualityComparable} and
-\tcode{WeakSentinel} concepts is avoid the self-referential requirements that
+\enternote The use of the expository \tcode{@\xname{WeaklyEqualityComparable}@} and
+\tcode{@\xname{WeakSentinel}@} concepts is avoid the self-referential requirements that
 would happen if parameters \tcode{I} and \tcode{S} use \tcode{common_iterator<I, S>}
 as their common type.\exitnote
 
@@ -3988,7 +4002,7 @@ unspecified whether any initialization is performed for \tcode{iter}.
 
 \indexlibrary{\idxcode{common_iterator}!constructor}%
 \begin{itemdecl}
-template <InputIterator U, WeakSentinel<U> V>
+template <InputIterator U, @\xname{WeakSentinel}@<U> V>
   requires Convertible<U, I> && Convertible<V, S>
 common_iterator(const common_iterator<U, V>& u);
 \end{itemdecl}
@@ -4010,7 +4024,7 @@ It is unspecified whether any initialization is performed for \tcode{sent}.
 \indexlibrary{\idxcode{operator=}!\idxcode{common_iterator}}%
 \indexlibrary{\idxcode{common_iterator}!\idxcode{operator=}}%
 \begin{itemdecl}
-template <InputIterator U, WeakSentinel<U> V>
+template <InputIterator U, @\xname{WeakSentinel}@<U> V>
   requires Convertible<U, I> && Convertible<V, S>
 common_iterator& operator=(const common_iterator<U, V>& u);
 \end{itemdecl}
@@ -4099,10 +4113,10 @@ return tmp;
 \indexlibrary{\idxcode{operator==}!\idxcode{common_iterator}}%
 \indexlibrary{\idxcode{common_iterator}!\idxcode{operator==}}%
 \begin{itemdecl}
-template <InputIterator I1, WeakSentinel<I1> S1,
-          InputIterator I2, WeakSentinel<I2> S2>
-  requires EqualityComparable<I1, I2>() && WeaklyEqualityComparable<I1, S2> &&
-    WeaklyEqualityComparable<I2, S1>
+template <InputIterator I1, @\xname{WeakSentinel}@<I1> S1,
+          InputIterator I2, @\xname{WeakSentinel}@<I2> S2>
+  requires EqualityComparable<I1, I2>() && @\xname{WeaklyEqualityComparable}@<I1, S2> &&
+    @\xname{WeaklyEqualityComparable}@<I2, S1>
 bool operator==(
   const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
 \end{itemdecl}
@@ -4122,10 +4136,10 @@ x.is_sentinel ?
 \indexlibrary{\idxcode{operator"!=}!\idxcode{common_iterator}}%
 \indexlibrary{\idxcode{common_iterator}!\idxcode{operator"!=}}%
 \begin{itemdecl}
-template <InputIterator I1, WeakSentinel<I1> S1,
-          InputIterator I2, WeakSentinel<I2> S2>
-  requires EqualityComparable<I1, I2>() && WeaklyEqualityComparable<I1, S2> &&
-    WeaklyEqualityComparable<I2, S1>
+template <InputIterator I1, @\xname{WeakSentinel}@<I1> S1,
+          InputIterator I2, @\xname{WeakSentinel}@<I2> S2>
+  requires EqualityComparable<I1, I2>() && @\xname{WeaklyEqualityComparable}@<I1, S2> &&
+    @\xname{WeaklyEqualityComparable}@<I2, S1>
 bool operator!=(
   const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
 \end{itemdecl}
@@ -4138,8 +4152,8 @@ bool operator!=(
 \indexlibrary{\idxcode{operator-}!\idxcode{common_iterator}}%
 \indexlibrary{\idxcode{common_iterator}!\idxcode{operator-}}%
 \begin{itemdecl}
-template <InputIterator I1, WeakSentinel<I1> S1,
-          InputIterator I2, WeakSentinel<I2> S2>
+template <InputIterator I1, @\xname{WeakSentinel}@<I1> S1,
+          InputIterator I2, @\xname{WeakSentinel}@<I2> S2>
   requires SizedIteratorRange<I1, I1> && SizedIteratorRange<I2, I2> &&
     requires (I1 a, I2 b) { {a-b}->DifferenceType<I2>; {b-a}->DifferenceType<I2>; }
     requires (I1 i, S2 s) { {i-s}->DifferenceType<I2>; {s-i}->DifferenceType<I2>; }
@@ -5938,8 +5952,8 @@ return an iterator and a sentinel. \enternote An iterator is a valid sentinel.
 \exitnote The \tcode{SizedIterable} concept refines \tcode{Iterable} but adds
 the requirement that the number of elements in the iterable can be determined
 in constant time with the \tcode{size} function. The \tcode{Range} concept describes
-requirements on an iterable type with constant-time copy, WeakInputIterator and assignment
-operators.
+requirements on an \tcode{Iterable} type with constant-time copy and assign
+operations.
 
 \pnum
 In addition to the three fundamental iterable categories, this standard defines
@@ -5977,27 +5991,28 @@ concept bool Iterable =
 
 \tcode{begin} and \tcode{end} are required to be amortized constant time.
 \enternote Most algorithms requiring this concept simply forward to an
-Iterator-based algorithm by calling \tcode{begin} and \tcode{end}. \exitnote
+\tcode{Iterator}-based algorithm by calling \tcode{begin} and \tcode{end}. \exitnote
 
 \rSec3[sized.iterables]{Sized iterables}
 
 \pnum
-The \tcode{SizedIterable} concept describes the requirements of an Iterable
+The \tcode{SizedIterable} concept describes the requirements of an \tcode{Iterable}
 type that knows its size in constant time with the \tcode{size} function.
 
 \begin{codeblock}
-// For exposition only:
-template <Iterator T>
-concept bool SizedIterableLike_ =
+// \expos
+template <class T>
+concept bool @\xname{SizedIterableLike}@ =
+  Iterable<T> &&
   requires(T t) {
     typename SizeType<T>;
     { size(t) } -> SizeType<T>;
     requires Integral<SizeType<T>>;
   };
 
-template <SizedIterableLike_ T>
+template <class T>
 concept bool SizedIterable =
-  is_sized_iterable<T>::value;
+  @\xname{SizedIterableLike}@<T> && is_sized_iterable<T>::value;
 \end{codeblock}
 
 \pnum
@@ -6010,20 +6025,20 @@ case of accidental conformance.
 A possible implementation for \tcode{is_sized_iterable} is given below:
 
 \begin{codeblock}
-// For exposition only:
+// \expos
 template<typename R>
-struct is_sized_iterable_impl_
-  : std::integral_constant< bool, SizedIterableLike_<R> >
-{};
+struct @\xname{is_sized_iterable_impl}@ :
+  std::integral_constant<bool, @\xname{SizedIterableLike}@<R>> {
+};
 
 template<typename R>
-struct is_sized_iterable
-  : conditional<
-        is_same<R, remove_const_t<remove_reference_t<R>>>::value,
-        is_sized_iterable_impl_<R>,
-        is_sized_iterable<remove_const_t<remove_reference_t<R>>>
-    >::type
-{};
+struct is_sized_iterable :
+  conditional<
+    is_same<R, remove_const_t<remove_reference_t<R>>>::value,
+    @\xname{is_sized_iterable_impl}@<R>,
+    is_sized_iterable<remove_const_t<remove_reference_t<R>>>
+  >::type {
+};
 \end{codeblock}
 \ednote{REVIEW: The handling of top-level reference here is inconsistent with the other
 type traits.}
@@ -6032,38 +6047,38 @@ type traits.}
 \rSec3[range.iterables]{Ranges}
 
 \pnum
-The \tcode{Range} concept describes the requirements of an Iterable type that
+The \tcode{Range} concept describes the requirements of an \tcode{Iterable} type that
 has constant time copy, move and assignment operators; that is, the cost of
 these operations is not proportional to the number of elements in the Range.
 
 \pnum
 \enterexample
-Examples of Ranges are:
+Examples of \tcode{Range}s are:
 
 \begin{itemize}
-\item An Iterable type that wraps a pair of iterators.
+\item An \tcode{Iterable} type that wraps a pair of iterators.
 
-\item An Iterable type that hold its elements by \tcode{shared_ptr}
+\item An \tcode{Iterable} type that hold its elements by \tcode{shared_ptr}
 and shares ownership with all its copies.
 
-\item An Iterable type that generates its elements on demand.
+\item An \tcode{Iterable} type that generates its elements on demand.
 \end{itemize}
 
-A container~(\cxxref{containers}) is not a Range since copying the
+A container~(\cxxref{containers}) is not a \tcode{Range} since copying the
 container copies the elements, which cannot be done in constant time.
 \exitexample
 
 \begin{codeblock}
-template <Iterable T>
+template <class T>
 concept bool Range =
-  Semiregular<T> && is_range<T>::value;
+  Iterable<T> && Semiregular<T> && is_range<T>::value;
 \end{codeblock}
 
 \pnum
-Since the difference between Iterable and Range is largely semantic, the
+Since the difference between \tcode{Iterable} and \tcode{Range} is largely semantic, the
 two are differentiated with the help of the \tcode{is_range} trait. Users may
 specialize the \tcode{is_range} trait. By default, \tcode{is_range} uses the
-following heuristics to determine whether an Iterable type \tcode{T} is a Range:
+following heuristics to determine whether an \tcode{Iterable} type \tcode{T} is a \tcode{Range}:
 
 \begin{itemize}
 \item If \tcode{T} derives from \tcode{range_base}, \tcode{is_range<T>::value}
@@ -6082,18 +6097,19 @@ Below is a possible implementation of the \tcode{is_range} trait.
 struct range_base
 {};
 
-// For exposition only:
-template <Iterable T>
-concept bool ContainerLike_ =
+// \expos
+template <class T>
+concept bool @\xname{ContainerLike}@ =
+  Iterable<T> &&
   !Same<decltype(*begin(declval<T &>())),
         decltype(*begin(declval<T const &>()))>;
 
-// For exposition only:
+// \expos
 template<typename T>
-struct is_range_impl_
+struct @\xname{is_range_impl}@
   : std::integral_constant<
       bool,
-      Iterable<T> && (!ContainerLike_<T> || Derived<T, range_base>)
+      Iterable<T> && (!@\xname{ContainerLike}@<T> || Derived<T, range_base>)
     >
 {};
 
@@ -6101,7 +6117,7 @@ template<typename T, typename Enable = void>
 struct is_range
   : conditional<
       is_same<T, remove_const_t<remove_reference_t<T>>>::value,
-      is_range_impl_<T>,
+      @\xname{is_range_impl}@<T>,
       is_range<remove_const_t<remove_reference_t<T>>>
     >::type
 {};
@@ -6113,67 +6129,67 @@ type traits.}
 \rSec3[bounded.iterables]{Bounded iterables}
 
 \pnum
-The \tcode{BoundedIterable} concept describes requirements of an Iterable type
+The \tcode{BoundedIterable} concept describes requirements of an \tcode{Iterable} type
 for which \tcode{begin} and \tcode{end} return objects of the same type.
 \enternote The standard containers~(\cxxref{containers}) are models of
 \tcode{BoundedIterable}. \exitnote
 
 \begin{codeblock}
-template <Iterable T>
+template <class T>
 concept bool BoundedIterable =
-  Same<IteratorType<T>, SentinelType<T>>;
+  Iterable<T> && Same<IteratorType<T>, SentinelType<T>>;
 \end{codeblock}
 
 \rSec3[input.iterables]{Input iterables}
 
 \pnum
-The \tcode{InputIterable} concept describes requirements of an Iterable type
+The \tcode{InputIterable} concept describes requirements of an \tcode{Iterable} type
 for which \tcode{begin} returns a model of
 \tcode{InputIterator}~(\ref{input.iterators}).
 
 \begin{codeblock}
-template <Iterable T>
+template <class T>
 concept bool InputIterable =
-  InputIterator<IteratorType<T>>;
+  Iterable<T> && InputIterator<IteratorType<T>>;
 \end{codeblock}
 
 \rSec3[forward.iterables]{Forward iterables}
 
 \pnum
 The \tcode{ForwardIterable} concept describes requirements of an
-InputIterable type for which \tcode{begin} returns a model of
+\tcode{InputIterable} type for which \tcode{begin} returns a model of
 \tcode{ForwardIterator}~(\ref{forward.iterators}).
 
 \begin{codeblock}
-template <InputIterable T>
+template <class T>
 concept bool ForwardIterable =
-  ForwardIterator<IteratorType<T>>;
+  InputIterable<T> && ForwardIterator<IteratorType<T>>;
 \end{codeblock}
 
 \rSec3[bidirectional.iterables]{Bidirectional iterables}
 
 \pnum
 The \tcode{BidirectionalIterable} concept describes requirements of a
-ForwardIterable type for which \tcode{begin} returns a model of
+\tcode{ForwardIterable} type for which \tcode{begin} returns a model of
 \tcode{BidirectionalIterator}~(\ref{bidirectional.iterators}).
 
 \begin{codeblock}
-template <ForwardIterable T>
+template <class T>
 concept bool BidirectionalIterable =
-  BidirectionalIterator<IteratorType<T>>;
+  ForwardIterable<T> && BidirectionalIterator<IteratorType<T>>;
 \end{codeblock}
 
 \rSec3[random.access.iterables]{Random access iterables}
 
 \pnum
 The \tcode{RandomAccessIterable} concept describes requirements of a
-BidirectionalIterable type for which \tcode{begin} returns a model of
+\tcode{BidirectionalIterable} type for which \tcode{begin} returns a model of
 \tcode{RandomAccessIterator}~(\ref{random.access.iterators}).
 
 \begin{codeblock}
-template <BidirectionalIterable T>
+template <class T>
 concept bool RandomAccessIterable =
-  RandomAccessIterator<IteratorType<T>>;
+  BidirectionalIterable<T> && RandomAccessIterator<IteratorType<T>>;
 \end{codeblock}
 
 \end{addedblock}

@@ -138,22 +138,22 @@ namespace std {
 
   template<InputIterator I, Sentinel<I> S, class T, class Proj = identity>
     requires IndirectRelation<equal_to<>, Projected<I, Proj>, const T *>
-    iterator_difference_t<I>
+    DifferenceType<I>
       count(I first, S last, const T& value, Proj proj = Proj{});
 
   template<InputIterable Rng, class T, class Proj = identity>
     requires IndirectRelation<equal_to<>, Projected<IteratorType<Rng>, Proj>, const T *>
-    iterator_difference_t<IteratorType<Rng>>
+    DifferenceType<IteratorType<Rng>>
       count(Rng&& rng, const T& value, Proj proj = Proj{});
 
   template<InputIterator I, Sentinel<I> S, class Proj = identity,
       IndirectCallablePredicate<Projected<I, Proj>> Pred>
-    iterator_difference_t<I>
+    DifferenceType<I>
       count_if(I first, S last, Pred pred, Proj proj = Proj{});
 
   template<InputIterable Rng, class Proj = identity,
       IndirectCallablePredicate<Projected<IteratorType<Rng>, Proj>> Pred>
-    iterator_difference_t<IteratorType<Rng>>
+    DifferenceType<IteratorType<Rng>>
       count_if(Rng&& rng, Pred pred, Proj proj = Proj{});
 
   template<InputIterator I1, Sentinel<I1> S1, WeakInputIterator I2,
@@ -259,7 +259,7 @@ namespace std {
       class Pred = equal_to<>, class Proj = identity>
     requires IndirectlyComparable<I1, const T*, Pred, Proj>
     I
-      search_n(I first, S last, iterator_difference_t<I> count,
+      search_n(I first, S last, DifferenceType<I> count,
                const T& value, Pred pred = Pred{},
                Proj proj = Proj{});
 
@@ -267,7 +267,7 @@ namespace std {
       class Proj = identity>
     requires IndirectlyComparable<IteratorType<Rng1>, const T*, Pred, Proj>
     IteratorType<Rng>
-      search_n(Rng& rng, iterator_difference_t<IteratorType<Rng>> count,
+      search_n(Rng& rng, DifferenceType<IteratorType<Rng>> count,
                const T& value, Pred pred = Pred{}, Proj proj = Proj{});
 
   // \ref{alg.modifying.operations}, modifying sequence operations:
@@ -468,7 +468,7 @@ namespace std {
   \end{codeblock}
   \ednote{REVIEW: N3351 only requires WeaklyIncrementable for fill and generate}
   \begin{codeblock}
-  template<Semiregular T, OutputIterator<T> O, Sentinel<I> S>
+  template<Semiregular T, OutputIterator<T> O, Sentinel<O> S>
     O fill(O first, S last, const T& value);
 
   template<Semiregular T, OutputIterable<T> Rng>
@@ -476,7 +476,7 @@ namespace std {
       fill(Rng& rng, const T& value);
 
   template<Semiregular T, WeakOutputIterator<T> O>
-    O fill_n(I first, iterator_difference_t<O> n, const T& value);
+    O fill_n(O first, DifferenceType<O> n, const T& value);
 
   template<Function F, OutputIterator<ResultType<F>> O,
       Sentinel<O> S>
@@ -495,7 +495,7 @@ namespace std {
     I remove(I first, S last, const T& value, Proj proj = Proj{});
 
   template<ForwardIterable Rng, class T, class Proj = identity>
-    requires Permutable<I> &&
+    requires Permutable<IteratorType<Rng>> &&
       IndirectRelation<equal_to<>, Projected<IteratorType<Rng>, Proj>, const T *>
     IteratorType<Rng>
       remove(Rng& rng, const T& value, Proj proj = Proj{});
@@ -507,7 +507,7 @@ namespace std {
 
   template<ForwardIterable Rng, class Proj = identity,
       IndirectCallablePredicate<Projected<IteratorType<Rng>, Proj>> Pred>
-    requires Permutable<I>
+    requires Permutable<IteratorType<Rng>>
     IteratorType<Rng>
       remove_if(Rng& rng, Pred pred, Proj proj = Proj{});
 
@@ -1808,22 +1808,22 @@ template<class InputIterator, class Predicate>
 \begin{itemdecl}
 template<InputIterator I, Sentinel<I> S, class T, class Proj = identity>
   requires IndirectRelation<equal_to<>, Projected<I, Proj>, const T *>
-  iterator_difference_t<I>
+  DifferenceType<I>
     count(I first, S last, const T& value, Proj proj = Proj{});
 
 template<InputIterable Rng, class T, class Proj = identity>
   requires IndirectRelation<equal_to<>, Projected<IteratorType<Rng>, Proj>, const T *>
-  iterator_difference_t<IteratorType<Rng>>
+  DifferenceType<IteratorType<Rng>>
     count(Rng&& rng, const T& value, Proj proj = Proj{});
 
 template<InputIterator I, Sentinel<I> S, class Proj = identity,
     IndirectCallablePredicate<Projected<I, Proj>> Pred>
-  iterator_difference_t<I>
+  DifferenceType<I>
     count_if(I first, S last, Pred pred, Proj proj = Proj{});
 
 template<InputIterable Rng, class Proj = identity,
     IndirectCallablePredicate<Projected<IteratorType<Rng>, Proj>> Pred>
-  iterator_difference_t<IteratorType<Rng>>
+  DifferenceType<IteratorType<Rng>>
     count_if(Rng&& rng, Pred pred, Proj proj = Proj{});
 \end{itemdecl}
 \end{addedblock}
@@ -2228,7 +2228,7 @@ template<ForwardIterator I, Sentinel<I> S, class T,
     class Pred = equal_to<>, class Proj = identity>
   requires IndirectlyComparable<I1, const T*, Pred, Proj>
   I
-    search_n(I first, S last, iterator_difference_t<I> count,
+    search_n(I first, S last, DifferenceType<I> count,
              const T& value, Pred pred = Pred{},
              Proj proj = Proj{});
 
@@ -2236,7 +2236,7 @@ template<ForwardIterable Rng, class T, class Pred = equal_to<>,
     class Proj = identity>
   requires IndirectlyComparable<IteratorType<Rng1>, const T*, Pred, Proj>
   IteratorType<Rng>
-    search_n(Rng& rng, iterator_difference_t<IteratorType<Rng>> count,
+    search_n(Rng& rng, DifferenceType<IteratorType<Rng>> count,
              const T& value, Pred pred = Pred{}, Proj proj = Proj{});
 \end{itemdecl}
 \end{addedblock}
@@ -2971,7 +2971,7 @@ template<class OutputIterator, class Size, class T>
 \end{removedblock}
 \begin{addedblock}
 \begin{itemdecl}
-template<Semiregular T, OutputIterator<T> O, Sentinel<I> S>
+template<Semiregular T, OutputIterator<T> O, Sentinel<O> S>
   O fill(O first, S last, const T& value);
 
 template<Semiregular T, OutputIterable<T> Rng>
@@ -2979,7 +2979,7 @@ template<Semiregular T, OutputIterable<T> Rng>
     fill(Rng& rng, const T& value);
 
 template<Semiregular T, WeakOutputIterator<T> O>
-  O fill_n(I first, iterator_difference_t<O> n, const T& value);
+  O fill_n(O first, DifferenceType<O> n, const T& value);
 \end{itemdecl}
 \end{addedblock}
 
@@ -3085,7 +3085,7 @@ template<ForwardIterator I, Sentinel<I> S, class T, class Proj = identity>
   I remove(I first, S last, const T& value, Proj proj = Proj{});
 
 template<ForwardIterable Rng, class T, class Proj = identity>
-  requires Permutable<I> &&
+  requires Permutable<IteratorType<Rng>> &&
     IndirectRelation<equal_to<>, Projected<IteratorType<Rng>, Proj>, const T *>
   IteratorType<Rng>
     remove(Rng& rng, const T& value, Proj proj = Proj{});
@@ -3097,7 +3097,7 @@ template<ForwardIterator I, Sentinel<I> S, class Proj = identity,
 
 template<ForwardIterable Rng, class Proj = identity,
     IndirectCallablePredicate<Projected<IteratorType<Rng>, Proj>> Pred>
-  requires Permutable<I>
+  requires Permutable<IteratorType<Rng>>
   IteratorType<Rng>
     remove_if(Rng& rng, Pred pred, Proj proj = Proj{});
 \end{itemdecl}
