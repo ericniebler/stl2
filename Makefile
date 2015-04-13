@@ -13,19 +13,19 @@
 
 FIGURES = $(patsubst %.dot,%.pdf,$(wildcard *.dot))
 
-TSPDF = pdflatex D4382 | grep -v "^Overfull"
+TSPDF = pdflatex N4382 | grep -v "^Overfull"
 
 default: rebuild
 
 clean:
-	rm -f *.aux D4382.pdf *.idx *.ilg *.ind *.log *.lot *.lof *.tmp *.out
+	rm -f *.aux N4382.pdf *.idx *.ilg *.ind *.log *.lot *.lof *.tmp *.out
 
 refresh:
 	$(TSPDF)
 
 rebuild:
 	$(TSPDF)
-	bibtex D4382
+	bibtex N4382
 	$(TSPDF)
 	$(TSPDF)
 

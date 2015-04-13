@@ -1022,11 +1022,16 @@ member function need not be defined.\exitnote
 The indirect callable concepts are used to constrain those algorithms that accept
 callable objects~(\cxxref{func.def}) as arguments.
 
+\indexlibrary{\idxcode{IndirectCallableResultType}}%
 \indexlibrary{\idxcode{IndirectCallable}}%
 \indexlibrary{\idxcode{IndirectRegularCallable}}%
 \indexlibrary{\idxcode{IndirectCallablePredicate}}%
 \indexlibrary{\idxcode{IndirectCallableRelation}}%
 \begin{codeblock}
+  template <class F, class...Is>
+  using IndirectCallableResultType =
+    ResultType<FunctionType<F>, ValueType<Is>...>;
+
   template <class F, class...Is>
   concept bool IndirectCallable =
     (Readable<Is> && ...) &&
@@ -1167,40 +1172,18 @@ relation, the value type must model \tcode{TotallyOrdered}.\exitnote
 
 \rSec1[iteratorranges]{Iterator range requirements}
 
-\rSec2[iteratorrange.iteratorranges]{Iterator range}
-
-The \tcode{IteratorRange} concept defines a pair of types (an
-\tcode{Iterator}~(\ref{iterator.iterators}) and a \tcode{Sentinel}), that can be compared for
-equality. This concept is the key that allows iterator ranges to be defined by pairs of types
-that are not the same.
-
-\indexlibrary{\idxcode{IteratorRange}}%
-\begin{codeblock}
-  template <class I, class S>
-  concept bool IteratorRange =
-    Iterator<I> &&
-    Regular<S> &&
-    EqualityComparable<I, S>();
-\end{codeblock}
-
-\pnum
-Let \tcode{a} be a valid iterator of type \tcode{I} and let \tcode{b} be a valid sentinel of type
-\tcode{S}. Then \tcode{I} and \tcode{S} model concept \tcode{IteratorRange} if and only if
-\tcode{b} is reachable from \tcode{a}.
-
 \rSec2[sizediteratorrange.iteratorranges]{Sized Iterator range}
 
-The \tcode{SizedIteratorRange} concept refines \tcode{IteratorRange}~(\ref{iteratorrange.iteratorranges})
-and allows the use of the \tcode{-} operator to compute the distance
-between an \tcode{Iterator}~(\ref{iterator.iterators}) and a \tcode{Sentinel} in constant time.
+The \tcode{SizedIteratorRange} concept describes the requirements on an
+\tcode{Iterator}~(\ref{iterator.iterators}) and a \tcode{Sentinel}
+that allows the use of the \tcode{-} operator to compute the distance
+between them in constant time.
 
 \indexlibrary{\idxcode{SizedIteratorRange}}%
 \begin{codeblock}
   template <class I, class S>
   concept bool SizedIteratorRange =
-    Iterator<I> &&
-    Regular<S> &&
-    IteratorRange<I, S> &&
+    Sentinel<S, I> &&
     requires (I i, S j) {
       { i - i } -> DifferenceType<I>;
       { j - j } -> DifferenceType<I>;
@@ -1218,11 +1201,17 @@ Let \tcode{a} be a valid iterator of type \tcode{I} and \tcode{b} be a valid sen
 \begin{itemize}
 \item \tcode{(b - a) == n}.
 \item \tcode{(a - b) == -n}.
+\item \tcode{(a - a) == 0}.
+\item \tcode{(b - b) == 0}.
 \end{itemize}
 
 \enternote The \tcode{SizedIteratorRange} concept is modeled by pairs of
 \tcode{RandomAccessIterator}s~(\ref{random.access.iterators}) and by counted iterators and their
 sentinels~(\ref{counted.iterator}).\exitnote
+
+\ednote{This concept also gives us a way to demote the category of \tcode{move_iterator}s to Input
+while retaining the ability of \tcode{move_iterator} pairs to communicate the range's size to
+container constructors.}
 
 \end{addedblock}
 
@@ -1752,11 +1741,17 @@ namespace std {
   }
   template <class T>
   struct difference_type<T, enable_if_t<is_integral<T>::value>>
-    : make_unsigned< decltype(declval<T>() - declval<T>()) > {
+    : make_signed< decltype(declval<T>() - declval<T>()) > {
   };
   template <class T>
     using DifferenceType = typename difference_type<T>::type;
 \end{codeblock}
+
+\ednote{REVIEW: The \tcode{difference_type} of unsigned \tcode{Integral} types
+is not large enough to cover the entire range. The Palo Alto report used
+a separate type trait for \tcode{WeaklyIncrementable}: \tcode{DistanceType}.
+\tcode{DifferenceType} is only used for \tcode{RandomAccessIterator}s. Cue
+discussion about the pros and cons of the two approaches.}
 
 \pnum
 Users may specialize \tcode{difference_type} on user-defined types.
@@ -5985,7 +5980,7 @@ concept bool Iterable =
     typename SentinelType<T>;
     { begin(t) } -> IteratorType<T>;
     { end(t) } -> SentinelType<T>;
-    requires IteratorRange<IteratorType, SentinelType>;
+    requires Sentinel<SentinelType<T>, IteratorType<T>>;
   };
 \end{codeblock}
 
@@ -6005,9 +6000,9 @@ template <class T>
 concept bool @\xname{SizedIterableLike}@ =
   Iterable<T> &&
   requires(T t) {
-    typename SizeType<T>;
-    { size(t) } -> SizeType<T>;
-    requires Integral<SizeType<T>>;
+    { size(t) } -> Integral;
+    requires Convertible<decltype(size(t)),
+                         DifferenceType<IteratorType<T>>>;
   };
 
 template <class T>
@@ -6016,32 +6011,25 @@ concept bool SizedIterable =
 \end{codeblock}
 
 \pnum
-Any \tcode{Iterable} object \tcode{o} for which \tcode{size(o)} compiles and
-returns an \tcode{Integral} type is a \tcode{SizedIterable} by default. The
-\tcode{is_sized_iterable} trait allows users to override the default in the
-case of accidental conformance.
+For any type \tcode{T}, \tcode{is_sized_iterable<T>} derives from
+\tcode{true_type} if \tcode{T} models \tcode{\xname{SizedIterableLike}},
+and \tcode{false_type} otherwise.
 
-\enternote
-A possible implementation for \tcode{is_sized_iterable} is given below:
+\pnum
+Users are free to specialize \tcode{is_sized_iterable}. \enternote Users
+may specialize \tcode{is_sized_iterable} to override the default in the
+case of accidental conformance.\exitnote
+
+\pnum
+\enternote A possible implementation for \tcode{is_sized_iterable} is given below:
 
 \begin{codeblock}
-// \expos
-template<typename R>
-struct @\xname{is_sized_iterable_impl}@ :
-  std::integral_constant<bool, @\xname{SizedIterableLike}@<R>> {
-};
+template <class R>
+struct is_sized_iterable : false_type { };
 
-template<typename R>
-struct is_sized_iterable :
-  conditional<
-    is_same<R, remove_const_t<remove_reference_t<R>>>::value,
-    @\xname{is_sized_iterable_impl}@<R>,
-    is_sized_iterable<remove_const_t<remove_reference_t<R>>>
-  >::type {
-};
+template <@\xname{SizedIterableLike}@ R>
+struct is_sized_iterable<R> : true_type { };
 \end{codeblock}
-\ednote{REVIEW: The handling of top-level reference here is inconsistent with the other
-type traits.}
 \exitnote
 
 \rSec3[range.iterables]{Ranges}
@@ -6083,10 +6071,10 @@ following heuristics to determine whether an \tcode{Iterable} type \tcode{T} is 
 \begin{itemize}
 \item If \tcode{T} derives from \tcode{range_base}, \tcode{is_range<T>::value}
 is true.
-\item If a top-level const changes \tcode{T}'s \tcode{IteratorType}'s
+\item If a top-level \tcode{const} changes \tcode{T}'s \tcode{IteratorType}'s
 \tcode{ReferenceType} type, \tcode{is_range<T>::value}
-is false. \enternote Deep constness implies element ownership, whereas shallow
-constness implies reference semantics. \exitnote
+is false. \enternote Deep \tcode{const}-ness implies element ownership, whereas shallow
+\tcode{const}-ness implies reference semantics. \exitnote
 \end{itemize}
 
 \pnum
@@ -6094,36 +6082,25 @@ constness implies reference semantics. \exitnote
 Below is a possible implementation of the \tcode{is_range} trait.
 
 \begin{codeblock}
-struct range_base
-{};
+struct range_base { };
 
 // \expos
 template <class T>
 concept bool @\xname{ContainerLike}@ =
   Iterable<T> &&
-  !Same<decltype(*begin(declval<T &>())),
-        decltype(*begin(declval<T const &>()))>;
+  !Same<ReferenceType<IteratorType<T &>>,
+        ReferenceType<IteratorType<const T &>>>;
 
 // \expos
-template<typename T>
-struct @\xname{is_range_impl}@
-  : std::integral_constant<
-      bool,
-      Iterable<T> && (!@\xname{ContainerLike}@<T> || Derived<T, range_base>)
-    >
-{};
+template <class T>
+struct is_range : false_type { };
 
-template<typename T, typename Enable = void>
-struct is_range
-  : conditional<
-      is_same<T, remove_const_t<remove_reference_t<T>>>::value,
-      @\xname{is_range_impl}@<T>,
-      is_range<remove_const_t<remove_reference_t<T>>>
-    >::type
-{};
+template <Iterable T>
+  requires Derived<remove_reference_t<T>, range_base> ||
+    !@\xname{ContainerLike}@<remove_reference_t<T>>
+struct is_range<T> : true_type { };
 \end{codeblock}
-\ednote{REVIEW: The handling of top-level reference here is inconsistent with the other
-type traits.}
+\ednote{REVIEW: Will this create ambiguities with user specializations?}
 \exitnote
 
 \rSec3[bounded.iterables]{Bounded iterables}
