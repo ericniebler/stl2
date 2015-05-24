@@ -57,7 +57,7 @@ The \tcode{Same} concept is used when requiring that two types are the same.
 
 \pnum
 \tcode{Same<T, U>} is an alias for \tcode{true} when \tcode{T} and \tcode{U}
-denote the same time after the elimination of aliases; otherwise, it is an alias for
+denote the same \oldtxt{time}\newtxt{type} after the elimination of aliases; otherwise, it is an alias for
 \tcode{false}. \tcode{Same<T, U>} shall have the same value as
 \tcode{is_same<T, U>::value}.
 
@@ -90,11 +90,14 @@ concept bool Convertible = is_convertible<T, U>::value;
 
 \begin{itemdescr}
 \pnum
-The \tcode{Convertible} concept concept expresses the requirement that a type
+The \tcode{Convertible} concept \oldtxt{concept }expresses the requirement that a type
 \tcode{T} can be implicitly converted to type \tcode{U}.
 \end{itemdescr}
 
 \rSec2[concepts.lib.corelang.common]{Concept Common}
+
+\ednote{BUGBUG Think about whether \tcode{Common<unsigned, int>} satisfies the concept,
+becuase signed<->unsigned is not unambiguously convertile.}
 
 \pnum
 Two types \tcode{T} and \tcode{U} are \techterm{unambiguously convertible} if
@@ -119,8 +122,10 @@ template <class T, class U>
 concept bool Common =
   requires (T t, U u) {
     typename CommonType<T, U>;
-    {CommonType<T, U>{forward<T>(t)}};
-    {CommonType<T, U>{forward<U>(u)}};
+    @\newtxt{typename CommonType<U, T>;}@
+    @\newtxt{requires Same<CommonType<U, T>, CommonType<T, U> >;}@
+    {CommonType<T, U>@\oldtxt{\{}\newtxt{(}@forward<T>(t)@\oldtxt{\}}\newtxt{)}@};
+    {CommonType<T, U>@\oldtxt{\{}\newtxt{(}@forward<U>(u)@\oldtxt{\}}\newtxt{)}@};
   };
 \end{itemdecl}
 
@@ -132,9 +137,12 @@ and \tcode{U} can be explicitly converted to the common type.
 
 \pnum
 Let \tcode{C} be \tcode{CommonType<T, U>}. Let \tcode{t1} and \tcode{t2} be objects
-of type \tcode{T}. \tcode{t1} equals \tcode{t2} if and only if \tcode{C\{t1\}} equals
-\tcode{C\{t2\}}. Let \tcode{u1} and \tcode{u2} be object of type \tcode{U}. \tcode{u1}
-equals \tcode{u2} if and only if \tcode{C\{u1\}} equals \tcode{C\{u2\}}.
+of type \tcode{T}. \tcode{t1} equals \tcode{t2} if and only if
+\tcode{C\oldtxt{\{}\newtxt{(}t1\oldtxt{\}}\newtxt{)}} equals
+\tcode{C\oldtxt{\{}\newtxt{(}t2\oldtxt{\}}\newtxt{)}}. Let \tcode{u1} and \tcode{u2} be
+object of type \tcode{U}. \tcode{u1} equals \tcode{u2} if and only if
+\tcode{C\oldtxt{\{}\newtxt{(}u1\oldtxt{\}}\newtxt{)}} equals
+\tcode{C\oldtxt{\{}\newtxt{(}u2\oldtxt{\}}\newtxt{)}}.
 
 \pnum
 \enternote Users are free to specialize \tcode{common_type} when at least one parameter is a
@@ -151,10 +159,14 @@ concept bool Boolean =
   requires(B b1, B b2) {
     { bool(b1) };
     { !b1 } -> Boolean;
-    requires Same<decltype(b1 && b2), bool>;
-    requires Same<decltype(b1 || b2), bool>;
+    @\oldtxt{requires Same<decltype(b1 \&\& b2), bool>};@
+    @\newtxt{\{b1 \&\& b2\} -> Same<bool>;}@
+    @\oldtxt{requires Same<decltype(b1 || b2), bool>;}@
+    @\newtxt{\{b1 || b2\} -> Same<bool>;}@
   };
 \end{itemdecl}
+
+\ednote{Add a bullet about the required short-circuiting of \tcode{\&\&} and \tcode{||}.}
 
 \pnum
 The \tcode{Boolean} concept describes the requirements on a type that is
@@ -356,17 +368,22 @@ references to [moveassignable] with references to
 \begin{itemdecl}
 template <class T>
 concept bool MoveAssignable =
-  is_move_assignable<T>::value;
+  @\oldtxt{is_move_assignable<T>::value;}@
+  @\newtxt{requires(T a, T b) \{}@
+    @\newtxt{\{ a = move(b) \} -> Same<T\&>;}@
+  @\newtxt{\};}@
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-Let \tcode{rv} be an rvalue of type \tcode{T}. Then a type \tcode{T} models
+Let \tcode{rv} be an rvalue of type \tcode{T}
+\newtxt{ and let \tcode{t} be an lvalue of type \tcode{T}}. Then \oldtxt{a }type \tcode{T} models
 \tcode{MoveAssignable} if and only if
 
 \begin{itemize}
-\item The expression \tcode{t = rv} is an lvalue of type (non-const) \tcode{T}, the expression returns
-a reference to \tcode{t}, and after the assignment \tcode{t} is equal to the value
+\item \newtxt{\tcode{(addressof(t = rv) == addressof(t)) != false)}}.
+\item \oldtxt{The expression \tcode{t = rv} is an lvalue of type (non-const) \tcode{T}, the expression returns
+a reference to \tcode{t}, and a}\newtxt{A}fter the assignment \tcode{t} is equal to the value
 of \tcode{rv} before the assignment.
 \end{itemize}
 
@@ -386,19 +403,25 @@ references to [copyassignable] with references to
 \begin{itemdecl}
 template <class T>
 concept bool CopyAssignable =
-  MoveAssignable<T> && is_copy_assignable<T>::value;
+  MoveAssignable<T> && @\oldtxt{is_copy_assignable<T>::value;}@
+  @\newtxt{requires(T a, T b, const T\& c) \{}@
+    @\newtxt{\{ a = b \} -> Same<T\&>;}@
+    @\newtxt{\{ a = c \} -> Same<T\&>;}@
+    @\newtxt{\{ a = (const T\&\&)c \} -> Same<T\&>;}@
+  @\newtxt{\};}@
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-Let \tcode{v} be an lvalue of type (possibly \tcode{const}) \tcode{T} or an rvalue
-of type \tcode{const T}. Then a type \tcode{T} models \tcode{CopyAssignable} if
-and only if
+Let \newtxt{\tcode{t} be an lvalue of type \tcode{T}, and }\tcode{v} be an lvalue of type (possibly
+\tcode{const}) \tcode{T} or an rvalue of type \tcode{const T}. Then \oldtxt{a }type \tcode{T} models
+\tcode{CopyAssignable} if and only if
 
 \begin{itemize}
-\item The expression \tcode{t = v} is an lvalue of type (non-\tcode{const}) \tcode{T},
-the expression returns a reference to \tcode{t}, \tcode{v} is unchanged, and after the
-assignment \tcode{t} is equal to \tcode{v}.
+\item \newtxt{\tcode{(addressof(t = v) == addressof(t)) != false)}}.
+\item \oldtxt{The expression \tcode{t = v} is an lvalue of type (non-\tcode{const}) \tcode{T},
+the expression returns a reference to \tcode{t}, \tcode{v} is unchanged, and a}\newtxt{A}fter the
+assignment \tcode{t} is equal to \tcode{v}\newtxt{ and \tcode{v} is unchanged}.
 \end{itemize}
 \end{itemdescr}
 
@@ -408,8 +431,17 @@ assignment \tcode{t} is equal to \tcode{v}.
 
 \indexlibrary{\idxcode{Swappable}}%
 \begin{itemdecl}
-template <class T, class U = T>
-concept bool Swappable =
+@\newtxt{template <class T>}@
+@\newtxt{concept bool Swappable() =}@
+  @\newtxt{requires(T t, T u) \{}@
+    @\newtxt{swap(forward<T>(t), forward<T>(u));}@
+  @\newtxt{\};}@
+
+template <class T, class U@\oldtxt{ = T}@>
+concept bool Swappable@\newtxt{()}@ =
+  @\newtxt{Swappable<T>() \&\&}@
+  @\newtxt{Swappable<U>() \&\&}@
+  @\newtxt{Common<T, U> \&\&}@
   requires(T t, U u) {
     swap(forward<T>(t), forward<U>(u));
     swap(forward<U>(u), forward<T>(t));
@@ -483,7 +515,7 @@ void value_swap(T&& t, U&& u) {
 
 // Requires: lvalues of \tcode{T} shall be swappable.
 template <class T>
-void lv_swap(T& t1 T& t2) {
+void lv_swap(T& t1@\newtxt{,}@ T& t2) {
   using std::swap;
   swap(t1, t2);                                 // OK: uses swappable conditions for
 }                                               // lvalues of type \tcode{T}
@@ -580,12 +612,15 @@ Let \tcode{a} be an object of type \tcode{T}, \tcode{b} be an object of type \tc
 and only if
 
 \begin{itemize}
-\item \tcode{(a == b) != false} if and only if \tcode{(C\{a\} == C\{b\}) != false}.
-\item \tcode{(a != b) != false} if and only if \tcode{(C\{a\} != C\{b\}) != false}.
-\item \tcode{(b == a) != false} if and only if \tcode{(C\{b\} == C\{a\}) != false}.
-\item \tcode{(b != a) != false} if and only if \tcode{(C\{b\} != C\{a\}) != false}.
+\item \tcode{(a == b) != false} if and only if \tcode{(C\oldtxt{\{}\newtxt{(}a\oldtxt{\}}\newtxt{)} == C\oldtxt{\{}\newtxt{(}b\oldtxt{\}}\newtxt{)}) != false}.
+\item \tcode{(a != b) != false} if and only if \tcode{(C\oldtxt{\{}\newtxt{(}a\oldtxt{\}}\newtxt{)} != C\oldtxt{\{}\newtxt{(}b\oldtxt{\}}\newtxt{)}) != false}.
+\item \tcode{(b == a) != false} if and only if \tcode{(C\oldtxt{\{}\newtxt{(}b\oldtxt{\}}\newtxt{)} == C\oldtxt{\{}\newtxt{(}a\oldtxt{\}}\newtxt{)}) != false}.
+\item \tcode{(b != a) != false} if and only if \tcode{(C\oldtxt{\{}\newtxt{(}b\oldtxt{\}}\newtxt{)} != C\oldtxt{\{}\newtxt{(}a\oldtxt{\}}\newtxt{)}) != false}.
 \end{itemize}
 \end{itemdescr}
+
+\ednote{BUGBUG There is concern on the committee that the \tcode{Common} requirement is
+overconstraining here. (In \tcode{Relation} too.}
 
 \rSec2[concepts.lib.foundational.semiregular]{Concept Semiregular}
 
@@ -599,12 +634,15 @@ concept bool Semiregular =
   CopyAssignable<T> &&
   requires(T a, size_t n) {
     // Object
-    requires Same<T*, decltype(&a)>;
+    @\oldtxt{requires Same<T*, decltype(\&a)>;}@
+    @\newtxt{\{\&a\} -> Same<T*>;}@
     // Destruction
     { a.~T() } noexcept;
     // Allocation
-    requires Same<T*, decltype(new T)>;
-    requires Same<T*, decltype(new T[n])>;
+    @\oldtxt{requires Same<T*, decltype(new T)>;}@
+    @\oldtxt{requires Same<T*, decltype(new T[n])>;}@
+    @\newtxt{\{new T\} -> Same<T*>;}@
+    @\newtxt{\{new T[n]\} -> Same<T*>;}@
     // Deallocation
     { delete new T };
     { delete new T[n] };
@@ -635,7 +673,7 @@ built-in types like \tcode{int}, except that they may not be comparable with \tc
 \begin{itemdecl}
 template <class T>
 concept bool Regular =
-  Semiregular<T>() && EqualitiyComparable<T>;
+  Semiregular<T>() && EqualityComparable<T>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -655,7 +693,7 @@ references to [concepts.lib.totallyordered]}
 \begin{itemdecl}
 template <class T>
 concept bool TotallyOrdered() {
-  return EqualityComparable<T>() && 
+  return EqualityComparable<T>() &&
     requires (T a, T b) {
       { a < b } -> Boolean;
       { a > b } -> Boolean;
@@ -694,8 +732,8 @@ concept bool TotallyOrdered() {
   return Common<T, U> &&
     TotallyOrdered<T>() &&
     TotallyOrdered<U>() &&
-    TotallyOrdered<CommonType<T, U>> &&
-    EqualityComparable<T, U> &&
+    TotallyOrdered<CommonType<T, U>>@\newtxt{()}@ &&
+    EqualityComparable<T, U>@\newtxt{()}@ &&
     requires (T a, U b) {
       { a < b } -> Boolean;
       { a > b } -> Boolean;
@@ -716,14 +754,14 @@ Let \tcode{a} be an object of type T, \tcode{b} be an object of type \tcode{U}, 
 and only if
 
 \begin{itemize}
-\item \tcode{(a < b) != false} if and only if \tcode{(C\{a\} < C\{b\}) != false}.
-\item \tcode{(a > b) != false} if and only if \tcode{(C\{a\} > C\{b\}) != false}.
-\item \tcode{(a <= b) != false} if and only if \tcode{(C\{a\} <= C\{b\}) != false}.
-\item \tcode{(a >= b) != false} if and only if \tcode{(C\{a\} >= C\{b\}) != false}.
-\item \tcode{(b < a) != false} if and only if \tcode{(C\{b\} < C\{a\}) != false}.
-\item \tcode{(b > a) != false} if and only if \tcode{(C\{b\} > C\{a\}) != false}.
-\item \tcode{(b <= a) != false} if and only if \tcode{(C\{b\} <= C\{a\}) != false}.
-\item \tcode{(b >= a) != false} if and only if \tcode{(C\{b\} >= C\{a\}) != false}.
+\item \tcode{(a < b) != false} if and only if \tcode{(C\oldtxt{\{}\newtxt{(}a\oldtxt{\}}\newtxt{)} < C\oldtxt{\{}\newtxt{(}b\oldtxt{\}}\newtxt{)}) != false}.
+\item \tcode{(a > b) != false} if and only if \tcode{(C\oldtxt{\{}\newtxt{(}a\oldtxt{\}}\newtxt{)} > C\oldtxt{\{}\newtxt{(}b\oldtxt{\}}\newtxt{)}) != false}.
+\item \tcode{(a <= b) != false} if and only if \tcode{(C\oldtxt{\{}\newtxt{(}a\oldtxt{\}}\newtxt{)} <= C\oldtxt{\{}\newtxt{(}b\oldtxt{\}}\newtxt{)}) != false}.
+\item \tcode{(a >= b) != false} if and only if \tcode{(C\oldtxt{\{}\newtxt{(}a\oldtxt{\}}\newtxt{)} >= C\oldtxt{\{}\newtxt{(}b\oldtxt{\}}\newtxt{)}) != false}.
+\item \tcode{(b < a) != false} if and only if \tcode{(C\oldtxt{\{}\newtxt{(}b\oldtxt{\}}\newtxt{)} < C\oldtxt{\{}\newtxt{(}a\oldtxt{\}}\newtxt{)}) != false}.
+\item \tcode{(b > a) != false} if and only if \tcode{(C\oldtxt{\{}\newtxt{(}b\oldtxt{\}}\newtxt{)} > C\oldtxt{\{}\newtxt{(}a\oldtxt{\}}\newtxt{)}) != false}.
+\item \tcode{(b <= a) != false} if and only if \tcode{(C\oldtxt{\{}\newtxt{(}b\oldtxt{\}}\newtxt{)} <= C\oldtxt{\{}\newtxt{(}a\oldtxt{\}}\newtxt{)}) != false}.
+\item \tcode{(b >= a) != false} if and only if \tcode{(C\oldtxt{\{}\newtxt{(}b\oldtxt{\}}\newtxt{)} >= C\oldtxt{\{}\newtxt{(}a\oldtxt{\}}\newtxt{)}) != false}.
 \end{itemize}
 \end{itemdescr}
 
@@ -748,13 +786,16 @@ concept bool Function =
   CopyConstructible<T> &&
   requires (F f, Args...args) {
     typename ResultType<F, Args...>;
-    requires Same<F*, decltype(&f)>;
+    @\oldtxt{requires Same<F*, decltype(\&f)>;}@
+    @\newtxt{\{ \&f \} -> Same<F*>;}@
     { f.~F() } noexcept;
-    requires Same<F*, decltype(new F)>;
+    @\oldtxt{requires Same<F*, decltype(new F)>;}@
+    @\newtxt{\{ new F \} -> Same<F*>;}@
     { delete new F };
-    { f(forward<Args>(args)...) };
-    requires Same<ResultType<F, Args...>,
-                  decltype(f(forward<Args>(args)...))>;
+    @\oldtxt{\{ f(forward<Args>(args)...) \};}@
+    @\oldtxt{requires Same<ResultType<F, Args...>,}@
+                  @\oldtxt{decltype(f(forward<Args>(args)...))>;}@
+    @\newtxt{\{ f(forward<Args>(args)...) \} -> Same<ResultType<F, Args...> >;}@
   };
 \end{itemdecl}
 
@@ -833,15 +874,90 @@ concept bool Relation() {
 
 \begin{itemdescr}
 \pnum
-Let \tcode{r} be any well-forned object of type \tcode{R}, \tcode{a} be any well-formed object of
+Let \tcode{r} be any well-formed object of type \tcode{R}, \tcode{a} be any well-formed object of
 type \tcode{T}, \tcode{b} be any well-formed object of type \tcode{U}, and \tcode{C} be
 \tcode{CommonType<T, U>}. Then types \tcode{R}, \tcode{T}, and \tcode{U} model \tcode{Relation} if
 and only if
 
 \begin{itemize}
-\item \tcode{r(a, b) != false} if and only if \tcode{r(C\{a\}, C\{b\}) != false}.
-\item \tcode{r(b, a) != false} if and only if \tcode{r(C\{b\}, C\{a\}) != false}.
+\item \tcode{r(a, b) != false} if and only if \tcode{r(C\oldtxt{\{}\newtxt{(}a\oldtxt{\}}\newtxt{)}, C\oldtxt{\{}\newtxt{(}b\oldtxt{\}}\newtxt{)}) != false}.
+\item \tcode{r(b, a) != false} if and only if \tcode{r(C\oldtxt{\{}\newtxt{(}b\oldtxt{\}}\newtxt{)}, C\oldtxt{\{}\newtxt{(}a\oldtxt{\}}\newtxt{)}) != false}.
 \end{itemize}
 \end{itemdescr}
 
 \end{addedblock}
+
+\color{newclr}
+\rSec2[concepts.lib.functions.strictweakorder]{Concept StrictWeakOrder}
+
+\indexlibrary{\idxcode{Relation}}%
+\begin{itemdecl}
+template <class F, class T>
+concept bool StrictWeakOrder() {
+  return Relation<F, T>();
+}
+
+template <class R, class T, class U>
+concept bool StrictWeakOrder() {
+  return Relation<R, T, U>();
+}
+\end{itemdecl}
+\color{black}
+
+\begin{itemdescr}
+\color{newclr}
+\pnum
+Let \tcode{comp} be a well-formed object of type \tcode{Comp}. Then type \tcode{Comp} models concept
+\tcode{StrictWeakOrder} if and only if it imposes a \techterm{strict weak ordering} on its arguments.
+\color{black}
+
+\ednote{Copied verbatim from [alg.sorting].}
+
+\pnum
+The term
+\techterm{strict}
+refers to the
+requirement of an irreflexive relation (\tcode{!comp(x, x)} for all \tcode{x}),
+and the term
+\techterm{weak}
+to requirements that are not as strong as
+those for a total ordering,
+but stronger than those for a partial
+ordering.
+If we define
+\tcode{equiv(a, b)}
+as
+\tcode{!comp(a, b) \&\& !comp(b, a)},
+then the requirements are that
+\tcode{comp}
+and
+\tcode{equiv}
+both be transitive  relations:
+
+\begin{itemize}
+\item
+\tcode{comp(a, b) \&\& comp(b, c)}
+implies
+\tcode{comp(a, c)}
+\item
+\tcode{equiv(a, b) \&\& equiv(b, c)}
+implies
+\tcode{equiv(a, c)}
+\enternote
+Under these conditions, it can be shown that
+\begin{itemize}
+\item
+\tcode{equiv}
+is an equivalence relation
+\item
+\tcode{comp}
+induces a well-defined relation on the equivalence
+classes determined by
+\tcode{equiv}
+\item
+The induced relation is a strict total ordering.
+\exitnote
+\end{itemize}
+\end{itemize}
+
+\end{itemdescr}
