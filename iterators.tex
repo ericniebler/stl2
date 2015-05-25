@@ -346,13 +346,14 @@ referenced object.
 \end{codeblock}
 
 \pnum
-Let \tcode{v} be an rvalue or a lvalue of type (possibly \tcode{const}) \tcode{T}, and let \tcode{o} be an
-object of type \tcode{Out}. Then types \tcode{T} and \tcode{Out} model \tcode{MoveWritable} if and
-only if
+Let \tcode{v} be an rvalue or a lvalue of type (possibly \tcode{const}) \tcode{T}, and let \tcode{o}
+be a\oldtxt{n}\newtxt{ dereferenceable} object of type \tcode{Out}. Then types \tcode{T} and
+\tcode{Out} model \tcode{MoveWritable} if and only if
 
 \begin{itemize}
-\item If \tcode{o} is dereferenceable, then after the assignment \tcode{*o = move(v)}, the value
-referred to by \tcode{*o} is equal to the value of \tcode{v} before the assignment.
+\item If \oldtxt{\tcode{o}}\newtxt{\tcode{Out}} is \oldtxt{dereferenceable}\newtxt{\tcode{Readable}},
+then after the assignment \tcode{*o = move(v)}, \oldtxt{the value referred to by }\tcode{*o} is equal
+to the value of \tcode{v} before the assignment.
 \end{itemize}
 
 \pnum
@@ -389,12 +390,13 @@ referenced object.
 
 \pnum
 Let \tcode{v} be an lvalue of type (possibly \tcode{const}) \tcode{T} or an rvalue
-of type \tcode{const T}, and let \tcode{o} be an object of type \tcode{Out}. Then types
-\tcode{T} and \tcode{Out} model \tcode{Writable} if and only if
+of type \tcode{const T}, and let \tcode{o} be a\oldtxt{n}\newtxt{ dereferenceable} object of type
+\tcode{Out}. Then types \tcode{T} and \tcode{Out} model \tcode{Writable} if and only if
 
 \begin{itemize}
-\item After the assignment \tcode{*o = v}, the value referred to by \tcode{*o} is equal to
-the value of \tcode{v} and \tcode{v} is unchanged.
+\item \oldtxt{A}\newtxt{If \tcode{Out} is \tcode{Readable}, a}fter the assignment \tcode{*o = v},
+\oldtxt{the value referred to by} \tcode{*o} is equal to the value of \tcode{v} and \tcode{v} is
+unchanged.
 \end{itemize}
 
 \rSec2[indirectlymovable.iterators]{IndirectlyMovable types}
@@ -413,11 +415,13 @@ type and a \tcode{MoveWritable} type.
 \end{codeblock}
 
 \pnum
-Let \tcode{i} be an object of type \tcode{I}, and let \tcode{o} be an object of type \tcode{Out}.
-Then types \tcode{I} and \tcode{Out} model \tcode{IndirectlyMovable} if and only if
+Let \tcode{i} be an object of type \tcode{I}, and let \tcode{o} be a\oldtxt{n}
+\newtxt{dereferenceable} object of type \tcode{Out}. Then types \tcode{I} and \tcode{Out} model
+\tcode{IndirectlyMovable} if and only if
 
 \begin{itemize}
-\item After the assignment \tcode{*o = move(*i)}, the value referred to by \tcode{*o} is equal to
+\item \oldtxt{A}\newtxt{If \tcode{Out} is \tcode{Readable}, a}fter the assignment
+\tcode{*o = move(*i)}, \oldtxt{the value referred to by} \tcode{*o} is equal to
 the value of \tcode{*i} before the assignment.
 \end{itemize}
 
@@ -438,12 +442,14 @@ type and a \tcode{Writable} type.
 \end{codeblock}
 
 \pnum
-Let \tcode{i} be an object of type \tcode{I}, and let \tcode{o} be an object of type \tcode{Out}.
-Then types \tcode{I} and \tcode{Out} model \tcode{IndirectlyCopyable} if and only if
+Let \tcode{i} be an object of type \tcode{I}, and let \tcode{o} be a\oldtxt{n}
+\newtxt{dereferenceable} object of type \tcode{Out}. Then types \tcode{I} and \tcode{Out} model
+\tcode{IndirectlyCopyable} if and only if
 
 \begin{itemize}
-\item After the assignment \tcode{*o = *i}, the value referred to by \tcode{*o} is equal to
-the value of \tcode{*i} and the value of \tcode{*i} is unchanged.
+\item \oldtxt{A}\newtxt{If \tcode{Out} is \tcode{Readable}, a}fter the assignment \tcode{*o = *i},
+\oldtxt{the value referred to by} \tcode{*o} is equal to the value of \tcode{*i} and the value of
+\tcode{*i} is unchanged.
 \end{itemize}
 
 \rSec2[indirectlyswappable.iterators]{IndirectlySwappable types}
@@ -1856,11 +1862,12 @@ alias that collects an iterator's associated types. It is defined as if:
 
 \indexlibrary{\idxcode{iterator_traits}}%
 \begin{codeblock}
-  template <WeakInputIterator I, class = void> struct @\xname{pointer_type}@ {
+  template <WeakInputIterator I@\oldtxt{, class = void}@> struct @\xname{pointer_type}@ {
     using type = add_pointer_t<ReferenceType<I>>;
   };
   template <WeakInputIterator I>
-  struct @\xname{pointer_type}@<I, void_t<decltype(declval<I>().operator->())>> {
+    @\newtxt{requires requires(I i) \{ \{ i.operator->() \} -> auto\&\&; \}}@
+  struct @\xname{pointer_type}@<I@\oldtxt{, void_t<decltype(declval<I>().operator->())>}@> {
     using type = decltype(declval<I>().operator->());
   };
   template <class> struct @\xname{iterator_traits}@ { };
@@ -2352,6 +2359,7 @@ namespace std {
     using value_type = ValueType<I>;
     using iterator_category = IteratorCategory<I>;
     using reference = ReferenceType<I>;
+    @\newtxt{using pointer = I;}@
 \end{codeblock}\end{addedblock}\begin{codeblock}
     reverse_iterator();
     explicit reverse_iterator(@\changed{Iterator}{I}@ x);
@@ -2364,7 +2372,7 @@ namespace std {
 
     @\changed{Iterator}{I}@ base() const;      // explicit
     reference operator*() const;
-    @\removed{pointer operator->() const;}@
+    @\newtxt{pointer operator->() const;} \ednote{Added back since N4382}@
 
     reverse_iterator& operator++();
     reverse_iterator  operator++(int);
@@ -2557,13 +2565,13 @@ reference operator*() const;
 \pnum
 \effects
 \begin{codeblock}
-Iterator tmp = current;
+I@\oldtxt{terator}@ tmp = current;
 return *--tmp;
 \end{codeblock}
 
 \end{itemdescr}
 
-\begin{removedblock}
+{\color{newclr}
 \rSec4[reverse.iter.opref]{\tcode{operator->}}
 
 \indexlibrary{\idxcode{operator->}!\idxcode{reverse_iterator}}%
@@ -2573,9 +2581,11 @@ pointer operator->() const;
 
 \begin{itemdescr}
 \pnum
-\returns \tcode{std::addressof(operator*())}.
+\returns \removed{\tcode{std::addressof(operator*())}}\newtxt{\tcode{current}}.
+
+\ednote{Added back since N4382.}
 \end{itemdescr}
-\end{removedblock}
+}
 
 \rSec4[reverse.iter.op++]{\tcode{operator++}}
 
@@ -3364,7 +3374,7 @@ underlying iterator's indirection operator to an rvalue reference.
 \removed{Some generic algorithms can be called with move iterators to replace
 copying with moving.} \ednote{This is untrue now. The algorithms that do
 copying are constrained with \tcode{IndirectlyCopyable}, which will reject
-\tcode{mov_iterator}s.}
+\tcode{move_iterator}s.}
 
 \pnum
 \enterexample
@@ -3401,6 +3411,7 @@ namespace std {
     using value_type = ValueType<I>;
     using iterator_category = IteratorCategory<I>;
     using reference = ValueType<I>&&;
+    @\newtxt{using pointer = I;}@
 \end{codeblock}\end{addedblock}\begin{codeblock}
 
     move_iterator();
@@ -3414,14 +3425,14 @@ namespace std {
 
     iterator_type base() const;
     reference operator*() const;
-    @\removed{pointer operator->() const;}@
+    @\newtxt{pointer operator->() const;} \ednote{Added back since N4382.}@
 
     move_iterator& operator++();
     move_iterator operator++(int);
     move_iterator& operator--()@\removed{;}@
       @\added{requires BidirectionalIterator<I>;}@
-    @\added{requires BidirectionalIterator<I>}@
-      move_iterator operator--(int)@\removed{;}@
+    move_iterator operator--(int)@\removed{;}@
+      @\newtxt{requires BidirectionalIterator<I>;}@
 
     move_iterator operator+(difference_type n) const@\removed{;}@
       @\added{requires RandomAccessIterator<I>;}@
@@ -3587,7 +3598,7 @@ reference operator*() const;
 \returns \tcode{std::move(*current)}.
 \end{itemdescr}
 
-\begin{removedblock}
+{\color{newclr}
 \rSec4[move.iter.op.ref]{\tcode{move_iterator::operator->}}
 
 \indexlibrary{\idxcode{operator->}!\idxcode{move_iterator}}%
@@ -3599,8 +3610,10 @@ pointer operator->() const;
 \begin{itemdescr}
 \pnum
 \returns \tcode{current}.
+
+\ednote{Added back since N4382.}
 \end{itemdescr}
-\end{removedblock}
+}
 
 \rSec4[move.iter.op.incr]{\tcode{move_iterator::operator++}}
 
@@ -5242,12 +5255,12 @@ on an end-of-stream iterator is not defined.
 For any other iterator value a
 \tcode{const T\&}
 is returned.
-\removed{The result of
+\newtxt{The result of
 \tcode{operator->}
 on an end-of-stream iterator is not defined.
 For any other iterator value a
 \tcode{const T*}
-is returned.}
+is returned.}~(\ednote{Added back since N4382.})
 The behavior of a program that applies \tcode{operator++()} to an end-of-stream
 iterator is undefined.
 It is impossible to store things into istream iterators.
@@ -5269,6 +5282,7 @@ namespace std {
     @\added{typedef Distance difference_type;}@
     @\added{typedef T value_type;}@
     @\added{typedef const T\& reference;}@
+    @\newtxt{typedef const T* pointer;}@
     typedef charT char_type;
     typedef traits traits_type;
     typedef basic_istream<charT,traits> istream_type;
@@ -5278,7 +5292,7 @@ namespace std {
    ~istream_iterator() = default;
 
     const T& operator*() const;
-    @\removed{const T* operator->() const;}@
+    @\newtxt{const T* operator->() const;} \ednote{Added back since N4382.}@
     istream_iterator<T,charT,traits,Distance>& operator++();
     istream_iterator<T,charT,traits,Distance>  operator++(int);
   private:
@@ -5365,10 +5379,10 @@ const T& operator*() const;
 \begin{itemdescr}
 \pnum
 \returns
-\textit{value}.
+\tcode{value}.
 \end{itemdescr}
 
-\begin{removedblock}
+{\color{newclr}
 \indexlibrary{\idxcode{operator->}!\idxcode{istream_iterator}}%
 \indexlibrary{\idxcode{istream_iterator}!\idxcode{operator->}}%
 \begin{itemdecl}
@@ -5378,9 +5392,11 @@ const T* operator->() const;
 \begin{itemdescr}
 \pnum
 \returns
-\tcode{\&(operator*())}.
+\tcode{\removed{\&(operator*())}std::addressof(operator*())}.
+
+\ednote{Added back since N4382.}
 \end{itemdescr}
-\end{removedblock}
+}
 
 \indexlibrary{\idxcode{operator++}!\idxcode{istream_iterator}}%
 \indexlibrary{\idxcode{istream_iterator}!\idxcode{operator++}}%
@@ -5394,7 +5410,7 @@ istream_iterator<T,charT,traits,Distance>& operator++();
 
 \pnum
 \effects
-\tcode{*in_stream \shr value}.
+\tcode{*in_stream \shr{} value}.
 
 \pnum
 \returns
@@ -5627,7 +5643,8 @@ reads successive
 from the streambuf for which it was constructed.
 \tcode{operator*}
 provides access to the current input character, if any.
-\removed{\enternote \tcode{operator->} may return a proxy. \exitnote}
+\newtxt{\enternote \tcode{operator->} may return a proxy. \exitnote}~(\ednote{Added back
+since N4382.})
 Each time
 \tcode{operator++}
 is evaluated, the iterator advances to the next input character.
@@ -5667,6 +5684,7 @@ namespace std {
     @\added{typedef charT                         value_type;}@
     @\added{typedef typename traits::off_type     difference_type;}@
     @\added{typedef charT                         reference;}@
+    @\newtxt{typedef \unspec                       pointer;}@
     typedef charT                         char_type;
     typedef traits                        traits_type;
     typedef typename traits::int_type     int_type;
@@ -5682,7 +5700,7 @@ namespace std {
     istreambuf_iterator(streambuf_type* s) noexcept;
     istreambuf_iterator(const proxy& p) noexcept;
     charT operator*() const;
-    @\removed{pointer operator->() const;}@
+    @\newtxt{pointer operator->() const;} \ednote{Added back since N4382.}@
     istreambuf_iterator<charT,traits>& operator++();
     proxy operator++(int);
     bool equal(const istreambuf_iterator& b) const;
