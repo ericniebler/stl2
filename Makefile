@@ -13,7 +13,7 @@
 
 FIGURES = $(patsubst %.dot,%.pdf,$(wildcard *.dot))
 
-TSPDF = pdflatex N4382 | grep -v "^Overfull"
+TSPDF = pdflatex -jobname=DXXXX N4382.tex | grep -v "^Overfull"
 
 default: rebuild
 
