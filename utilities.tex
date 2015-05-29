@@ -2,6 +2,100 @@
 \setcounter{chapter}{19}
 \rSec0[utilities]{General utilities library}
 
+\setcounter{section}{1}
+\rSec1[utility]{Utility components}
+
+\ednote{Change the \tcode{<utility>} synopsis as follows:}
+
+\begin{codeblock}
+  // \ref{utility.swap}, swap:
+  template<class T>
+    @\newtxt{requires MoveConstructible<T> \&\& MoveAssignable<T>}@
+  void swap(T& a, T& b) noexcept(@\seebelow@);
+  template <class T, size_t N>
+    @\newtxt{requires Swappable<T\&>}@
+  void swap(T (&a)[N], T (&b)[N]) noexcept(noexcept(swap(*a, *b)));}
+
+  // \ref{utility.exchange}, exchange:
+  template <class T, class U=T>
+    @\newtxt{requires MoveConstructible<T> \&\& Assignable<T, U>}@
+  T exchange(T& obj, U&& new_val);
+\end{codeblock}
+
+\setcounter{subsection}{1}
+\rSec2[utility.swap]{swap}
+
+\indexlibrary{\idxcode{swap}}%
+\begin{itemdecl}
+template<class T>
+  @\newtxt{requires MoveConstructible<T> \&\& MoveAssignable<T>}@
+void swap(T& a, T& b) noexcept(@\seebelow@);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\remark The expression inside \tcode{noexcept} is equivalent to:
+
+\begin{codeblock}
+is_nothrow_move_constructible<T>::value &&
+is_nothrow_move_assignable<T>::value
+\end{codeblock}
+
+\oldtxt{
+\pnum
+\requires
+Type
+\tcode{T}
+shall be
+\tcode{MoveConstructible} (Table~\ref{moveconstructible})
+and
+\tcode{MoveAssignable} (Table~\ref{moveassignable}).
+}
+
+\pnum
+\effects
+Exchanges values stored in two locations.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{swap}}%
+\begin{itemdecl}
+template <class T, size_t N>
+  @\newtxt{requires Swappable<T\&>}@
+void swap(T (&a)[N], T (&b)[N]) noexcept(noexcept(swap(*a, *b)));}
+\end{itemdecl}
+
+\begin{itemdescr}
+\oldtxt{
+\pnum
+\requires
+\tcode{a[i]} shall be swappable with~(\ref{swappable.requirements}) \tcode{b[i]}
+for all \tcode{i} in the range \range{0}{N}.
+}
+
+\pnum
+\effects \tcode{swap_ranges(a, a + N, b)}
+\end{itemdescr}
+
+\rSec2[utility.exchange]{exchange}
+
+\begin{itemdecl}
+template <class T, class U=T>
+  @\newtxt{requires MoveConstructible<T> \&\& Assignable<T, U>}@
+T exchange(T& obj, U&& new_val);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Equivalent to:
+
+\begin{codeblock}
+T old_val = std::move(obj);
+obj = std::forward<U>(new_val);
+return old_val;
+\end{codeblock}
+\end{itemdescr}
+
 \setcounter{section}{8}
 \rSec1[function.objects]{Function objects}
 

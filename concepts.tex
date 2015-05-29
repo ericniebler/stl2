@@ -265,7 +265,11 @@ references to [defaultconstructible] with references to
 \begin{itemdecl}
 template <class T>
 concept bool DefaultConstructible =
-  is_default_constructible<T>::value;
+  @\oldtxt{is_default_constructible<T>::value;}@
+  @\newtxt{requires \{}@
+    @\newtxt{ T\{\}; }@
+    @\newtxt{ T(); }@
+  @\newtxt{\};}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -273,10 +277,10 @@ concept bool DefaultConstructible =
 A type \tcode{T} models \tcode{DefaultConstructible} if and only if
 
 \begin{itemize}
-\item The definition \tcode{T t;} default-initializes~(\cxxref{dcl.init})
-object \tcode{t}.
 \item The definition \tcode{T u\{\};} value-initializes~(\cxxref{dcl.init})
 object \tcode{u}.
+\item The definition \tcode{T t;} default-initializes~(\cxxref{dcl.init})
+object \tcode{t}.
 \item The expressions \tcode{T()} and \tcode{T\{\}} value-initialize~(\cxxref{dcl.init})
 temporary objects of type \tcode{T}.
 \end{itemize}
@@ -294,7 +298,10 @@ references to [moveconstructible] with references to
 \begin{itemdecl}
 template <class T>
 concept bool MoveConstructible =
-  is_move_constructible<T>::value;
+  @\oldtxt{is_move_constructible<T>::value;}@
+  @\newtxt{requires (T t) \{}@
+    @\newtxt{T(move(t));}@
+  @\newtxt{\};}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -324,7 +331,12 @@ references to [copyconstructible] with references to
 \begin{itemdecl}
 template <class T>
 concept bool CopyConstructible =
-  MoveConstructible<T> && is_copy_constructible<T>::value;
+  MoveConstructible<T> && @\oldtxt{is_copy_constructible<T>::value;}@
+  @\newtxt{requires (T a, const T\& b) \{}@
+    @\newtxt{T(a);}@
+    @\newtxt{T(b);}@
+    @\newtxt{T((const T\&\&)b);}@
+  @\newtxt{\};}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -346,7 +358,10 @@ to \tcode{u}.
 \begin{itemdecl}
 template <class T, class ...Args>
 concept bool Constructible =
-  is_constructible<T, Args...>::value;
+  @\oldtxt{is_constructible<T, Args...>::value;}@
+  @\newtxt{requires ( Args...args ) \{}@
+    @\newtxt{ T(forward<Args>(args)...); }@
+  @\newtxt{\};}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -366,7 +381,10 @@ references to [destructible] with references to
 \begin{itemdecl}
 template <class T>
 concept bool Destructible =
-  is_destructible<T>::value;
+  @\oldtxt{is_destructible<T>::value;}@
+  @\newtxt{requires (T t) \{}@
+    @\newtxt{ \{ t.$\sim$T() \} noexcept; }@
+  @\newtxt{\}}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -445,6 +463,31 @@ assignment \tcode{t} is equal to \tcode{v}\newtxt{ and \tcode{v} is unchanged}.
 \end{itemize}
 \end{itemdescr}
 
+{
+\color{newclr}
+\rSec2[concepts.lib.corelang.assignable]{Concept Assignable}
+
+\indexlibrary{\idxcode{Assignable}}%
+\begin{itemdecl}
+template <class T, class U = T>
+concept bool Assignable =
+  requires(T a, U b) {
+    { a = forward<U>(b) } -> Same<T&>;
+  };
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+Let \tcode{t} be an lvalue of type \tcode{T}. If \tcode{U} is a reference type, let \tcode{v}
+be a lvalue of type \tcode{U}; otherwise, let \tcode{v} be an rvalue of type \tcode{U}.
+Then types \tcode{T} and \tcode{U} model \tcode{Assignable} if and only if
+
+\begin{itemize}
+\item \newtxt{\tcode{(addressof(t = v) == addressof(t)) != false)}}.
+\end{itemize}
+\end{itemdescr}
+}
+
 \rSec2[concepts.lib.corelang.swappable]{Concept Swappable}
 \ednote{Remove subclause [swappable.requirements]. Replace references to
 [swappable.requirements] with [concepts.lib.corelang.swappable].}
@@ -471,8 +514,6 @@ concept bool Swappable@\newtxt{() \{}@@\oldtxt{ =}@
 \end{itemdecl}
 
 \begin{itemdescr}
-\ednote{The above requires that the \tcode{swap} function templates defined in
-\tcode{<utility>} are constrained to only accept movable types.}
 \ednote{The following is copied almost verbatim from [swappable.requirements]}
 
 \pnum
@@ -503,7 +544,7 @@ resolution~(\cxxref{over.match}) on a candidate set that includes:
 
 \begin{itemize}
 \item the two \tcode{swap} function templates defined in
-\tcode{<utility>}~(\cxxref{utility}) and
+\tcode{<utility>}~(\ref{utility}) and
 
 \item the lookup set produced by argument-dependent lookup~(\cxxref{basic.lookup.argdep}).
 \end{itemize}
