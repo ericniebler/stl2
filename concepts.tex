@@ -73,15 +73,14 @@ denote the same \oldtxt{time}\newtxt{type} after the elimination of aliases; oth
 \indexlibrary{\idxcode{Derived}}%
 \begin{itemdecl}
 template <class T, class U>
-concept bool Derived = is_base_of<U, T>::value;
+concept bool Derived = @\seebelow@;
 \end{itemdecl}
 
 \begin{itemdescr}
-{\color{oldclr}
 \pnum
-The \tcode{Derived} concept is used when requiring that a type \tcode{T} is derived
-from \tcode{U}, or the same type as \tcode{U}.
-}
+\oldtxt{The \tcode{Derived} concept is used when requiring that a type \tcode{T} is derived
+from \tcode{U}, or the same type as \tcode{U}}\newtxt{\tcode{Derived<T, U>} has the same value as
+\tcode{is_base_of<U, T>::value}}.
 \end{itemdescr}
 
 \rSec2[concepts.lib.corelang.convertible]{Concept Convertible}
@@ -89,15 +88,14 @@ from \tcode{U}, or the same type as \tcode{U}.
 \indexlibrary{\idxcode{Convertible}}%
 \begin{itemdecl}
 template <class T, class U>
-concept bool Convertible = is_convertible<T, U>::value;
+concept bool Convertible = @\seebelow@;
 \end{itemdecl}
 
 \begin{itemdescr}
-{\color{oldclr}
 \pnum
-The \tcode{Convertible} concept \oldtxt{concept }expresses the requirement that a type
-\tcode{T} can be implicitly converted to type \tcode{U}.
-}
+\oldtxt{The \tcode{Convertible} concept \oldtxt{concept }expresses the requirement that a type
+\tcode{T} can be implicitly converted to type \tcode{U}}\newtxt{\tcode{Convertible<T, U>} has the
+same value as \tcode{is_convertible<T, U>::value}}.
 \end{itemdescr}
 
 \rSec2[concepts.lib.corelang.common]{Concept Common}
@@ -268,25 +266,29 @@ concept bool DefaultConstructible =
   @\oldtxt{is_default_constructible<T>::value;}@
   @\newtxt{requires \{}@
     @\newtxt{ T\{\}; }@
-    @\newtxt{ T(); }@
   @\newtxt{\};}@
 \end{itemdecl}
 
 \begin{itemdescr}
+\ednote{REVIEW: The C++14 \tcode{DefaultConstructible} requirements table also requires \tcode{T()} as
+a valid expression, but that disallows array types. However, \tcode{is_default_constructible<int[4]>::value}
+is true. It's not clear to me whether the requirements table is wrong or whether the exclusion of
+array types was intentional. Also, the text below seems to duplicate the normative wording above,
+so I propose to strike it.}
+
+\oldtxt{
 \pnum
 A type \tcode{T} models \tcode{DefaultConstructible} if and only if
+}
 
 \begin{itemize}
-\item The definition \tcode{T u\{\};} value-initializes~(\cxxref{dcl.init})
-object \tcode{u}.
-\item The definition \tcode{T t;} default-initializes~(\cxxref{dcl.init})
-object \tcode{t}.
-\item The expressions \tcode{T()} and \tcode{T\{\}} value-initialize~(\cxxref{dcl.init})
-temporary objects of type \tcode{T}.
+\item \oldtxt{The definition \tcode{T u\{\};} value-initializes~(\cxxref{dcl.init})
+object \tcode{u}.}
+\item \oldtxt{The definition \tcode{T t;} default-initializes~(\cxxref{dcl.init})
+object \tcode{t}.}
+\item \oldtxt{The expressions \tcode{T()} and \tcode{T\{\}} value-initialize~(\cxxref{dcl.init})
+temporary objects of type \tcode{T}.}
 \end{itemize}
-
-\ednote{REVIEW: Stephan T. Lavavej wonders if we need to say anything special about
-aggregates.}
 \end{itemdescr}
 
 \rSec2[concepts.lib.corelang.moveconstructible]{Concept MoveConstructible}
@@ -360,12 +362,12 @@ template <class T, class ...Args>
 concept bool Constructible =
   @\oldtxt{is_constructible<T, Args...>::value;}@
   @\newtxt{requires ( Args...args ) \{}@
-    @\newtxt{ T(forward<Args>(args)...); }@
+    @\newtxt{ T\{forward<Args>(args)...\}; }@
   @\newtxt{\};}@
 \end{itemdecl}
 
 \begin{itemdescr}
-{\color{oldclr}
+\oldtxt{
 \pnum
 The \tcode{Constructible} concept is used when requiring that a type \tcode{T} is
 constructible with arguments of types \tcode{Args...}.
@@ -388,12 +390,17 @@ concept bool Destructible =
 \end{itemdecl}
 
 \begin{itemdescr}
+\ednote{REVIEW: The expression \tcode{t.$\sim$T()} comes straight from the requirements table for the
+\tcode{Destructible} concept in C++14. However, \tcode{t.$\sim$T()} is not valid if \tcode{T} is a
+reference or array type. We need to decide whether we want \tcode{Destructible<int\&>} and
+\tcode{Destructible<int[42]>} to be true or false.}
+
 \pnum
 A type \tcode{T} models \tcode{Destructible} if and only if
 
 \begin{itemize}
 \item After the expression \tcode{u.$\sim$T()}, all resources owned by \tcode{u} are
-reclaimed and no exception is propagated.
+reclaimed\oldtxt{ and no exception is propagated}.
 \end{itemize}
 \end{itemdescr}
 
