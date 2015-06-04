@@ -1,0 +1,92 @@
+%!TEX root = stl2-ts.tex
+{\color{newclr}
+\infannex{tagged}{Reference implementation for \tcode{tagged}}
+
+\pnum Below is a reference implementation of the \tcode{tagged} class template described in
+\ref{taggedtup.tagged}, and also \tcode{tagged_pair}~(\ref{pairs.tagged}),
+\tcode{tagged_tuple}~(\ref{tuple.tagged}), and \tcode{tag::input}~(\ref{alg.tagspec}).
+
+\begin{codeblock}
+namespace std {
+  template <class Base, class...Tags>
+  struct tagged;
+
+  template <class Base, class...Tags>
+  struct tuple_size<tagged<Base, Tags...>>
+    : tuple_size<Base> { };
+  template <size_t N, class Base, class...Tags>
+  struct tuple_element<N, tagged<Base, Tags...>>
+    : tuple_element<N, Base> { };
+
+  struct __getters {
+  private:
+    template <class, class...> friend struct tagged;
+    template <class Type, class Indices, class...Tags>
+    struct make_;
+    template <class Type, std::size_t...Is, class...Tags>
+    struct make_<Type, index_sequence<Is...>, Tags...>
+      : Tags::template rebind<Type, Is>... {
+      make_() = default;
+      make_(const make_&) = default;
+    private:
+      template <class, class...> friend struct tagged;
+      ~make_() = default;
+    };
+    template <class Type, class...Tags>
+    using make = make_<Type, make_index_sequence<sizeof...(Tags)>, Tags...>;
+  };
+
+  template <class Base, class...Tags>
+  struct tagged
+    : Base, __getters::make<tagged<Base, Tags...>, Tags...> {
+    using Base::Base;
+    template <class U>
+      requires Assignable<Base, U>
+    tagged& operator=(U&& u) {
+      static_cast<Base&>(*this) = std::forward<U>(u);
+      return *this;
+    }
+  };
+
+  template <class T>
+  struct __tag_spec { };
+  template <class Spec, class Arg>
+  struct __tag_spec<Spec(Arg)> { using type = Spec; };
+
+  template <class T>
+  struct __tag_elem { };
+  template <class Spec, class Arg>
+  struct __tag_elem<Spec(Arg)> { using type = Arg; };
+
+  template <class F, class S>
+  using tagged_pair =
+    tagged<pair<typename __tag_elem<F>::type, typename __tag_elem<S>::type>,
+           typename __tag_spec<F>::type, typename __tag_spec<S>::type>;
+
+  template <class...Types>
+  using tagged_tuple =
+    tagged<tuple<typename __tag_elem<Types>::type...>,
+           typename __tag_spec<Types>::type...>;
+
+  namespace tag {
+    struct input {
+    private:
+      friend struct __getters;
+      template <class Derived, size_t I>
+      struct rebind {
+        constexpr decltype(auto) input() & {
+          return get<I>(static_cast<Derived &>(*this));
+        }
+        constexpr decltype(auto) input() && {
+          return get<I>(static_cast<Derived &&>(*this));
+        }
+        constexpr decltype(auto) input() const & {
+          return get<I>(static_cast<const Derived &>(*this));
+        }
+      };
+    }
+    // Other tag specifiers defined similarly, see \ref{alg.tagspec}
+  }
+}
+\end{codeblock}
+}

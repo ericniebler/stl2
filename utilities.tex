@@ -22,6 +22,22 @@
   T exchange(T& obj, U&& new_val);
 \end{codeblock}
 
+\ednote{To the end of the \tcode{<utility>} synopsis, add the following:}
+
+{\color{newclr}
+\begin{codeblock}
+  // \ref{taggedtup.tagged}, struct with named accessors
+  template <class Base, class... Types> struct tagged;
+
+  // \ref{tagged.astuple}, tuple-like access to tagged
+  template <class Base, class... Tags> struct tuple_size<tagged<Base, Tags...>>;
+  template <size_t N, class Base, class... Tags> struct tuple_element<N, tagged<Base, Tags...>>;
+
+  // \ref{tagged.pair}, tagged pairs
+  template <class T1, class T2> using tagged_pair = @\seebelow@;
+\end{codeblock}
+}
+
 \setcounter{subsection}{1}
 \rSec2[utility.swap]{swap}
 
@@ -60,7 +76,7 @@ Exchanges values stored in two locations.
 \indexlibrary{\idxcode{swap}}%
 \begin{itemdecl}
 template <class T, size_t N>
-    @\newtxt{requires requires (std::remove_all_extents_t<T>\& t) \{ swap(t, t); \}}@
+  @\newtxt{requires requires (std::remove_all_extents_t<T>\& t) \{ swap(t, t); \}}@
 void swap(T (&a)[N], T (&b)[N]) noexcept(noexcept(swap(*a, *b)));}
 \end{itemdecl}
 
@@ -95,6 +111,279 @@ obj = std::forward<U>(new_val);
 return old_val;
 \end{codeblock}
 \end{itemdescr}
+
+\setcounter{subsection}{5}
+
+{\color{newclr}
+\rSec2[taggedtup]{Tagged tuple-like types}
+
+\rSec3[taggedtup.general]{In general}
+
+\pnum The library provides a template for augmenting a tuple-like type with named element accessor
+member functions. The library also provides several templates that provide access to \tcode{tagged}
+objects as if they were \tcode{tuple} objects (see~\cxxref{tuple.elem}).
+
+\ednote{This type exists so that the algorithms can return pair- and tuple-like objects with named
+accessors, as requested by LEWG. Rather than create a bunch of one-off class types with no relation
+to pair and tuple, I opted instead to create a general utility. I'll note that this functionality
+can be merged into \tcode{pair} and \tcode{tuple} directly with minimal breakage, but I opted for
+now to keep it separate.}
+
+\rSec3[taggedtup.tagged]{Class template \tcode{tagged}}
+
+Class template \tcode{tagged} augments a tuple-like class type by giving it named accessors. It is
+used to define the alias templates \tcode{tagged_pair}~(\ref{pairs.tagged}) and
+\tcode{tagged_tuple}~(\ref{tuple.tagged}).
+
+\pnum In the class synopsis below, let $i$ be in the range
+\range{0}{sizeof...(Tags)} in order and $T_i$ be the $i^{th}$ type in \tcode{Tags}, where indexing
+is zero-based.
+
+\indexlibrary{\idxcode{tagged}}%
+\begin{codeblock}
+// defined in header <utility>
+
+namespace std {
+  template <class Base, class... Tags>
+  struct tagged :
+    Base, @\textit{TAGGET}@(tagged<Base, Tags...>, @$T_i$@, @$i$@)... { // \seebelow
+    using Base::Base;
+    template <class U>
+      requires Assignable<Base, U>
+    tagged& operator=(U&& u);
+  };
+}
+\end{codeblock}
+
+\pnum The size of the \tcode{Tags} parameter pack shall be less than or equal to
+\tcode{tuple_size<Base>::value}.
+
+\pnum A \techterm{tagged getter} is an empty trivial class type that has a named member function that
+returns a reference to a member of a tuple-like object that is assumed to be derived from the getter
+class. The tuple-like type of a tagged getter is called its \techterm{DerivedCharacteristic}.
+The index of the tuple element returned from the getter's member functions is called its
+\techterm{ElementIndex}. The name of the getter's member function is called its
+\techterm{ElementName}
+
+\pnum A tagged getter class with DerivedCharacteristic \tcode{\textit{D}}, ElementIndex
+\tcode{\textit{N}}, and ElementName \tcode{\textit{name}} shall provide the following interface:
+
+\begin{codeblock}
+struct @\xname{\textit{TAGGED_GETTER}}@ {
+  constexpr decltype(auto) @$name$@() &       { return get<@$N$@>(static_cast<@$D$@&>(*this)); }
+  constexpr decltype(auto) @$name$@() &&      { return get<@$N$@>(static_cast<@$D$@&&>(*this)); }
+  constexpr decltype(auto) @$name$@() const & { return get<@$N$@>(static_cast<const @$D$@&>(*this)); }
+};
+\end{codeblock}
+
+\pnum A \techterm{tag specifier} is a type that facilitates a mapping from a tuple-like type and an
+element index into a \textit{tagged getter} that gives named access to the element at that index.
+The types in the \tcode{Tags} parameter pack shall be tag specifiers. The tag specifiers in the
+\tcode{Tags} parameter pack shall be unique. \enternote The mapping mechanism from tag specifier to
+tagged getter is unspecified.\exitnote
+
+\pnum Let \tcode{\textit{TAGGET}(D, T, $N$)} name a tagged getter type that gives named
+access to the $N$-th element of the tuple-like type \tcode{D}.
+
+\pnum It shall not be possible to delete an instance of class template \tcode{tagged} through a
+pointer to any base other than \tcode{Base}.
+
+\pnum A \techterm{tagged type} is a unary function type whose return type is a tag specifier. Let
+\tcode{\textit{TAGSPEC}(F)} name the tag specifier of the tagged type \tcode{F}, and let
+\tcode{\textit{TAGELEM}(F)} name the argument type of the tagged type \tcode{F}.
+
+\indexlibrary{\idxcode{operator=}!\idxcode{tagged}}
+\indexlibrary{\idxcode{tagged}!\idxcode{operator=}}
+\begin{itemdecl}
+template <class U>
+  requires Assignable<Base, U>
+tagged& operator=(U&& u);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Assigns \tcode{forward<U>(u)} to \tcode{static_cast<Base\&>(*this)}.
+
+\pnum
+\returns \tcode{*this}.
+\end{itemdescr}
+
+\rSec3[tagged.astuple]{Tuple-like access to \tcode{tagged}}
+
+\indexlibrary{\idxcode{tuple_size}}%
+\begin{itemdecl}
+template <class Base, class... Tags>
+struct tuple_size<tagged<Base, Tags...>>
+  : tuple_size<Base> { };
+\end{itemdecl}
+
+\indexlibrary{\idxcode{tuple_element}}%
+\begin{itemdecl}
+template <class Base, class... Tags>
+struct tuple_element<N, tagged<Base, Tags...>>
+  : tuple_element<N, Base> { };
+\end{itemdecl}
+}
+
+\setcounter{section}{2}
+
+\rSec1[pairs]{Pairs}
+
+\setcounter{subsection}{1}
+
+\rSec2[pairs.pair]{Class template \tcode{pair}}
+
+\ednote{To the bottom of the \tcode{pair} synopsis, add the following:}
+
+{\color{newclr}
+\begin{codeblock}
+namespace std {
+  // ...
+  template <class T1, class T2>
+  using tagged_pair = tagged<pair<@\textit{TAGELEM}@(T1), @\textit{TAGELEM}@(T2)>,
+                             @\textit{TAGSPEC}@(T1), @\textit{TAGSPEC}@(T2)>;
+}
+\end{codeblock}
+}
+
+\ednote{After [pair.piecewise], add the following sub-section:}
+
+\setcounter{subsection}{5}
+
+{\color{newclr}
+\rSec2[pairs.tagged]{Alias template \tcode{tagged_pair}}
+
+\begin{codeblock}
+template <class T1, class T2>
+using tagged_pair = tagged<pair<@\textit{TAGELEM}@(T1), @\textit{TAGELEM}@(T2)>,
+                           @\textit{TAGSPEC}@(T1), @\textit{TAGSPEC}@(T2)>;
+\end{codeblock}
+
+\pnum Types \tcode{T1}  and \tcode{T2} shall be tagged types~(\ref{taggedtup.tagged}).
+
+\pnum \enterexample
+\begin{codeblock}
+// See \ref{alg.tagspec}:
+tagged_pair<tag::min(int), tag::max(int)> p{0, 1};
+assert(&p.min() == &p.first);
+assert(&p.max() == &p.second);
+\end{codeblock}
+\exitexample
+
+
+\rSec3[pairs.tagged.creation]{Tagged pair creation functions}
+
+\indexlibrary{\idxcode{make_pair}}%
+\begin{itemdecl}
+template <class Tag1, class Tag2, class T1, class T2>
+  constexpr tagged_pair<Tag1(V1), Tag2(V2)> make_tagged_pair(T1&& x, T2&& y);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{tagged_pair<Tag1(V1), Tag2(V2)>(std::forward<T1>(x), std::forward<T2>(y))};
+
+where \tcode{V1} and \tcode{V2} are determined as follows: Let \tcode{Ui} be
+\tcode{decay_t<Ti>} for each \tcode{Ti}. Then each \tcode{Vi} is \tcode{X\&}
+if \tcode{Ui} equals \tcode{reference_wrapper<X>}, otherwise \tcode{Vi} is
+\tcode{Ui}.
+
+\pnum
+\enterexample
+In place of:
+
+\begin{codeblock}
+  return tagged_pair<tag::min(int), tag::max(double)>(5, 3.1415926);   // explicit types
+\end{codeblock}
+
+a \Cpp program may contain:
+
+\begin{codeblock}
+  return make_tagged_pair<tag::min, tag::max>(5, 3.1415926);           // types are deduced
+\end{codeblock}
+\exitexample
+\end{itemdescr}
+}
+
+\rSec1[tuple]{Tuples}
+
+\rSec2[tuple.general]{In general}
+
+\ednote{To the bottom of the \tcode{<tuple>} synopsis, add the following:}
+
+{\color{newclr}
+\begin{codeblock}
+namespace std {
+  // ...
+  template <class... Types>
+  using tagged_tuple = tagged<tuple<@\textit{TAGELEM}@(Types)...>,
+                              @\textit{TAGSPEC}@(Types)...>;
+}
+\end{codeblock}
+}
+
+\ednote{After [tuple.tuple], add the following sub-section:}
+
+\setcounter{subsection}{2}
+
+{\color{newclr}
+\rSec2[tuple.tagged]{Alias template \tcode{tagged_tuple}}
+
+\begin{codeblock}
+template <class... Types>
+using tagged_tuple = tagged<tuple<@\textit{TAGELEM}@(Types)...>,
+                            @\textit{TAGSPEC}@(Types)...>;
+\end{codeblock}
+
+\pnum The types in parameter pack \tcode{Types} shall be tagged types~(\ref{taggedtup.tagged}).
+
+\pnum \enterexample
+\begin{codeblock}
+// See \ref{alg.tagspec}:
+tagged_tuple<tag::in(char*), tag::out(char*)> t{0, 0};
+assert(&t.in() == &get<0>(t));
+assert(&t.out() == &get<1>(t));
+\end{codeblock}
+\exitexample
+
+\rSec3[tuple.tagged.creation]{Tagged tuple creation functions}
+
+\pnum
+In the function descriptions that follow, let $i$ be in the range \range{0}{sizeof...(Types)}
+in order and let $T_i$ be the $i^{th}$ type in a template parameter pack named \tcode{Types},
+where indexing is zero-based.
+
+\indexlibrary{\idxcode{make_tagged_tuple}}%
+\indexlibrary{\idxcode{tagged_tuple}!\idxcode{make_tagged_tuple}}%
+\begin{itemdecl}
+template<class...Tags, class... Types>
+  constexpr tagged_tuple<Tags(@\textit{VTypes}@)...>> make_tagged_tuple(Types&&... t);
+\end{itemdecl}
+
+\begin{itemdescr} \pnum Let \tcode{$U_i$} be \tcode{decay_t<$T_i$>} for each
+$T_i$ in \tcode{Types}. Then each $V_i$ in \tcode{VTypes} is
+\tcode{X\&} if $U_i$ equals \tcode{reference_wrapper<X>}, otherwise
+$V_i$ is $U_i$.
+
+\pnum
+\returns \tcode{tagged_tuple<Tags(VTypes)...>(std::forward<Types>(t)...)}.
+
+\pnum
+\enterexample
+
+\begin{codeblock}
+int i; float j;
+make_tagged_tuple<tag::in1, tag::in2, tag::out>(1, ref(i), cref(j))
+\end{codeblock}
+
+creates a tagged tuple of type
+
+\begin{codeblock}
+tagged_tuple<tag::in1(int), tag::in2(int&), tag::out(const float&)>
+\end{codeblock}
+\exitexample
+\end{itemdescr}
+}
 
 \setcounter{section}{8}
 \rSec1[function.objects]{Function objects}
