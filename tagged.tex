@@ -4,7 +4,7 @@
 
 \pnum Below is a reference implementation of the \tcode{tagged} class template described in
 \ref{taggedtup.tagged}, and also \tcode{tagged_pair}~(\ref{pairs.tagged}),
-\tcode{tagged_tuple}~(\ref{tuple.tagged}), and \tcode{tag::input}~(\ref{alg.tagspec}).
+\tcode{tagged_tuple}~(\ref{tuple.tagged}), and \tcode{tag::in}~(\ref{alg.tagspec}).
 
 \begin{codeblock}
 namespace std {
@@ -22,26 +22,52 @@ namespace std {
   private:
     template <class, class...> friend struct tagged;
     template <class Type, class Indices, class...Tags>
-    struct make_;
+    struct collect_;
     template <class Type, std::size_t...Is, class...Tags>
-    struct make_<Type, index_sequence<Is...>, Tags...>
-      : Tags::template rebind<Type, Is>... {
-      make_() = default;
-      make_(const make_&) = default;
+    struct collect_<Type, index_sequence<Is...>, Tags...>
+      : Tags::template getter<Type, Is>... {
+      collect_() = default;
+      collect_(const collect_&) = default;
+      collect_& operator=(const collect_&) = default;
     private:
       template <class, class...> friend struct tagged;
-      ~make_() = default;
+      ~collect_() = default;
     };
     template <class Type, class...Tags>
-    using make = make_<Type, make_index_sequence<sizeof...(Tags)>, Tags...>;
+    using collect = collect_<Type, make_index_sequence<sizeof...(Tags)>, Tags...>;
   };
 
   template <class Base, class...Tags>
   struct tagged
-    : Base, __getters::make<tagged<Base, Tags...>, Tags...> {
+    : Base, __getters::collect<tagged<Base, Tags...>, Tags...> {
     using Base::Base;
+    tagged() = default;
+    tagged(tagged&&) = default;
+    tagged(const tagged&) = default;
+    tagged &operator=(tagged&&) = default;
+    tagged &operator=(const tagged&) = default;
+    template <typename Other>
+      requires Constructible<Base, Other>
+    tagged(tagged<Other, Tags...> &&that)
+      : Base(static_cast<Other &&>(that)) { }
+    template <typename Other>
+      requires Constructible<Base, const Other&>
+    tagged(tagged<Other, Tags...> const &that)
+      : Base(static_cast<const Other&>(that)) { }
+    template <typename Other>
+      requires Assignable<Base, Other>
+    tagged& operator=(tagged<Other, Tags...>&& that) {
+      static_cast<Base&>(*this) = static_cast<Other&&>(that);
+      return *this;
+    }
+    template <typename Other>
+      requires Assignable<Base, const Other&>
+    tagged& operator=(const tagged<Other, Tags...>& that) {
+      static_cast<Base&>(*this) = static_cast<const Other&>(that);
+      return *this;
+    }
     template <class U>
-      requires Assignable<Base, U>
+      requires Assignable<Base, U> && !Same<decay_t<U>, tagged>
     tagged& operator=(U&& u) {
       static_cast<Base&>(*this) = std::forward<U>(u);
       return *this;
@@ -69,20 +95,26 @@ namespace std {
            typename __tag_spec<Types>::type...>;
 
   namespace tag {
-    struct input {
+    struct in {
     private:
       friend struct __getters;
       template <class Derived, size_t I>
-      struct rebind {
-        constexpr decltype(auto) input() & {
+      struct getter {
+        getter() = default;
+        getter(const getter&) = default;
+        getter &operator=(const getter&) = default;
+        constexpr decltype(auto) in() & {
           return get<I>(static_cast<Derived &>(*this));
         }
-        constexpr decltype(auto) input() && {
+        constexpr decltype(auto) in() && {
           return get<I>(static_cast<Derived &&>(*this));
         }
-        constexpr decltype(auto) input() const & {
+        constexpr decltype(auto) in() const & {
           return get<I>(static_cast<const Derived &>(*this));
         }
+      private:
+        friend struct __getters;
+        ~getter() = default;
       };
     }
     // Other tag specifiers defined similarly, see \ref{alg.tagspec}
