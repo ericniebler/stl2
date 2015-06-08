@@ -29,6 +29,11 @@
   // \ref{taggedtup.tagged}, struct with named accessors
   template <class Base, class... Types> struct tagged;
 
+  // \ref{tagged.special}, tagged specialized algorithms
+  template <class Base, class... Tags>
+    requires Swappable<Base&>
+  void swap(tagged<Base, Tags...>& x, tagged<Base, Tags...>& y) noexcept(@\seebelow@);
+
   // \ref{tagged.astuple}, tuple-like access to tagged
   template <class Base, class... Tags> struct tuple_size<tagged<Base, Tags...>>;
   template <size_t N, class Base, class... Tags> struct tuple_element<N, tagged<Base, Tags...>>;
@@ -148,10 +153,33 @@ namespace std {
   struct tagged :
     Base, @\textit{TAGGET}@(tagged<Base, Tags...>, @$T_i$@, @$i$@)... { // \seebelow
     using Base::Base;
+    tagged() = default;
+    tagged(tagged&&) = default;
+    tagged(const tagged&) = default;
+    tagged &operator=(tagged&&) = default;
+    tagged &operator=(const tagged&) = default;
+    template <typename Other>
+      requires Constructible<Base, Other>
+    tagged(tagged<Other, Tags...> &&that) noexcept(@\seebelow@);
+    template <typename Other>
+      requires Constructible<Base, const Other&>
+    tagged(tagged<Other, Tags...> const &that);
+    template <typename Other>
+      requires Assignable<Base, Other>
+    tagged& operator=(tagged<Other, Tags...>&& that) noexcept(@\seebelow@);
+    template <typename Other>
+      requires Assignable<Base, const Other&>
+    tagged& operator=(const tagged<Other, Tags...>& that);
     template <class U>
-      requires Assignable<Base, U>
+      requires Assignable<Base, U> && !Same<decay_t<U>, tagged>
     tagged& operator=(U&& u);
+    void swap(tagged& that) noexcept(@\seebelow@)
+      requires Swappable<Base&>;
   };
+
+  template <class Base, class... Tags>
+    requires Swappable<Base&>
+  void swap(tagged<Base, Tags...>& x, tagged<Base, Tags...>& y) noexcept(@\seebelow@);
 }
 \end{codeblock}
 
@@ -192,11 +220,81 @@ pointer to any base other than \tcode{Base}.
 \tcode{\textit{TAGSPEC}(F)} name the tag specifier of the tagged type \tcode{F}, and let
 \tcode{\textit{TAGELEM}(F)} name the argument type of the tagged type \tcode{F}.
 
+\indexlibrary{\idxcode{tagged}!\idxcode{tagged}}
+\begin{itemdecl}
+template <typename Other>
+  requires Constructible<Base, Other>
+tagged(tagged<Other, Tags...> &&that) noexcept(@\seebelow@);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\remarks The expression in the \tcode{noexcept} is equivalent to:
+
+\begin{codeblock}
+noexcept(Base(declval<Other>()))
+\end{codeblock}
+
+\pnum
+\effects Initializes \tcode{Base} with \tcode{static_cast<Other\&\&>(that)}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{tagged}!\idxcode{tagged}}
+\begin{itemdecl}
+template <typename Other>
+  requires Constructible<Base, const Other&>
+tagged(const tagged<Other, Tags...>& that);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Initializes \tcode{Base} with \tcode{static_cast<const Other\&>(that)}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator=}!\idxcode{tagged}}
+\indexlibrary{\idxcode{tagged}!\idxcode{operator=}}
+\begin{itemdecl}
+template <typename Other>
+  requires Assignable<Base, Other>
+tagged& operator=(tagged<Other, Tags...>&& that) noexcept(@\seebelow@);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\remarks The expression in the \tcode{noexcept} is equivalent to:
+
+\begin{codeblock}
+noexcept(declval<Base&>() = declval<Other>())
+\end{codeblock}
+
+\pnum
+\effects Assigns \tcode{static_cast<Other\&\&>(that)} to \tcode{static_cast<Base\&>(*this)}.
+
+\pnum
+\returns \tcode{*this}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator=}!\idxcode{tagged}}
+\indexlibrary{\idxcode{tagged}!\idxcode{operator=}}
+\begin{itemdecl}
+template <typename Other>
+  requires Assignable<Base, const Other&>
+tagged& operator=(const tagged<Other, Tags...>& that);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Assigns \tcode{static_cast<const Other\&>(that)} to \tcode{static_cast<Base\&>(*this)}.
+
+\pnum
+\returns \tcode{*this}.
+\end{itemdescr}
+
 \indexlibrary{\idxcode{operator=}!\idxcode{tagged}}
 \indexlibrary{\idxcode{tagged}!\idxcode{operator=}}
 \begin{itemdecl}
 template <class U>
-  requires Assignable<Base, U>
+  requires Assignable<Base, U> && !Same<decay_t<U>, tagged>
 tagged& operator=(U&& u);
 \end{itemdecl}
 
@@ -206,6 +304,46 @@ tagged& operator=(U&& u);
 
 \pnum
 \returns \tcode{*this}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{swap}!\idxcode{tagged}}
+\indexlibrary{\idxcode{tagged}!\idxcode{swap}}
+\begin{itemdecl}
+void swap(tagged& rhs) noexcept(@\seebelow@)
+  requires Swappable<Base&>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\remarks The expression in the \tcode{noexcept} is equivalent to:
+
+\begin{codeblock}
+noexcept(swap(declval<Base&>(), declval<Base&>()))
+\end{codeblock}
+
+\pnum
+\effects Calls \tcode{swap} on the result of applying \tcode{static_cast} to \tcode{*this} and
+\tcode{that}.
+
+\pnum
+\throws Nothing unless the call to \tcode{swap} on the \tcode{Base} sub-objects throws.
+
+\end{itemdescr}
+
+\rSec3[tagged.special]{\tcode{tagged} specialized algorithms}
+
+\indexlibrary{\idxcode{swap}!\tcode{tagged}}%
+
+\begin{itemdecl}
+template<class Base, class... Tags>
+  requires Swappable<Base&>
+void swap(tagged<Base, Tags...>& x, tagged<Base, Tags...>& y)
+  noexcept(noexcept(x.swap(y)));
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects \tcode{x.swap(y)}
 \end{itemdescr}
 
 \rSec3[tagged.astuple]{Tuple-like access to \tcode{tagged}}
