@@ -172,7 +172,7 @@ namespace std {
     tagged& operator=(const tagged<Other, Tags...>& that);
     template <class U>
       requires Assignable<Base, U> && !Same<decay_t<U>, tagged>
-    tagged& operator=(U&& u);
+    tagged& operator=(U&& u) noexcept(@\seebelow@);
     void swap(tagged& that) noexcept(@\seebelow@)
       requires Swappable<Base&>;
   };
@@ -295,10 +295,17 @@ tagged& operator=(const tagged<Other, Tags...>& that);
 \begin{itemdecl}
 template <class U>
   requires Assignable<Base, U> && !Same<decay_t<U>, tagged>
-tagged& operator=(U&& u);
+tagged& operator=(U&& u) noexcept(@\seebelow@);
 \end{itemdecl}
 
 \begin{itemdescr}
+\pnum
+\remarks The expression in the \tcode{noexcept} is equivalent to:
+
+\begin{codeblock}
+noexcept(declval<Base&>() = forward<U>(u))
+\end{codeblock}
+
 \pnum
 \effects Assigns \tcode{forward<U>(u)} to \tcode{static_cast<Base\&>(*this)}.
 
