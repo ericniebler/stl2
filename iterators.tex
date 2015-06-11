@@ -1652,6 +1652,9 @@ namespace std {
     struct common_type<I, unreachable>;
   template<Iterator I>
     struct common_type<unreachable, I>;
+
+  @\newtxt{// \ref{dangling.wrappers} Dangling wrapper}@
+  @\newtxt{template <class T> class dangling;}@
 \end{codeblock}
 \end{addedblock}
 \begin{codeblock}
@@ -5178,6 +5181,72 @@ namespace std {
 and \tcode{\oldtxt{counted}\newtxt{default}_sentinel} can satisfy the \tcode{Common} requirement of the
 \tcode{EqualityComparable} concept.\exitnote
 \end{itemdescr}
+
+{\color{newclr}
+\rSec2[dangling.wrappers]{Dangling wrapper}
+
+\rSec3[dangling.wrap]{Class template \tcode{dangling}}
+
+\pnum
+\indexlibrary{\idxcode{dangling}}%
+Class template \tcode{dangling} is a wrapper for an object that refers to another object whose
+lifetime may have ended. It is used by algorithms that accept rvalue ranges and return iterators.
+
+\begin{codeblock}
+namespace std {
+  template <CopyConstructible T>
+  class dangling {
+  public:
+    dangling() requires DefaultConstructible<T>;
+    dangling(T t);
+    T get_unsafe() const;
+  private:
+    T value; // \expos
+  };
+
+  template <Range R>
+  using safe_iterator_t =
+    conditional_t<is_lvalue_reference<R>::value, IteratorType<R>, dangling<IteratorType<R>>>;
+}
+\end{codeblock}
+
+\rSec3[dangling.wrap.ops]{\tcode{dangling} operations}
+
+\rSec4[dangling.wrap.op.const]{\tcode{dangling} constructors}
+
+\indexlibrary{\idxcode{dangling}!\idxcode{dangling}}%
+\begin{itemdecl}
+dangling() requires DefaultConstructible<T>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Constructs a \tcode{dangling}, value initializing \tcode{value}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{dangling}!\idxcode{dangling}}%
+\begin{itemdecl}
+dangling(T t);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Constructs a \tcode{dangling}, initializing \tcode{value} with \tcode{t}.
+\end{itemdescr}
+
+\rSec4[dangling.wrap.op.get]{\tcode{dangling::get_unsafe}}
+
+\indexlibrary{\idxcode{get_unsafe}!\idxcode{dangling}}%
+\indexlibrary{\idxcode{dangling}!\idxcode{get_unsafe}}%
+\begin{itemdecl}
+T get_unsafe() const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{value}.
+\end{itemdescr}
+}
 
 \rSec2[unreachable.sentinels]{Unreachable sentinel}
 
