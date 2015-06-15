@@ -856,16 +856,16 @@ using ResultType = result_of_t<F(Args...)>;
 
 template <class F, class...Args>
 concept bool Function =
-  Destructible<T> &&
-  CopyConstructible<T> &&
-  requires (F f, Args...args) {
+  Destructible<@\oldtxt{T}\newtxt{F}@> &&
+  CopyConstructible<@\oldtxt{T}\newtxt{F}@> &&
+  requires (F f, Args...args@\newtxt{, const F\& cf, F* fptr}@) {
     typename ResultType<F, Args...>;
     @\oldtxt{requires Same<F*, decltype(\&f)>;}@
     @\newtxt{\{ \&f \} -> Same<F*>;}@
-    { f.~F() } noexcept;
+    @\oldtxt{\{ f.~F() \} noexcept;}@
     @\oldtxt{requires Same<F*, decltype(new F)>;}@
-    @\newtxt{\{ new F \} -> Same<F*>;}@
-    @\oldtxt{\{ }@delete new F@\oldtxt{ \}}@;
+    @\newtxt{new F(cf);}@
+    @\oldtxt{\{ }@delete @\newtxt{fptr}\oldtxt{new F \}}@;
     @\oldtxt{\{ f(forward<Args>(args)...) \};}@
     @\oldtxt{requires Same<ResultType<F, Args...>,}@
                   @\oldtxt{decltype(f(forward<Args>(args)...))>;}@
