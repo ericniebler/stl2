@@ -17,66 +17,6 @@ library implements many of these ideas using real concepts, but it's a subset of
 here. A critically important piece of this work will be to fully implement this design in C++17 with
 a compiler that supports Concepts.
 
-\rSec1[future.rvalrngs]{Algorithms and Rvalue Ranges}
-
-\pnum
-As presented in this document, the vast majority of algorithms do not accept rvalue \oldtxt{Iterables}\newtxt{Ranges}.
-This shortcoming becomes more painful with the addition of range views~(\ref{future.views}).
-The issue is one of safety. Those algorithms that return iterators into the input range, like
-\tcode{find}, can return iterators that will immediately be made invalid once the temporary
-\oldtxt{Iterable}\newtxt{Range} they point into gets destroyed -- but not for \textit{all}
-\oldtxt{Iterables}\newtxt{Ranges}. For a\oldtxt{n} \oldtxt{Iterable}\newtxt{Range} that
-is little more than a pair of iterators, it is perfectly safe to use an iterator into the
-\oldtxt{Iterable}\newtxt{Range}
-after the \oldtxt{Iterable}\newtxt{Range} has been destroyed. The iterator's validity is not tied to the
-\oldtxt{Iterable}\newtxt{Range}'s lifetime at all.
-
-\pnum
-The range-v3 library~(\cite{range-v3}) on which this proposal is based has recently implemented an
-experimental solution to this problem. The library provides a wrapper called \tcode{dangling}
-that the algorithms can use to mark returned iterators that point into rvalue ranges. It works
-as follows:
-
-\begin{codeblock}
-  template <class T>
-  struct dangling {
-    dangling() = default;
-    dangling(T t) : t_(t) {}            // implicit
-    T get_unsafe() const { return t_; } // explicit
-  private:
-    T t_;
-  };
-
-  template <@\oldtxt{Iterable}\newtxt{Range}@ Rng>
-  using safe_iterator_t =
-    std::conditional_t<
-      std::is_lvalue_reference<Rng>::value,
-      IteratorType<Rng>,
-      dangling<IteratorType<Rng>>>;
-
-  template <Input@\oldtxt{Iterable}\newtxt{Range}@ Rng, class T, class Proj = identity>
-    requires //...
-    safe_iterator_t<Rng>
-      find(Rng&& rng, const T& value, Proj proj = Proj{}) {
-        return find(begin(rng), end(rng), value, std::move(proj));
-      }
-\end{codeblock}
-
-\pnum
-Of particular note is that a \tcode{dangling<Iterator>} is \textit{not} an iterator. In order to
-obtain an iterator into an expired \oldtxt{Iterable}\newtxt{Range}, the user must explicitly call a method called
-\tcode{get_unsafe}. That makes it impossible for a user to accidentally use an iterator that may be
-invalid.
-
-\pnum
-An extension of this idea would be to define \tcode{safe_iterator_t} in terms of a trait that can be
-specialized on user-defined \oldtxt{Iterable}\newtxt{Range} types. That way, \oldtxt{Iterables}\newtxt{Ranges} that guarantee their iterators can
-outlive the \oldtxt{Iterable}\newtxt{Range} will never have their iterators wrapped in \tcode{dangling}.
-
-\pnum
-If time shows that the range-v3 solution is workable, a future paper can integrate the new
-functionality into this document.
-
 \rSec1[future.proxy]{Proxy Iterators}
 
 \pnum
@@ -113,7 +53,7 @@ A future paper will propose such a type.
 
 \pnum
 The vast majority of the power of ranges comes from their composability. \techterm{Views} on existing
-\oldtxt{Iterables}\newtxt{Ranges}
+Ranges
 can combine in chains of operations that evaluate lazily, giving programmers a concise and efficient
 way to express rich transformations on data. This paper is narrowly focused on the concepts and the
 algorithms, leaving range views as critically important future work.
