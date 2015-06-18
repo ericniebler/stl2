@@ -52,7 +52,9 @@ fundamental type properties.
 \indexlibrary{\idxcode{Same}}%
 \begin{itemdecl}
 template <class T, class U>
-concept bool Same = @\seebelow@;
+concept bool Same@\newtxt{() \{}\oldtxt{ =}@
+  @\newtxt{return}@ @\seebelow@;
+@\newtxt{\}}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -71,7 +73,9 @@ denote the same type after the elimination of aliases; otherwise, it is an alias
 \indexlibrary{\idxcode{Derived}}%
 \begin{itemdecl}
 template <class T, class U>
-concept bool Derived = @\seebelow@;
+concept bool Derived@\newtxt{() \{}\oldtxt{ =}@
+  @\newtxt{return}@ @\seebelow@;
+@\newtxt{\}}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -84,7 +88,9 @@ concept bool Derived = @\seebelow@;
 \indexlibrary{\idxcode{Convertible}}%
 \begin{itemdecl}
 template <class T, class U>
-concept bool Convertible = @\seebelow@;
+concept bool Convertible@\newtxt{() \{}\oldtxt{ =}@
+  @\newtxt{return}@ @\seebelow@;
+@\newtxt{\}}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -98,8 +104,11 @@ concept bool Convertible = @\seebelow@;
 If \tcode{T} and \tcode{U} can both be explicitly converted to a third type,
 \tcode{C}, then \tcode{T} and \tcode{U} share a \techterm{common type},
 \tcode{C}. \enternote \tcode{C} could be the same as \tcode{T}, or \tcode{U}, or
-it could be a different type.\exitnote This notion is encapsulated by the
-\tcode{CommonType} alias and the \tcode{Common} concept.
+it could be a different type. \newtxt{\tcode{C} may not be unique.}\exitnote
+\oldtxt{This notion is encapsulated by the \tcode{CommonType} alias and the
+\tcode{Common} concept.}\newtxt{Informally, two types \tcode{T} and \tcode{U}
+model the \tcode{Common} concept when the type alias \tcode{CommonType<T, U>}
+is well-formed and names a common type of \tcode{T} and \tcode{U}.}
 
 \indexlibrary{\idxcode{Common}}%
 \begin{itemdecl}
@@ -107,21 +116,24 @@ template <class T, class U>
 using CommonType = common_type_t<T, U>;
 
 template <class T, class U>
-concept bool Common =
-  requires (T t, U u) {
+concept bool Common@\newtxt{() \{}\oldtxt{ =}@
+  @\newtxt{return}@ requires (T t, U u) {
     typename CommonType<T, U>;
     typename CommonType<U, T>;
-    requires Same<CommonType<U, T>, CommonType<T, U> >;
+    requires Same<CommonType<U, T>, CommonType<T, U>>@\newtxt{()}@;
     CommonType<T, U>(forward<T>(t));
     CommonType<T, U>(forward<U>(u));
   };
+@\newtxt{\}}@
 \end{itemdecl}
 
 \begin{itemdescr}
+\oldtxt{
 \pnum
 Two types \tcode{T} and \tcode{U} model the \tcode{Common} concept when the type
 alias \tcode{CommonType<T, U>} is well-formed, and when objects of types \tcode{T}
 and \tcode{U} can be explicitly converted to the common type.
+}
 
 \pnum
 Let \tcode{C} be \tcode{CommonType<T, U>}. Let \tcode{t1} and \tcode{t2} be objects
@@ -143,8 +155,8 @@ user-defined type. Those specializations are considered by the \tcode{Common} co
 \indexlibrary{\idxcode{Boolean}}%
 \begin{itemdecl}
 template <class B>
-concept bool Boolean =
-  requires(B b1, B b2) {
+concept bool Boolean@\newtxt{() \{}\oldtxt{ =}@
+  @\newtxt{return}@ requires(B b1, B b2) {
     bool(b1);
     { b1 } -> bool;
     bool(!b1);
@@ -152,6 +164,7 @@ concept bool Boolean =
     { b1 && b2 } -> Same<bool>;
     { b1 || b2 } -> Same<bool>;
   };
+@\newtxt{\}}@
 \end{itemdecl}
 
 \pnum
@@ -180,7 +193,9 @@ Given values \tcode{b1} and \tcode{b2} of type \tcode{B}, then type \tcode{B} mo
 \indexlibrary{\idxcode{Integral}}%
 \begin{itemdecl}
 template <class T>
-concept bool Integral = is_integral<T>::value;
+concept bool Integral@\newtxt{() \{}\oldtxt{ =}@
+  @\newtxt{return}@ is_integral<T>::value;
+@\newtxt{\}}@
 \end{itemdecl}
 
 \rSec2[concepts.lib.corelang.signedintegral]{Concept SignedIntegral}
@@ -188,8 +203,9 @@ concept bool Integral = is_integral<T>::value;
 \indexlibrary{\idxcode{SignedIntegral}}%
 \begin{itemdecl}
 template <class T>
-concept bool SignedIntegral =
-  Integral<T> && is_signed<T>::value;
+concept bool SignedIntegral@\newtxt{() \{}\oldtxt{ =}@
+  @\newtxt{return}@ Integral<T>@\newtxt{()}@ && is_signed<T>::value;
+@\newtxt{\}}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -204,8 +220,9 @@ integral types~(\cxxref{basic.fundamental}).
 \indexlibrary{\idxcode{UnsignedIntegral}}%
 \begin{itemdecl}
 template <class T>
-concept bool UnsignedIntegral =
-  Integral<T> && !SignedIntegral<T>;
+concept bool UnsignedIntegral@\newtxt{() \{}\oldtxt{ =}@
+  @\newtxt{return}@ Integral<T>@\newtxt{()}@ && !SignedIntegral<T>@\newtxt{()}@;
+@\newtxt{\}}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -224,10 +241,11 @@ references to [defaultconstructible] with references to
 \indexlibrary{\idxcode{DefaultConstructible}}%
 \begin{itemdecl}
 template <class T>
-concept bool DefaultConstructible =
-  requires {
+concept bool DefaultConstructible@\newtxt{() \{}\oldtxt{ =}@
+  @\newtxt{return}@ requires {
     T{};
   };
+@\newtxt{\}}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -245,10 +263,11 @@ references to [moveconstructible] with references to
 \indexlibrary{\idxcode{MoveConstructible}}%
 \begin{itemdecl}
 template <class T>
-concept bool MoveConstructible =
-  requires (T t) {
+concept bool MoveConstructible@\newtxt{() \{}\oldtxt{ =}@
+  @\newtxt{return}@ requires (T t) {
     T(move(t));
   };
+@\newtxt{\}}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -277,13 +296,14 @@ references to [copyconstructible] with references to
 \indexlibrary{\idxcode{CopyConstructible}}%
 \begin{itemdecl}
 template <class T>
-concept bool CopyConstructible =
-  MoveConstructible<T> && 
-  requires (T a, const T& b) {
-    T(a);
-    T(b);
-    T((const T&&)b);
-  };
+concept bool CopyConstructible@\newtxt{() \{}\oldtxt{ =}@
+  @\newtxt{return}@ MoveConstructible<T>@\newtxt{()}@ && 
+    requires (T a, const T& b) {
+      T(a);
+      T(b);
+      T((const T&&)b);
+    };
+@\newtxt{\}}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -304,10 +324,11 @@ to \tcode{u}.
 \indexlibrary{\idxcode{Constructible}}%
 \begin{itemdecl}
 template <class T, class ...Args>
-concept bool Constructible =
-  requires ( Args...args ) {
+concept bool Constructible@\newtxt{() \{}\oldtxt{ =}@
+  @\newtxt{return}@ requires ( Args...args ) {
     T{forward<Args>(args)...};
   };
+@\newtxt{\}}@
 \end{itemdecl}
 
 \rSec2[concepts.lib.corelang.destructible]{Concept Destructible}
@@ -318,10 +339,11 @@ references to [destructible] with references to
 \indexlibrary{\idxcode{Destructible}}%
 \begin{itemdecl}
 template <class T>
-concept bool Destructible =
-  requires (T t) {
-    { t.$\sim$T() } noexcept;
+concept bool Destructible@\newtxt{() \{}\oldtxt{ =}@
+  @\newtxt{return}@ requires (T t) {
+    { t.@$\sim$@T() } noexcept;
   };
+@\newtxt{\}}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -347,10 +369,11 @@ references to [moveassignable] with references to
 \indexlibrary{\idxcode{MoveAssignable}}%
 \begin{itemdecl}
 template <class T>
-concept bool MoveAssignable =
-  requires(T a, T b) {
+concept bool MoveAssignable@\newtxt{() \{}\oldtxt{ =}@
+  @\newtxt{return}@ requires(T a, T b) {
     { a = move(b) } -> Same<T&>;
   };
+@\newtxt{\}}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -380,13 +403,14 @@ references to [copyassignable] with references to
 \indexlibrary{\idxcode{CopyAssignable}}%
 \begin{itemdecl}
 template <class T>
-concept bool CopyAssignable =
-  MoveAssignable<T> && 
-  requires(T a, T b, const T& c) {
-    { a = b } -> Same<T&>;
-    { a = c } -> Same<T&>;
-    { a = (const T&&)c } -> Same<T&>;
-  };
+concept bool CopyAssignable@\newtxt{() \{}\oldtxt{ =}@
+  @\newtxt{return}@ MoveAssignable<T>@\newtxt{()}@ && 
+    requires(T a, T b, const T& c) {
+      { a = b } -> Same<T&>;
+      { a = c } -> Same<T&>;
+      { a = (const T&&)c } -> Same<T&>;
+    };
+@\newtxt{\}}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -406,10 +430,11 @@ Let \tcode{t} be an lvalue of type \tcode{T}, and \tcode{v} be an lvalue of type
 \indexlibrary{\idxcode{Assignable}}%
 \begin{itemdecl}
 template <class T, class U = T>
-concept bool Assignable =
-  requires(T a, U b) {
+concept bool Assignable@\newtxt{() \{}\oldtxt{ =}@
+  @\newtxt{return}@ requires(T a, U b) {
     { a = forward<U>(b) } -> Same<T&>;
   };
+@\newtxt{\}}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -440,7 +465,7 @@ template <class T, class U>
 concept bool Swappable() {
   return Swappable<T>() &&
     Swappable<U>() &&
-    Common<T, U> &&
+    Common<T, U>@\newtxt{()}@ &&
     requires(T t, U u) {
       swap(forward<T>(t), forward<U>(u));
       swap(forward<U>(u), forward<T>(t));
@@ -590,7 +615,7 @@ does not mean that the type does not model \tcode{EqualityComparable}.\exitnote
 \begin{itemdecl}
 template <class T, class U>
 concept bool EqualityComparable() {
-  return Common<T, U> &&
+  return Common<T, U>@\newtxt{()}@ &&
     EqualityComparable<T>() &&
     EqualityComparable<U>() &&
     EqualityComparable<CommonType<T, U>>() &&
@@ -625,23 +650,24 @@ overconstraining here. (In \tcode{Relation} too.}
 \indexlibrary{\idxcode{Semiregular}}%
 \begin{itemdecl}
 template <class T>
-concept bool Semiregular =
-  DefaultConstructible<T> &&
-  CopyConstructible<T> &&
-  Destructible<T> &&
-  CopyAssignable<T> &&
-  requires(T a, size_t n, T* p) {
-    // Object
-    { &a } -> Same<T*>;
-    // Destruction
-    { a.~T() } noexcept;
-    // Allocation
-    { new T } -> Same<T*>;
-    { new T[n] } -> Same<T*>;
-    // Deallocation
-    delete p;
-    delete[] p;
-  };
+concept bool Semiregular@\newtxt{() \{}\oldtxt{ =}@
+  @\newtxt{return}@ DefaultConstructible<T>@\newtxt{()}@ &&
+    CopyConstructible<T>@\newtxt{()}@ &&
+    Destructible<T>@\newtxt{()}@ &&
+    CopyAssignable<T>@\newtxt{()}@ &&
+    requires(T a, size_t n, T* p) {
+      // Object
+      { &a } -> Same<T*>;
+      // Destruction
+      { a.~T() } noexcept;
+      // Allocation
+      { new T } -> Same<T*>;
+      { new T[n] } -> Same<T*>;
+      // Deallocation
+      delete p;
+      delete[] p;
+    };
+@\newtxt{\}}@
 \end{itemdecl}
 
 \ednote{The concepts are probably too fine-grained here. Look again at ``The Palo Alto''
@@ -667,8 +693,9 @@ built-in types like \tcode{int}, except that they may not be comparable with \tc
 \indexlibrary{\idxcode{Regular}}%
 \begin{itemdecl}
 template <class T>
-concept bool Regular =
-  Semiregular<T>() && EqualityComparable<T>;
+concept bool Regular@\newtxt{() \{}\oldtxt{ =}@
+  @\newtxt{return}@ Semiregular<T>() && EqualityComparable<T>@\newtxt{()}@;
+@\newtxt{\}}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -724,7 +751,7 @@ does not mean that the type does not model \tcode{TotallyOrdered}.\exitnote
 \begin{itemdecl}
 template <class T, class U>
 concept bool TotallyOrdered() {
-  return Common<T, U> &&
+  return Common<T, U>@\newtxt{()}@ &&
     TotallyOrdered<T>() &&
     TotallyOrdered<U>() &&
     TotallyOrdered<CommonType<T, U>>() &&
@@ -776,17 +803,18 @@ template <class F, class...Args>
 using ResultType = result_of_t<F(Args...)>;
 
 template <class F, class...Args>
-concept bool Function =
-  Destructible<@\oldtxt{T}\newtxt{F}@> &&
-  CopyConstructible<@\oldtxt{T}\newtxt{F}@> &&
-  requires (F f, Args...args@\newtxt{, const F\& cf, F* fptr}@) {
-    typename ResultType<F, Args...>;
-    { &f } -> Same<F*>;
-    @\oldtxt{\{ f.~F() \} noexcept;}@
-    @\oldtxt{\{ }@new F@\newtxt{(cf)}\oldtxt{ \} -> Same<F*>}@;
-    delete @\oldtxt{new F}\newtxt{fptr}@;
-    { f(forward<Args>(args)...) } -> Same<ResultType<F, Args...>>;
-  };
+concept bool Function@\newtxt{() \{}\oldtxt{ =}@
+  @\newtxt{return}@ Destructible<@\oldtxt{T}\newtxt{F}@>@\newtxt{()}@ &&
+    CopyConstructible<@\oldtxt{T}\newtxt{F}@>@\newtxt{()}@ &&
+    requires (F f, Args...args@\newtxt{, const F\& cf, F* fptr}@) {
+      typename ResultType<F, Args...>;
+      { &f } -> Same<F*>;
+      @\oldtxt{\{ f.~F() \} noexcept;}@
+      @\oldtxt{\{ }@new F@\newtxt{(cf)}\oldtxt{ \} -> Same<F*>}@;
+      delete @\oldtxt{new F}\newtxt{fptr}@;
+      { f(forward<Args>(args)...) } -> Same<ResultType<F, Args...>>;
+    };
+@\newtxt{\}}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -813,8 +841,9 @@ function that generates random numbers may model \tcode{Function}.\exitnote
 \indexlibrary{\idxcode{RegularFunction}}%
 \begin{itemdecl}
 template <class F, class...Args>
-concept bool RegularFunction =
-  Function<F, Args...>;
+concept bool RegularFunction@\newtxt{() \{}\oldtxt{ =}@
+  @\newtxt{return}@ Function<F, Args...>@\newtxt{()}@;
+@\newtxt{\}}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -835,9 +864,10 @@ equal arguments, they shall return equal objects.
 \indexlibrary{\idxcode{Predicate}}%
 \begin{itemdecl}
 template <class F, class...Args>
-concept bool Predicate =
-  RegularFunction<F, Args...> &&
-  @\newtxt{Boolean}\oldtxt{Convertible}@<ResultType<F, Args...>@\oldtxt{, bool}@>;
+concept bool Predicate@\newtxt{() \{}\oldtxt{ =}@
+  @\newtxt{return}@ RegularFunction<F, Args...>@\newtxt{()}@ &&
+    @\oldtxt{Convertible}\newtxt{Boolean}@<ResultType<F, Args...>@\oldtxt{, bool}@>@\newtxt{()}@;
+@\newtxt{\}}@
 \end{itemdecl}
 
 \rSec2[concepts.lib.functions.relation]{Concept Relation}
@@ -846,17 +876,17 @@ concept bool Predicate =
 \begin{itemdecl}
 template <class F, class T>
 concept bool Relation() {
-  return Predicate<F, T, T>;
+  return Predicate<F, T, T>@\newtxt{()}@;
 }
 
 template <class R, class T, class U>
 concept bool Relation() {
   return Relation<R, T>() &&
     Relation<R, U>() &&
-    Common<T, U> &&
+    Common<T, U>@\newtxt{()}@ &&
     Relation<R, CommonType<T, U>>() &&
-    @\newtxt{Predicate<R, T, U> \&\&}@
-    @\newtxt{Predicate<R, U, T>;}@
+    @\newtxt{Predicate<R, T, U>() \&\&}@
+    @\newtxt{Predicate<R, U, T>();}@
     @\oldtxt{requires (R r, T a, U b) \{}@
       @\oldtxt{\{ r(a, b) \} -> Boolean;}@
       @\oldtxt{\{ r(b, a) \} -> Boolean;}@
