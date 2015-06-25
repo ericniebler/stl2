@@ -5,25 +5,52 @@
 \setcounter{section}{1}
 \rSec1[utility]{Utility components}
 
-\ednote{Change the \tcode{<utility>} synopsis as follows:}
+\ednote{``\tcode{swap}'' is a customization point found by Argument-Dependent Lookup. Due to the nature of
+ADL, the \tcode{swap} in namespace \tcode{std} would be considered if either argument has namespace \tcode{std}
+as an associated type. If \tcode{std::swap} remains unconstrained, then the \tcode{Swappable} concept will
+erroneously return true for some types that are not in fact swappable. Below, we suggest adding constraints
+directly to the overloads of \tcode{swap} in namespace \tcode{std} rather than defining new constrained
+overloads of \tcode{swap} in namespace \tcode{std::experimental::ranges_v1}. The precise mechanism by which
+\tcode{swap} is constrained such that it is usable in build environments lacking the concepts language feature
+is unspecified.}
+
+\synopsis{Header \tcode{<utility>} synopsis}
+
+\pnum
+Change the \tcode{<utility>} synopsis as follows:
 
 \begin{codeblock}
+@\newtxt{namespace std \{}@
+  // ... as before ..
+
   // \ref{utility.swap}, swap:
   template<class T>
-    @\added{requires MoveConstructible<T>\newtxt{()} \&\& MoveAssignable<T>\newtxt{()} \&\& Destructible<T>\newtxt{()}}@
+    @\added{requires \newtxt{experimental::ranges_v1::}MoveConstructible<T>\newtxt{()} \&\&}@
+      @\added{\newtxt{experimental::ranges_v1::}MoveAssignable<T>\newtxt{()} \&\& \newtxt{experimental::ranges_v1::}Destructible<T>\newtxt{()}}@
   void swap(T& a, T& b) noexcept(@\seebelow@);
+
   template <class T, size_t N>
     @\added{requires requires (remove_all_extents_t<T>\& t) \{ swap(t, t); \}}@
   void swap(T (&a)[N], T (&b)[N]) noexcept(noexcept(swap(*a, *b)));}
+
+  // ... as before ..
+@\newtxt{\}}@
+\end{codeblock}
+
+{\color{newclr}
+\synopsis{Header \tcode{<experimental/ranges_v1/utility>} synopsis}
+}
+
+\begin{codeblock}
+@\newtxt{namespace std \{ namespace experimental \{ namespace ranges_v1 \{}@
+  @\newtxt{// \ref{utility.swap}, swap:}@
+  @\newtxt{using std::swap;}@
 
   // \ref{utility.exchange}, exchange:
   template <class T, class U=T>
     @\added{requires MoveConstructible<T>\newtxt{()} \&\& Assignable<T, U>\newtxt{()} \&\& Destructible<T>\newtxt{()}}@
   T exchange(T& obj, U&& new_val);
 \end{codeblock}
-
-\ednote{To the end of the \tcode{<utility>} synopsis, add the following:}
-
 {\color{addclr}
 \begin{codeblock}
   // \ref{taggedtup.tagged}, struct with named accessors
@@ -34,22 +61,63 @@
     requires Swappable<Base&>@\newtxt{()}@
   void swap(tagged<Base, Tags...>& x, tagged<Base, Tags...>& y) noexcept(@\seebelow@);
 
-  // \ref{tagged.astuple}, tuple-like access to tagged
-  template <class Base, class... Tags> struct tuple_size<tagged<Base, Tags...>>;
-  template <size_t N, class Base, class... Tags> struct tuple_element<N, tagged<Base, Tags...>>;
-
-  // \ref{pairs.tagged}, tagged pairs
+  // \ref{tagged.pairs}, tagged pairs
   template <class T1, class T2> using tagged_pair = @\seebelow@;
+
+  @\newtxt{template <class Tag1, class Tag2, class T1, class T2>}@
+  @\newtxt{constexpr tagged_pair<Tag1(V1), Tag2(V2)> make_tagged_pair(T1\&\& x, T2\&\& y);}@
+@\newtxt{\}\}\}}@
+
+@\newtxt{namespace std \{}@
+  // \ref{tagged.astuple}, tuple-like access to tagged
+  template <class Base, class... Tags>
+  struct tuple_size<@\newtxt{experimental::ranges_v1::}@tagged<Base, Tags...>>;
+  
+  template <size_t N, class Base, class... Tags>
+  struct tuple_element<N, @\newtxt{experimental::ranges_v1::}@tagged<Base, Tags...>>;
+@\newtxt{\}}@
 \end{codeblock}
+}
+
+{\color{newclr}
+\pnum
+Any entities declared or defined directly in namespace \tcode{std} in header \tcode{<utility>}
+that are not already defined in namespace \tcode{std::experimental::ranges_v1} in header
+\tcode{<experimental/ranges_v1/utility>} are imported with
+\grammarterm{using-declaration}{s}~(\cxxref{namespace.udecl}). \enterexample
+\begin{codeblock}
+namespace std { namespace experimental { namespace ranges_v1 {
+  using std::pair;
+  using std::make_pair;
+  // ... others
+}}}
+\end{codeblock}
+\exitexample
+
+\pnum
+Any nested namespaces defined directly in namespace \tcode{std} in header \tcode{<utility>}
+that are not already defined in namespace \tcode{std::experimental::ranges_v1} in header
+\tcode{<experimental/ranges_v1/utility>} are aliased with a
+\grammarterm{namespace-alias-definition}~(\cxxref{namespace.alias}). \enterexample
+\begin{codeblock}
+namespace std { namespace experimental { namespace ranges_v1 {
+  namespace rel_ops = std::rel_ops;
+}}}
+\end{codeblock}
+\exitexample
 }
 
 \setcounter{subsection}{1}
 \rSec2[utility.swap]{swap}
 
+\ednote{The following edits to the two \tcode{swap} overloads are to be applied to the versions in
+namespace \tcode{std}.}
+
 \indexlibrary{\idxcode{swap}}%
 \begin{itemdecl}
 template<class T>
-  @\added{requires MoveConstructible<T>\newtxt{()} \&\& MoveAssignable<T>\newtxt{()} \&\& Destructible<T>\newtxt{()}}@
+  @\added{requires \newtxt{experimental::ranges_v1::}MoveConstructible<T>\newtxt{()} \&\&}@
+    @\added{\newtxt{experimental::ranges_v1::}MoveAssignable<T>\newtxt{()} \&\& \newtxt{experimental::ranges_v1::}Destructible<T>\newtxt{()}}@
 void swap(T& a, T& b) noexcept(@\seebelow@);
 \end{itemdecl}
 
@@ -59,8 +127,23 @@ void swap(T& a, T& b) noexcept(@\seebelow@);
 
 \begin{codeblock}
 is_nothrow_move_constructible<T>::value &&
-is_nothrow_move_assignable<T>::value
+is_nothrow_move_assignable<T>::value @\newtxt{\&\&}@
+@\newtxt{is_nothrow_destructible<T>::value}@
 \end{codeblock}
+
+{\color{newclr}
+\pnum
+\remark
+A library implementor is free to omit the \tcode{requires} clause so long as
+this function does not participate in overload resolution if the following
+is false
+\begin{codeblock}
+is_move_constructible<T>::value &&
+is_move_assignable<T>::value &&
+is_destructible<T>::value
+\end{codeblock}
+\ednote{This is to support compilation environments that do not support concepts.}
+}
 
 \removed{
 \pnum
@@ -71,6 +154,21 @@ shall be
 \tcode{MoveConstructible} (Table~\ref{moveconstructible})
 and
 \tcode{MoveAssignable} (Table~\ref{moveassignable}).
+}
+
+{\color{newclr}
+\pnum
+\requires
+The expressions
+\begin{codeblock}
+T tmp(move(a));
+a = move(b);
+b = move(tmp);
+\end{codeblock}
+shall have the effect of exchanging the values stored in the two locations.
+\enterexample Objects \tcode{a} and \tcode{b} may not be reference-like
+types (e.g. \tcode{reference_wrapper}~(\cxxref{refwrap})) that alias each
+other.\exitexample
 }
 
 \pnum
@@ -86,11 +184,21 @@ void swap(T (&a)[N], T (&b)[N]) noexcept(noexcept(swap(*a, *b)));}
 \end{itemdecl}
 
 \begin{itemdescr}
-\removed{
 \pnum
 \requires
-\tcode{a[i]} shall be swappable with~(\ref{swappable.requirements}) \tcode{b[i]}
+\tcode{a[i]} shall be swappable with~(\ref{concepts.lib.corelang.swappable}) \tcode{b[i]}
 for all \tcode{i} in the range \range{0}{N}.
+
+{\color{newclr}
+\pnum
+\remark
+A library implementor is free to omit the \tcode{requires} clause so long as
+this function does not participate in overload resolution if the following
+expression is ill-formed
+\begin{codeblock}
+swap(declval<remove_all_extents_t<T>&>(), declval<remove_all_extents_t<T>&>())
+\end{codeblock}
+\ednote{This is to support compilation environments that do not support concepts.}
 }
 
 \pnum
@@ -117,437 +225,71 @@ return old_val;
 \end{codeblock}
 \end{itemdescr}
 
-\setcounter{subsection}{5}
-
-{\color{addclr}
-\rSec2[taggedtup]{Tagged tuple-like types}
-
-\rSec3[taggedtup.general]{In general}
-
-\pnum The library provides a template for augmenting a tuple-like type with named element accessor
-member functions. The library also provides several templates that provide access to \tcode{tagged}
-objects as if they were \tcode{tuple} objects (see~\cxxref{tuple.elem}).
-
-\ednote{This type exists so that the algorithms can return pair- and tuple-like objects with named
-accessors, as requested by LEWG. Rather than create a bunch of one-off class types with no relation
-to pair and tuple, I opted instead to create a general utility. I'll note that this functionality
-can be merged into \tcode{pair} and \tcode{tuple} directly with minimal breakage, but I opted for
-now to keep it separate.}
-
-\rSec3[taggedtup.tagged]{Class template \tcode{tagged}}
-
-Class template \tcode{tagged} augments a tuple-like class type by giving it named accessors. It is
-used to define the alias templates \tcode{tagged_pair}~(\ref{pairs.tagged}) and
-\tcode{tagged_tuple}~(\ref{tuple.tagged}).
-
-\pnum In the class synopsis below, let $i$ be in the range
-\range{0}{sizeof...(Tags)} in order and $T_i$ be the $i^{th}$ type in \tcode{Tags}, where indexing
-is zero-based.
-
-\indexlibrary{\idxcode{tagged}}%
-\begin{codeblock}
-// defined in header <utility>
-
-namespace std {
-  template <class Base, class... Tags>
-  struct tagged :
-    Base, @\textit{TAGGET}@(tagged<Base, Tags...>, @$T_i$@, @$i$@)... { // \seebelow
-    using Base::Base;
-    tagged() = default;
-    tagged(tagged&&) = default;
-    tagged(const tagged&) = default;
-    tagged &operator=(tagged&&) = default;
-    tagged &operator=(const tagged&) = default;
-    template <typename Other>
-      requires Constructible<Base, Other>@\newtxt{()}@
-    tagged(tagged<Other, Tags...> &&that) noexcept(@\seebelow@);
-    template <typename Other>
-      requires Constructible<Base, const Other&>@\newtxt{()}@
-    tagged(tagged<Other, Tags...> const &that);
-    template <typename Other>
-      requires Assignable<Base, Other>@\newtxt{()}@
-    tagged& operator=(tagged<Other, Tags...>&& that) noexcept(@\seebelow@);
-    template <typename Other>
-      requires Assignable<Base, const Other&>@\newtxt{()}@
-    tagged& operator=(const tagged<Other, Tags...>& that);
-    template <class U>
-      requires Assignable<Base, U>@\newtxt{()}@ && !Same<decay_t<U>, tagged>@\newtxt{()}@
-    tagged& operator=(U&& u) noexcept(@\seebelow@);
-    void swap(tagged& that) noexcept(@\seebelow@)
-      requires Swappable<Base&>@\newtxt{()}@;
-  };
-
-  template <class Base, class... Tags>
-    requires Swappable<Base&>@\newtxt{()}@
-  void swap(tagged<Base, Tags...>& x, tagged<Base, Tags...>& y) noexcept(@\seebelow@);
-}
-\end{codeblock}
-
-\pnum The size of the \tcode{Tags} parameter pack shall be less than or equal to
-\tcode{tuple_size<Base>::value}.
-
-\pnum A \techterm{tagged getter} is an empty trivial class type that has a named member function that
-returns a reference to a member of a tuple-like object that is assumed to be derived from the getter
-class. The tuple-like type of a tagged getter is called its \techterm{DerivedCharacteristic}.
-The index of the tuple element returned from the getter's member functions is called its
-\techterm{ElementIndex}. The name of the getter's member function is called its
-\techterm{ElementName}
-
-\pnum A tagged getter class with DerivedCharacteristic \tcode{\textit{D}}, ElementIndex
-\tcode{\textit{N}}, and ElementName \tcode{\textit{name}} shall provide the following interface:
-
-\begin{codeblock}
-struct @\xname{\textit{TAGGED_GETTER}}@ {
-  constexpr decltype(auto) @$name$@() &       { return get<@$N$@>(static_cast<@$D$@&>(*this)); }
-  constexpr decltype(auto) @$name$@() &&      { return get<@$N$@>(static_cast<@$D$@&&>(*this)); }
-  constexpr decltype(auto) @$name$@() const & { return get<@$N$@>(static_cast<const @$D$@&>(*this)); }
-};
-\end{codeblock}
-
-\pnum A \techterm{tag specifier} is a type that facilitates a mapping from a tuple-like type and an
-element index into a \textit{tagged getter} that gives named access to the element at that index.
-The types in the \tcode{Tags} parameter pack shall be tag specifiers. The tag specifiers in the
-\tcode{Tags} parameter pack shall be unique. \enternote The mapping mechanism from tag specifier to
-tagged getter is unspecified.\exitnote
-
-\pnum Let \tcode{\textit{TAGGET}(D, T, $N$)} name a tagged getter type that gives named
-access to the $N$-th element of the tuple-like type \tcode{D}.
-
-\pnum It shall not be possible to delete an instance of class template \tcode{tagged} through a
-pointer to any base other than \tcode{Base}.
-
-\pnum A \techterm{tagged type} is a unary function type whose return type is a tag specifier. Let
-\tcode{\textit{TAGSPEC}(F)} name the tag specifier of the tagged type \tcode{F}, and let
-\tcode{\textit{TAGELEM}(F)} name the argument type of the tagged type \tcode{F}.
-
-\indexlibrary{\idxcode{tagged}!\idxcode{tagged}}
-\begin{itemdecl}
-template <typename Other>
-  requires Constructible<Base, Other>@\newtxt{()}@
-tagged(tagged<Other, Tags...> &&that) noexcept(@\seebelow@);
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\remarks The expression in the \tcode{noexcept} is equivalent to:
-
-\begin{codeblock}
-noexcept(Base(declval<Other>()))
-\end{codeblock}
-
-\pnum
-\effects Initializes \tcode{Base} with \tcode{static_cast<Other\&\&>(that)}.
-\end{itemdescr}
-
-\indexlibrary{\idxcode{tagged}!\idxcode{tagged}}
-\begin{itemdecl}
-template <typename Other>
-  requires Constructible<Base, const Other&>@\newtxt{()}@
-tagged(const tagged<Other, Tags...>& that);
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\effects Initializes \tcode{Base} with \tcode{static_cast<const Other\&>(that)}.
-\end{itemdescr}
-
-\indexlibrary{\idxcode{operator=}!\idxcode{tagged}}
-\indexlibrary{\idxcode{tagged}!\idxcode{operator=}}
-\begin{itemdecl}
-template <typename Other>
-  requires Assignable<Base, Other>@\newtxt{()}@
-tagged& operator=(tagged<Other, Tags...>&& that) noexcept(@\seebelow@);
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\remarks The expression in the \tcode{noexcept} is equivalent to:
-
-\begin{codeblock}
-noexcept(declval<Base&>() = declval<Other>())
-\end{codeblock}
-
-\pnum
-\effects Assigns \tcode{static_cast<Other\&\&>(that)} to \tcode{static_cast<Base\&>(*this)}.
-
-\pnum
-\returns \tcode{*this}.
-\end{itemdescr}
-
-\indexlibrary{\idxcode{operator=}!\idxcode{tagged}}
-\indexlibrary{\idxcode{tagged}!\idxcode{operator=}}
-\begin{itemdecl}
-template <typename Other>
-  requires Assignable<Base, const Other&>@\newtxt{()}@
-tagged& operator=(const tagged<Other, Tags...>& that);
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\effects Assigns \tcode{static_cast<const Other\&>(that)} to \tcode{static_cast<Base\&>(*this)}.
-
-\pnum
-\returns \tcode{*this}.
-\end{itemdescr}
-
-\indexlibrary{\idxcode{operator=}!\idxcode{tagged}}
-\indexlibrary{\idxcode{tagged}!\idxcode{operator=}}
-\begin{itemdecl}
-template <class U>
-  requires Assignable<Base, U>@\newtxt{()}@ && !Same<decay_t<U>, tagged>@\newtxt{()}@
-tagged& operator=(U&& u) noexcept(@\seebelow@);
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\remarks The expression in the \tcode{noexcept} is equivalent to:
-
-\begin{codeblock}
-noexcept(declval<Base&>() = forward<U>(u))
-\end{codeblock}
-
-\pnum
-\effects Assigns \tcode{forward<U>(u)} to \tcode{static_cast<Base\&>(*this)}.
-
-\pnum
-\returns \tcode{*this}.
-\end{itemdescr}
-
-\indexlibrary{\idxcode{swap}!\idxcode{tagged}}
-\indexlibrary{\idxcode{tagged}!\idxcode{swap}}
-\begin{itemdecl}
-void swap(tagged& rhs) noexcept(@\seebelow@)
-  requires Swappable<Base&>@\newtxt{()}@;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\remarks The expression in the \tcode{noexcept} is equivalent to:
-
-\begin{codeblock}
-noexcept(swap(declval<Base&>(), declval<Base&>()))
-\end{codeblock}
-
-\pnum
-\effects Calls \tcode{swap} on the result of applying \tcode{static_cast} to \tcode{*this} and
-\tcode{that}.
-
-\pnum
-\throws Nothing unless the call to \tcode{swap} on the \tcode{Base} sub-objects throws.
-
-\end{itemdescr}
-
-\rSec3[tagged.special]{\tcode{tagged} specialized algorithms}
-
-\indexlibrary{\idxcode{swap}!\tcode{tagged}}%
-
-\begin{itemdecl}
-template<class Base, class... Tags>
-  requires Swappable<Base&>@\newtxt{()}@
-void swap(tagged<Base, Tags...>& x, tagged<Base, Tags...>& y)
-  noexcept(noexcept(x.swap(y)));
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\effects \tcode{x.swap(y)}
-\end{itemdescr}
-
-\rSec3[tagged.astuple]{Tuple-like access to \tcode{tagged}}
-
-\indexlibrary{\idxcode{tuple_size}}%
-\begin{itemdecl}
-template <class Base, class... Tags>
-struct tuple_size<tagged<Base, Tags...>>
-  : tuple_size<Base> { };
-\end{itemdecl}
-
-\indexlibrary{\idxcode{tuple_element}}%
-\begin{itemdecl}
-template <class Base, class... Tags>
-struct tuple_element<N, tagged<Base, Tags...>>
-  : tuple_element<N, Base> { };
-\end{itemdecl}
-}
-
-\setcounter{section}{2}
-
-\rSec1[pairs]{Pairs}
-
-\setcounter{subsection}{1}
-
-\rSec2[pairs.pair]{Class template \tcode{pair}}
-
-\ednote{To the bottom of the \tcode{pair} synopsis, add the following:}
-
-{\color{addclr}
-\begin{codeblock}
-namespace std {
-  // ...
-  template <class T1, class T2>
-  using tagged_pair = tagged<pair<@\textit{TAGELEM}@(T1), @\textit{TAGELEM}@(T2)>,
-                             @\textit{TAGSPEC}@(T1), @\textit{TAGSPEC}@(T2)>;
-}
-\end{codeblock}
-}
-
-\ednote{After [pair.piecewise], add the following sub-section:}
-
-\setcounter{subsection}{5}
-
-{\color{addclr}
-\rSec2[pairs.tagged]{Alias template \tcode{tagged_pair}}
-
-\begin{codeblock}
-template <class T1, class T2>
-using tagged_pair = tagged<pair<@\textit{TAGELEM}@(T1), @\textit{TAGELEM}@(T2)>,
-                           @\textit{TAGSPEC}@(T1), @\textit{TAGSPEC}@(T2)>;
-\end{codeblock}
-
-\pnum Types \tcode{T1}  and \tcode{T2} shall be tagged types~(\ref{taggedtup.tagged}).
-
-\pnum \enterexample
-\begin{codeblock}
-// See \ref{alg.tagspec}:
-tagged_pair<tag::min(int), tag::max(int)> p{0, 1};
-assert(&p.min() == &p.first);
-assert(&p.max() == &p.second);
-\end{codeblock}
-\exitexample
-
-
-\rSec3[pairs.tagged.creation]{Tagged pair creation functions}
-
-\indexlibrary{\idxcode{make_pair}}%
-\begin{itemdecl}
-template <class Tag1, class Tag2, class T1, class T2>
-  constexpr tagged_pair<Tag1(V1), Tag2(V2)> make_tagged_pair(T1&& x, T2&& y);
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\returns \tcode{tagged_pair<Tag1(V1), Tag2(V2)>(std::forward<T1>(x), std::forward<T2>(y))};
-
-where \tcode{V1} and \tcode{V2} are determined as follows: Let \tcode{Ui} be
-\tcode{decay_t<Ti>} for each \tcode{Ti}. Then each \tcode{Vi} is \tcode{X\&}
-if \tcode{Ui} equals \tcode{reference_wrapper<X>}, otherwise \tcode{Vi} is
-\tcode{Ui}.
-
-\pnum
-\enterexample
-In place of:
-
-\begin{codeblock}
-  return tagged_pair<tag::min(int), tag::max(double)>(5, 3.1415926);   // explicit types
-\end{codeblock}
-
-a \Cpp program may contain:
-
-\begin{codeblock}
-  return make_tagged_pair<tag::min, tag::max>(5, 3.1415926);           // types are deduced
-\end{codeblock}
-\exitexample
-\end{itemdescr}
-}
-
-\rSec1[tuple]{Tuples}
-
-\rSec2[tuple.general]{In general}
-
-\ednote{To the bottom of the \tcode{<tuple>} synopsis, add the following:}
-
-{\color{addclr}
-\begin{codeblock}
-namespace std {
-  // ...
-  template <class... Types>
-  using tagged_tuple = tagged<tuple<@\textit{TAGELEM}@(Types)...>,
-                              @\textit{TAGSPEC}@(Types)...>;
-}
-\end{codeblock}
-}
-
-\ednote{After [tuple.tuple], add the following sub-section:}
-
-\setcounter{subsection}{2}
-
-{\color{addclr}
-\rSec2[tuple.tagged]{Alias template \tcode{tagged_tuple}}
-
-\begin{codeblock}
-template <class... Types>
-using tagged_tuple = tagged<tuple<@\textit{TAGELEM}@(Types)...>,
-                            @\textit{TAGSPEC}@(Types)...>;
-\end{codeblock}
-
-\pnum The types in parameter pack \tcode{Types} shall be tagged types~(\ref{taggedtup.tagged}).
-
-\pnum \enterexample
-\begin{codeblock}
-// See \ref{alg.tagspec}:
-tagged_tuple<tag::in(char*), tag::out(char*)> t{0, 0};
-assert(&t.in() == &get<0>(t));
-assert(&t.out() == &get<1>(t));
-\end{codeblock}
-\exitexample
-
-\rSec3[tuple.tagged.creation]{Tagged tuple creation functions}
-
-\pnum
-In the function descriptions that follow, let $i$ be in the range \range{0}{sizeof...(Types)}
-in order and let $T_i$ be the $i^{th}$ type in a template parameter pack named \tcode{Types},
-where indexing is zero-based.
-
-\indexlibrary{\idxcode{make_tagged_tuple}}%
-\indexlibrary{\idxcode{tagged_tuple}!\idxcode{make_tagged_tuple}}%
-\begin{itemdecl}
-template<class...Tags, class... Types>
-  constexpr tagged_tuple<Tags(@\textit{VTypes}@)...>> make_tagged_tuple(Types&&... t);
-\end{itemdecl}
-
-\begin{itemdescr} \pnum Let \tcode{$U_i$} be \tcode{decay_t<$T_i$>} for each
-$T_i$ in \tcode{Types}. Then each $V_i$ in \tcode{VTypes} is
-\tcode{X\&} if $U_i$ equals \tcode{reference_wrapper<X>}, otherwise
-$V_i$ is $U_i$.
-
-\pnum
-\returns \tcode{tagged_tuple<Tags(VTypes)...>(std::forward<Types>(t)...)}.
-
-\pnum
-\enterexample
-
-\begin{codeblock}
-int i; float j;
-make_tagged_tuple<tag::in1, tag::in2, tag::out>(1, ref(i), cref(j))
-\end{codeblock}
-
-creates a tagged tuple of type
-
-\begin{codeblock}
-tagged_tuple<tag::in1(int), tag::in2(int&), tag::out(const float&)>
-\end{codeblock}
-\exitexample
-\end{itemdescr}
-}
-
 \setcounter{section}{8}
 \rSec1[function.objects]{Function objects}
 
-\ednote{To \tcode{<functional>} header synopsis, add \tcode{identity} function object.}
-
-\begin{quote}
 \setcounter{Paras}{1}
 \pnum
-\synopsis{Header \tcode{<functional>} synopsis}
+\synopsis{Header \tcode{<\newtxt{experimental/ranges_v1/}functional>} synopsis}
 
 \begin{codeblock}
+@\newtxt{namespace std \{ namespace experimental \{ namespace ranges_v1 \{}@
+  template <class T = void>
+    @\added{requires EqualityComparable<T>() || Same<T, void>\newtxt{()}}@
+  struct equal_to;
+  
+  template <class T = void>
+    @\added{requires EqualityComparable<T>() || Same<T, void>\newtxt{()}}@
+  struct not_equal_to;
+  
+  template <class T = void>
+    @\added{requires EqualityComparable<T>() || Same<T, void>\newtxt{()}}@
+  struct greater;
+  
+  template <class T = void>
+    @\added{requires EqualityComparable<T>() || Same<T, void>\newtxt{()}}@
+  struct less;
+  
+  template <class T = void>
+    @\added{requires EqualityComparable<T>() || Same<T, void>\newtxt{()}}@
+  struct greater_equal;
+  
+  template <class T = void>
+    @\added{requires EqualityComparable<T>() || Same<T, void>\newtxt{()}}@
+  struct less_equal;
+  
   @\added{struct identity;}@
+@\newtxt{\}\}\}}@
 \end{codeblock}
-\end{quote}
 
-\ednote{Add constraints to the comparison function objects.}
+{\color{newclr}
+\pnum
+Any entities declared or defined directly in namespace \tcode{std} in header \tcode{<functional>}
+that are not already defined in namespace \tcode{std::experimental::ranges_v1} in header
+\tcode{<experimental/ranges_v1/functional>} are imported with
+\grammarterm{using-declaration}{s}~(\cxxref{namespace.udecl}). \enterexample
+\begin{codeblock}
+namespace std { namespace experimental { namespace ranges_v1 {
+  using std::reference_wrapper;
+  using std::ref;
+  // ... others
+}}}
+\end{codeblock}
+\exitexample
 
-\begin{quote}
+\pnum
+Any nested namespaces defined directly in namespace \tcode{std} in header \tcode{<functional>}
+that are not already defined in namespace \tcode{std::experimental::ranges_v1} in header
+\tcode{<experimental/ranges_v1/functional>} are aliased with a
+\grammarterm{namespace-alias-definition}~(\cxxref{namespace.alias}). \enterexample
+\begin{codeblock}
+namespace std { namespace experimental { namespace ranges_v1 {
+  namespace placeholders = std::placeholders;
+}}}
+\end{codeblock}
+\exitexample
+}
+
 \setcounter{subsection}{5}
 \rSec2[comparisons]{Comparisons}
 
@@ -764,7 +506,6 @@ For templates \tcode{greater}, \tcode{less}, \tcode{greater_equal}, and
 \tcode{less_equal}, the specializations for any pointer type yield a total order,
 even if the built-in operators \tcode{<}, \tcode{>}, \tcode{<=}, \tcode{>=}
 do not.
-\end{quote}
 
 \ednote{After subsection 20.9.12 [unord.hash] add the following subsection:}
 
@@ -789,3 +530,404 @@ a non-template, clashes with any attempt to provide \tcode{identity<T>::type}." 
 bikeshed naming discussion here>.}
 \end{itemdescr}
 \end{addedblock}
+
+
+\setcounter{section}{14}
+
+{\color{addclr}
+\rSec1[taggedtup]{Tagged tuple-like types}
+
+\rSec2[taggedtup.general]{In general}
+
+\pnum The library provides a template for augmenting a tuple-like type with named element accessor
+member functions. The library also provides several templates that provide access to \tcode{tagged}
+objects as if they were \tcode{tuple} objects (see~\cxxref{tuple.elem}).
+
+\ednote{This type exists so that the algorithms can return pair- and tuple-like objects with named
+accessors, as requested by LEWG. Rather than create a bunch of one-off class types with no relation
+to pair and tuple, I opted instead to create a general utility. I'll note that this functionality
+can be merged into \tcode{pair} and \tcode{tuple} directly with minimal breakage, but I opted for
+now to keep it separate.}
+
+\rSec2[taggedtup.tagged]{Class template \tcode{tagged}}
+
+Class template \tcode{tagged} augments a tuple-like class type by giving it named accessors. It is
+used to define the alias templates \tcode{tagged_pair}~(\ref{tagged.pairs}) and
+\tcode{tagged_tuple}~(\ref{tagged.tuple}).
+
+\pnum In the class synopsis below, let $i$ be in the range
+\range{0}{sizeof...(Tags)} in order and $T_i$ be the $i^{th}$ type in \tcode{Tags}, where indexing
+is zero-based.
+
+\indexlibrary{\idxcode{tagged}}%
+\begin{codeblock}
+// defined in header <\newtxt{experimental/ranges_v1/}utility>
+
+namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
+  template <class Base, class... Tags>
+  struct tagged :
+    Base, @\textit{TAGGET}@(tagged<Base, Tags...>, @$T_i$@, @$i$@)... { // \seebelow
+    using Base::Base;
+    tagged() = default;
+    tagged(tagged&&) = default;
+    tagged(const tagged&) = default;
+    tagged &operator=(tagged&&) = default;
+    tagged &operator=(const tagged&) = default;
+    template <typename Other>
+      requires Constructible<Base, Other>@\newtxt{()}@
+    tagged(tagged<Other, Tags...> &&that) noexcept(@\seebelow@);
+    template <typename Other>
+      requires Constructible<Base, const Other&>@\newtxt{()}@
+    tagged(tagged<Other, Tags...> const &that);
+    template <typename Other>
+      requires Assignable<Base, Other>@\newtxt{()}@
+    tagged& operator=(tagged<Other, Tags...>&& that) noexcept(@\seebelow@);
+    template <typename Other>
+      requires Assignable<Base, const Other&>@\newtxt{()}@
+    tagged& operator=(const tagged<Other, Tags...>& that);
+    template <class U>
+      requires Assignable<Base, U>@\newtxt{()}@ && !Same<decay_t<U>, tagged>@\newtxt{()}@
+    tagged& operator=(U&& u) noexcept(@\seebelow@);
+    void swap(tagged& that) noexcept(@\seebelow@)
+      requires Swappable<Base&>@\newtxt{()}@;
+  };
+
+  template <class Base, class... Tags>
+    requires Swappable<Base&>@\newtxt{()}@
+  void swap(tagged<Base, Tags...>& x, tagged<Base, Tags...>& y) noexcept(@\seebelow@);
+}@\newtxt{\}\}}@
+\end{codeblock}
+
+\pnum The size of the \tcode{Tags} parameter pack shall be less than or equal to
+\tcode{tuple_size<Base>::value}.
+
+\pnum A \techterm{tagged getter} is an empty trivial class type that has a named member function that
+returns a reference to a member of a tuple-like object that is assumed to be derived from the getter
+class. The tuple-like type of a tagged getter is called its \techterm{DerivedCharacteristic}.
+The index of the tuple element returned from the getter's member functions is called its
+\techterm{ElementIndex}. The name of the getter's member function is called its
+\techterm{ElementName}
+
+\pnum A tagged getter class with DerivedCharacteristic \tcode{\textit{D}}, ElementIndex
+\tcode{\textit{N}}, and ElementName \tcode{\textit{name}} shall provide the following interface:
+
+\begin{codeblock}
+struct @\xname{\textit{TAGGED_GETTER}}@ {
+  constexpr decltype(auto) @$name$@() &       { return get<@$N$@>(static_cast<@$D$@&>(*this)); }
+  constexpr decltype(auto) @$name$@() &&      { return get<@$N$@>(static_cast<@$D$@&&>(*this)); }
+  constexpr decltype(auto) @$name$@() const & { return get<@$N$@>(static_cast<const @$D$@&>(*this)); }
+};
+\end{codeblock}
+
+\pnum A \techterm{tag specifier} is a type that facilitates a mapping from a tuple-like type and an
+element index into a \textit{tagged getter} that gives named access to the element at that index.
+The types in the \tcode{Tags} parameter pack shall be tag specifiers. The tag specifiers in the
+\tcode{Tags} parameter pack shall be unique. \enternote The mapping mechanism from tag specifier to
+tagged getter is unspecified.\exitnote
+
+\pnum Let \tcode{\textit{TAGGET}(D, T, $N$)} name a tagged getter type that gives named
+access to the $N$-th element of the tuple-like type \tcode{D}.
+
+\pnum It shall not be possible to delete an instance of class template \tcode{tagged} through a
+pointer to any base other than \tcode{Base}.
+
+\pnum A \techterm{tagged type} is a unary function type whose return type is a tag specifier. Let
+\tcode{\textit{TAGSPEC}(F)} name the tag specifier of the tagged type \tcode{F}, and let
+\tcode{\textit{TAGELEM}(F)} name the argument type of the tagged type \tcode{F}.
+
+\indexlibrary{\idxcode{tagged}!\idxcode{tagged}}
+\begin{itemdecl}
+template <typename Other>
+  requires Constructible<Base, Other>@\newtxt{()}@
+tagged(tagged<Other, Tags...> &&that) noexcept(@\seebelow@);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\remarks The expression in the \tcode{noexcept} is equivalent to:
+
+\begin{codeblock}
+@\oldtxt{noexcept(Base(declval<Other>()))}\newtxt{is_nothrow_constructible<Base, Other>::value}@
+\end{codeblock}
+
+\pnum
+\effects Initializes \tcode{Base} with \tcode{static_cast<Other\&\&>(that)}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{tagged}!\idxcode{tagged}}
+\begin{itemdecl}
+template <typename Other>
+  requires Constructible<Base, const Other&>@\newtxt{()}@
+tagged(const tagged<Other, Tags...>& that);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Initializes \tcode{Base} with \tcode{static_cast<const Other\&>(that)}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator=}!\idxcode{tagged}}
+\indexlibrary{\idxcode{tagged}!\idxcode{operator=}}
+\begin{itemdecl}
+template <typename Other>
+  requires Assignable<Base, Other>@\newtxt{()}@
+tagged& operator=(tagged<Other, Tags...>&& that) noexcept(@\seebelow@);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\remarks The expression in the \tcode{noexcept} is equivalent to:
+
+\begin{codeblock}
+@\oldtxt{noexcept(declval<Base\&>() = declval<Other>())}\newtxt{is_nothrow_assignable<Base\&, Other>::value}@
+\end{codeblock}
+
+\pnum
+\effects Assigns \tcode{static_cast<Other\&\&>(that)} to \tcode{static_cast<Base\&>(*this)}.
+
+\pnum
+\returns \tcode{*this}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator=}!\idxcode{tagged}}
+\indexlibrary{\idxcode{tagged}!\idxcode{operator=}}
+\begin{itemdecl}
+template <typename Other>
+  requires Assignable<Base, const Other&>@\newtxt{()}@
+tagged& operator=(const tagged<Other, Tags...>& that);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Assigns \tcode{static_cast<const Other\&>(that)} to \tcode{static_cast<Base\&>(*this)}.
+
+\pnum
+\returns \tcode{*this}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator=}!\idxcode{tagged}}
+\indexlibrary{\idxcode{tagged}!\idxcode{operator=}}
+\begin{itemdecl}
+template <class U>
+  requires Assignable<Base, U>@\newtxt{()}@ && !Same<decay_t<U>, tagged>@\newtxt{()}@
+tagged& operator=(U&& u) noexcept(@\seebelow@);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\remarks The expression in the \tcode{noexcept} is equivalent to:
+
+\begin{codeblock}
+@\oldtxt{noexcept(declval<Base\&>() = forward<U>(u))}\newtxt{is_nothrow_assignable<Base\&, U>::value}@
+\end{codeblock}
+
+\pnum
+\effects Assigns \tcode{forward<U>(u)} to \tcode{static_cast<Base\&>(*this)}.
+
+\pnum
+\returns \tcode{*this}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{swap}!\idxcode{tagged}}
+\indexlibrary{\idxcode{tagged}!\idxcode{swap}}
+\begin{itemdecl}
+void swap(tagged& rhs) noexcept(@\seebelow@)
+  requires Swappable<Base&>@\newtxt{()}@;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\remarks The expression in the \tcode{noexcept} is equivalent to:
+
+\begin{codeblock}
+noexcept(swap(declval<Base&>(), declval<Base&>()))
+\end{codeblock}
+
+\pnum
+\effects Calls \tcode{swap} on the result of applying \tcode{static_cast} to \tcode{*this} and
+\tcode{that}.
+
+\pnum
+\throws Nothing unless the call to \tcode{swap} on the \tcode{Base} sub-objects throws.
+
+\end{itemdescr}
+
+\rSec2[tagged.special]{\tcode{tagged} specialized algorithms}
+
+\indexlibrary{\idxcode{swap}!\tcode{tagged}}%
+
+\begin{itemdecl}
+template<class Base, class... Tags>
+  requires Swappable<Base&>@\newtxt{()}@
+void swap(tagged<Base, Tags...>& x, tagged<Base, Tags...>& y)
+  noexcept(noexcept(x.swap(y)));
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects \tcode{x.swap(y)}
+\end{itemdescr}
+
+\rSec2[tagged.astuple]{Tuple-like access to \tcode{tagged}}
+
+\indexlibrary{\idxcode{tuple_size}}%
+\indexlibrary{\idxcode{tuple_element}}%
+\begin{itemdecl}
+@\newtxt{namespace std \{}@
+  template <class Base, class... Tags>
+  struct tuple_size<@\newtxt{experimental::ranges_v1::}@tagged<Base, Tags...>>
+    : tuple_size<Base> { };
+
+  template <class Base, class... Tags>
+  struct tuple_element<N, @\newtxt{experimental::ranges_v1::}@tagged<Base, Tags...>>
+    : tuple_element<N, Base> { };
+@\newtxt{\}}@
+\end{itemdecl}
+
+\rSec2[tagged.pairs]{Alias template \tcode{tagged_pair}}
+
+\begin{codeblock}
+@\newtxt{// defined in header <experimental/ranges_v1/utility>}@
+
+namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
+  // ...
+  template <class T1, class T2>
+  using tagged_pair = tagged<pair<@\textit{TAGELEM}@(T1), @\textit{TAGELEM}@(T2)>,
+                             @\textit{TAGSPEC}@(T1), @\textit{TAGSPEC}@(T2)>;
+}@\newtxt{\}\}}@
+\end{codeblock}
+
+\pnum Types \tcode{T1}  and \tcode{T2} shall be tagged types~(\ref{taggedtup.tagged}).
+
+\pnum \enterexample
+\begin{codeblock}
+// See \ref{alg.tagspec}:
+tagged_pair<tag::min(int), tag::max(int)> p{0, 1};
+assert(&p.min() == &p.first);
+assert(&p.max() == &p.second);
+\end{codeblock}
+\exitexample
+
+\rSec3[tagged.pairs.creation]{Tagged pair creation functions}
+
+\indexlibrary{\idxcode{make_tagged_pair}}%
+\begin{itemdecl}
+@\newtxt{// defined in header <experimental/ranges_v1/utility>}@
+
+@\newtxt{namespace std \{ namespace experimental \{ namespace ranges_v1 \{}@
+  template <class Tag1, class Tag2, class T1, class T2>
+    constexpr tagged_pair<Tag1(V1), Tag2(V2)> make_tagged_pair(T1&& x, T2&& y);
+@\newtxt{\}\}\}}@
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{tagged_pair<Tag1(V1), Tag2(V2)>(std::forward<T1>(x), std::forward<T2>(y))};
+
+where \tcode{V1} and \tcode{V2} are determined as follows: Let \tcode{Ui} be
+\tcode{decay_t<Ti>} for each \tcode{Ti}. Then each \tcode{Vi} is \tcode{X\&}
+if \tcode{Ui} equals \tcode{reference_wrapper<X>}, otherwise \tcode{Vi} is
+\tcode{Ui}.
+
+\pnum
+\enterexample
+In place of:
+
+\begin{codeblock}
+  return tagged_pair<tag::min(int), tag::max(double)>(5, 3.1415926);   // explicit types
+\end{codeblock}
+
+a \Cpp program may contain:
+
+\begin{codeblock}
+  return make_tagged_pair<tag::min, tag::max>(5, 3.1415926);           // types are deduced
+\end{codeblock}
+\exitexample
+\end{itemdescr}
+
+{\color{newclr}
+\rSec2[tagged.tuple]{Alias template \tcode{tagged_tuple}}
+
+\synopsis{Header \tcode{<experimental/ranges_v1/tuple>} synopsis}
+
+\begin{codeblock}
+namespace std { namespace experimental { namespace ranges_v1 {
+  template <class... Types>
+  using tagged_tuple = tagged<tuple<@\textit{TAGELEM}@(Types)...>,
+                              @\textit{TAGSPEC}@(Types)...>;
+
+  template<class...Tags, class... Types>
+    constexpr tagged_tuple<Tags(@\textit{VTypes}@)...>> make_tagged_tuple(Types&&... t);
+}}}
+\end{codeblock}
+
+\pnum
+Any entities declared or defined in namespace \tcode{std} in header \tcode{<tuple>}
+that are not already defined in namespace \tcode{std::experimental::ranges_v1} in header
+\tcode{<experimental/ranges_v1/tuple>} are imported with
+\grammarterm{using-declaration}{s}~(\cxxref{namespace.udecl}). \enterexample
+\begin{codeblock}
+namespace std { namespace experimental { namespace ranges_v1 {
+  using std::tuple;
+  using std::make_tuple;
+  // ... others
+}}}
+\end{codeblock}
+\exitexample
+}
+
+\begin{codeblock}
+template <class... Types>
+using tagged_tuple = tagged<tuple<@\textit{TAGELEM}@(Types)...>,
+                            @\textit{TAGSPEC}@(Types)...>;
+\end{codeblock}
+
+\pnum The types in parameter pack \tcode{Types} shall be tagged types~(\ref{taggedtup.tagged}).
+
+\pnum \enterexample
+\begin{codeblock}
+// See \ref{alg.tagspec}:
+tagged_tuple<tag::in(char*), tag::out(char*)> t{0, 0};
+assert(&t.in() == &get<0>(t));
+assert(&t.out() == &get<1>(t));
+\end{codeblock}
+\exitexample
+
+\rSec3[tagged.tuple.creation]{Tagged tuple creation functions}
+
+\pnum
+In the function descriptions that follow, let $i$ be in the range \range{0}{sizeof...(Types)}
+in order and let $T_i$ be the $i^{th}$ type in a template parameter pack named \tcode{Types},
+where indexing is zero-based.
+
+\indexlibrary{\idxcode{make_tagged_tuple}}%
+\indexlibrary{\idxcode{tagged_tuple}!\idxcode{make_tagged_tuple}}%
+\begin{itemdecl}
+template<class...Tags, class... Types>
+  constexpr tagged_tuple<Tags(@\textit{VTypes}@)...>> make_tagged_tuple(Types&&... t);
+\end{itemdecl}
+
+\begin{itemdescr} \pnum Let \tcode{$U_i$} be \tcode{decay_t<$T_i$>} for each
+$T_i$ in \tcode{Types}. Then each $V_i$ in \tcode{VTypes} is
+\tcode{X\&} if $U_i$ equals \tcode{reference_wrapper<X>}, otherwise
+$V_i$ is $U_i$.
+
+\pnum
+\returns \tcode{tagged_tuple<Tags(VTypes)...>(std::forward<Types>(t)...)}.
+
+\pnum
+\enterexample
+
+\begin{codeblock}
+int i; float j;
+make_tagged_tuple<tag::in1, tag::in2, tag::out>(1, ref(i), cref(j))
+\end{codeblock}
+
+creates a tagged tuple of type
+
+\begin{codeblock}
+tagged_tuple<tag::in1(int), tag::in2(int&), tag::out(const float&)>
+\end{codeblock}
+\exitexample
+\end{itemdescr}
+}
