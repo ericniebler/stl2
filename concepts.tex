@@ -13,17 +13,19 @@ simplicity).}
 \pnum
 This Clause describes library components that \Cpp programs may use to perform
 compile-time validation of template parameters and perform function dispatch
-based on properties of types.
+based on properties of types. \newtxt{The purpose of these concepts is to establish
+a foundation for equational reasoning in programs.}
 
 \pnum
-The following subclauses describe core language concepts, foundational concepts,
-function concepts, iterator concepts, and rearrangement concepts
-as summarized in Table~\ref{tab:concepts.lib.summary}.
+The following subclauses describe core language concepts, \oldtxt{foundational concepts,}
+\newtxt{comparison concepts, object concepts,} function concepts, iterator concepts,
+and rearrangement concepts as summarized in Table~\ref{tab:concepts.lib.summary}.
 
 \begin{libsumtab}{Fundamental concepts library summary}{tab:concepts.lib.summary}
-\ref{concepts.lib.corelang}       & Core language concepts  &   \tcode{<@\newtxt{experimental/ranges_v1/}@concepts>}      \\
-\ref{concepts.lib.foundational}   & Foundational concepts   &                           \\
-\ref{concepts.lib.functions}      & Function concepts       &                           \\
+\ref{concepts.lib.corelang}   & Core language concepts         &   \tcode{<@\newtxt{experimental/ranges_v1/}@concepts>}      \\
+\ref{concepts.lib.comparison} & Comparison concepts            &                      \\
+\ref{concepts.lib.object}     & Object concepts                &                      \\
+\ref{concepts.lib.functions}  & Function concepts              &                      \\
 \end{libsumtab}
 
 \pnum
@@ -143,66 +145,24 @@ and \tcode{U} can be explicitly converted to the common type.
 
 \pnum
 Let \tcode{C} be \tcode{CommonType<T, U>}. Let \tcode{t1} and \tcode{t2} be objects
-of type \tcode{T}. \tcode{t1} equals \tcode{t2} if and only if
+of type \tcode{T}\newtxt{, and \tcode{u1} and \tcode{u2} be objects of type \tcode{U}}.
+\oldtxt{ \tcode{t1} equals \tcode{t2} if and only if
 \tcode{C(t1)} equals
 \tcode{C(t2)}. Let \tcode{u1} and \tcode{u2} be
 object of type \tcode{U}. \tcode{u1} equals \tcode{u2} if and only if
 \tcode{C(u1)} equals
-\tcode{C(u2)}.
+\tcode{C(u2)}.}
+\newtxt{The types \tcode{T} and \tcode{U} model \tcode{Common} if and only if}
+\begin{itemize}
+\item \newtxt{\tcode{C(t1)} equals \tcode{C(t2)} if and only if \tcode{t1} equals \tcode{t2}.}
+\item \newtxt{\tcode{C(u1)} equals \tcode{C(u2)} if and only if \tcode{u1} equals \tcode{u2}.}
+\end{itemize}
 
 \pnum
 \enternote Users are free to specialize \tcode{common_type} when at least one parameter is a
 user-defined type. Those specializations are considered by the \tcode{Common} concept.\exitnote
 
 \end{itemdescr}
-
-\rSec2[concepts.lib.corelang.boolean]{Concept Boolean}
-
-\indexlibrary{\idxcode{Boolean}}%
-\begin{itemdecl}
-template <class B>
-concept bool Boolean@\newtxt{() \{}\oldtxt{ =}@
-  @\newtxt{return}@ requires(B b1, B b2@\newtxt{, bool a}@) {
-    bool(b1);
-    { b1 } -> bool;
-    bool(!b1);
-    { !b1 } -> bool;
-    { b1 && b2 } -> Same<bool>;
-    { b1 || b2 } -> Same<bool>;
-    @\newtxt{\{ b1 == b2 \} -> bool;}@
-    @\newtxt{\{ b1 != b2 \} -> bool;}@
-    @\newtxt{\{ b1 == a \} -> bool;}@
-    @\newtxt{\{ a == b1 \} -> bool;}@
-  };
-@\newtxt{\}}@
-\end{itemdecl}
-
-\pnum
-The \tcode{Boolean} concept describes the requirements on a type that is usable in Boolean contexts.
-
-\pnum
-Given values \tcode{b1} and \tcode{b2} of type \tcode{B}, then type \tcode{B} models
-\tcode{Boolean} if and only if
-
-\begin{itemize}
-\item \tcode{bool(b1) == [](bool x) \{ return x; \}(b1)}.
-\item \tcode{bool(b1) == !bool(!b1)}.
-\item \tcode{(b1 \&\& b2)}, \tcode{(b1 \&\& bool(b2))}, and
-      \tcode{(bool(b1) \&\& b2)} are all semantically identical to
-      \tcode{(bool(b1) \&\& bool(b2))}, including short-circuit evaluation.
-\item \tcode{(b1 || b2)}, \tcode{(b1 || bool(b2))}, and
-      \tcode{(bool(b1) || b2)} are all semantically identical to
-      \tcode{(bool(b1) || bool(b2))}, including short-circuit evaluation.
-\item \newtxt{\tcode{bool(b1 == b2)}, \tcode{bool(b1 == bool(b2))}, and
-      \tcode{bool(bool(b1) == b2)} are all semantically identical to
-      \tcode{(bool(b1) == bool(b2))}.}
-\item \newtxt{\tcode{bool(b1 != b2)}, \tcode{bool(b1 != bool(b2))}, and
-      \tcode{bool(bool(b1) != b2)} are all semantically identical to
-      \tcode{(bool(b1) != bool(b2))}.}
-\end{itemize}
-
-\enterexample The types \tcode{bool}, \tcode{std::true_type}, and
-\tcode{std::bitset<>::reference} are \tcode{Boolean} types.\exitexample
 
 \rSec2[concepts.lib.corelang.integral]{Concept Integral}
 
@@ -248,219 +208,26 @@ integral types~(\cxxref{basic.fundamental}).
 \exitnote
 \end{itemdescr}
 
-\rSec2[concepts.lib.corelang.defaultconstructible]{Concept DefaultConstructible}
-
-\ednote{Remove table [defaultconstructible] in [utility.arg.requirements]. Replace
-references to [defaultconstructible] with references to
-[concepts.lib.corelang.defaultconstructible].}
-
-\indexlibrary{\idxcode{DefaultConstructible}}%
-\begin{itemdecl}
-template <class T>
-concept bool DefaultConstructible@\newtxt{() \{}\oldtxt{ =}@
-  @\newtxt{return}@ requires {
-    T{};
-  };
-@\newtxt{\}}@
-\end{itemdecl}
-
-\begin{itemdescr}
-\ednote{REVIEW: The C++14 \tcode{DefaultConstructible} requirements table also requires \tcode{T()} as
-a valid expression, but that disallows array types. However, \tcode{is_default_constructible<int[4]>::value}
-is true. It's not clear to me whether the requirements table is wrong or whether the exclusion of
-array types was intentional.}
-\end{itemdescr}
-
-\rSec2[concepts.lib.corelang.moveconstructible]{Concept MoveConstructible}
-\ednote{Remove table [moveconstructible] in [utility.arg.requirements]. Replace
-references to [moveconstructible] with references to
-[concepts.lib.corelang.moveconstructible].}
-
-\indexlibrary{\idxcode{MoveConstructible}}%
-\begin{itemdecl}
-template <class T>
-concept bool MoveConstructible@\newtxt{() \{}\oldtxt{ =}@
-  @\newtxt{return}@ requires (T t) {
-    T(move(t));
-  };
-@\newtxt{\}}@
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-Let \tcode{rv} be an rvalue of type \tcode{T}. Then a type \tcode{T} models
-\tcode{MoveConstructible} if and only if
-
-\begin{itemize}
-\item After the definition \tcode{T u = rv;}, \tcode{u} is equal to the value of
-\tcode{rv} before the construction.
-\item \tcode{T(rv)} is equal to the value of \tcode{rv} before the construction.
-\end{itemize}
-
-\pnum
-\tcode{rv}'s state is unspecified. \enternote \tcode{rv} must still meet the
-requirements of the library component that is using it. The operations listed
-in those requirements must work as specified whether \tcode{rv} has been moved
-from or not.\exitnote
-\end{itemdescr}
-
-\rSec2[concepts.lib.corelang.copyconstructible]{Concept CopyConstructible}
-\ednote{Remove table [copyconstructible] in [utility.arg.requirements]. Replace
-references to [copyconstructible] with references to
-[concepts.lib.corelang.copyconstructible].}
-
-\indexlibrary{\idxcode{CopyConstructible}}%
-\begin{itemdecl}
-template <class T>
-concept bool CopyConstructible@\newtxt{() \{}\oldtxt{ =}@
-  @\newtxt{return}@ MoveConstructible<T>@\newtxt{()}@ && 
-    requires (T a, const T& b) {
-      T(a);
-      T(b);
-      T((const T&&)b);
-    };
-@\newtxt{\}}@
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-Let \tcode{v} be an lvalue of type (possibly \tcode{const}) \tcode{T} or an rvalue
-of type \tcode{const T}. Then a type \tcode{T} models \tcode{CopyConstructible} if
-and only if
-
-\begin{itemize}
-\item After the definition \tcode{T u = v;}, \tcode{v} is unchanged and is equal
-to \tcode{u}.
-\item \tcode{T(v)} is equal to \tcode{v} and \tcode{v} is unchanged.
-\end{itemize}
-\end{itemdescr}
-
-\rSec2[concepts.lib.corelang.constructible]{Concept Constructible}
-
-\indexlibrary{\idxcode{Constructible}}%
-\begin{itemdecl}
-template <class T, class ...Args>
-concept bool Constructible@\newtxt{() \{}\oldtxt{ =}@
-  @\newtxt{return}@ requires ( Args...args ) {
-    T{forward<Args>(args)...};
-  };
-@\newtxt{\}}@
-\end{itemdecl}
-
-\rSec2[concepts.lib.corelang.destructible]{Concept Destructible}
-\ednote{Remove table [destructible] in [utility.arg.requirements]. Replace
-references to [destructible] with references to
-[concepts.lib.corelang.destructible].}
-
-\indexlibrary{\idxcode{Destructible}}%
-\begin{itemdecl}
-template <class T>
-concept bool Destructible@\newtxt{() \{}\oldtxt{ =}@
-  @\newtxt{return}@ requires (T t) {
-    { t.@$\sim$@T() } noexcept;
-  };
-@\newtxt{\}}@
-\end{itemdecl}
-
-\begin{itemdescr}
-\ednote{REVIEW: The expression \tcode{t.$\sim$T()} comes straight from the requirements table for the
-\tcode{Destructible} concept in C++14. However, \tcode{t.$\sim$T()} is not valid if \tcode{T} is a
-reference or array type. We need to decide whether we want \tcode{Destructible<int\&>} and
-\tcode{Destructible<int[42]>} to be true or false.}
-
-\pnum
-A type \tcode{T} models \tcode{Destructible} if and only if
-
-\begin{itemize}
-\item After the expression \tcode{u.$\sim$T()}, all resources owned by \tcode{u} are
-reclaimed.
-\end{itemize}
-\end{itemdescr}
-
-\rSec2[concepts.lib.corelang.moveassignable]{Concept MoveAssignable}
-\ednote{Remove table [moveassignable] in [utility.arg.requirements]. Replace
-references to [moveassignable] with references to
-[concepts.lib.corelang.moveassignable].}
-
-\indexlibrary{\idxcode{MoveAssignable}}%
-\begin{itemdecl}
-template <class T>
-concept bool MoveAssignable@\newtxt{() \{}\oldtxt{ =}@
-  @\newtxt{return}@ requires(T a, T b) {
-    { a = move(b) } -> Same<T&>;
-  };
-@\newtxt{\}}@
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-Let \tcode{rv} be an rvalue of type \tcode{T}
-and let \tcode{t} be an lvalue of type \tcode{T}. Then type \tcode{T} models
-\tcode{MoveAssignable} if and only if
-
-\begin{itemize}
-\item \tcode{(addressof(t = rv) == addressof(t)) != false)}.
-\item After the assignment \tcode{t} is equal to the value
-of \tcode{rv} before the assignment.
-\end{itemize}
-
-\pnum
-\tcode{rv}'s state is unspecified. \enternote \tcode{rv} must still meet the
-requirements of the library component that is using it. The operations listed
-in those requirements must work as specified whether \tcode{rv} has been moved
-from or not.\exitnote
-\end{itemdescr}
-
-\rSec2[concepts.lib.corelang.copyassignable]{Concept CopyAssignable}
-\ednote{Remove table [copyassignable] in [utility.arg.requirements]. Replace
-references to [copyassignable] with references to
-[concepts.lib.corelang.copyassignable].}
-
-\indexlibrary{\idxcode{CopyAssignable}}%
-\begin{itemdecl}
-template <class T>
-concept bool CopyAssignable@\newtxt{() \{}\oldtxt{ =}@
-  @\newtxt{return}@ MoveAssignable<T>@\newtxt{()}@ && 
-    requires(T a, T b, const T& c) {
-      { a = b } -> Same<T&>;
-      { a = c } -> Same<T&>;
-      { a = (const T&&)c } -> Same<T&>;
-    };
-@\newtxt{\}}@
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-Let \tcode{t} be an lvalue of type \tcode{T}, and \tcode{v} be an lvalue of type (possibly
-\tcode{const}) \tcode{T} or an rvalue of type \tcode{const T}. Then type \tcode{T} models
-\tcode{CopyAssignable} if and only if
-
-\begin{itemize}
-\item \tcode{(addressof(t = v) == addressof(t)) != false)}.
-\item After the assignment \tcode{t} is equal to \tcode{v} and \tcode{v} is unchanged.
-\end{itemize}
-\end{itemdescr}
-
 \rSec2[concepts.lib.corelang.assignable]{Concept Assignable}
 
 \indexlibrary{\idxcode{Assignable}}%
 \begin{itemdecl}
 template <class T, class U = T>
 concept bool Assignable@\newtxt{() \{}\oldtxt{ =}@
-  @\newtxt{return}@ requires(T a, U b) {
-    { a = forward<U>(b) } -> Same<T&>;
+  @\newtxt{return}@ requires(T@\newtxt{\&\&}@ a, U@\newtxt{\&\&}@ b) {
+    { forward<T>(a) = forward<U>(b) } -> Same<T&>;
   };
 @\newtxt{\}}@
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-Let \tcode{t} be an lvalue of type \tcode{T}. If \tcode{U} is a reference type, let \tcode{v}
+Let \tcode{t} be an lvalue of type \tcode{T}. If \tcode{U} is an \newtxt{lvalue} reference type, let \tcode{v}
 be a lvalue of type \tcode{U}; otherwise, let \tcode{v} be an rvalue of type \tcode{U}.
 Then types \tcode{T} and \tcode{U} model \tcode{Assignable} if and only if
 
 \begin{itemize}
-\item \tcode{(addressof(t = v) == addressof(t)) != false)}.
+\item \tcode{\oldtxt{(}addressof(t = v) == addressof(t)\oldtxt{) != false)}}.
 \end{itemize}
 \end{itemdescr}
 
@@ -584,19 +351,72 @@ int main() {
 \exitexample
 \end{itemdescr}
 
-\rSec1[concepts.lib.foundational]{Foundational concepts}
+\rSec1[concepts.lib.comparison]{Comparison concepts}
 
-\rSec2[concepts.lib.foundational.general]{In general}
+\rSec2[concepts.lib.comparison.general]{In general}
 
 \pnum
-This section describes the foundational concepts that describe the basis of the value-oriented
-programming style on which the library is based. The purpose of these concepts is to establish
-a foundation for equational reasoning in programs.
+\newtxt{This section describes concepts that establish relationships and orderings
+on values of possibly differing object types.}
 
-\rSec2[concepts.lib.foundational.equalitycomparable]{Concept EqualityComparable}
+\rSec2[concepts.lib.corelang.boolean]{Concept Boolean}
+
+\pnum
+The \tcode{Boolean} concept describes the requirements on a type that is usable in Boolean contexts.
+
+\indexlibrary{\idxcode{Boolean}}%
+\begin{itemdecl}
+template <class B>
+concept bool Boolean@\newtxt{() \{}\oldtxt{ =}@
+  @\newtxt{return}@ requires(B b1, B b2@\newtxt{, bool a}@) {
+    bool(b1);
+    { b1 } -> bool;
+    bool(!b1);
+    { !b1 } -> bool;
+    { b1 && b2 } -> Same<bool>;
+    @\newtxt{\{ b1 \&\& a \} -> Same<bool>;}@
+    @\newtxt{\{ a \&\& b1 \} -> Same<bool>;}@
+    { b1 || b2 } -> Same<bool>;
+    @\newtxt{\{ b1 || a \} -> Same<bool>;}@
+    @\newtxt{\{ a || b1 \} -> Same<bool>;}@
+    @\newtxt{\{ b1 == b2 \} -> bool;}@
+    @\newtxt{\{ b1 != b2 \} -> bool;}@
+    @\newtxt{\{ b1 == a \} -> bool;}@
+    @\newtxt{\{ a == b1 \} -> bool;}@
+    @\newtxt{\{ b1 != a \} -> bool;}@
+    @\newtxt{\{ a != b1 \} -> bool;}@
+  };
+@\newtxt{\}}@
+\end{itemdecl}
+
+\pnum
+Given values \tcode{b1} and \tcode{b2} of type \tcode{B}, then type \tcode{B} models
+\tcode{Boolean} if and only if
+
+\begin{itemize}
+\item \tcode{bool(b1) == [](bool x) \{ return x; \}(b1)}.
+\item \tcode{bool(b1) == !bool(!b1)}.
+\item \tcode{(b1 \&\& b2)}, \tcode{(b1 \&\& bool(b2))}, and
+      \tcode{(bool(b1) \&\& b2)} are all semantically identical to
+      \tcode{(bool(b1) \&\& bool(b2))}, including short-circuit evaluation.
+\item \tcode{(b1 || b2)}, \tcode{(b1 || bool(b2))}, and
+      \tcode{(bool(b1) || b2)} are all semantically identical to
+      \tcode{(bool(b1) || bool(b2))}, including short-circuit evaluation.
+\item \newtxt{\tcode{bool(b1 == b2)}, \tcode{bool(b1 == bool(b2))}, and
+      \tcode{bool(bool(b1) == b2)} are all semantically identical to
+      \tcode{(bool(b1) == bool(b2))}.}
+\item \newtxt{\tcode{bool(b1 != b2)}, \tcode{bool(b1 != bool(b2))}, and
+      \tcode{bool(bool(b1) != b2)} are all semantically identical to
+      \tcode{(bool(b1) != bool(b2))}.}
+\end{itemize}
+
+\enterexample The types \tcode{bool}, \tcode{std::true_type}, and
+\tcode{std::bitset<>::reference} are \tcode{Boolean} types.\exitexample
+
+\rSec2[concepts.lib.comparison.equalitycomparable]{Concept EqualityComparable}
 
 \ednote{Remove table [equalitycomparable] in [utility.arg.requirements]. Replace references to
-[equalitycomparable] with [concepts.lib.equalitycomparable].}
+[equalitycomparable] with [concepts.lib\newtxt{.comparison}.equalitycomparable].}
 
 \indexlibrary{\idxcode{EqualityComparable}}%
 \begin{itemdecl}
@@ -661,71 +481,12 @@ and only if
 \ednote{BUGBUG There is concern on the committee that the \tcode{Common} requirement is
 overconstraining here. (In \tcode{Relation} too.}
 
-\rSec2[concepts.lib.foundational.semiregular]{Concept Semiregular}
-
-\indexlibrary{\idxcode{Semiregular}}%
-\begin{itemdecl}
-template <class T>
-concept bool Semiregular@\newtxt{() \{}\oldtxt{ =}@
-  @\newtxt{return}@ DefaultConstructible<T>@\newtxt{()}@ &&
-    CopyConstructible<T>@\newtxt{()}@ &&
-    Destructible<T>@\newtxt{()}@ &&
-    CopyAssignable<T>@\newtxt{()}@ &&
-    requires(T a, size_t n, T* p) {
-      // Object
-      { &a } -> Same<T*>;
-      // Destruction
-      { a.~T() } noexcept;
-      // Allocation
-      { new T } -> Same<T*>;
-      { new T[n] } -> Same<T*>;
-      // Deallocation
-      delete p;
-      delete[] p;
-    };
-@\newtxt{\}}@
-\end{itemdecl}
-
-\ednote{The concepts are probably too fine-grained here. Look again at ``The Palo Alto''
-report; in particular, at the definition of \tcode{Semiregular} in Appendix D.}
-
-\begin{itemdescr}
-\pnum
-Let \tcode{a} be any well-formed object of type \tcode{T}. Then type \tcode{T} models
-\tcode{Semiregular} if and only if
-
-\begin{itemize}
-\item \tcode{(\&a == addressof(a)) != false}.
-\item \tcode{a} is not a volatile object or const volatile object~(\cxxref{basic.type.qualifier}).
-\end{itemize}
-
-\pnum
-\enternote The \tcode{Semiregular} concept is modeled by types that have behave similarly to
-built-in types like \tcode{int}, except that they may not be comparable with \tcode{==}.\exitnote
-\end{itemdescr}
-
-\rSec2[concepts.lib.foundational.regular]{Concept Regular}
-
-\indexlibrary{\idxcode{Regular}}%
-\begin{itemdecl}
-template <class T>
-concept bool Regular@\newtxt{() \{}\oldtxt{ =}@
-  @\newtxt{return}@ Semiregular<T>() && EqualityComparable<T>@\newtxt{()}@;
-@\newtxt{\}}@
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\enternote The \tcode{Regular} concept is modeled by types that behave similarly to
-built-in types like \tcode{int} and that are comparable with \tcode{==}.\exitnote
-\end{itemdescr}
-
-\rSec2[concepts.lib.foundational.totallyordered]{Concept TotallyOrdered}
+\rSec2[concepts.lib.comparison.totallyordered]{Concept TotallyOrdered}
 
 \ednote{Remove table [lessthancomparable] in [utility.arg.requirements]. Replace uses of
 \tcode{LessThanComparable} with \tcode{TotallyOrdered} (acknowledging that this is a breaking
 change that makes type requirements stricter). Replace references to [lessthancomparable] with
-references to [concepts.lib.totallyordered]}
+references to [concepts.lib\newtxt{.comparison}.totallyordered]}
 
 \indexlibrary{\idxcode{TotallyOrdered}}%
 \begin{itemdecl}
@@ -803,6 +564,321 @@ and only if
 \end{itemize}
 \end{itemdescr}
 
+\rSec1[concepts.lib.object]{Object concepts}
+
+\pnum
+This section \oldtxt{describes the foundational}\newtxt{defines} concepts that describe the basis of the
+value-oriented programming style on which the library is based. \oldtxt{The purpose of these concepts is
+to establish a foundation for equational reasoning in programs.} \ednote{These concepts reuse many of the
+names of concepts that traditionally describe features of types to describe families of object types (See
+the rationale in Appendix~\ref{decomposition}).}
+
+\rSec2[concepts.lib.object.destructible]{Concept Destructible}
+\ednote{Remove table [destructible] in [utility.arg.requirements]. Replace
+references to [destructible] with references to
+[concepts.lib.\oldtxt{corelang}\newtxt{object}.destructible].}
+
+\pnum
+\newtxt{The \tcode{Destructible} concept is the base of the hierarchy of object concepts.
+It describes properties that all such object types have in common.}
+
+\indexlibrary{\idxcode{Destructible}}%
+\begin{itemdecl}
+template <class T>
+concept bool Destructible@\newtxt{() \{}\oldtxt{ =}@
+  @\newtxt{return}@ requires (T t@\newtxt{, T* p}@) {
+    { t.@$\sim$@T() } noexcept;
+    @\newtxt{\{ \&t \} -> Same<T*>;}@
+    @\newtxt{delete p;}@
+    @\newtxt{delete[] p;}@
+  };
+@\newtxt{\}}@
+\end{itemdecl}
+
+\begin{itemdescr}
+\ednote{\oldtxt{REVIEW: The expression \tcode{t.$\sim$T()} comes straight from the requirements table for the
+\tcode{Destructible} concept in C++14. However, \tcode{t.$\sim$T()} is not valid if \tcode{T} is a
+reference or array type. We need to decide whether we want \tcode{Destructible<int\&>} and
+\tcode{Destructible<int[42]>} to be true or false.}}
+
+\pnum
+\oldtxt{A}\newtxt{Given an object \tcode{t} of type \tcode{T} and pointer \tcode{p}
+of type \tcode{T*}, the} type \tcode{T} models \tcode{Destructible} if and only if
+
+\begin{itemize}
+\item After \newtxt{evaluating} the expression \tcode{\oldtxt{u}\newtxt{t}.$\sim$T()},
+\newtxt{\tcode{delete p}, or \tcode{delete[] p},} all resources owned by
+\oldtxt{\tcode{u}}\newtxt{the denoted object(s)} are reclaimed.
+\item \newtxt{\tcode{\&t == addressof(t)}.}
+\end{itemize}
+\end{itemdescr}
+
+\rSec2[concepts.lib.object.constructible]{Concept Constructible}
+
+\pnum
+\newtxt{The \tcode{Constructible} concept is used to constrain the type of a
+variable to be either an object type constructible from a given set of argument
+types, or a reference type that can be bound to those arguments.}
+
+\indexlibrary{\idxcode{Constructible}}%
+\begin{itemdecl}
+template <class T, class ...Args>
+concept bool Constructible@\newtxt{() \{}\oldtxt{ =}@
+  @\newtxt{return}@ requires (@\oldtxt{ }@Args@\newtxt{\&\&}@...args@\oldtxt{ }@) {
+    T{forward<Args>(args)...};
+  }@\oldtxt{;}\newtxt{ \&\&}@
+  @\newtxt{(is_reference<T>::value ||}@
+    @\newtxt{(Destructible<T>() \&\& requires (Args\&\&...args) \{}@
+      @\newtxt{new T\{forward<Args>(args)...\};}@
+    @\newtxt{\}));}@
+@\newtxt{\}}@
+\end{itemdecl}
+
+\ednote{\newtxt{Requiring \tcode{T\{forward<Args>(args)...\}} to be equality preserving
+implies that construction from equal arguments must result in equal objects, i.e., the
+value of a \tcode{Constructible} object must be totally determined by the constructor
+arguments.}}
+
+\rSec2[concepts.lib.object.defaultconstructible]{Concept DefaultConstructible}
+
+\ednote{Remove table [defaultconstructible] in [utility.arg.requirements]. Replace
+references to [defaultconstructible] with references to
+[concepts.lib.\oldtxt{corelang}\newtxt{object}.defaultconstructible].}
+
+\indexlibrary{\idxcode{DefaultConstructible}}%
+\begin{itemdecl}
+template <class T>
+concept bool DefaultConstructible@\newtxt{() \{} \oldtxt{=}@
+  @\newtxt{return Constructible<T>() \&\&}@
+    requires @\newtxt{(size_t n)}@ {
+      @\newtxt{new}@ T@\newtxt{[n]}@{};
+    };
+@\newtxt{\}}@
+\end{itemdecl}
+
+\pnum
+\newtxt{\enternote The array allocation expression \tcode{new T[n]\{\}} implicitly
+requires that \tcode{T} has a non-explicit default constructor. \exitnote}
+
+\rSec2[concepts.lib.object.moveconstructible]{Concept MoveConstructible}
+\ednote{Remove table [moveconstructible] in [utility.arg.requirements]. Replace
+references to [moveconstructible] with references to
+[concepts.lib.\oldtxt{corelang}\newtxt{object}.moveconstructible].}
+
+\indexlibrary{\idxcode{MoveConstructible}}%
+\begin{itemdecl}
+template <class T>
+concept bool MoveConstructible@\newtxt{() \{}\oldtxt{ =}@
+  @\newtxt{return Constructible<T, remove_cv_t<T>\&\&>() \&\&}@
+    requires (remove_cv_t<T> t) {
+      @\newtxt{new T[1]\{move(t)\};}@
+      @\oldtxt{T(move(t));}@
+    };
+@\newtxt{\}}@
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+Let \tcode{rv} be an rvalue of type \oldtxt{\tcode{T}} \newtxt{\tcode{remove_cv_t<T>}}.
+Then a type \tcode{T} models \tcode{MoveConstructible} if and only if
+
+\begin{itemize}
+\item After the definition \tcode{T u = rv;}, \tcode{u} is equal to the value of
+\tcode{rv} before the construction.
+\item \oldtxt{\tcode{T(rv)}} \newtxt{\tcode{T\{rv\}}, \tcode{*new T\{rv\}}, or
+\tcode{*new T[1]\{rv\}}} is equal to the value of \tcode{rv} before the construction.
+\end{itemize}
+
+\pnum
+\newtxt{\enternote The array allocation expression \tcode{new T[1]\{move(t)\}}
+requires that \tcode{T} can be copy-initialized from an rvalue of type
+\tcode{remove_cv_t<T>}; the constructor selected by overload resolution must be
+non-explicit. \exitnote}
+
+\pnum
+\tcode{rv}'s \newtxt{resulting} state is unspecified. \enternote \tcode{rv} must still meet the
+requirements of the library component that is using it. The operations listed
+in those requirements must work as specified whether \tcode{rv} has been moved
+from or not.\exitnote
+\end{itemdescr}
+
+\rSec2[concepts.lib.object.copyconstructible]{Concept CopyConstructible}
+\ednote{Remove table [copyconstructible] in [utility.arg.requirements]. Replace
+references to [copyconstructible] with references to
+[concepts.lib.\oldtxt{corelang}\newtxt{object}.copyconstructible].}
+
+\indexlibrary{\idxcode{CopyConstructible}}%
+\begin{itemdecl}
+template <class T>
+concept bool CopyConstructible@\newtxt{() \{}\oldtxt{ =}@
+  @\newtxt{return}@ MoveConstructible<T>@\newtxt{()}@ &&
+    @\newtxt{Constructible<T, remove_cv_t<T>\&>() \&\&}@
+    @\newtxt{Constructible<T, const remove_cv_t<T>\&>() \&\&}@
+    @\newtxt{Constructible<T, const remove_cv_t<T>\&\&>() \&\&}@
+    requires (@\oldtxt{T}\newtxt{remove_cv_t<T>\&}@ a, const @\oldtxt{T}\newtxt{remove_cv_t<T>}@& b) {
+      @\oldtxt{T(a)} \newtxt{new T[1]\{a\}}@;
+      @\oldtxt{T(b)} \newtxt{new T[1]\{b\}}@;
+      @\oldtxt{T((const T\&\&)b)} \newtxt{new T[1]\{move(b)\}}@;
+    };
+@\newtxt{\}}@
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+Let \tcode{v} be an lvalue of type (possibly \tcode{const}) \oldtxt{\tcode{T}}
+\newtxt{\tcode{remove_cv_t<T>}} or an rvalue of type \oldtxt{\tcode{const T}}
+\newtxt{\tcode{const remove_cv_t<T>}}. Then a type \tcode{T} models
+\tcode{CopyConstructible} if and only if
+
+\begin{itemize}
+\item After the definition \tcode{T u = v;}, \tcode{v} is unchanged and is equal
+to \tcode{u}.
+\item \oldtxt{\tcode{T(v)}} \newtxt{\tcode{T\{v\}}, \tcode{*new T\{v\}}, or
+\tcode{*new T[1]\{v\}}} is equal to \tcode{v} and \tcode{v} is unchanged.
+\end{itemize}
+\end{itemdescr}
+
+\pnum
+\newtxt{\enternote The array allocation expressions \tcode{new T[1]\{a\}},
+\tcode{new T[1]\{b\}}, and \tcode{new T[1]\{move(b)\}} require that \tcode{T} can
+be copy-initialized from an lvalue of type (possibly \tcode{const})
+\tcode{remove_cv_t<T>} and an rvalue of type \tcode{const remove_cv_t<T>};
+the constructor selected by overload resolution must be non-explicit. \exitnote}
+
+\rSec2[concepts.lib.object.movable]{Concept Movable}
+\ednote{Remove table [moveassignable] in [utility.arg.requirements]. Replace
+references to [moveassignable] with references to
+[concepts.lib.\oldtxt{corelang.moveassignable}\newtxt{value.movable}].}
+
+\indexlibrary{\idxcode{Movable}}%
+\begin{itemdecl}
+template <class T>
+concept bool @\oldtxt{MoveAssignable =}\newtxt{Movable() \{}@
+  @\newtxt{return MoveConstructible<T>() \&\&}@
+    @\newtxt{Assignable<T\&, T\&\&>();}@
+    @\oldtxt{requires(T a, T b) \{}@
+      @\oldtxt{\{ a = move(b) \} -> Same<T\&>;}@
+    @\oldtxt{\};}@
+@\newtxt{\}}@
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+Let \tcode{rv} be an rvalue of type \tcode{T}
+and let \tcode{t} be an lvalue of type \tcode{T}. Then type \tcode{T} models
+\tcode{\oldtxt{MoveAssignable}\newtxt{Movable}} if and only if
+
+\begin{itemize}
+\item \oldtxt{\tcode{(addressof(t = rv) == addressof(t)) != false)}.}
+\item After the assignment \newtxt{\tcode{t = rv},} \tcode{t} is equal to the value
+of \tcode{rv} before the assignment.
+\item \newtxt{\tcode{t} is not a volatile object or const volatile object~(\cxxref{basic.type.qualifier}).}
+\end{itemize}
+
+%% FIXME: I've relocated the non-volatile requirement here from Semiregular for the time being,
+%% but ideally it will be obsoleted by a more general requirement that covers all side effects
+%% pending the outcome of the discussion that begins at
+%% https://github.com/CaseyCarter/stl2/commit/2d54e6b6275c9d1f97b3c5d899171ef53ef5dc04#commitcomment-11773953
+
+\pnum
+\tcode{rv}'s \newtxt{resulting} state is unspecified. \enternote \tcode{rv} must still meet the
+requirements of the library component that is using it. The operations listed
+in those requirements must work as specified whether \tcode{rv} has been moved
+from or not.\exitnote
+\end{itemdescr}
+
+\rSec2[concepts.lib.object.copyable]{Concept Copyable}
+\ednote{Remove table [copyassignable] in [utility.arg.requirements]. Replace
+references to [copyassignable] with references to
+[concepts.lib.\oldtxt{corelang.copyassignable}\newtxt{value.copyable}].}
+
+\indexlibrary{\idxcode{Copyable}}%
+\begin{itemdecl}
+template <class T>
+concept bool @\oldtxt{CopyAssignable =}\newtxt{Copyable() \{}@
+  @\newtxt{return CopyConstructible<T>() \&\&}@
+    @\oldtxt{MoveAssignable}\newtxt{Movable}@<T>@\newtxt{()}@ &&
+    @\newtxt{Assignable<T\&, T\&>() \&\&}@
+    @\newtxt{Assignable<T\&, const T\&>() \&\&}@
+    @\newtxt{Assignable<T\&, const T\&\&>();}@
+    @\oldtxt{requires(T a, T b, const T\& c) \{}@
+      @\oldtxt{\{ a = b \} -> Same<T\&>;}@
+      @\oldtxt{\{ a = c \} -> Same<T\&>;}@
+      @\oldtxt{\{ a = (const T\&\&)c \} -> Same<T\&>;}@
+    @\oldtxt{\};}@
+@\newtxt{\}}@
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+Let \tcode{t} be an lvalue of type \tcode{T}, and \tcode{v} be an lvalue of type (possibly
+\tcode{const}) \tcode{T} or an rvalue of type \tcode{const T}. Then type \tcode{T} models
+\tcode{\oldtxt{CopyAssignable}\newtxt{Copyable}} if and only if
+
+\begin{itemize}
+\item \oldtxt{\tcode{(addressof(t = v) == addressof(t)) != false)}.}
+\item After the assignment \newtxt{\tcode{t = v},} \tcode{t} is equal to \tcode{v} and \tcode{v} is unchanged.
+\end{itemize}
+\end{itemdescr}
+
+\rSec2[concepts.lib.object.semiregular]{Concept Semiregular}
+
+\indexlibrary{\idxcode{Semiregular}}%
+\begin{itemdecl}
+template <class T>
+concept bool Semiregular@\newtxt{() \{}\oldtxt{ =}@
+  @\newtxt{return Copyable<T>() \&\&}@
+    DefaultConstructible<T>@\newtxt{();} \oldtxt{\&\&}@
+    @\oldtxt{CopyConstructible<T> \&\&}@
+    @\oldtxt{Destructible<T> \&\&}@
+    @\oldtxt{CopyAssignable<T> \&\&}@
+    @\oldtxt{requires(T a, size_t n, T* p) \{}@
+      @\oldtxt{// Object}@
+      @\oldtxt{\{ \&a \} -> Same<T*>;}@
+      @\oldtxt{// Destruction}@
+      @\oldtxt{\{ a.~T() \} noexcept;}@
+      @\oldtxt{// Allocation}@
+      @\oldtxt{\{ new T \} -> Same<T*>;}@
+      @\oldtxt{\{ new T[n] \} -> Same<T*>}@;
+      @\oldtxt{// Deallocation}@
+      @\oldtxt{delete p;}@
+      @\oldtxt{delete[] p;}@
+    @\oldtxt{\};}@
+@\newtxt{\}}@
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\oldtxt{Let \tcode{a} be any well-formed object of type \tcode{T}. Then type \tcode{T} models
+\tcode{Semiregular} if and only if}
+
+\begin{itemize}
+\item \oldtxt{\tcode{(\&a == addressof(a)) != false}.}
+\item \oldtxt{\tcode{a} is not a volatile object or const volatile object~(\cxxref{basic.type.qualifier}).}
+\end{itemize}
+
+\pnum
+\enternote The \tcode{Semiregular} concept is modeled by types that \oldtxt{have} behave similarly to
+built-in types like \tcode{int}, except that they may not be comparable with \tcode{==}.\exitnote
+\end{itemdescr}
+
+\rSec2[concepts.lib.object.regular]{Concept Regular}
+
+\indexlibrary{\idxcode{Regular}}%
+\begin{itemdecl}
+template <class T>
+concept bool Regular@\newtxt{() \{}\oldtxt{ =}@
+  @\newtxt{return}@ Semiregular<T>@\newtxt{()}@ &&
+    EqualityComparable<T>@\newtxt{()}@;
+@\newtxt{\}}@
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\enternote The \tcode{Regular} concept is modeled by types that behave similarly to
+built-in types like \tcode{int} and that are comparable with \tcode{==}.\exitnote
+\end{itemdescr}
+
 \rSec1[concepts.lib.functions]{Function concepts}
 
 \rSec2[concepts.lib.functions.general]{In general}
@@ -820,14 +896,14 @@ using ResultType = result_of_t<F(Args...)>;
 
 template <class F, class...Args>
 concept bool Function@\newtxt{() \{}\oldtxt{ =}@
-  @\newtxt{return}@ Destructible<@\oldtxt{T}\newtxt{F}@>@\newtxt{()}@ &&
+  @\newtxt{return}@ @\oldtxt{Destructible<T> \&\&}@
     CopyConstructible<@\oldtxt{T}\newtxt{F}@>@\newtxt{()}@ &&
-    requires (F f, Args...args@\newtxt{, const F\& cf, F* fptr}@) {
+    requires (F f, Args@\newtxt{\&\&}@...args) {
       typename ResultType<F, Args...>;
-      { &f } -> Same<F*>;
+      @\oldtxt{\{ \&f \} -> Same<F*>;}@
       @\oldtxt{\{ f.~F() \} noexcept;}@
-      @\oldtxt{\{ }@new F@\newtxt{(cf)}\oldtxt{ \} -> Same<F*>}@;
-      delete @\oldtxt{new F}\newtxt{fptr}@;
+      @\oldtxt{\{ new F \} -> Same<F*>}@;
+      @\oldtxt{delete new F}@;
       { f(forward<Args>(args)...) } -> Same<ResultType<F, Args...>>;
     };
 @\newtxt{\}}@
@@ -835,11 +911,11 @@ concept bool Function@\newtxt{() \{}\oldtxt{ =}@
 
 \begin{itemdescr}
 \pnum
-Let \tcode{f} be any object of type \tcode{F}. Then types \tcode{F} and \tcode{Args...} model
-\tcode{Function} if and only if
+\oldtxt{Let \tcode{f} be any object of type \tcode{F}. Then types \tcode{F} and \tcode{Args...} model
+\tcode{Function} if and only if}
 
 \begin{itemize}
-\item \tcode{(\&f == addressof(f)) != false}.
+\item \oldtxt{\tcode{(\&f == addressof(f)) != false}.}
 \end{itemize}
 
 \pnum
