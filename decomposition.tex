@@ -1,0 +1,378 @@
+%!TEX root = stl2-ts.tex
+\infannex{decomposition}{Decomposition Rationale}
+
+\pnum
+Concepts in \Cpp are formed from conjunctions and disjunctions of requirements; there is
+no subtractive syntax to form a new concept by removing selected requirements from an existing
+concept. If one needs a concept ``like \tcode{Semiregular} but without default construction''
+it is necessary to either duplicate all of the desired requirements in the definition
+of a new concept, or to refactor the desired requirements from the existing concept to
+a new concept (\tcode{concept bool Foo = // ...}) and declare that the existing concept
+refines the new one (\tcode{concept bool Semiregular = Foo \&\& // ...}). This process of
+refactoring an existing concept into two is referred to as ``decomposition.''
+
+\pnum
+The current revision of this document includes concepts formed by decomposition from
+\tcode{Semiregular}, which is itself a decomposition of \tcode{Regular} formed by relaxing the
+requirement for equality comparison. This section explains why these decomposed concepts are
+useful to the library specification.
+
+\rSec1[decomposition.problem]{Problem Discussion}
+
+\rSec2[decomposition.problem.feature]{Syntactic Feature Concepts}
+\pnum
+N4382 inherited from the C++ Standard several concepts that describe individual syntactic
+features of types:
+\begin{itemize}
+\item \tcode{Destructible}
+\item \tcode{Constructible}
+\item \tcode{DefaultConstructible}
+\item \tcode{MoveConstructible}
+\item \tcode{CopyConstructible}
+\item \tcode{Assignable}
+\item \tcode{MoveAssignable}
+\item \tcode{CopyAssignable}
+\end{itemize}
+These concepts are not useful in isolation, e.g. the capability to copy construct an object
+isn't useful if that copy cannot then be destroyed. They are building blocks that are used
+to compose useful constraints for object types piecemeal from a list of desired features.
+This design is flexible, but awkward - not all combinations of features are sensible, and
+the resulting constraints are verbose and error prone. Two examples of this problem in
+a post-N4382 revision of this document are the constraints on \tcode{swap} :
+\begin{codeblock}
+template <class T>
+  requires MoveConstructible<T> && MoveAssignable<T> // oops - forgot Destructible<T>
+void swap(T&, T&);
+\end{codeblock}
+and the \tcode{Function} concept:
+\begin{codeblock}
+template <class F, class ...Args>
+concept bool Function =
+  Destructible<T> &&
+  CopyConstructible<T> &&
+  requires(F f, Args...args) {
+    typename ResultType<F, Args...>;
+    { &f } -> Same<F*>;
+    { f.~F() } noexcept;   // oops, Destructible<T> already requires this
+    { new F } -> Same<F*>; // oops, mistakenly requires default construction
+    { delete new F };
+    { f(forward<Args>(args)...) } -> Same<ResultType<F, Args...>{}>;
+  };
+\end{codeblock}
+
+\pnum
+This design violates one of the fundamental ideals of the Palo Alto Report:
+\begin{quote}
+The concepts used should express general ideas in the application domain (hence the name
+``concepts'') rather than mere programming language artifacts. ... concepts should represent
+fully formed abstractions.
+\end{quote}
+The syntactic feature concepts do not ``represent fully formed abstractions.''
+
+\rSec2[decomposition.problem.object]{Object Concepts}
+
+\pnum
+Conversely, N4382 inherited two concepts from the Palo Alto Report that form a small
+hierarchy of object types:
+\begin{itemize}
+\item \tcode{Semiregular}
+\item \tcode{Regular}
+\end{itemize}
+These concepts stand on their own by including a set of features with attendant semantics
+that describe useful families of object types. There is a gap in the design space below
+\tcode{Semiregular} that N4382 fills by using the feature concepts together with subsets
+of the requirements of \tcode{Regular} to describe other useful object types. The Palo
+Alto Report acknowledges the existence of such useful relaxations of \tcode{Regular} in
+its decomposition of \tcode{Semiregular} into \tcode{Movable} and \tcode{Copyable} in
+Appendix D.1.
+
+\pnum 
+It seems that the solution to the design problems the feature concepts present is to
+pre-compose the useful families of object types and insert them into the \tcode{Regular}
+hierarchy, allowing us to eliminate the feature concepts from the design altogether. The
+determination of which combinations are in fact useful is guided by a few few simple precepts
+informed by usage in the standard library and the requirements of the \tcode{Regular} hierarchy:
+\begin{itemize}
+\item Addressability is fundamental. Objects whose addresses cannot be taken with \tcode{\&}
+simply are not value-semantic objects. 
+\item Destruction is prerequisite to construction. It must be forbidden to create an
+object which cannot be destroyed. This is so fundamental a notion to C++ that the
+standard library requires it implicitly.
+%% Andrew: If we ever have to write Destructible as a constraint on [an] algorithm, we've done something wrong.
+\item Deallocation is equivalent to destruction. The capability to destroy an object should
+not depend on whether that object has automatic or dynamic storage duration.
+\item Allocation is equivalent to construction. The author of a library component should
+have the freedom to determine whether an object should be constructed in automatic storage,
+as a member subobject, or on the heap to best meet the design requirements of that component.
+\item Construction is prerequisite to assignment. If there's a way to transfer the value
+of one object to another, it should be possible to transfer that value into a freshly
+created object.
+\item Move is prerequisite to copy. Object types that can be copied but for which moves are
+ill-formed are pathological.
+\end{itemize}
+
+\rSec1[decomposition.concepts]{Decomposed Hierarchy}
+
+\pnum
+This section presents the decomposed concepts and describes how they form a hierarchy that
+embodies the design precepts presented above. Our starting point is the decomposition of
+\tcode{Semiregular} presented in the Palo Alto Report's Appendix D (presented here in N4377
+concept syntax, with axioms elided for brevity):
+
+\begin{codeblock}
+template <class T>
+concept bool Movable() {
+  return requires (T a, T b) {
+    // requirements for move construction
+    T{move(a)};
+    // requirements for move assignment
+    { a = move(b) } -> Same<T&>;
+    // requirements for move (de-) allocation
+    { new T{move(a)} } -> Same<T*>;
+    delete new T{move(a)};
+
+    // general object requirements that are
+    // here because Movable is the base of the
+    // concept hierarchy:
+    // addressability
+    { &t } -> Same<T*>;
+    // destruction
+    { t.~T() } noexcept;
+  };
+}
+
+template <class T>
+concept bool Copyable() {
+  return Movable<T>() && // refines Movable with
+    requires (T a, T b) {
+      // copy construction
+      T{a};
+      // copy assignment
+      { a = b } -> Same<T&>;
+      // copy (de-) allocation
+      { new T{a} } -> Same<T*>;
+      delete new T{a};
+    };
+}
+
+template <class T>
+concept bool Semiregular() {
+  return Copyable<T>() && // refines Copyable with:
+    requires {
+      // default construction
+      T{};
+      // default allocation
+      { new T{} } -> Same<T*>;
+      // array (de-) allocation
+      delete[] new T[1];
+    };
+}
+\end{codeblock}
+The \tcode{Copyable} and \tcode{Movable} concepts are necessary to describe both object types
+that are modeled by the standard library, and requirements on user types with which the standard
+library interacts. Simply changing those requirements to \tcode{Semiregular} would cause too
+much breakage of existing code, and result in inefficiencies when the old code is updated to meet
+the requirements of the stricter concept. This would violate the general ``Don't pay for what you
+don't use'' principle of \Cpp.
+
+Looking beyond the algorithms and iterators that were the focus of N3351 - and N4382, for that
+matter - the standard library requires concepts to describe:
+\begin{itemize}
+\item object types that are copy/move constructible but without assignment requirements
+\item object types that are constructible from a specific set of argument types
+\item object types that are only destructible (although the applicability of such a concept is
+narrow, it provides a convenient basis for the other object concepts)
+\end{itemize}
+We introduce concepts named \tcode{CopyConstructible}, \tcode{MoveConstructible},
+\tcode{Constructible}, \tcode{DefaultConstructible}, and \tcode{Destructible} to match these usages
+in the library, formed by further decomposition of \tcode{Copyable} and \tcode{Movable}. Although
+the Palo Alto Report warns against successive decomposition:
+\begin{quote}
+We recognize that these concepts could be further decomposed into smaller and smaller units.
+For example, we could easily see factoring out shared ``object requirements'' for the
+\tcode{Copyable}, \tcode{Movable}, and \tcode{Function} concepts. However, each subsequent
+refactoring yields concepts with less coherent meaning (if any).
+\end{quote}
+the proverbial ship has already sailed; the standard library uses these concepts in its design
+now. We simply provide convenient names by which to refer to them, and a coherent hierarchy
+relating them to each other as decompositions of \tcode{Regular}. Further, we feel that a larger
+body of concepts with fewer distinct requirements is more readable than a smaller body of concepts
+individually composed of more and/or duplicated requirements.
+
+\rSec2[decomposition.concepts.destructible]{Destructible (\ref{concepts.lib.object.destructible})}
+(As with the presentation of the N3351 concepts, we omit the non-syntactic requirements for
+brevity. Each concept is fully specified in [concepts.lib.object] (\ref{concepts.lib.object}).)
+
+\begin{codeblock}
+template <class T>
+concept bool Destructible() {
+  return requires (T t, T* p) {
+    { t.@$\sim$@T() } noexcept;
+    delete p;
+    delete[] p;
+    { &t } -> Same<T*>;
+  };
+}
+\end{codeblock}
+
+\tcode{Destructible} is modeled by object types that are, unsuprisingly, destructible.  Note
+that \tcode{Destructible} only admits non-array object types since they are the only types for which
+the syntax \tcode{t.$\sim$T()} is valid. It includes requirements for deallocation per the design
+precept that ``destruction is equivalent to deallocation.'' Since \tcode{Destructible} is the basis
+of the concept hierarchy, it includes requirements that are applicable to all value-semantic
+object types - namely addressability.
+
+\rSec2[decomposition.concepts.constructible]{Constructible (\ref{concepts.lib.object.constructible})}
+\begin{codeblock}
+template <class T, class ...Args>
+concept bool Constructible() {
+  return requires (Args&&...args) {
+    T{forward<Args>(args)...};
+  } &&
+  (is_reference<T>::value ||
+    (Destructible<T>() && requires (Args&&...args) {
+      new T{forward<Args>(args)...};
+    }));
+}
+\end{codeblock}
+
+\tcode{Constructible} describes either an object type \tcode{T} that is constructible from argument types
+\tcode{Args...}, or a reference type \tcode{T} that can be bound to \tcode{Args...}. For the object case,
+it includes allocation requirements per the design precept that ``construction is equivalent to allocation''
+and refines \tcode{Destructible} per ``destruction is prerequisite to construction.''
+
+\rSec2[decomposition.concepts.defaultconstructible]{DefaultConstructible (\ref{concepts.lib.object.defaultconstructible})}
+\begin{codeblock}
+template <class T>
+concept bool DefaultConstructible() {
+  return Constructible<T>() &&
+    requires (size_t n) {
+      new T[n]{};
+    };
+}
+\end{codeblock}
+
+\tcode{DefaultConstructible} adds an array allocation requirement onto the requirements of
+\tcode{Constructible<T>}. Since array initialization copy-initializes the array elements,
+this effectively requires both that any user-defined overload of \tcode{new T[]} is
+accessible, and that \tcode{T} not have an explicit default constructor.
+
+\rSec2[decomposition.concepts.moveconstructible]{MoveConstructible (\ref{concepts.lib.object.moveconstructible})}
+\begin{codeblock}
+template <class T>
+concept bool MoveConstructible() {
+  return Constructible<T, remove_cv_t<T>&&>() &&
+    requires (remove_cv_t<T> t) {
+      new T[1]{move(t)};
+    };
+}
+\end{codeblock}
+\tcode{MoveConstructible} describes an object type \tcode{T} whose objects can be move constructed:
+constructed from rvalues with the same value type (\tcode{remove_cv_t<T>}). It also requires array
+allocation, effectively forbidding \tcode{T} to have an explicit move constructor.
+
+\rSec2[decomposition.concepts.copyconstructible]{CopyConstructible (\ref{concepts.lib.object.copyconstructible})}
+\begin{codeblock}
+template <class T>
+concept bool CopyConstructible() {
+  return MoveConstructible<T>() &&
+    Constructible<T, remove_cv_t<T>&>() &&
+    Constructible<T, const remove_cv_t<T>&>() &&
+    Constructible<T, const remove_cv_t<T>&&>() &&
+    requires (remove_cv_t<T>& a, const remove_cv_t<T>& b) {
+      new T[1]{a};
+      new T[1]{b};
+      new T[1]{move(b)};
+    };
+}
+\end{codeblock}
+\tcode{CopyConstructible} describes an object type \tcode{T} whose objects can be copy constructed:
+constructed from (possibly \tcode{const}) lvalues or \tcode{const} rvalues with the same value type
+(\tcode{remove_cv_t<T>}). The array allocation requirements forbid \tcode{T} to have explicit
+copy constructor(s).
+
+\rSec2[decomposition.concepts.movable]{Movable (\ref{concepts.lib.object.movable})}
+\begin{codeblock}
+template <class T>
+concept bool Movable() {
+  return MoveConstructible<T>() &&
+    Assignable<T&, T&&>();
+}
+\end{codeblock}
+\tcode{Movable} refines \tcode{MoveConstructible} with the requirement that assignment to an object
+from an rvalue of the same object type transfers the value intact from the source to the destination
+object. It is roughly equivalent to \tcode{Movable} from the Palo Alto Report.
+
+\rSec2[decomposition.concepts.copyable]{Copyable (\ref{concepts.lib.object.copyable})}
+\begin{codeblock}
+template <class T>
+concept bool Copyable() {
+  return CopyConstructible<T>() &&
+    Movable<T>() &&
+    Assignable<T&, T&>() &&
+    Assignable<T&, const T&>() &&
+    Assignable<T&, const T&&>();
+}
+\end{codeblock}
+\tcode{Copyable} refines both \tcode{CopyConstructible} and \tcode{Movable} with additional
+requirements that assignment to an object from a possibly-\tcode{const} lvalue or \tcode{const}
+rvalue of the same object type replicates the value of the source object in the destination object.
+It is roughly equivalent to \tcode{Copyable} from the Palo Alto Report.
+
+\rSec2[decomposition.concepts.semiregular]{Semiregular (\ref{concepts.lib.object.semiregular})}
+\begin{codeblock}
+template <class T>
+concept bool Semiregular() {
+  return Copyable<T>() &&
+    DefaultConstructible<T>();
+}
+\end{codeblock}
+Just as in the Palo Alto Report, \tcode{Semiregular} refines \tcode{Copyable}. This formulation,
+however, indirectly incorporates the requirements for default construction, allocation, and array
+deallocation by refining \tcode{DefaultConstructible<T>} instead of listing them explicitly.
+
+\rSec2[decomposition.concepts.regular]{Regular (\ref{concepts.lib.object.regular})}
+\begin{codeblock}
+template <class T>
+concept bool Regular() {
+  return Semiregular<T>() &&
+    EqualityComparable<T>();
+}
+\end{codeblock}
+\tcode{Regular} is roughly equivalent to the formulation in the Palo Alto Report.
+
+\rSec1[decomposition.usage]{Usage}
+
+\pnum
+The utility of these object concepts versus the syntactic feature concepts should be clear: each
+includes a complement of required semantic behaviors along with its syntactic requirements resulting
+in fully formed abstractions. Similarly to how the strong type system of \Cpp turns many programming
+errors into type errors, the use of these stronger concepts makes it easier to avoid semantic errors.
+Requirements formed using these concepts are both more concise and more strict than the equivalents
+formed by composition of syntactic feature concepts.
+
+\pnum
+Since ``destruction is prerequisite to destruction,'' implicit requirements for destruction become
+explicit and cannot be inadvertently ommitted. The declaration of \tcode{swap}, for example, becomes:
+\begin{codeblock}
+template <Movable T>
+void swap(T&, T&);
+\end{codeblock}
+One of the design goals of STL2 is to explicitly specify such implicit requirements. The use of these
+stronger concepts makes it possible to do so without adding verbiage to the specification.
+
+\pnum
+Pushing requirements down the hierarchy allows for reuse of requirements without replication. The
+\tcode{Function} concept becomes:
+\begin{codeblock}
+template <class F, class ...Args>
+concept bool Function() {
+  return CopyConstructible<T>() &&
+    requires (F f, Args&&...args) {
+      typename ResultType<F, Args...>;
+      { f(forward<Args>(args)...) } -> Same<ResultType<F, Args...>{}>;
+    };
+}
+\end{codeblock}
+which is significantly more concise than the definition from the Palo Alto Report despite
+incorporating more requirements.

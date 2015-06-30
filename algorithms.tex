@@ -559,13 +559,16 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
 
   template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O,
       class Proj = identity, IndirectCallableRelation<Projected<I, Proj>> R = equal_to<>>
-    requires IndirectlyCopyable<I, O>@\newtxt{()}@
+    requires IndirectlyCopyable<I, O>@\newtxt{() \&\& (ForwardIterator<I>() ||}@
+      @\newtxt{ForwardIterator<O>() || Copyable<ValueType<I>{}>())}@
     tagged_pair<tag::in(I), tag::out(O)>
       unique_copy(I first, S last, O result, R comp = R{}, Proj proj = Proj{});
 
   template<InputRange Rng, WeaklyIncrementable O, class Proj = identity,
       IndirectCallableRelation<Projected<IteratorType<Rng>, Proj>> R = equal_to<>>
-    requires IndirectlyCopyable<IteratorType<Rng>, O>@\newtxt{()}@
+    requires IndirectlyCopyable<IteratorType<Rng>, O>@\newtxt{() \&\&}@
+      @\newtxt{(ForwardIterator<IteratorType<Rng>{}>() || ForwardIterator<O>() ||}@
+       @\newtxt{Copyable<ValueType<IteratorType<Rng>{}>{}>())}@
     tagged_pair<tag::in(@\oldtxt{IteratorType}\newtxt{safe_iterator_t}@<Rng>), tag::out(O)>
       unique_copy(Rng&@\newtxt{\&}@ rng, O result, R comp = R{}, Proj proj = Proj{});
 
@@ -1560,10 +1563,10 @@ template<InputRange Rng, class Proj = identity,
 \pnum
 \requires \tcode{Function} shall meet the requirements of
 \tcode{MoveConstructible}~(\changed{Table~\cxxref{moveconstructible}}{
-\ref{concepts.lib.corelang.moveconstructible}}).
+\ref{concepts.lib.object.moveconstructible}}).
 \enternote \tcode{Function} need not meet the requirements of
 \tcode{CopyConstructible}~(\changed{Table~\cxxref{copyconstructible}}{
-\ref{concepts.lib.corelang.copyconstructible}}).\exitnote
+\ref{concepts.lib.object.copyconstructible}}).\exitnote
 \end{removedblock}
 
 \pnum
@@ -3362,13 +3365,16 @@ template<class InputIterator, class OutputIterator,
 \begin{itemdecl}
 template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O,
     class Proj = identity, IndirectCallableRelation<Projected<I, Proj>> R = equal_to<>>
-  requires IndirectlyCopyable<I, O>@\newtxt{()}@
+  requires IndirectlyCopyable<I, O>@\newtxt{() \&\& (ForwardIterator<I>() ||}@
+    @\newtxt{ForwardIterator<O>() || Copyable<ValueType<I>{}>())}@
   tagged_pair<tag::in(I), tag::out(O)>
     unique_copy(I first, S last, O result, R comp = R{}, Proj proj = Proj{});
 
 template<InputRange Rng, WeaklyIncrementable O, class Proj = identity,
     IndirectCallableRelation<Projected<IteratorType<Rng>, Proj>> R = equal_to<>>
-  requires IndirectlyCopyable<IteratorType<Rng>, O>@\newtxt{()}@
+  requires IndirectlyCopyable<IteratorType<Rng>, O>@\newtxt{() \&\&}@
+    @\newtxt{(ForwardIterator<IteratorType<Rng>{}>() || ForwardIterator<O>() ||}@
+     @\newtxt{Copyable<ValueType<IteratorType<Rng>{}>{}>())}@
   tagged_pair<tag::in(@\oldtxt{IteratorType}\newtxt{safe_iterator_t}@<Rng>), tag::out(O)>
     unique_copy(Rng&@\newtxt{\&}@ rng, O result, R comp = R{}, Proj proj = Proj{});
 \end{itemdecl}
@@ -3384,7 +3390,7 @@ and
 \range{result}{result+(last-first)}
 shall not overlap.\removed{ The expression
 \tcode{*result = *first}
-shall be valid.} If neither
+shall be valid.} \oldoldtxt{If neither
 \tcode{InputIterator}
 nor
 \tcode{OutputIterator}
@@ -3392,7 +3398,7 @@ meets the requirements of forward iterator then the value type of
 \tcode{InputIterator}
 shall be \tcode{CopyConstructible} (Table~\cxxref{copyconstructible}) and
 \tcode{CopyAssignable} (Table~\cxxref{copyassignable}).
-Otherwise \tcode{CopyConstructible} is not required.
+Otherwise \tcode{CopyConstructible} is not required.}
 
 \pnum
 \effects
@@ -3575,7 +3581,7 @@ the requirements of \tcode{MoveConstructible}
 (Table~\cxxref{moveconstructible}) and the
 requirements of
 \tcode{MoveAssignable}
-(Table~\cxxref{moveassignable})}.
+(Table~\cxxref{moveassignable}).}
 
 \pnum
 \complexity
@@ -5008,7 +5014,7 @@ sorted with respect to \tcode{\removed{operator<}}\removed{ or} \tcode{comp}\add
 \tcode{ValueSwappable}~(\ref{concepts.lib.corelang.swappable}). The type
 of \tcode{*first} shall satisfy the requirements of
 \tcode{MoveConstructible} (Table~\cxxref{moveconstructible}) and of
-\tcode{MoveAssignable} (Table~\cxxref{moveassignable})}.
+\tcode{MoveAssignable} (Table~\cxxref{moveassignable}).}
 
 \begin{addedblock}
 \pnum
@@ -5523,7 +5529,7 @@ shall be a valid non-empty heap.
 \tcode{ValueSwappable}~(\ref{concepts.lib.corelang.swappable}). The type
 of \tcode{*first} shall satisfy the requirements of
 \tcode{MoveConstructible} (Table~\cxxref{moveconstructible}) and of
-\tcode{MoveAssignable} (Table~\cxxref{moveassignable})}.
+\tcode{MoveAssignable} (Table~\cxxref{moveassignable}).}
 
 \pnum
 \effects
@@ -5639,7 +5645,7 @@ Sorts elements in the heap
 \tcode{ValueSwappable}~(\ref{concepts.lib.corelang.swappable}). The type
 of \tcode{*first} shall satisfy the requirements of
 \tcode{MoveConstructible} (Table~\cxxref{moveconstructible}) and of
-\tcode{MoveAssignable} (Table~\cxxref{moveassignable})}.
+\tcode{MoveAssignable} (Table~\cxxref{moveassignable}).}
 
 \begin{addedblock}
 \pnum

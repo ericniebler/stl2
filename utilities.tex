@@ -24,9 +24,9 @@ Change the \tcode{<utility>} synopsis as follows:
   // ... as before ..
 
   // \ref{utility.swap}, swap:
-  template<class T>
-    @\added{requires \newtxt{experimental::ranges_v1::}MoveConstructible<T>\newtxt{()} \&\&}@
-      @\added{\newtxt{experimental::ranges_v1::}MoveAssignable<T>\newtxt{()} \&\& \newtxt{experimental::ranges_v1::}Destructible<T>\newtxt{()}}@
+  template<@\oldoldtxt{class}\newtxt{experimental::ranges_v1::Movable}@ T>
+    @\added{\oldtxt{requires MoveConstructible<T> \&\&}}@
+      @\added{\oldtxt{MoveAssignable<T> \&\& Destructible<T>}}@
   void swap(T& a, T& b) noexcept(@\seebelow@);
 
   template <class T, size_t N>
@@ -47,8 +47,8 @@ Change the \tcode{<utility>} synopsis as follows:
   @\newtxt{using std::swap;}@
 
   // \ref{utility.exchange}, exchange:
-  template <class T, class U=T>
-    @\added{requires MoveConstructible<T>\newtxt{()} \&\& Assignable<T, U>\newtxt{()} \&\& Destructible<T>\newtxt{()}}@
+  template <@\oldtxt{class}\newtxt{Movable}@ T, class U=T>
+    @\added{requires \oldtxt{MoveConstructible<T> \&\&} Assignable<T\newtxt{\&}, U>\newtxt{()} \oldtxt{\&\& Destructible<T>}}@
   T exchange(T& obj, U&& new_val);
 \end{codeblock}
 {\color{addclr}
@@ -115,9 +115,9 @@ namespace \tcode{std}.}
 
 \indexlibrary{\idxcode{swap}}%
 \begin{itemdecl}
-template<class T>
-  @\added{requires \newtxt{experimental::ranges_v1::}MoveConstructible<T>\newtxt{()} \&\&}@
-    @\added{\newtxt{experimental::ranges_v1::}MoveAssignable<T>\newtxt{()} \&\& \newtxt{experimental::ranges_v1::}Destructible<T>\newtxt{()}}@
+template<@\oldoldtxt{class}\newtxt{experimental::ranges_v1::Movable}@ T>
+  @\added{\oldtxt{requires MoveConstructible<T> \&\&}}@
+    @\added{\oldtxt{MoveAssignable<T> \&\& Destructible<T>}}@
 void swap(T& a, T& b) noexcept(@\seebelow@);
 \end{itemdecl}
 
@@ -151,9 +151,9 @@ is_destructible<T>::value
 Type
 \tcode{T}
 shall be
-\tcode{MoveConstructible} (Table~\ref{moveconstructible})
+\tcode{MoveConstructible} (Table~\cxxref{moveconstructible})
 and
-\tcode{MoveAssignable} (Table~\ref{moveassignable}).
+\tcode{MoveAssignable} (Table~\cxxref{moveassignable}).
 }
 
 {\color{newclr}
@@ -208,8 +208,8 @@ swap(declval<remove_all_extents_t<T>&>(), declval<remove_all_extents_t<T>&>())
 \rSec2[utility.exchange]{exchange}
 
 \begin{itemdecl}
-template <class T, class U=T>
-  @\added{requires MoveConstructible<T>\newtxt{()} \&\& Assignable<T, U>\newtxt{()} \&\& Destructible<T>\newtxt{()}}@
+template <@\oldtxt{class}\newtxt{Movable}@ T, class U=T>
+  @\added{requires \oldtxt{MoveConstructible<T> \&\&} Assignable<T\newtxt{\&}, U>\newtxt{()} \oldtxt{\&\& Destructible<T>}}@
 T exchange(T& obj, U&& new_val);
 \end{itemdecl}
 
@@ -580,13 +580,13 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
       requires Constructible<Base, const Other&>@\newtxt{()}@
     tagged(tagged<Other, Tags...> const &that);
     template <typename Other>
-      requires Assignable<Base, Other>@\newtxt{()}@
+      requires Assignable<Base@\newtxt{\&}@, Other>@\newtxt{()}@
     tagged& operator=(tagged<Other, Tags...>&& that) noexcept(@\seebelow@);
     template <typename Other>
-      requires Assignable<Base, const Other&>@\newtxt{()}@
+      requires Assignable<Base@\newtxt{\&}@, const Other&>@\newtxt{()}@
     tagged& operator=(const tagged<Other, Tags...>& that);
     template <class U>
-      requires Assignable<Base, U>@\newtxt{()}@ && !Same<decay_t<U>, tagged>@\newtxt{()}@
+      requires Assignable<Base@\newtxt{\&}@, U>@\newtxt{()}@ && !Same<decay_t<U>, tagged>@\newtxt{()}@
     tagged& operator=(U&& u) noexcept(@\seebelow@);
     void swap(tagged& that) noexcept(@\seebelow@)
       requires Swappable<Base&>@\newtxt{()}@;
@@ -670,7 +670,7 @@ tagged(const tagged<Other, Tags...>& that);
 \indexlibrary{\idxcode{tagged}!\idxcode{operator=}}
 \begin{itemdecl}
 template <typename Other>
-  requires Assignable<Base, Other>@\newtxt{()}@
+  requires Assignable<Base@\newtxt{\&}@, Other>@\newtxt{()}@
 tagged& operator=(tagged<Other, Tags...>&& that) noexcept(@\seebelow@);
 \end{itemdecl}
 
@@ -693,7 +693,7 @@ tagged& operator=(tagged<Other, Tags...>&& that) noexcept(@\seebelow@);
 \indexlibrary{\idxcode{tagged}!\idxcode{operator=}}
 \begin{itemdecl}
 template <typename Other>
-  requires Assignable<Base, const Other&>@\newtxt{()}@
+  requires Assignable<Base@\newtxt{\&}@, const Other&>@\newtxt{()}@
 tagged& operator=(const tagged<Other, Tags...>& that);
 \end{itemdecl}
 
@@ -709,7 +709,7 @@ tagged& operator=(const tagged<Other, Tags...>& that);
 \indexlibrary{\idxcode{tagged}!\idxcode{operator=}}
 \begin{itemdecl}
 template <class U>
-  requires Assignable<Base, U>@\newtxt{()}@ && !Same<decay_t<U>, tagged>@\newtxt{()}@
+  requires Assignable<Base@\newtxt{\&}@, U>@\newtxt{()}@ && !Same<decay_t<U>, tagged>@\newtxt{()}@
 tagged& operator=(U&& u) noexcept(@\seebelow@);
 \end{itemdecl}
 
