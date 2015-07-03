@@ -33,12 +33,24 @@ In this Clause, \tcode{CamelCase} identifiers ending with ``\tcode{Type}'' denot
 template aliases.
 
 \pnum
-A \techterm{regular function} is a function that returns equal output when passed
-equal input. A regular function that returns a value may copy or move the returned
-object, or may return a reference. Regular functions are allowed to have
-side effects and preconditions that, when violated, make the function non-regular.
-\enternote A function that returns \tcode{void} is necessarily a regular function.
-\exitnote
+\newtxt{An expression is \techterm{equality preserving} if, given equal inputs, the
+expression results in equal outputs. Any expression appearing in a
+\techterm{requires-expression} in this document is required to be equality preserving,
+except for those annotated with the comment ``not equality preserving.'' An
+expression so annotated may be equality preserving, but it is not required to be so.
+\enternote Not all input values must be valid for a given expression, e.g., for
+integers \tcode{a} and \tcode{b}, the expression \tcode{a / b} is not well-defined
+when \tcode{b} is \tcode{0}. This does not preclude the expression \tcode{a / b}
+being equality preserving. \exitnote}
+
+\pnum
+A \techterm{regular function} is \newtxt{a function that is equality preserving,
+i.e.,} a function that returns equal output when passed equal input. A regular
+function that returns a value may copy or move the returned object, or may return a
+reference. \newtxt{\enternote Regular functions may have side effects. \exitnote}
+\oldtxt{Regular functions are allowed to have side effects and preconditions that,
+when violated, make the function non-regular. \enternote A function that returns void
+is necessarily a regular function. \exitnote}
 
 \rSec1[concepts.lib.corelang]{Core language concepts}
 
@@ -431,16 +443,21 @@ concept bool EqualityComparable() {
 
 \begin{itemdescr}
 \pnum
-Let \tcode{a}, \tcode{b}, and \tcode{c} be well-formed objects of type \tcode{T}. Then type
-\tcode{T} models \tcode{EqualityComparable} if and only if
+Let \tcode{a}\oldtxt{,} \newtxt{and} \tcode{b}\oldtxt{, and \tcode{c}} be well-formed objects
+of type \tcode{T}. Then type \tcode{T} models \tcode{EqualityComparable} if and only if
 
 \begin{itemize}
-\item \tcode{(a == a) != false}.
-\item \tcode{(a == b) != false} if and only if \tcode{a} is equal to \tcode{b}.
-\item \tcode{(a == b) != false} if and only if \tcode{(b == a) != false}.
-\item \tcode{(a != b) != false} if and only if \tcode{(a == b) == false}.
-\item \tcode{(a == b) != false \&\& (b == c) != false} if and only if \tcode{(a == c) != false}.
+\item \tcode{\newtxt{bool}(a == a)\oldtxt{ != false}}.
+\item \tcode{\newtxt{bool}(a == b)\oldtxt{ != false}} if and only if \tcode{a} is equal to \tcode{b}.
+\item \oldtxt{\tcode{(a == b) != false} if and only if \tcode{(b == a) != false}.}
+\item \newtxt{\tcode{bool(a != b) == !bool(a == b)}}.
+\item \oldtxt{\tcode{(a != b) != false} if and only if \tcode{(a == b) == false}}.
+\item \oldtxt{\tcode{(a == b) != false \&\& (b == c) != false} if and only if \tcode{(a == c) != false}.}
 \end{itemize}
+
+\pnum
+\newtxt{\enternote The requirement that the expression \tcode{a == b} is equality preserving
+implies that \tcode{==} is transitive and symmetric. \exitnote}
 
 \pnum
 \enternote Not all arguments will be well-formed for a given type. For example, $NaN$ is not a
@@ -471,10 +488,14 @@ Let \tcode{a} be an object of type \tcode{T}, \tcode{b} be an object of type \tc
 and only if
 
 \begin{itemize}
-\item \tcode{(a == b) != false} if and only if \tcode{(C(a) == C(b)) != false}.
-\item \tcode{(a != b) != false} if and only if \tcode{(C(a) != C(b)) != false}.
-\item \tcode{(b == a) != false} if and only if \tcode{(C(b) == C(a)) != false}.
-\item \tcode{(b != a) != false} if and only if \tcode{(C(b) != C(a)) != false}.
+\item \newtxt{\tcode{bool(a == b) == bool(C(a) == C(b))}.}
+\item \oldtxt{\tcode{(a == b) != false} if and only if \tcode{(C(a) == C(b)) != false}.}
+\item \newtxt{\tcode{bool(a != b) == bool(C(a) != C(b))}.}
+\item \oldtxt{\tcode{(a != b) != false} if and only if \tcode{(C(a) != C(b)) != false}.}
+\item \newtxt{\tcode{bool(b == a) == bool(C(b) == C(a))}.}
+\item \oldtxt{\tcode{(b == a) != false} if and only if \tcode{(C(b) == C(a)) != false}.}
+\item \newtxt{\tcode{bool(b != a) == bool(C(b) != C(a))}.}
+\item \oldtxt{\tcode{(b != a) != false} if and only if \tcode{(C(b) != C(a)) != false}.}
 \end{itemize}
 \end{itemdescr}
 
@@ -508,15 +529,20 @@ Let \tcode{a}, \tcode{b}, and \tcode{c} be well-formed objects of type \tcode{T}
 \tcode{T} models \tcode{TotallyOrdered} if and only if
 
 \begin{itemize}
-\item \tcode{(a < a) == false}.
-\item If \tcode{(a < b) != false}, then \tcode{(b < a) == false}.
-\item If \tcode{(a < b) != false} and \tcode{(b < c) != false}, then
-      \tcode{(a < c) != false}.
-\item Exactly one of the following is true: \tcode{(a < b) != false}, or
-      \tcode{(b < a) != false}, or \tcode{(a == b) != false}.
-\item \tcode{(a > b) != false} if and only if \tcode{(b < a) != false}.
-\item \tcode{(a <= b) != false} if and only if \tcode{(b < a) == false}.
-\item \tcode{(a >= b) != false} if and only if \tcode{(b > a) == false}.
+\item \newtxt{Exactly one of \tcode{bool(a < b)}, \tcode{bool(b < a)}, or
+      \tcode{bool(a == b)} is \tcode{true}.}
+\item \oldtxt{\tcode{(a < a) == false}.}
+\item \oldtxt{If \tcode{(a < b) != false}, then \tcode{(b < a) == false}.}
+\item If \tcode{\newtxt{bool}(a < b)\oldtxt{ != false}} and \tcode{\newtxt{bool}(b < c)\oldtxt{ != false}}, then
+      \tcode{\newtxt{bool}(a < c)\oldtxt{ != false}}.
+\item \oldtxt{Exactly one of the following is true: \tcode{(a < b) != false}, or
+      \tcode{(b < a) != false}, or \tcode{(a == b) != false}.}
+\item \newtxt{\tcode{bool(a > b) == bool(b < a)}.}
+\item \oldtxt{\tcode{(a > b) != false} if and only if \tcode{(b < a) != false}.}
+\item \newtxt{\tcode{bool(a <= b) == !bool(b < a)}.}
+\item \oldtxt{\tcode{(a <= b) != false} if and only if \tcode{(b < a) == false}.}
+\item \newtxt{\tcode{bool(a >= b) == !bool(a < b)}.}
+\item \oldtxt{\tcode{(a >= b) != false} if and only if \tcode{(b > a) == false}.}
 \end{itemize}
 
 \pnum
@@ -533,34 +559,42 @@ concept bool TotallyOrdered() {
     TotallyOrdered<U>() &&
     TotallyOrdered<CommonType<T, U>>() &&
     EqualityComparable<T, U>() &&
-    requires (T a, U b) {
-      { a < b } -> Boolean;
-      { a > b } -> Boolean;
-      { a <= b } -> Boolean;
-      { a >= b } -> Boolean;
-      { b < a } -> Boolean;
-      { b > a } -> Boolean;
-      { b <= a } -> Boolean;
-      { b >= a } -> Boolean;
+    requires (T @\oldtxt{a}\newtxt{t}@, U @\oldtxt{b}\newtxt{u}@) {
+      { @\oldtxt{a}\newtxt{t}@ < @\oldtxt{b}\newtxt{u}@ } -> Boolean;
+      { @\oldtxt{a}\newtxt{t}@ > @\oldtxt{b}\newtxt{u}@ } -> Boolean;
+      { @\oldtxt{a}\newtxt{t}@ <= @\oldtxt{b}\newtxt{u}@ } -> Boolean;
+      { @\oldtxt{a}\newtxt{t}@ >= @\oldtxt{b}\newtxt{u}@ } -> Boolean;
+      { @\oldtxt{b}\newtxt{u}@ < @\oldtxt{a}\newtxt{t}@ } -> Boolean;
+      { @\oldtxt{b}\newtxt{u}@ > @\oldtxt{a}\newtxt{t}@ } -> Boolean;
+      { @\oldtxt{b}\newtxt{u}@ <= @\oldtxt{a}\newtxt{t}@ } -> Boolean;
+      { @\oldtxt{b}\newtxt{u}@ >= @\oldtxt{a}\newtxt{t}@ } -> Boolean;
     };
 }
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-Let \tcode{a} be an object of type T, \tcode{b} be an object of type \tcode{U}, and \tcode{C} be
-\tcode{CommonType<T, U>}. Then types \tcode{T} and \tcode{U} model \tcode{EqualityComparable} if
-and only if
+Let \tcode{\oldtxt{a}\newtxt{t}} be an object of type T, \tcode{\oldtxt{b}\newtxt{u}} be an object of type \tcode{U}, and \tcode{C} be
+\tcode{CommonType<T, U>}. Then types \tcode{T} and \tcode{U} model \oldtxt{\tcode{EqualityComparable}}
+\newtxt{\tcode{TotallyOrdered}} if and only if
 
 \begin{itemize}
-\item \tcode{(a < b) != false} if and only if \tcode{(C(a) < C(b)) != false}.
-\item \tcode{(a > b) != false} if and only if \tcode{(C(a) > C(b)) != false}.
-\item \tcode{(a <= b) != false} if and only if \tcode{(C(a) <= C(b)) != false}.
-\item \tcode{(a >= b) != false} if and only if \tcode{(C(a) >= C(b)) != false}.
-\item \tcode{(b < a) != false} if and only if \tcode{(C(b) < C(a)) != false}.
-\item \tcode{(b > a) != false} if and only if \tcode{(C(b) > C(a)) != false}.
-\item \tcode{(b <= a) != false} if and only if \tcode{(C(b) <= C(a)) != false}.
-\item \tcode{(b >= a) != false} if and only if \tcode{(C(b) >= C(a)) != false}.
+\item \newtxt{\tcode{bool(t < u) == bool(C(t) < C(u))}.}
+\item \oldtxt{\tcode{(a < b) != false} if and only if \tcode{(C(a) < C(b)) != false}.}
+\item \newtxt{\tcode{bool(t > u) == bool(C(t) > C(u))}.}
+\item \oldtxt{\tcode{(a > b) != false} if and only if \tcode{(C(a) > C(b)) != false}.}
+\item \newtxt{\tcode{bool(t <= u) == bool(C(t) <= C(u))}.}
+\item \oldtxt{\tcode{(a <= b) != false} if and only if \tcode{(C(a) <= C(b)) != false}.}
+\item \newtxt{\tcode{bool(t >= u) == bool(C(t) >= C(u))}.}
+\item \oldtxt{\tcode{(a >= b) != false} if and only if \tcode{(C(a) >= C(b)) != false}.}
+\item \newtxt{\tcode{bool(u < t) == bool(C(u) < C(t))}.}
+\item \oldtxt{\tcode{(b < a) != false} if and only if \tcode{(C(b) < C(a)) != false}.}
+\item \newtxt{\tcode{bool(u > t) == bool(C(u) > C(t))}.}
+\item \oldtxt{\tcode{(b > a) != false} if and only if \tcode{(C(b) > C(a)) != false}.}
+\item \newtxt{\tcode{bool(u <= t) == bool(C(u) <= C(t))}.}
+\item \oldtxt{\tcode{(b <= a) != false} if and only if \tcode{(C(b) <= C(a)) != false}.}
+\item \newtxt{\tcode{bool(u >= t) == bool(C(u) >= C(t))}.}
+\item \oldtxt{\tcode{(b >= a) != false} if and only if \tcode{(C(b) >= C(a)) != false}.}
 \end{itemize}
 \end{itemdescr}
 
@@ -588,7 +622,7 @@ template <class T>
 concept bool Destructible@\newtxt{() \{}\oldtxt{ =}@
   @\newtxt{return}@ requires (T t@\newtxt{, T* p}@) {
     { t.@$\sim$@T() } noexcept;
-    @\newtxt{\{ \&t \} -> Same<T*>;}@
+    @\newtxt{\{ \&t \} -> Same<T*>; // not equality preserving}@
     @\newtxt{delete p;}@
     @\newtxt{delete[] p;}@
   };
@@ -625,18 +659,14 @@ types, or a reference type that can be bound to those arguments.}
 template <class T, class ...Args>
 concept bool Constructible@\newtxt{() \{}\oldtxt{ =}@
   @\newtxt{return}@ requires (@\oldtxt{ }@Args@\newtxt{\&\&}@...args@\oldtxt{ }@) {
-    T{forward<Args>(args)...};
+    T{forward<Args>(args)...}; @\newtxt{// not equality preserving}@
   }@\oldtxt{;}\newtxt{ \&\&}@
   @\newtxt{(is_reference<T>::value ||}@
     @\newtxt{(Destructible<T>() \&\& requires (Args\&\&...args) \{}@
-      @\newtxt{new T\{forward<Args>(args)...\};}@
+      @\newtxt{new T\{forward<Args>(args)...\}; // not equality preserving}@
     @\newtxt{\}));}@
 @\newtxt{\}}@
 \end{itemdecl}
-
-\pnum
-\newtxt{Neither the expression \tcode{T\{forward<Args>(args)...\}} nor
-\tcode{new T\{forward<Args>(args)...\}} is required to be equality preserving.}
 
 \rSec2[concepts.lib.object.defaultconstructible]{Concept DefaultConstructible}
 
@@ -650,7 +680,7 @@ template <class T>
 concept bool DefaultConstructible@\newtxt{() \{} \oldtxt{=}@
   @\newtxt{return Constructible<T>() \&\&}@
     requires @\newtxt{(size_t n)}@ {
-      @\newtxt{new}@ T@\newtxt{[n]}@{};
+      @\newtxt{new}@ T@\newtxt{[n]}@{}; @\newtxt{// not equality preserving}@
     };
 @\newtxt{\}}@
 \end{itemdecl}
@@ -913,7 +943,7 @@ concept bool Function@\newtxt{() \{}\oldtxt{ =}@
       @\oldtxt{\{ f.~F() \} noexcept;}@
       @\oldtxt{\{ new F \} -> Same<F*>}@;
       @\oldtxt{delete new F}@;
-      { f(forward<Args>(args)...) } -> Same<ResultType<F, Args...>>;
+      { f(forward<Args>(args)...) } -> Same<ResultType<F, Args...>>; @\newtxt{// not equality preserving}@
     };
 @\newtxt{\}}@
 \end{itemdecl}
@@ -928,9 +958,9 @@ concept bool Function@\newtxt{() \{}\oldtxt{ =}@
 \end{itemize}
 
 \pnum
-The function call expression need not be equality-preserving; that is, the expression
+\oldtxt{The function call expression need not be equality-preserving; that is, the expression
 \tcode{f(args...)} is allowed to return non-equal objects when called with equal arguments,
-and still model \tcode{Function}.
+and still model \tcode{Function}.}
 
 \pnum
 \enternote Since models of \tcode{Function} are allowed to be non-equality-preserving, a
@@ -950,7 +980,9 @@ concept bool RegularFunction@\newtxt{() \{}\oldtxt{ =}@
 \begin{itemdescr}
 \pnum
 Models of \tcode{RegularFunction} shall be equality-preserving; that is, when passed
-equal arguments, they shall return equal objects.
+equal arguments, they shall return equal objects. \newtxt{\enternote This requirement
+supersedes the annotation on the function call expression in the definition of
+\tcode{Function}. \exitnote}
 
 \pnum
 \enternote A random number generator is not a model of \tcode{RegularFunction}.\exitnote
@@ -1003,8 +1035,10 @@ type \tcode{T}, \tcode{b} be any well-formed object of type \tcode{U}, and \tcod
 and only if
 
 \begin{itemize}
-\item \tcode{r(a, b) != false} if and only if \tcode{r(C(a), C(b)) != false}.
-\item \tcode{r(b, a) != false} if and only if \tcode{r(C(b), C(a)) != false}.
+\item \newtxt{\tcode{bool(r(a, b)) == bool(r(C(a), C(b)))}.}
+\item \oldtxt{\tcode{r(a, b) != false} if and only if \tcode{r(C(a), C(b)) != false}.}
+\item \newtxt{\tcode{bool(r(b, a)) == bool(r(C(b), C(a)))}.}
+\item \oldtxt{\tcode{r(b, a) != false} if and only if \tcode{r(C(b), C(a)) != false}.}
 \end{itemize}
 \end{itemdescr}
 
