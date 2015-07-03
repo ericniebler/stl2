@@ -348,7 +348,7 @@ referenced object.
   concept bool MoveWritable@\newtxt{() \{}\oldtxt{ =}@
     @\newtxt{return}@ Semiregular<Out>@\newtxt{()}@ &&
       requires (Out o, T v) {
-        *o = move(v);
+        *o = move(v); @\newtxt{// not equality preserving}@
       };
   @\newtxt{\}}@
 \end{codeblock}
@@ -391,7 +391,7 @@ referenced object.
   concept bool Writable@\newtxt{() \{}\oldtxt{ =}@
     @\newtxt{return}@ MoveWritable<Out, T>@\newtxt{()}@ &&
       requires (Out o, T v) {
-        *o = v;
+        *o = v; @\newtxt{// not equality preserving}@
       };
   @\newtxt{\}}@
 \end{codeblock}
@@ -400,10 +400,12 @@ referenced object.
 Let \tcode{v} be an lvalue of type (possibly \tcode{const}) \tcode{T} or an rvalue
 of type \tcode{const T}, and let \tcode{o} be a dereferenceable object of type
 \tcode{Out}. Then types \tcode{T} and \tcode{Out} model \tcode{Writable} if and only if
+\newtxt{after the assignment \tcode{*o = v},}
 
 \begin{itemize}
-\item If \tcode{Out} is \tcode{Readable}, after the assignment \tcode{*o = v},
-\tcode{*o} is equal to the value of \tcode{v} and \tcode{v} is unchanged.
+\item \tcode{v} is unchanged.
+\item If \tcode{Out} is \tcode{Readable}, \oldtxt{after the assignment \tcode{*o = v},}
+\tcode{*o} is equal to the value of \tcode{v} \oldtxt{and \tcode{v} is unchanged}.
 \end{itemize}
 
 \rSec2[indirectlymovable.iterators]{Concept IndirectlyMovable}
@@ -448,12 +450,13 @@ type and a \tcode{Writable} type.
 \pnum
 Let \tcode{i} be an object of type \tcode{I}, and let \tcode{o} be a
 dereferenceable object of type \tcode{Out}. Then types \tcode{I} and \tcode{Out} model
-\tcode{IndirectlyCopyable} if and only if
+\tcode{IndirectlyCopyable} if and only if \newtxt{after the assignment \tcode{*o = *i},}
 
 \begin{itemize}
-\item If \tcode{Out} is \tcode{Readable}, after the assignment \tcode{*o = *i},
-\tcode{*o} is equal to the value of \tcode{*i} and the value of
-\tcode{*i} is unchanged.
+\item The value of \tcode{*i} is unchanged.
+\item If \tcode{Out} is \tcode{Readable}, \oldtxt{after the assignment \tcode{*o = *i},}
+\tcode{*o} is equal to the value of \tcode{*i} \oldtxt{and the value of
+\tcode{*i} is unchanged}.
 \end{itemize}
 
 \rSec2[indirectlyswappable.iterators]{Concept IndirectlySwappable}
@@ -486,16 +489,18 @@ nor is the type required to be \tcode{EqualityComparable}.
       requires (I i) {
         typename DifferenceType<I>;
         requires SignedIntegral<DifferenceType<I>>@\newtxt{()}@;
-        { ++i } -> Same<I&>;
-        i++;
+        { ++i } -> Same<I&>; @\newtxt{// not equality preserving}@
+        i++; @\newtxt{// not equality preserving}@
       };
   @\newtxt{\}}@
 \end{codeblock}
 
 \pnum
-Not all arguments will be incrementable for a given type. For example $NaN$ is not a well-formed
-floating point value and hence is not incrementable. Likewise, past-the-end iterators are also not
-incrementable. This does not mean that the type does not model \tcode{WeaklyIncrementable}.
+Not all \oldtxt{arguments will}\newtxt{values must} be incrementable for a given type.
+\enternote For example, $NaN$ is not a well-formed floating point value and hence is
+not incrementable. Likewise, past-the-end iterators \oldtxt{are also}\newtxt{may} not
+\newtxt{be} incrementable. This does not mean that the\newtxt{ir} type\newtxt{s}
+do\oldtxt{es} not model \tcode{WeaklyIncrementable}. \exitnote
 
 \pnum
 Let \tcode{i} be an object of type \tcode{I}.
@@ -503,7 +508,7 @@ Then the type \tcode{I} models \tcode{WeaklyIncrementable} if and only if
 
 \begin{itemize}
 \item If \tcode{i} is incrementable, then \tcode{++i} moves \tcode{i} to the next element.
-\item If \tcode{i} is incrementable, then \tcode{(\&++i == \&i) != false}.
+\item If \tcode{i} is incrementable, then \tcode{\oldtxt{(}\&++i == \&i\oldtxt{) != false}}.
 \item If \tcode{i} is incrementable, then \tcode{i++} moves \tcode{i} to the next element.
 \item \tcode{++i} is valid if and only if \tcode{i++} is valid.
 \end{itemize}
@@ -525,7 +530,9 @@ template.\exitnote
 
 The \tcode{Incrementable} concept describes types that can be incremented with the pre-
 and post-increment operators. The increment operations are required to be equality-preserving,
-and the type is required to be \tcode{EqualityComparable}.
+and the type is required to be \tcode{EqualityComparable}. \newtxt{\enternote This requirement
+supersedes the annotation on the increment expressions in the definition of
+\tcode{WeaklyIncrementable}. \exitnote}
 
 \indexlibrary{\idxcode{Incrementable}}%
 \begin{codeblock}
@@ -544,10 +551,10 @@ Let \tcode{a} and \tcode{b} be incrementable objects of type \tcode{I}.
 Then the type \tcode{I} models \tcode{Incrementable} if and only if
 
 \begin{itemize}
-\item If \tcode{(a == b) != false} then \tcode{(++a == ++b) != false}.
-\item If \tcode{(a == b) != false} then \tcode{((a++, a) == (b++, b)) != false}.
-\item If \tcode{(a == b) != false} then \tcode{(a++ == b) != false}.
-\item If \tcode{(a == b) != false} then \tcode{((a++, a) == ++b) != false}.
+\item If \tcode{\newtxt{bool}(a == b)\oldtxt{ != false}} then \tcode{\newtxt{bool}(++a == ++b)\oldtxt{ != false}}.
+\item If \tcode{\newtxt{bool}(a == b)\oldtxt{ != false}} then \tcode{\newtxt{bool}((a++, a) == (b++, b))\oldtxt{ != false}}.
+\item If \tcode{\newtxt{bool}(a == b)\oldtxt{ != false}} then \tcode{\newtxt{bool}(a++ == b)\oldtxt{ != false}}.
+\item If \tcode{\newtxt{bool}(a == b)\oldtxt{ != false}} then \tcode{\newtxt{bool}((a++, a) == ++b)\oldtxt{ != false}}.
 \end{itemize}
 
 \ednote{Copied in part from the \tcode{ForwardIterator} description. This wording is removed
@@ -813,10 +820,10 @@ and adds the multi-pass guarantee, described below.
 
 \pnum
 The domain of \tcode{==} for forward iterators is that of iterators over the same
-underlying sequence. However, value-initialized iterators may be compared and
-shall compare equal to other value-initialized iterators of the same type.
-\enternote value initialized iterators behave as if they refer past the end of
-the same empty sequence \exitnote
+underlying sequence. However, value-initialized iterators \newtxt{of the same type}
+may be compared and shall compare equal\oldoldtxt{ to other value-initialized iterators of the same type}.
+\enternote \changed{v}{V}alue\added{-}initialized iterators behave as if they refer past the end of
+the same empty sequence\added{.} \exitnote
 
 \pnum
 Two dereferenceable iterators \tcode{a} and \tcode{b} of type \tcode{X} offer the
@@ -844,14 +851,14 @@ allows the use of multi-pass one-directional algorithms with forward iterators.
 \ednote{Remove Table 109}
 
 \pnum
-If \tcode{a} and \tcode{b} are equal, then either \tcode{a} and \tcode{b}
+\oldoldtxt{If \tcode{a} and \tcode{b} are equal, then either \tcode{a} and \tcode{b}
 are both dereferenceable
-or else neither is dereferenceable.
+or else neither is dereferenceable.}
 
 \pnum
-If \tcode{a} and \tcode{b} are both dereferenceable, then \tcode{a == b}
-if and only if \changed{\tcode{*a} and \tcode{*b} are bound to the same object}{
-\tcode{*a} is equal to \tcode{*b}}.
+\oldoldtxt{If \tcode{a} and \tcode{b} are both dereferenceable, then \tcode{a == b}
+if and only if }\removed{\tcode{*a} and \tcode{*b} are bound to the same object}\oldtxt{
+\tcode{*a} is equal to \tcode{*b}}\oldoldtxt{.}
 
 \rSec2[bidirectional.iterators]{Concept BidirectionalIterator}
 
@@ -897,11 +904,11 @@ Let \tcode{a} and \tcode{b} be decrementable objects of type \tcode{I}. Then \tc
 
 \begin{itemize}
 \item \tcode{\&\dcr{}a == \&a}.
-\item If \tcode{(a == b) != false}, then \tcode{(a\dcr{} == j) != false}.
-\item If \tcode{(a == b) != false}, then \tcode{((a\dcr{}, a) == \dcr{}j) != false}.
-\item If \tcode{a} is incrementable and \tcode{(a == b) != false}, then
-      \tcode{(\dcr{}(++a) == b) != false}.
-\item If \tcode{(a == b) != false}, then \tcode{(++(\dcr{}a) == b) != false}.
+\item If \tcode{\newtxt{bool}(a == b)\oldtxt{ != false}}, then \tcode{\newtxt{bool}(a\dcr{} == \oldtxt{j}\newtxt{b})\oldtxt{ != false}}.
+\item If \tcode{\newtxt{bool}(a == b)\oldtxt{ != false}}, then \tcode{\newtxt{bool}((a\dcr{}, a) == \dcr{}\oldtxt{j}\newtxt{b})\oldtxt{ != false}}.
+\item If \tcode{a} is incrementable and \tcode{\newtxt{bool}(a == b)\oldtxt{ != false}}, then
+      \tcode{\newtxt{bool}(\dcr{}(++a) == b)\oldtxt{ != false}}.
+\item If \tcode{\newtxt{bool}(a == b)\oldtxt{ != false}}, then \tcode{\newtxt{bool}(++(\dcr{}a) == b)\oldtxt{ != false}}.
 \end{itemize}
 \end{addedblock}
 
@@ -935,8 +942,8 @@ notation via subscripting.
   concept bool @\xname{MutableIterator}@ = // \expos
     Iterator<I>@\newtxt{()}@ &&
     requires(I i) {
-        { *i } -> auto&;
-        *i = *i;
+      { *i } -> auto&;
+      *i = *i;
     };
 
   template <class I>
@@ -951,10 +958,12 @@ notation via subscripting.
         { n + i } -> Same<I>;
         { i -= n } -> Same<I&>;
         { i - n } -> Same<I>;
-        (@\xname{MutableIterator}@<I> ?
-          requires(I i, int n) { i[n] = *i; *i = i[n]; } :
-          requires(I i, int n) { { i[n] } -> const ValueType<I>&; });
-      };
+        @\newtxt{\{ i[n] \} -> const ValueType<I>\&;}@
+      @\newtxt{\} \&\&}@
+      (@\newtxt{!}\xname{MutableIterator}@<I> @\oldtxt{?}\newtxt{||}@
+        requires(I i, @\oldtxt{int}\newtxt{DifferenceType<I>}@ n) { i[n] = *i; *i = i[n]; }@\oldtxt{ :}\newtxt{);}@
+        @\oldtxt{requires(I i, int n) \{ \{ i[n] \} -> const ValueType<I>\&; \})}@
+      @\oldtxt{\};}@
   @\newtxt{\}}@
 \end{codeblock}
 \end{addedblock}
@@ -965,7 +974,7 @@ notation via subscripting.
 \pnum
 Let \tcode{a} and \tcode{b} be valid iterators of type \tcode{I} such that \tcode{b} is reachable
 from \tcode{a}. Let \tcode{n} be the smallest value of type \tcode{DifferenceType<I>} such that after
-\tcode{n} applications of \tcode{++a}, \tcode{(a == b) != false}. Then \tcode{I} models
+\tcode{n} applications of \tcode{++a}, \tcode{\newtxt{bool}(a == b)\oldtxt{ != false}}. Then \tcode{I} models
 \tcode{RandomAccessIterator} if and only if:
 
 \begin{itemize}
@@ -1010,7 +1019,6 @@ object type~(\ref{function.objects}).
     return mem_fn(t);
   }
   template <class T>
-    @\newtxt{requires !is_member_pointer<decay_t<T>{}>::value}@
   T @\xname{as_function}@(T&& t@\oldtxt{, std::false_type}@) {
     return forward<T>(t);
   }
@@ -1233,7 +1241,7 @@ between them in constant time.
 \pnum
 Let \tcode{a} be a valid iterator of type \tcode{I} and \tcode{b} be a valid sentinel of type
 \tcode{S}. Let \tcode{n} be the smallest value of type \tcode{DifferenceType<I>} such that after
-\tcode{n} applications of \tcode{++a}, \tcode{(a == b) != false}. Then types \tcode{I} and
+\tcode{n} applications of \tcode{++a}, \tcode{\newtxt{bool}(a == b)\oldtxt{ != false}}. Then types \tcode{I} and
 \tcode{S} model \tcode{SizedIteratorRange} if and only if:
 
 \begin{itemize}
@@ -6292,7 +6300,7 @@ categories \techterm{bidirectional ranges},
 \techterm{forward ranges},
 \techterm{input ranges} and
 \techterm{output ranges} are defined similarly.
-\enternote There is no \techterm{weak input ranges} or
+\enternote There \oldtxt{is}\newtxt{are} no \techterm{weak input ranges} or
 \techterm{weak output ranges} because of the \tcode{EqualityComparable}
 requirement on iterators and sentinels. \exitnote \ednote{TODO: Rethink that because
 a weak input range would not require (strongly) incrementable iterators.}
@@ -6353,7 +6361,7 @@ concept bool SizedRange@\newtxt{() \{}\oldtxt{ =}@
 
 \pnum
 For any type \tcode{T}, \tcode{is_sized_range<T>} derives from
-\tcode{true_type} if \tcode{T} models \tcode{\xname{SizedRangeLike}},
+\tcode{true_type} if \tcode{T} \oldtxt{models}\newtxt{meets the syntactic requirements of} \tcode{\xname{SizedRangeLike}},
 and \tcode{false_type} otherwise.
 
 \pnum
@@ -6387,7 +6395,7 @@ Examples of \tcode{View}s are:
 \begin{itemize}
 \item A \tcode{Range} type that wraps a pair of iterators.
 
-\item A \tcode{Range} type that hold its elements by \tcode{shared_ptr}
+\item A \tcode{Range} type that hold\newtxt{s} its elements by \tcode{shared_ptr}
 and shares ownership with all its copies.
 
 \item A \tcode{Range} type that generates its elements on demand.
