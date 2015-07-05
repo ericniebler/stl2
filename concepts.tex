@@ -32,16 +32,14 @@ and rearrangement concepts} as summarized in Table~\ref{tab:concepts.lib.summary
 In this Clause, \tcode{CamelCase} identifiers ending with ``\tcode{Type}'' denote
 template aliases.
 
+\rSec2[concepts.lib.general.equality]{Equality Preserving}
+
 \pnum
 \newtxt{An expression is \techterm{equality preserving} if, given equal inputs, the
-expression results in equal outputs. Any expression appearing in a
-\techterm{requires-expression} in this document is required to be equality preserving,
-except for those annotated with the comment ``not equality preserving.'' An
-expression so annotated may be equality preserving, but it is not required to be so.
-\enternote Not all input values must be valid for a given expression, e.g., for
-integers \tcode{a} and \tcode{b}, the expression \tcode{a / b} is not well-defined
-when \tcode{b} is \tcode{0}. This does not preclude the expression \tcode{a / b}
-being equality preserving. \exitnote}
+expression results in equal outputs. \enternote Not all input values must be valid
+for a given expression, e.g., for integers \tcode{a} and \tcode{b}, the expression
+\tcode{a / b} is not well-defined when \tcode{b} is \tcode{0}. This does not
+preclude the expression \tcode{a / b} being equality preserving. \exitnote}
 
 \pnum
 A \techterm{regular function} is \newtxt{a function that is equality preserving,
@@ -49,8 +47,27 @@ i.e.,} a function that returns equal output when passed equal input. A regular
 function that returns a value may copy or move the returned object, or may return a
 reference. \newtxt{\enternote Regular functions may have side effects. \exitnote}
 \oldtxt{Regular functions are allowed to have side effects and preconditions that,
-when violated, make the function non-regular. \enternote A function that returns void
-is necessarily a regular function. \exitnote}
+when violated, make the function non-regular. \enternote A function that returns
+\tcode{void} is necessarily a regular function. \exitnote}
+
+\pnum
+\newtxt{Expressions appearing in a \techterm{requires-expression} in this document
+are required to be equality preserving, except for those annotated with the comment
+``not equality preserving.'' An expression so annotated may be equality preserving,
+but it is not required to be so.}
+
+\pnum
+\newtxt{Expressions required by this specification to be equality preserving are
+further required to be stable: two evaluations of such an expression with the same
+input objects must have the same results absent any intervening direct modification
+of those input objects. \enternote This requirement allows generic code to reason
+about the current values of objects based on knowledge of the prior values as
+observed via equality preserving expressions. It effectively forbids spontaneous
+changes to an object, changes to an object from another thread of execution, changes
+to an object as side effects of non-modifying actions, and changes to an object as
+side effects of modifying a distinct object if those changes could be observable
+to a library function via an equality preserving expression that is required to be
+valid for that object. \exitnote}
 
 \rSec1[concepts.lib.corelang]{Core language concepts}
 
@@ -811,13 +828,7 @@ and let \tcode{t} be an lvalue of type \tcode{T}. Then type \tcode{T} models
 \item \oldtxt{\tcode{(addressof(t = rv) == addressof(t)) != false)}.}
 \item After the assignment \newtxt{\tcode{t = rv},} \tcode{t} is equal to the value
 of \tcode{rv} before the assignment.
-\item \newtxt{\tcode{t} is not a volatile object or const volatile object~(\cxxref{basic.type.qualifier}).}
 \end{itemize}
-
-%% FIXME: I've relocated the non-volatile requirement here from Semiregular for the time being,
-%% but ideally it will be obsoleted by a more general requirement that covers all side effects
-%% pending the outcome of the discussion that begins at
-%% https://github.com/CaseyCarter/stl2/commit/2d54e6b6275c9d1f97b3c5d899171ef53ef5dc04#commitcomment-11773953
 
 \pnum
 \tcode{rv}'s \newtxt{resulting} state is unspecified. \enternote \tcode{rv} must still meet the
