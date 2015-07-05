@@ -126,21 +126,91 @@ for_each( z.begin(), z.end(), [](Ref r) {
 
 Without the constraint, this code compiles. With it, it doesn't. The constraint `Function<F, ValueType<I>>` checks to see if the lambda is callable with `pair<int,string>`. The lambda accepts `pair<int&,string&>`. There is no conversion that makes the call succeed.
 
-Changing the lambda to accept either a `pair<int,string> [const &]` or a `pair<int const &, string const &> [const &]` would make the check succeed, but the body of the lambda would fail to compile or have the wrong semantics.
-
+Changing the lambda to accept either a "`pair<int,string> [const &]`" or a "`pair<int const &, string const &> [const &]`" would make the check succeed, but the body of the lambda would fail to compile or have the wrong semantics.
 
 Proposed Design
 =====
 
+The design suggested here makes heavier use of an existing API, `iter_swap(I,I)`, promoting it to the status of customization point, thereby giving proxy iterators a way to control how elements are swapped. In addition, it suggests a new customization point: `iter_move(I)`, which can be used for moving an element at a certain position out of sequence, leaving a "hole". The return type of `iter_move` is the iterator's *rvalue reference*, a new associated type. The `IndirectlySwappable` and `IndirectlyMovable` concepts are re-expressed in terms of `iter_swap` and `iter_move`, respectively.
+
+The relationships between an iterator's associated types, currently expressed in terms of convertability, are re-expressed in terms of a shared *common reference* type. A *common reference* is much like the familiar `common_type` trait, except that instead of throwing away top-level cv and ref qualifiers, they are preserved. Informally, the common reference of two reference types is the *minimally-qualified* reference type to which both types can bind. Like `common_type`, the new `common_reference` trait can be specialized.
 
 ## Impact on the Standard
 
+The algorithms must be specified to use `iter_swap` and `iter_move` when swapping and moving elements. The concepts must be respecified in terms of the new customization points, and a new type trait, `common_reference`, must be specified and implemented. The known shortcomings of `common_type` (lack of SFINAE-friendliness, difficulty of specialization) must be addressed. Care must be taken in the algorithm implementations to hew to the valid expressions for the iterator concepts. The algorithm constraints must be respecified to accommodate proxy iterators.
+
+For user code, the changes are minimal. No code that works today will stop working after adoping this resolution. When adapting generic code to work with proxy iterators, calls to `swap` and `move` should be replaced with `iter_swap` and `iter_move`, and for calls to higher-order algorithms, generic lambdas are the preferred solution. When that's not possible, functions can be changed to take arguments by the iterator's *common reference* type, which is the result of applying the `common_reference` trait to `Reference<I>&&` and `ValueType<I>&`. (A `CommonReference<I>` type alias is suggested to make this simpler.)
+
+Alternate Designs
+=====
+
+## New iterator concepts
+
+In [N1640][9][@new-iter-concepts], Abrahams et.al. describe a decomposition of the standard iterator concept hierarchy into access concepts: `Readable`, `Writable`, `Swappable`, and `Lvalue`; and traversal concepts: `SinglePass`, `Forward`, `Bidirectional`, and `RandomAccess`. Like the design suggested in this paper, the `Swappable` concept from N1640 is specified in terms of `iter_swap`. Since N1640 was written before move semantics, it does not have anything like `iter_move`, but it's reasonable to assume that it would have invented something similar.
+
+Like the Palo Alto report, the `Readable` concept from N1640 requires a convertibility constraint between an iterator's reference and value associated types. As a result, N1640 does not adequately address the proxy reference problem as presented in this paper. In particular, it is incapable of correctly expressing the relationship between a move-only value type and its proxy reference type. Also, the somewhat complicated iterator tag composition suggested by N1640 is not necessary in a world with concept-based overloading.
+
+In other respect, N1640 agrees with the STL design suggested by the Palo Alto report and the Ranges TS, which also has concepts for `Readable`, `Writable`. In the Palo Alto design, these "access" concepts are not purely orthogonal to the "traversal" concepts of `InputIterator`, `ForwardIterator`, however, since the latter are not pure traversal concepts; rather, these iterators are all `Readable`. The standard algorithms have little need for writable-but-not-readable random access iterators, for instance, so a purely orthogonal design does not accurately capture the requirements clusters that appear in the algorithm constraints. The binary concepts `IndirectlyMovable<I,O>`, `IndirectlyCopyable<I,O>`, and `IndirectlySwappable<I1,I2>` from the Palo Alto report do a better job of grouping common requirements and reducing verbosity in the algorithm constraints.
+
+## Cursor/Property Map
+
+[N1873][11][@n1873], the "Cursor/Property Map Abstraction" BUGBUG TODO
+
+## Language support
+
+In private exchange, Sean Parent suggested a more radical fix for the proxy reference problem: change the language. With his suggestion, it would be possible to specify that a type is a proxy reference with a syntax such as:
+
+```c++
+struct bool_reference : bool& {
+    // ...
+}
+```
+
+Notice the "inheritance" from `bool&`. When doing template type deduction, a `bool_reference` can bind to a `T&`, with `T` deduced to `bool`. This solution has not been explored in depth. It is unclear how to control which operations are to be performed on the proxy itself and which on the object being proxied, or under which circumstances, if any, that is desirable. The impact of changing template type deduction and possibly overload resolution to natively support proxy references is unknown.
 
 
 Technical Specifications
 =====
 
-This section is intentionally left blank.
+This section is written as a set of diffs against N4382, "C++ Extensions for Ranges".
+
+Add a section for diffs against 20.10 "Metaprogramming and type traits". To 20.10.2, add the following to the `<type_traits>` synopsis:
+
+> ```c++
+> // 20.10.7.6, other transformations:
+> ...
+> template <class T, class U, class TQual, class UQual> struct basic_common_reference;
+> template <class... T> struct common_reference;
+> ```
+
+Change Table 57 Other Transformations as follows:
+
+> | Template | Condition | Commonts |
+> |----------|-----------|----------|
+> | `template <class... T>` |  | [...] A program may specialize this trait if at least one template parameter in the                   |
+> | `struct common_type;`   |  | specialization is a user-defined type <span style="color:blue">and `sizeof...(T) == 2`</span>. [...]  |
+
+Delete [meta.trans.other]/p3 and replace it with the following:
+
+> <span style="color:blue">3\. Let `CREF(A)` be `add_lvalue_reference_t<add_const_t<A>>`. Let `COPYCV(FROM,TO)` be an alias for type `TO` with the addition of `FROM`'s top-level cv-modifiers. [*Example:* -- `COPYCV(int const, short volatile)` is an alias for `short const volatile`. -- *exit example*] Let `COND_RES(X,Y)` be `decltype(declval<bool>()? declval<X>() : declval<Y>())`. Given types `A` and `B`, let `X` be `remove_reference_t<A>`, let `Y` be `remove_reference_t<B>`, and let `COMMON_REF(A,B)` be:</span>
+>
+>> <span style="color:blue">(3.1) -- If `A` and `B` are both lvalue reference types, `COMMON_REF(A,B)` is `COND_RES(COPYCV(X,Y) &, COPYCV(Y,X) &)`.
+>> (3.2) -- If `A` and `B` are both rvalue reference types, let `R` be `COMMON_REF(X&, Y&)`. If `R` is a reference type, `COMMON_REF(A,B)` is `remove_reference_t<R> &&`. Otherwise, it is `R`.
+>> (3.3) -- If `A` is an lvalue reference type and `B` is an rvalue reference type, then `COMMON_REF(A,B)` is `COMMON_REF(X&,Y const&)`.
+>> (3.4) -- If `A` is an rvalue reference type and `B` is an lvalue reference type, then `COMMON_REF(A,B)` is `COMMON_REF(X const&,Y&)`.
+>> (3.5) -- Otherwise, `COMMON_REF(A,B)` is `decay_t<COND_RES(CREF(A), CREF(B))>`.</span>
+>
+> <span style="color:blue">If any of the types computed above are ill-formed, then `COMMON_REF(A,B)` is ill-formed.</span>
+>
+> 4\. <span style="color:blue">[*Editorial note:* -- The following text in black is taken from the current C++17 draft -- *end note*]</span> For the `common_type` trait applied to a parameter pack `T` of types, the member type shall be either defined or not present as follows:
+>
+>> (4.1) -- If `sizeof...(T)` is zero, there shall be no member type.
+>> (4.2) -- If `sizeof...(T)` is one, let `T0` denote the sole type in the pack `T`. The member typedef type shall denote the same type as `decay_t<T0>`.
+>> <span style="color:blue">(4.3) -- If `sizeof...(T)` is two, let `T0` and `T1` denote the two types in the pack `T`, and let `X` and `Y` be `decay_<T0>` and `decay_t<T1>` respectively. Then if `X` and `T0` denote the same type and `Y` and `T1` denote the same type:</span>
+>>> <span style="color:blue">(4.2.1) -- If `COMMON_REF(T0, T1)` denotes a valid type, then the member typedef `type` denotes that type. Otherwise, there shall be no member `type`.
+>>> (4.2.2) -- Otherwise, if `common_type<X, Y>` has a member typedef `type`, then the member typedef `type` denotes that type. Otherwise, there shall be no member `type`.</span>
+>>
+>> (4.4) -- If `sizeof...(T)` is greater than <span style="color:red; text-decoration:line-through">one</span><span style="color:blue">two</span>, let `T1`, `T2`, and `R`, respectively, denote the first, second, and (pack of) remaining types comprising `T`. Let `C` <span style="color:red; text-decoration:line-through">denote the type, if any, of an unevaluated conditional expression (5.16) whose first operand is an arbitrary value of type bool, whose second operand is an xvalue of type T1, and whose third operand is an xvalue of type T2.</span><span style="color:blue">be the type `common_type_t<T1,T2>`.</span> If there is such a type `C`, the member typedef `type` shall denote the same type, if any, as `common_type_t<C,R...>`. Otherwise, there shall be no member type.
 
 Future Directions
 =====
@@ -257,13 +327,20 @@ references:
     month: 10
     day: 8
 - id: new-iter-concepts
-  title: New Iterator Concepts
-  URL: 'http://www.boost.org/libs/iterator/doc/new-iter-concepts.html'
-  type: webpage
-  accessed:
-    year: 2014
-    month: 10
-    day: 8
+  title: 'N1640: New Iterator Concepts'
+  URL: 'http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2004/n1640.html'
+  type: article
+  author:
+  - family: Abrahams
+    given: David
+  - family: Siek
+    given: Jeremy
+  - family: Witt
+    given: Thomas
+  issued:
+    year: 2004
+    month: 4
+    day: 10
 - id: universal-references
   title: Universal References in C++11
   URL: 'http://isocpp.org/blog/2012/11/universal-references-in-c11-scott-meyers'
@@ -420,7 +497,7 @@ references:
 [6]: https://github.com/sean-parent/sean-parent.github.com/wiki/presentations/2013-09-11-cpp-seasoning/cpp-seasoning.pdf "C++ Seasoning, Sean Parent"
 [7]: http://www.github.com/ericniebler/range-v3 "Range v3"
 [8]: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3351.pdf "A Concept Design for the STL"
-[9]: http://www.boost.org/libs/iterator/doc/new-iter-concepts.html "New Iterator Concepts"
+[9]: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2004/n1640.html "New Iterator Concepts"
 [10]: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3782.pdf "Indexed-Based Ranges"
 [11]: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2005/n1873.html "The Cursor/Property Map Abstraction"
 [12]: http://ericniebler.com/2014/04/27/range-comprehensions/ "Range Comprehensions"
