@@ -190,63 +190,91 @@ Change Table 57 Other Transformations as follows:
 > |----------|-----------|----------|
 > | `template <class... T>` |  | [...] A program may specialize this trait |
 > | `struct common_type;`   |  | if at least one template parameter in the  |
-> | | | specialization is a user-defined type <span style="color:blue">and</span> |
-> | | | <span style="color:blue">`sizeof...(T) == 2`</span>. [...] |
+> | | | specialization is a user-defined type <span style="color:#009a9a">and</span> |
+> | | | <span style="color:#009a9a">`sizeof...(T) == 2`</span>. [...] |
 > | | | |
 > | | | |
-> | <span style="color:blue">`template <class T, class U,`</span> |  | <span style="color:blue">There shall be no member typedef `type`.</span> |
-> | <span style="color:blue">&nbsp;&nbsp;`template <class> class TQual,`</span> |  | <span style="color:blue">A program may specialize this trait if at</span> |
-> | <span style="color:blue">&nbsp;&nbsp;`template <class> class UQual>`</span> |  | <span style="color:blue">least one template parameter in the</span> |
-> | <span style="color:blue">`struct basic_common_reference;`</span> |  | <span style="color:blue">specialization is a user-defined type.</span> |
+> | <span style="color:#009a9a">`template <class T, class U,`</span> |  | <span style="color:#009a9a">There shall be no member typedef `type`.</span> |
+> | <span style="color:#009a9a">&nbsp;&nbsp;`template <class> class TQual,`</span> |  | <span style="color:#009a9a">A program may specialize this trait if at</span> |
+> | <span style="color:#009a9a">&nbsp;&nbsp;`template <class> class UQual>`</span> |  | <span style="color:#009a9a">least one template parameter in the</span> |
+> | <span style="color:#009a9a">`struct basic_common_reference;`</span> |  | <span style="color:#009a9a">specialization is a user-defined type.</span> |
+> | | | <span style="color:#009a9a">&lbrack; *Note:* -- Such specializations may be</span> |
+> | | | <span style="color:#009a9a">used to influence the result of</span>|
+> | | | <span style="color:#009a9a">`common_reference` --*end note* ]</span>|
 > | | | |
 > | | | |
-> | <span style="color:blue">`template <class... T>`</span> |  | <span style="color:blue">The member typedef type shall be</span> |
-> | <span style="color:blue">`struct common_reference;`</span> |  | <span style="color:blue">defined or omitted as specified below.</span> |
-> | | | <span style="color:blue">If it is omitted, there shall be no</span> |
-> | | | <span style="color:blue">member type. All types in the</span> |
-> | | | <span style="color:blue">parameter pack T shall be complete or</span> |
-> | | | <span style="color:blue">(possibly cv) void. A program may</span> |
-> | | | <span style="color:blue">specialize this trait if at least one</span> |
-> | | | <span style="color:blue">template parameter in the</span> |
-> | | | <span style="color:blue">specialization is a user-defined type</span> |
-> | | | <span style="color:blue">and `sizeof...(T) == 2`. [ *Note:* Such</span> |
-> | | | <span style="color:blue">specializations are needed to properly</span> |
-> | | | <span style="color:blue">handle proxy reference types. -- *end*</span> |
-> | | | <span style="color:blue">*note* \]</span> |
+> | <span style="color:#009a9a">`template <class... T>`</span> |  | <span style="color:#009a9a">The member typedef type shall be</span> |
+> | <span style="color:#009a9a">`struct common_reference;`</span> |  | <span style="color:#009a9a">defined or omitted as specified below.</span> |
+> | | | <span style="color:#009a9a">If it is omitted, there shall be no</span> |
+> | | | <span style="color:#009a9a">member type. All types in the</span> |
+> | | | <span style="color:#009a9a">parameter pack T shall be complete or</span> |
+> | | | <span style="color:#009a9a">(possibly cv) void. A program may</span> |
+> | | | <span style="color:#009a9a">specialize this trait if at least one</span> |
+> | | | <span style="color:#009a9a">template parameter in the</span> |
+> | | | <span style="color:#009a9a">specialization is a user-defined type</span> |
+> | | | <span style="color:#009a9a">and `sizeof...(T) == 2`. [ *Note:* Such</span> |
+> | | | <span style="color:#009a9a">specializations are needed to properly</span> |
+> | | | <span style="color:#009a9a">handle proxy reference types in generic</span> |
+> | | | <span style="color:#009a9a">code. --*end note* \]</span> |
 
 
 
 Delete [meta.trans.other]/p3 and replace it with the following:
 
-> <span style="color:blue">3\. Let `CREF(A)` be `add_lvalue_reference_t<add_const_t<A>>`. Let `UNCVREF(A)` be `remove_cv_t<remove_reference_t<A>>`. Let `XREF(A)` denote a unary template `T` such that `T<UNCVREF(A)>` denotes the same type as `A`. Let `COPYCV(FROM,TO)` be an alias for type `TO` with the addition of `FROM`'s top-level cv-modifiers. [*Example:* -- `COPYCV(int const, short volatile)` is an alias for `short const volatile`. -- *exit example*] Let `COND_RES(X,Y)` be `decltype(declval<bool>()? declval<X>() : declval<Y>())`. Given types `A` and `B`, let `X` be `remove_reference_t<A>`, let `Y` be `remove_reference_t<B>`, and let `COMMON_REF(A,B)` be:</span>
+> <span style="color:#009a9a">3\. Let `CREF(A)` be `add_lvalue_reference_t<add_const_t<A>>`. Let `UNCVREF(A)` be `remove_cv_t<remove_reference_t<A>>`. Let `XREF(A)` denote a unary template `T` such that `T<UNCVREF(A)>` denotes the same type as `A`. Let `COPYCV(FROM,TO)` be an alias for type `TO` with the addition of `FROM`'s top-level cv-qualifiers. [*Example:* -- `COPYCV(int const, short volatile)` is an alias for `short const volatile`. -- *exit example*] Let `COND_RES(X,Y)` be `decltype(declval<bool>()? declval<X>() : declval<Y>())`. Given types `A` and `B`, let `X` be `remove_reference_t<A>`, let `Y` be `remove_reference_t<B>`, and let `COMMON_REF(A,B)` be:</span>
 >
->> <span style="color:blue">(3.1) -- If `A` and `B` are both lvalue reference types, `COMMON_REF(A,B)` is `COND_RES(COPYCV(X,Y) &, COPYCV(Y,X) &)`.
+>> <span style="color:#009a9a">(3.1) -- If `A` and `B` are both lvalue reference types, `COMMON_REF(A,B)` is `COND_RES(COPYCV(X,Y) &, COPYCV(Y,X) &)`.
 >> (3.2) -- If `A` and `B` are both rvalue reference types, let `R` be `COMMON_REF(X&, Y&)`. If `R` is a reference type, `COMMON_REF(A,B)` is `remove_reference_t<R> &&`. Otherwise, it is `R`.
 >> (3.3) -- If `A` is an lvalue reference type and `B` is an rvalue reference type, then `COMMON_REF(A,B)` is `COMMON_REF(X&,Y const&)`.
 >> (3.4) -- If `A` is an rvalue reference type and `B` is an lvalue reference type, then `COMMON_REF(A,B)` is `COMMON_REF(X const&,Y&)`.
 >> (3.5) -- Otherwise, `COMMON_REF(A,B)` is `decay_t<COND_RES(CREF(A), CREF(B))>`.</span>
 >
-> <span style="color:blue">If any of the types computed above are ill-formed, then `COMMON_REF(A,B)` is ill-formed.</span>
+> <span style="color:#009a9a">If any of the types computed above are ill-formed, then `COMMON_REF(A,B)` is ill-formed.</span>
 >
-> <span style="color:blue">4\. [*Editorial note:* -- The following text in black is taken from the current C++17 draft -- *end note*]</span> For the `common_type` trait applied to a parameter pack `T` of types, the member type shall be either defined or not present as follows:
+> <span style="color:#009a9a">4\. <span style="color:blue">[*Editorial note:* -- The following text in black is taken from the current C++17 draft --*end note*]</span></span> For the `common_type` trait applied to a parameter pack `T` of types, the member type shall be either defined or not present as follows:
 >
 >> (4.1) -- If `sizeof...(T)` is zero, there shall be no member `type`.
 >> (4.2) -- If `sizeof...(T)` is one, let `T0` denote the sole type in the pack `T`. The member typedef type shall denote the same type as `decay_t<T0>`.
->> <span style="color:blue">(4.3) -- If `sizeof...(T)` is two, let `T0` and `T1` denote the two types in the pack `T`, and let `X` and `Y` be `decay_<T0>` and `decay_t<T1>` respectively. Then if `X` and `T0` denote the same type and `Y` and `T1` denote the same type:</span>
->>> <span style="color:blue">(4.2.1) -- If `COMMON_REF(T0, T1)` denotes a valid type, then the member typedef `type` denotes that type. Otherwise, there shall be no member `type`.
+>> <span style="color:#009a9a">(4.3) -- If `sizeof...(T)` is two, let `T0` and `T1` denote the two types in the pack `T`, and let `X` and `Y` be `decay_<T0>` and `decay_t<T1>` respectively. Then if `X` and `T0` denote the same type and `Y` and `T1` denote the same type:</span>
+>>> <span style="color:#009a9a">(4.2.1) -- If `COMMON_REF(T0, T1)` denotes a valid type, then the member typedef `type` denotes that type. Otherwise, there shall be no member `type`.
 >>> (4.2.2) -- Otherwise, if `common_type_t<X, Y>` denotes a valid type, then the member typedef `type` denotes that type. Otherwise, there shall be no member `type`.</span>
 >>
->> (4.4) -- If `sizeof...(T)` is greater than <span style="color:red; text-decoration:line-through">one</span><span style="color:blue">two</span>, let `T1`, `T2`, and `R`, respectively, denote the first, second, and (pack of) remaining types comprising `T`. Let `C` <span style="color:red; text-decoration:line-through">denote the type, if any, of an unevaluated conditional expression (5.16) whose first operand is an arbitrary value of type bool, whose second operand is an xvalue of type T1, and whose third operand is an xvalue of type T2.</span><span style="color:blue">be the type `common_type_t<T1,T2>`.</span> If there is such a type `C`, the member typedef `type` shall denote the same type, if any, as `common_type_t<C,R...>`. Otherwise, there shall be no member type.
+>> (4.4) -- If `sizeof...(T)` is greater than <span style="color:red; text-decoration:line-through">one</span><span style="color:#009a9a">two</span>, let `T1`, `T2`, and `R`, respectively, denote the first, second, and (pack of) remaining types comprising `T`. <span style="color:red; text-decoration:line-through">[ *Note:* `sizeof...(R)` may be zero. --*end note* ]</span> Let `C` <span style="color:red; text-decoration:line-through">denote the type, if any, of an unevaluated conditional expression (5.16) whose first operand is an arbitrary value of type bool, whose second operand is an xvalue of type T1, and whose third operand is an xvalue of type T2.</span><span style="color:#009a9a">be the type `common_type_t<T1,T2>`.</span> If there is such a type `C`, the member typedef `type` shall denote the same type, if any, as `common_type_t<C,R...>`. Otherwise, there shall be no member type.
 >
-> <span style="color:blue">5\. For the `common_reference` trait applied to a parameter pack `T` of types, the member type shall be either defined or not present as follows:</span>
+> <span style="color:#009a9a">5\. For the `common_reference` trait applied to a parameter pack `T` of types, the member type shall be either defined or not present as follows:</span>
 >
->> <span style="color:blue">(5.1) -- If `sizeof...(T)` is zero, there shall be no member `type`.
+>> <span style="color:#009a9a">(5.1) -- If `sizeof...(T)` is zero, there shall be no member `type`.
 >> (5.2) -- If `sizeof...(T)` is one, let `T0` denote the sole type in the pack `T`. The member typedef type shall denote the same type as `T0`.
 >> (5.3) -- If `sizeof...(T)` is two, let `T0` and `T1` denote the two types in the pack `T`. Then if `COMMON_REF(T0,T1)` denotes a valid type and either `COMMON_REF(T0,T1)` is a reference type or `basic_common_reference_t<UNCVREF(T0),UNCVREF(T1),XREF(T0),XREF(T1)>` does not denote a valid type then:</span>
->>> <span style="color:blue">(5.2.1) -- The member typedef `type` denotes `COMMON_REF(T0, T1)`.
+>>> <span style="color:#009a9a">(5.2.1) -- The member typedef `type` denotes `COMMON_REF(T0, T1)`.
 >>> (5.2.2) -- Otherwise, if `basic_common_reference_t<UNCVREF(T0),UNCVREF(T1),XREF(T0),XREF(T1)>` denotes a valid type, then the member typedef `type` denotes that type. Otherwise, there shall be no member `type`.</span>
 >>
->> <span style="color:blue">(5.4) -- If `sizeof...(T)` is greater than two, let `T1`, `T2`, and `R`, respectively, denote the first, second, and (pack of) remaining types comprising `T`. Let `C` be the type `common_reference_t<T1,T2>`. If there is such a type `C`, the member typedef `type` shall denote the same type, if any, as `common_reference_t<C,R...>`. Otherwise, there shall be no member type.</span>
+>> <span style="color:#009a9a">(5.4) -- If `sizeof...(T)` is greater than two, let `T1`, `T2`, and `R`, respectively, denote the first, second, and (pack of) remaining types comprising `T`. Let `C` be the type `common_reference_t<T1,T2>`. If there is such a type `C`, the member typedef `type` shall denote the same type, if any, as `common_reference_t<C,R...>`. Otherwise, there shall be no member type.</span>
+
+To [19.2] Core Language Concepts, add the following:
+
+> **19.2.*X* Concept CommonReference [concepts.lib.corelang.commonref]**
+>
+> If `T` and `U` can both be explicitly converted or bound to a third type, `C`, then `T` and `U` share a *common reference type*, `C`. [ *Note:* `C` could be the same as `T`, or `U`, or it could be a different type. `C` may be a reference type. `C` may not be unique. --*end note* ] Informally, two types `T` and `U` model the `CommonReference` concept when the type alias `CommonReferenceType<T, U>` is well-formed and names a common reference type of `T` and `U`.
+> 
+> ```c++
+> template <class T, class U>
+> using CommonReferenceType = common_reference_t<T, U>;
+> 
+> template <class T, class U>
+> concept bool CommonReference() {
+>   return 
+>     requires (T&& t, U&& u) {
+>       typename CommonReferenceType<T, U>;
+>       typename CommonReferenceType<U, T>;
+>       requires Same<CommonReferenceType<T, U>,
+>         CommonReferenceType<U, T>>;
+>       CommonReferenceType<T, U>(forward<T>(t));
+>       CommonReferenceType<T, U>(forward<U>(u));
+>     };
+> }
+> ```
+
 
 Future Directions
 =====
@@ -547,3 +575,199 @@ references:
 [20]: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4017.htm "Non-member size() and more"
 [21]: http://www.open-std.org/Jtc1/sc22/wg21/docs/papers/2012/n3350.html "A minimal std::range<Iter>"
 [22]: http://www.gotw.ca/publications/mill09.htm "When is a container not a container?"
+
+Appendix 1: Reference implementations of `common_type` and `common_reference`
+=========
+
+```c++
+#include <utility>
+#include <type_traits>
+
+using std::is_same;
+using std::decay_t;
+using std::declval;
+
+template <class T>
+using __t = typename T::type;
+
+template <class T>
+constexpr typename __t<T>::value_type __v = __t<T>::value;
+
+template <class T, class... Args>
+using __apply = typename T::template apply<Args...>;
+
+template <class T, class U>
+struct __compose {
+  template <class V>
+  using apply = __apply<T, __apply<U, V>>;
+};
+
+template <template <class...> class T, class... Args>
+struct __defer { };
+
+template <template <class...> class T, class... Args>
+  requires requires { typename T<Args...>; }
+struct __defer<T, Args...> {
+  using type = T<Args...>;
+};
+
+template <template <class...> class T>
+struct __q {
+  template <class... U>
+  using apply = __t<__defer<T, U...>>;
+};
+
+template <class T>
+struct __id {
+  using type = T;
+};
+
+template <class T>
+using __cref =
+  std::add_lvalue_reference_t<std::add_const_t<T>>;
+
+template <class T>
+using __uncvref = std::remove_cv_t<std::remove_reference_t<T>>;
+
+template <class From, class To>
+struct __copy_cv_ {
+  using type = To;
+};
+template <class From, class To>
+struct __copy_cv_<From const, To> {
+  using type = To const;
+};
+template <class From, class To>
+struct __copy_cv_<From volatile, To> {
+  using type = To volatile;
+};
+template <class From, class To>
+struct __copy_cv_<From const volatile, To> {
+  using type = To const volatile;
+};
+
+template <class From, class To>
+using __copy_cv = __t<__copy_cv_<From, To>>;
+
+template <class T, class U>
+struct __builtin_common_;
+
+template <class T, class U>
+using __cond_res =
+  decltype(true ? declval<T>() : declval<U>());
+
+template <class T, class U>
+using __builtin_common_t =
+  __apply<__builtin_common_<T, U>>;
+
+template <class T, class U>
+struct __builtin_common_ {
+  template <class X = T, class Y = U>
+  using apply = decay_t<__cond_res<__cref<X>, __cref<Y>>>;
+};
+template <class T, class U>
+struct __builtin_common_<T &&, U &&> {
+  template <class X = T, class Y = U,
+    class R = __builtin_common_t<X &, Y &>>
+  using apply =
+    std::conditional_t<__v<std::is_reference<R>>,
+      std::remove_reference_t<R> &&, R>;
+};
+template <class T, class U>
+struct __builtin_common_<T &, U &> {
+  template <class X = T, class Y = U>
+  using apply =
+    __cond_res<__copy_cv<Y, X> &, __copy_cv<X, Y> &>;
+};
+template <class T, class U>
+struct __builtin_common_<T &, U &&>
+  : __builtin_common_<T &, U const &> { };
+template <class T, class U>
+struct __builtin_common_<T &&, U &>
+  : __builtin_common_<T const &, U &> { };
+
+template <class T, class U>
+using __builtin_common = __defer<__builtin_common_t, T, U>;
+
+template <class ...Ts>
+struct common_type { };
+
+template <class... T>
+using common_type_t = __t<common_type<T...>>;
+
+template <class T>
+struct common_type<T> : std::decay<T> { };
+
+template <class T, class U>
+struct common_type<T, U>
+  : common_type<decay_t<T>, decay_t<U>> { };
+
+template <class T, class U>
+  requires __v<is_same<decay_t<T>, T>> &&
+    __v<is_same<decay_t<U>, U>>
+struct common_type<T, U> : __builtin_common<T, U> { };
+
+template <class T, class U, class V, class... W>
+struct common_type<T, U, V, W...> { };
+
+template <class T, class U, class V, class... W>
+  requires requires { typename common_type_t<T, U>; }
+struct common_type<T, U, V, W...>
+  : common_type<common_type_t<T, U>, V, W...> { };
+
+namespace __qual {
+  using __rref = __q<std::add_rvalue_reference_t>;
+  using __lref = __q<std::add_lvalue_reference_t>;
+  template <class>
+  struct __xref { using type = __compose<__q<__t>, __q<__id>>; };
+  template <class T>
+  struct __xref<T&> { using type = __compose<__lref, __t<__xref<T>>>; };
+  template <class T>
+  struct __xref<T&&> { using type = __compose<__rref, __t<__xref<T>>>; };
+  template <class T>
+  struct __xref<const T> { using type = __q<std::add_const_t>; };
+  template <class T>
+  struct __xref<volatile T> { using type = __q<std::add_volatile_t>; };
+  template <class T>
+  struct __xref<const volatile T> { using type = __q<std::add_cv_t>; };
+}
+
+template <class T, class U, template <class> class TQual,
+  template <class> class UQual>
+struct basic_common_reference { };
+
+template <class T, class U>
+using __basic_common_reference_t =
+  __t<basic_common_reference<__uncvref<T>, __uncvref<U>,
+    __qual::__xref<T>::type::template apply,
+    __qual::__xref<U>::type::template apply>>;
+
+template <class... T>
+struct common_reference { };
+
+template <class... T>
+using common_reference_t = __t<common_reference<T...>>;
+
+template <class T>
+struct common_reference<T> {
+  using type = T;
+};
+
+template <class T, class U>
+struct common_reference<T, U>
+  : __defer<__basic_common_reference_t, T, U> { };
+
+template <class T, class U>
+  requires requires {typename __builtin_common_t<T, U>;} &&
+    (__v<std::is_reference<__builtin_common_t<T, U>>> ||
+    !requires {typename __basic_common_reference_t<T, U>;})
+struct common_reference<T, U> : __builtin_common<T, U> { };
+
+template <class T, class U, class V, class... W>
+struct common_reference<T, U, V, W...> { };
+
+template <class T, class U, class V, class... W>
+  requires requires { typename common_reference_t<T, U>; }
+struct common_reference<T, U, V, W...>
+  : common_reference<common_reference_t<T, U>, V, W...> { };
+```
