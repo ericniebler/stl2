@@ -137,9 +137,17 @@ The relationships between an iterator's associated types, currently expressed in
 
 ## Impact on the Standard
 
+### Overview
+
 The algorithms must be specified to use `iter_swap` and `iter_move` when swapping and moving elements. The concepts must be respecified in terms of the new customization points, and a new type trait, `common_reference`, must be specified and implemented. The known shortcomings of `common_type` (lack of SFINAE-friendliness, difficulty of specialization) must be addressed. Care must be taken in the algorithm implementations to hew to the valid expressions for the iterator concepts. The algorithm constraints must be respecified to accommodate proxy iterators.
 
 For user code, the changes are minimal. No code that works today will stop working after adoping this resolution. When adapting generic code to work with proxy iterators, calls to `swap` and `move` should be replaced with `iter_swap` and `iter_move`, and for calls to higher-order algorithms, generic lambdas are the preferred solution. When that's not possible, functions can be changed to take arguments by the iterator's *common reference* type, which is the result of applying the `common_reference` trait to `Reference<I>&&` and `ValueType<I>&`. (A `CommonReference<I>` type alias is suggested to make this simpler.)
+
+### `iter_swap` and `iter_move`
+
+### `common_type` and `common_reference`
+
+
 
 Alternate Designs
 =====
@@ -224,24 +232,24 @@ Delete [meta.trans.other]/p3 and replace it with the following:
 > <span style="color:#009a9a">3\. Let `CREF(A)` be `add_lvalue_reference_t<add_const_t<A>>`. Let `UNCVREF(A)` be `remove_cv_t<remove_reference_t<A>>`. Let `XREF(A)` denote a unary template `T` such that `T<UNCVREF(A)>` denotes the same type as `A`. Let `COPYCV(FROM,TO)` be an alias for type `TO` with the addition of `FROM`'s top-level cv-qualifiers. [*Example:* -- `COPYCV(int const, short volatile)` is an alias for `short const volatile`. -- *exit example*] Let `COND_RES(X,Y)` be `decltype(declval<bool>()? declval<X>() : declval<Y>())`. Given types `A` and `B`, let `X` be `remove_reference_t<A>`, let `Y` be `remove_reference_t<B>`, and let `COMMON_REF(A,B)` be:</span>
 >
 >> <span style="color:#009a9a">(3.1) -- If `A` and `B` are both lvalue reference types, `COMMON_REF(A,B)` is `COND_RES(COPYCV(X,Y) &, COPYCV(Y,X) &)`.
->> (3.2) -- If `A` and `B` are both rvalue reference types, let `R` be `COMMON_REF(X&, Y&)`. If `R` is a reference type, `COMMON_REF(A,B)` is `remove_reference_t<R> &&`. Otherwise, it is `R`.
->> (3.3) -- If `A` is an lvalue reference type and `B` is an rvalue reference type, then `COMMON_REF(A,B)` is `COMMON_REF(X&,Y const&)`.
->> (3.4) -- If `A` is an rvalue reference type and `B` is an lvalue reference type, then `COMMON_REF(A,B)` is `COMMON_REF(X const&,Y&)`.
->> (3.5) -- Otherwise, `COMMON_REF(A,B)` is `decay_t<COND_RES(CREF(A), CREF(B))>`.</span>
+>> (3.2) -- If `A` and `B` are both rvalue reference types, then if `X` or `Y` is volatile, `COMMON_REF(A,B)` is `decay_t<COND_RES(A,B)>`. Otherwise, let `R` be `COMMON_REF(X&,Y&)`. If `R` is a reference type, `COMMON_REF(A,B)` is `remove_reference_t<R> &&`. Otherwise, it is `R`.
+>> (3.3) -- If `A` is an lvalue reference type and `B` is an rvalue reference type, then if `X` is volatile, `COMMON_REF(A,B)` is `decay_t<COND_RES(A,B)>`. Otherwise, `COMMON_REF(A,B)` is `COMMON_REF(X&,Y const&)`.
+>> (3.4) -- If `A` is an rvalue reference type and `B` is an lvalue reference type, then if `Y` is volatile, `COMMON_REF(A,B)` is `decay_t<COND_RES(A,B)>`. Otherwise, `COMMON_REF(A,B)` is `COMMON_REF(X const&,Y&)`.
+>> (3.5) -- Otherwise, `COMMON_REF(A,B)` is `decay_t<COND_RES(CREF(A),CREF(B))>`.</span>
 >
 > <span style="color:#009a9a">If any of the types computed above are ill-formed, then `COMMON_REF(A,B)` is ill-formed.</span>
 >
-> <span style="color:#009a9a">4\. <span style="color:blue">[*Editorial note:* -- The following text in black is taken from the current C++17 draft --*end note*]</span></span> For the `common_type` trait applied to a parameter pack `T` of types, the member type shall be either defined or not present as follows:
+> <span style="color:#009a9a">4\. <span style="color:blue">[*Editorial note:* -- The following text in black is taken from the current C++17 draft --*end note*]</span></span> For the `common_type` trait applied to a parameter pack `T` of types, the member `type` shall be either defined or not present as follows:
 >
 >> (4.1) -- If `sizeof...(T)` is zero, there shall be no member `type`.
 >> (4.2) -- If `sizeof...(T)` is one, let `T0` denote the sole type in the pack `T`. The member typedef type shall denote the same type as `decay_t<T0>`.
->> <span style="color:#009a9a">(4.3) -- If `sizeof...(T)` is two, let `T0` and `T1` denote the two types in the pack `T`, and let `X` and `Y` be `decay_<T0>` and `decay_t<T1>` respectively. Then if `X` and `T0` denote the same type and `Y` and `T1` denote the same type:</span>
+>> <span style="color:#009a9a">(4.3) -- If `sizeof...(T)` is two, let `T0` and `T1` denote the two types in the pack `T`, and let `X` and `Y` be `decay_t<T0>` and `decay_t<T1>` respectively. Then if `X` and `T0` denote the same type and `Y` and `T1` denote the same type:</span>
 >>> <span style="color:#009a9a">(4.2.1) -- If `COMMON_REF(T0, T1)` denotes a valid type, then the member typedef `type` denotes that type. Otherwise, there shall be no member `type`.
 >>> (4.2.2) -- Otherwise, if `common_type_t<X, Y>` denotes a valid type, then the member typedef `type` denotes that type. Otherwise, there shall be no member `type`.</span>
 >>
 >> (4.4) -- If `sizeof...(T)` is greater than <span style="color:red; text-decoration:line-through">one</span><span style="color:#009a9a">two</span>, let `T1`, `T2`, and `R`, respectively, denote the first, second, and (pack of) remaining types comprising `T`. <span style="color:red; text-decoration:line-through">[ *Note:* `sizeof...(R)` may be zero. --*end note* ]</span> Let `C` <span style="color:red; text-decoration:line-through">denote the type, if any, of an unevaluated conditional expression (5.16) whose first operand is an arbitrary value of type bool, whose second operand is an xvalue of type T1, and whose third operand is an xvalue of type T2.</span><span style="color:#009a9a">be the type `common_type_t<T1,T2>`.</span> If there is such a type `C`, the member typedef `type` shall denote the same type, if any, as `common_type_t<C,R...>`. Otherwise, there shall be no member type.
 >
-> <span style="color:#009a9a">5\. For the `common_reference` trait applied to a parameter pack `T` of types, the member type shall be either defined or not present as follows:</span>
+> <span style="color:#009a9a">5\. For the `common_reference` trait applied to a parameter pack `T` of types, the member `type` shall be either defined or not present as follows:</span>
 >
 >> <span style="color:#009a9a">(5.1) -- If `sizeof...(T)` is zero, there shall be no member `type`.
 >> (5.2) -- If `sizeof...(T)` is one, let `T0` denote the sole type in the pack `T`. The member typedef type shall denote the same type as `T0`.
@@ -666,6 +674,8 @@ struct __builtin_common_ {
   using apply = decay_t<__cond_res<__cref<X>, __cref<Y>>>;
 };
 template <class T, class U>
+  requires !__v<std::is_volatile<T>>
+        && !__v<std::is_volatile<U>>
 struct __builtin_common_<T &&, U &&> {
   template <class X = T, class Y = U,
     class R = __builtin_common_t<X &, Y &>>
@@ -680,9 +690,11 @@ struct __builtin_common_<T &, U &> {
     __cond_res<__copy_cv<Y, X> &, __copy_cv<X, Y> &>;
 };
 template <class T, class U>
+  requires !__v<std::is_volatile<T>>
 struct __builtin_common_<T &, U &&>
   : __builtin_common_<T &, U const &> { };
 template <class T, class U>
+  requires !__v<std::is_volatile<U>>
 struct __builtin_common_<T &&, U &>
   : __builtin_common_<T const &, U &> { };
 
@@ -702,9 +714,11 @@ template <class T, class U>
 struct common_type<T, U>
   : common_type<decay_t<T>, decay_t<U>> { };
 
+template <class T>
+constexpr bool __decayed = __v<is_same<decay_t<T>, T>>;
+
 template <class T, class U>
-  requires __v<is_same<decay_t<T>, T>> &&
-    __v<is_same<decay_t<U>, U>>
+  requires __decayed<T> && __decayed<U>
 struct common_type<T, U> : __builtin_common<T, U> { };
 
 template <class T, class U, class V, class... W>
