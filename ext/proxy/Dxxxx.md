@@ -20,9 +20,7 @@ The proxy iterator problem has been known since at least 1999 when Herb Sutter w
 
 Looking forward to a constrained version of the STL, there is one additional problem: the algorithm constraints must accommodate iterators with proxy reference types. This is particularly vexing for the higher-order algorithms that accept functions that are callable with objects of the iterator's value type.
 
-<!--
-A *proxy* is a stand-in for another object. It is important to note that not all iterators that return rvalues are proxy iterators. If the rvalue does not stand in for another object, it is not a proxy. For instance, an iterator that adapts another by multiplying each element by 2 is not a proxy iterator. This is an important distinction. Previous
--->
+Note that not all iterators that return rvalues are proxy iterators. If the rvalue does not stand in for another object, it is not a proxy. For instance, an iterator that adapts another by multiplying each element by 2 is not a proxy iterator. The Palo Alto report lifts the onerous requirement that Forward iterators have true reference types, so they solve the "rvalue iterator" problem. However, as we show below, that is not enough to solve the "proxy iterator" problem.
 
 ## Proxy Iterator problems
 
@@ -211,12 +209,12 @@ Change Table 57 Other Transformations as follows:
 > | | | <span style="color:#009a9a">`common_reference` --*end note* ]</span>|
 > | | | |
 > | | | |
-> | <span style="color:#009a9a">`template <class... T>`</span> |  | <span style="color:#009a9a">The member typedef type shall be</span> |
+> | <span style="color:#009a9a">`template <class... T>`</span> |  | <span style="color:#009a9a">The member typedef `type` shall be</span> |
 > | <span style="color:#009a9a">`struct common_reference;`</span> |  | <span style="color:#009a9a">defined or omitted as specified below.</span> |
 > | | | <span style="color:#009a9a">If it is omitted, there shall be no</span> |
-> | | | <span style="color:#009a9a">member type. All types in the</span> |
-> | | | <span style="color:#009a9a">parameter pack T shall be complete or</span> |
-> | | | <span style="color:#009a9a">(possibly cv) void. A program may</span> |
+> | | | <span style="color:#009a9a">member `type`. All types in the</span> |
+> | | | <span style="color:#009a9a">parameter pack `T` shall be complete or</span> |
+> | | | <span style="color:#009a9a">(possibly *cv*) `void`. A program may</span> |
 > | | | <span style="color:#009a9a">specialize this trait if at least one</span> |
 > | | | <span style="color:#009a9a">template parameter in the</span> |
 > | | | <span style="color:#009a9a">specialization is a user-defined type</span> |
@@ -225,16 +223,14 @@ Change Table 57 Other Transformations as follows:
 > | | | <span style="color:#009a9a">handle proxy reference types in generic</span> |
 > | | | <span style="color:#009a9a">code. --*end note* \]</span> |
 
-
-
 Delete [meta.trans.other]/p3 and replace it with the following:
 
-> <span style="color:#009a9a">3\. Let `CREF(A)` be `add_lvalue_reference_t<add_const_t<A>>`. Let `UNCVREF(A)` be `remove_cv_t<remove_reference_t<A>>`. Let `XREF(A)` denote a unary template `T` such that `T<UNCVREF(A)>` denotes the same type as `A`. Let `COPYCV(FROM,TO)` be an alias for type `TO` with the addition of `FROM`'s top-level cv-qualifiers. [*Example:* -- `COPYCV(int const, short volatile)` is an alias for `short const volatile`. -- *exit example*] Let `COND_RES(X,Y)` be `decltype(declval<bool>()? declval<X>() : declval<Y>())`. Given types `A` and `B`, let `X` be `remove_reference_t<A>`, let `Y` be `remove_reference_t<B>`, and let `COMMON_REF(A,B)` be:</span>
+> <span style="color:#009a9a">3\. Let `CREF(A)` be `add_lvalue_reference_t<add_const_t<remove_reference_t<A>>>`. Let `UNCVREF(A)` be `remove_cv_t<remove_reference_t<A>>`. Let `XREF(A)` denote a unary template `T` such that `T<UNCVREF(A)>` denotes the same type as `A`. Let `COPYCV(FROM,TO)` be an alias for type `TO` with the addition of `FROM`'s top-level cv-qualifiers. [*Example:* -- `COPYCV(int const, short volatile)` is an alias for `short const volatile`. -- *exit example*] Let `COND_RES(X,Y)` be `decltype(declval<bool>()? declval<X>() : declval<Y>())`. Given types `A` and `B`, let `X` be `remove_reference_t<A>`, let `Y` be `remove_reference_t<B>`, and let `COMMON_REF(A,B)` be:</span>
 >
 >> <span style="color:#009a9a">(3.1) -- If `A` and `B` are both lvalue reference types, `COMMON_REF(A,B)` is `COND_RES(COPYCV(X,Y) &, COPYCV(Y,X) &)`.
->> (3.2) -- If `A` and `B` are both rvalue reference types, then if `X` or `Y` is volatile, `COMMON_REF(A,B)` is `decay_t<COND_RES(A,B)>`. Otherwise, let `R` be `COMMON_REF(X&,Y&)`. If `R` is a reference type, `COMMON_REF(A,B)` is `remove_reference_t<R> &&`. Otherwise, it is `R`.
->> (3.3) -- If `A` is an lvalue reference type and `B` is an rvalue reference type, then if `X` is volatile, `COMMON_REF(A,B)` is `decay_t<COND_RES(A,B)>`. Otherwise, `COMMON_REF(A,B)` is `COMMON_REF(X&,Y const&)`.
->> (3.4) -- If `A` is an rvalue reference type and `B` is an lvalue reference type, then if `Y` is volatile, `COMMON_REF(A,B)` is `decay_t<COND_RES(A,B)>`. Otherwise, `COMMON_REF(A,B)` is `COMMON_REF(X const&,Y&)`.
+>> (3.2) -- If `A` and `B` are both rvalue reference types, and `COMMON_RES(X&,Y&)` is well formed, and `is_convertible<A,R>::value` and `is_convertible<B,R>::value` are true where `R` is `remove_reference_t<COMMON_RES(X&,Y&)>&&` if `COMMON_RES(X&,Y&)` is a reference type or `COMMON_RES(X&,Y&)` otherwise, then `COMMON_RES(A,B)` is `R`.
+>> (3.3) -- If `A` is an rvalue reference and `B` is an lvalue reference and `COMMON_REF(const X&, Y&)` is well formed and `is_convertible<A,R>::value` is true where `R` is `COMMON_REF(const X&, Y&)` then `COMMON_RES(A,B)` is `R`.
+>> (3.4) -- If `A` is an lvalue reference and `B` is an rvalue reference, then `COMMON_REF(A,B)` is `COMMON_REF(B,A)`.
 >> (3.5) -- Otherwise, `COMMON_REF(A,B)` is `decay_t<COND_RES(CREF(A),CREF(B))>`.</span>
 >
 > <span style="color:#009a9a">If any of the types computed above are ill-formed, then `COMMON_REF(A,B)` is ill-formed.</span>
@@ -610,14 +606,15 @@ struct __compose {
   using apply = __apply<T, __apply<U, V>>;
 };
 
+template <class T>
+struct __id { using type = T; };
+
 template <template <class...> class T, class... Args>
 struct __defer { };
 
 template <template <class...> class T, class... Args>
   requires requires { typename T<Args...>; }
-struct __defer<T, Args...> {
-  using type = T<Args...>;
-};
+struct __defer<T, Args...> : __id<T<Args...>> { };
 
 template <template <class...> class T>
 struct __q {
@@ -625,82 +622,54 @@ struct __q {
   using apply = __t<__defer<T, U...>>;
 };
 
-template <class T>
-struct __id {
-  using type = T;
-};
-
-template <class T>
-using __cref =
-  std::add_lvalue_reference_t<std::add_const_t<T>>;
-
+template <class T, class X = std::remove_reference_t<T>>
+using __cref = std::add_lvalue_reference_t<std::add_const_t<X>>;
 template <class T>
 using __uncvref = std::remove_cv_t<std::remove_reference_t<T>>;
 
-template <class From, class To>
-struct __copy_cv_ {
-  using type = To;
-};
-template <class From, class To>
-struct __copy_cv_<From const, To> {
-  using type = To const;
-};
-template <class From, class To>
-struct __copy_cv_<From volatile, To> {
-  using type = To volatile;
-};
-template <class From, class To>
-struct __copy_cv_<From const volatile, To> {
-  using type = To const volatile;
-};
+template <class T, class U>
+using __cond = decltype(true ? declval<T>() : declval<U>());
 
+template <class From, class To>
+struct __copy_cv_ : __id<To> { };
+template <class From, class To>
+struct __copy_cv_<From const, To> : std::add_const<To> { };
+template <class From, class To>
+struct __copy_cv_<From volatile, To> : std::add_volatile<To> { };
+template <class From, class To>
+struct __copy_cv_<From const volatile, To> : std::add_cv<To> { };
 template <class From, class To>
 using __copy_cv = __t<__copy_cv_<From, To>>;
 
 template <class T, class U>
-struct __builtin_common_;
+struct __builtin_common { };
+template <class T, class U>
+using __builtin_common_t = __t<__builtin_common<T, U>>;
+template <class T, class U>
+  requires requires { typename __cond<__cref<T>, __cref<U>>; }
+struct __builtin_common<T, U> :
+  std::decay<__cond<__cref<T>, __cref<U>>> { };
+template <class T, class U, class R = __builtin_common_t<T &, U &>>
+using __rref_res = std::conditional_t<__v<std::is_reference<R>>,
+  std::remove_reference_t<R> &&, R>;
+template <class T, class U>
+  requires requires { typename __rref_res<T, U>; }
+    && __v<std::is_convertible<T &&, __rref_res<T, U>>>
+    && __v<std::is_convertible<U &&, __rref_res<T, U>>>
+struct __builtin_common<T &&, U &&> : __id<__rref_res<T, U>> { };
+template <class T, class U>
+using __lref_res = __cond<__copy_cv<T, U> &, __copy_cv<U, T> &>;
+template <class T, class U>
+struct __builtin_common<T &, U &> : __defer<__lref_res, T, U> { };
+template <class T, class U>
+  requires requires { typename __builtin_common_t<T &, U const &>; }
+    && __v<std::is_convertible<U &&, __builtin_common_t<T &, U const &>>>
+struct __builtin_common<T &, U &&> :
+  __builtin_common<T &, U const &> { };
+template <class T, class U>
+struct __builtin_common<T &&, U &> : __builtin_common<U &, T &&> { };
 
-template <class T, class U>
-using __cond_res =
-  decltype(true ? declval<T>() : declval<U>());
-
-template <class T, class U>
-using __builtin_common_t =
-  __apply<__builtin_common_<T, U>>;
-
-template <class T, class U>
-struct __builtin_common_ {
-  template <class X = T, class Y = U>
-  using apply = decay_t<__cond_res<__cref<X>, __cref<Y>>>;
-};
-template <class T, class U>
-  requires !__v<std::is_volatile<T>>
-        && !__v<std::is_volatile<U>>
-struct __builtin_common_<T &&, U &&> {
-  template <class X = T, class Y = U,
-    class R = __builtin_common_t<X &, Y &>>
-  using apply =
-    std::conditional_t<__v<std::is_reference<R>>,
-      std::remove_reference_t<R> &&, R>;
-};
-template <class T, class U>
-struct __builtin_common_<T &, U &> {
-  template <class X = T, class Y = U>
-  using apply =
-    __cond_res<__copy_cv<Y, X> &, __copy_cv<X, Y> &>;
-};
-template <class T, class U>
-  requires !__v<std::is_volatile<T>>
-struct __builtin_common_<T &, U &&>
-  : __builtin_common_<T &, U const &> { };
-template <class T, class U>
-  requires !__v<std::is_volatile<U>>
-struct __builtin_common_<T &&, U &>
-  : __builtin_common_<T const &, U &> { };
-
-template <class T, class U>
-using __builtin_common = __defer<__builtin_common_t, T, U>;
-
+// common_type
 template <class ...Ts>
 struct common_type { };
 
@@ -733,17 +702,17 @@ namespace __qual {
   using __rref = __q<std::add_rvalue_reference_t>;
   using __lref = __q<std::add_lvalue_reference_t>;
   template <class>
-  struct __xref { using type = __compose<__q<__t>, __q<__id>>; };
+  struct __xref : __id<__compose<__q<__t>, __q<__id>>> { };
   template <class T>
-  struct __xref<T&> { using type = __compose<__lref, __t<__xref<T>>>; };
+  struct __xref<T&> : __id<__compose<__lref, __t<__xref<T>>>> { };
   template <class T>
-  struct __xref<T&&> { using type = __compose<__rref, __t<__xref<T>>>; };
+  struct __xref<T&&> : __id<__compose<__rref, __t<__xref<T>>>> { };
   template <class T>
-  struct __xref<const T> { using type = __q<std::add_const_t>; };
+  struct __xref<const T> : __id<__q<std::add_const_t>> { };
   template <class T>
-  struct __xref<volatile T> { using type = __q<std::add_volatile_t>; };
+  struct __xref<volatile T> : __id<__q<std::add_volatile_t>> { };
   template <class T>
-  struct __xref<const volatile T> { using type = __q<std::add_cv_t>; };
+  struct __xref<const volatile T> : __id<__q<std::add_cv_t>> { };
 }
 
 template <class T, class U, template <class> class TQual,
@@ -756,6 +725,7 @@ using __basic_common_reference_t =
     __qual::__xref<T>::type::template apply,
     __qual::__xref<U>::type::template apply>>;
 
+// common_reference
 template <class... T>
 struct common_reference { };
 
@@ -763,9 +733,7 @@ template <class... T>
 using common_reference_t = __t<common_reference<T...>>;
 
 template <class T>
-struct common_reference<T> {
-  using type = T;
-};
+struct common_reference<T> : __id<T> { };
 
 template <class T, class U>
 struct common_reference<T, U>
