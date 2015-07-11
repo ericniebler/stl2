@@ -32,14 +32,21 @@ and rearrangement concepts} as summarized in Table~\ref{tab:concepts.lib.summary
 In this Clause, \tcode{CamelCase} identifiers ending with ``\tcode{Type}'' denote
 template aliases.
 
-\rSec2[concepts.lib.general.equality]{Equality Preserving}
+\newtxt{
+\pnum
+The concepts in this Clause are defined in the namespace \tcode{std::experimental::ranges_v1}.
+}
+
+{\color{newclr}
+\rSec2[concepts.lib.general.equality]{Equality Preservation}
 
 \pnum
-\newtxt{An expression is \techterm{equality preserving} if, given equal inputs, the
+An expression is \techterm{equality preserving} if, given equal inputs, the
 expression results in equal outputs. \enternote Not all input values must be valid
 for a given expression, e.g., for integers \tcode{a} and \tcode{b}, the expression
 \tcode{a / b} is not well-defined when \tcode{b} is \tcode{0}. This does not
-preclude the expression \tcode{a / b} being equality preserving. \exitnote}
+preclude the expression \tcode{a / b} being equality preserving. \exitnote
+}
 
 \pnum
 A \techterm{regular function} is \newtxt{a function that is equality preserving,
@@ -50,24 +57,75 @@ reference. \newtxt{\enternote Regular functions may have side effects. \exitnote
 when violated, make the function non-regular. \enternote A function that returns
 \tcode{void} is necessarily a regular function. \exitnote}
 
+{\color{newclr}
 \pnum
-\newtxt{Expressions appearing in a \techterm{requires-expression} in this document
-are required to be equality preserving, except for those annotated with the comment
+Expressions declared in a \techterm{requires-expression} in this document are
+required to be equality preserving, except for those annotated with the comment
 ``not equality preserving.'' An expression so annotated may be equality preserving,
-but it is not required to be so.}
+but is not required to be so.
 
 \pnum
-\newtxt{Expressions required by this specification to be equality preserving are
+An expression that may alter the value of one or more of its inputs in a manner
+observable to equality preserving expressions is said to modify those inputs.
+This document uses a notational convention to specify which expressions declared
+in a \techterm{requires-expression} modify what inputs: except where otherwise
+specified, an expression operand that is a non-constant lvalue or rvalue may be
+modified. Operands that are constant lvalues or rvalues must not be modified.
+
+\pnum
+Where a \techterm{requires-expression} declares an expression that is non-modifying
+for some constant lvalue operand, additional variants of that expression that accept
+a non-constant lvalue or (possibly constant) rvalue for the given operand are also
+required except where such an expression variant is explicitly required with
+differing semantics. Such implicit expression variants must meet the semantic
+requirements of the declared expression.  The extent to which an implementation
+validates the syntax of these implicit expression variants is unspecified.
+
+\enterexample
+\begin{codeblock}
+template <class T>
+concept bool C() {
+  return requires (T a, T b, const T c, const T d) {
+    c == d;       // \#1
+    a = move(b);  // \#2
+    a = c;        // \#3
+  };
+}
+\end{codeblock}
+Expression \#1 does not modify either of its operands, \#2 modifies both of its
+operands, and \#3 modifies only its first operand \tcode{a}.
+
+Expression \#1 implicitly requires additional expression variants that meet the
+requirements for \tcode{c == d} (including non-modification), as if the expressions
+\begin{codeblock}
+a == d;       a == b;             a == move(b);       a == d;
+c == a;       c == move(a);       c == move(d);
+move(a) == d; move(a) == b;       move(a) == move(b); move(a) == move(d);
+move(c) == b; move(c) == move(b); move(c) == d;       move(c) == move(d);
+\end{codeblock}
+had been declared as well.
+
+Expression \#3 implicitly requires additional expression variants that meet the
+requirements for \tcode{a = c} (including non-modification of the second operand),
+as if the expressions \tcode{a = b} and \tcode{a = move(c)} had been declared.
+Expression \#3 does not implicitly require an expression variant with a
+non-constant rvalue second operand, since expression \#2 already specifies exactly
+such an expression explicitly.
+\exitexample
+
+\pnum
+Expressions required by this specification to be equality preserving are
 further required to be stable: two evaluations of such an expression with the same
-input objects must have the same results absent any intervening direct modification
+input objects must have the same results absent any intervening modification
 of those input objects. \enternote This requirement allows generic code to reason
 about the current values of objects based on knowledge of the prior values as
 observed via equality preserving expressions. It effectively forbids spontaneous
 changes to an object, changes to an object from another thread of execution, changes
-to an object as side effects of non-modifying actions, and changes to an object as
+to an object as side effects of non-modifying expressions, and changes to an object as
 side effects of modifying a distinct object if those changes could be observable
 to a library function via an equality preserving expression that is required to be
-valid for that object. \exitnote}
+valid for that object. \exitnote
+}
 
 \rSec1[concepts.lib.corelang]{Core language concepts}
 
@@ -77,12 +135,6 @@ valid for that object. \exitnote}
 This section contains the definition of concepts corresponding to language features.
 These concepts express relationships between types, type classifications, and
 fundamental type properties.
-
-\newtxt{
-\pnum
-The concepts in this section are all defined in the \tcode{std::experimental::ranges_v1}
-namespace.
-}
 
 \rSec2[concepts.lib.corelang.same]{Concept Same}
 
@@ -397,7 +449,7 @@ The \tcode{Boolean} concept describes the requirements on a type that is usable 
 \begin{itemdecl}
 template <class B>
 concept bool Boolean@\newtxt{() \{}\oldtxt{ =}@
-  @\newtxt{return}@ requires(B b1, B b2@\newtxt{, bool a}@) {
+  @\newtxt{return}@ requires(@\newtxt{const }@B b1, @\newtxt{const }@B b2@\newtxt{, const bool a}@) {
     bool(b1);
     { b1 } -> bool;
     bool(!b1);
@@ -426,17 +478,15 @@ Given values \tcode{b1} and \tcode{b2} of type \tcode{B}, then type \tcode{B} mo
 \item \tcode{bool(b1) == [](bool x) \{ return x; \}(b1)}.
 \item \tcode{bool(b1) == !bool(!b1)}.
 \item \tcode{(b1 \&\& b2)}, \tcode{(b1 \&\& bool(b2))}, and
-      \tcode{(bool(b1) \&\& b2)} are all semantically identical to
-      \tcode{(bool(b1) \&\& bool(b2))}, including short-circuit evaluation.
+      \tcode{(bool(b1) \&\& b2)} are all \oldtxt{semantically identical}\newtxt{equal} to
+      \tcode{(bool(b1) \&\& bool(b2))}, \oldtxt{including}\newtxt{and have the same} short-circuit evaluation.
 \item \tcode{(b1 || b2)}, \tcode{(b1 || bool(b2))}, and
-      \tcode{(bool(b1) || b2)} are all semantically identical to
-      \tcode{(bool(b1) || bool(b2))}, including short-circuit evaluation.
+      \tcode{(bool(b1) || b2)} are all \oldtxt{semantically identical}\newtxt{equal} to
+      \tcode{(bool(b1) || bool(b2))}, \oldtxt{including}\newtxt{and have the same} short-circuit evaluation.
 \item \newtxt{\tcode{bool(b1 == b2)}, \tcode{bool(b1 == bool(b2))}, and
-      \tcode{bool(bool(b1) == b2)} are all semantically identical to
-      \tcode{(bool(b1) == bool(b2))}.}
+      \tcode{bool(bool(b1) == b2)} are all equal to \tcode{(bool(b1) == bool(b2))}.}
 \item \newtxt{\tcode{bool(b1 != b2)}, \tcode{bool(b1 != bool(b2))}, and
-      \tcode{bool(bool(b1) != b2)} are all semantically identical to
-      \tcode{(bool(b1) != bool(b2))}.}
+      \tcode{bool(bool(b1) != b2)} are all equal to \tcode{(bool(b1) != bool(b2))}.}
 \end{itemize}
 
 \enterexample The types \tcode{bool}, \tcode{std::true_type}, and
@@ -451,7 +501,7 @@ Given values \tcode{b1} and \tcode{b2} of type \tcode{B}, then type \tcode{B} mo
 \begin{itemdecl}
 template <class T>
 concept bool EqualityComparable() {
-  return requires(T a, T b) {
+  return requires(@\newtxt{const }@T a, @\newtxt{const }@T b) {
     {a == b} -> Boolean;
     {a != b} -> Boolean;
   };
@@ -489,7 +539,7 @@ concept bool EqualityComparable() {
     EqualityComparable<T>() &&
     EqualityComparable<U>() &&
     EqualityComparable<CommonType<T, U>>() &&
-    requires(T a, U b) {
+    requires(@\newtxt{const }@T a, @\newtxt{const }@U b) {
       {a == b} -> Boolean;
       {b == a} -> Boolean;
       {a != b} -> Boolean;
@@ -531,7 +581,7 @@ references to [concepts.lib\newtxt{.comparison}.totallyordered]}
 template <class T>
 concept bool TotallyOrdered() {
   return EqualityComparable<T>() &&
-    requires (T a, T b) {
+    requires (@\newtxt{const }@T a, @\newtxt{const }@T b) {
       { a < b } -> Boolean;
       { a > b } -> Boolean;
       { a <= b } -> Boolean;
@@ -576,7 +626,7 @@ concept bool TotallyOrdered() {
     TotallyOrdered<U>() &&
     TotallyOrdered<CommonType<T, U>>() &&
     EqualityComparable<T, U>() &&
-    requires (T @\oldtxt{a}\newtxt{t}@, U @\oldtxt{b}\newtxt{u}@) {
+    requires (@\oldtxt{T a, U b}\newtxt{const T t, const U u}@) {
       { @\oldtxt{a}\newtxt{t}@ < @\oldtxt{b}\newtxt{u}@ } -> Boolean;
       { @\oldtxt{a}\newtxt{t}@ > @\oldtxt{b}\newtxt{u}@ } -> Boolean;
       { @\oldtxt{a}\newtxt{t}@ <= @\oldtxt{b}\newtxt{u}@ } -> Boolean;
@@ -637,9 +687,10 @@ It describes properties that all such object types have in common.}
 \begin{itemdecl}
 template <class T>
 concept bool Destructible@\newtxt{() \{}\oldtxt{ =}@
-  @\newtxt{return}@ requires (T t@\newtxt{, T* p}@) {
+  @\newtxt{return}@ requires (T t@\newtxt{, const T ct, T* p}@) {
     { t.@$\sim$@T() } noexcept;
     @\newtxt{\{ \&t \} -> Same<T*>; // not equality preserving}@
+    @\newtxt{\{ \&ct \} -> Same<const T*>; // not equality preserving}@
     @\newtxt{delete p;}@
     @\newtxt{delete[] p;}@
   };
@@ -653,7 +704,10 @@ reference or array type. We need to decide whether we want \tcode{Destructible<i
 \tcode{Destructible<int[42]>} to be true or false.}}
 
 \pnum
-\oldtxt{A}\newtxt{Given an object \tcode{t} of type \tcode{T} and pointer \tcode{p}
+\newtxt{The expression requirement \tcode{\&ct} does not require implicit expression variants.}
+
+\pnum
+\oldtxt{A}\newtxt{Given a (possibly \tcode{const}) lvalue \tcode{t} of type \tcode{T} and pointer \tcode{p}
 of type \tcode{T*}, the} type \tcode{T} models \tcode{Destructible} if and only if
 
 \begin{itemize}
@@ -661,6 +715,7 @@ of type \tcode{T*}, the} type \tcode{T} models \tcode{Destructible} if and only 
 \newtxt{\tcode{delete p}, or \tcode{delete[] p},} all resources owned by
 \oldtxt{\tcode{u}}\newtxt{the denoted object(s)} are reclaimed.
 \item \newtxt{\tcode{\&t == addressof(t)}.}
+\item \newtxt{The expression \tcode{\&t} is non-modifying.}
 \end{itemize}
 \end{itemdescr}
 
@@ -696,7 +751,7 @@ references to [defaultconstructible] with references to
 template <class T>
 concept bool DefaultConstructible@\newtxt{() \{} \oldtxt{=}@
   @\newtxt{return Constructible<T>() \&\&}@
-    requires @\newtxt{(size_t n)}@ {
+    requires @\newtxt{(const size_t n)}@ {
       @\newtxt{new}@ T@\newtxt{[n]}@{}; @\newtxt{// not equality preserving}@
     };
 @\newtxt{\}}@
@@ -762,13 +817,12 @@ references to [copyconstructible] with references to
 template <class T>
 concept bool CopyConstructible@\newtxt{() \{}\oldtxt{ =}@
   @\newtxt{return}@ MoveConstructible<T>@\newtxt{()}@ &&
-    @\newtxt{Constructible<T, remove_cv_t<T>\&>() \&\&}@
     @\newtxt{Constructible<T, const remove_cv_t<T>\&>() \&\&}@
-    @\newtxt{Constructible<T, const remove_cv_t<T>\&\&>() \&\&}@
-    requires (@\oldtxt{T}\newtxt{remove_cv_t<T>\&}@ a, const @\oldtxt{T}\newtxt{remove_cv_t<T>}@& b) {
-      @\oldtxt{T(a)} \newtxt{[](T)\{\}(a)}@;
-      @\oldtxt{T(b)} \newtxt{[](T)\{\}(b)}@;
-      @\oldtxt{T((const T\&\&)b)} \newtxt{[](T)\{\}(move(b))}@;
+    requires (@\oldtxt{T a, const T\& b}\newtxt{const remove_cv_t<T> t}@) {
+      @\newtxt{[](T)\{\}(t);}@
+      @\oldtxt{T(a);}@
+      @\oldtxt{T(b);}@
+      @\oldtxt{T((const T\&\&)b);}@
     };
 @\newtxt{\}}@
 \end{itemdecl}
@@ -781,24 +835,22 @@ Let \tcode{v} be an lvalue of type (possibly \tcode{const}) \oldtxt{\tcode{T}}
 \tcode{CopyConstructible} if and only if
 
 \begin{itemize}
-\item After the definition \tcode{T u = v;}, \tcode{v} is unchanged and is equal
+\item After the definition \tcode{T u = v;}, \tcode{v} \oldtxt{is unchanged and }is equal
 to \tcode{u}.
 \item \oldtxt{\tcode{T(v)}} \newtxt{\tcode{T\{v\}} or \tcode{*new T\{v\}}} is equal
-to \tcode{v} and \tcode{v} is unchanged.
+to \tcode{v}\oldtxt{ and \tcode{v} is unchanged}.
 \end{itemize}
 
 \pnum
-\newtxt{\enternote The expressions \tcode{[](T)\{\}(a)}, \tcode{[](T)\{\}(b)}, and
-\tcode{[](T)\{\}(move(b))}, require that \tcode{T} can be copy-initialized from an
-lvalue of type (possibly \tcode{const}) \tcode{remove_cv_t<T>} and an rvalue of type
-\tcode{const remove_cv_t<T>}; the constructor selected by overload resolution must
-be non-explicit. \exitnote}
+\newtxt{\enternote The expression \tcode{[](T)\{\}(t)} (and its implicit variants)
+require that \tcode{T} can be copy-initialized from an lvalue of type (possibly
+\tcode{const}) \tcode{remove_cv_t<T>} and an rvalue of type \tcode{const remove_cv_t<T>};
+the constructor selected by overload resolution must be non-explicit. \exitnote}
 
-\ednote{\newtxt{Ideally, \tcode{CopyConstructible} would include array allocation
-requirements \tcode{new T[1]\{a\}}, \tcode{new T[1]\{b\}}, and
-\tcode{new T[1]\{move(b)\}}. This is not currently possible since [expr.new]/19
-requires an accessible default constructor even when all array elements are
-initialized.}}
+\ednote{\newtxt{Ideally, \tcode{CopyConstructible} would include an array
+allocation requirement \tcode{new T[1]\{t\}}. This is not currently possible since
+[expr.new]/19 requires an accessible default constructor even when all array elements
+are initialized.}}
 \end{itemdescr}
 
 \rSec2[concepts.lib.object.movable]{Concept Movable}
@@ -848,9 +900,7 @@ template <class T>
 concept bool @\oldtxt{CopyAssignable =}\newtxt{Copyable() \{}@
   @\newtxt{return CopyConstructible<T>() \&\&}@
     @\oldtxt{MoveAssignable}\newtxt{Movable}@<T>@\newtxt{()}@ &&
-    @\newtxt{Assignable<T\&, T\&>() \&\&}@
     @\newtxt{Assignable<T\&, const T\&>() \&\&}@
-    @\newtxt{Assignable<T\&, const T\&\&>();}@
     @\oldtxt{requires(T a, T b, const T\& c) \{}@
       @\oldtxt{\{ a = b \} -> Same<T\&>;}@
       @\oldtxt{\{ a = c \} -> Same<T\&>;}@
@@ -867,7 +917,7 @@ Let \tcode{t} be an lvalue of type \tcode{T}, and \tcode{v} be an lvalue of type
 
 \begin{itemize}
 \item \oldtxt{\tcode{(addressof(t = v) == addressof(t)) != false)}.}
-\item After the assignment \newtxt{\tcode{t = v},} \tcode{t} is equal to \tcode{v} and \tcode{v} is unchanged.
+\item After the assignment \newtxt{\tcode{t = v},} \tcode{t} is equal to \tcode{v}\oldtxt{ and \tcode{v} is unchanged}.
 \end{itemize}
 \end{itemdescr}
 

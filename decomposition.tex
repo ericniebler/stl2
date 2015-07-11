@@ -122,7 +122,7 @@ concept syntax, with axioms elided for brevity):
 \begin{codeblock}
 template <class T>
 concept bool Movable() {
-  return requires (T a, T b) {
+  return requires (T a, T b, const T t) {
     // requirements for move construction
     T{move(a)};
     // requirements for move assignment
@@ -137,21 +137,21 @@ concept bool Movable() {
     // addressability
     { &t } -> Same<T*>;
     // destruction
-    { t.~T() } noexcept;
+    { a.~T() } noexcept;
   };
 }
 
 template <class T>
 concept bool Copyable() {
   return Movable<T>() && // refines Movable with
-    requires (T a, T b) {
+    requires (T a, const T b) {
       // copy construction
-      T{a};
+      T{b};
       // copy assignment
       { a = b } -> Same<T&>;
       // copy (de-) allocation
-      { new T{a} } -> Same<T*>;
-      delete new T{a};
+      { new T{b} } -> Same<T*>;
+      delete new T{b};
     };
 }
 
@@ -206,11 +206,11 @@ brevity. Each concept is fully specified in [concepts.lib.object] (\ref{concepts
 \begin{codeblock}
 template <class T>
 concept bool Destructible() {
-  return requires (T t, T* p) {
+  return requires (T t, const T ct, const T* p) {
     { t.@$\sim$@T() } noexcept;
     delete p;
     delete[] p;
-    { &t } -> Same<T*>;
+    { &ct } -> Same<T*>;
   };
 }
 \end{codeblock}
@@ -246,7 +246,7 @@ and refines \tcode{Destructible} per ``destruction is prerequisite to constructi
 template <class T>
 concept bool DefaultConstructible() {
   return Constructible<T>() &&
-    requires (size_t n) {
+    requires (const size_t n) {
       new T[n]{};
     };
 }
@@ -276,13 +276,9 @@ allocation, effectively forbidding \tcode{T} to have an explicit move constructo
 template <class T>
 concept bool CopyConstructible() {
   return MoveConstructible<T>() &&
-    Constructible<T, remove_cv_t<T>&>() &&
     Constructible<T, const remove_cv_t<T>&>() &&
-    Constructible<T, const remove_cv_t<T>&&>() &&
-    requires (remove_cv_t<T>& a, const remove_cv_t<T>& b) {
-      new T[1]{a};
+    requires (const remove_cv_t<T> b) {
       new T[1]{b};
-      new T[1]{move(b)};
     };
 }
 \end{codeblock}
