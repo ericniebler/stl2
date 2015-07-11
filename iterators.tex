@@ -276,7 +276,7 @@ including pointers, smart pointers, and iterators.
   template <class I>
   concept bool Readable@\newtxt{() \{}\oldtxt{ =}@
     @\newtxt{return}@ Semiregular<I>@\newtxt{()}@ &&
-      requires (I i) {
+      requires (@\newtxt{const }@I i) {
         typename ValueType<I>;
         { *i } -> const ValueType<I>&; // pre: i is dereferenceable
       };
@@ -390,7 +390,7 @@ referenced object.
   template <class Out, class T>
   concept bool Writable@\newtxt{() \{}\oldtxt{ =}@
     @\newtxt{return}@ MoveWritable<Out, T>@\newtxt{()}@ &&
-      requires (Out o, T v) {
+      requires (Out o, @\newtxt{const }@T v) {
         *o = v; @\newtxt{// not equality preserving}@
       };
   @\newtxt{\}}@
@@ -400,12 +400,10 @@ referenced object.
 Let \tcode{v} be an lvalue of type (possibly \tcode{const}) \tcode{T} or an rvalue
 of type \tcode{const T}, and let \tcode{o} be a dereferenceable object of type
 \tcode{Out}. Then types \tcode{T} and \tcode{Out} model \tcode{Writable} if and only if
-\newtxt{after the assignment \tcode{*o = v},}
 
 \begin{itemize}
-\item \tcode{v} is unchanged.
-\item If \tcode{Out} is \tcode{Readable}, \oldtxt{after the assignment \tcode{*o = v},}
-\tcode{*o} is equal to the value of \tcode{v} \oldtxt{and \tcode{v} is unchanged}.
+\item If \tcode{Out} is \tcode{Readable}, after the assignment \tcode{*o = v},
+\tcode{*o} is equal to the value of \tcode{v}\oldtxt{ and \tcode{v} is unchanged}.
 \end{itemize}
 
 \rSec2[indirectlymovable.iterators]{Concept IndirectlyMovable}
@@ -450,12 +448,11 @@ type and a \tcode{Writable} type.
 \pnum
 Let \tcode{i} be an object of type \tcode{I}, and let \tcode{o} be a
 dereferenceable object of type \tcode{Out}. Then types \tcode{I} and \tcode{Out} model
-\tcode{IndirectlyCopyable} if and only if \newtxt{after the assignment \tcode{*o = *i},}
+\tcode{IndirectlyCopyable} if and only if
 
 \begin{itemize}
-\item The value of \tcode{*i} is unchanged.
-\item If \tcode{Out} is \tcode{Readable}, \oldtxt{after the assignment \tcode{*o = *i},}
-\tcode{*o} is equal to the value of \tcode{*i} \oldtxt{and the value of
+\item If \tcode{Out} is \tcode{Readable}, after the assignment \tcode{*o = *i},
+\tcode{*o} is equal to the value of \tcode{*i}\oldtxt{ and the value of
 \tcode{*i} is unchanged}.
 \end{itemize}
 
@@ -496,24 +493,25 @@ nor is the type required to be \tcode{EqualityComparable}.
 \end{codeblock}
 
 \pnum
+Let \tcode{i} be an object of type \tcode{I}. \newtxt{When both pre and post-increment
+are valid, \tcode{i} is said to be \techterm{incrementable}.} T\oldtxt{hen t}he type
+\tcode{I} models \tcode{WeaklyIncrementable} if and only if
+
+\begin{itemize}
+\item \tcode{++i} is valid if and only if \tcode{i++} is valid.
+\item If \tcode{i} is incrementable, then \newtxt{either }\tcode{++i} \newtxt{or \tcode{i++} }moves \tcode{i} to the next element.
+\item If \tcode{i} is incrementable, then \tcode{\oldtxt{(}\&++i == \&i\oldtxt{) != false}}.
+\item \oldtxt{If \tcode{i} is incrementable, then \tcode{i++} moves \tcode{i} to the next element.}
+\end{itemize}
+
+\ednote{REVIEW Can we be more specific than ``moves to the next element''?}
+
+\pnum
 Not all \oldtxt{arguments will}\newtxt{values must} be incrementable for a given type.
 \enternote For example, $NaN$ is not a well-formed floating point value and hence is
 not incrementable. Likewise, past-the-end iterators \oldtxt{are also}\newtxt{may} not
 \newtxt{be} incrementable. This does not mean that the\newtxt{ir} type\newtxt{s}
 do\oldtxt{es} not model \tcode{WeaklyIncrementable}. \exitnote
-
-\pnum
-Let \tcode{i} be an object of type \tcode{I}.
-Then the type \tcode{I} models \tcode{WeaklyIncrementable} if and only if
-
-\begin{itemize}
-\item If \tcode{i} is incrementable, then \tcode{++i} moves \tcode{i} to the next element.
-\item If \tcode{i} is incrementable, then \tcode{\oldtxt{(}\&++i == \&i\oldtxt{) != false}}.
-\item If \tcode{i} is incrementable, then \tcode{i++} moves \tcode{i} to the next element.
-\item \tcode{++i} is valid if and only if \tcode{i++} is valid.
-\end{itemize}
-
-\ednote{REVIEW Can we be more specific than ``moves to the next element''?}
 
 \ednote{Copied almost verbatim from the \tcode{InputIterator} description. This wording is removed
 there.}
@@ -531,7 +529,7 @@ template.\exitnote
 The \tcode{Incrementable} concept describes types that can be incremented with the pre-
 and post-increment operators. The increment operations are required to be equality-preserving,
 and the type is required to be \tcode{EqualityComparable}. \newtxt{\enternote This requirement
-supersedes the annotation on the increment expressions in the definition of
+supersedes the annotations on the increment expressions in the definition of
 \tcode{WeaklyIncrementable}. \exitnote}
 
 \indexlibrary{\idxcode{Incrementable}}%
@@ -551,8 +549,8 @@ Let \tcode{a} and \tcode{b} be incrementable objects of type \tcode{I}.
 Then the type \tcode{I} models \tcode{Incrementable} if and only if
 
 \begin{itemize}
-\item If \tcode{\newtxt{bool}(a == b)\oldtxt{ != false}} then \tcode{\newtxt{bool}(++a == ++b)\oldtxt{ != false}}.
-\item If \tcode{\newtxt{bool}(a == b)\oldtxt{ != false}} then \tcode{\newtxt{bool}((a++, a) == (b++, b))\oldtxt{ != false}}.
+\item \oldtxt{If \tcode{(a == b) != false} then \tcode{(++a == ++b) != false}.} %% Implied by equality preservation of ++i
+\item \oldtxt{If \tcode{(a == b) != false} then \tcode{((a++, a) == (b++, b)) != false}.} %% Implied by equality preservation of i++ and the following requirements
 \item If \tcode{\newtxt{bool}(a == b)\oldtxt{ != false}} then \tcode{\newtxt{bool}(a++ == b)\oldtxt{ != false}}.
 \item If \tcode{\newtxt{bool}(a == b)\oldtxt{ != false}} then \tcode{\newtxt{bool}((a++, a) == ++b)\oldtxt{ != false}}.
 \end{itemize}
@@ -670,11 +668,12 @@ weak input iterators are not required to be comparable for equality.
   concept bool WeakInputIterator@\newtxt{() \{}\oldtxt{ =}@
     @\newtxt{return}@ WeakIterator<I>@\newtxt{()}@ &&
       Readable<I>@\newtxt{()}@ &&
-      requires(I i) {
+      requires(I i@\newtxt{, const I ci}@) {
         typename IteratorCategory<I>;
-        { i++ } -> Readable;
+        { i++ } -> Readable; @\newtxt{// not equality preserving}@
         @\newtxt{requires Same<ValueType<I>, ValueType<decltype(i++)>{}>();}@
         requires Derived<IteratorCategory<I>, weak_input_iterator_tag>@\newtxt{()}@;
+        @\newtxt{\{ *ci \} -> const ValueType<I>\&;}@
       };
   @\newtxt{\}}@
 \end{codeblock}
@@ -703,7 +702,7 @@ The \tcode{InputIterator} concept is a refinement of \tcode{Iterator}~(\ref{iter
 
 \pnum
 \enternote
-For input iterators,
+\oldoldtxt{For input iterators}\newtxt{Since \tcode{InputIterator} is only \tcode{WeaklyIncrementable}},
 \tcode{a == b}
 does not imply
 \tcode{++a == ++b}.
@@ -712,7 +711,7 @@ Algorithms on input iterators should never attempt to pass through the same iter
 They should be
 \term{single pass}
 algorithms.
-Value type T is not required to be a \oldoldtxt{\tcode{CopyAssignable}} \newtxt{\tcode{Copyable}}
+\oldoldtxt{Value type T}\newtxt{\tcode{ValueType<I>}} is not required to be a \oldoldtxt{\tcode{CopyAssignable}}\newtxt{\tcode{Copyable}}
 type (\removed{Table}~\ref{concepts.lib.object.copyable}). These algorithms can be used with
 istreams as the source of the input data through the \tcode{istream_iterator} class template.
 \exitnote
@@ -832,8 +831,8 @@ Two dereferenceable iterators \tcode{a} and \tcode{b} of type \tcode{X} offer th
 
 \begin{itemize}
 \item \tcode{a == b} implies \tcode{++a == ++b} and
-\item \tcode{X} is a pointer type or the expression
-\tcode{(void)++X(a), *a} is equivalent to the expression \tcode{*a}.
+\item \oldoldtxt{\tcode{X} is a pointer type or t}\newtxt{T}he expression
+\tcode{\oldoldtxt{(void)++X(a)}\newtxt{([](X x)\{++x;\}(a)}, *a\newtxt{)}} is equivalent to the expression \tcode{*a}.
 \end{itemize}
 
 \pnum
@@ -842,11 +841,11 @@ The requirement that
 \tcode{a == b}
 implies
 \tcode{++a == ++b}
-(which is not true for input and output iterators)
-and the removal of the restrictions on the number of the assignments through
+(which is not true for \oldoldtxt{input and output}\newtxt{weaker} iterators)
+and the removal of the restrictions on the number of\oldoldtxt{ the} assignments through
 a mutable iterator
 (which applies to output iterators)
-allows the use of multi-pass one-directional algorithms with forward iterators.
+allow\oldoldtxt{s} the use of multi-pass one-directional algorithms with forward iterators.
 \exitnote
 
 \ednote{Remove Table 109}
@@ -942,7 +941,7 @@ notation via subscripting.
   template <class I>
   concept bool @\xname{MutableIterator}@ = // \expos
     Iterator<I>@\newtxt{()}@ &&
-    requires(I i) {
+    requires(@\newtxt{const }@I i) {
       { *i } -> auto&;
       *i = *i;
     };
@@ -953,16 +952,16 @@ notation via subscripting.
       TotallyOrdered<I>() &&
       Derived<IteratorCategory<I>, random_access_iterator_tag>@\newtxt{()}@ &&
       SizedIteratorRange<I, I>@\newtxt{()}@ && // see below
-      requires (I i, I j, DifferenceType<I> n) {
+      requires (I i, @\newtxt{const }@I j, @\newtxt{const }@DifferenceType<I> n) {
         { i += n } -> Same<I&>;
-        { i + n } -> Same<I>;
-        { n + i } -> Same<I>;
+        { @\oldtxt{i}\newtxt{j}@ + n } -> Same<I>;
+        { n + @\oldtxt{i}\newtxt{j}@ } -> Same<I>;
         { i -= n } -> Same<I&>;
-        { i - n } -> Same<I>;
-        @\newtxt{\{ i[n] \} -> const ValueType<I>\&;}@
+        { @\oldtxt{i}\newtxt{j}@ - n } -> Same<I>;
+        @\newtxt{\{ j[n] \} -> const ValueType<I>\&;}@
       @\newtxt{\} \&\&}@
       (@\newtxt{!}\xname{MutableIterator}@<I> @\oldtxt{?}\newtxt{||}@
-        requires(I i, @\oldtxt{int}\newtxt{DifferenceType<I>}@ n) { i[n] = *i; *i = i[n]; }@\oldtxt{ :}\newtxt{);}@
+        requires(@\newtxt{const }@I i, @\oldtxt{int}\newtxt{const DifferenceType<I>}@ n) { i[n] = *i; *i = i[n]; }@\oldtxt{ :}\newtxt{);}@
         @\oldtxt{requires(I i, int n) \{ \{ i[n] \} -> const ValueType<I>\&; \})}@
       @\oldtxt{\};}@
   @\newtxt{\}}@
@@ -1206,7 +1205,7 @@ of iterators into an ordered sequence (e.g., \tcode{sort}).
 \begin{codeblock}
   template <class I, class R = less<>, class P = identity>
   concept bool Sortable@\newtxt{() \{}\oldtxt{ =}@
-    @\newtxt{return}@ ForwardIterator<I>@\newtxt{()}@ &&
+    @\newtxt{return}\oldtxt{ ForwardIterator<I> \&\&}@
       Permutable<I>@\newtxt{()}@ &&
       IndirectCallableStrictWeakOrder<R, Projected<I, P>>@\newtxt{()}@;
   @\newtxt{\}}@
@@ -1230,7 +1229,7 @@ between them in constant time.
   template <class I, class S>
   concept bool SizedIteratorRange@\newtxt{() \{}\oldtxt{ =}@
     @\newtxt{return}@ Sentinel<S, I>@\newtxt{()}@ &&
-      requires (I i, S j) {
+      requires (@\newtxt{const }@I i, @\newtxt{const }@S j) {
         { i - i } -> DifferenceType<I>;
         { j - j } -> DifferenceType<I>;
         { i - j } -> DifferenceType<I>;
@@ -1468,9 +1467,11 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
   template <InputIterator I1, @\xname{WeakSentinel}@<I1> S1,
             InputIterator I2, @\xname{WeakSentinel}@<I2> S2>
     requires SizedIteratorRange<I1, I1>@\newtxt{()}@ && SizedIteratorRange<I2, I2>@\newtxt{()}@ &&
-      requires (I1 a, I2 b) { {a-b}->DifferenceType<I2>; {b-a}->DifferenceType<I2>; }
-      requires (I1 i, S2 s) { {i-s}->DifferenceType<I2>; {s-i}->DifferenceType<I2>; }
-      requires (I2 i, S1 s) { {i-s}->DifferenceType<I2>; {s-i}->DifferenceType<I2>; }
+      @\newtxt{requires (const I1 i1, const S1 s1, const I2 i2, const S2 s2) \{}@
+        @\oldtxt{requires (I1 a, I2 b) \{ }@{@\oldtxt{a}\newtxt{i1}@-@\oldtxt{b}\newtxt{i2}@}->DifferenceType<I2>; {@\oldtxt{b}\newtxt{i2}@-@\oldtxt{a}\newtxt{i1}@}->DifferenceType<I2>;@\oldtxt{ \}}@
+        @\oldtxt{requires (I1 i, S2 s) \{ }@{@\oldtxt{i}\newtxt{i1}@-s@\newtxt{2}@}->DifferenceType<I2>; {s@\newtxt{2}@-@\oldtxt{i}\newtxt{i1}@}->DifferenceType<I2>;@\oldtxt{ \}}@
+        @\oldtxt{requires (I2 i, S1 s) \{ }@{@\oldtxt{i}\newtxt{i2}@-s@\newtxt{1}@}->DifferenceType<I2>; {s@\newtxt{1}@-@\oldtxt{i}\newtxt{i2}@}->DifferenceType<I2>;@\oldtxt{ \}}@
+      @\newtxt{\}}@
   DifferenceType<I2> operator-(
     const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
 
@@ -1638,7 +1639,7 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
 \begin{addedblock}
 \begin{codeblock}
   template <class C> auto size(const C& c) -> decltype(c.size());
-  template <class T, size_t N> constexpr size_t begin(T (&array)[N]) noexcept;
+  template <class T, size_t N> constexpr size_t @\oldtxt{begin}\newtxt{size}@(T (&array)[N]) noexcept;
   template <class E> size_t size(initializer_list<E> il) noexcept;
 \end{codeblock}
 \end{addedblock}
@@ -4076,7 +4077,7 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
   template<class A, class B>
   concept bool @\xname{WeaklyEqualityComparable}@ =
     EqualityComparable<A>() && EqualityComparable<B>() &&
-    requires(A a, B b) {
+    requires(@\newtxt{const }@A a, @\newtxt{const }@B b) {
       {a==b} -> Boolean;
       {a!=b} -> Boolean;
       {b==a} -> Boolean;
@@ -4139,9 +4140,11 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
   template <InputIterator I1, @\xname{WeakSentinel}@<I1> S1,
             InputIterator I2, @\xname{WeakSentinel}@<I2> S2>
     requires SizedIteratorRange<I1, I1>@\newtxt{()}@ && SizedIteratorRange<I2, I2>@\newtxt{()}@ &&
-      requires (I1 a, I2 b) { {a-b}->DifferenceType<I2>; {b-a}->DifferenceType<I2>; }
-      requires (I1 i, S2 s) { {i-s}->DifferenceType<I2>; {s-i}->DifferenceType<I2>; }
-      requires (I2 i, S1 s) { {i-s}->DifferenceType<I2>; {s-i}->DifferenceType<I2>; }
+      @\newtxt{requires (const I1 i1, const S1 s1, const I2 i2, const S2 s2) \{}@
+        @\oldtxt{requires (I1 a, I2 b) \{ }@{@\oldtxt{a}\newtxt{i1}@-@\oldtxt{b}\newtxt{i2}@}->DifferenceType<I2>; {@\oldtxt{b}\newtxt{i2}@-@\oldtxt{a}\newtxt{i1}@}->DifferenceType<I2>;@\oldtxt{ \}}@
+        @\oldtxt{requires (I1 i, S2 s) \{ }@{@\oldtxt{i}\newtxt{i1}@-s@\newtxt{2}@}->DifferenceType<I2>; {s@\newtxt{2}@-@\oldtxt{i}\newtxt{i1}@}->DifferenceType<I2>;@\oldtxt{ \}}@
+        @\oldtxt{requires (I2 i, S1 s) \{ }@{@\oldtxt{i}\newtxt{i2}@-s@\newtxt{1}@}->DifferenceType<I2>; {s@\newtxt{1}@-@\oldtxt{i}\newtxt{i2}@}->DifferenceType<I2>;@\oldtxt{ \}}@
+      @\newtxt{\}}@
   DifferenceType<I2> operator-(
     const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
 }@\newtxt{\}\}}@
@@ -4358,9 +4361,11 @@ bool operator!=(
 template <InputIterator I1, @\xname{WeakSentinel}@<I1> S1,
           InputIterator I2, @\xname{WeakSentinel}@<I2> S2>
   requires SizedIteratorRange<I1, I1>@\newtxt{()}@ && SizedIteratorRange<I2, I2>@\newtxt{()}@ &&
-    requires (I1 a, I2 b) { {a-b}->DifferenceType<I2>; {b-a}->DifferenceType<I2>; }
-    requires (I1 i, S2 s) { {i-s}->DifferenceType<I2>; {s-i}->DifferenceType<I2>; }
-    requires (I2 i, S1 s) { {i-s}->DifferenceType<I2>; {s-i}->DifferenceType<I2>; }
+    @\newtxt{requires (const I1 i1, const S1 s1, const I2 i2, const S2 s2) \{}@
+      @\oldtxt{requires (I1 a, I2 b) \{ }@{@\oldtxt{a}\newtxt{i1}@-@\oldtxt{b}\newtxt{i2}@}->DifferenceType<I2>; {@\oldtxt{b}\newtxt{i2}@-@\oldtxt{a}\newtxt{i1}@}->DifferenceType<I2>;@\oldtxt{ \}}@
+      @\oldtxt{requires (I1 i, S2 s) \{ }@{@\oldtxt{i}\newtxt{i1}@-s@\newtxt{2}@}->DifferenceType<I2>; {s@\newtxt{2}@-@\oldtxt{i}\newtxt{i1}@}->DifferenceType<I2>;@\oldtxt{ \}}@
+      @\oldtxt{requires (I2 i, S1 s) \{ }@{@\oldtxt{i}\newtxt{i2}@-s@\newtxt{1}@}->DifferenceType<I2>; {s@\newtxt{1}@-@\oldtxt{i}\newtxt{i2}@}->DifferenceType<I2>;@\oldtxt{ \}}@
+    @\newtxt{\}}@
 DifferenceType<I2> operator-(
   const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
 \end{itemdecl}
@@ -6312,8 +6317,10 @@ a weak input range would not require (strongly) incrementable iterators.}
 The \tcode{Range} concept defines the requirements of a type that allows
 iteration over its elements by providing a \tcode{begin} iterator and an
 \tcode{end} iterator or sentinel.
+\enternote Most algorithms requiring this concept simply forward to an
+\tcode{Iterator}-based algorithm by calling \tcode{begin} and \tcode{end}. \exitnote
 
-\begin{codeblock}
+\begin{itemdecl}
 template <class T>
 using IteratorType = decltype(begin(declval<T>()));
 
@@ -6325,16 +6332,30 @@ concept bool Range@\newtxt{() \{}\oldtxt{ =}@
   @\newtxt{return}@ requires(T t) {
     typename IteratorType<T>;
     typename SentinelType<T>;
-    { begin(t) } -> IteratorType<T>;
-    { end(t) } -> SentinelType<T>;
+    { begin(t) } -> @\newtxt{Same<}@IteratorType<T>@\newtxt{>}@; @\newtxt{// not equality preserving}@
+    { end(t) } -> @\newtxt{Same<}@SentinelType<T>@\newtxt{>}@; @\newtxt{// not equality preserving}@
     requires Sentinel<SentinelType<T>, IteratorType<T>>@\newtxt{()}@;
   };
 @\newtxt{\}}@
-\end{codeblock}
+\end{itemdecl}
 
-\tcode{begin} and \tcode{end} are required to be amortized constant time.
-\enternote Most algorithms requiring this concept simply forward to an
-\tcode{Iterator}-based algorithm by calling \tcode{begin} and \tcode{end}. \exitnote
+\begin{itemdescr}
+
+\oldtxt{\tcode{begin} and \tcode{end} are required to be amortized constant time.}
+
+\pnum
+\newtxt{Given an object \tcode{t} of type \tcode{T}, the type \tcode{T} models
+\tcode{Range} if and only if}
+
+\begin{itemize}
+\item \newtxt{Both \tcode{begin(t)} and \tcode{end(t)} are amortized constant time
+and non-modifying. (\tcode{begin(t)} and \tcode{end(t)} do not require
+implicit expression variants.)}
+\item \newtxt{Either \tcode{T} models \tcode{SizedRange}, \tcode{T} does not meet
+the syntactic requirements of \tcode{SizedRange}, or \tcode{is_sized_range<T>::value}
+is \tcode{false}~(\ref{sized.iterables}).}
+\end{itemize}
+\end{itemdescr}
 
 \rSec3[sized.iterables]{Sized ranges}
 
@@ -6348,11 +6369,14 @@ of a \tcode{Range} type that knows its size in constant time with the
 template <class T>
 concept bool @\xname{SizedRangeLike}@ =
   Range<T>@\newtxt{()}@ &&
-  requires(T t) {
+  requires(@\newtxt{const }@T t) {
     { size(t) } -> Integral;
     requires Convertible<decltype(size(t)),
                          DifferenceType<IteratorType<T>>>@\newtxt{()}@;
   };
+
+@\newtxt{template <class R>}@
+@\newtxt{struct is_sized_range;}@
 
 template <class T>
 concept bool SizedRange@\newtxt{() \{}\oldtxt{ =}@
@@ -6361,14 +6385,22 @@ concept bool SizedRange@\newtxt{() \{}\oldtxt{ =}@
 \end{codeblock}
 
 \pnum
+\newtxt{Given an object \tcode{t} of type \tcode{T}, the type \tcode{T} models
+\tcode{SizedRange} if and only if \tcode{size(t)} returns the number of elements
+in \tcode{t}.}
+
+\pnum
 For any type \tcode{T}, \tcode{is_sized_range<T>} derives from
 \tcode{true_type} if \tcode{T} \oldtxt{models}\newtxt{meets the syntactic requirements of} \tcode{\xname{SizedRangeLike}},
 and \tcode{false_type} otherwise.
 
 \pnum
-Users are free to specialize \tcode{is_sized_range}. \enternote Users
-may want to specialize \tcode{is_sized_range} to override the default in the
-case of accidental conformance.\exitnote
+Users are free to specialize \tcode{is_sized_range}.
+\enternote \newtxt{As indicated in the requirements for the \tcode{Range}
+concept above,} users \oldtxt{may want to}\newtxt{must} specialize
+\tcode{is_sized_range} \newtxt{so that its member \tcode{value} is \tcode{false}}
+to override the default in the case of accidental \newtxt{syntactic}
+conformance. \exitnote
 
 \pnum
 \enternote A possible implementation for \tcode{is_sized_range} is given below:
@@ -6407,6 +6439,11 @@ container copies the elements, which cannot be done in constant time.
 \exitexample
 
 \begin{codeblock}
+@\newtxt{template <class T>}@
+@\newtxt{struct is_view;}@
+
+@\newtxt{struct view_base \{ \};}@
+
 template <class T>
 concept bool View@\newtxt{() \{}\oldtxt{ =}@
   @\newtxt{return}@ Range<T>@\newtxt{()}@ && Semiregular<T>@\newtxt{()}@ && is_view<T>::value;
@@ -6435,8 +6472,6 @@ is false. \enternote Deep \tcode{const}-ness implies element ownership, whereas 
 Below is a possible implementation of the \tcode{is_view} trait.
 
 \begin{codeblock}
-struct view_base { };
-
 // \expos
 template <class T>
 concept bool @\xname{ContainerLike}@ =
