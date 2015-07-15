@@ -728,15 +728,26 @@ types, or a reference type that can be bound to those arguments.}
 
 \indexlibrary{\idxcode{Constructible}}%
 \begin{itemdecl}
+@\newtxt{template <class T, class ...Args>}@
+@\newtxt{concept bool \xname{ConstructibleObject} = // exposition only}@
+  @\newtxt{Destructible<T>() \&\& requires (Args\&\& ...args) \{}@
+    @\newtxt{T\{forward<Args>(args)...\} // not equality preserving}@
+    @\newtxt{new T\{forward<Args>(args)...\} // not equality preserving}@
+  @\newtxt{\};}@
+
+@\newtxt{template <class T, class ...Args>}@
+@\newtxt{concept bool \xname{BindableReference} = // exposition only}@
+  @\newtxt{is_reference<T>::value \&\& requires (Args\&\& ...args) \{}@
+    @\newtxt{T(forward<Args>(args)...)}@
+  @\newtxt{\};}@
+
 template <class T, class ...Args>
 concept bool Constructible@\newtxt{() \{}\oldtxt{ =}@
-  @\newtxt{return}@ requires (@\oldtxt{ }@Args@\newtxt{\&\&}@...args@\oldtxt{ }@) {
-    T{forward<Args>(args)...}; @\newtxt{// not equality preserving}@
-  }@\oldtxt{;}\newtxt{ \&\&}@
-  @\newtxt{(is_reference<T>::value ||}@
-    @\newtxt{(Destructible<T>() \&\& requires (Args\&\&...args) \{}@
-      @\newtxt{new T\{forward<Args>(args)...\}; // not equality preserving}@
-    @\newtxt{\}));}@
+  @\newtxt{return \xname{ConstructibleObject}<T, Args...> ||}@
+    @\newtxt{\xname{BindableReference}<T, Args...>;}@
+  @\oldtxt{requires ( Args...args ) \{}@
+    @\oldtxt{T\{forward<Args>(args)...\};}@
+  @\oldtxt{\};}@
 @\newtxt{\}}@
 \end{itemdecl}
 
