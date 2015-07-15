@@ -56,7 +56,7 @@ concept bool Function =
     { f.~F() } noexcept;   // oops, Destructible<T> already requires this
     { new F } -> Same<F*>; // oops, mistakenly requires default construction
     { delete new F };
-    { f(forward<Args>(args)...) } -> Same<ResultType<F, Args...>{}>;
+    { f(std::forward<Args>(args)...) } -> Same<ResultType<F, Args...>>;
   };
 \end{codeblock}
 
@@ -124,12 +124,12 @@ template <class T>
 concept bool Movable() {
   return requires (T a, T b, const T t) {
     // requirements for move construction
-    T{move(a)};
+    T{std::move(a)};
     // requirements for move assignment
-    { a = move(b) } -> Same<T&>;
+    { a = std::move(b) } -> Same<T&>;
     // requirements for move (de-) allocation
-    { new T{move(a)} } -> Same<T*>;
-    delete new T{move(a)};
+    { new T{std::move(a)} } -> Same<T*>;
+    delete new T{std::move(a)};
 
     // general object requirements that are
     // here because Movable is the base of the
@@ -227,11 +227,11 @@ object types - namely addressability.
 template <class T, class ...Args>
 concept bool Constructible() {
   return requires (Args&&...args) {
-    T{forward<Args>(args)...};
+    T{std::forward<Args>(args)...};
   } &&
   (is_reference<T>::value ||
     (Destructible<T>() && requires (Args&&...args) {
-      new T{forward<Args>(args)...};
+      new T{std::forward<Args>(args)...};
     }));
 }
 \end{codeblock}
@@ -263,7 +263,7 @@ template <class T>
 concept bool MoveConstructible() {
   return Constructible<T, remove_cv_t<T>&&>() &&
     requires (remove_cv_t<T> t) {
-      new T[1]{move(t)};
+      new T[1]{std::move(t)};
     };
 }
 \end{codeblock}
@@ -366,7 +366,7 @@ concept bool Function() {
   return CopyConstructible<T>() &&
     requires (F f, Args&&...args) {
       typename ResultType<F, Args...>;
-      { f(forward<Args>(args)...) } -> Same<ResultType<F, Args...>{}>;
+      { f(std::forward<Args>(args)...) } -> Same<ResultType<F, Args...>>;
     };
 }
 \end{codeblock}

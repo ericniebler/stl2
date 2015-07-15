@@ -13,16 +13,16 @@ simplicity).}
 \pnum
 This Clause describes library components that \Cpp programs may use to perform
 compile-time validation of template parameters and perform function dispatch
-based on properties of types. \newtxt{The purpose of these concepts is to establish
-a foundation for equational reasoning in programs.}
+based on properties of types. The purpose of these concepts is to establish
+a foundation for equational reasoning in programs.
 
 \pnum
-The following subclauses describe core language concepts, \oldtxt{foundational concepts,}
-\newtxt{comparison concepts, object concepts, and} function concepts\oldtxt{, iterator concepts,
-and rearrangement concepts} as summarized in Table~\ref{tab:concepts.lib.summary}.
+The following subclauses describe core language concepts,
+comparison concepts, object concepts, and function concepts
+as summarized in Table~\ref{tab:concepts.lib.summary}.
 
 \begin{libsumtab}{Fundamental concepts library summary}{tab:concepts.lib.summary}
-\ref{concepts.lib.corelang}   & Core language concepts         &   \tcode{<\newtxt{experimental/ranges_v1/}concepts>}      \\
+\ref{concepts.lib.corelang}   & Core language concepts         &   \tcode{<experimental/ranges_v1/concepts>}      \\
 \ref{concepts.lib.comparison} & Comparison concepts            &                      \\
 \ref{concepts.lib.object}     & Object concepts                &                      \\
 \ref{concepts.lib.functions}  & Function concepts              &                      \\
@@ -30,45 +30,52 @@ and rearrangement concepts} as summarized in Table~\ref{tab:concepts.lib.summary
 
 \pnum
 In this Clause, \tcode{CamelCase} identifiers ending with ``\tcode{Type}'' denote
-template aliases.
+\oldtxt{template aliases}\newtxt{alias templates}.
 
-\newtxt{
 \pnum
 The concepts in this Clause are defined in the namespace \tcode{std::experimental::ranges_v1}.
-}
 
-{\color{newclr}
 \rSec2[concepts.lib.general.equality]{Equality Preservation}
 
 \pnum
-An expression is \techterm{equality preserving} if, given equal inputs, the
-expression results in equal outputs. \enternote Not all input values must be valid
-for a given expression, e.g., for integers \tcode{a} and \tcode{b}, the expression
-\tcode{a / b} is not well-defined when \tcode{b} is \tcode{0}. This does not
-preclude the expression \tcode{a / b} being equality preserving. \exitnote
-}
+An expression is \techterm{equality preserving} if, given equal inputs, the expression results in
+equal outputs. \newtxt{The inputs to an expression is the set of the expression's operands. The
+output of an expression is the expression's result and all operands modified by the expression.}
+\enternote Not all input values must be valid for a given expression; e.g., for integers \tcode{a}
+and \tcode{b}, the expression \tcode{a / b} is not well-defined when \tcode{b} is \tcode{0}. This
+does not preclude the expression \tcode{a / b} being equality preserving. \exitnote
 
 \pnum
-A \techterm{regular function} is \newtxt{a function that is equality preserving,
-i.e.,} a function that returns equal output when passed equal input. A regular
+A \techterm{regular function} is a function that is equality preserving,
+i.e., a function that returns equal output when passed equal input. A regular
 function that returns a value may copy or move the returned object, or may return a
-reference. \newtxt{\enternote Regular functions may have side effects. \exitnote}
-\oldtxt{Regular functions are allowed to have side effects and preconditions that,
-when violated, make the function non-regular. \enternote A function that returns
-\tcode{void} is necessarily a regular function. \exitnote}
+reference. \enternote Regular functions may have side effects. \exitnote
 
-{\color{newclr}
+\pnum
+Expressions required by this specification to be equality preserving are
+further required to be stable: two evaluations of such an expression with the same
+input objects must have \oldtxt{the same results}\newtxt{equal outputs} absent any
+\newtxt{explicit} intervening modification of those input objects.
+\enternote This requirement allows generic code to reason
+about the current values of objects based on knowledge of the prior values as
+observed via equality preserving expressions. It effectively forbids spontaneous
+changes to an object, changes to an object from another thread of execution, changes
+to an object as side effects of non-modifying expressions, and changes to an object as
+side effects of modifying a distinct object if those changes could be observable
+to a library function via an equality preserving expression that is required to be
+valid for that object. \exitnote
+
 \pnum
 Expressions declared in a \techterm{requires-expression} in this document are
 required to be equality preserving, except for those annotated with the comment
-``not equality preserving.'' An expression so annotated may be equality preserving,
-but is not required to be so.
+``not \newtxt{required to be} equality preserving.'' An expression so annotated
+may be equality preserving, but is not required to be so.
 
 \pnum
 An expression that may alter the value of one or more of its inputs in a manner
 observable to equality preserving expressions is said to modify those inputs.
 This document uses a notational convention to specify which expressions declared
-in a \techterm{requires-expression} modify what inputs: except where otherwise
+in a \techterm{requires-expression} modify \oldtxt{what}\newtxt{which} inputs: except where otherwise
 specified, an expression operand that is a non-constant lvalue or rvalue may be
 modified. Operands that are constant lvalues or rvalues must not be modified.
 
@@ -78,8 +85,12 @@ for some constant lvalue operand, additional variants of that expression that ac
 a non-constant lvalue or (possibly constant) rvalue for the given operand are also
 required except where such an expression variant is explicitly required with
 differing semantics. Such implicit expression variants must meet the semantic
-requirements of the declared expression.  The extent to which an implementation
+requirements of the declared expression. The extent to which an implementation
 validates the syntax of these implicit expression variants is unspecified.
+
+\ednote{The motivation for this relaxation of syntactic checking is to avoid an exponential
+blow-up in the concept definitions and in compile times that would be required to check every
+permutation of cv-qualification and value category for expression operands.}
 
 \enterexample
 \begin{codeblock}
@@ -87,11 +98,12 @@ template <class T>
 concept bool C() {
   return requires (T a, T b, const T c, const T d) {
     c == d;       // \#1
-    a = move(b);  // \#2
+    a = std::move(b);  // \#2
     a = c;        // \#3
   };
 }
 \end{codeblock}
+
 Expression \#1 does not modify either of its operands, \#2 modifies both of its
 operands, and \#3 modifies only its first operand \tcode{a}.
 
@@ -113,18 +125,21 @@ non-constant rvalue second operand, since expression \#2 already specifies exact
 such an expression explicitly.
 \exitexample
 
-\pnum
-Expressions required by this specification to be equality preserving are
-further required to be stable: two evaluations of such an expression with the same
-input objects must have the same results absent any intervening modification
-of those input objects. \enternote This requirement allows generic code to reason
-about the current values of objects based on knowledge of the prior values as
-observed via equality preserving expressions. It effectively forbids spontaneous
-changes to an object, changes to an object from another thread of execution, changes
-to an object as side effects of non-modifying expressions, and changes to an object as
-side effects of modifying a distinct object if those changes could be observable
-to a library function via an equality preserving expression that is required to be
-valid for that object. \exitnote
+{\color{newclr}
+\enterexample
+The following type \tcode{T} satisfies the explicitly stated syntactic requirements
+of concept \tcode{C} above but does not satisfy the additional implicit requirements:
+
+\begin{codeblock}
+struct T {
+  bool operator==(T const &) const { return true; }
+  bool operator==(T &) = delete;
+};
+\end{codeblock}
+
+Since \tcode{T} fails to satisfy the implicit requirements of \tcode{C}, \tcode{C<T>()} is not
+satisfied in principle. Whether it is satisfied in practice is undefined.
+\exitexample
 }
 
 \rSec1[concepts.lib.corelang]{Core language concepts}
@@ -141,61 +156,62 @@ fundamental type properties.
 \indexlibrary{\idxcode{Same}}%
 \begin{itemdecl}
 template <class T, class U>
-concept bool Same@\newtxt{() \{}\oldtxt{ =}@
-  @\newtxt{return}@ @\seebelow@;
-@\newtxt{\}}@
+concept bool Same() {
+  return @\seebelow@;
+}
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\tcode{Same<T, U>} is an alias for \tcode{true} when \tcode{T} and \tcode{U}
-denote the same type after the elimination of aliases; otherwise, it is an alias for
-\tcode{false}.
+\tcode{Same<T, U>\newtxt{()}} is \oldtxt{an alias for \tcode{true} when}\newtxt{satisfied if and
+only if} \tcode{T} and \tcode{U} denote the same type\oldtxt{ after the elimination of aliases;
+otherwise, it is an alias for \tcode{false}}.
 
 \pnum
-\remarks For the purposes of constraint checking, \tcode{Same<T, U>} implies
-\tcode{Same<U, T>}.
+\remarks For the purposes of constraint checking, \tcode{Same<T, U>\newtxt{()}} implies
+\tcode{Same<U, T>\newtxt{()}}.
 \end{itemdescr}
 
-\rSec2[concepts.lib.corelang.derived]{Concept Derived}
+\rSec2[concepts.lib.corelang.derived]{Concept DerivedFrom}
 
-\indexlibrary{\idxcode{Derived}}%
+\indexlibrary{\idxcode{DerivedFrom}}%
 \begin{itemdecl}
 template <class T, class U>
-concept bool Derived@\newtxt{() \{}\oldtxt{ =}@
-  @\newtxt{return}@ @\seebelow@;
-@\newtxt{\}}@
+concept bool Derived@\newtxt{From}@() {
+  return @\seebelow@;
+}
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\tcode{Derived<T, U>} has the same value as \tcode{is_base_of<U, T>::value}.
+\tcode{Derived\newtxt{From}<T, U>\newtxt{()}} \oldtxt{has the same value as}\newtxt{is satisfied if and only if}
+\tcode{is_base_of<U, T>::value}\newtxt{ is \tcode{true}}.
 \end{itemdescr}
 
-\rSec2[concepts.lib.corelang.convertible]{Concept Convertible}
+\rSec2[concepts.lib.corelang.convertibleto]{Concept ConvertibleTo}
 
-\indexlibrary{\idxcode{Convertible}}%
+\indexlibrary{\idxcode{ConvertibleTo}}%
 \begin{itemdecl}
 template <class T, class U>
-concept bool Convertible@\newtxt{() \{}\oldtxt{ =}@
-  @\newtxt{return}@ @\seebelow@;
-@\newtxt{\}}@
+concept bool Convertible@\newtxt{To}@() {
+  return @\seebelow@;
+}
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\tcode{Convertible<T, U>} has the same value as \tcode{is_convertible<T, U>::value}.
+\tcode{Convertible\newtxt{To}<T, U>\newtxt{()}} \oldtxt{has the same value as}\newtxt{is satisfied
+if and only if} \tcode{is_convertible<T, U>::value}\newtxt{ is \tcode{true}}.
 \end{itemdescr}
 
 \rSec2[concepts.lib.corelang.common]{Concept Common}
 
 \pnum
-If \tcode{T} and \tcode{U} can both be explicitly converted to a third type,
+If \tcode{T} and \tcode{U} can both be explicitly converted to \oldtxt{a}\newtxt{some} third type,
 \tcode{C}, then \tcode{T} and \tcode{U} share a \techterm{common type},
 \tcode{C}. \enternote \tcode{C} could be the same as \tcode{T}, or \tcode{U}, or
-it could be a different type. \newtxt{\tcode{C} may not be unique.}\exitnote
-\oldtxt{This notion is encapsulated by the \tcode{CommonType} alias and the
-\tcode{Common} concept.}\newtxt{Informally, two types \tcode{T} and \tcode{U}
+it could be a different type. \tcode{C} may not be unique.\exitnote
+\oldtxt{Informally, two types \tcode{T} and \tcode{U}
 model the \tcode{Common} concept when the type alias \tcode{CommonType<T, U>}
 is well-formed and names a common type of \tcode{T} and \tcode{U}.}
 
@@ -205,38 +221,26 @@ template <class T, class U>
 using CommonType = common_type_t<T, U>;
 
 template <class T, class U>
-concept bool Common@\newtxt{() \{}\oldtxt{ =}@
-  @\newtxt{return}@ requires (T t, U u) {
+concept bool Common() {
+  return requires (T t, U u) {
     typename CommonType<T, U>;
     typename CommonType<U, T>;
-    requires Same<CommonType<U, T>, CommonType<T, U>>@\newtxt{()}@;
-    CommonType<T, U>(forward<T>(t));
-    CommonType<T, U>(forward<U>(u));
+    requires Same<CommonType<U, T>, CommonType<T, U>>();
+    CommonType<T, U>(std::forward<T>(t));
+    CommonType<T, U>(std::forward<U>(u));
   };
-@\newtxt{\}}@
+}
 \end{itemdecl}
 
 \begin{itemdescr}
-\oldtxt{
-\pnum
-Two types \tcode{T} and \tcode{U} model the \tcode{Common} concept when the type
-alias \tcode{CommonType<T, U>} is well-formed, and when objects of types \tcode{T}
-and \tcode{U} can be explicitly converted to the common type.
-}
-
 \pnum
 Let \tcode{C} be \tcode{CommonType<T, U>}. Let \tcode{t1} and \tcode{t2} be objects
-of type \tcode{T}\newtxt{, and \tcode{u1} and \tcode{u2} be objects of type \tcode{U}}.
-\oldtxt{ \tcode{t1} equals \tcode{t2} if and only if
-\tcode{C(t1)} equals
-\tcode{C(t2)}. Let \tcode{u1} and \tcode{u2} be
-object of type \tcode{U}. \tcode{u1} equals \tcode{u2} if and only if
-\tcode{C(u1)} equals
-\tcode{C(u2)}.}
-\newtxt{The types \tcode{T} and \tcode{U} model \tcode{Common} if and only if}
+of type \tcode{T}, and \tcode{u1} and \tcode{u2} be objects of type \tcode{U}.
+\oldtxt{The types \tcode{T} and \tcode{U} model }\tcode{Common\newtxt{<T, U()>}}
+\newtxt{is satisfied} if and only if
 \begin{itemize}
-\item \newtxt{\tcode{C(t1)} equals \tcode{C(t2)} if and only if \tcode{t1} equals \tcode{t2}.}
-\item \newtxt{\tcode{C(u1)} equals \tcode{C(u2)} if and only if \tcode{u1} equals \tcode{u2}.}
+\item \tcode{C(t1)} equals \tcode{C(t2)} if and only if \tcode{t1} equals \tcode{t2}.
+\item \tcode{C(u1)} equals \tcode{C(u2)} if and only if \tcode{u1} equals \tcode{u2}.
 \end{itemize}
 
 \pnum
@@ -267,8 +271,8 @@ concept bool SignedIntegral@\newtxt{() \{}\oldtxt{ =}@
 
 \begin{itemdescr}
 \pnum
-\enternote \tcode{SignedIntegral<T>} may be true even for types that are not signed
-integral types~(\cxxref{basic.fundamental}).
+\enternote \tcode{SignedIntegral<T>\newtxt{()}} may be \oldtxt{true}\newtxt{satisfied} even for
+types that are not signed integral types~(\cxxref{basic.fundamental}).
 \exitnote
 \end{itemdescr}
 
@@ -284,8 +288,8 @@ concept bool UnsignedIntegral@\newtxt{() \{}\oldtxt{ =}@
 
 \begin{itemdescr}
 \pnum
-\enternote \tcode{UnsignedIntegral<T>} may be true even for types that are not unsigned
-integral types~(\cxxref{basic.fundamental}).
+\enternote \tcode{UnsignedIntegral<T>\newtxt{()}} may be \oldtxt{true}\newtxt{satisfied} even for
+types that are not unsigned integral types~(\cxxref{basic.fundamental}).
 \exitnote
 \end{itemdescr}
 
@@ -296,7 +300,7 @@ integral types~(\cxxref{basic.fundamental}).
 template <class T, class U = T>
 concept bool Assignable@\newtxt{() \{}\oldtxt{ =}@
   @\newtxt{return}@ requires(T@\newtxt{\&\&}@ a, U@\newtxt{\&\&}@ b) {
-    { forward<T>(a) = forward<U>(b) } -> Same<T&>;
+    { std::forward<T>(a) = std::forward<U>(b) } -> Same<T&>;
   };
 @\newtxt{\}}@
 \end{itemdecl}
@@ -305,10 +309,11 @@ concept bool Assignable@\newtxt{() \{}\oldtxt{ =}@
 \pnum
 Let \tcode{t} be an lvalue of type \tcode{T}. If \tcode{U} is an \newtxt{lvalue} reference type, let \tcode{v}
 be a lvalue of type \tcode{U}; otherwise, let \tcode{v} be an rvalue of type \tcode{U}.
-Then types \tcode{T} and \tcode{U} model \tcode{Assignable} if and only if
+Then \oldtxt{types \tcode{T} and \tcode{U} model} \tcode{Assignable\newtxt{<T, U>()}}
+\newtxt{is satisfied} if and only if
 
 \begin{itemize}
-\item \tcode{\oldtxt{(}addressof(t = v) == addressof(t)\oldtxt{) != false)}}.
+\item \tcode{\oldtxt{(}std::addressof(t = v) == std::addressof(t)\oldtxt{) != false)}}.
 \end{itemize}
 \end{itemdescr}
 
@@ -321,7 +326,7 @@ Then types \tcode{T} and \tcode{U} model \tcode{Assignable} if and only if
 template <class T>
 concept bool Swappable() {
   return requires(T t, T u) {
-    swap(forward<T>(t), forward<T>(u));
+    swap(std::forward<T>(t), std::forward<T>(u));
   };
 }
 
@@ -331,8 +336,8 @@ concept bool Swappable() {
     Swappable<U>() &&
     Common<T, U>@\newtxt{()}@ &&
     requires(T t, U u) {
-      swap(forward<T>(t), forward<U>(u));
-      swap(forward<U>(u), forward<T>(t));
+      swap(std::forward<T>(t), std::forward<U>(u));
+      swap(std::forward<U>(u), std::forward<T>(t));
     };
 }
 \end{itemdecl}
@@ -347,8 +352,9 @@ denote an expression of type \tcode{U}.
 
 \pnum
 An object \tcode{t} is \defn{swappable with} an object \tcode{u} if and only if
-types \tcode{T} and \tcode{U} model \tcode{Swappable}. Types \tcode{T} and \tcode{U}
-model \tcode{Swappable} if and only if:
+\oldtxt{types \tcode{T} and \tcode{U} model} \tcode{Swappable\newtxt{<T, U>()}}
+\newtxt{is satisfied}. \oldtxt{Types \tcode{T} and \tcode{U} model}
+\tcode{Swappable\newtxt{<T, U>()}} \newtxt{is satisfied} if and only if:
 
 \begin{itemize}
 \item the requires clause above is evaluated in the context described below, and
@@ -471,8 +477,8 @@ concept bool Boolean@\newtxt{() \{}\oldtxt{ =}@
 \end{itemdecl}
 
 \pnum
-Given values \tcode{b1} and \tcode{b2} of type \tcode{B}, then type \tcode{B} models
-\tcode{Boolean} if and only if
+Given values \tcode{b1} and \tcode{b2} of type \tcode{B}, then \oldtxt{type \tcode{B} models}
+\tcode{Boolean\newtxt{<B>()}} \newtxt{is satisfied} if and only if
 
 \begin{itemize}
 \item \tcode{bool(b1) == [](bool x) \{ return x; \}(b1)}.
@@ -511,7 +517,8 @@ concept bool EqualityComparable() {
 \begin{itemdescr}
 \pnum
 Let \tcode{a}\oldtxt{,} \newtxt{and} \tcode{b}\oldtxt{, and \tcode{c}} be well-formed objects
-of type \tcode{T}. Then type \tcode{T} models \tcode{EqualityComparable} if and only if
+of type \tcode{T}. \oldtxt{Then type \tcode{T} models} \tcode{EqualityComparable\newtxt{<T>()}}
+\newtxt{is satisfied} if and only if
 
 \begin{itemize}
 \item \tcode{\newtxt{bool}(a == a)\oldtxt{ != false}}.
@@ -529,7 +536,7 @@ implies that \tcode{==} is transitive and symmetric. \exitnote}
 \pnum
 \enternote Not all arguments will be well-formed for a given type. For example, $NaN$ is not a
 well-formed floating point value, and many types' moved-from states are not well-formed. This
-does not mean that the type does not model \tcode{EqualityComparable}.\exitnote
+does not mean that the type does not \oldtxt{model}\newtxt{satisfy} \tcode{EqualityComparable}.\exitnote
 \end{itemdescr}
 
 \begin{itemdecl}
@@ -551,8 +558,8 @@ concept bool EqualityComparable() {
 \begin{itemdescr}
 \pnum
 Let \tcode{a} be an object of type \tcode{T}, \tcode{b} be an object of type \tcode{U}, and \tcode{C} be
-\tcode{CommonType<T, U>}. Then types \tcode{T} and \tcode{U} model \tcode{EqualityComparable} if
-and only if
+\tcode{CommonType<T, U>}. Then \oldtxt{types \tcode{T} and \tcode{U} model}
+\tcode{EqualityComparable\newtxt{<T, U>()}} \newtxt{is satisfied} if and only if
 
 \begin{itemize}
 \item \newtxt{\tcode{bool(a == b) == bool(C(a) == C(b))}.}
@@ -592,8 +599,8 @@ concept bool TotallyOrdered() {
 
 \begin{itemdescr}
 \pnum
-Let \tcode{a}, \tcode{b}, and \tcode{c} be well-formed objects of type \tcode{T}. Then type
-\tcode{T} models \tcode{TotallyOrdered} if and only if
+Let \tcode{a}, \tcode{b}, and \tcode{c} be well-formed objects of type \tcode{T}. Then \oldtxt{type
+\tcode{T} models} \tcode{TotallyOrdered\newtxt{<T>()}} \newtxt{is satisfied} if and only if
 
 \begin{itemize}
 \item \newtxt{Exactly one of \tcode{bool(a < b)}, \tcode{bool(b < a)}, or
@@ -615,7 +622,7 @@ Let \tcode{a}, \tcode{b}, and \tcode{c} be well-formed objects of type \tcode{T}
 \pnum
 \enternote Not all arguments will be well-formed for a given type. For example, $NaN$ is not a
 well-formed floating point value, and many types' moved-from states are not well-formed. This
-does not mean that the type does not model \tcode{TotallyOrdered}.\exitnote
+does not mean that the type does not \oldtxt{model}\newtxt{satisfy} \tcode{TotallyOrdered}.\exitnote
 \end{itemdescr}
 
 \begin{itemdecl}
@@ -641,9 +648,10 @@ concept bool TotallyOrdered() {
 
 \begin{itemdescr}
 \pnum
-Let \tcode{\oldtxt{a}\newtxt{t}} be an object of type T, \tcode{\oldtxt{b}\newtxt{u}} be an object of type \tcode{U}, and \tcode{C} be
-\tcode{CommonType<T, U>}. Then types \tcode{T} and \tcode{U} model \oldtxt{\tcode{EqualityComparable}}
-\newtxt{\tcode{TotallyOrdered}} if and only if
+Let \tcode{\oldtxt{a}\newtxt{t}} be an object of type T, \tcode{\oldtxt{b}\newtxt{u}} be an object
+of type \tcode{U}, and \tcode{C} be \tcode{CommonType<T, U>}. Then \oldtxt{types \tcode{T} and
+\tcode{U} model} \oldtxt{\tcode{EqualityComparable}}
+\newtxt{\tcode{TotallyOrdered<T,U>()>} is satisfied} if and only if
 
 \begin{itemize}
 \item \newtxt{\tcode{bool(t < u) == bool(C(t) < C(u))}.}
@@ -689,8 +697,8 @@ template <class T>
 concept bool Destructible@\newtxt{() \{}\oldtxt{ =}@
   @\newtxt{return}@ requires (T t@\newtxt{, const T ct, T* p}@) {
     { t.@$\sim$@T() } noexcept;
-    @\newtxt{\{ \&t \} -> Same<T*>; // not equality preserving}@
-    @\newtxt{\{ \&ct \} -> Same<const T*>; // not equality preserving}@
+    @\newtxt{\{ \&t \} -> Same<T*>; // not \newtxt{required to be} equality preserving}@
+    @\newtxt{\{ \&ct \} -> Same<const T*>; // not \newtxt{required to be} equality preserving}@
     @\newtxt{delete p;}@
     @\newtxt{delete[] p;}@
   };
@@ -707,8 +715,9 @@ reference or array type. We need to decide whether we want \tcode{Destructible<i
 \newtxt{The expression requirement \tcode{\&ct} does not require implicit expression variants.}
 
 \pnum
-\oldtxt{A}\newtxt{Given a (possibly \tcode{const}) lvalue \tcode{t} of type \tcode{T} and pointer \tcode{p}
-of type \tcode{T*}, the} type \tcode{T} models \tcode{Destructible} if and only if
+\oldtxt{A}\newtxt{Given a (possibly \tcode{const}) lvalue \tcode{t} of type \tcode{T} and pointer
+\tcode{p} of type \tcode{T*},} \oldtxt{type \tcode{T} models} \tcode{Destructible\newtxt{<T>()}}
+\newtxt{is satisfied} if and only if
 
 \begin{itemize}
 \item After \newtxt{evaluating} the expression \tcode{\oldtxt{u}\newtxt{t}.$\sim$T()},
@@ -731,11 +740,11 @@ types, or a reference type that can be bound to those arguments.}
 template <class T, class ...Args>
 concept bool Constructible@\newtxt{() \{}\oldtxt{ =}@
   @\newtxt{return}@ requires (@\oldtxt{ }@Args@\newtxt{\&\&}@...args@\oldtxt{ }@) {
-    T{forward<Args>(args)...}; @\newtxt{// not equality preserving}@
+    T{std::forward<Args>(args)...}; @\newtxt{// not \newtxt{required to be} equality preserving}@
   }@\oldtxt{;}\newtxt{ \&\&}@
   @\newtxt{(is_reference<T>::value ||}@
     @\newtxt{(Destructible<T>() \&\& requires (Args\&\&...args) \{}@
-      @\newtxt{new T\{forward<Args>(args)...\}; // not equality preserving}@
+      @\newtxt{new T\{std::forward<Args>(args)...\}; // not \newtxt{required to be} equality preserving}@
     @\newtxt{\}));}@
 @\newtxt{\}}@
 \end{itemdecl}
@@ -752,7 +761,7 @@ template <class T>
 concept bool DefaultConstructible@\newtxt{() \{} \oldtxt{=}@
   @\newtxt{return Constructible<T>() \&\&}@
     requires @\newtxt{(const size_t n)}@ {
-      @\newtxt{new}@ T@\newtxt{[n]}@{}; @\newtxt{// not equality preserving}@
+      @\newtxt{new}@ T@\newtxt{[n]}@{}; @\newtxt{// not \newtxt{required to be} equality preserving}@
     };
 @\newtxt{\}}@
 \end{itemdecl}
@@ -772,8 +781,8 @@ template <class T>
 concept bool MoveConstructible@\newtxt{() \{}\oldtxt{ =}@
   @\newtxt{return Constructible<T, remove_cv_t<T>\&\&>() \&\&}@
     requires (@\oldtxt{T} \newtxt{remove_cv_t<T>}@ t) {
-      @\newtxt{[](T)\{\}(move(t));}@
-      @\oldtxt{T(move(t));}@
+      @\newtxt{[](T)\{\}(std::move(t));}@
+      @\oldtxt{T(std::move(t));}@
     };
 @\newtxt{\}}@
 \end{itemdecl}
@@ -781,7 +790,8 @@ concept bool MoveConstructible@\newtxt{() \{}\oldtxt{ =}@
 \begin{itemdescr}
 \pnum
 Let \tcode{rv} be an rvalue of type \oldtxt{\tcode{T}} \newtxt{\tcode{remove_cv_t<T>}}.
-Then a type \tcode{T} models \tcode{MoveConstructible} if and only if
+Then \oldtxt{a type \tcode{T} models} \tcode{MoveConstructible\newtxt{<T>()}} \newtxt{is satisfied}
+if and only if
 
 \begin{itemize}
 \item After the definition \tcode{T u = rv;}, \tcode{u} is equal to the value of
@@ -797,12 +807,12 @@ in those requirements must work as specified whether \tcode{rv} has been moved
 from or not.\exitnote
 
 \pnum
-\newtxt{\enternote The expression \tcode{[](T)\{\}(move(t))} requires that \tcode{T}
+\newtxt{\enternote The expression \tcode{[](T)\{\}(std::move(t))} requires that \tcode{T}
 can be copy-initialized from an rvalue of type \tcode{remove_cv_t<T>}; the constructor
 selected by overload resolution must be non-explicit. \exitnote}
 
 \ednote{\newtxt{Ideally, \tcode{MoveConstructible} would include an array allocation
-requirement \tcode{new T[1]\{move(t)\}}. This is not currently possible since
+requirement \tcode{new T[1]\{std::move(t)\}}. This is not currently possible since
 [expr.new]/19 requires an accessible default constructor even when all array elements
 are initialized.}}
 \end{itemdescr}
@@ -831,8 +841,8 @@ concept bool CopyConstructible@\newtxt{() \{}\oldtxt{ =}@
 \pnum
 Let \tcode{v} be an lvalue of type (possibly \tcode{const}) \oldtxt{\tcode{T}}
 \newtxt{\tcode{remove_cv_t<T>}} or an rvalue of type \oldtxt{\tcode{const T}}
-\newtxt{\tcode{const remove_cv_t<T>}}. Then a type \tcode{T} models
-\tcode{CopyConstructible} if and only if
+\newtxt{\tcode{const remove_cv_t<T>}}. Then \oldtxt{a type \tcode{T} models}
+\tcode{CopyConstructible\newtxt{<T>()}} \newtxt{is satisfied} if and only if
 
 \begin{itemize}
 \item After the definition \tcode{T u = v;}, \tcode{v} \oldtxt{is unchanged and }is equal
@@ -865,7 +875,7 @@ concept bool @\oldtxt{MoveAssignable =}\newtxt{Movable() \{}@
   @\newtxt{return MoveConstructible<T>() \&\&}@
     @\newtxt{Assignable<T\&, T\&\&>();}@
     @\oldtxt{requires(T a, T b) \{}@
-      @\oldtxt{\{ a = move(b) \} -> Same<T\&>;}@
+      @\oldtxt{\{ a = std::move(b) \} -> Same<T\&>;}@
     @\oldtxt{\};}@
 @\newtxt{\}}@
 \end{itemdecl}
@@ -873,8 +883,8 @@ concept bool @\oldtxt{MoveAssignable =}\newtxt{Movable() \{}@
 \begin{itemdescr}
 \pnum
 Let \tcode{rv} be an rvalue of type \tcode{T}
-and let \tcode{t} be an lvalue of type \tcode{T}. Then type \tcode{T} models
-\tcode{\oldtxt{MoveAssignable}\newtxt{Movable}} if and only if
+and let \tcode{t} be an lvalue of type \tcode{T}. Then \oldtxt{type \tcode{T} models}
+\tcode{\oldtxt{MoveAssignable}\newtxt{Movable<T>()}} \newtxt{is satisfied} if and only if
 
 \begin{itemize}
 \item \oldtxt{\tcode{(addressof(t = rv) == addressof(t)) != false)}.}
@@ -912,8 +922,8 @@ concept bool @\oldtxt{CopyAssignable =}\newtxt{Copyable() \{}@
 \begin{itemdescr}
 \pnum
 Let \tcode{t} be an lvalue of type \tcode{T}, and \tcode{v} be an lvalue of type (possibly
-\tcode{const}) \tcode{T} or an rvalue of type \tcode{const T}. Then type \tcode{T} models
-\tcode{\oldtxt{CopyAssignable}\newtxt{Copyable}} if and only if
+\tcode{const}) \tcode{T} or an rvalue of type \tcode{const T}. Then \oldtxt{type \tcode{T} models}
+\tcode{\oldtxt{CopyAssignable}\newtxt{Copyable<T>()}} \newtxt{is satisfied} if and only if
 
 \begin{itemize}
 \item \oldtxt{\tcode{(addressof(t = v) == addressof(t)) != false)}.}
@@ -958,8 +968,9 @@ concept bool Semiregular@\newtxt{() \{}\oldtxt{ =}@
 \end{itemize}
 
 \pnum
-\enternote The \tcode{Semiregular} concept is modeled by types that \oldtxt{have} behave similarly to
-built-in types like \tcode{int}, except that they may not be comparable with \tcode{==}.\exitnote
+\enternote The \tcode{Semiregular} concept is \oldtxt{modeled}\newtxt{satisfied} by types that
+\oldtxt{have} behave similarly to built-in types like \tcode{int}, except that they may not be
+comparable with \tcode{==}.\exitnote
 \end{itemdescr}
 
 \rSec2[concepts.lib.object.regular]{Concept Regular}
@@ -975,8 +986,8 @@ concept bool Regular@\newtxt{() \{}\oldtxt{ =}@
 
 \begin{itemdescr}
 \pnum
-\enternote The \tcode{Regular} concept is modeled by types that behave similarly to
-built-in types like \tcode{int} and that are comparable with \tcode{==}.\exitnote
+\enternote The \tcode{Regular} concept is \oldtxt{modeled}\newtxt{satisfied} by types that behave
+similarly to built-in types like \tcode{int} and that are comparable with \tcode{==}.\exitnote
 \end{itemdescr}
 
 \rSec1[concepts.lib.functions]{Function concepts}
@@ -1004,7 +1015,7 @@ concept bool Function@\newtxt{() \{}\oldtxt{ =}@
       @\oldtxt{\{ f.~F() \} noexcept;}@
       @\oldtxt{\{ new F \} -> Same<F*>}@;
       @\oldtxt{delete new F}@;
-      { f(forward<Args>(args)...) } -> Same<ResultType<F, Args...>>; @\newtxt{// not equality preserving}@
+      { f(std::forward<Args>(args)...) } -> Same<ResultType<F, Args...>>; @\newtxt{// not \newtxt{required to be} equality preserving}@
     };
 @\newtxt{\}}@
 \end{itemdecl}
@@ -1024,8 +1035,11 @@ concept bool Function@\newtxt{() \{}\oldtxt{ =}@
 and still model \tcode{Function}.}
 
 \pnum
-\enternote Since models of \tcode{Function} are allowed to be non-equality-preserving, a
-function that generates random numbers may model \tcode{Function}.\exitnote
+\enternote \oldtxt{Since models of \tcode{Function} are allowed to be non-equality-preserving, a
+function that generates random numbers may model \tcode{Function}}\newtxt{Since the function call
+expression of \tcode{Function} is not required to be
+equality-preserving~(\ref{concepts.lib.general.equality}), a function that generates random numbers
+may satisfy \tcode{Function}}.\exitnote
 \end{itemdescr}
 
 \rSec2[concepts.lib.functions.regularfunction]{Concept RegularFunction}
@@ -1040,13 +1054,14 @@ concept bool RegularFunction@\newtxt{() \{}\oldtxt{ =}@
 
 \begin{itemdescr}
 \pnum
-Models of \tcode{RegularFunction} shall be equality-preserving; that is, when passed
-equal arguments, they shall return equal objects. \newtxt{\enternote This requirement
-supersedes the annotation on the function call expression in the definition of
-\tcode{Function}. \exitnote}
+\oldtxt{Models of}\newtxt{The function call expression of} \tcode{RegularFunction} shall be
+equality-preserving~(\ref{concepts.lib.general.equality})\oldtxt{; that is, when passed equal
+arguments, they shall return equal objects}. \newtxt{\enternote This requirement supersedes the
+annotation on the function call expression in the definition of \tcode{Function}. \exitnote}
 
 \pnum
-\enternote A random number generator is not a model of \tcode{RegularFunction}.\exitnote
+\enternote A random number generator \oldtxt{is not a model of}\newtxt{does not satisfy}
+\tcode{RegularFunction}.\exitnote
 
 \pnum
 \enternote There is no syntactic difference between \tcode{Function} and
@@ -1092,8 +1107,8 @@ concept bool Relation() {
 \pnum
 Let \tcode{r} be any well-formed object of type \tcode{R}, \tcode{a} be any well-formed object of
 type \tcode{T}, \tcode{b} be any well-formed object of type \tcode{U}, and \tcode{C} be
-\tcode{CommonType<T, U>}. Then types \tcode{R}, \tcode{T}, and \tcode{U} model \tcode{Relation} if
-and only if
+\tcode{CommonType<T, U>}. Then \tcode{types \tcode{R}, \tcode{T}, and \tcode{U} model}
+\tcode{Relation\newtxt{<T,U>()}} \newtxt{is satisfied} if and only if
 
 \begin{itemize}
 \item \newtxt{\tcode{bool(r(a, b)) == bool(r(C(a), C(b)))}.}
@@ -1120,8 +1135,9 @@ concept bool StrictWeakOrder() {
 
 \begin{itemdescr}
 \pnum
-Let \tcode{comp} be a well-formed object of type \tcode{Comp}. Then type \tcode{Comp} models concept
-\tcode{StrictWeakOrder} if and only if it imposes a \techterm{strict weak ordering} on its arguments.
+Let \tcode{comp} be a well-formed object of type \tcode{Comp}. Then \oldtxt{type \tcode{Comp}
+models concept} \tcode{StrictWeakOrder\newtxt{<Comp>()}} \newtxt{is satisfied} if and only if
+\oldtxt{it}\newtxt{\tcode{comp}} imposes a \techterm{strict weak ordering} on its arguments.
 
 \ednote{Copied verbatim from [alg.sorting].}
 
