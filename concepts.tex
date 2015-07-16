@@ -23,7 +23,7 @@ as summarized in Table~\ref{tab:concepts.lib.summary}.
 
 \begin{libsumtab}{Fundamental concepts library summary}{tab:concepts.lib.summary}
 \ref{concepts.lib.corelang}   & Core language concepts         &   \tcode{<experimental/ranges_v1/concepts>}      \\
-\ref{concepts.lib.comparison} & Comparison concepts            &                      \\
+\ref{concepts.lib.compare}    & Comparison concepts            &                      \\
 \ref{concepts.lib.object}     & Object concepts                &                      \\
 \ref{concepts.lib.functions}  & Function concepts              &                      \\
 \end{libsumtab}
@@ -438,15 +438,15 @@ int main() {
 \exitexample
 \end{itemdescr}
 
-\rSec1[concepts.lib.comparison]{Comparison concepts}
+\rSec1[concepts.lib.compare]{Comparison concepts}
 
-\rSec2[concepts.lib.comparison.general]{In general}
+\rSec2[concepts.lib.compare.general]{In general}
 
 \pnum
 \newtxt{This section describes concepts that establish relationships and orderings
 on values of possibly differing object types.}
 
-\rSec2[concepts.lib.corelang.boolean]{Concept Boolean}
+\rSec2[concepts.lib.compare.boolean]{Concept Boolean}
 
 \pnum
 The \tcode{Boolean} concept describes the requirements on a type that is usable in Boolean contexts.
@@ -498,7 +498,7 @@ Given values \tcode{b1} and \tcode{b2} of type \tcode{B}, then \oldtxt{type \tco
 \enterexample The types \tcode{bool}, \tcode{std::true_type}, and
 \tcode{std::bitset<>::reference} are \tcode{Boolean} types.\exitexample
 
-\rSec2[concepts.lib.comparison.equalitycomparable]{Concept EqualityComparable}
+\rSec2[concepts.lib.compare.equalitycomparable]{Concept EqualityComparable}
 
 \ednote{Remove table [equalitycomparable] in [utility.arg.requirements]. Replace references to
 [equalitycomparable] with [concepts.lib\newtxt{.comparison}.equalitycomparable].}
@@ -576,7 +576,7 @@ Let \tcode{a} be an object of type \tcode{T}, \tcode{b} be an object of type \tc
 \ednote{BUGBUG There is concern on the committee that the \tcode{Common} requirement is
 overconstraining here. (In \tcode{Relation} too.}
 
-\rSec2[concepts.lib.comparison.totallyordered]{Concept TotallyOrdered}
+\rSec2[concepts.lib.compare.totallyordered]{Concept TotallyOrdered}
 
 \ednote{Remove table [lessthancomparable] in [utility.arg.requirements]. Replace uses of
 \tcode{LessThanComparable} with \tcode{TotallyOrdered} (acknowledging that this is a breaking
@@ -780,10 +780,10 @@ references to [moveconstructible] with references to
 template <class T>
 concept bool MoveConstructible@\newtxt{() \{}\oldtxt{ =}@
   @\newtxt{return Constructible<T, remove_cv_t<T>\&\&>() \&\&}@
-    requires (@\oldtxt{T} \newtxt{remove_cv_t<T>}@ t) {
-      @\newtxt{[](T)\{\}(std::move(t));}@
-      @\oldtxt{T(std::move(t));}@
-    };
+    @\newtxt{Convertible<remove_cv_t<T>\&\&, T>();}@
+    @\oldtxt{requires (T t) \{}@
+      @\oldtxt{T(move(t));}@
+    @\oldtxt{\};}@
 @\newtxt{\}}@
 \end{itemdecl}
 
@@ -806,11 +806,6 @@ requirements of the library component that is using it. The operations listed
 in those requirements must work as specified whether \tcode{rv} has been moved
 from or not.\exitnote
 
-\pnum
-\newtxt{\enternote The expression \tcode{[](T)\{\}(std::move(t))} requires that \tcode{T}
-can be copy-initialized from an rvalue of type \tcode{remove_cv_t<T>}; the constructor
-selected by overload resolution must be non-explicit. \exitnote}
-
 \ednote{\newtxt{Ideally, \tcode{MoveConstructible} would include an array allocation
 requirement \tcode{new T[1]\{std::move(t)\}}. This is not currently possible since
 [expr.new]/19 requires an accessible default constructor even when all array elements
@@ -828,12 +823,14 @@ template <class T>
 concept bool CopyConstructible@\newtxt{() \{}\oldtxt{ =}@
   @\newtxt{return}@ MoveConstructible<T>@\newtxt{()}@ &&
     @\newtxt{Constructible<T, const remove_cv_t<T>\&>() \&\&}@
-    requires (@\oldtxt{T a, const T\& b}\newtxt{const remove_cv_t<T> t}@) {
-      @\newtxt{[](T)\{\}(t);}@
+    @\newtxt{Convertible<remove_cv_t<T>\&, T>() \&\&}@
+    @\newtxt{Convertible<const remove_cv_t<T>\&, T>() \&\&}@
+    @\newtxt{Convertible<const remove_cv_t<T>\&\&, T>();}@
+    @\oldtxt{requires (T a, const T\& b) \{}@
       @\oldtxt{T(a);}@
       @\oldtxt{T(b);}@
       @\oldtxt{T((const T\&\&)b);}@
-    };
+    @\oldtxt{\};}@
 @\newtxt{\}}@
 \end{itemdecl}
 
@@ -851,12 +848,6 @@ to \tcode{u}.
 to \tcode{v}\oldtxt{ and \tcode{v} is unchanged}.
 \end{itemize}
 
-\pnum
-\newtxt{\enternote The expression \tcode{[](T)\{\}(t)} (and its implicit variants)
-require that \tcode{T} can be copy-initialized from an lvalue of type (possibly
-\tcode{const}) \tcode{remove_cv_t<T>} and an rvalue of type \tcode{const remove_cv_t<T>};
-the constructor selected by overload resolution must be non-explicit. \exitnote}
-
 \ednote{\newtxt{Ideally, \tcode{CopyConstructible} would include an array
 allocation requirement \tcode{new T[1]\{t\}}. This is not currently possible since
 [expr.new]/19 requires an accessible default constructor even when all array elements
@@ -866,7 +857,7 @@ are initialized.}}
 \rSec2[concepts.lib.object.movable]{Concept Movable}
 \ednote{Remove table [moveassignable] in [utility.arg.requirements]. Replace
 references to [moveassignable] with references to
-[concepts.lib.\oldtxt{corelang.moveassignable}\newtxt{value.movable}].}
+[concepts.lib.\oldtxt{corelang.moveassignable}\newtxt{object.movable}].}
 
 \indexlibrary{\idxcode{Movable}}%
 \begin{itemdecl}
@@ -902,7 +893,7 @@ from or not.\exitnote
 \rSec2[concepts.lib.object.copyable]{Concept Copyable}
 \ednote{Remove table [copyassignable] in [utility.arg.requirements]. Replace
 references to [copyassignable] with references to
-[concepts.lib.\oldtxt{corelang.copyassignable}\newtxt{value.copyable}].}
+[concepts.lib.\oldtxt{corelang.copyassignable}\newtxt{object.copyable}].}
 
 \indexlibrary{\idxcode{Copyable}}%
 \begin{itemdecl}
@@ -910,7 +901,7 @@ template <class T>
 concept bool @\oldtxt{CopyAssignable =}\newtxt{Copyable() \{}@
   @\newtxt{return CopyConstructible<T>() \&\&}@
     @\oldtxt{MoveAssignable}\newtxt{Movable}@<T>@\newtxt{()}@ &&
-    @\newtxt{Assignable<T\&, const T\&>() \&\&}@
+    @\newtxt{Assignable<T\&, const T\&>();}@
     @\oldtxt{requires(T a, T b, const T\& c) \{}@
       @\oldtxt{\{ a = b \} -> Same<T\&>;}@
       @\oldtxt{\{ a = c \} -> Same<T\&>;}@
@@ -1083,9 +1074,9 @@ concept bool Predicate@\newtxt{() \{}\oldtxt{ =}@
 
 \indexlibrary{\idxcode{Relation}}%
 \begin{itemdecl}
-template <class F, class T>
+template <class @\oldtxt{F}\newtxt{R}@, class T>
 concept bool Relation() {
-  return Predicate<F, T, T>@\newtxt{()}@;
+  return Predicate<@\oldtxt{F}\newtxt{R}@, T, T>@\newtxt{()}@;
 }
 
 template <class R, class T, class U>
