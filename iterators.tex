@@ -6373,19 +6373,22 @@ of a \tcode{Range} type that knows its size in constant time with the
 // \expos
 template <class T>
 concept bool @\xname{SizedRangeLike}@ =
-  Range<T>@\newtxt{()}@ &&
-  requires(@\newtxt{const }@T t) {
+  Range<T@\newtxt{\&}@>@\newtxt{()}@ &&
+  requires(@\newtxt{const }@T@\newtxt{\&}@ t) {
     { size(t) } -> Integral;
-    requires Convertible@\newtxt{To}@<decltype(size(t)),
-                           DifferenceType<IteratorType<T>>>@\newtxt{()}@;
+    @\newtxt{\{ size(t) \} -> ConvertibleTo<DifferenceType<IteratorType<T\&>{}>{}>;}@
+    @\oldtxt{requires Convertible<decltype(size(t)),}@
+                         @\oldtxt{DifferenceType<IteratorType<T>{}>{}>;}@
   };
 
-@\newtxt{template <class R>}@
+@\newtxt{template <\xname{SizedRangeLike} R>}@
 @\newtxt{struct is_sized_range;}@
 
 template <class T>
 concept bool SizedRange@\newtxt{() \{}\oldtxt{ =}@
-  @\newtxt{return}@ @\xname{SizedRangeLike}@<T> && is_sized_range<T>::value;
+  @\newtxt{return Range<T>() \&\&}@
+    @\xname{SizedRangeLike}@<T> &&
+    is_sized_range<T>::value;
 @\newtxt{\}}@
 \end{codeblock}
 
@@ -6394,26 +6397,32 @@ concept bool SizedRange@\newtxt{() \{}\oldtxt{ =}@
 only if \tcode{size(t)} returns the number of elements in \tcode{t}.}
 
 \pnum
-For any type \tcode{T}, \tcode{is_sized_range<T>} derives from
-\tcode{true_type} if \tcode{T} \oldtxt{models}\newtxt{meets the syntactic requirements of}
-\tcode{\xname{SizedRangeLike}}, and \tcode{false_type} otherwise.
+For a\oldtxt{ny} type \tcode{T} \newtxt{that satisfies \tcode{\xname{SizedRangeLike<T>}}},
+\tcode{is_sized_range<T>} derives from \tcode{true_type} if \oldtxt{\tcode{T} models
+\tcode{\xname{SizedRangeLike}}} \newtxt{\tcode{Same<T, remove\_cv\_t<remove\_reference\_t<T>{}>{}>()} is satisfied}, and \oldtxt{\tcode{false_type}} \newtxt{\tcode{is_sized_range<remove_cv_t<remove_reference_t<T>{}>{}>}} otherwise.
 
 \pnum
 Users are free to specialize \tcode{is_sized_range}.
 \enternote \newtxt{As indicated in the requirements for the \tcode{Range}
 concept above,} users \oldtxt{may want to}\newtxt{must} specialize
 \tcode{is_sized_range} \newtxt{so that its member \tcode{value} is \tcode{false}}
-to override the default in the case of accidental \newtxt{syntactic}
-conformance. \exitnote
+to override the default \oldtxt{in the case of accidental conformance}
+\newtxt{for \tcode{Range} types that satisfy \tcode{\xname{SizedRangeLike}} but
+do not satisfy \tcode{SizedRange}}. \exitnote
 
 \pnum
 \enternote A possible implementation for \tcode{is_sized_range} is given below:
 
 \begin{codeblock}
-template <class R>
-struct is_sized_range : false_type { };
+@\newtxt{// \expos}@
+@\newtxt{template <class T>}@
+@\newtxt{using \xname{uncvref} = remove_cv_t<remove_reference_t<T>{}>;}@
+
+template <@\oldtxt{class}\newtxt{\xname{SizedRangeLike}}@ R>
+struct is_sized_range : @\oldtxt{false_type}\newtxt{is_sized_range<\xname{uncvref}<R>{}>}@ { };
 
 template <@\xname{SizedRangeLike}@ R>
+  @\newtxt{requires Same<R, \xname{uncvref}<R>{}>()}@
 struct is_sized_range<R> : true_type { };
 \end{codeblock}
 \exitnote
