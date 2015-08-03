@@ -6334,7 +6334,7 @@ using SentinelType = decltype(end(declval<T>()));
 
 template <class T>
 concept bool Range@\newtxt{() \{}\oldtxt{ =}@
-  @\newtxt{return}@ requires(T t) {
+  @\newtxt{return}@ requires(T@\newtxt{\&\&}@ t) {
     typename IteratorType<T>;
     typename SentinelType<T>;
     { begin(t) } -> @\newtxt{Same<}@IteratorType<T>@\newtxt{>}@; @\newtxt{// not \newtxt{required to be} equality preserving}@
@@ -6358,8 +6358,8 @@ concept bool Range@\newtxt{() \{}\oldtxt{ =}@
 and non-modifying. (\tcode{begin(t)} and \tcode{end(t)} do not require
 implicit expression variants.)}
 \item \newtxt{Either \tcode{SizedRange<T>()} is satisfied, \tcode{T} does not meet
-the syntactic requirements of \tcode{SizedRange}, or \tcode{is_sized_range<T>::value}
-is \tcode{false}~(\ref{sized.iterables}).}
+the syntactic requirements of \tcode{SizedRange}, or \tcode{disable_sized_range<T>::value}
+is \tcode{true}~(\ref{sized.iterables}).}
 \end{itemize}
 \end{itemdescr}
 
@@ -6370,26 +6370,33 @@ The \tcode{SizedRange} concept describes the requirements
 of a \tcode{Range} type that knows its size in constant time with the
 \tcode{size} function.
 
-\begin{codeblock}
-// \expos
-template <class T>
-concept bool @\xname{SizedRangeLike}@ =
-  Range<T>@\newtxt{()}@ &&
-  requires(@\newtxt{const }@T t) {
-    { size(t) } -> Integral;
-    requires Convertible@\newtxt{To}@<decltype(size(t)),
-                           DifferenceType<IteratorType<T>>>@\newtxt{()}@;
-  };
+\begin{itemdecl}
+@\oldtxt{// \expos}@
+@\oldtxt{template <class T>}@
+@\oldtxt{concept bool \xname{SizedRangeLike} =}@
+  @\oldtxt{Range<T> \&\&}@
+  @\oldtxt{requires(T t) \{}@
+    @\oldtxt{\{ size(t) \} -> Integral;}@
+    @\oldtxt{requires Convertible<decltype(size(t)),}@
+                         @\oldtxt{DifferenceType<IteratorType<T>{}>{}>;}@
+  @\oldtxt{\};}@
 
-@\newtxt{template <class R>}@
-@\newtxt{struct is_sized_range;}@
+@\newtxt{template <class T>}@
+@\newtxt{struct disable_sized_range;}@
 
 template <class T>
 concept bool SizedRange@\newtxt{() \{}\oldtxt{ =}@
-  @\newtxt{return}@ @\xname{SizedRangeLike}@<T> && is_sized_range<T>::value;
+  @\oldtxt{\xname{SizedRangeLike}<T> \&\& is_sized_range<T>::value;}@
+  @\newtxt{return !disable_sized_range<T>::value \&\&}@
+    @\newtxt{Range<T>() \&\&}@
+    @\newtxt{requires (const remove_reference_t<T>\& t) \{}@
+      @\newtxt{\{ size(t) \} -> Integral;}@
+      @\newtxt{\{ size(t) \} -> ConvertibleTo<DifferenceType<IteratorType<T\&>{}>{}>;}@
+    @\newtxt{\};}@
 @\newtxt{\}}@
-\end{codeblock}
+\end{itemdecl}
 
+\begin{itemdescr}
 \pnum
 \newtxt{Given an object \tcode{t} of type \tcode{T}, \tcode{SizedRange<T>()} is satisfied if and only if}
 
@@ -6399,29 +6406,40 @@ concept bool SizedRange@\newtxt{() \{}\oldtxt{ =}@
 \end{itemize}
 
 \pnum
-For any type \tcode{T}, \tcode{is_sized_range<T>} derives from
-\tcode{true_type} if \tcode{T} \oldtxt{models}\newtxt{meets the syntactic requirements of}
-\tcode{\xname{SizedRangeLike}}, and \tcode{false_type} otherwise.
+For any type \tcode{T}, \tcode{\oldtxt{is}\newtxt{disable}_sized_range<T>}
+derives from \oldtxt{\tcode{true_type} if \tcode{T} models
+\tcode{\xname{SizedRangeLike}}, and} \tcode{false_type} \newtxt{if \tcode{T}
+is a non-reference cv-unqualified type, and from \\
+\tcode{disable_sized_range<remove_cv_t<remove_reference_t<T>{}>{}>}} otherwise.
 
 \pnum
-Users are free to specialize \tcode{is_sized_range}.
+Users are free to specialize \tcode{\oldtxt{is}\newtxt{disable}_sized_range}.
 \enternote \newtxt{As indicated in the requirements for the \tcode{Range}
-concept above,} users \oldtxt{may want to}\newtxt{must} specialize
-\tcode{is_sized_range} \newtxt{so that its member \tcode{value} is \tcode{false}}
-to override the default in the case of accidental \newtxt{syntactic}
-conformance. \exitnote
+concept above,} users \oldtxt{may want to} \newtxt{must} specialize
+\tcode{\oldtxt{is}\newtxt{disable}_sized_range} \newtxt{so that its member
+\tcode{value} is \tcode{true}} to override the default \oldtxt{in the case of
+accidental conformance} \newtxt{for \tcode{Range} types that meet only the
+syntactic requirements of \tcode{SizedRange}}. \exitnote
 
 \pnum
-\enternote A possible implementation for \tcode{is_sized_range} is given below:
+\enternote A possible implementation for
+\tcode{\oldtxt{is}\newtxt{disable}_sized_range} is given below:
 
 \begin{codeblock}
-template <class R>
-struct is_sized_range : false_type { };
+@\newtxt{// \expos}@
+@\newtxt{template <class T>}@
+@\newtxt{using \xname{uncvref} = remove_cv_t<remove_reference_t<T>{}>;}@
 
-template <@\xname{SizedRangeLike}@ R>
-struct is_sized_range<R> : true_type { };
+template <class R>
+struct @\oldtxt{is}\newtxt{disable}@_sized_range : @\oldtxt{false_type}@
+  @\newtxt{disable_sized_range<\xname{uncvref}<R>{}>}@ { };
+
+template <@\oldtxt{\xname{SizedRangeLike}}\newtxt{class}@ R>
+  @\newtxt{requires Same<R, \xname{uncvref}<R>{}>()}@
+struct @\oldtxt{is}\newtxt{disable}@_sized_range<R> : @\oldtxt{true_type}\newtxt{false_type}@ { };
 \end{codeblock}
 \exitnote
+\end{itemdescr}
 
 \rSec3[range.iterables]{Views}
 
@@ -6447,56 +6465,85 @@ A container~(\cxxref{containers}) is not a \tcode{View} since copying the
 container copies the elements, which cannot be done in constant time.
 \exitexample
 
-\begin{codeblock}
+\begin{itemdecl}
 @\newtxt{template <class T>}@
-@\newtxt{struct is_view;}@
+@\newtxt{struct enable_view \{ \};}@
 
 @\newtxt{struct view_base \{ \};}@
 
+// \expos
+@\newtxt{template <class T>}@
+@\newtxt{constexpr bool \xname{view_predicate} = \seebelow;}@
+
 template <class T>
 concept bool View@\newtxt{() \{}\oldtxt{ =}@
-  @\newtxt{return}@ Range<T>@\newtxt{()}@ && Semiregular<T>@\newtxt{()}@ && is_view<T>::value;
+  @\newtxt{return}@ Range<T@\newtxt{\&}@>@\newtxt{()}@ &&
+    Semiregular<T>@\newtxt{()}@ &&
+    @\oldtxt{is_view}\newtxt{\xname{view_predicate}}@<T>@\oldtxt{::value}@;
 @\newtxt{\}}@
-\end{codeblock}
+\end{itemdecl}
 
+\begin{itemdescr}
 \pnum
-Since the difference between \tcode{Range} and
-\tcode{View} is largely semantic, the
-two are differentiated with the help of the \tcode{is_view} trait. Users may
-specialize the \tcode{is_view} trait. By default,
-\tcode{is_view} uses the following heuristics to determine whether an
-\tcode{Range} type \tcode{T} is a \tcode{View}:
-
+Since the difference between \tcode{Range} and \tcode{View} is largely semantic, the
+two are differentiated with the help of the \tcode{\oldtxt{is}\newtxt{enable}_view}
+trait. Users may specialize \oldtxt{the} \tcode{\oldtxt{is}\newtxt{enable}_view}
+\oldtxt{trait} \newtxt{to derive from \tcode{true_type} or \tcode{false_type}}.
+\oldtxt{By default, \tcode{\oldtxt{is_view}\newtxt{\xname{view_predicate}}}
+uses the following heuristics to determine whether a \tcode{Range} type \tcode{T}
+is a \tcode{View}:}
 \begin{itemize}
-\item If \tcode{T} derives from \tcode{view_base}, \tcode{is_view<T>::value}
-is true.
-\item If a top-level \tcode{const} changes \tcode{T}'s \tcode{IteratorType}'s
+\item \oldtxt{If \tcode{T} derives from \tcode{view_base}, \tcode{is_view<T>::value}
+is true.}
+\item \oldtxt{If a top-level \tcode{const} changes \tcode{T}'s \tcode{IteratorType}'s
 \tcode{ReferenceType} type, \tcode{is_view<T>::value}
 is false. \enternote Deep \tcode{const}-ness implies element ownership, whereas shallow
-\tcode{const}-ness implies reference semantics. \exitnote
+\tcode{const}-ness implies reference semantics. \exitnote}
 \end{itemize}
+
+{\color{newclr}
+\pnum
+For a type \tcode{T}, the value of \tcode{\xname{view_predicate<T>}} shall be:
+\begin{itemize}
+\item If \tcode{enable_view<T>} has a member type \tcode{type}, \tcode{enable_view<T>::type::value};
+\item If \tcode{T} is derived from \tcode{view_base}, \tcode{true};
+\item If both \tcode{T\&} and \tcode{const T\&} satisfy \tcode{Range} and \tcode{ReferenceType<IteratorType<T\&>{}>} is not the same type as \tcode{ReferenceType<IteratorType<const T\&>{}>}, \tcode{false}; \enternote Deep \tcode{const}-ness implies element ownership, whereas shallow \tcode{const}-ness implies reference semantics. \exitnote
+\item Otherwise, \tcode{true}.
+\end{itemize}
+}
 
 \pnum
 \enternote
-Below is a possible implementation of the \tcode{is_view} trait.
+Below is a possible implementation of \oldtxt{the \tcode{is_view} trait} \newtxt{\tcode{\xname{view_predicate}}}.
 
 \begin{codeblock}
 // \expos
 template <class T>
 concept bool @\xname{ContainerLike}@ =
-  Range<T>@\newtxt{()}@ &&
-  !Same<ReferenceType<IteratorType<@\newtxt{remove_const_t<}@T@\newtxt{>}@ &>>,
-        ReferenceType<IteratorType<const T &>>>@\newtxt{()}@;
+  Range<T@\newtxt{\&}@>@\newtxt{()}@ && @\newtxt{Range<const T\&>()} \&\&@
+  !Same<ReferenceType<IteratorType<T&>>,
+        ReferenceType<IteratorType<const T&>>>@\newtxt{()}@;
 
 template <class T>
-struct is_view : false_type { };
+@\oldtxt{struct is_view : false_type \{ \};}@
+@\newtxt{constexpr bool \xname{view_predicate} = true;}@
 
-template <Range T>
-  requires Derived@\newtxt{From}@<remove_reference_t<T>, view_base>@\newtxt{()}@ ||
-    !@\xname{ContainerLike}@<remove_reference_t<T>>
-struct is_view<T> : true_type { };
+@\newtxt{template <class T>}@
+  @\newtxt{requires requires \{ typename enable_view<T>::type; \}}@
+@\newtxt{constexpr bool \xname{view_predicate}<T> = enable_view<T>::type::value;}@
+
+@\newtxt{template <\xname{ContainerLike} T>}@
+  @\newtxt{requires !(DerivedFrom<T, view_base>() ||}@
+             @\newtxt{requires \{ typename enable_view<T>::type; \})}@
+@\newtxt{constexpr bool \xname{view_predicate}<T> = false;}@
+
+@\oldtxt{template <Range T>}@
+  @\oldtxt{requires Derived<remove_reference_t<T>, view_base> ||}@
+    @\oldtxt{!\xname{ContainerLike}<remove_reference_t<T>{}>}@
+@\oldtxt{struct is_view<T> : true_type \{ \};}@
 \end{codeblock}
 \exitnote
+\end{itemdescr}
 
 \rSec3[bounded.iterables]{Bounded ranges}
 
