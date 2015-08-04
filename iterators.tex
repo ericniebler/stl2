@@ -6336,19 +6336,26 @@ iteration over its elements by providing a \tcode{begin} iterator and an
 
 \begin{itemdecl}
 template <class T>
-using IteratorType = decltype(begin(declval<T>()));
+  @\newtxt{requires requires (T\& t) \{}@
+    @\newtxt{\{ begin(t) \} -> Iterator; // not required to be equality preserving}@
+  @\newtxt{\}}@
+using IteratorType = decltype(begin(declval<T@\newtxt{\&}@>()));
 
 template <class T>
-using SentinelType = decltype(end(declval<T>()));
+  @\newtxt{requires requires (T\& t) \{}@
+    @\newtxt{typename IteratorType<T>;}@
+    @\newtxt{\{ end(t) \} -> Sentinel<IteratorType<T>{}>; // not required to be equality preserving}@
+  @\newtxt{\}}@
+using SentinelType = decltype(end(declval<T@\newtxt{\&}@>()));
 
 template <class T>
 concept bool Range@\newtxt{() \{}\oldtxt{ =}@
-  @\newtxt{return}@ requires(T@\newtxt{\&\&}@ t) {
+  @\newtxt{return}@ requires@\oldtxt{(T t)}@ {
     typename IteratorType<T>;
     typename SentinelType<T>;
-    { begin(t) } -> @\newtxt{Same<}@IteratorType<T>@\newtxt{>}@; @\newtxt{// not \newtxt{required to be} equality preserving}@
-    { end(t) } -> @\newtxt{Same<}@SentinelType<T>@\newtxt{>}@; @\newtxt{// not \newtxt{required to be} equality preserving}@
-    requires Sentinel<SentinelType<T>, IteratorType<T>>@\newtxt{()}@;
+    @\oldtxt{\{ begin(t) \} -> IteratorType<T>;}@
+    @\oldtxt{\{ end(t) \} -> SentinelType<T>;}@
+    @\oldtxt{requires Sentinel<SentinelType<T>, IteratorType<T>{}>;}@
   };
 @\newtxt{\}}@
 \end{itemdecl}
@@ -6358,17 +6365,14 @@ concept bool Range@\newtxt{() \{}\oldtxt{ =}@
 \oldtxt{\tcode{begin} and \tcode{end} are required to be amortized constant time.}
 
 \pnum
-\newtxt{Given an object \tcode{t} of type \tcode{T}, \oldtxt{the type \tcode{T} models}
-\tcode{Range\newtxt{<T>()}} \newtxt{is satisfied} if and only if}
+\newtxt{Given an lvalue \tcode{t} of type \tcode{remove_reference_t<T>}, \tcode{Range<T>()} is satisfied
+if and only if}
 
 \begin{itemize}
 \item \newtxt{Overload resolution~(\cxxref{over.match}) on the expressions \tcode{begin(t)} and \tcode{end(t)} selects unary non-member functions ``\tcode{begin}'' and ``\tcode{end}'' from candidate sets that includes the three overloads of \tcode{begin} and \tcode{end} found in \tcode{<experimental/ranges_v1/iterator>}~(\ref{iterator.synopsis}) and the lookup sets produced by argument-dependent lookup~(\cxxref{basic.lookup.argdep}).}
 \item \newtxt{Both \tcode{begin(t)} and \tcode{end(t)} are amortized constant time
 and non-modifying. (\tcode{begin(t)} and \tcode{end(t)} do not require
 implicit expression variants.)}
-\item \newtxt{Either \tcode{SizedRange<T>()} is satisfied, \tcode{T} does not meet
-the syntactic requirements of \tcode{SizedRange}, or \tcode{disable_sized_range<T>::value}
-is \tcode{true}~(\ref{ranges.sized}).}
 \end{itemize}
 \end{itemdescr}
 
@@ -6400,14 +6404,14 @@ concept bool SizedRange@\newtxt{() \{}\oldtxt{ =}@
     @\newtxt{Range<T>() \&\&}@
     @\newtxt{requires (const remove_reference_t<T>\& t) \{}@
       @\newtxt{\{ size(t) \} -> Integral;}@
-      @\newtxt{\{ size(t) \} -> ConvertibleTo<DifferenceType<IteratorType<T\&>{}>{}>;}@
+      @\newtxt{\{ size(t) \} -> ConvertibleTo<DifferenceType<IteratorType<T>{}>{}>;}@
     @\newtxt{\};}@
 @\newtxt{\}}@
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\newtxt{Given an object \tcode{t} of type \tcode{T}, \tcode{SizedRange<T>()} is satisfied if and only if}
+\newtxt{Given an lvalue \tcode{t} of type \tcode{remove_reference_t<T>}, \tcode{SizedRange<T>()} is satisfied if and only if}
 
 \begin{itemize}
 \item \newtxt{Overload resolution~(\cxxref{over.match}) on the expression \tcode{size(t)} selects a unary non-member function ``\tcode{size}'' from a candidate set that includes the three overloads of \tcode{size} found in \tcode{<experimental/ranges_v1/iterator>}~(\ref{iterator.synopsis}) and the lookup set produced by argument-dependent lookup~(\cxxref{basic.lookup.argdep}).}
@@ -6423,12 +6427,12 @@ is a non-reference cv-unqualified type, and from \\
 
 \pnum
 Users are free to specialize \tcode{\oldtxt{is}\newtxt{disable}_sized_range}.
-\enternote \newtxt{As indicated in the requirements for the \tcode{Range}
-concept above,} users \oldtxt{may want to} \newtxt{must} specialize
+\enternote Users \oldtxt{may want to} \newtxt{must} specialize
 \tcode{\oldtxt{is}\newtxt{disable}_sized_range} \newtxt{so that its member
 \tcode{value} is \tcode{true}} to override the default \oldtxt{in the case of
 accidental conformance} \newtxt{for \tcode{Range} types that meet only the
-syntactic requirements of \tcode{SizedRange}}. \exitnote
+syntactic requirements of \tcode{SizedRange} when instantiating a library
+template that has differing behavior for \tcode{Range} and \tcode{SizedRange}}. \exitnote
 
 \pnum
 \enternote A possible implementation for
@@ -6486,7 +6490,7 @@ container copies the elements, which cannot be done in constant time.
 
 template <class T>
 concept bool View@\newtxt{() \{}\oldtxt{ =}@
-  @\newtxt{return}@ Range<T@\newtxt{\&}@>@\newtxt{()}@ &&
+  @\newtxt{return}@ Range<T>@\newtxt{()}@ &&
     Semiregular<T>@\newtxt{()}@ &&
     @\oldtxt{is_view}\newtxt{\xname{view_predicate}}@<T>@\oldtxt{::value}@;
 @\newtxt{\}}@
@@ -6516,7 +6520,7 @@ For a type \tcode{T}, the value of \tcode{\xname{view_predicate<T>}} shall be:
 \begin{itemize}
 \item If \tcode{enable_view<T>} has a member type \tcode{type}, \tcode{enable_view<T>::type::value};
 \item If \tcode{T} is derived from \tcode{view_base}, \tcode{true};
-\item If both \tcode{T\&} and \tcode{const T\&} satisfy \tcode{Range} and \tcode{ReferenceType<IteratorType<T\&>{}>} is not the same type as \tcode{ReferenceType<IteratorType<const T\&>{}>}, \tcode{false}; \enternote Deep \tcode{const}-ness implies element ownership, whereas shallow \tcode{const}-ness implies reference semantics. \exitnote
+\item If both \tcode{T} and \tcode{const T} satisfy \tcode{Range} and \tcode{ReferenceType<IteratorType<T>{}>} is not the same type as \tcode{ReferenceType<IteratorType<const T>{}>}, \tcode{false}; \enternote Deep \tcode{const}-ness implies element ownership, whereas shallow \tcode{const}-ness implies reference semantics. \exitnote
 \item Otherwise, \tcode{true}.
 \end{itemize}
 }
@@ -6529,9 +6533,9 @@ Below is a possible implementation of \oldtxt{the \tcode{is_view} trait} \newtxt
 // \expos
 template <class T>
 concept bool @\xname{ContainerLike}@ =
-  Range<T@\newtxt{\&}@>@\newtxt{()}@ && @\newtxt{Range<const T\&>()} \&\&@
-  !Same<ReferenceType<IteratorType<T&>>,
-        ReferenceType<IteratorType<const T&>>>@\newtxt{()}@;
+  Range<T>@\newtxt{()}@ && @\newtxt{Range<const T>() \&\&}@
+  !Same<ReferenceType<IteratorType<T@\oldtxt{\&}@>>,
+        ReferenceType<IteratorType<const T@\oldtxt{\&}@>>>@\newtxt{()}@;
 
 template <class T>
 @\oldtxt{struct is_view : false_type \{ \};}@
