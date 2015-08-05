@@ -820,6 +820,10 @@ Change 24.6 Header `<iterator>` synopsis by adding the following to namespace `s
 >   common_reference_t<ReferenceType<I>, ValueType<I>&>;
 > ```
 
+
+TODO Add definition of `RvalueReferenceType` to [iterator.assoc].
+
+
 Add subsection (TODO) `iter_move`
 
 > ```c++
@@ -828,9 +832,8 @@ Add subsection (TODO) `iter_move`
 > __iter_move_t<_R> iter_move(R&& r)
 >   noexcept(noexcept(__iter_move_t<_R>(std::move(*r))));
 > ```
-
-TODO description of `iter_move`
-
+>
+> 1\. *Returns*: `std::move(*r)`
 
 Add subsection (TODO) `is_nothrow_indirectly_movable`:
 
@@ -847,7 +850,6 @@ Add subsection (TODO) `is_nothrow_indirectly_movable`:
 > { };
 > ```
 
-
 Add subsection (TODO) `iter_swap`
 
 > ```c++
@@ -857,7 +859,11 @@ Add subsection (TODO) `iter_swap`
 >   requires Swappable<ReferenceType<_R1>, ReferenceType<_R2>>()
 > void iter_swap(R1&& r1, R2&& r2)
 >   noexcept(is_nothrow_swappable_v<ReferenceType<_R1>, ReferenceType<_R2>>);
+> ```
 >
+> 1\. *Effects*: `swap(*r1, *r2)`
+>
+> ```c++
 > template <class R1, class R2,
 >   Readable _R1 = std::remove_reference_t<R1>,
 >   Readable _R2 = std::remove_reference_t<R2>>
@@ -867,8 +873,17 @@ Add subsection (TODO) `iter_swap`
 >   noexcept(is_nothrow_indirectly_movable_v<_R1, _R2> &&
 >            is_nothrow_indirectly_movable_v<_R2, _R1>);
 > ```
-
-TODO describe the `iter_swap` overloads
+>
+> 1\. *Effects*: Exchanges values referred to by two `Readable` objects.
+>
+> 2\. \[*Example:* Below is a possible implementation:
+> > ```c++
+> > ValueType<_R1> tmp(iter_move(r1));
+> > *r1 = iter_move(r2);
+> > *r2 = std::move(tmp);
+> > ```
+>
+> -- *end example*\]
 
 Add subsection (TODO) `is_nothrow_indirectly_swappable`:
 
