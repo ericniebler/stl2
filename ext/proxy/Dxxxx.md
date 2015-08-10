@@ -1007,6 +1007,27 @@ subsubsection, include the following:
 > > { };
 > > ```
 
+Change 25.1 "Algorithms: General" ([algorithms.general]) as follows:
+
+> <pre>
+> template&lt;InputIterator I, Sentinel&lt;I&gt; S, WeaklyIncrementable O,
+>     class Proj = identity, IndirectCallableRelation&lt;Projected&lt;I, Proj&gt;&gt; R = equal_to&lt;&gt;&gt;
+>   requires IndirectlyCopyable&lt;I, O&gt;() &amp;&amp; (ForwardIterator&lt;I&gt;() ||
+>     ForwardIterator&lt;O&gt;() <span style="color:red; text-decoration:line-through">|| Copyable&lt;ValueType&lt;I&gt;&gt;()</span>)
+>   tagged_pair&lt;tag::in(I), tag::out(O)&gt;
+>     unique_copy(I first, S last, O result, R comp = R{}, Proj proj = Proj{});
+>
+> template&lt;InputRange Rng, WeaklyIncrementable O, class Proj = identity,
+>     IndirectCallableRelation&lt;Projected&lt;IteratorType&lt;Rng&gt;, Proj&gt;&gt; R = equal_to&lt;&gt;&gt;
+>   requires IndirectlyCopyable&lt;IteratorType&lt;Rng&gt;, O&gt;() &amp;&amp;
+>     (ForwardIterator&lt;IteratorType&lt;Rng&gt;&gt;() || ForwardIterator&lt;O&gt;()
+>       <span style="color:red; text-decoration:line-through">|| Copyable&lt;ValueType&lt;IteratorType&lt;Rng&gt;&gt;&gt;()</span>)
+>   tagged_pair&lt;tag::in(safe_iterator_t&lt;Rng&gt;), tag::out(O)&gt;
+>     unique_copy(Rng&amp;&amp; rng, O result, R comp = R{}, Proj proj = Proj{});
+>
+> </pre>
+
+Make the identical change to 25.3.9 "Unique" ([alg.unique]).
 
 Acknowledgements
 =====
@@ -1425,9 +1446,6 @@ template <_Decayed T, _Decayed U>
 struct common_type<T, U> : __builtin_common<T, U> { };
 
 template <class T, class U, class V, class... W>
-struct common_type<T, U, V, W...> { };
-
-template <class T, class U, class V, class... W>
   requires _Valid<common_type_t, T, U>
 struct common_type<T, U, V, W...>
   : common_type<common_type_t<T, U>, V, W...> { };
@@ -1479,9 +1497,6 @@ template <class T, class U>
   requires _Valid<__builtin_common_t, T, U>
     && __v<std::is_reference<__builtin_common_t<T, U>>>
 struct common_reference<T, U> : __builtin_common<T, U> { };
-
-template <class T, class U, class V, class... W>
-struct common_reference<T, U, V, W...> { };
 
 template <class T, class U, class V, class... W>
   requires _Valid<common_reference_t, T, U>
