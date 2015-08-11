@@ -1,20 +1,20 @@
 ---
-pagetitle: Proxy Iterators for STL.Next
-title: Proxy Iterators for STL.Next
+pagetitle: Proxy Iterators for the Ranges Extensions
+title: Proxy Iterators for the Ranges Extensions
 ...
 
 Introduction
 =====
 
-This paper presents an extension to the Ranges TS [@n4328] that makes *proxy iterators* full-fledged members of the STL iterator hierarchy. This solves the "`vector<bool>`-is-not-a-container" problem along with several other problems that become apparent when working with range adaptors. It achieves this without fracturing the `Iterator` concept hierarchy[][9][@new-iter-concepts] and without breaking iterators apart into separate traversal and access pieces[][11][@n1873].
+This paper presents an extension to [the Ranges design][1][@n4382] that makes *proxy iterators* full-fledged members of the STL iterator hierarchy. This solves the "`vector<bool>`-is-not-a-container" problem along with several other problems that become apparent when working with range adaptors. It achieves this without [fracturing the `Iterator` concept hierarchy][2][@new-iter-concepts] and without breaking iterators apart into [separate traversal and access pieces][3][@n1873].
 
 The design presented makes only moderate, local changes to some Iterator concepts, fixes some existing library issues, and fills in a gap left by the addition of move semantics. The functions `swap` and `iter_swap` have been part of C++ since C++98. With C++11, the language got move semantics and `move`, but not `iter_move`. This arguably is an oversight. By adding it and making both `iter_swap` and `iter_move` customization points, iterators can control how elements are swapped and moved by permuting algorithms.
 
-Also, there are outstanding issues in `common_type`, and the committee has received feedback that by ignoring top-level cv- and ref-qualifiers, the trait is not as general as it could be. By fixing the issues and adding a new trait -- `common_reference` -- that respects cv- and ref-qualifiers, we kill two birds. With the new `common_reference` trait and `iter_move` customization point, we can generalize the Iterator concepts -- `Readable`, `IndirectlyMovable`, and `IndirectCallable` in particular -- in ways that bring proxy iterators into the fold.
+Also, there are outstanding issues in `common_type`, and by ignoring top-level cv- and ref-qualifiers, the trait is not as general as it could be. By fixing the issues and adding a new trait -- `common_reference` -- that respects cv- and ref-qualifiers, we kill two birds. With the new `common_reference` trait and `iter_move` customization point, we can generalize the Iterator concepts -- `Readable`, `IndirectlyMovable`, and `IndirectCallable` in particular -- in ways that bring proxy iterators into the fold.
 
 Individually, these are simple changes the committee might want to make anyway. Together, they make a whole new class of data structures usable with the standard algorithms.
 
-The design is presented as a series of diffs to the latest draft of the Ranges and Concepts TSs.
+The design is presented as a series of diffs to the latest draft of the Ranges Extensions.
 
 Implementation Experience
 =============
@@ -24,16 +24,24 @@ Everything suggested here has been implemented in C++11, where Concepts Lite has
 Motivation and Scope
 =====
 
-The proxy iterator problem has been known since at least 1999 when Herb Sutter wrote his article ["When is a container not a container?"][22][@sutter-99] about the problems with `vector<bool>`. Because `vector<bool>` stores the `bool`s as bits in packed integers rather than as actual `bool`s, its iterators cannot return a real `bool&` when they are dereferenced; rather, they must return proxy objects that merely behave like `bool&`. That would be fine except that:
+The proxy iterator problem has been known since at least 1999 when Herb Sutter wrote his article ["When is a container not a container?"][4][@sutter-99] about the problems with `vector<bool>`. Because `vector<bool>` stores the `bool`s as bits in packed integers rather than as actual `bool`s, its iterators cannot return a real `bool&` when they are dereferenced; rather, they must return proxy objects that merely behave like `bool&`. That would be fine except that:
 
 1. According to the iterator requirements tables, every iterator category stronger than InputIterator is required to return a real reference from its dereference operator (`vector` is required to have random-access iterators), and
 2. Algorithms that move and swap elements often do not work with proxy references.
 
 Looking forward to a constrained version of the STL, there is one additional problem: the algorithm constraints must accommodate iterators with proxy reference types. This is particularly vexing for the higher-order algorithms that accept functions that are callable with objects of the iterator's value type.
 
-TODO: Why is this an important problem to solve?
+Why is this an interesting problem to solve? Any data structure whose elements are "virtual" -- that don't physically live in memory -- requires proxies to make the data structure readable and (optionally) writable. In addition to `vector<bool>` and `bitset` (which currently lacks iterators for no other technical reason), other examples include:
 
-Note that not all iterators that return rvalues are proxy iterators. If the rvalue does not stand in for another object, it is not a proxy. For instance, an iterator that adapts another by multiplying each element by 2 is not a proxy iterator. The Palo Alto report lifts the onerous requirement that Forward iterators have true reference types, so they solve the "rvalue iterator" problem. However, as we show below, that is not enough to solve the "proxy iterator" problem.
+* A `zip` view of *N* sequences (described below)
+* A view of elements in a database
+* A view of elements in a different address space (e.g., in a different process or across the network)
+* A view that does pre- and/or post-processing whenever an element is read or written.
+* A view of sub-objects (virtual or actual) that can only be accessed via getters and setters.
+
+These are all potentially interesting views that, as of today, can only be represented as Input sequences. That severely limits the number of algorithms that can operate on them. The design suggested by this paper would make all of these valid sequences even for RandomAccess.
+
+Note that not all iterators that return rvalues are proxy iterators. If the rvalue does not stand in for another object, it is not a proxy. For instance, an iterator that adapts another by multiplying each element by 2 is not a proxy iterator. The [Palo Alto report][6][@palo-alto] lifts the onerous requirement that Forward iterators have true reference types, so they solve the "rvalue iterator" problem. However, as we show below, that is not enough to solve the "proxy iterator" problem.
 
 ## Proxy Iterator problems
 
@@ -49,7 +57,7 @@ swap(*i, b);
 
 Because of the fact that this code is underspecified, it is impossible to say with certainty which algorithms work with `vector<bool>`. That fact that many do is due largely to the efforts of implementors and to the fact that `bool` is a trivial, copyable type that hides many of the nastier problems with proxy references. For more interesting proxy reference types, the problems are impossible to hide.
 
-A more interesting proxy reference type is that of a `zip` range view from the [range-v3][7][@range-v3] library. The `zip` view adapts two underlying sequences by building pairs of elements on the fly as the `zip` view is iterated.
+A more interesting proxy reference type is that of a `zip` range view from the [range-v3][5][@range-v3] library. The `zip` view adapts two underlying sequences by building pairs of elements on the fly as the `zip` view is iterated.
 
 ```c++
 vector<int> vi {1,2,3};
@@ -84,7 +92,7 @@ auto j = next(i);
 
 Since `*j` returns an rvalue `pair`, the `move` has no effect. The assignment then copies elements instead of moving them. Had one of the underlying sequences been of a move-only type like `unique_ptr`, the code would fail to compile.
 
-The fundamental problem is that with proxies, the expression `move(*j)` is moving the *proxy*, not the element being proxied. Patching this up in the current system would involve returning some special pair-like type from `*j` and overloading `move` for it such that it returns a different pair-like type that stores rvalue references. However, `move` is not a customization point, so the algorithms will not use it. Making `move` a customization point is one possible fix, but the effects on user code of breaking the assumption that `move(t)` returns a `T&&` are unknown and unknowable.
+The fundamental problem is that with proxies, the expression `move(*j)` is moving the *proxy*, not the element being proxied. Patching this up in the current system would involve returning some special pair-like type from `*j` and overloading `move` for it such that it returns a different pair-like type that stores rvalue references. However, `move` is not a customization point, so the algorithms will not use it. Making `move` a customization point is one possible fix, but the effects on user code such a change are unknown (and unknowable).
 
 ### Iterator associated types
 
@@ -200,7 +208,7 @@ using __iter_move_t =
   conditional_t<
     is_reference_v<ReferenceType<R>>,
     remove_reference_t<ReferenceType<R>> &&,
-    ReferenceType<R>;
+    decay_t<ReferenceType<R>>;
 
 template <class R>
 __iter_move_t<R> iter_move(R r)
@@ -425,7 +433,7 @@ TODO discussion
 
 ## New iterator concepts
 
-In [N1640][9][@new-iter-concepts], Abrahams et.al. describe a decomposition of the standard iterator concept hierarchy into access concepts: `Readable`, `Writable`, `Swappable`, and `Lvalue`; and traversal concepts: `SinglePass`, `Forward`, `Bidirectional`, and `RandomAccess`. Like the design suggested in this paper, the `Swappable` concept from N1640 is specified in terms of `iter_swap`. Since N1640 was written before move semantics, it does not have anything like `iter_move`, but it's reasonable to assume that it would have invented something similar.
+In [N1640][2][@new-iter-concepts], Abrahams et.al. describe a decomposition of the standard iterator concept hierarchy into access concepts: `Readable`, `Writable`, `Swappable`, and `Lvalue`; and traversal concepts: `SinglePass`, `Forward`, `Bidirectional`, and `RandomAccess`. Like the design suggested in this paper, the `Swappable` concept from N1640 is specified in terms of `iter_swap`. Since N1640 was written before move semantics, it does not have anything like `iter_move`, but it's reasonable to assume that it would have invented something similar.
 
 Like the Palo Alto report, the `Readable` concept from N1640 requires a convertibility constraint between an iterator's reference and value associated types. As a result, N1640 does not adequately address the proxy reference problem as presented in this paper. In particular, it is incapable of correctly expressing the relationship between a move-only value type and its proxy reference type. Also, the somewhat complicated iterator tag composition suggested by N1640 is not necessary in a world with concept-based overloading.
 
@@ -433,7 +441,7 @@ In other respect, N1640 agrees with the STL design suggested by the Palo Alto re
 
 ## Cursor/Property Map
 
-[N1873][11][@n1873], the "Cursor/Property Map Abstraction" BUGBUG TODO
+[N1873][3][@n1873], the "Cursor/Property Map Abstraction" BUGBUG TODO
 
 ## Language support
 
@@ -908,7 +916,7 @@ subsubsection, insert the following:
 >
 > 1\. The return type is `Ret` where `Ret` is
 > `remove_reference_t<ReferenceType<R>>&&` if `R` is
-> a reference type; `R`, otherwise.
+> a reference type; `decay_t<R>`, otherwise.
 > 2\. The expression in the `noexcept` is equivalent to:
 > > ```c++
 > > noexcept(Ret(std::move(*r)))
@@ -1039,46 +1047,6 @@ References
 
 ---
 references:
-- id: boostconceptcheck
-  title: Boost Concept Check Library
-  URL: 'http://boost.org/libs/concept_check'
-  type: webpage
-  accessed:
-    year: 2014
-    month: 10
-    day: 8
-- id: boostrange
-  title: Boost.Range Library
-  URL: 'http://boost.org/libs/range'
-  type: webpage
-  accessed:
-    year: 2014
-    month: 10
-    day: 8
-- id: asl
-  title: Adobe Source Libraries
-  URL: 'http://stlab.adobe.com'
-  type: webpage
-  accessed:
-    year: 2014
-    month: 10
-    day: 8
-- id: drange
-  title: D Phobos std.range
-  URL: 'http://dlang.org/phobos/std_range.html'
-  type: webpage
-  accessed:
-    year: 2014
-    month: 10
-    day: 8
-- id: bekennrange
-  title: Position-Based Ranges
-  URL: 'https://github.com/Bekenn/range'
-  type: webpage
-  accessed:
-    year: 2014
-    month: 10
-    day: 8
 - id: stepanov09
   title: Elements of Programming
   type: book
@@ -1117,27 +1085,6 @@ references:
     month: 8
     day: 26
   URL: 'http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2005/n1873.html'
-- id: n3782
-  title: 'N3782: Index-Based Ranges'
-  type: article
-  author:
-  - family: Schödl
-    given: Arno
-  - family: Fracassi
-    given: Fabio
-  issued:
-    year: 2013
-    month: 9
-    day: 24
-  URL: 'http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3782.pdf'
-- id: clangmodernize
-  title: Clang Modernize
-  URL: 'http://clang.llvm.org/extra/clang-modernize.html'
-  type: webpage
-  accessed:
-    year: 2014
-    month: 10
-    day: 8
 - id: new-iter-concepts
   title: 'N1640: New Iterator Concepts'
   URL: 'http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2004/n1640.html'
@@ -1153,22 +1100,6 @@ references:
     year: 2004
     month: 4
     day: 10
-- id: universal-references
-  title: Universal References in C++11
-  URL: 'http://isocpp.org/blog/2012/11/universal-references-in-c11-scott-meyers'
-  type: webpage
-  accessed:
-    year: 2014
-    month: 10
-    day: 8
-- id: range-comprehensions
-  title: Range Comprehensions
-  URL: 'http://ericniebler.com/2014/04/27/range-comprehensions/'
-  type: webpage
-  accessed:
-    year: 2014
-    month: 10
-    day: 8
 - id: sutter-99
   title: When is a container not a container?
   type: article-journal
@@ -1190,29 +1121,6 @@ references:
     month: 7
     day: 1
   URL: 'http://www.gotw.ca/publications/mill09.htm'
-- id: n4132
-  title: 'N4132: Contiguous Iterators'
-  type: article
-  author:
-  - family: Maurer
-    given: Jens
-  issued:
-    year: 2014
-    month: 9
-    day: 10
-  accessed:
-    year: 2014
-    month: 10
-    day: 8
-  URL: 'https://isocpp.org/files/papers/n4132.html'
-- id: ntcts-iterator
-  title: NTCTS Iterator
-  URL: 'https://github.com/Beman/ntcts_iterator'
-  type: webpage
-  accessed:
-    year: 2014
-    month: 10
-    day: 8
 - id: range-v3
   title: Range v3
   URL: 'http://www.github.com/ericniebler/range-v3'
@@ -1221,108 +1129,25 @@ references:
     year: 2014
     month: 10
     day: 8
-- id: llvm-sroa
-  title: 'Debug info: Support fragmented variables'
-  URL: 'http://reviews.llvm.org/D2680'
-  type: webpage
-  accessed:
-    year: 2014
-    month: 10
-    day: 8
-- id: libcxx
-  title: 'libc++ C++ Standard Library'
-  URL: 'http://libcxx.llvm.org/'
-  type: webpage
-  accessed:
-    year: 2014
-    month: 10
-    day: 8
-- id: austern98
-  title: 'Segmented Iterators and Hierarchical Algorithms'
-  URL: 'http://dl.acm.org/citation.cfm?id=647373.724070'
-  author:
-  - family: Austern
-    given: Matthew
-  type: paper-conference
-  container-title: Selected Papers from the International Seminar on Generic Programming
-  page: 80-90
-  issued:
-    year: 2000
-- id: cpp-seasoning
-  title: 'C++ Seasoning'
-  author:
-  - family: Parent
-    given: Sean
-  type: speech
-  URL: 'https://github.com/sean-parent/sean-parent.github.com/wiki/presentations/2013-09-11-cpp-seasoning/cpp-seasoning.pdf'
-  container-title: 'GoingNative 2013'
-  issued:
-    year: 2013
-    month: 9
-    day: 11
-- id: muchnick97
-  title: 'Advanced Compiler Design Implementation'
-  author:
-  - family: Muchnick
-    given: Steven
-  publisher: 'Morgan Kaufmann'
-  issued:
-    year: 1997
-  isbn: '1558603204, 9781558603202'
-- id: n4017
-  title: 'N4017: Non-member size() and more'
+- id: n4382
+  title: 'N4382: Working Draft: C++ Extensions for Ranges'
   type: article
   author:
-  - family: Marcangelo
-    given: Riccardo
+  - family: Niebler
+    given: Eric
   issued:
-    year: 2014
-    month: 5
-    day: 22
-  accessed:
-    year: 2014
-    month: 10
-    day: 10
-  URL: 'http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4017.htm'
-- id: n3350
-  title: 'N3350: A minimal std::range<Iter>'
-  type: article
-  author:
-  - family: Yasskin
-    given: Jeffrey
-  issued:
-    year: 2012
-    month: 1
-    day: 16
-  accessed:
-    year: 2014
-    month: 10
-    day: 10
-    URL: 'http://www.open-std.org/Jtc1/sc22/wg21/docs/papers/2012/n3350.html'
+    year: 2015
+    month: 4
+    day: 12
+  URL: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4382.pdf
 ...
 
-[1]: http://boost.org/libs/concept_check "Boost Concept Check Library"
-[2]: http://www.boost.org/libs/range "Boost.Range"
-[3]: http://stlab.adobe.com/ "Adobe Source Libraries"
-[4]: http://dlang.org/phobos/std_range.html "D Phobos std.range"
-[5]: https://github.com/Bekenn/range "Position-Based Ranges"
-[6]: https://github.com/sean-parent/sean-parent.github.com/wiki/presentations/2013-09-11-cpp-seasoning/cpp-seasoning.pdf "C++ Seasoning, Sean Parent"
-[7]: http://www.github.com/ericniebler/range-v3 "Range v3"
-[8]: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3351.pdf "A Concept Design for the STL"
-[9]: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2004/n1640.html "New Iterator Concepts"
-[10]: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3782.pdf "Indexed-Based Ranges"
-[11]: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2005/n1873.html "The Cursor/Property Map Abstraction"
-[12]: http://ericniebler.com/2014/04/27/range-comprehensions/ "Range Comprehensions"
-[13]: http://isocpp.org/blog/2012/11/universal-references-in-c11-scott-meyers "Universal References in C++11"
-[14]: http://lafstern.org/matt/segmented.pdf "Segmented Iterators and Hierarchical Algorithms"
-[15]: http://reviews.llvm.org/D2680 "Debug info: Support fragmented variables."
-[16]: http://clang.llvm.org/extra/clang-modernize.html "Clang Modernize"
-[17]: http://libcxx.llvm.org/ "libc++ C++ Standard Library"
-[18]: https://isocpp.org/files/papers/n4132.html "Contiguous Iterators"
-[19]: https://github.com/Beman/ntcts_iterator "ntcts_iterator"
-[20]: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n4017.htm "Non-member size() and more"
-[21]: http://www.open-std.org/Jtc1/sc22/wg21/docs/papers/2012/n3350.html "A minimal std::range<Iter>"
-[22]: http://www.gotw.ca/publications/mill09.htm "When is a container not a container?"
+[1]: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4382.pdf "Working Draft: C++ Extensions for Ranges"
+[2]: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2004/n1640.html "New Iterator Concepts"
+[3]: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2005/n1873.html "The Cursor/Property Map Abstraction"
+[4]: http://www.gotw.ca/publications/mill09.htm "When is a container not a container?"
+[5]: http://www.github.com/ericniebler/range-v3 "Range v3"
+[6]: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3351.pdf "A Concept Design for the STL"
 
 Appendix 1: Reference implementations of `common_type` and `common_reference`
 =========
