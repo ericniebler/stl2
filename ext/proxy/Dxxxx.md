@@ -36,7 +36,7 @@ Why is this an interesting problem to solve? Any data structure whose elements a
 * A `zip` view of *N* sequences (described below)
 * A view of elements in a database
 * A view of elements in a different address space (e.g., in a different process or across the network)
-* A view that does pre- and/or post-processing whenever an element is read or written.
+* A view that does pre- and/or post-processing whenever an element is read or written (e.g., for logging purposes).
 * A view of sub-objects (virtual or actual) that can only be accessed via getters and setters.
 
 These are all potentially interesting views that, as of today, can only be represented as Input sequences. That severely limits the number of algorithms that can operate on them. The design suggested by this paper would make all of these valid sequences even for RandomAccess.
@@ -360,7 +360,7 @@ concept bool IndirectlySwappable() {
 
 ### Algorithm constraints: IndirectCallable
 
-Further problems with proxy iterators arise while trying to constrain algorithms that accept callback functions from users: predicates, relations, and projections. Below, for example, is part of the implementation of `unique_copy` from the SGI STL[TODO REFERENCE].
+Further problems with proxy iterators arise while trying to constrain algorithms that accept callback functions from users: predicates, relations, and projections. Below, for example, is part of the implementation of `unique_copy` from the [SGI STL][7][@sgi-stl].
 
 ```c++
 _Tp value = *first;
@@ -468,7 +468,7 @@ To [19.2] Core Language Concepts, add the following:
 
 > **19.2.*X* Concept CommonReference [concepts.lib.corelang.commonref]**
 >
-> If `T` and `U` can both be explicitly converted or bound to a third type, `C`, then `T` and `U` share a *common reference type*, `C`. [ *Note:* `C` could be the same as `T`, or `U`, or it could be a different type. `C` may be a reference type. `C` may not be unique. --*end note* ] Informally, two types `T` and `U` model the `CommonReference` concept when the type alias `CommonReferenceType<T, U>` is well-formed and names a common reference type of `T` and `U`.
+> 1\. If `T` and `U` can both be explicitly converted or bound to a third type, `C`, then `T` and `U` share a *common reference type*, `C`. [ *Note:* `C` could be the same as `T`, or `U`, or it could be a different type. `C` may be a reference type. `C` may not be unique. --*end note* ] Informally, two types `T` and `U` model the `CommonReference` concept when the type alias `CommonReferenceType<T, U>` is well-formed and names a common reference type of `T` and `U`.
 >
 > ```c++
 > template <class T, class U>
@@ -487,6 +487,12 @@ To [19.2] Core Language Concepts, add the following:
 >     };
 > }
 > ```
+> 
+> 2\. Let `C` be `CommonReferenceType<T, U>`. Let `t1` and `t2` be objects of type `T`, and `u1` and `u2` be objects of type `U`. `CommonReference<T, U>()` is satisfied if and only if
+> > (2.1) -- `C(t1)` equals `C(t2)` if and only if `t1` equals `t2`.
+> > (2.2) -- `C(u1)` equals `C(u2)` if and only if `u1` equals `u2`.
+>
+> 3\. [ Note: Users are free to specialize `common_reference` when at least one parameter is a user-defined type. Those specializations are considered by the `CommonReference` concept. --end note ]
 
 Change 19.2.5 Concept Common to the following:
 
@@ -1140,6 +1146,28 @@ references:
     month: 4
     day: 12
   URL: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4382.pdf
+- id: palo-alto
+  title: 'N3351: A Concept Design for the STL'
+  type: article
+  author:
+  - family: Stroustrup
+    given: Bjarne
+  - family: Sutton
+    given: Andrew
+  issued:
+    year: 2013
+    month: 1
+    day: 12
+  URL: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3351.pdf
+- id: sgi-stl
+  title: 'SGI Standard Template Library Programmer''s Guide'
+  type: webpage
+  source: https://www.sgi.com/tech/stl/
+  URL: https://www.sgi.com/tech/stl/
+  accessed:
+    year: 2015
+    month: 8
+    day: 12
 ...
 
 [1]: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4382.pdf "Working Draft: C++ Extensions for Ranges"
@@ -1148,183 +1176,5 @@ references:
 [4]: http://www.gotw.ca/publications/mill09.htm "When is a container not a container?"
 [5]: http://www.github.com/ericniebler/range-v3 "Range v3"
 [6]: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3351.pdf "A Concept Design for the STL"
+[7]: https://www.sgi.com/tech/stl/ "SGI Standard Template Library Programmer's Guide"
 
-Appendix 1: Reference implementations of `common_type` and `common_reference`
-=========
-
-```c++
-#include <utility>
-#include <type_traits>
-
-using std::is_same;
-using std::decay_t;
-using std::declval;
-
-template <class T>
-using __t = typename T::type;
-
-template <class T>
-constexpr typename __t<T>::value_type __v = __t<T>::value;
-
-template <class T, class... Args>
-using __apply = typename T::template apply<Args...>;
-
-template <class T, class U>
-struct __compose {
-  template <class V>
-  using apply = __apply<T, __apply<U, V>>;
-};
-
-template <class T>
-struct __id { using type = T; };
-
-template <template <class...> class T, class... U>
-concept bool _Valid = requires { typename T<U...>; };
-
-template <class U, template <class...> class T, class... V>
-concept bool _Is = _Valid<T, U, V...> && __v<T<U, V...>>;
-
-template <class U, class V>
-concept bool _ConvertibleTo = _Is<U, std::is_convertible, V>;
-
-template <template <class...> class T, class... U>
-struct __defer { };
-_Valid{T, ...U}
-struct __defer<T, U...> : __id<T<U...>> { };
-
-template <template <class...> class T>
-struct __q {
-  template <class... U>
-  using apply = __t<__defer<T, U...>>;
-};
-
-template <class T>
-struct __has_type : std::false_type { };
-template <class T> requires _Valid<__t, T>
-struct __has_type<T> : std::true_type { };
-
-template <class T, class X = std::remove_reference_t<T>>
-using __cref = std::add_lvalue_reference_t<std::add_const_t<X>>;
-template <class T>
-using __uncvref = std::remove_cv_t<std::remove_reference_t<T>>;
-
-template <class T, class U>
-using __cond = decltype(true ? declval<T>() : declval<U>());
-
-template <class From, class To>
-struct __copy_cv_ : __id<To> { };
-template <class From, class To>
-struct __copy_cv_<From const, To> : std::add_const<To> { };
-template <class From, class To>
-struct __copy_cv_<From volatile, To> : std::add_volatile<To> { };
-template <class From, class To>
-struct __copy_cv_<From const volatile, To> : std::add_cv<To> { };
-template <class From, class To>
-using __copy_cv = __t<__copy_cv_<From, To>>;
-
-template <class T, class U>
-struct __builtin_common { };
-template <class T, class U>
-using __builtin_common_t = __t<__builtin_common<T, U>>;
-template <class T, class U>
-  requires _Valid<__cond, __cref<T>, __cref<U>>
-struct __builtin_common<T, U> :
-  std::decay<__cond<__cref<T>, __cref<U>>> { };
-template <class T, class U, class R = __builtin_common_t<T &, U &>>
-using __rref_res = std::conditional_t<__v<std::is_reference<R>>,
-  std::remove_reference_t<R> &&, R>;
-template <class T, class U>
-  requires _Valid<__builtin_common_t, T &, U &>
-    && _ConvertibleTo<T &&, __rref_res<T, U>>
-    && _ConvertibleTo<U &&, __rref_res<T, U>>
-struct __builtin_common<T &&, U &&> : __id<__rref_res<T, U>> { };
-template <class T, class U>
-using __lref_res = __cond<__copy_cv<T, U> &, __copy_cv<U, T> &>;
-template <class T, class U>
-struct __builtin_common<T &, U &> : __defer<__lref_res, T, U> { };
-template <class T, class U>
-  requires _Valid<__builtin_common_t, T &, U const &>
-    && _ConvertibleTo<U &&, __builtin_common_t<T &, U const &>>
-struct __builtin_common<T &, U &&> :
-  __builtin_common<T &, U const &> { };
-template <class T, class U>
-struct __builtin_common<T &&, U &> : __builtin_common<U &, T &&> { };
-
-// common_type
-template <class ...Ts>
-struct common_type { };
-
-template <class... T>
-using common_type_t = __t<common_type<T...>>;
-
-template <class T>
-struct common_type<T> : std::decay<T> { };
-
-template <class T, class U>
-struct common_type<T, U>
-  : common_type<decay_t<T>, decay_t<U>> { };
-
-template <class T>
-concept bool _Decayed = __v<is_same<decay_t<T>, T>>;
-
-template <_Decayed T, _Decayed U>
-struct common_type<T, U> : __builtin_common<T, U> { };
-
-template <class T, class U, class V, class... W>
-  requires _Valid<common_type_t, T, U>
-struct common_type<T, U, V, W...>
-  : common_type<common_type_t<T, U>, V, W...> { };
-
-namespace __qual {
-  using __rref = __q<std::add_rvalue_reference_t>;
-  using __lref = __q<std::add_lvalue_reference_t>;
-  template <class>
-  struct __xref : __id<__compose<__q<__t>, __q<__id>>> { };
-  template <class T>
-  struct __xref<T&> : __id<__compose<__lref, __t<__xref<T>>>> { };
-  template <class T>
-  struct __xref<T&&> : __id<__compose<__rref, __t<__xref<T>>>> { };
-  template <class T>
-  struct __xref<const T> : __id<__q<std::add_const_t>> { };
-  template <class T>
-  struct __xref<volatile T> : __id<__q<std::add_volatile_t>> { };
-  template <class T>
-  struct __xref<const volatile T> : __id<__q<std::add_cv_t>> { };
-}
-
-template <class T, class U, template <class> class TQual,
-  template <class> class UQual>
-struct basic_common_reference { };
-
-template <class T, class U>
-using __basic_common_reference =
-  basic_common_reference<__uncvref<T>, __uncvref<U>,
-    __qual::__xref<T>::type::template apply,
-    __qual::__xref<U>::type::template apply>;
-
-// common_reference
-template <class... T>
-struct common_reference { };
-
-template <class... T>
-using common_reference_t = __t<common_reference<T...>>;
-
-template <class T>
-struct common_reference<T> : __id<T> { };
-
-template <class T, class U>
-struct common_reference<T, U>
-  : std::conditional_t<
-      __v<__has_type<__basic_common_reference<T, U>>>,
-      __basic_common_reference<T, U>, common_type<T, U>> { };
-
-template <class T, class U>
-  requires _Valid<__builtin_common_t, T, U>
-    && __v<std::is_reference<__builtin_common_t<T, U>>>
-struct common_reference<T, U> : __builtin_common<T, U> { };
-
-template <class T, class U, class V, class... W>
-  requires _Valid<common_reference_t, T, U>
-struct common_reference<T, U, V, W...>
-  : common_reference<common_reference_t<T, U>, V, W...> { };
-```
