@@ -147,6 +147,14 @@ Without the constraint, this code compiles. With it, it doesn't. The constraint 
 
 Changing the lambda to accept either a "`pair<int,string> [const &]`" or a "`pair<int const &, string const &> [const &]`" would make the check succeed, but the body of the lambda would fail to compile or have the wrong semantics.
 
+## Problems with the Cross-type Concepts
+
+The purpose of the `Common` concept in the Palo Alto report is to make cross-type concepts semantically meaningful. The values of different types, `T` and `U`, can be projected into a shared domain where the operation(s) in question can be performed with identical semantics. Concepts like `EqualityComparable`, `TotallyOrdered`, and `Relation` use `Common` to enforce the semantic coherence that is needed for equational reasoning, even when argument types differ.
+
+However, the syntactic requirements of `Common` cause these concepts to be overconstrained. The "common" type cannot be any random type with no relation to the other two; rather, objects of the original two types must be explicitly convertible to the common type. The somewhat non-intuitive result of this is that `EqualityComparable<T,T>` can be false even when `EqualityComparable<T>` is true, due to the extra `Common<T,T>` constraint on the former and the fact that `Common<T,T>` is false for non-movable types: there is no such permissible explicit "conversion" from `T` to `T` when `T` is non-movable.
+
+Although not strictly a problem with proxy iterators, the issues with the foundational concepts effect all the parts of the standard library built upon them and so must be addressed. The design described below offers a simple solution to an otherwise thorny problem.
+
 Proposed Design
 =====
 
@@ -168,7 +176,43 @@ When adapting generic code to work with proxy iterators, calls to `swap` and `mo
 
 ### CommonReference and CommonType
 
-TODO `CommonReference` fixes the problem that `EqualityComparable<T,T>` yields different results that `EqualityComparable<T>` when `T` is non-movable.
+The suggested `common_reference` type trait and the `CommonReference` concept that uses it, which is used to express the constraints between an iterator's associated types, takes two (possibly cv- and ref-qualified) types and finds a common type (also possibly qualified) to which they can both be converted *or bound*. When passed two reference types, `common_reference` tries to find another reference type to which both references can bind. (`common_reference` may return a non-reference type if no such reference type is found.) If common references exist between an iterator's associated types, then generic code knows how to manipulate values read from the iterator, and the iterator "makes sense".
+
+Like `common_type`, `common_reference` may also be specialized on user-defined types, and this is the hook that is needed to make proxy references work in a generic context. As a purely practical matter, specializing such a template presents some issues. Would a user need to specialize `common_reference` for every permutation of cv- and ref-qualifiers, for both the left and right arguments? Obviously, such an interface would be broken. The issue is that there is no way in C++ to partially specialize on type *qualifiers*.
+
+Rather, `common_reference` is implemented in terms of another template: `basic_common_reference`. The interface to `basic_common_reference` is given below:
+
+```c++
+template <class T, class U,
+  template <class> class TQual,
+  template <class> class UQual>
+struct basic_common_reference;
+```
+
+An instantiation of `common_reference<T cv &, U cv &>` defers to `basic_common_reference<T, U, tqual, uqual>`, where `tqual` is a unary alias template such that `tqual<T>` is `T cv &`. Basically, the template template parameters encode the type qualifiers that got stripped from the first two arguments. That permits users to effectively partially specialize `basic_common_reference` -- and hence `common_reference` -- on type qualifiers.
+
+For instance, here is the partial specialization that find the common "reference" of two `tuple`s of references -- which is a proxy reference.
+
+```c++
+template <class...Ts, class...Us,
+  template <class> class TQual, 
+  template <class> class UQual>
+  requires sizeof...(Ts) == sizeof...(Us) &&
+    (CommonReference<TQual<Ts>, UQual<Us>>() &&...)
+struct basic_common_reference<tuple<Ts...>, tuple<Us...>, TQual, UQual> {
+  using type = tuple<
+    common_reference_t<TQual<Ts>, UQual<Us>>...>;    
+};
+```
+
+With this specialization, the common reference between the types `tuple<int,double>&` and `tuple<const int&,double&>` is computed as `tuple<const int&,double&>`. (The fact that there is currently no conversion from an lvalue of type `tuple<int,double>` to `tuple<const int&,double&>` means that these two types do not model `CommonReference`. Arguably, such a conversion should exist.)
+
+A reference implementation of `common_type` and `common_reference` can be found in [Appendix 1](#appendix-1-reference-implementations-of-common_type-and-common_reference).
+
+#### CommonReference and the Cross-Type Concepts
+
+The `CommonReference` concept also eliminates the problems with the cross-type concepts as described in the section ["Problems with the Cross-type Concepts"](#problems-with-the-cross-type-concepts). By using the `CommonReference` concept instead of `Common` in concepts like `EqualityComparable` and `TotallyOrdered`, these concepts are no longer overconstrained since a const lvalue of type "`T`" can bind to the common reference type "`const T&`", regardless of whether `T` is movable or not. `CommonReference`, like `Common`, ensures that there is a shared domain in which the operation(s) in question are semantically meaningful, so equational reasoning is preserved.
+
 
 ### Permutable: `iter_swap` and `iter_move`
 
