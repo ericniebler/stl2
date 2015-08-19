@@ -815,20 +815,22 @@ Change the description of `IndirectlySwappable`:
 > `iter_swap(i1,i2)`, the value of `*i1` is equal to the value of
 > `*i2` before the call, and *vice versa*.
 
-Change the definition of the `Projected` struct in 24.3.3 "Projected iterator" ([projected.indirectcallables]) to the following:
+Swap subsections 24.3.3 ([projected.indirectcallables]) and 24.3.4 ([indirectfunct.indirectcallables]), and change the definition of the `Projected` struct ([projected.indirectcallables]) to the following:
 
 > ```c++
-> template <Readable I, class Proj>
->   requires RegularFunction<FunctionType<Proj>, ValueType<I>>() &&
->     RegularFunction<FunctionType<Proj>, ReferenceType<I>>() &&
->     RegularFunction<FunctionType<Proj>, iter_common_reference_t<I>>()
+> template <Readable I, IndirectRegularCallable<I> Proj>
 > struct Projected {
 >   using value_type = decay_t<ResultType<FunctionType<Proj>, ValueType<I>>>;
 >   ResultType<FunctionType<Proj>, ReferenceType<I>> operator*() const;
 > };
+>
+> template <WeaklyIncrementable I, IndirectRegularCallable<I> Proj>
+> struct difference_type<Projected<I, Proj>> {
+>   using type = DifferenceType<I>;
+> };
 > ```
 
-Change 24.3.4 "Indirect callables" ([indirectfunc.indirectcallables]) as described as follows: remove concept `IndirectRegularCallable` since it is not currently used anywhere. Change `IndirectCallable`, `IndirectCallablePredicate`, `IndirectCallableRelation`, and `IndirectCallableStrictWeakOrder` as follows:
+Change 24.3.4 "Indirect callables" ([indirectfunc.indirectcallables]) as described as follows: Change `IndirectCallable`, `IndirectRegularCallable`, `IndirectCallablePredicate`, `IndirectCallableRelation`, and `IndirectCallableStrictWeakOrder` as follows:
 
 > ```c++
 > template <class F>
@@ -850,6 +852,27 @@ Change 24.3.4 "Indirect callables" ([indirectfunc.indirectcallables]) as describ
 >     Function<FunctionType<F>, ReferenceType<I1>, ValueType<I2>>() &&
 >     Function<FunctionType<F>, ReferenceType<I1>, ReferenceType<I2>>() &&
 >     Function<FunctionType<F>, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
+> }
+> 
+> template <class F>
+> concept bool IndirectRegularCallable() {
+>   return RegularFunction<FunctionType<F>>();
+> }
+> template <class F, class I>
+> concept bool IndirectRegularCallable() {
+>   return Readable<I>() &&
+>     RegularFunction<FunctionType<F>, ValueType<I>>() &&
+>     RegularFunction<FunctionType<F>, ReferenceType<I>>() &&
+>     RegularFunction<FunctionType<F>, iter_common_reference_t<I>>();
+> }
+> template <class F, class I1, class I2>
+> concept bool IndirectRegularCallable() {
+>   return Readable<I1>() && Readable<I2>() &&
+>     RegularFunction<FunctionType<F>, ValueType<I1>, ValueType<I2>>() &&
+>     RegularFunction<FunctionType<F>, ValueType<I1>, ReferenceType<I2>>() &&
+>     RegularFunction<FunctionType<F>, ReferenceType<I1>, ValueType<I2>>() &&
+>     RegularFunction<FunctionType<F>, ReferenceType<I1>, ReferenceType<I2>>() &&
+>     RegularFunction<FunctionType<F>, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
 > }
 > 
 > template <class F, class I>
