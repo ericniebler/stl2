@@ -41,7 +41,7 @@ Why is this an interesting problem to solve? Any data structure whose elements a
 
 These are all potentially interesting views that, as of today, can only be represented as Input sequences. That severely limits the number of algorithms that can operate on them. The design suggested by this paper would make all of these valid sequences even for RandomAccess.
 
-Note that not all iterators that return rvalues are proxy iterators. If the rvalue does not stand in for another object, it is not a proxy. For instance, an iterator that adapts another by multiplying each element by 2 is not a proxy iterator. The [Palo Alto report][6][@palo-alto] lifts the onerous requirement that Forward iterators have true reference types, so they solve the "rvalue iterator" problem. However, as we show below, that is not enough to solve the "proxy iterator" problem.
+Note that not all iterators that return rvalues are proxy iterators. If the rvalue does not stand in for another object, it is not a proxy. The [Palo Alto report][6][@palo-alto] lifts the onerous requirement that Forward iterators have true reference types, so they solve the "rvalue iterator" problem. However, as we show below, that is not enough to solve the "proxy iterator" problem.
 
 ## Proxy Iterator problems
 
@@ -70,7 +70,7 @@ assert(&x.first == &vi[0]);
 assert(&x.second == &vs[0]);
 ```
 
-The `zip` view's iterator's reference type is an rvalue `pair` object, but the `pair` holds lvalue references to the elements of the underlying sequences. This proxy reference type exposes more of the fundamental problems with proxies than does `vector<bool>`, so it will be used in the proceeding discussion.
+The `zip` view's iterator's reference type is a prvalue `pair` object, but the `pair` holds lvalue references to the elements of the underlying sequences. This proxy reference type exposes more of the fundamental problems with proxies than does `vector<bool>`, so it will be used in the proceeding discussion.
 
 ### Permutable proxy iterators
 
@@ -90,7 +90,7 @@ auto j = next(i);
 *i = move(*j);
 ```
 
-Since `*j` returns an rvalue `pair`, the `move` has no effect. The assignment then copies elements instead of moving them. Had one of the underlying sequences been of a move-only type like `unique_ptr`, the code would fail to compile.
+Since `*j` returns a prvalue `pair`, the `move` has no effect. The assignment then copies elements instead of moving them. Had one of the underlying sequences been of a move-only type like `unique_ptr`, the code would fail to compile.
 
 The fundamental problem is that with proxies, the expression `move(*j)` is moving the *proxy*, not the element being proxied. Patching this up in the current system would involve returning some special pair-like type from `*j` and overloading `move` for it such that it returns a different pair-like type that stores rvalue references. However, `move` is not a customization point, so the algorithms will not use it. Making `move` a customization point is one possible fix, but the effects on user code such a change are unknown (and unknowable).
 
@@ -126,7 +126,7 @@ The Palo Alto report shows the constrained signature of the `for_each` algorithm
 
 ```c++
 template<InputIterator I, Semiregular F>
-    requires Function<F, ValueType<I>>
+  requires Function<F, ValueType<I>>
 F for_each(I first, I last, F f);
 ```
 
@@ -149,9 +149,9 @@ Changing the lambda to accept either a "`pair<int,string> [const &]`" or a "`pai
 
 ## Problems with the Cross-type Concepts
 
-The purpose of the `Common` concept in the Palo Alto report is to make cross-type concepts semantically meaningful. The values of different types, `T` and `U`, can be projected into a shared domain where the operation(s) in question can be performed with identical semantics. Concepts like `EqualityComparable`, `TotallyOrdered`, and `Relation` use `Common` to enforce the semantic coherence that is needed for equational reasoning, even when argument types differ.
+The purpose of the `Common` concept in the Palo Alto report is to make cross-type concepts semantically meaningful; it requires that the values of different types, `T` and `U`, can be projected into a shared domain where the operation(s) in question can be performed with identical semantics. Concepts like `EqualityComparable`, `TotallyOrdered`, and `Relation` use `Common` to enforce the semantic coherence that is needed for equational reasoning, even when argument types differ.
 
-However, the syntactic requirements of `Common` cause these concepts to be overconstrained. The "common" type cannot be any random type with no relation to the other two; rather, objects of the original two types must be explicitly convertible to the common type. The somewhat non-intuitive result of this is that `EqualityComparable<T,T>` can be false even when `EqualityComparable<T>` is true, due to the extra `Common<T,T>` constraint on the former and the fact that `Common<T,T>` is false for non-movable types: there is no such permissible explicit "conversion" from `T` to `T` when `T` is non-movable.
+However, the syntactic requirements of `Common` cause these concepts to be overconstrained. The "common" type cannot be any random type with no relation to the other two; rather, objects of the original two types must be explicitly convertible to the common type. The somewhat non-intuitive result of this is that `EqualityComparable<T,T>` can be false even when `EqualityComparable<T>` is true. The former has an extra `Common<T,T>` constraint, which is false for non-movable types: there is no such permissible explicit "conversion" from `T` to `T` when `T` is non-movable.
 
 Although not strictly a problem with proxy iterators, the issues with the foundational concepts effect all the parts of the standard library built upon them and so must be addressed. The design described below offers a simple solution to an otherwise thorny problem.
 
@@ -166,11 +166,11 @@ The relationships between an iterator's associated types, currently expressed in
 
 ### Overview, for implementers
 
-The algorithms must be specified to use `iter_swap` and `iter_move` when swapping and moving elements. The concepts must be respecified in terms of the new customization points, and a new type trait, `common_reference`, must be specified and implemented. The known shortcomings of `common_type` (lack of SFINAE-friendliness, difficulty of specialization) must be addressed. Care must be taken in the algorithm implementations to hew to the valid expressions for the iterator concepts. The algorithm constraints must be respecified to accommodate proxy iterators.
+The algorithms must be specified to use `iter_swap` and `iter_move` when swapping and moving elements. The concepts must be respecified in terms of the new customization points, and a new type trait, `common_reference`, must be specified and implemented. The known shortcomings of `common_type` (e.g., [difficulty of specialization](https://cplusplus.github.io/LWG/lwg-active.html#2465)) must be addressed. (The formulation of `common_type` given in this paper fixes all known issues.) Care must be taken in the algorithm implementations to hew to the valid expressions for the iterator concepts. The algorithm constraints must be respecified to accommodate proxy iterators.
 
 ### Overview, for users
 
-For user code, the changes are minimal. Little to no conforming code that works today will stop working after adoping this resolution. The changes to `common_type` are potentially breaking, but only for conversion sequences that are sensitive to cv qualification and value category, and the committee has shown no reluctance to make similar changes to `common_type` before. And the addition of `common_reference` gives recourse to users who care about the issue.
+For user code, the changes are minimal. Little to no conforming code that works today will stop working after adoping this resolution. The changes to `common_type` are potentially breaking, but only for conversion sequences that are sensitive to cv qualification and value category, and the committee has shown no reluctance to make similar changes to `common_type` before. And the addition of `common_reference` gives recourse to users who care about it.
 
 When adapting generic code to work with proxy iterators, calls to `swap` and `move` should be replaced with `iter_swap` and `iter_move`, and for calls to higher-order algorithms, generic lambdas are the preferred solution. When that's not possible, functions can be changed to take arguments by the iterator's *common reference* type, which is the result of applying the `common_reference` trait to `ReferenceType<I>` and `ValueType<I>&`. (An `iter_common_reference_t<I>` type alias is suggested to make this simpler.)
 
@@ -464,16 +464,22 @@ using R = iter_common_reference_t<I>;
 sort(first, last, [](R&& x, R&& y) {return x < y;});
 ```
 
-
-
 Alternate Designs
 =====
 
-## Make move a customization point
+## Make `move` a customization point
 
-Breaking change. What does move(std::ref(i)) do? Hard to know what the Right Thing is for std::pair and std::tuple since there isn't enough context.
+Rather than adding a new customization point (`iter_move`) we could press `std::move` into service as a partial solution to the proxy iterator problem. The idea would be to make expressions like `std::move(*it)` do the right thing for iterators like the `zip` iterator described above. That would involve making `move` a customization point and letting it return something other than an rvalue reference type, so that proxy lvalues can be turned into proxy rvalues. (This solution would still require `common_reference` to solve the other problems described above.)
 
-TODO discussion
+At first blush, this solution makes a kind of sense: `swap` is a customization point, so why isn't `move`? That logic overlooks the fact that users already have a way to specify how types are moved: with the move constructor and move assignment operator. Rvalue references and move semantics are complicated enough without adding yet another wrinkle, and overloads of `move` that return something other than `T&&` qualify as a wrinkle; `move` is widely used, and there's no telling how much code could break if `move` returned something other than a `T&&`.
+
+It's also a breaking change since `move` is often called qualified, as `std::move`. That would not find any overloads in other namespaces unless the approach described in [N4381][8][@custpoints] were adopted. Turning `move` into a namespace-scoped function object (the customization point design suggested by `N4381`) comes with its own risks, as described in that paper.
+
+Making `move` the customization point instead of `iter_move` reduces design flexibility for authors of proxy iterator types since argument-dependent dispatch happens on the type of the proxy *reference* instead of the iterator. Consider the `zip` iterator described above, whose reference type is a prvalue `pair` of lvalue references. To make this iterator work using `move` as the customization point would require overloading `move` on `pair`. That would be a breaking change since `move` of `pair` already has a meaning. Rather, the `zip` iterator's reference type would have to be some special `proxy_pair` type just so that `move` could be overloaded for it. That's undesirable.
+
+A correlary of the above point involves proxy-like types like `reference_wrapper`. Given an lvalue `reference_wrapper` named "`x`", it's unclear what `move(x)` should do. Should it return an rvalue reference to "`x`", or should it return a temporary object that wraps an rvalue reference to "`x.get()`"? With `move` as a customization point, there is often not enough context to say with certainty what behavior to assign to `move` for a type that stores references.
+
+For all these reasons, this paper prefers to add a new, dedicated API -- `iter_move` -- whose use is unambiguous.
 
 ## New iterator concepts
 
@@ -1235,6 +1241,16 @@ references:
     year: 2015
     month: 8
     day: 12
+- id: custpoints
+  title: 'Suggested Design for Customization Points'
+  type: article
+  author:
+  - family: Niebler
+    given: Eric
+  issued:
+    year: 2015
+    month: 3
+    day: 11
 ...
 
 [1]: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4382.pdf "Working Draft: C++ Extensions for Ranges"
@@ -1244,4 +1260,4 @@ references:
 [5]: http://www.github.com/ericniebler/range-v3 "Range v3"
 [6]: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3351.pdf "A Concept Design for the STL"
 [7]: https://www.sgi.com/tech/stl/ "SGI Standard Template Library Programmer's Guide"
-
+[8]: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4381.html "Suggested Design for Customization Points"
