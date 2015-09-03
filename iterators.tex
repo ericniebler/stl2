@@ -6348,14 +6348,14 @@ iteration over its elements by providing a \tcode{begin} iterator and an
 \begin{itemdecl}
 template <class T>
   @\newtxt{requires requires (T\& t) \{}@
-    @\newtxt{\{ begin(t) \} -> Iterator; // not required to be equality preserving}@
+    @\newtxt{\{ begin(t) \} -> Iterator; // possibly required to be equality preserving (\seebelow)}@
   @\newtxt{\}}@
 using IteratorType = decltype(begin(declval<T@\newtxt{\&}@>()));
 
 template <class T>
   @\newtxt{requires requires (T\& t) \{}@
     @\newtxt{typename IteratorType<T>;}@
-    @\newtxt{\{ end(t) \} -> Sentinel<IteratorType<T>{}>; // not required to be equality preserving}@
+    @\newtxt{\{ end(t) \} -> Sentinel<IteratorType<T>{}>;}@
   @\newtxt{\}}@
 using SentinelType = decltype(end(declval<T@\newtxt{\&}@>()));
 
@@ -6381,11 +6381,24 @@ if and only if}
 
 \begin{itemize}
 \item \newtxt{Overload resolution~(\cxxref{over.match}) on the expressions \tcode{begin(t)} and \tcode{end(t)} selects unary non-member functions ``\tcode{begin}'' and ``\tcode{end}'' from candidate sets that includes the three overloads of \tcode{begin} and \tcode{end} found in \tcode{<experimental/ranges_v1/iterator>}~(\ref{iterator.synopsis}) and the lookup sets produced by argument-dependent lookup~(\cxxref{basic.lookup.argdep}).}
+
 \item \newtxt{Both \tcode{begin(t)} and \tcode{end(t)} are amortized constant time
-and non-modifying. (\tcode{begin(t)} and \tcode{end(t)} do not require
-implicit expression variants.)}
+and non-modifying. \enternote \tcode{begin(t)} and \tcode{end(t)} do not require
+implicit expression variants. \exitnote}
+
+\item \newtxt{If \tcode{IteratorType<T>} satisfies \tcode{ForwardIterator},
+\tcode{begin(t)} is equality preserving.}
 \end{itemize}
 \end{itemdescr}
+
+\pnum \newtxt{\enternote
+Equality preservation of both \tcode{begin} and \tcode{end} enables passing a \tcode{Range}
+whose \tcode{IteratorType} satisfies \tcode{ForwardIterator} to multiple algorithms and
+making multiple passes over the range by repeated calls to \tcode{begin} and \tcode{end}.
+Since \tcode{begin} is not required to be equality preserving when the return type does
+not satisfy \tcode{ForwardIterator}, repeated calls might not return equal values or
+might not be well-defined; \tcode{begin} should be called at most once for such a range.
+\exitnote}
 
 \rSec3[ranges.sized]{Sized ranges}
 
@@ -6427,6 +6440,13 @@ concept bool SizedRange@\newtxt{() \{}\oldtxt{ =}@
 \begin{itemize}
 \item \newtxt{Overload resolution~(\cxxref{over.match}) on the expression \tcode{size(t)} selects a unary non-member function ``\tcode{size}'' from a candidate set that includes the three overloads of \tcode{size} found in \tcode{<experimental/ranges_v1/iterator>}~(\ref{iterator.synopsis}) and the lookup set produced by argument-dependent lookup~(\cxxref{basic.lookup.argdep}).}
 \item \newtxt{\tcode{size(t)} returns the number of elements in \tcode{t}.}
+\item \newtxt{If \tcode{IteratorType<T>} satisfies \tcode{ForwardIterator},
+\tcode{size(t)} is well-defined regardless of the evaluation of
+\tcode{begin(t)}. \enternote \tcode{size(t)} is otherwise not required be
+well-defined after evaluating \tcode{begin(t)}. For a \tcode{SizedRange}
+whose \tcode{IteratorType} does not model \tcode{ForwardIterator}, for
+example, \tcode{size(t)} might only be well-defined if evaluated before
+the first call to \tcode{begin(t)}. \exitnote}
 \end{itemize}
 
 \pnum
