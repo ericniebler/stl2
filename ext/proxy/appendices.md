@@ -109,15 +109,18 @@ using common_type_t = __t<common_type<T...>>;
 template <class T>
 struct common_type<T> : std::decay<T> { };
 
-template <class T, class U>
-struct common_type<T, U>
-  : common_type<decay_t<T>, decay_t<U>> { };
-
 template <class T>
 concept bool _Decayed = __v<is_same<decay_t<T>, T>>;
 
+template <class T, class U>
+struct __common_type2
+  : common_type<decay_t<T>, decay_t<U>> { };
+
 template <_Decayed T, _Decayed U>
-struct common_type<T, U> : __builtin_common<T, U> { };
+struct __common_type2<T, U> : __builtin_common<T, U> { };
+
+template <class T, class U>
+struct common_type<T, U> : __common_type2<T, U> { };
 
 template <class T, class U, class V, class... W>
   requires _Valid<common_type_t, T, U>
@@ -162,15 +165,17 @@ template <class T>
 struct common_reference<T> : __id<T> { };
 
 template <class T, class U>
-struct common_reference<T, U>
-  : std::conditional_t<
-      __v<__has_type<__basic_common_reference<T, U>>>,
+struct __common_reference2
+  : std::conditional_t<__v<__has_type<__basic_common_reference<T, U>>>,
       __basic_common_reference<T, U>, common_type<T, U>> { };
 
 template <class T, class U>
   requires _Valid<__builtin_common_t, T, U>
-    && __v<std::is_reference<__builtin_common_t<T, U>>>
-struct common_reference<T, U> : __builtin_common<T, U> { };
+    && _Is<__builtin_common_t<T, U>, std::is_reference>
+struct __common_reference2<T, U> : __builtin_common<T, U> { };
+
+template <class T, class U>
+struct common_reference<T, U> : __common_reference2<T, U> { };
 
 template <class T, class U, class V, class... W>
   requires _Valid<common_reference_t, T, U>
