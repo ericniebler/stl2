@@ -7,36 +7,68 @@
 
 \begin{codeblock}
 namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
-  template <class Base, class...Tags>
+  @\newtxt{namespace tag \{ struct __specifier_tag \{ \}; \}}@
+
+  template <class T>
+  struct __tag_spec { };
+  template <class Spec, class Arg>
+  struct __tag_spec<Spec(Arg)> { using type = Spec; };
+
+  template <class T>
+  struct __tag_elem { };
+  template <class Spec, class Arg>
+  struct __tag_elem<Spec(Arg)> { using type = Arg; };
+
+  @\newtxt{template <class T>}@
+  @\newtxt{concept bool TagSpecifier() \{}@
+    @\newtxt{return DerivedFrom<T, tag::__specifier_tag>();}@
+  @\newtxt{\}}@
+
+  @\newtxt{template <class T>}@
+  @\newtxt{concept bool TaggedType() \{}@
+    @\newtxt{return requires \{}@
+      @\newtxt{typename __tag_spec<T>::type;}@
+      @\newtxt{requires TagSpecifier<typename __tag_spec<T>::type>();}@
+    @\newtxt{\};}@
+  @\newtxt{\}}@
+
+  template <class Base, @\oldtxt{class}\newtxt{TagSpecifier}@...Tags>
+    @\newtxt{requires sizeof...(Tags) >= tuple_size<Base>::value}@
   struct tagged;
+  @\newtxt{\}\}}@
 
   template <class Base, class...Tags>
-  struct tuple_size<tagged<Base, Tags...>>
+  struct tuple_size<@\newtxt{experimental::ranges_v1::}@tagged<Base, Tags...>>
     : tuple_size<Base> { };
   template <size_t N, class Base, class...Tags>
-  struct tuple_element<N, tagged<Base, Tags...>>
+  struct tuple_element<N, @\newtxt{experimental::ranges_v1::}@tagged<Base, Tags...>>
     : tuple_element<N, Base> { };
 
+  @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
   struct __getters {
   private:
-    template <class, class...> friend struct tagged;
-    template <class Type, class Indices, class...Tags>
+    template <class, @\oldtxt{class}\newtxt{TagSpecifier}@...>
+      @\newtxt{requires sizeof...(Tags) >= tuple_size<Base>::value}@
+    friend struct tagged;
+    template <class Type, class Indices, @\oldtxt{class}\newtxt{TagSpecifier}@...Tags>
     struct collect_;
-    template <class Type, std::size_t...Is, class...Tags>
+    template <class Type, std::size_t...Is, @\oldtxt{class}\newtxt{TagSpecifier}@...Tags>
     struct collect_<Type, index_sequence<Is...>, Tags...>
       : Tags::template getter<Type, Is>... {
       collect_() = default;
       collect_(const collect_&) = default;
       collect_& operator=(const collect_&) = default;
     private:
-      template <class, class...> friend struct tagged;
+      template <class @\newtxt{Base}@, @\oldtxt{class...}\newtxt{TagSpecifier...Tags}@>
+        @\newtxt{requires sizeof...(Tags) <= tuple_size<Base>::value}@
+      friend struct tagged;
       ~collect_() = default;
     };
-    template <class Type, class...Tags>
+    template <class Type, @\oldtxt{class}\newtxt{TagSpecifier}@...Tags>
     using collect = collect_<Type, make_index_sequence<sizeof...(Tags)>, Tags...>;
   };
 
-  template <class Base, class...Tags>
+  template <class Base, @\oldtxt{class}\newtxt{TagSpecifier}@...Tags>
   struct tagged
     : Base, __getters::collect<tagged<Base, Tags...>, Tags...> {
     using Base::Base;
@@ -73,30 +105,20 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
     }
   };
 
-  template <class T>
-  struct __tag_spec { };
-  template <class Spec, class Arg>
-  struct __tag_spec<Spec(Arg)> { using type = Spec; };
-
-  template <class T>
-  struct __tag_elem { };
-  template <class Spec, class Arg>
-  struct __tag_elem<Spec(Arg)> { using type = Arg; };
-
-  template <class F, class S>
+  template <@\oldtxt{class}\newtxt{TaggedType}@ F, @\oldtxt{class}\newtxt{TaggedType}@ S>
   using tagged_pair =
     tagged<pair<typename __tag_elem<F>::type, typename __tag_elem<S>::type>,
            typename __tag_spec<F>::type, typename __tag_spec<S>::type>;
 
-  template <class...Types>
+  template <@\oldtxt{class}\newtxt{TaggedType}@...Types>
   using tagged_tuple =
     tagged<tuple<typename __tag_elem<Types>::type...>,
            typename __tag_spec<Types>::type...>;
 
   namespace tag {
-    struct in {
+    struct in : @\newtxt{__specifier_tag}@ {
     private:
-      friend struct __getters;
+      friend @\oldtxt{struct}@ __getters;
       template <class Derived, size_t I>
       struct getter {
         getter() = default;
@@ -112,7 +134,7 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
           return get<I>(static_cast<const Derived &>(*this));
         }
       private:
-        friend struct __getters;
+        friend @\oldtxt{struct}@ __getters;
         ~getter() = default;
       };
     }
