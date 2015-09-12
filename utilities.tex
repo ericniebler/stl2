@@ -54,7 +54,19 @@ Change the \tcode{<utility>} synopsis as follows:
 {\color{addclr}
 \begin{codeblock}
   // \ref{taggedtup.tagged}, struct with named accessors
-  template <class Base, class... Types> struct tagged;
+  @\newtxt{template <class T>}@
+  @\newtxt{concept bool TagSpecifier() \{}@
+    @\newtxt{return \seebelow;}@
+  @\newtxt{\}}@
+
+  @\newtxt{template <class F>}@
+  @\newtxt{concept bool TaggedType() \{}@
+    @\newtxt{return \seebelow;}@
+  @\newtxt{\}}@
+
+  template <class Base, @\oldtxt{class... Types}\newtxt{TagSpecifier... Tags}@>
+    @\newtxt{requires sizeof...(Tags) <= tuple_size<Base>::value}@
+  struct tagged;
 
   // \ref{tagged.special}, tagged specialized algorithms
   template <class Base, class... Tags>
@@ -62,9 +74,9 @@ Change the \tcode{<utility>} synopsis as follows:
   void swap(tagged<Base, Tags...>& x, tagged<Base, Tags...>& y) noexcept(@\seebelow@);
 
   // \ref{tagged.pairs}, tagged pairs
-  template <class T1, class T2> using tagged_pair = @\seebelow@;
+  template <@\oldtxt{class}\newtxt{TaggedType}@ T1, @\oldtxt{class}\newtxt{TaggedType}@ T2> using tagged_pair = @\seebelow@;
 
-  @\newtxt{template <class Tag1, class Tag2, class T1, class T2>}@
+  @\newtxt{template <TagSpecifier Tag1, TagSpecifier Tag2, class T1, class T2>}@
   @\newtxt{constexpr tagged_pair<Tag1(V1), Tag2(V2)> make_tagged_pair(T1\&\& x, T2\&\& y);}@
 @\newtxt{\}\}\}}@
 
@@ -551,7 +563,18 @@ is zero-based.
 // defined in header <\newtxt{experimental/ranges_v1/}utility>
 
 namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
-  template <class Base, class... Tags>
+  @\newtxt{template <class T>}@
+  @\newtxt{concept bool TagSpecifier() \{}@
+    @\newtxt{return \impdef;}@
+  @\newtxt{\}}@
+
+  @\newtxt{template <class F>}@
+  @\newtxt{concept bool TaggedType() \{}@
+    @\newtxt{return \impdef;}@
+  @\newtxt{\}}@
+
+  template <class Base, @\oldtxt{class}\newtxt{TagSpecifier}@... Tags>
+    @\newtxt{requires sizeof...(Tags) <= tuple_size<Base>::value}@
   struct tagged :
     Base, @\textit{TAGGET}@(tagged<Base, Tags...>, @$T_i$@, @$i$@)... { // \seebelow
     using Base::Base;
@@ -585,8 +608,8 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
 }@\newtxt{\}\}}@
 \end{codeblock}
 
-\pnum The size of the \tcode{Tags} parameter pack shall be less than or equal to
-\tcode{tuple_size<Base>::value}.
+\pnum \oldtxt{The size of the \tcode{Tags} parameter pack shall be less than or equal to
+\tcode{tuple_size<Base>::value}.}
 
 \pnum A \techterm{tagged getter} is an empty trivial class type that has a named member function that
 returns a reference to a member of a tuple-like object that is assumed to be derived from the getter
@@ -606,9 +629,11 @@ struct @\xname{\textit{TAGGED_GETTER}}@ {
 };
 \end{codeblock}
 
-\pnum A \techterm{tag specifier} is a type that facilitates a mapping from a tuple-like type and an
+\pnum
+A \techterm{tag specifier} is a type that facilitates a mapping from a tuple-like type and an
 element index into a \textit{tagged getter} that gives named access to the element at that index.
-The types in the \tcode{Tags} parameter pack shall be tag specifiers. The tag specifiers in the
+\newtxt{\tcode{TagSpecifier<T>()} is satisfied if and only if \tcode{T} is a tag specifier.}
+\oldtxt{The types in the \tcode{Tags} parameter pack shall be tag specifiers.} The tag specifiers in the
 \tcode{Tags} parameter pack shall be unique. \enternote The mapping mechanism from tag specifier to
 tagged getter is unspecified.\exitnote
 
@@ -618,9 +643,11 @@ access to the $N$-th element of the tuple-like type \tcode{D}.
 \pnum It shall not be possible to delete an instance of class template \tcode{tagged} through a
 pointer to any base other than \tcode{Base}.
 
-\pnum A \techterm{tagged type} is a unary function type whose return type is a tag specifier. Let
-\tcode{\textit{TAGSPEC}(F)} name the tag specifier of the tagged type \tcode{F}, and let
-\tcode{\textit{TAGELEM}(F)} name the argument type of the tagged type \tcode{F}.
+\pnum
+\newtxt{\tcode{TaggedType<F>()} is satisfied if and only if \tcode{F} is a unary function type with return type \tcode{T} which satisfies \tcode{TagSpecifier<T>()}.}
+\oldtxt{A \techterm{tagged type} is a unary function type whose return type is a tag specifier.} Let
+\tcode{\textit{TAGSPEC}(F)} name the tag specifier of the \oldtxt{tagged type}\newtxt{\tcode{TaggedType}} \tcode{F}, and let
+\tcode{\textit{TAGELEM}(F)} name the argument type of the \oldtxt{tagged type}\newtxt{\tcode{TaggedType}} \tcode{F}.
 
 \indexlibrary{\idxcode{tagged}!\idxcode{tagged}}
 \begin{itemdecl}
@@ -778,13 +805,13 @@ void swap(tagged<Base, Tags...>& x, tagged<Base, Tags...>& y)
 
 namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
   // ...
-  template <class T1, class T2>
+  template <@\oldtxt{class}\newtxt{TaggedType}@ T1, @\oldtxt{class}\newtxt{TaggedType}@ T2>
   using tagged_pair = tagged<pair<@\textit{TAGELEM}@(T1), @\textit{TAGELEM}@(T2)>,
                              @\textit{TAGSPEC}@(T1), @\textit{TAGSPEC}@(T2)>;
 }@\newtxt{\}\}}@
 \end{codeblock}
 
-\pnum Types \tcode{T1}  and \tcode{T2} shall be tagged types~(\ref{taggedtup.tagged}).
+\pnum \oldtxt{Types \tcode{T1}  and \tcode{T2} shall be tagged types~(\ref{taggedtup.tagged}).}
 
 \pnum \enterexample
 \begin{codeblock}
@@ -802,7 +829,7 @@ assert(&p.max() == &p.second);
 @\newtxt{// defined in header <experimental/ranges_v1/utility>}@
 
 @\newtxt{namespace std \{ namespace experimental \{ namespace ranges_v1 \{}@
-  template <class Tag1, class Tag2, class T1, class T2>
+  template <@\oldtxt{class}\newtxt{TagSpecifier}@ Tag1, @\oldtxt{class}\newtxt{TagSpecifier}@ Tag2, class T1, class T2>
     constexpr tagged_pair<Tag1(V1), Tag2(V2)> make_tagged_pair(T1&& x, T2&& y);
 @\newtxt{\}\}\}}@
 \end{itemdecl}
@@ -839,12 +866,13 @@ a \Cpp program may contain:
 
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges_v1 {
-  template <class... Types>
+  template <@\oldtxt{class}\newtxt{TaggedType}@... Types>
   using tagged_tuple = tagged<tuple<@\textit{TAGELEM}@(Types)...>,
                               @\textit{TAGSPEC}@(Types)...>;
 
-  template<class...Tags, class... Types>
-    constexpr tagged_tuple<Tags(@\textit{VTypes}@)...>> make_tagged_tuple(Types&&... t);
+  template<@\oldtxt{class}\newtxt{TagSpecifier}@...Tags, class... Types>
+    @\newtxt{requires sizeof...(Tags) == sizeof...(Types)}@
+      constexpr tagged_tuple<Tags(@\textit{VTypes}@)...>> make_tagged_tuple(Types&&... t);
 }}}
 \end{codeblock}
 
@@ -864,12 +892,12 @@ namespace std { namespace experimental { namespace ranges_v1 {
 }
 
 \begin{codeblock}
-template <class... Types>
+template <@\oldtxt{class}\newtxt{TaggedType}@... Types>
 using tagged_tuple = tagged<tuple<@\textit{TAGELEM}@(Types)...>,
                             @\textit{TAGSPEC}@(Types)...>;
 \end{codeblock}
 
-\pnum The types in parameter pack \tcode{Types} shall be tagged types~(\ref{taggedtup.tagged}).
+\pnum \oldtxt{The types in parameter pack \tcode{Types} shall be tagged types~(\ref{taggedtup.tagged}).}
 
 \pnum \enterexample
 \begin{codeblock}
@@ -890,8 +918,9 @@ where indexing is zero-based.
 \indexlibrary{\idxcode{make_tagged_tuple}}%
 \indexlibrary{\idxcode{tagged_tuple}!\idxcode{make_tagged_tuple}}%
 \begin{itemdecl}
-template<class...Tags, class... Types>
-  constexpr tagged_tuple<Tags(@\textit{VTypes}@)...>> make_tagged_tuple(Types&&... t);
+template<@\oldtxt{class}\newtxt{TagSpecifier}@...Tags, class... Types>
+  @\newtxt{requires sizeof...(Tags) == sizeof...(Types)}@
+    constexpr tagged_tuple<Tags(@\textit{VTypes}@)...>> make_tagged_tuple(Types&&... t);
 \end{itemdecl}
 
 \begin{itemdescr} \pnum Let \tcode{$U_i$} be \tcode{decay_t<$T_i$>} for each
@@ -900,7 +929,7 @@ $T_i$ in \tcode{Types}. Then each $V_i$ in \tcode{VTypes} is
 $V_i$ is $U_i$.
 
 \pnum
-\returns \tcode{tagged_tuple<Tags(VTypes)...>(std::forward<Types>(t)...)}.
+\returns \tcode{tagged_tuple<Tags(\textit{VTypes})...>(std::forward<Types>(t)...)}.
 
 \pnum
 \enterexample
