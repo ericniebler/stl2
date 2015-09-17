@@ -1035,34 +1035,6 @@ object type~(\ref{function.objects}).
     decltype(@\xname{as_function}@(declval<T>()@\oldtxt{, is_member_pointer<decay_t<T>{}>\{\}}@));
 \end{codeblock}
 
-\rSec2[projected.indirectcallables]{Projected iterator}
-
-\pnum
-The \tcode{Projected} class template is intended for use when specifying the constraints of
-algorithms that accept callable objects and projections. It bundles a \tcode{Readable} type
-\tcode{I} and a projection function \tcode{Proj} into a new \tcode{Readable} type whose
-\tcode{reference} type is the result of applying \tcode{Proj} to the \tcode{ReferenceType}
-of \tcode{I}.
-
-\indexlibrary{\idxcode{Projected}}%
-\begin{codeblock}
-  template <Readable I, class Proj>
-    requires RegularFunction<FunctionType<Proj>, ValueType<I>>@\newtxt{()}@
-  struct Projected {
-    using value_type = decay_t<ResultType<FunctionType<Proj>, ValueType<I>>>;
-    ResultType<FunctionType<Proj>, ReferenceType<I>> operator*() const;
-  };
-
-  template <WeaklyIncrementable I, class Proj>
-  struct difference_type<Projected<I, Proj>> {
-    using type = DifferenceType<I>;
-  };
-\end{codeblock}
-
-\pnum
-\enternote \tcode{Projected} is only used to ease constraints specification. Its
-member function need not be defined.\exitnote
-
 \rSec2[indirectfunc.indirectcallables]{Indirect callables}
 
 \pnum
@@ -1113,6 +1085,34 @@ callable objects~(\cxxref{func.def}) as arguments.
   using IndirectCallableResultType =
     ResultType<FunctionType<F>, ValueType<Is>...>;
 \end{codeblock}
+
+\rSec2[projected.indirectcallables]{Projected iterator}
+
+\pnum
+The \tcode{Projected} class template is intended for use when specifying the constraints of
+algorithms that accept callable objects and projections. It bundles a \tcode{Readable} type
+\tcode{I} and a projection function \tcode{Proj} into a new \tcode{Readable} type whose
+\tcode{reference} type is the result of applying \tcode{Proj} to the \tcode{ReferenceType}
+of \tcode{I}.
+
+\indexlibrary{\idxcode{Projected}}%
+\begin{codeblock}
+  template <Readable I, @\oldtxt{class}\newtxt{IndirectRegularCallable<I>}@ Proj>
+    @\oldtxt{requires RegularFunction<FunctionType<Proj>, ValueType<I>>}@
+  struct Projected {
+    using value_type = decay_t<ResultType<FunctionType<Proj>, ValueType<I>>>;
+    ResultType<FunctionType<Proj>, ReferenceType<I>> operator*() const;
+  };
+
+  template <WeaklyIncrementable I, class Proj>
+  struct difference_type<Projected<I, Proj>> {
+    using type = DifferenceType<I>;
+  };
+\end{codeblock}
+
+\pnum
+\enternote \tcode{Projected} is only used to ease constraints specification. Its
+member function need not be defined.\exitnote
 
 \rSec1[commmonalgoreq]{Common algorithm requirements}
 
