@@ -23,10 +23,10 @@ as summarized in Table~\ref{tab:iterators.lib.summary}.
 
 \begin{libsumtab}{Iterators library summary}{tab:iterators.lib.summary}
 \ref{iterator.requirements} & Requirements        &                           \\ \rowsep
-\ref{iterator.primitives} & Iterator primitives   &   \tcode{<\newtxt{experimental/ranges_v1/}iterator>}      \\
+\ref{iterator.primitives} & Iterator primitives   &   \tcode{<\added{experimental/ranges_v1/}iterator>}      \\
 \ref{predef.iterators} & Predefined iterators     &                           \\
 \ref{stream.iterators} & Stream iterators         &                           \\
-\added{\ref{ranges}} & \added{Ranges}          &                           \\
+\added{\ref{ranges}} & \added{Ranges}             &                           \\
 \end{libsumtab}
 
 \rSec1[iterator.requirements]{Iterator requirements}
@@ -110,7 +110,7 @@ The seven categories of iterators correspond to the iterator concepts
 \tcode{ForwardIterator},
 \tcode{BidirectionalIterator}, and
 \tcode{RandomAccess\-Iterator}, respectively. The generic term \techterm{iterator} refers to
-any type that \oldtxt{models}\newtxt{satisfies} \tcode{WeakIterator}.
+any type that satisfies \tcode{WeakIterator}.
 \end{addedblock}
 
 \pnum
@@ -268,24 +268,24 @@ of \tcode{iterator_traits<X>}~(\cxxref{iterator.traits})}{the type aliases
 \rSec2[readable.iterators]{Concept Readable}
 
 \pnum
-The \tcode{Readable} concept is \oldtxt{modeled}\newtxt{satisfied} by types that are readable by
+The \tcode{Readable} concept is satisfied by types that are readable by
 applying \tcode{operator*} including pointers, smart pointers, and iterators.
 
 \indexlibrary{\idxcode{Readable}}%
 \begin{codeblock}
   template <class I>
-  concept bool Readable@\newtxt{() \{}\oldtxt{ =}@
-    @\newtxt{return}@ Semiregular<I>@\newtxt{()}@ &&
-      requires (@\newtxt{const }@I i) {
+  concept bool Readable() {
+    return Semiregular<I>() &&
+      requires (const I i) {
         typename ValueType<I>;
         { *i } -> const ValueType<I>&; // pre: i is dereferenceable
       };
-  @\newtxt{\}}@
+  }
 \end{codeblock}
 
 \pnum
 A \tcode{Readable} type has an associated value type that can be accessed with the \tcode{ValueType}
-\oldtxt{template alias}\newtxt{alias template}.
+alias template.
 
 \indexlibrary{\idxcode{ValueType}}%
 \begin{codeblock}
@@ -293,9 +293,9 @@ A \tcode{Readable} type has an associated value type that can be accessed with t
   template <class T>
   struct value_type<T*>
     : enable_if<is_object<T>::value, remove_cv_t<T>> { };
-  @\newtxt{template<class I>}@
-    @\newtxt{requires is_array<I>::value}@
-  @\newtxt{struct value_type<I> : value_type<decay_t<I>{}> \{ \};}@
+  template<class I>
+    requires is_array<I>::value
+  struct value_type<I> : value_type<decay_t<I>{}> { };
   template <class I>
   struct value_type<I const> : value_type<decay_t<I>> { };
   template <class I>
@@ -345,18 +345,17 @@ referenced object.
 \indexlibrary{\idxcode{MoveWritable}}%
 \begin{codeblock}
   template <class Out, class T>
-  concept bool MoveWritable@\newtxt{() \{}\oldtxt{ =}@
-    @\newtxt{return}@ Semiregular<Out>@\newtxt{()}@ &&
+  concept bool MoveWritable() {
+    return Semiregular<Out>() &&
       requires (Out o, T v) {
-        *o = std::move(v); @\newtxt{// not \newtxt{required to be} equality preserving}@
+        *o = std::move(v); // not required to be equality preserving
       };
-  @\newtxt{\}}@
+  }
 \end{codeblock}
 
 \pnum
 Let \tcode{v} be an rvalue or a lvalue of type (possibly \tcode{const}) \tcode{T}, and let \tcode{o}
-be a dereferenceable object of type \tcode{Out}. Then \oldtxt{types \tcode{T} and
-\tcode{Out} model} \tcode{MoveWritable\newtxt{<Out,T>()}} \newtxt{is satisfied} if and only if
+be a dereferenceable object of type \tcode{Out}. Then \tcode{MoveWritable<Out,T>()} is satisfied if and only if
 
 \begin{itemize}
 \item If \tcode{Out} is \tcode{Readable},
@@ -388,23 +387,22 @@ referenced object.
 \indexlibrary{\idxcode{Writable}}%
 \begin{codeblock}
   template <class Out, class T>
-  concept bool Writable@\newtxt{() \{}\oldtxt{ =}@
-    @\newtxt{return}@ MoveWritable<Out, T>@\newtxt{()}@ &&
-      requires (Out o, @\newtxt{const }@T v) {
-        *o = v; @\newtxt{// not \newtxt{required to be} equality preserving}@
+  concept bool Writable() {
+    return MoveWritable<Out, T>() &&
+      requires (Out o, const T v) {
+        *o = v; // not required to be equality preserving
       };
-  @\newtxt{\}}@
+  }
 \end{codeblock}
 
 \pnum
 Let \tcode{v} be an lvalue of type (possibly \tcode{const}) \tcode{T} or an rvalue
 of type \tcode{const T}, and let \tcode{o} be a dereferenceable object of type
-\tcode{Out}. Then \oldtxt{types \tcode{T} and \tcode{Out} model} \tcode{Writable\newtxt{<Out,T>()}}
-\newtxt{is satisfied} if and only if
+\tcode{Out}. Then \tcode{Writable<Out,T>()} is satisfied if and only if
 
 \begin{itemize}
 \item If \tcode{Out} is \tcode{Readable}, after the assignment \tcode{*o = v},
-\tcode{*o} is equal to the value of \tcode{v}\oldtxt{ and \tcode{v} is unchanged}.
+\tcode{*o} is equal to the value of \tcode{v}.
 \end{itemize}
 
 \rSec2[indirectlymovable.iterators]{Concept IndirectlyMovable}
@@ -416,15 +414,15 @@ type and a \tcode{MoveWritable} type.
 \indexlibrary{\idxcode{IndirectlyMovable}}%
 \begin{codeblock}
   template <class I, class Out>
-  concept bool IndirectlyMovable@\newtxt{() \{}\oldtxt{ =}@
-    @\newtxt{return}@ Readable<I>@\newtxt{()}@ && MoveWritable<Out, ValueType<I>>@\newtxt{()}@;
-  @\newtxt{\}}@
+  concept bool IndirectlyMovable() {
+    return Readable<I>() && MoveWritable<Out, ValueType<I>>();
+  }
 \end{codeblock}
 
 \pnum
 Let \tcode{i} be an object of type \tcode{I}, and let \tcode{o} be a
-dereferenceable object of type \tcode{Out}. Then \oldtxt{types \tcode{I} and \tcode{Out} model}
-\tcode{IndirectlyMovable\newtxt{<I,Out>()}} \newtxt{is satisfied} if and only if
+dereferenceable object of type \tcode{Out}. Then
+\tcode{IndirectlyMovable<I,Out>()} is satisfied if and only if
 
 \begin{itemize}
 \item If \tcode{Out} is \tcode{Readable}, after the assignment
@@ -441,20 +439,19 @@ type and a \tcode{Writable} type.
 \indexlibrary{\idxcode{IndirectlyCopyable}}%
 \begin{codeblock}
   template <class I, class Out>
-  concept bool IndirectlyCopyable@\newtxt{() \{}\oldtxt{ =}@
-    @\newtxt{return}@ IndirectlyMovable<I, Out>@\newtxt{()}@ && Writable<Out, ValueType<I>>@\newtxt{()}@;
-  @\newtxt{\}}@
+  concept bool IndirectlyCopyable() {
+    return IndirectlyMovable<I, Out>() && Writable<Out, ValueType<I>>();
+  }
 \end{codeblock}
 
 \pnum
 Let \tcode{i} be an object of type \tcode{I}, and let \tcode{o} be a
-dereferenceable object of type \tcode{Out}. Then \oldtxt{types \tcode{I} and \tcode{Out} model}
-\tcode{IndirectlyCopyable\newtxt{<I,Out>()}} \newtxt{is satisfied} if and only if
+dereferenceable object of type \tcode{Out}. Then
+\tcode{IndirectlyCopyable<I,Out>()} is satisfied if and only if
 
 \begin{itemize}
 \item If \tcode{Out} is \tcode{Readable}, after the assignment \tcode{*o = *i},
-\tcode{*o} is equal to the value of \tcode{*i}\oldtxt{ and the value of
-\tcode{*i} is unchanged}.
+\tcode{*o} is equal to the value of \tcode{*i}.
 \end{itemize}
 
 \rSec2[indirectlyswappable.iterators]{Concept IndirectlySwappable}
@@ -466,11 +463,11 @@ value types of two \tcode{Readable} types.
 \indexlibrary{\idxcode{IndirectlySwappable}}%
 \begin{codeblock}
   template <class I1, class I2 = I1>
-  concept bool IndirectlySwappable@\newtxt{() \{}\oldtxt{ =}@
-    @\newtxt{return}@ Readable<I1>@\newtxt{()}@ &&
-      Readable<I2>@\newtxt{()}@ &&
+  concept bool IndirectlySwappable() {
+    return Readable<I1>() &&
+      Readable<I2>() &&
       Swappable<ReferenceType<I1>, ReferenceType<I2>>();
-  @\newtxt{\}}@
+  }
 \end{codeblock}
 
 \rSec2[weaklyincrementable.iterators]{Concept WeaklyIncrementable}
@@ -483,37 +480,36 @@ nor is the type required to be \tcode{EqualityComparable}.
 \indexlibrary{\idxcode{WeaklyIncrementable}}%
 \begin{codeblock}
   template <class I>
-  concept bool WeaklyIncrementable@\newtxt{() \{}\oldtxt{ =}@
-    @\newtxt{return}@ Semiregular<I>@\newtxt{()}@ &&
+  concept bool WeaklyIncrementable() {
+    return Semiregular<I>() &&
       requires (I i) {
         typename DifferenceType<I>;
-        requires SignedIntegral<DifferenceType<I>>@\newtxt{()}@;
-        { ++i } -> Same<I&>; @\newtxt{// not \newtxt{required to be} equality preserving}@
-        i++; @\newtxt{// not \newtxt{required to be} equality preserving}@
+        requires SignedIntegral<DifferenceType<I>>();
+        { ++i } -> Same<I&>; // not required to be equality preserving
+        i++; // not required to be equality preserving
       };
-  @\newtxt{\}}@
+  }
 \end{codeblock}
 
 \pnum
-Let \tcode{i} be an object of type \tcode{I}. \newtxt{When both pre and post-increment
-are valid, \tcode{i} is said to be \techterm{incrementable}.} Then \oldtxt{the type
-\tcode{I} models} \tcode{WeaklyIncrementable\newtxt{<I>()}} \newtxt{is satisfied} if and only if
+Let \tcode{i} be an object of type \tcode{I}. When both pre and post-increment
+are valid, \tcode{i} is said to be \techterm{incrementable}. Then
+\tcode{WeaklyIncrementable<I>()} is satisfied if and only if
 
 \begin{itemize}
 \item \tcode{++i} is valid if and only if \tcode{i++} is valid.
-\item If \tcode{i} is incrementable, then \newtxt{either }\tcode{++i} \newtxt{or \tcode{i++} }moves \tcode{i} to the next element.
-\item If \tcode{i} is incrementable, then \tcode{\oldtxt{(}\&++i == \&i\oldtxt{) != false}}.
-\item \oldtxt{If \tcode{i} is incrementable, then \tcode{i++} moves \tcode{i} to the next element.}
+\item If \tcode{i} is incrementable, then either \tcode{++i} or \tcode{i++} moves \tcode{i} to the next element.
+\item If \tcode{i} is incrementable, then \tcode{\&++i == \&i}.
 \end{itemize}
 
 \ednote{REVIEW Can we be more specific than ``moves to the next element''?}
 
 \pnum
-Not all \oldtxt{arguments will}\newtxt{values must} be incrementable for a given type.
+Not all values must be incrementable for a given type.
 \enternote For example, $NaN$ is not a well-formed floating point value and hence is
-not incrementable. Likewise, past-the-end iterators \oldtxt{are also}\newtxt{may} not
-\newtxt{be} incrementable. This does not mean that the\newtxt{ir} type\newtxt{s}
-do\oldtxt{es} not \oldtxt{model}\newtxt{satisfy} \tcode{WeaklyIncrementable}. \exitnote
+not incrementable. Likewise, past-the-end iterators may not
+be incrementable. This does not mean that their types
+do not satisfy \tcode{WeaklyIncrementable}. \exitnote
 
 \ednote{Copied almost verbatim from the \tcode{InputIterator} description. This wording is removed
 there.}
@@ -531,32 +527,30 @@ template.\exitnote
 \pnum
 The \tcode{Incrementable} concept describes types that can be incremented with the pre-
 and post-increment operators. The increment operations are required to be equality-preserving,
-and the type is required to be \tcode{EqualityComparable}. \newtxt{\enternote This requirement
+and the type is required to be \tcode{EqualityComparable}. \enternote This requirement
 supersedes the annotations on the increment expressions in the definition of
-\tcode{WeaklyIncrementable}. \exitnote}
+\tcode{WeaklyIncrementable}. \exitnote
 
 \indexlibrary{\idxcode{Incrementable}}%
 \begin{codeblock}
   template <class I>
-  concept bool Incrementable@\newtxt{() \{}\oldtxt{ =}@
-    @\newtxt{return}@ Regular<I>@\newtxt{()}@ &&
-      WeaklyIncrementable<I>@\newtxt{()}@ &&
+  concept bool Incrementable() {
+    return Regular<I>() &&
+      WeaklyIncrementable<I>() &&
       requires(I i) {
         { i++ } -> Same<I>;
       };
-  @\newtxt{\}}@
+  }
 \end{codeblock}
 
 \pnum
 Let \tcode{a} and \tcode{b} be incrementable objects of type \tcode{I}.
-Then \oldtxt{the type \tcode{I} models} \tcode{Incrementable\newtxt{<I>()}} \newtxt{is satisfied}
+Then \tcode{Incrementable<I>()} is satisfied
 if and only if
 
 \begin{itemize}
-\item \oldtxt{If \tcode{(a == b) != false} then \tcode{(++a == ++b) != false}.} %% Implied by equality preservation of ++i
-\item \oldtxt{If \tcode{(a == b) != false} then \tcode{((a++, a) == (b++, b)) != false}.} %% Implied by equality preservation of i++ and the following requirements
-\item If \tcode{\newtxt{bool}(a == b)\oldtxt{ != false}} then \tcode{\newtxt{bool}(a++ == b)\oldtxt{ != false}}.
-\item If \tcode{\newtxt{bool}(a == b)\oldtxt{ != false}} then \tcode{\newtxt{bool}((a++, a) == ++b)\oldtxt{ != false}}.
+\item If \tcode{bool(a == b)} then \tcode{bool(a++ == b)}.
+\item If \tcode{bool(a == b)} then \tcode{bool((a++, a) == ++b)}.
 \end{itemize}
 
 \ednote{Copied in part from the \tcode{ForwardIterator} description. This wording is removed
@@ -565,7 +559,7 @@ there.}
 \pnum
 \enternote The requirement that \tcode{a} equals \tcode{b} implies \tcode{++a} equals \tcode{++b}
 (which is not true for weakly incrementable types) allows the use of multi-pass one-directional
-algorithms with types that \oldtxt{model}\newtxt{satisfy} \tcode{Incrementable}.\exitnote
+algorithms with types that satisfy \tcode{Incrementable}.\exitnote
 
 \end{addedblock}
 
@@ -588,12 +582,12 @@ to provide a richer set of iterator movements~(\ref{forward.iterators},
 \indexlibrary{\idxcode{WeakIterator}}%
 \begin{codeblock}
   template <class I>
-  concept bool WeakIterator@\newtxt{() \{}\oldtxt{ =}@
-    @\newtxt{return}@ WeaklyIncrementable<I>@\newtxt{()}@ &&
+  concept bool WeakIterator() {
+    return WeaklyIncrementable<I>() &&
       requires(I i) {
         { *i } -> auto&&; // pre: i is dereferenceable
       };
-  @\newtxt{\}}@
+  }
 \end{codeblock}
 
 \pnum
@@ -636,10 +630,10 @@ has property
 \indexlibrary{\idxcode{Iterator}}%
 \begin{codeblock}
   template <class I>
-  concept bool Iterator@\newtxt{() \{}\oldtxt{ =}@
-    @\newtxt{return}@ WeakIterator<I>@\newtxt{()}@ &&
+  concept bool Iterator() {
+    return WeakIterator<I>() &&
       EqualityComparable<I>();
-  @\newtxt{\}}@
+  }
 \end{codeblock}
 
 \rSec2[sentinel.iterators]{Concept Sentinel}
@@ -652,11 +646,11 @@ compared to an iterator for equality.
 \indexlibrary{\idxcode{Sentinel}}%
 \begin{codeblock}
   template <class T, class I>
-  concept bool Sentinel@\newtxt{() \{}\oldtxt{ =}@
-    @\newtxt{return}@ Regular<T>@\newtxt{()}@ &&
-      Iterator<I>@\newtxt{()}@ &&
+  concept bool Sentinel() {
+    return Regular<T>() &&
+      Iterator<I>() &&
       EqualityComparable<T, I>();
-  @\newtxt{\}}@
+  }
 \end{codeblock}
 
 \rSec2[weakinput.iterators]{Concept WeakInputIterator}
@@ -671,17 +665,17 @@ weak input iterators are not required to be comparable for equality.
 \indexlibrary{\idxcode{WeakInputIterator}}%
 \begin{codeblock}
   template <class I>
-  concept bool WeakInputIterator@\newtxt{() \{}\oldtxt{ =}@
-    @\newtxt{return}@ WeakIterator<I>@\newtxt{()}@ &&
-      Readable<I>@\newtxt{()}@ &&
-      requires(I i@\newtxt{, const I ci}@) {
+  concept bool WeakInputIterator() {
+    return WeakIterator<I>() &&
+      Readable<I>() &&
+      requires(I i, const I ci) {
         typename IteratorCategory<I>;
-        { i++ } -> Readable; @\newtxt{// not \newtxt{required to be} equality preserving}@
-        @\newtxt{requires Same<ValueType<I>, ValueType<decltype(i++)>{}>();}@
-        requires Derived@\newtxt{From}@<IteratorCategory<I>, weak_input_iterator_tag>@\newtxt{()}@;
-        @\newtxt{\{ *ci \} -> const ValueType<I>\&;}@
+        { i++ } -> Readable; // not required to be equality preserving
+        requires Same<ValueType<I>, ValueType<decltype(i++)>>();
+        requires DerivedFrom<IteratorCategory<I>, weak_input_iterator_tag>();
+        { *ci } -> const ValueType<I>&;
       };
-  @\newtxt{\}}@
+  }
 \end{codeblock}
 \end{addedblock}
 
@@ -697,18 +691,18 @@ The \tcode{InputIterator} concept is a refinement of \tcode{Iterator}~(\ref{iter
 \indexlibrary{\idxcode{InputIterator}}%
 \begin{codeblock}
   template <class I>
-  concept bool InputIterator@\newtxt{() \{}\oldtxt{ =}@
-    @\newtxt{return}@ WeakInputIterator<I>@\newtxt{()}@ &&
-      Iterator<I>@\newtxt{()}@ &&
-      Derived@\newtxt{From}@<IteratorCategory<I>, input_iterator_tag>@\newtxt{()}@;
-  @\newtxt{\}}@
+  concept bool InputIterator() {
+    return WeakInputIterator<I>() &&
+      Iterator<I>() &&
+      DerivedFrom<IteratorCategory<I>, input_iterator_tag>();
+  }
 \end{codeblock}
 
 \end{addedblock}
 
 \pnum
 \enternote
-\oldoldtxt{For input iterators}\newtxt{Since \tcode{InputIterator} is only \tcode{WeaklyIncrementable}},
+\removed{For input iterators}\added{Since \tcode{InputIterator} is only \tcode{WeaklyIncrementable}},
 \tcode{a == b}
 does not imply
 \tcode{++a == ++b}.
@@ -717,7 +711,7 @@ Algorithms on input iterators should never attempt to pass through the same iter
 They should be
 \term{single pass}
 algorithms.
-\oldoldtxt{Value type T}\newtxt{\tcode{ValueType<I>}} is not required to be a \oldoldtxt{\tcode{CopyAssignable}}\newtxt{\tcode{Copyable}}
+\removed{Value type T}\added{\tcode{ValueType<I>}} is not required to be a \removed{\tcode{CopyAssignable}}\added{\tcode{Copyable}}
 type (\removed{Table}~\ref{concepts.lib.object.copyable}). These algorithms can be used with
 istreams as the source of the input data through the \tcode{istream_iterator} class template.
 \exitnote
@@ -739,9 +733,9 @@ However, weak output iterators are not required to be comparable for equality.
 \indexlibrary{\idxcode{WeakOutputIterator}}%
 \begin{codeblock}
   template <class I, class T>
-  concept bool WeakOutputIterator@\newtxt{() \{}\oldtxt{ =}@
-    @\newtxt{return}@ WeakIterator<I>@\newtxt{()}@ && Writable<I, T>@\newtxt{()}@;
-  @\newtxt{\}}@
+  concept bool WeakOutputIterator() {
+    return WeakIterator<I>() && Writable<I, T>();
+  }
 \end{codeblock}
 \end{addedblock}
 
@@ -772,9 +766,9 @@ The \tcode{OutputIterator} concept is a refinement of \tcode{Iterator}~(\ref{ite
 \indexlibrary{\idxcode{OutputIterator}}%
 \begin{codeblock}
   template <class I, class T>
-  concept bool OutputIterator@\newtxt{() \{}\oldtxt{ =}@
-    @\newtxt{return}@ WeakOutputIterator<I, T>@\newtxt{()}@ && Iterator<I>@\newtxt{()}@;
-  @\newtxt{\}}@
+  concept bool OutputIterator() {
+    return WeakOutputIterator<I, T>() && Iterator<I>();
+  }
 \end{codeblock}
 
 \pnum
@@ -816,18 +810,18 @@ and adds the multi-pass guarantee, described below.
 \indexlibrary{\idxcode{ForwardIterator}}%
 \begin{codeblock}
   template <class I>
-  concept bool ForwardIterator@\newtxt{() \{}\oldtxt{ =}@
-    @\newtxt{return}@ InputIterator<I>@\newtxt{()}@ &&
-      Incrementable<I>@\newtxt{()}@ &&
-      Derived@\newtxt{From}@<IteratorCategory<I>, forward_iterator_tag>@\newtxt{()}@;
-  @\newtxt{\}}@
+  concept bool ForwardIterator() {
+    return InputIterator<I>() &&
+      Incrementable<I>() &&
+      DerivedFrom<IteratorCategory<I>, forward_iterator_tag>();
+  }
 \end{codeblock}
 \end{addedblock}
 
 \pnum
 The domain of \tcode{==} for forward iterators is that of iterators over the same
-underlying sequence. However, value-initialized iterators \newtxt{of the same type}
-may be compared and shall compare equal\oldoldtxt{ to other value-initialized iterators of the same type}.
+underlying sequence. However, value-initialized iterators \added{of the same type}
+may be compared and shall compare equal\removed{ to other value-initialized iterators of the same type}.
 \enternote \changed{v}{V}alue\added{-}initialized iterators behave as if they refer past the end of
 the same empty sequence\added{.} \exitnote
 
@@ -837,8 +831,8 @@ Two dereferenceable iterators \tcode{a} and \tcode{b} of type \tcode{X} offer th
 
 \begin{itemize}
 \item \tcode{a == b} implies \tcode{++a == ++b} and
-\item \oldoldtxt{\tcode{X} is a pointer type or t}\newtxt{T}he expression
-\tcode{\oldoldtxt{(void)++X(a)}\newtxt{([](X x)\{++x;\}(a)}, *a\newtxt{)}} is equivalent to the expression \tcode{*a}.
+\item \removed{\tcode{X} is a pointer type or t}\added{T}he expression
+\tcode{\removed{(void)++X(a)}\added{([](X x)\{++x;\}(a)}, *a\added{)}} is equivalent to the expression \tcode{*a}.
 \end{itemize}
 
 \pnum
@@ -847,24 +841,23 @@ The requirement that
 \tcode{a == b}
 implies
 \tcode{++a == ++b}
-(which is not true for \oldoldtxt{input and output}\newtxt{weaker} iterators)
-and the removal of the restrictions on the number of\oldoldtxt{ the} assignments through
+(which is not true for \removed{input and output}\added{weaker} iterators)
+and the removal of the restrictions on the number of\removed{ the} assignments through
 a mutable iterator
 (which applies to output iterators)
-allow\oldoldtxt{s} the use of multi-pass one-directional algorithms with forward iterators.
+allow\removed{s} the use of multi-pass one-directional algorithms with forward iterators.
 \exitnote
 
 \ednote{Remove Table 109}
 
 \pnum
-\oldoldtxt{If \tcode{a} and \tcode{b} are equal, then either \tcode{a} and \tcode{b}
+\removed{If \tcode{a} and \tcode{b} are equal, then either \tcode{a} and \tcode{b}
 are both dereferenceable
 or else neither is dereferenceable.}
 
 \pnum
-\oldoldtxt{If \tcode{a} and \tcode{b} are both dereferenceable, then \tcode{a == b}
-if and only if }\removed{\tcode{*a} and \tcode{*b} are bound to the same object}\oldtxt{
-\tcode{*a} is equal to \tcode{*b}}\oldoldtxt{.}
+\removed{If \tcode{a} and \tcode{b} are both dereferenceable, then \tcode{a == b}
+if and only if \tcode{*a} and \tcode{*b} are bound to the same object.}
 
 \rSec2[bidirectional.iterators]{Concept BidirectionalIterator}
 
@@ -885,14 +878,14 @@ and adds the ability to move an iterator backward as well as forward.
 \indexlibrary{\idxcode{BidirectionalIterator}}%
 \begin{codeblock}
   template <class I>
-  concept bool BidirectionalIterator@\newtxt{() \{}\oldtxt{ =}@
-    @\newtxt{return}@ ForwardIterator<I>@\newtxt{()}@ &&
-      Derived@\newtxt{From}@<IteratorCategory<I>, bidirectional_iterator_tag>@\newtxt{()}@ &&
+  concept bool BidirectionalIterator() {
+    return ForwardIterator<I>() &&
+      DerivedFrom<IteratorCategory<I>, bidirectional_iterator_tag>() &&
       requires (I i) {
         { @\dcr@i } -> Same<I&>;
         { i@\dcr@ } -> Same<I>;
       };
-  @\newtxt{\}}@
+  }
 \end{codeblock}
 \end{addedblock}
 
@@ -905,16 +898,16 @@ A bidirectional iterator \tcode{r} is decrementable only if there exists some \t
 decrementable.
 
 \pnum
-Let \tcode{a} and \tcode{b} be decrementable objects of type \tcode{I}. Then \oldtxt{\tcode{I}
-models} \tcode{BidirectionalIterator\newtxt{<I>()}} \newtxt{is satisfied} if and only if:
+Let \tcode{a} and \tcode{b} be decrementable objects of type \tcode{I}. Then
+\tcode{BidirectionalIterator<I>()} is satisfied if and only if:
 
 \begin{itemize}
 \item \tcode{\&\dcr{}a == \&a}.
-\item If \tcode{\newtxt{bool}(a == b)\oldtxt{ != false}}, then \tcode{\newtxt{bool}(a\dcr{} == \oldtxt{j}\newtxt{b})\oldtxt{ != false}}.
-\item If \tcode{\newtxt{bool}(a == b)\oldtxt{ != false}}, then \tcode{\newtxt{bool}((a\dcr{}, a) == \dcr{}\oldtxt{j}\newtxt{b})\oldtxt{ != false}}.
-\item If \tcode{a} is incrementable and \tcode{\newtxt{bool}(a == b)\oldtxt{ != false}}, then
-      \tcode{\newtxt{bool}(\dcr{}(++a) == b)\oldtxt{ != false}}.
-\item If \tcode{\newtxt{bool}(a == b)\oldtxt{ != false}}, then \tcode{\newtxt{bool}(++(\dcr{}a) == b)\oldtxt{ != false}}.
+\item If \tcode{bool(a == b)}, then \tcode{bool(a\dcr{} == b)}.
+\item If \tcode{bool(a == b)}, then \tcode{bool((a\dcr{}, a) == \dcr{}b)}.
+\item If \tcode{a} is incrementable and \tcode{bool(a == b)}, then
+      \tcode{bool(\dcr{}(++a) == b)}.
+\item If \tcode{bool(a == b)}, then \tcode{bool(++(\dcr{}a) == b)}.
 \end{itemize}
 \end{addedblock}
 
@@ -946,31 +939,29 @@ notation via subscripting.
 \begin{codeblock}
   template <class I>
   concept bool @\xname{MutableIterator}@ = // \expos
-    Iterator<I>@\newtxt{()}@ &&
-    requires(@\newtxt{const }@I i) {
+    Iterator<I>() &&
+    requires(const I i) {
       { *i } -> auto&;
       *i = *i;
     };
 
   template <class I>
-  concept bool RandomAccessIterator@\newtxt{() \{}\oldtxt{ =}@
-    @\newtxt{return}@ BidirectionalIterator<I>@\newtxt{()}@ &&
+  concept bool RandomAccessIterator() {
+    return BidirectionalIterator<I>() &&
       TotallyOrdered<I>() &&
-      Derived@\newtxt{From}@<IteratorCategory<I>, random_access_iterator_tag>@\newtxt{()}@ &&
-      SizedIteratorRange<I, I>@\newtxt{()}@ && // see below
-      requires (I i, @\newtxt{const }@I j, @\newtxt{const }@DifferenceType<I> n) {
+      DerivedFrom<IteratorCategory<I>, random_access_iterator_tag>() &&
+      SizedIteratorRange<I, I>() && // see below
+      requires (I i, const I j, const DifferenceType<I> n) {
         { i += n } -> Same<I&>;
-        { @\oldtxt{i}\newtxt{j}@ + n } -> Same<I>;
-        { n + @\oldtxt{i}\newtxt{j}@ } -> Same<I>;
+        { j + n } -> Same<I>;
+        { n + j } -> Same<I>;
         { i -= n } -> Same<I&>;
-        { @\oldtxt{i}\newtxt{j}@ - n } -> Same<I>;
-        @\newtxt{\{ j[n] \} -> const ValueType<I>\&;}@
-      @\newtxt{\} \&\&}@
-      (@\newtxt{!}\xname{MutableIterator}@<I> @\oldtxt{?}\newtxt{||}@
-        requires(@\newtxt{const }@I i, @\oldtxt{int}\newtxt{const DifferenceType<I>}@ n) { i[n] = *i; *i = i[n]; }@\oldtxt{ :}\newtxt{);}@
-        @\oldtxt{requires(I i, int n) \{ \{ i[n] \} -> const ValueType<I>\&; \})}@
-      @\oldtxt{\};}@
-  @\newtxt{\}}@
+        { j - n } -> Same<I>;
+        { j[n] } -> const ValueType<I>&;
+      } &&
+      (!@\xname{MutableIterator}@<I> ||
+        requires(const I i, const DifferenceType<I> n) { i[n] = *i; *i = i[n]; });
+  }
 \end{codeblock}
 \end{addedblock}
 
@@ -980,9 +971,8 @@ notation via subscripting.
 \pnum
 Let \tcode{a} and \tcode{b} be valid iterators of type \tcode{I} such that \tcode{b} is reachable
 from \tcode{a}. Let \tcode{n} be the smallest value of type \tcode{DifferenceType<I>} such that after
-\tcode{n} applications of \tcode{++a}, \tcode{\newtxt{bool}(a == b)\oldtxt{ != false}}. Then
-\oldtxt{\tcode{I} models} \tcode{RandomAccessIterator\newtxt{<I>()}} \newtxt{is satisfied} if and
-only if:
+\tcode{n} applications of \tcode{++a}, \tcode{bool(a == b)}. Then
+\tcode{RandomAccessIterator<I>()} is satisfied if and only if:
 
 \begin{itemize}
 \item \tcode{(a += n)} is equal to \tcode{b}.
@@ -1021,18 +1011,18 @@ object type~(\ref{function.objects}).
 \begin{codeblock}
   // Exposition only
   template <class T>
-    @\newtxt{requires is_member_pointer<decay_t<T>{}>::value}@
-  auto @\xname{as_function}@(T&& t@\oldtxt{, std::true_type}@) {
+    requires is_member_pointer<decay_t<T>>::value
+  auto @\xname{as_function}@(T&& t) {
     return mem_fn(t);
   }
   template <class T>
-  T @\xname{as_function}@(T&& t@\oldtxt{, std::false_type}@) {
+  T @\xname{as_function}@(T&& t) {
     return std::forward<T>(t);
   }
 
   template <class T>
   using FunctionType =
-    decltype(@\xname{as_function}@(declval<T>()@\oldtxt{, is_member_pointer<decay_t<T>{}>\{\}}@));
+    decltype(@\xname{as_function}@(declval<T>()));
 \end{codeblock}
 
 \rSec2[projected.indirectcallables]{Projected iterator}
@@ -1047,7 +1037,7 @@ of \tcode{I}.
 \indexlibrary{\idxcode{Projected}}%
 \begin{codeblock}
   template <Readable I, class Proj>
-    requires RegularFunction<FunctionType<Proj>, ValueType<I>>@\newtxt{()}@
+    requires RegularFunction<FunctionType<Proj>, ValueType<I>>()
   struct Projected {
     using value_type = decay_t<ResultType<FunctionType<Proj>, ValueType<I>>>;
     ResultType<FunctionType<Proj>, ReferenceType<I>> operator*() const;
