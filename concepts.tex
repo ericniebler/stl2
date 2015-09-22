@@ -126,22 +126,21 @@ such an expression explicitly.
 \exitexample
 
 \enterexample
-The following type \tcode{T} \oldtxt{satisfies}\newtxt{meets} the explicitly stated syntactic requirements
-of concept \tcode{C} above but does not \oldtxt{satisfy}\newtxt{meet} the additional implicit requirements:
+The following type \tcode{T} meets the explicitly stated syntactic requirements
+of concept \tcode{C} above but does not meet the additional implicit requirements:
 
 \begin{codeblock}
 struct T {
-  bool operator==(@\oldtxt{T const \&}\newtxt{const T\&}@) const { return true; }
-  bool operator==(@\oldtxt{T \&}\newtxt{T\&}@) = delete;
+  bool operator==(const T&) const { return true; }
+  bool operator==(T&) = delete;
 };
 \end{codeblock}
 
-\oldtxt{Since }\tcode{T} fails to \oldtxt{satisfy}\newtxt{meet} the implicit
-requirements of \tcode{C}, so \tcode{C<T>()} is not satisfied\oldtxt{ in principle}.
-\oldtxt{Whether it is satisfied in practice is undefined.} \newtxt{Since
+\tcode{T} fails to meet the implicit
+requirements of \tcode{C}, so \tcode{C<T>()} is not satisfied. Since
 implementations are not required to validate the syntax of implicit requirements, it
 is unspecified whether or not an implementation diagnoses as ill-formed a program
-which requires \tcode{C<T>()}.}
+which requires \tcode{C<T>()}.
 \exitexample
 
 \rSec1[concepts.lib.corelang]{Core language concepts}
@@ -269,8 +268,8 @@ concept bool SignedIntegral() {
 \begin{itemdescr}
 \pnum
 \enternote \tcode{SignedIntegral<T>()} may be satisfied even for
-types that are not signed integral types~(\cxxref{basic.fundamental})\newtxt{;
-for example, \tcode{char}}.
+types that are not signed integral types~(\cxxref{basic.fundamental});
+for example, \tcode{char}.
 \exitnote
 \end{itemdescr}
 
@@ -287,8 +286,8 @@ concept bool UnsignedIntegral() {
 \begin{itemdescr}
 \pnum
 \enternote \tcode{UnsignedIntegral<T>()} may be satisfied even for
-types that are not unsigned integral types~(\cxxref{basic.fundamental})\newtxt{;
-for example, \tcode{char}}.
+types that are not unsigned integral types~(\cxxref{basic.fundamental});
+for example, \tcode{char}.
 \exitnote
 \end{itemdescr}
 
@@ -323,7 +322,7 @@ Then \tcode{Assignable<T, U>()} is satisfied if and only if
 \begin{itemdecl}
 template <class T>
 concept bool Swappable() {
-  return requires(T@\newtxt{\&\&}@ t, T@\newtxt{\&\&}@ u) {
+  return requires(T&& t, T&& u) {
     (void)swap(std::forward<T>(t), std::forward<T>(u));
   };
 }
@@ -333,7 +332,7 @@ concept bool Swappable() {
   return Swappable<T>() &&
     Swappable<U>() &&
     Common<T, U>() &&
-    requires(T@\newtxt{\&\&}@ t, U@\newtxt{\&\&}@ u) {
+    requires(T&& t, U&& u) {
       (void)swap(std::forward<T>(t), std::forward<U>(u));
       (void)swap(std::forward<U>(u), std::forward<T>(t));
     };
@@ -342,11 +341,11 @@ concept bool Swappable() {
 
 \begin{itemdescr}
 \pnum
-\newtxt{\enternote The casts to \tcode{void} in the required expressions indicate
+\enternote The casts to \tcode{void} in the required expressions indicate
 that the value---if any---of the call to \tcode{swap} does not participate in the
 semantics. Callers are effectively forbidden to rely on the return type or value of
 a call to \tcode{swap}, and user customizations of \tcode{swap} need not return
-equal values when given equal operands. \exitnote}
+equal values when given equal operands. \exitnote
 
 \ednote{The following is copied almost verbatim from [swappable.requirements]}
 
@@ -500,9 +499,9 @@ Given values \tcode{b1} and \tcode{b2} of type \tcode{B}, then
 \end{itemize}
 
 \pnum \enterexample The types \tcode{bool}, \tcode{std::true_type}, and
-\tcode{std::bitset<\newtxt{$N$}>::reference} are \tcode{Boolean} types. \newtxt{
+\tcode{std::bitset<$N$>::reference} are \tcode{Boolean} types.
 Pointers, smart pointers, and types with explicit conversions to \tcode{bool} are
-not \tcode{Boolean} types.}\exitexample
+not \tcode{Boolean} types.\exitexample
 
 \rSec2[concepts.lib.compare.equalitycomparable]{Concept EqualityComparable}
 

@@ -20,13 +20,12 @@ is unspecified.}
 Change the \tcode{<utility>} synopsis as follows:
 
 \begin{codeblock}
-@\newtxt{namespace std \{}@
+@\added{namespace std \{}@
   // ... as before ..
 
   // \ref{utility.swap}, swap:
-  template<@\oldoldtxt{class}\newtxt{experimental::ranges_v1::Movable}@ T>
-    @\added{\oldtxt{requires MoveConstructible<T> \&\&}}@
-      @\added{\oldtxt{MoveAssignable<T> \&\& Destructible<T>}}@
+  template<class T>
+    @\added{requires experimental::ranges_v1::Movable<T>()}@
   void swap(T& a, T& b) noexcept(@\seebelow@);
 
   template <class T, size_t N>
@@ -34,22 +33,22 @@ Change the \tcode{<utility>} synopsis as follows:
   void swap(T (&a)[N], T (&b)[N]) noexcept(noexcept(swap(*a, *b)));}
 
   // ... as before ..
-@\newtxt{\}}@
+@\added{\}}@
 \end{codeblock}
 
-{\color{newclr}
+{\color{addclr}
 \pnum
 \synopsis{Header \tcode{<experimental/ranges_v1/utility>} synopsis}
 }
 
 \begin{codeblock}
-@\newtxt{namespace std \{ namespace experimental \{ namespace ranges_v1 \{}@
-  @\newtxt{// \ref{utility.swap}, swap:}@
-  @\newtxt{using std::swap;}@
+@\added{namespace std \{ namespace experimental \{ namespace ranges_v1 \{}@
+  @\added{// \ref{utility.swap}, swap:}@
+  @\added{using std::swap;}@
 
   // \ref{utility.exchange}, exchange:
-  template <@\oldtxt{class}\newtxt{Movable}@ T, class U=T>
-    @\added{requires \oldtxt{MoveConstructible<T> \&\&} Assignable<T\newtxt{\&}, U>\newtxt{()} \oldtxt{\&\& Destructible<T>}}@
+  template <@\removed{class}\added{Movable}@ T, class U=T>
+    @\added{requires Assignable<T\&, U>()}@
   T exchange(T& obj, U&& new_val);
 \end{codeblock}
 {\color{addclr}
@@ -71,28 +70,28 @@ Change the \tcode{<utility>} synopsis as follows:
 
   // \ref{tagged.special}, tagged specialized algorithms
   template <class Base, class... Tags>
-    requires Swappable<Base&>@\newtxt{()}@
+    requires Swappable<Base&>()
   void swap(tagged<Base, Tags...>& x, tagged<Base, Tags...>& y) noexcept(@\seebelow@);
 
   // \ref{tagged.pairs}, tagged pairs
   template <@\oldtxt{class}\newtxt{TaggedType}@ T1, @\oldtxt{class}\newtxt{TaggedType}@ T2> using tagged_pair = @\seebelow@;
 
-  @\newtxt{template <TagSpecifier Tag1, TagSpecifier Tag2, class T1, class T2>}@
-  @\newtxt{constexpr tagged_pair<Tag1(V1), Tag2(V2)> make_tagged_pair(T1\&\& x, T2\&\& y);}@
-@\newtxt{\}\}\}}@
+  template <@\oldtxt{class}\newtxt{TagSpecifier}@ Tag1, @\oldtxt{class}\newtxt{TagSpecifier}@ Tag2, class T1, class T2>
+  constexpr tagged_pair<Tag1(V1), Tag2(V2)> make_tagged_pair(T1&& x, T2&& y);
+}}}
 
-@\newtxt{namespace std \{}@
+namespace std {
   // \ref{tagged.astuple}, tuple-like access to tagged
   template <class Base, class... Tags>
-  struct tuple_size<@\newtxt{experimental::ranges_v1::}@tagged<Base, Tags...>>;
+  struct tuple_size<experimental::ranges_v1::tagged<Base, Tags...>>;
   
   template <size_t N, class Base, class... Tags>
-  struct tuple_element<N, @\newtxt{experimental::ranges_v1::}@tagged<Base, Tags...>>;
-@\newtxt{\}}@
+  struct tuple_element<N, experimental::ranges_v1::tagged<Base, Tags...>>;
+}
 \end{codeblock}
 }
 
-{\color{newclr}
+{\color{addclr}
 \pnum
 Any entities declared or defined directly in namespace \tcode{std} in header \tcode{<utility>}
 that are not already defined in namespace \tcode{std::experimental::ranges_v1} in header
@@ -129,9 +128,7 @@ namespace \tcode{std}.}
 \indexlibrary{\idxcode{swap}}%
 \begin{itemdecl}
 template<class T>
-  @\newtxt{requires experimental::ranges_v1::Movable<T>()}@
-  @\oldtxt{requires MoveConstructible<T> \&\&}@
-    @\oldtxt{MoveAssignable<T> \&\& Destructible<T>}@
+  @\added{requires experimental::ranges_v1::Movable<T>()}@
 void swap(T& a, T& b) noexcept(@\seebelow@);
 \end{itemdecl}
 
@@ -141,11 +138,11 @@ void swap(T& a, T& b) noexcept(@\seebelow@);
 
 \begin{codeblock}
 is_nothrow_move_constructible<T>::value &&
-is_nothrow_move_assignable<T>::value @\newtxt{\&\&}@
-@\newtxt{is_nothrow_destructible<T>::value}@
+is_nothrow_move_assignable<T>::value @\added{\&\&}@
+@\added{is_nothrow_destructible<T>::value}@
 \end{codeblock}
 
-{\color{newclr}
+{\color{addclr}
 \pnum
 \remark
 A library implementor is free to omit the \tcode{requires} clause so long as
@@ -188,7 +185,7 @@ void swap(T (&a)[N], T (&b)[N]) noexcept(noexcept(swap(*a, *b)));}
 \tcode{a[i]} shall be swappable with~(\ref{concepts.lib.corelang.swappable}) \tcode{b[i]}
 for all \tcode{i} in the range \range{0}{N}.
 
-{\color{newclr}
+{\color{addclr}
 \pnum
 \remark
 A library implementor is free to omit the \tcode{requires} clause so long as
@@ -207,8 +204,8 @@ swap(declval<remove_all_extents_t<T>&>(), declval<remove_all_extents_t<T>&>())
 \rSec2[utility.exchange]{exchange}
 
 \begin{itemdecl}
-template <@\oldtxt{class}\newtxt{Movable}@ T, class U=T>
-  @\added{requires \oldtxt{MoveConstructible<T> \&\&} Assignable<T\newtxt{\&}, U>\newtxt{()} \oldtxt{\&\& Destructible<T>}}@
+template <@\removed{class}\added{Movable}@ T, class U=T>
+  @\added{requires Assignable<T\&, U>()}@
 T exchange(T& obj, U&& new_val);
 \end{itemdecl}
 
@@ -229,39 +226,39 @@ return old_val;
 
 \setcounter{Paras}{1}
 \pnum
-\synopsis{Header \tcode{<\newtxt{experimental/ranges_v1/}functional>} synopsis}
+\synopsis{Header \tcode{<\added{experimental/ranges_v1/}functional>} synopsis}
 
 \begin{codeblock}
-@\newtxt{namespace std \{ namespace experimental \{ namespace ranges_v1 \{}@
+@\added{namespace std \{ namespace experimental \{ namespace ranges_v1 \{}@
   template <class T = void>
-    @\added{requires EqualityComparable<T>() || Same<T, void>\newtxt{()}}@
+    @\added{requires EqualityComparable<T>() || Same<T, void>()}@
   struct equal_to;
   
   template <class T = void>
-    @\added{requires EqualityComparable<T>() || Same<T, void>\newtxt{()}}@
+    @\added{requires EqualityComparable<T>() || Same<T, void>()}@
   struct not_equal_to;
   
   template <class T = void>
-    @\added{requires \oldtxt{EqualityComparable}\newtxt{TotallyOrdered}<T>() || Same<T, void>\newtxt{()}}@
+    @\added{requires TotallyOrdered<T>() || Same<T, void>()}@
   struct greater;
   
   template <class T = void>
-    @\added{requires \oldtxt{EqualityComparable}\newtxt{TotallyOrdered}<T>() || Same<T, void>\newtxt{()}}@
+    @\added{requires TotallyOrdered<T>() || Same<T, void>()}@
   struct less;
   
   template <class T = void>
-    @\added{requires \oldtxt{EqualityComparable}\newtxt{TotallyOrdered}<T>() || Same<T, void>\newtxt{()}}@
+    @\added{requires TotallyOrdered<T>() || Same<T, void>()}@
   struct greater_equal;
   
   template <class T = void>
-    @\added{requires \oldtxt{EqualityComparable}\newtxt{TotallyOrdered}<T>() || Same<T, void>\newtxt{()}}@
+    @\added{requires TotallyOrdered<T>() || Same<T, void>()}@
   struct less_equal;
   
   @\added{struct identity;}@
-@\newtxt{\}\}\}}@
+@\added{\}\}\}}@
 \end{codeblock}
 
-{\color{newclr}
+{\color{addclr}
 \pnum
 Any entities declared or defined directly in namespace \tcode{std} in header \tcode{<functional>}
 that are not already defined in namespace \tcode{std::experimental::ranges_v1} in header
@@ -299,7 +296,7 @@ operators in the language~(\cxxref{expr.rel}, \cxxref{expr.eq}).
 \indexlibrary{\idxcode{equal_to}}%
 \begin{itemdecl}
 template <class T = void>
-  @\added{requires EqualityComparable<T>() || Same<T, void>\newtxt{()}}@
+  @\added{requires EqualityComparable<T>() || Same<T, void>()}@
 struct equal_to {
   constexpr bool operator()(const T& x, const T& y) const;
   @\oldoldtxt{typedef T first_argument_type;}@
@@ -316,7 +313,7 @@ struct equal_to {
 \indexlibrary{\idxcode{not_equal_to}}%
 \begin{itemdecl}
 template <class T = void>
-  @\added{requires EqualityComparable<T>() || Same<T, void>\newtxt{()}}@
+  @\added{requires EqualityComparable<T>() || Same<T, void>()}@
 struct not_equal_to {
   constexpr bool operator()(const T& x, const T& y) const;
   @\oldoldtxt{typedef T first_argument_type;}@
@@ -333,7 +330,7 @@ struct not_equal_to {
 \indexlibrary{\idxcode{greater}}%
 \begin{itemdecl}
 template <class T = void>
-  @\added{requires TotallyOrdered<T>() || Same<T, void>\newtxt{()}}@
+  @\added{requires TotallyOrdered<T>() || Same<T, void>()}@
 struct greater {
   constexpr bool operator()(const T& x, const T& y) const;
   @\oldoldtxt{typedef T first_argument_type;}@
@@ -350,7 +347,7 @@ struct greater {
 \indexlibrary{\idxcode{less}}%
 \begin{itemdecl}
 template <class T = void>
-  @\added{requires TotallyOrdered<T>() || Same<T, void>\newtxt{()}}@
+  @\added{requires TotallyOrdered<T>() || Same<T, void>()}@
 struct less {
   constexpr bool operator()(const T& x, const T& y) const;
   @\oldoldtxt{typedef T first_argument_type;}@
@@ -367,7 +364,7 @@ struct less {
 \indexlibrary{\idxcode{greater_equal}}%
 \begin{itemdecl}
 template <class T = void>
-  @\added{requires TotallyOrdered<T>() || Same<T, void>\newtxt{()}}@
+  @\added{requires TotallyOrdered<T>() || Same<T, void>()}@
 struct greater_equal {
   constexpr bool operator()(const T& x, const T& y) const;
   @\oldoldtxt{typedef T first_argument_type;}@
@@ -384,7 +381,7 @@ struct greater_equal {
 \indexlibrary{\idxcode{less_equal}}%
 \begin{itemdecl}
 template <class T = void>
-  @\added{requires TotallyOrdered<T>() || Same<T, void>\newtxt{()}}@
+  @\added{requires TotallyOrdered<T>() || Same<T, void>()}@
 struct less_equal {
   constexpr bool operator()(const T& x, const T& y) const;
   @\oldoldtxt{typedef T first_argument_type;}@
@@ -561,9 +558,9 @@ is zero-based.
 
 \indexlibrary{\idxcode{tagged}}%
 \begin{codeblock}
-// defined in header <\newtxt{experimental/ranges_v1/}utility>
+// defined in header <experimental/ranges_v1/utility>
 
-namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
+namespace std { namespace experimental { namespace ranges_v1 {
   @\newtxt{template <class T>}@
   @\newtxt{concept bool TagSpecifier() \{}@
     @\newtxt{return \impdef;}@
@@ -585,28 +582,28 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
     tagged &operator=(tagged&&) = default;
     tagged &operator=(const tagged&) = default;
     template <typename Other>
-      requires Constructible<Base, Other>@\newtxt{()}@
+      requires Constructible<Base, Other>()
     tagged(tagged<Other, Tags...> &&that) noexcept(@\seebelow@);
     template <typename Other>
-      requires Constructible<Base, const Other&>@\newtxt{()}@
+      requires Constructible<Base, const Other&>()
     tagged(tagged<Other, Tags...> const &that);
     template <typename Other>
-      requires Assignable<Base@\newtxt{\&}@, Other>@\newtxt{()}@
+      requires Assignable<Base&, Other>()
     tagged& operator=(tagged<Other, Tags...>&& that) noexcept(@\seebelow@);
     template <typename Other>
-      requires Assignable<Base@\newtxt{\&}@, const Other&>@\newtxt{()}@
+      requires Assignable<Base&, const Other&>()
     tagged& operator=(const tagged<Other, Tags...>& that);
     template <class U>
-      requires Assignable<Base@\newtxt{\&}@, U>@\newtxt{()}@ && !Same<decay_t<U>, tagged>@\newtxt{()}@
+      requires Assignable<Base&, U>() && !Same<decay_t<U>, tagged>()
     tagged& operator=(U&& u) noexcept(@\seebelow@);
     void swap(tagged& that) noexcept(@\seebelow@)
-      requires Swappable<Base&>@\newtxt{()}@;
+      requires Swappable<Base&>();
   };
 
   template <class Base, class... Tags>
-    requires Swappable<Base&>@\newtxt{()}@
+    requires Swappable<Base&>()
   void swap(tagged<Base, Tags...>& x, tagged<Base, Tags...>& y) noexcept(@\seebelow@);
-}@\newtxt{\}\}}@
+}}}
 \end{codeblock}
 
 \pnum \oldtxt{The size of the \tcode{Tags} parameter pack shall be less than or equal to
@@ -653,7 +650,7 @@ pointer to any base other than \tcode{Base}.
 \indexlibrary{\idxcode{tagged}!\idxcode{tagged}}
 \begin{itemdecl}
 template <typename Other>
-  requires Constructible<Base, Other>@\newtxt{()}@
+  requires Constructible<Base, Other>()
 tagged(tagged<Other, Tags...> &&that) noexcept(@\seebelow@);
 \end{itemdecl}
 
@@ -662,7 +659,7 @@ tagged(tagged<Other, Tags...> &&that) noexcept(@\seebelow@);
 \remarks The expression in the \tcode{noexcept} is equivalent to:
 
 \begin{codeblock}
-@\oldtxt{noexcept(Base(declval<Other>()))}\newtxt{is_nothrow_constructible<Base, Other>::value}@
+is_nothrow_constructible<Base, Other>::value
 \end{codeblock}
 
 \pnum
@@ -672,7 +669,7 @@ tagged(tagged<Other, Tags...> &&that) noexcept(@\seebelow@);
 \indexlibrary{\idxcode{tagged}!\idxcode{tagged}}
 \begin{itemdecl}
 template <typename Other>
-  requires Constructible<Base, const Other&>@\newtxt{()}@
+  requires Constructible<Base, const Other&>()
 tagged(const tagged<Other, Tags...>& that);
 \end{itemdecl}
 
@@ -685,7 +682,7 @@ tagged(const tagged<Other, Tags...>& that);
 \indexlibrary{\idxcode{tagged}!\idxcode{operator=}}
 \begin{itemdecl}
 template <typename Other>
-  requires Assignable<Base@\newtxt{\&}@, Other>@\newtxt{()}@
+  requires Assignable<Base&, Other>()
 tagged& operator=(tagged<Other, Tags...>&& that) noexcept(@\seebelow@);
 \end{itemdecl}
 
@@ -694,7 +691,7 @@ tagged& operator=(tagged<Other, Tags...>&& that) noexcept(@\seebelow@);
 \remarks The expression in the \tcode{noexcept} is equivalent to:
 
 \begin{codeblock}
-@\oldtxt{noexcept(declval<Base\&>() = declval<Other>())}\newtxt{is_nothrow_assignable<Base\&, Other>::value}@
+is_nothrow_assignable<Base&, Other>::value
 \end{codeblock}
 
 \pnum
@@ -708,7 +705,7 @@ tagged& operator=(tagged<Other, Tags...>&& that) noexcept(@\seebelow@);
 \indexlibrary{\idxcode{tagged}!\idxcode{operator=}}
 \begin{itemdecl}
 template <typename Other>
-  requires Assignable<Base@\newtxt{\&}@, const Other&>@\newtxt{()}@
+  requires Assignable<Base&, const Other&>()
 tagged& operator=(const tagged<Other, Tags...>& that);
 \end{itemdecl}
 
@@ -724,7 +721,7 @@ tagged& operator=(const tagged<Other, Tags...>& that);
 \indexlibrary{\idxcode{tagged}!\idxcode{operator=}}
 \begin{itemdecl}
 template <class U>
-  requires Assignable<Base@\newtxt{\&}@, U>@\newtxt{()}@ && !Same<decay_t<U>, tagged>@\newtxt{()}@
+  requires Assignable<Base&, U>() && !Same<decay_t<U>, tagged>()
 tagged& operator=(U&& u) noexcept(@\seebelow@);
 \end{itemdecl}
 
@@ -733,7 +730,7 @@ tagged& operator=(U&& u) noexcept(@\seebelow@);
 \remarks The expression in the \tcode{noexcept} is equivalent to:
 
 \begin{codeblock}
-@\oldtxt{noexcept(declval<Base\&>() = std::forward<U>(u))}\newtxt{is_nothrow_assignable<Base\&, U>::value}@
+is_nothrow_assignable<Base&, U>::value
 \end{codeblock}
 
 \pnum
@@ -747,7 +744,7 @@ tagged& operator=(U&& u) noexcept(@\seebelow@);
 \indexlibrary{\idxcode{tagged}!\idxcode{swap}}
 \begin{itemdecl}
 void swap(tagged& rhs) noexcept(@\seebelow@)
-  requires Swappable<Base&>@\newtxt{()}@;
+  requires Swappable<Base&>();
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -773,7 +770,7 @@ noexcept(swap(declval<Base&>(), declval<Base&>()))
 
 \begin{itemdecl}
 template<class Base, class... Tags>
-  requires Swappable<Base&>@\newtxt{()}@
+  requires Swappable<Base&>()
 void swap(tagged<Base, Tags...>& x, tagged<Base, Tags...>& y)
   noexcept(noexcept(x.swap(y)));
 \end{itemdecl}
@@ -788,28 +785,28 @@ void swap(tagged<Base, Tags...>& x, tagged<Base, Tags...>& y)
 \indexlibrary{\idxcode{tuple_size}}%
 \indexlibrary{\idxcode{tuple_element}}%
 \begin{itemdecl}
-@\newtxt{namespace std \{}@
+namespace std {
   template <class Base, class... Tags>
-  struct tuple_size<@\newtxt{experimental::ranges_v1::}@tagged<Base, Tags...>>
+  struct tuple_size<experimental::ranges_v1::tagged<Base, Tags...>>
     : tuple_size<Base> { };
 
-  template <@\newtxt{size_t N, }@class Base, class... Tags>
-  struct tuple_element<N, @\newtxt{experimental::ranges_v1::}@tagged<Base, Tags...>>
+  template <size_t N, class Base, class... Tags>
+  struct tuple_element<N, experimental::ranges_v1::tagged<Base, Tags...>>
     : tuple_element<N, Base> { };
-@\newtxt{\}}@
+}
 \end{itemdecl}
 
 \rSec2[tagged.pairs]{Alias template \tcode{tagged_pair}}
 
 \begin{codeblock}
-@\newtxt{// defined in header <experimental/ranges_v1/utility>}@
+// defined in header <experimental/ranges_v1/utility>
 
-namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
+namespace std { namespace experimental { namespace ranges_v1 {
   // ...
   template <@\oldtxt{class}\newtxt{TaggedType}@ T1, @\oldtxt{class}\newtxt{TaggedType}@ T2>
   using tagged_pair = tagged<pair<@\textit{TAGELEM}@(T1), @\textit{TAGELEM}@(T2)>,
                              @\textit{TAGSPEC}@(T1), @\textit{TAGSPEC}@(T2)>;
-}@\newtxt{\}\}}@
+}}}
 \end{codeblock}
 
 \pnum \oldtxt{Types \tcode{T1}  and \tcode{T2} shall be tagged types~(\ref{taggedtup.tagged}).}
@@ -827,12 +824,12 @@ assert(&p.max() == &p.second);
 
 \indexlibrary{\idxcode{make_tagged_pair}}%
 \begin{itemdecl}
-@\newtxt{// defined in header <experimental/ranges_v1/utility>}@
+// defined in header <experimental/ranges_v1/utility>
 
-@\newtxt{namespace std \{ namespace experimental \{ namespace ranges_v1 \{}@
+namespace std { namespace experimental { namespace ranges_v1 {
   template <@\oldtxt{class}\newtxt{TagSpecifier}@ Tag1, @\oldtxt{class}\newtxt{TagSpecifier}@ Tag2, class T1, class T2>
     constexpr tagged_pair<Tag1(V1), Tag2(V2)> make_tagged_pair(T1&& x, T2&& y);
-@\newtxt{\}\}\}}@
+}}}
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -860,7 +857,7 @@ a \Cpp program may contain:
 \exitexample
 \end{itemdescr}
 
-{\color{newclr}
+{\color{addclr}
 \rSec2[tagged.tuple]{Alias template \tcode{tagged_tuple}}
 
 \synopsis{Header \tcode{<experimental/ranges_v1/tuple>} synopsis}
