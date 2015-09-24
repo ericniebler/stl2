@@ -486,7 +486,9 @@ In other respects, N1640 agrees with the STL design suggested by the Palo Alto r
 
 ## Cursor/Property Map
 
-[N1873][3][@n1873], the "Cursor/Property Map Abstraction" BUGBUG TODO
+[N1873][3][@n1873], the "Cursor/Property Map Abstraction", suggests a radical solution to the proxy iterator problem, among others: break iterators into two distint entities -- a cursor that denotes position and a property map that facilitates element access. A so-called property map (`pm`) is a polymorphic function that is used together with a cursor (`c`) to read an element (`pm(*c)`) and with a cursor and value (`v`) to write an element (`pm(*c, v)`). This alternate syntax for element access obviates the need for proxy objects entirely, so the proxy iterator problem simply disappears.
+
+The problems with this approach are mostly practical: the model is more complicated and the migration story is poor. No longer is a single object sufficient for both traversal and access. Three arguments are needed to denote a range: a begin cursor, an end cursor, and a property map. Generic code must be updated to account for the new syntax and for the extra property map argument. In other words, this solution is more invasive than the one this document presents.
 
 ## Language support
 
@@ -566,6 +568,8 @@ In addition, `Relation<F,T,U>` requires `Relation<F, CommonReferenceType<const T
 ### Chapter 20: General utilities
 
 To 20.2, add the following to the `<utility>` synopsis (*N.B.*, in namespace `std`):
+
+<span style="color:blue">[*Editorial note:* -- Future work: harmonize this with [N4426: Adding [nothrow\-]swappable traits](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4426.html). --*end note*]</span>
 
 > ```c++
 > // is_nothrow_swappable
@@ -909,7 +913,7 @@ Change 24.3.4 "Indirect callables" ([indirectfunc.indirectcallables]) as describ
 > }
 > ```
 
-Note: These definitions of `IndirectCallable` and `IndirectCallablePredicate` are less general than the ones in N4382 that they replace. The original definitions are variadic but these handle only up to 2 arguments. The Standard Library never requires callback functions to accept more than two arguments, so the reduced expressive power does not impact the Standard Library; however, it may impact user code. The complication is the need to check callability with a cross-product of the parameters' `ValueType` and `ReferenceType`s, which is difficult to expression using Concepts Lite and results in an explosion of tests to be performed as the number of parameters increases.
+Note: These definitions of `IndirectCallable` and `IndirectCallablePredicate` are less general than the ones in N4382 that they replace. The original definitions are variadic but these handle only up to 2 arguments. The Standard Library never requires callback functions to accept more than two arguments, so the reduced expressive power does not impact the Standard Library; however, it may impact user code. The complication is the need to check callability with a cross-product of the parameters' `ValueType` and `ReferenceType`s, which is difficult to express using Concepts Lite and results in an explosion of tests to be performed as the number of parameters increases.
 
 There are several options for preserving the full expressive power of the N4382 concepts should that prove desirable: (1) Require callability testing only with arguments "`ValueType<Is>...`", "`ReferenceType<Is>..`" , and "`iter_common_reference_t<Is>...`", leaving the other combinations as merely documented constraints that are not required to be tested; (2) Actually test the full cross-product of argument types using meta-programming techniques, accepting the compile-time hit when argument lists get large. (The latter has been tested and shown to be feasable.)
 
@@ -987,6 +991,8 @@ subsubsection, insert the following:
 > 
 > 3\. *Returns:* `std::move(*r)`
 >
+> <span style="color:blue">[*Editorial note:* -- Future work: Rather than defining a new `iter_swap` in namespace `std::experimental::ranges_v1`, it will probably be necessary to constrain the `iter_swap` in namespace `std` much the way the Ranges TS constrains `std::swap`. --*end note*]</span>
+>
 > > ```c++
 > > template <class R1, class R2,
 > >   Readable _R1 = remove_reference_t<R1>,
@@ -1050,9 +1056,6 @@ To [iterator.assoc] (24.7.1), add the following definition of `RvalueReferenceTy
 > the function `iter_move` in `<experimental/ranges_v1/iterator>` (24.6) and
 > the lookup set produced by argument-dependent lookup (3.4.2).
 
-BUGBUG TODO rather than add a new iter_swap, the iter_swap in std should be
-used and constrained.
-
 After subsubsection "Iterator operations" ([iterator.operations]), add a
 new subsubsection "Iterator traits" ([iterator.traits]). Under that
 subsubsection, include the following:
@@ -1106,7 +1109,12 @@ Make the identical change to 25.3.9 "Unique" ([alg.unique]).
 Acknowledgements
 =====
 
+I would like to extend my sincerest gratitude to Sean Parent, Andrew Sutton,
+and Casey Carter for their help formalizing and vetting many of the ideas
+presented in this paper and in the Ranges TS.
 
+I would also like to thank Herb Sutter and the Standard C++ Foundation, without
+whose generous financial support this work would not be possible.
 
 References
 =====
