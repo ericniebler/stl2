@@ -785,12 +785,12 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
   template<RandomAccessIterator I, Sentinel<I> S, class Comp = less<>,
       class Proj = identity>
     requires Sortable<I, Comp, Proj>@\newtxt{()}@
-    I nth_element(I first, I nth, S last, Comp comp, Proj proj = Proj{});
+    I nth_element(I first, I nth, S last, Comp comp@\newtxt{ = Comp\{\}}@, Proj proj = Proj{});
 
   template<RandomAccessRange Rng, class Comp = less<>, class Proj = identity>
     requires Sortable<IteratorType<Rng>, Comp, Proj>@\newtxt{()}@
     @\oldtxt{IteratorType}\newtxt{safe_iterator_t}@<Rng>
-      nth_element(Rng&@\newtxt{\&}@ rng, IteratorType<Rng> nth, Comp comp, Proj proj = Proj{});
+      nth_element(Rng&@\newtxt{\&}@ rng, IteratorType<Rng> nth, Comp comp@\newtxt{ = Comp\{\}}@, Proj proj = Proj{});
 
   // \ref{alg.binary.search}, binary search:
   template<ForwardIterator I, Sentinel<I> S, @\oldtxt{TotallyOrdered}\newtxt{class}@ T, class Proj = identity,
@@ -1035,9 +1035,10 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
   @\oldtxt{template<TotallyOrdered T>}@
     @\oldtxt{constexpr const T\& min(const T\& a, const T\& b);}@
 
-  template<class T, class Comp@\newtxt{ = less<>}@>
-    requires StrictWeakOrder<FunctionType<Comp>, T>@\newtxt{()}@
-    constexpr const T& min(const T& a, const T& b, Comp comp@\newtxt{ = Comp\{\}}@);
+  template<class T, class @\newtxt{Proj = identity,}@
+      @\newtxt{IndirectCallableStrictWeakOrder<Projected<const T*, Proj>{}> }@Comp@\newtxt{ = less<>}@>
+    @\oldtxt{requires StrictWeakOrder<FunctionType<Comp>, T>}@
+    constexpr const T& min(const T& a, const T& b, Comp comp@\newtxt{ = Comp\{\}, Proj proj = Proj\{\}}@);
 
 \end{codeblock}
 \ednote{REVIEW: The Palo Alto report returns by const reference here but the
@@ -1053,22 +1054,24 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
     @\oldtxt{ValueType<IteratorType<Rng>{}>}@
       @\oldtxt{min(Rng\&\& rng);}@
 
-  template<@\oldtxt{Semiregular}\newtxt{Copyable}@ T, class Comp@\newtxt{ = less<>}@>
-    requires StrictWeakOrder<FunctionType<Comp>, T>@\newtxt{()}@
-    constexpr T min(initializer_list<T> t, Comp comp@\newtxt{ = Comp\{\}}@);
+  template<@\oldtxt{Semiregular}\newtxt{Copyable}@ T, class @\newtxt{Proj = identity,}@
+      @\newtxt{IndirectCallableStrictWeakOrder<Projected<const T*, Proj>{}> }@Comp@\newtxt{ = less<>}@>
+    @\oldtxt{requires StrictWeakOrder<FunctionType<Comp>, T>}@
+    constexpr T min(initializer_list<T> t, Comp comp@\newtxt{ = Comp\{\}, Proj proj = Proj\{\}}@);
 
-  template<InputRange Rng,
-      IndirectCallableStrictWeakOrder<IteratorType<Rng>> Comp@\newtxt{ = less<>}@>
+  template<InputRange Rng, @\newtxt{class Proj = identity,}@
+      IndirectCallableStrictWeakOrder<@\newtxt{Projected<}@IteratorType<Rng>@\newtxt{, Proj>}@> Comp@\newtxt{ = less<>}@>
     requires @\oldtxt{Semiregular}\newtxt{Copyable}@<ValueType<IteratorType<Rng>>>@\newtxt{()}@
     ValueType<IteratorType<Rng>>
-      min(Rng&& rng, Comp comp@\newtxt{ = Comp\{\}}@);
+      min(Rng&& rng, Comp comp@\newtxt{ = Comp\{\}, Proj proj = Proj\{\}}@);
 
   @\oldtxt{template<TotallyOrdered T>}@
     @\oldtxt{constexpr const T\& max(const T\& a, const T\& b);}@
 
-  template<class T, class Comp@\newtxt{ = less<>}@>
-    requires StrictWeakOrder<FunctionType<Comp>, T>@\newtxt{()}@
-    constexpr const T& max(const T& a, const T& b, Comp comp@\newtxt{ = Comp\{\}}@);
+  template<class T, class @\newtxt{Proj = identity,}@
+      @\newtxt{IndirectCallableStrictWeakOrder<Projected<const T*, Proj>{}> }@Comp@\newtxt{ = less<>}@>
+    @\oldtxt{requires StrictWeakOrder<FunctionType<Comp>, T>}@
+    constexpr const T& max(const T& a, const T& b, Comp comp@\newtxt{ = Comp\{\}, Proj proj = Proj\{\}}@);
 
   @\oldtxt{template<TotallyOrdered T>}@
     @\oldtxt{requires Semiregular<T>}@
@@ -1080,24 +1083,26 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
     @\oldtxt{ValueType<IteratorType<Rng>{}>}@
       @\oldtxt{max(Rng\&\& rng);}@
 
-  template<@\oldtxt{Semiregular}\newtxt{Copyable}@ T, class Comp@\newtxt{ = less<>}@>
-    requires StrictWeakOrder<FunctionType<Comp>, T>@\newtxt{()}@
-    constexpr T max(initializer_list<T> t, Comp comp@\newtxt{ = Comp\{\}}@);
+  template<@\oldtxt{Semiregular}\newtxt{Copyable}@ T, class @\newtxt{Proj = identity,}@
+      @\newtxt{IndirectCallableStrictWeakOrder<Projected<const T*, Proj>{}> }@Comp@\newtxt{ = less<>}@>
+    @\oldtxt{requires StrictWeakOrder<FunctionType<Comp>, T>}@
+    constexpr T max(initializer_list<T> t, Comp comp@\newtxt{ = Comp\{\}, Proj proj = Proj\{\}}@);
 
-  template<InputRange Rng,
-      IndirectCallableStrictWeakOrder<IteratorType<Rng>> Comp@\newtxt{ = less<>}@>
+  template<InputRange Rng, @\newtxt{class Proj = identity,}@
+      IndirectCallableStrictWeakOrder<@\newtxt{Projected<}@IteratorType<Rng>@\newtxt{, Proj>}@> Comp@\newtxt{ = less<>}@>
     requires @\oldtxt{Semiregular}\newtxt{Copyable}@<ValueType<IteratorType<Rng>>>@\newtxt{()}@
     ValueType<IteratorType<Rng>>
-      max(Rng&& rng, Comp comp@\newtxt{ = Comp\{\}}@);
+      max(Rng&& rng, Comp comp@\newtxt{ = Comp\{\}, Proj proj = Proj\{\}}@);
 
   @\oldtxt{template<TotallyOrdered T>}@
     @\oldtxt{constexpr tagged_pair<tag::min(const T\&), tag::max(const T\&)>}@
       @\oldtxt{minmax(const T\& a, const T\& b);}@
 
-  template<class T, class Comp@\newtxt{ = less<>}@>
-    requires StrictWeakOrder<FunctionType<Comp>, T>@\newtxt{()}@
+  template<class T, class @\newtxt{Proj = identity,}@
+      @\newtxt{IndirectCallableStrictWeakOrder<Projected<const T*, Proj>{}> }@Comp@\newtxt{ = less<>}@>
+    @\oldtxt{requires StrictWeakOrder<FunctionType<Comp>, T>}@
     constexpr tagged_pair<tag::min(const T&), tag::max(const T&)>
-      minmax(const T& a, const T& b, Comp comp@\newtxt{ = Comp\{\}}@);
+      minmax(const T& a, const T& b, Comp comp@\newtxt{ = Comp\{\}, Proj proj = Proj\{\}}@);
 
   @\oldtxt{template<TotallyOrdered T>}@
     @\oldtxt{requires Semiregular<T>}@
@@ -1110,16 +1115,17 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
     @\oldtxt{tagged_pair<tag::min(ValueType<IteratorType<Rng>{}>), tag::max(ValueType<IteratorType<Rng>{}>)>}@
       @\oldtxt{minmax(Rng\&\& rng);}@
 
-  template<@\oldtxt{Semiregular}\newtxt{Copyable}@ T, class Comp@\newtxt{ = less<>}@>
-    requires StrictWeakOrder<FunctionType<Comp>, T>@\newtxt{()}@
+  template<@\oldtxt{Semiregular}\newtxt{Copyable}@ T, class @\newtxt{Proj = identity,}@
+      @\newtxt{IndirectCallableStrictWeakOrder<Projected<const T*, Proj>{}> }@Comp@\newtxt{ = less<>}@>
+    @\oldtxt{requires StrictWeakOrder<FunctionType<Comp>, T>}@
     constexpr tagged_pair<tag::min(T), tag::max(T)>
-      minmax(initializer_list<T> t, Comp comp@\newtxt{ = Comp\{\}}@);
+      minmax(initializer_list<T> t, Comp comp@\newtxt{ = Comp\{\}, Proj proj = Proj\{\}}@);
 
-  template<InputRange Rng,
-      IndirectCallableStrictWeakOrder<IteratorType<Rng>> Comp@\newtxt{ = less<>}@>
+  template<InputRange Rng, @\newtxt{class Proj = identity,}@
+      IndirectCallableStrictWeakOrder<@\newtxt{Projected<}@IteratorType<Rng>@\newtxt{, Proj}@> Comp@\newtxt{ = less<>}@>
     requires @\oldtxt{Semiregular}\newtxt{Copyable}@<ValueType<IteratorType<Rng>>>@\newtxt{()}@
     tagged_pair<tag::min(ValueType<IteratorType<Rng>>), tag::max(ValueType<IteratorType<Rng>>)>
-      minmax(Rng&& rng, Comp comp@\newtxt{ = Comp\{\}}@);
+      minmax(Rng&& rng, Comp comp@\newtxt{ = Comp\{\}, Proj proj = Proj\{\}}@);
 
   template<ForwardIterator I, Sentinel<I> S, class Proj = identity,
       IndirectCallableStrictWeakOrder<Projected<I, Proj>> Comp = less<>>
@@ -4513,12 +4519,12 @@ template<class RandomAccessIterator, class Compare>
 template<RandomAccessIterator I, Sentinel<I> S, class Comp = less<>,
     class Proj = identity>
   requires Sortable<I, Comp, Proj>@\newtxt{()}@
-  I nth_element(I first, I nth, S last, Comp comp, Proj proj = Proj{});
+  I nth_element(I first, I nth, S last, Comp comp@\newtxt{ = Comp\{\}}@, Proj proj = Proj{});
 
 template<RandomAccessRange Rng, class Comp = less<>, class Proj = identity>
   requires Sortable<IteratorType<Rng>, Comp, Proj>@\newtxt{()}@
   @\oldtxt{IteratorType}\newtxt{safe_iterator_t}@<Rng>
-    nth_element(Rng&@\newtxt{\&}@ rng, IteratorType<Rng> nth, Comp comp, Proj proj = Proj{});
+    nth_element(Rng&@\newtxt{\&}@ rng, IteratorType<Rng> nth, Comp comp@\newtxt{ = Comp\{\}}@, Proj proj = Proj{});
 \end{itemdecl}
 \end{addedblock}
 
@@ -5775,9 +5781,10 @@ template<class T, class Compare>
 @\oldtxt{template<TotallyOrdered T>}@
   @\oldtxt{constexpr const T\& min(const T\& a, const T\& b);}@
 
-template<class T, class Comp@\newtxt{ = less<>}@>
-  requires StrictWeakOrder<FunctionType<Comp>, T>@\newtxt{()}@
-  constexpr const T& min(const T& a, const T& b, Comp comp@\newtxt{ = Comp\{\}}@);
+template<class T, class @\newtxt{Proj = identity,}@
+    @\newtxt{IndirectCallableStrictWeakOrder<Projected<const T*, Proj>{}> }@Comp@\newtxt{ = less<>}@>
+  @\oldtxt{requires StrictWeakOrder<FunctionType<Comp>, T>}@
+  constexpr const T& min(const T& a, const T& b, Comp comp@\newtxt{ = Comp\{\}, Proj proj = Proj\{\}}@);
 \end{itemdecl}
 \end{addedblock}
 
@@ -5821,15 +5828,16 @@ template<class T, class Compare>
   @\oldtxt{ValueType<IteratorType<Rng>{}>}@
     @\oldtxt{min(Rng\&\& rng);}@
 
-template<@\oldtxt{Semiregular}\newtxt{Copyable}@ T, class Comp@\newtxt{ = less<>}@>
-  requires StrictWeakOrder<FunctionType<Comp>, T>@\newtxt{()}@
-  constexpr T min(initializer_list<T> rng, Comp comp@\newtxt{ = Comp\{\}}@);
+template<@\oldtxt{Semiregular}\newtxt{Copyable}@ T, class @\newtxt{Proj = identity,}@
+    @\newtxt{IndirectCallableStrictWeakOrder<Projected<const T*, Proj>{}> }@Comp@\newtxt{ = less<>}@>
+  @\oldtxt{requires StrictWeakOrder<FunctionType<Comp>, T>}@
+  constexpr T min(initializer_list<T> rng, Comp comp@\newtxt{ = Comp\{\}, Proj proj = Proj\{\}}@);
 
-template<InputRange Rng,
-    IndirectCallableStrictWeakOrder<IteratorType<Rng>> Comp@\newtxt{ = less<>}@>
+template<InputRange Rng, @\newtxt{class Proj = identity,}@
+    IndirectCallableStrictWeakOrder<@\newtxt{Projected<}@IteratorType<Rng>@\newtxt{, Proj>}@> Comp@\newtxt{ = less<>}@>
   requires @\oldtxt{Semiregular}\newtxt{Copyable}@<ValueType<IteratorType<Rng>>>@\newtxt{()}@
   ValueType<IteratorType<Rng>>
-    min(Rng&& rng, Comp comp@\newtxt{ = Comp\{\}}@);
+    min(Rng&& rng, Comp comp@\newtxt{ = Comp\{\}, Proj proj = Proj\{\}}@);
 \end{itemdecl}
 \end{addedblock}
 
@@ -5858,9 +5866,10 @@ template<class T, class Compare>
 @\oldtxt{template<TotallyOrdered T>}@
   @\oldtxt{constexpr const T\& max(const T\& a, const T\& b);}@
 
-template<class T, class Comp@\newtxt{ = less<>}@>
-  requires StrictWeakOrder<FunctionType<Comp>, T>@\newtxt{()}@
-  constexpr const T& max(const T& a, const T& b, Comp comp@\newtxt{ = Comp\{\}}@);
+template<class T, class @\newtxt{Proj = identity,}@
+    @\newtxt{IndirectCallableStrictWeakOrder<Projected<const T*, Proj>{}> }@Comp@\newtxt{ = less<>}@>
+  @\oldtxt{requires StrictWeakOrder<FunctionType<Comp>, T>}@
+  constexpr const T& max(const T& a, const T& b, Comp comp@\newtxt{ = Comp\{\}, Proj proj = Proj\{\}}@);
 \end{itemdecl}
 \end{addedblock}
 
@@ -5904,15 +5913,16 @@ template<class T, class Compare>
   @\oldtxt{ValueType<IteratorType<Rng>{}>}@
     @\oldtxt{max(Rng\&\& rng);}@
 
-template<@\oldtxt{Semiregular}\newtxt{Copyable}@ T, class Comp@\newtxt{ = less<>}@>
-  requires StrictWeakOrder<FunctionType<Comp>, T>@\newtxt{()}@
-  constexpr T max(initializer_list<T> rng, Comp comp@\newtxt{ = Comp\{\}}@);
+template<@\oldtxt{Semiregular}\newtxt{Copyable}@ T, class @\newtxt{Proj = identity,}@
+    @\newtxt{IndirectCallableStrictWeakOrder<Projected<const T*, Proj>{}> }@Comp@\newtxt{ = less<>}@>
+  @\oldtxt{requires StrictWeakOrder<FunctionType<Comp>, T>}@
+  constexpr T max(initializer_list<T> rng, Comp comp@\newtxt{ = Comp\{\}, Proj proj = \{\}}@);
 
-template<InputRange Rng,
-    IndirectCallableStrictWeakOrder<IteratorType<Rng>> Comp@\newtxt{ = less<>}@>
+template<InputRange Rng, @\newtxt{class Proj = identity,}@
+    IndirectCallableStrictWeakOrder<@\newtxt{Projected<}@IteratorType<Rng>@\newtxt{, Proj>}@> Comp@\newtxt{ = less<>}@>
   requires @\oldtxt{Semiregular}\newtxt{Copyable}@<ValueType<IteratorType<Rng>>>@\newtxt{()}@
   ValueType<IteratorType<Rng>>
-    max(Rng&& rng, Comp comp@\newtxt{ = Comp\{\}}@);
+    max(Rng&& rng, Comp comp@\newtxt{ = Comp\{\}, Proj proj = Proj\{\}}@);
 \end{itemdecl}
 \end{addedblock}
 
@@ -5942,10 +5952,11 @@ template<class T, class Compare>
   @\oldtxt{constexpr tagged_pair<tag::min(const T\&), tag::max(const T\&)>}@
     @\oldtxt{minmax(const T\& a, const T\& b);}@
 
-template<class T, class Comp@\newtxt{ = less<>}@>
-  requires StrictWeakOrder<FunctionType<Comp>, T>@\newtxt{()}@
+template<class T, class @\newtxt{Proj = identity,}@
+    @\newtxt{IndirectCallableStrictWeakOrder<Projected<const T*, Proj>{}> }@Comp@\newtxt{ = less<>}@>
+  @\oldtxt{requires StrictWeakOrder<FunctionType<Comp>, T>}@
   constexpr tagged_pair<tag::min(const T&), tag::max(const T&)>
-    minmax(const T& a, const T& b, Comp comp@\newtxt{ = Comp\{\}}@);
+    minmax(const T& a, const T& b, Comp comp@\newtxt{ = Comp\{\}, Proj proj = Proj\{\}}@);
 \end{itemdecl}
 \end{addedblock}
 
@@ -5971,7 +5982,7 @@ Returns \tcode{\changed{pair<const T\&, const T\&>(}{\{}a, b\changed{)}{\}}} whe
 
 \pnum
 \complexity
-Exactly one comparison.
+Exactly one comparison \newtxt{and exactly two applications of the projection}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{minmax}}%
@@ -5996,16 +6007,17 @@ template<class T, class Compare>
   @\oldtxt{tagged_pair<tag::min(ValueType<IteratorType<Rng>{}>), tag::max(ValueType<IteratorType<Rng>{}>)>}@
     @\oldtxt{minmax(Rng\&\& rng);}@
 
-template<@\oldtxt{Semiregular}\newtxt{Copyable}@ T, class Comp@\newtxt{ = less<>}@>
-  requires StrictWeakOrder<FunctionType<Comp>, T>@\newtxt{()}@
+template<@\oldtxt{Semiregular}\newtxt{Copyable}@ T, class @\newtxt{Proj = identity,}@
+    @\newtxt{IndirectCallableStrictWeakOrder<Projected<const T*, Proj>{}> }@Comp@\newtxt{ = less<>}@>
+  @\oldtxt{requires StrictWeakOrder<FunctionType<Comp>, T>}@
   constexpr tagged_pair<tag::min(T), tag::max(T)>
-    minmax(initializer_list<T> rng, Comp comp@\newtxt{ = Comp\{\}}@);
+    minmax(initializer_list<T> rng, Comp comp@\newtxt{ = Comp\{\}, Proj proj = Proj\{\}}@);
 
-template<InputRange Rng,
-    IndirectCallableStrictWeakOrder<IteratorType<Rng>> Comp@\newtxt{ = less<>}@>
+template<InputRange Rng, @\newtxt{class Proj = identity,}@
+    IndirectCallableStrictWeakOrder<@\newtxt{Projected<}@IteratorType<Rng>@\newtxt{, Proj>}@> Comp@\newtxt{ = less<>}@>
   requires @\oldtxt{Semiregular}\newtxt{Copyable}@<ValueType<IteratorType<Rng>>>@\newtxt{()}@
   tagged_pair<tag::min(ValueType<IteratorType<Rng>>), tag::max(ValueType<IteratorType<Rng>>)>
-    minmax(Rng&& rng, Comp comp@\newtxt{ = Comp\{\}}@);
+    minmax(Rng&& rng, Comp comp@\newtxt{ = Comp\{\}, Proj proj = Proj\{\}}@);
 \end{itemdecl}
 \end{addedblock}
 
@@ -6025,7 +6037,7 @@ equivalent to the largest.
 
 \pnum
 \complexity At most \tcode{\changed{(3/2) * t.size()}{(3/2) * distance(begin(rng), end(rng))}}
-applications of the corresponding predicate.
+applications of the corresponding predicate\newtxt{, and at most twice as many applications of the projection}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{min_element}}%
