@@ -214,24 +214,24 @@ it could be a different type. \tcode{C} may not be unique.\exitnote
 
 \indexlibrary{\idxcode{Common}}%
 \begin{itemdecl}
-template <class T, class U>
-using CommonType = common_type_t<T, U>;
+@\oldtxt{template <class T, class U>}@
+@\oldtxt{using CommonType = common_type_t<T, U>;}@
 
 template <class T, class U>
 concept bool Common() {
   return requires (T t, U u) {
-    typename CommonType<T, U>;
-    typename CommonType<U, T>;
-    requires Same<CommonType<U, T>, CommonType<T, U>>();
-    CommonType<T, U>(std::forward<T>(t));
-    CommonType<T, U>(std::forward<U>(u));
+    typename @\oldtxt{CommonType}\newtxt{common_type_t}@<T, U>;
+    typename @\oldtxt{CommonType}\newtxt{common_type_t}@<U, T>;
+    requires Same<@\oldtxt{CommonType}\newtxt{common_type_t}@<U, T>, @\oldtxt{CommonType}\newtxt{common_type_t}@<T, U>>();
+    @\oldtxt{CommonType}\newtxt{common_type_t}@<T, U>(std::forward<T>(t));
+    @\oldtxt{CommonType}\newtxt{common_type_t}@<T, U>(std::forward<U>(u));
   };
 }
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-Let \tcode{C} be \tcode{CommonType<T, U>}. Let \tcode{t1} and \tcode{t2} be objects
+Let \tcode{C} be \tcode{\oldtxt{CommonType}}\tcode{\newtxt{common_type_t}}\tcode{<T, U>}. Let \tcode{t1} and \tcode{t2} be objects
 of type \tcode{T}, and \tcode{u1} and \tcode{u2} be objects of type \tcode{U}.
 \tcode{Common<T, U>()} is satisfied if and only if
 \begin{itemize}
@@ -549,7 +549,7 @@ concept bool EqualityComparable() {
   return Common<T, U>() &&
     EqualityComparable<T>() &&
     EqualityComparable<U>() &&
-    EqualityComparable<CommonType<T, U>>() &&
+    EqualityComparable<@\oldtxt{CommonType}\newtxt{common_type_t}@<T, U>>() &&
     requires(const T a, const U b) {
       {a == b} -> Boolean;
       {b == a} -> Boolean;
@@ -562,7 +562,8 @@ concept bool EqualityComparable() {
 \begin{itemdescr}
 \pnum
 Let \tcode{a} be an object of type \tcode{T}, \tcode{b} be an object of type \tcode{U}, and \tcode{C} be
-\tcode{CommonType<T, U>}. Then \tcode{EqualityComparable<T, U>()} is satisfied if and only if
+\tcode{\oldtxt{CommonType}}\tcode{\newtxt{common_type_t}}\tcode{<T, U>}. Then \tcode{EqualityComparable<T, U>()}
+is satisfied if and only if
 
 \begin{itemize}
 \item \tcode{bool(a == b) == bool(C(a) == C(b)).}
@@ -622,7 +623,7 @@ concept bool TotallyOrdered() {
   return Common<T, U>() &&
     TotallyOrdered<T>() &&
     TotallyOrdered<U>() &&
-    TotallyOrdered<CommonType<T, U>>() &&
+    TotallyOrdered<@\oldtxt{CommonType}\newtxt{common_type_t}@<T, U>>() &&
     EqualityComparable<T, U>() &&
     requires (const T t, const U u) {
       { t < u } -> Boolean;
@@ -640,8 +641,8 @@ concept bool TotallyOrdered() {
 \begin{itemdescr}
 \pnum
 Let \tcode{t} be an object of type T, \tcode{u} be an object
-of type \tcode{U}, and \tcode{C} be \tcode{CommonType<T, U>}. Then 
-\tcode{TotallyOrdered<T,U>()} is satisfied if and only if
+of type \tcode{U}, and \tcode{C} be \tcode{\oldtxt{CommonType}}\tcode{\newtxt{common_type_t}}\tcode{<T, U>}.
+Then  \tcode{TotallyOrdered<T,U>()} is satisfied if and only if
 
 \begin{itemize}
 \item \tcode{bool(t < u) == bool(C(t) < C(u)).}
@@ -934,16 +935,16 @@ objects~(\ref{function.objects}) and their arguments.
 
 \indexlibrary{\idxcode{Function}}%
 \begin{itemdecl}
-template <class F, class...Args>
-using ResultType = result_of_t<F(Args...)>;
+@\oldtxt{template <class F, class...Args>}@
+@\oldtxt{using ResultType = result_of_t<F(Args...)>;}@
 
 template <class F, class...Args>
 concept bool Function() {
   return CopyConstructible<F>() &&
     requires (F f, Args&&...args) {
-      typename ResultType<F, Args...>;
+      typename @\oldtxt{ResultType<F, Args...>}\newtxt{result_of_t<F\&(Args...)>}@;
       { f(std::forward<Args>(args)...) } // not required to be equality preserving
-        -> Same<ResultType<F, Args...>>;
+        -> Same<@\oldtxt{ResultType<F, Args...>}\newtxt{result_of_t<F\&(Args...)>}@>;
     };
 }
 \end{itemdecl}
@@ -988,7 +989,7 @@ annotation on the function call expression in the definition of \tcode{Function}
 template <class F, class...Args>
 concept bool Predicate@() \{@
   return RegularFunction<F, Args...>() &&
-    Boolean<ResultType<F, Args...>>();
+    Boolean<@\oldtxt{ResultType<F, Args...>}\newtxt{result_of_t<F\&(Args...)>}@>();
 @\}@
 \end{itemdecl}
 
@@ -1006,7 +1007,7 @@ concept bool Relation() {
   return Relation<R, T>() &&
     Relation<R, U>() &&
     Common<T, U>() &&
-    Relation<R, CommonType<T, U>>() &&
+    Relation<R, @\oldtxt{CommonType}\newtxt{common_type_t}@<T, U>>() &&
     Predicate<R, T, U>() &&
     Predicate<R, U, T>();
 }
@@ -1016,8 +1017,8 @@ concept bool Relation() {
 \pnum
 Let \tcode{r} be any \oldtxt{well-formed} object of type \tcode{R}, \tcode{a} be any
 \oldtxt{well-formed} object of type \tcode{T}, \tcode{b} be any \oldtxt{well-formed}
-object of type \tcode{U}, and \tcode{C} be \tcode{CommonType<T, U>}. Then
-\tcode{Relation<R,T,U>()} is satisfied if and only if
+object of type \tcode{U}, and \tcode{C} be \tcode{\oldtxt{CommonType}}\tcode{\newtxt{common_type_t}}\tcode{<T, U>}.
+Then \tcode{Relation<R,T,U>()} is satisfied if and only if
 
 \begin{itemize}
 \item \tcode{bool(r(a, b)) == bool(r(C(a), C(b))).}

@@ -242,8 +242,8 @@ and
 denote values of type
 \tcode{X} or \tcode{const X},
 \tcode{difference_type} and \tcode{reference} refer to the
-types \tcode{\removed{iterator_traits<X>::difference_type}}\tcode{\added{DifferenceType<X>}} and
-\tcode{\removed{iterator_traits<X>::ref\-erence}}~\tcode{\added{ReferenceType<X>}}, respectively,
+types \tcode{\removed{iterator_traits<X>::difference_type}}\tcode{\oldtxt{DifferenceType<X>}}\tcode{\newtxt{difference_type_t<X>}} and
+\tcode{\removed{iterator_traits<X>::ref\-erence}}~\tcode{\oldtxt{ReferenceType<X>}}\tcode{\newtxt{reference_t<X>}}, respectively,
 \tcode{n}
 denotes a value of
 \tcode{difference_type},
@@ -262,7 +262,9 @@ denotes a value of value type
 denotes a value of some type that is writable to the \added{weak }output iterator.
 \enternote For an iterator type \tcode{X} \changed{there must be an instantiation
 of \tcode{iterator_traits<X>}~(\cxxref{iterator.traits})}{the type aliases
-\tcode{DifferenceType<X>} and \tcode{ReferenceType<X>} must be well-formed}. \exitnote
+\tcode{\oldtxt{DifferenceType<X>}}\tcode{\newtxt{difference_type_t<X>}} and
+\tcode{\oldtxt{ReferenceType<X>}}\tcode{\newtxt{reference_t<X>}}
+must be well-formed}. \exitnote
 
 \begin{addedblock}
 \rSec2[iterators.readable]{Concept Readable}
@@ -277,17 +279,17 @@ applying \tcode{operator*} including pointers, smart pointers, and iterators.
   concept bool Readable() {
     return Semiregular<I>() &&
       requires (const I i) {
-        typename ValueType<I>;
-        { *i } -> const ValueType<I>&; // pre: i is dereferenceable
+        typename @\oldtxt{ValueType}\newtxt{value_type_t}@<I>;
+        { *i } -> const @\oldtxt{ValueType}\newtxt{value_type_t}@<I>&; // pre: i is dereferenceable
       };
   }
 \end{codeblock}
 
 \pnum
-A \tcode{Readable} type has an associated value type that can be accessed with the \tcode{ValueType}
-alias template.
+A \tcode{Readable} type has an associated value type that can be accessed with the
+\tcode{\oldtxt{ValueType}}\tcode{\newtxt{value_type_t}} alias template.
 
-\indexlibrary{\idxcode{ValueType}}%
+\indexlibrary{\idxcode{value_type_t}}%
 \begin{codeblock}
   template <class> struct value_type { };
   template <class T>
@@ -312,7 +314,7 @@ alias template.
     : enable_if<is_object<typename T::element_type>::value, typename T::element_type> { };
 
   template <class T>
-    using ValueType = typename value_type<T>::type;
+    using @\oldtxt{ValueType}\newtxt{value_type_t}@ = typename value_type<T>::type;
 \end{codeblock}
 
 \pnum
@@ -415,7 +417,7 @@ type and a \tcode{MoveWritable} type.
 \begin{codeblock}
   template <class I, class Out>
   concept bool IndirectlyMovable() {
-    return Readable<I>() && MoveWritable<Out, ValueType<I>>();
+    return Readable<I>() && MoveWritable<Out, @\oldtxt{ValueType}\newtxt{value_type_t}@<I>>();
   }
 \end{codeblock}
 
@@ -440,7 +442,7 @@ type and a \tcode{Writable} type.
 \begin{codeblock}
   template <class I, class Out>
   concept bool IndirectlyCopyable() {
-    return IndirectlyMovable<I, Out>() && Writable<Out, ValueType<I>>();
+    return IndirectlyMovable<I, Out>() && Writable<Out, @\oldtxt{ValueType}\newtxt{value_type_t}@<I>>();
   }
 \end{codeblock}
 
@@ -466,7 +468,7 @@ The \tcode{IndirectlySwappable} concept describes a swappable relationship betwe
   concept bool IndirectlySwappable() {
     return Readable<I1>() &&
       Readable<I2>() &&
-      Swappable<ReferenceType<I1>, ReferenceType<I2>>();
+      Swappable<@\oldtxt{ReferenceType}\newtxt{reference_t}@<I1>, @\oldtxt{ReferenceType}\newtxt{reference_t}@<I2>>();
   }
 \end{codeblock}
 
@@ -483,8 +485,8 @@ nor is the type required to be \tcode{EqualityComparable}.
   concept bool WeaklyIncrementable() {
     return Semiregular<I>() &&
       requires (I i) {
-        typename DifferenceType<I>;
-        requires SignedIntegral<DifferenceType<I>>();
+        typename @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I>;
+        requires SignedIntegral<@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I>>();
         { ++i } -> Same<I&>; // not required to be equality preserving
         i++; // not required to be equality preserving
       };
@@ -670,11 +672,11 @@ weak input iterators are not required to be comparable for equality.
     return WeakIterator<I>() &&
       Readable<I>() &&
       requires(I i, const I ci) {
-        typename IteratorCategory<I>;
+        typename @\oldtxt{IteratorCategory}\newtxt{iterator_category_t}@<I>;
         { i++ } -> Readable; // not required to be equality preserving
-        requires Same<ValueType<I>, ValueType<decltype(i++)>>();
-        requires DerivedFrom<IteratorCategory<I>, weak_input_iterator_tag>();
-        { *ci } -> const ValueType<I>&;
+        requires Same<@\oldtxt{ValueType}\newtxt{value_type_t}@<I>, @\oldtxt{ValueType}\newtxt{value_type_t}@<decltype(i++)>>();
+        requires DerivedFrom<@\oldtxt{ValueType}\newtxt{value_type_t}@<I>, weak_input_iterator_tag>();
+        { *ci } -> const @\oldtxt{ValueType}\newtxt{value_type_t}@<I>&;
       };
   }
 \end{codeblock}
@@ -695,7 +697,7 @@ The \tcode{InputIterator} concept is a refinement of \tcode{Iterator}~(\ref{iter
   concept bool InputIterator() {
     return WeakInputIterator<I>() &&
       Iterator<I>() &&
-      DerivedFrom<IteratorCategory<I>, input_iterator_tag>();
+      DerivedFrom<@\oldtxt{ValueType}\newtxt{value_type_t}@<I>, input_iterator_tag>();
   }
 \end{codeblock}
 
@@ -712,7 +714,8 @@ Algorithms on input iterators should never attempt to pass through the same iter
 They should be
 \term{single pass}
 algorithms.
-\removed{Value type T}\added{\tcode{ValueType<I>}} is not required to be a \removed{\tcode{CopyAssignable}}\added{\tcode{Copyable}}
+\removed{Value type T}\added{\tcode{\oldtxt{ValueType}\newtxt{value_type_t}<I>}} is not required
+to be a \removed{\tcode{CopyAssignable}}\added{\tcode{Copyable}}
 type (\removed{Table}~\ref{concepts.lib.object.copyable}). These algorithms can be used with
 istreams as the source of the input data through the \tcode{istream_iterator} class template.
 \exitnote
@@ -815,7 +818,7 @@ and adds the multi-pass guarantee, described below.
   concept bool ForwardIterator() {
     return InputIterator<I>() &&
       Incrementable<I>() &&
-      DerivedFrom<IteratorCategory<I>, forward_iterator_tag>();
+      DerivedFrom<@\oldtxt{ValueType}\newtxt{value_type_t}@<I>, forward_iterator_tag>();
   }
 \end{codeblock}
 \end{addedblock}
@@ -882,7 +885,7 @@ and adds the ability to move an iterator backward as well as forward.
   template <class I>
   concept bool BidirectionalIterator() {
     return ForwardIterator<I>() &&
-      DerivedFrom<IteratorCategory<I>, bidirectional_iterator_tag>() &&
+      DerivedFrom<@\oldtxt{ValueType}\newtxt{value_type_t}@<I>, bidirectional_iterator_tag>() &&
       requires (I i) {
         { @\dcr@i } -> Same<I&>;
         { i@\dcr@ } -> Same<I>;
@@ -951,18 +954,18 @@ notation via subscripting.
   concept bool RandomAccessIterator() {
     return BidirectionalIterator<I>() &&
       TotallyOrdered<I>() &&
-      DerivedFrom<IteratorCategory<I>, random_access_iterator_tag>() &&
+      DerivedFrom<@\oldtxt{ValueType}\newtxt{value_type_t}@<I>, random_access_iterator_tag>() &&
       SizedIteratorRange<I, I>() && // see below
-      requires (I i, const I j, const DifferenceType<I> n) {
+      requires (I i, const I j, const @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n) {
         { i += n } -> Same<I&>;
         { j + n } -> Same<I>;
         { n + j } -> Same<I>;
         { i -= n } -> Same<I&>;
         { j - n } -> Same<I>;
-        { j[n] } -> const ValueType<I>&;
+        { j[n] } -> const @\oldtxt{ValueType}\newtxt{value_type_t}@<I>&;
       } &&
       (!@\xname{MutableIterator}@<I> ||
-        requires(const I i, const DifferenceType<I> n) { i[n] = *i; *i = i[n]; });
+        requires(const I i, const @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n) { i[n] = *i; *i = i[n]; });
   }
 \end{codeblock}
 \end{addedblock}
@@ -972,7 +975,8 @@ notation via subscripting.
 \begin{addedblock}
 \pnum
 Let \tcode{a} and \tcode{b} be valid iterators of type \tcode{I} such that \tcode{b} is reachable
-from \tcode{a}. Let \tcode{n} be the smallest value of type \tcode{DifferenceType<I>} such that after
+from \tcode{a}. Let \tcode{n} be the smallest value of type
+\tcode{\oldtxt{DifferenceType<I>}}\tcode{\newtxt{difference_type_t<I>}} such that after
 \tcode{n} applications of \tcode{++a}, \newtxt{then} \tcode{bool(a == b)}. Then
 \tcode{RandomAccessIterator<I>()} is satisfied if and only if:
 
@@ -1003,13 +1007,13 @@ objects~(\cxxref{func.require}) as arguments.
 the transition should we ever decide to support proxy iterators in the future. See the
 Future Work appendix~(\ref{future.proxy}).}
 
-\rSec2[indirectcallables.functiontype]{Function type}
+\rSec2[indirectcallables.as_function_t]{as_function_t type}
 
 \pnum
-The \tcode{FunctionType} is an alias used to turn a callable type~(\cxxref{func.def}) into a function
-object type~(\ref{function.objects}).
+The \tcode{\oldtxt{FunctionType}}\tcode{\newtxt{as_function_t}} is an alias used to turn a
+callable type~(\cxxref{func.def}) into a function object type~(\ref{function.objects}).
 
-\indexlibrary{\idxcode{FunctionType}}%
+\indexlibrary{\idxcode{function_t}}%
 \begin{codeblock}
   // Exposition only
   template <class T>
@@ -1023,7 +1027,7 @@ object type~(\ref{function.objects}).
   }
 
   template <class T>
-  using FunctionType =
+  using @\oldtxt{FunctionType}\newtxt{as_function_t}@ =
     decltype(@\xname{as_function}@(declval<T>()));
 \end{codeblock}
 
@@ -1033,7 +1037,7 @@ object type~(\ref{function.objects}).
 The indirect callable concepts are used to constrain those algorithms that accept
 callable objects~(\cxxref{func.def}) as arguments.
 
-\indexlibrary{\idxcode{IndirectCallableResultType}}%
+\indexlibrary{\idxcode{indirect_result_of_t}}%
 \indexlibrary{\idxcode{IndirectCallable}}%
 \indexlibrary{\idxcode{IndirectRegularCallable}}%
 \indexlibrary{\idxcode{IndirectCallablePredicate}}%
@@ -1043,67 +1047,76 @@ callable objects~(\cxxref{func.def}) as arguments.
   template <class F, class...Is>
   concept bool IndirectCallable@\newtxt{() \{}\oldtxt{ =}@
     @\newtxt{return}@ (Readable<Is>@\newtxt{()}@ && ...) &&
-      Function<FunctionType<F>, ValueType<Is>...>@\newtxt{()}@;
+      Function<@\oldtxt{FunctionType}\newtxt{as_function_t}@<F>, @\oldtxt{ValueType}\newtxt{value_type_t}@<Is>...>@\newtxt{()}@;
   @\newtxt{\}}@
 
   template <class F, class...Is>
   concept bool IndirectRegularCallable@\newtxt{() \{}\oldtxt{ =}@
     @\newtxt{return}@ (Readable<Is>@\newtxt{()}@ && ...) &&
-      RegularFunction<FunctionType<F>, ValueType<Is>...>@\newtxt{()}@;
+      RegularFunction<@\oldtxt{FunctionType}\newtxt{as_function_t}@<F>, @\oldtxt{ValueType}\newtxt{value_type_t}@<Is>...>@\newtxt{()}@;
   @\newtxt{\}}@
 
   template <class F, class...Is>
   concept bool IndirectCallablePredicate@\newtxt{() \{}\oldtxt{ =}@
     @\newtxt{return}@ (Readable<Is>@\newtxt{()}@ && ...) &&
-      Predicate<FunctionType<F>, ValueType<Is>...>@\newtxt{()}@;
+      Predicate<@\oldtxt{FunctionType}\newtxt{as_function_t}@<F>, @\oldtxt{ValueType}\newtxt{value_type_t}@<Is>...>@\newtxt{()}@;
   @\newtxt{\}}@
 
   template <class F, class I1, class I2 = I1>
   concept bool IndirectCallableRelation@\newtxt{() \{}\oldtxt{ =}@
     @\newtxt{return}@ Readable<I1>@\newtxt{()}@ &&
       Readable<I2>@\newtxt{()}@ &&
-      Relation<FunctionType<F>, ValueType<I1>, ValueType<I2>>();
+      Relation<@\oldtxt{FunctionType}\newtxt{as_function_t}@<F>, @\oldtxt{ValueType}\newtxt{value_type_t}@<I1>, @\oldtxt{ValueType}\newtxt{value_type_t}@<I2>>();
   @\newtxt{\}}@
 
   template <class F, class I1, class I2 = I1>
   concept bool IndirectCallableStrictWeakOrder@\newtxt{() \{}\oldtxt{ =}@
     @\newtxt{return}@ Readable<I1>@\newtxt{()}@ &&
       Readable<I2>@\newtxt{()}@ &&
-      StrictWeakOrder<FunctionType<F>, ValueType<I1>, ValueType<I2>>();
+      StrictWeakOrder<@\oldtxt{FunctionType}\newtxt{as_function_t}@<F>, @\oldtxt{ValueType}\newtxt{value_type_t}@<I1>, @\oldtxt{ValueType}\newtxt{value_type_t}@<I2>>();
   @\newtxt{\}}@
 
   @\oldtxt{template <class F, class...Is>}@
+  @\oldtxt{using IndirectCallableResultType =}@
+    @\oldtxt{ResultType<FunctionType<F>, ValueType<Is>...>}@
+
+  @\newtxt{template <class> struct indirect_result_of \{ \};}@
   @\newtxt{IndirectCallable\{F, ...Is\}}@
-  using IndirectCallableResultType =
-    ResultType<FunctionType<F>, ValueType<Is>...>;
+  @\newtxt{struct indirect_result_of<F(Is...)> :}@
+    @\newtxt{result_of<as_function_t<F>(value_type_t<Is>...)> \{ \};}@
+
+  @\newtxt{template <class F>}@
+  @\newtxt{using indirect_result_of_t = typename indirect_result_of<F>::type;}@
 \end{codeblock}
 
-\rSec2[projected]{Class template \tcode{Projected}}
+\rSec2[projected]{Class template \tcode{projected}}
 
 \pnum
-The \tcode{Projected} class template is intended for use when specifying the constraints of
+The \tcode{\oldtxt{P}\newtxt{p}rojected} class template is intended for use when specifying the constraints of
 algorithms that accept callable objects and projections. It bundles a \tcode{Readable} type
 \tcode{I} and a \oldtxt{projection} function \tcode{Proj} into a new \tcode{Readable} type whose
-\tcode{reference} type is the result of applying \tcode{Proj} to the \tcode{ReferenceType}
-of \tcode{I}.
+\tcode{reference} type is the result of applying \tcode{Proj} to the
+\tcode{\oldtxt{ReferenceType}}\tcode{\newtxt{reference_t}} of \tcode{I}.
 
-\indexlibrary{\idxcode{Projected}}%
+\indexlibrary{\idxcode{projected}}%
 \begin{codeblock}
   template <Readable I, @\oldtxt{class}\newtxt{IndirectRegularCallable<I>}@ Proj>
-    requires RegularFunction<FunctionType<Proj>, @\oldtxt{Value}\newtxt{Reference}@Type<I>>
-  struct Projected {
-    using value_type = decay_t<ResultType<FunctionType<Proj>, ValueType<I>>>;
-    ResultType<FunctionType<Proj>, ReferenceType<I>> operator*() const;
+    requires RegularFunction<@\oldtxt{FunctionType}\newtxt{as_function_t}@<Proj&>, @\oldtxt{ValueType}\newtxt{reference_t}@<I>>
+  struct @\oldtxt{P}\newtxt{p}@rojected {
+    @\oldtxt{using value_type = decay_t<ResultType<FunctionType<Proj>, ValueType<I>{}>{}>;}@
+    @\oldtxt{ResultType<FunctionType<Proj>, ReferenceType<I>{}> operator*() const;}@
+    @\newtxt{using value_type = decay_t<result_of_t<as_function_t<Proj\&>(value_type_t<I>)>{}>;}@
+    @\newtxt{result_of_t<as_function_t<Proj\&>(reference_t<I>)> operator*() const;}@
   };
 
   template <WeaklyIncrementable I, class Proj>
-  struct difference_type<Projected<I, Proj>> {
-    using type = DifferenceType<I>;
+  struct difference_type<@\oldtxt{P}\newtxt{p}@rojected<I, Proj>> {
+    using type = @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I>;
   };
 \end{codeblock}
 
 \pnum
-\enternote \tcode{Projected} is only used to ease constraints specification. Its
+\enternote \tcode{\oldtxt{P}\newtxt{p}rojected} is only used to ease constraints specification. Its
 member function need not be defined.\exitnote
 
 \rSec1[commonalgoreq]{Common algorithm requirements}
@@ -1127,7 +1140,7 @@ compare values from two different sequences.
   template <class I1, class I2, class R = equal_to<>, class P1 = identity,
     class P2 = identity>
   concept bool IndirectlyComparable@\newtxt{() \{}\oldtxt{ =}@
-    @\newtxt{return}@ IndirectCallableRelation<R, Projected<I1, P1>, Projected<I2, P2>>@\newtxt{()}@;
+    @\newtxt{return}@ IndirectCallableRelation<R, @\oldtxt{P}\newtxt{p}@rojected<I1, P1>, @\oldtxt{P}\newtxt{p}@rojected<I2, P2>>@\newtxt{()}@;
   @\newtxt{\}}@
 \end{codeblock}
 
@@ -1142,7 +1155,7 @@ elements in place by moving or swapping them.
   template <class I>
   concept bool Permutable@\newtxt{() \{}\oldtxt{ =}@
     @\newtxt{return}@ ForwardIterator<I>@\newtxt{()}@ &&
-      @\oldtxt{Semiregular}\newtxt{Movable}@<ValueType<I>>@\newtxt{()}@ &&
+      @\oldtxt{Semiregular}\newtxt{Movable}@<@\oldtxt{ValueType}\newtxt{value_type_t}@<I>>@\newtxt{()}@ &&
       IndirectlyMovable<I, I>@\newtxt{()}@;
   @\newtxt{\}}@
 \end{codeblock}
@@ -1163,7 +1176,7 @@ algorithms that merge sorted sequences into an output sequence by copying elemen
       WeaklyIncrementable<Out>@\newtxt{()}@ &&
       IndirectlyCopyable<I1, Out>@\newtxt{()}@ &&
       IndirectlyCopyable<I2, Out>@\newtxt{()}@ &&
-      IndirectCallableStrictWeakOrder<R, Projected<I1, P1>, Projected<I2, P2>>@\newtxt{()}@;
+      IndirectCallableStrictWeakOrder<R, @\oldtxt{P}\newtxt{p}@rojected<I1, P1>, @\oldtxt{P}\newtxt{p}@rojected<I2, P2>>@\newtxt{()}@;
   @\newtxt{\}}@
 \end{codeblock}
 
@@ -1187,7 +1200,7 @@ algorithms that merge sorted sequences into an output sequence by moving element
       WeaklyIncrementable<Out>@\newtxt{()}@ &&
       IndirectlyMovable<I1, Out>@\newtxt{()}@ &&
       IndirectlyMovable<I2, Out>@\newtxt{()}@ &&
-      IndirectCallableStrictWeakOrder<R, Projected<I1, P1>, Projected<I2, P2>>@\newtxt{()}@;
+      IndirectCallableStrictWeakOrder<R, @\oldtxt{P}\newtxt{p}@rojected<I1, P1>, @\oldtxt{P}\newtxt{p}@rojected<I2, P2>>@\newtxt{()}@;
   @\newtxt{\}}@
 \end{codeblock}
 
@@ -1207,7 +1220,7 @@ of algorithms that permute sequences of iterators into an ordered sequence (e.g.
   concept bool Sortable@\newtxt{() \{}\oldtxt{ =}@
     @\newtxt{return}\oldtxt{ ForwardIterator<I> \&\&}@
       Permutable<I>@\newtxt{()}@ &&
-      IndirectCallableStrictWeakOrder<R, Projected<I, P>>@\newtxt{()}@;
+      IndirectCallableStrictWeakOrder<R, @\oldtxt{P}\newtxt{p}@rojected<I, P>>@\newtxt{()}@;
   @\newtxt{\}}@
 \end{codeblock}
 
@@ -1231,17 +1244,18 @@ between them in constant time.
   concept bool SizedIteratorRange@\newtxt{() \{}\oldtxt{ =}@
     @\newtxt{return}@ Sentinel<S, I>@\newtxt{()}@ &&
       requires (@\newtxt{const }@I i, @\newtxt{const }@S j) {
-        { i - i } -> DifferenceType<I>;
-        { j - j } -> DifferenceType<I>;
-        { i - j } -> DifferenceType<I>;
-        { j - i } -> DifferenceType<I>;
+        { i - i } -> @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I>;
+        { j - j } -> @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I>;
+        { i - j } -> @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I>;
+        { j - i } -> @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I>;
       };
   @\newtxt{\}}@
 \end{codeblock}
 
 \pnum
 Let \tcode{a} be a valid iterator of type \tcode{I} and \tcode{b} be a valid sentinel of type
-\tcode{S}. Let \tcode{n} be the smallest value of type \tcode{DifferenceType<I>} such that after
+\tcode{S}. Let \tcode{n} be the smallest value of type
+\tcode{\oldtxt{DifferenceType<I>}}\tcode{\newtxt{difference_type_t<I>}} such that after
 \tcode{n} applications of \tcode{++a}, \tcode{\newtxt{bool}(a == b)\oldtxt{ != false}}. Then
 \oldtxt{types \tcode{I} and \tcode{S} model} \tcode{SizedIteratorRange\newtxt{<I,S>()}}
 \newtxt{is satisfied} if and only if:
@@ -1281,11 +1295,11 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
   template <class> struct difference_type;
   template <class> struct value_type;
   template <class> struct iterator_category;
-  template <class WeaklyIncrementable> using DifferenceType
+  template <class WeaklyIncrementable> using @\oldtxt{DifferenceType}\newtxt{difference_type_t}@
     = typename difference_type<WeaklyIncrementable>::type;
-  template <class Readable> using ValueType
+  template <class Readable> using @\oldtxt{ValueType}\newtxt{value_type_t}@
     = typename value_type<Readable>::type;
-  template <class WeakInputIterator> using IteratorCategory
+  template <class WeakInputIterator> using @\oldtxt{ValueType}\newtxt{value_type_t}@
     = typename iterator_category<WeakInputIterator>::type;
 
 \end{codeblock}
@@ -1318,23 +1332,23 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
 \begin{addedblock}
 \begin{codeblock}
   template <WeakIterator I>
-    void advance(I& i, DifferenceType<I> n);
+    void advance(I& i, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n);
   template <Iterator I, Sentinel<I> S>
     void advance(I& i, S bound);
   template <Iterator I, Sentinel<I> S>
-    DifferenceType<I> advance(I& i, DifferenceType<I> n, S bound);
+    @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> advance(I& i, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n, S bound);
   template <Iterator I, Sentinel<I> S>
-    DifferenceType<I> distance(I first, S last);
+    @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> distance(I first, S last);
   template <WeakIterator I>
-    I next(I x, DifferenceType<I> n = 1);
+    I next(I x, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n = 1);
   template <Iterator I, Sentinel<I> S>
     I next(I x, S bound);
   template <Iterator I, Sentinel<I> S>
-    I next(I x, DifferenceType<I> n, S bound);
+    I next(I x, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n, S bound);
   template <BidirectionalIterator I>
-    I prev(I x, DifferenceType<I> n = 1);
+    I prev(I x, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n = 1);
   template <BidirectionalIterator I>
-    I prev(I x, DifferenceType<I> n, I bound);
+    I prev(I x, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n, I bound);
 \end{codeblock}
 \end{addedblock}
 
@@ -1377,13 +1391,13 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
 
   template <@\changed{class Iterator1}{BidirectionalIterator I1}@, @\changed{class Iterator2}{BidirectionalIterator I2}@>
       @\added{requires SizedIteratorRange<I2, I1>\newtxt{()}}@
-    @\changed{auto}{DifferenceType<I2>}@ operator-(
+    @\removed{auto}\oldtxt{DifferenceType<I2>}\newtxt{difference_type_t<I2>}@ operator-(
       const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
       const reverse_iterator<@\changed{Iterator2}{I2}@>& y)@\removed{ ->decltype(y.base() - x.base())}@;
   template <@\changed{class Iterator}{RandomAccessIterator I}@>
     reverse_iterator<@\changed{Iterator}{I}@>
       operator+(
-    @\changed{typename reverse_iterator<Iterator>::difference_type}{DifferenceType<I>}@ n,
+    @\removed{typename reverse_iterator<Iterator>::difference_type}\oldtxt{DifferenceType<I>}\newtxt{difference_type_t<I>}@ n,
     const reverse_iterator<@\changed{Iterator}{I}@>& x);
 
   template <@\changed{class Iterator}{BidirectionalIterator I}@>
@@ -1401,7 +1415,7 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
   template <class Container> class insert_iterator;
   template <class Container>
     insert_iterator<Container> inserter(Container& x, @\removed{typename Container::iterator}@
-      @\added{IteratorType<Container>}@ i);
+      @\oldtxt{IteratorType}\newtxt{iterator_t}\added{<Container>}@ i);
 
   @\added{\itshape{\rmfamily{// \ref{iterators.move} Move iterators}}}@
   template <@\changed{class Iterator}{WeakInputIterator I}@> class move_iterator;
@@ -1432,13 +1446,13 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
 
   template <@\changed{class Iterator1}{WeakInputIterator I1}@, @\changed{class Iterator2}{WeakInputIterator I2}@>
       @\added{requires SizedIteratorRange<I2, I1>\newtxt{()}}@
-    @\changed{auto}{DifferenceType<I2>}@ operator-(
+    @\removed{auto}\oldtxt{DifferenceType<I2>}\newtxt{difference_type_t<I2>}@ operator-(
       const move_iterator<@\changed{Iterator1}{I1}@>& x,
       const move_iterator<@\changed{Iterator2}{I2}@>& y)@\removed{ ->decltype(y.base() - x.base())}@;
   template <@\changed{class Iterator}{RandomAccessIterator I}@>
     move_iterator<@\changed{Iterator}{I}@>
       operator+(
-    @\changed{typename move_iterator<Iterator>::difference_type}{DifferenceType<I>}@ n,
+    @\removed{typename move_iterator<Iterator>::difference_type}\oldtxt{DifferenceType<I>}\newtxt{difference_type_t<I>}@ n,
     const move_iterator<@\changed{Iterator}{I}@>& x);
   template <@\changed{class Iterator}{WeakInputIterator I}@>
     move_iterator<@\changed{Iterator}{I}@> make_move_iterator(@\changed{Iterator}{I}@ i);
@@ -1470,11 +1484,11 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
             InputIterator I2, @\xname{WeakSentinel}@<I2> S2>
     requires SizedIteratorRange<I1, I1>@\newtxt{()}@ && SizedIteratorRange<I2, I2>@\newtxt{()}@ &&
       @\newtxt{requires (const I1 i1, const S1 s1, const I2 i2, const S2 s2) \{}@
-        @\oldtxt{requires (I1 a, I2 b) \{ }@{@\oldtxt{a}\newtxt{i1}@-@\oldtxt{b}\newtxt{i2}@}->DifferenceType<I2>; {@\oldtxt{b}\newtxt{i2}@-@\oldtxt{a}\newtxt{i1}@}->DifferenceType<I2>;@\oldtxt{ \}}@
-        @\oldtxt{requires (I1 i, S2 s) \{ }@{@\oldtxt{i}\newtxt{i1}@-s@\newtxt{2}@}->DifferenceType<I2>; {s@\newtxt{2}@-@\oldtxt{i}\newtxt{i1}@}->DifferenceType<I2>;@\oldtxt{ \}}@
-        @\oldtxt{requires (I2 i, S1 s) \{ }@{@\oldtxt{i}\newtxt{i2}@-s@\newtxt{1}@}->DifferenceType<I2>; {s@\newtxt{1}@-@\oldtxt{i}\newtxt{i2}@}->DifferenceType<I2>;@\oldtxt{ \}}@
+        @\oldtxt{requires (I1 a, I2 b) \{ }@{@\oldtxt{a}\newtxt{i1}@-@\oldtxt{b}\newtxt{i2}@}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>; {@\oldtxt{b}\newtxt{i2}@-@\oldtxt{a}\newtxt{i1}@}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>;@\oldtxt{ \}}@
+        @\oldtxt{requires (I1 i, S2 s) \{ }@{@\oldtxt{i}\newtxt{i1}@-s@\newtxt{2}@}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>; {s@\newtxt{2}@-@\oldtxt{i}\newtxt{i1}@}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>;@\oldtxt{ \}}@
+        @\oldtxt{requires (I2 i, S1 s) \{ }@{@\oldtxt{i}\newtxt{i2}@-s@\newtxt{1}@}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>; {s@\newtxt{1}@-@\oldtxt{i}\newtxt{i2}@}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>;@\oldtxt{ \}}@
       @\newtxt{\}}@
-  DifferenceType<I2> operator-(
+  @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2> operator-(
     const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
 
   // \ref{default.sentinels} Default sentinels
@@ -1552,22 +1566,22 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
       default_sentinel x, const counted_iterator<I>& y);
   template <WeakIterator I1, WeakIterator I2>
     requires Common<I1, I2>@\newtxt{()}@
-    DifferenceType<I2> operator-(
+    @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2> operator-(
       const counted_iterator<I1>& x, const counted_iterator<I2>& y);
   template <WeakIterator I>
-    DifferenceType<I> operator-(
+    @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> operator-(
       const counted_iterator<I>& x, default_sentinel y);
   template <WeakIterator I>
-    DifferenceType<I> operator-(
+    @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> operator-(
       default_sentinel x, const counted_iterator<I>& y);
   template <RandomAccessIterator I>
     counted_iterator<I>
-      operator+(DifferenceType<I> n, const counted_iterator<I>& x);
+      operator+(@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n, const counted_iterator<I>& x);
   template <WeakIterator I>
-    counted_iterator<I> make_counted_iterator(I i, DifferenceType<I> n);
+    counted_iterator<I> make_counted_iterator(I i, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n);
 
   template <WeakIterator I>
-    void advance(counted_iterator<I>& i, DifferenceType<I> n);
+    void advance(counted_iterator<I>& i, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n);
 
   // \ref{unreachable.sentinels} Unreachable sentinels
   struct unreachable { };
@@ -1648,10 +1662,10 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
   template <class E> size_t size(initializer_list<E> il) noexcept;
 
   @\newtxt{// \ref{range.primitives}, Range primitives:}@
-  @\newtxt{Range\{R\}}@
-  @\newtxt{DifferenceType<IteratorType<R>{}> distance(R\&\& r);}@
-  @\newtxt{SizedRange\{R\}}@
-  @\newtxt{DifferenceType<IteratorType<R>{}> distance(R\&\& r);}@
+  @\newtxt{template <Range R>}@
+  @\oldtxt{DifferenceType}\newtxt{difference_type_t<\oldtxt{IteratorType}\newtxt{iterator_t}<R>{}> distance(R\&\& r);}@
+  @\newtxt{template <SizedRange R>}@
+  @\oldtxt{DifferenceType}\newtxt{difference_type_t<\oldtxt{IteratorType}\newtxt{iterator_t}<R>{}> distance(R\&\& r);}@
 \end{codeblock}
 \end{addedblock}
 \begin{codeblock}
@@ -1725,9 +1739,9 @@ iterator_traits<Iterator>::iterator_category
 \end{removedblock}
 \begin{addedblock}
 \begin{codeblock}
-DifferenceType<WeaklyIncrementable>
-ValueType<Readable>
-IteratorCategory<WeakInputIterator>
+@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<WeaklyIncrementable>
+@\oldtxt{ValueType}\newtxt{value_type_t}@<Readable>
+@\oldtxt{ValueType}\newtxt{value_type_t}@<WeakInputIterator>
 \end{codeblock}
 \end{addedblock}
 
@@ -1736,7 +1750,7 @@ In addition, the type\removed{s}
 
 \begin{addedblock}
 \begin{codeblock}
-ReferenceType<Readable>
+@\tcode{\oldtxt{ReferenceType}}\tcode{\newtxt{reference_t}}@<Readable>
 \end{codeblock}
 
 shall be an alias for \tcode{decltype(*declval<Readable>())}.
@@ -1810,8 +1824,8 @@ namespace std {
 
 \begin{addedblock}
 \pnum
-\indexlibrary{\idxcode{DifferenceType}}%
-\tcode{DifferenceType<T>} is implemented as if:
+\indexlibrary{\idxcode{difference_type_t}}%
+\tcode{\oldtxt{DifferenceType<T>}}\tcode{\newtxt{difference_type_t<T>}} is implemented as if:
 
 \indexlibrary{\idxcode{difference_type}}%
 \begin{codeblock}
@@ -1843,21 +1857,22 @@ namespace std {
     : make_signed< decltype(declval<T>() - declval<T>()) > {
   };
   template <class T>
-    using DifferenceType = typename difference_type<T>::type;
+    using @\oldtxt{DifferenceType}\newtxt{difference_type_t}@ = typename difference_type<T>::type;
 \end{codeblock}
 
 \ednote{REVIEW: The \tcode{difference_type} of unsigned \tcode{Integral} types
 is not large enough to cover the entire range. The Palo Alto report used
 a separate type trait for \tcode{WeaklyIncrementable}: \tcode{DistanceType}.
-\tcode{DifferenceType} is only used for \tcode{RandomAccessIterator}s. Cue
-discussion about the pros and cons of the two approaches.}
+\tcode{\oldtxt{DifferenceType}}\tcode{\newtxt{difference_type_t}} is only used for
+\tcode{RandomAccessIterator}s. Cue discussion about the pros and cons of the two approaches.}
 
 \pnum
 Users may specialize \tcode{difference_type} on user-defined types.
 
 \pnum
-\indexlibrary{\idxcode{IteratorCategory}}%
-\tcode{IteratorCategory<T>} is implemented as if:
+\indexlibrary{\idxcode{iterator_category_t}}%
+\tcode{\oldtxt{IteratorCategory<T>}}\tcode{\newtxt{iterator_category_t<T>}}
+is implemented as if:
 
 \indexlibrary{\idxcode{iterator_category}}%
 \begin{codeblock}
@@ -1874,10 +1889,10 @@ Users may specialize \tcode{difference_type} on user-defined types.
   template <class T>
     requires requires { typename T::iterator_category; }
   struct iterator_category<T> {
-    using type = @\oldtxt{typename T::iterator_category}\seebelow@;
+    using type = @\oldtxt{typename T::iterator_category}\newtxt{\seebelow}@;
   };
   template <class T>
-    using IteratorCategory = typename iterator_category<T>::type;
+    using @\oldtxt{IteratorCategory}\newtxt{iterator_category_t}@ = typename iterator_category<T>::type;
 \end{codeblock}
 
 \pnum
@@ -1934,7 +1949,7 @@ alias that collects an iterator's associated types. It is defined as if:
 \indexlibrary{\idxcode{iterator_traits}}%
 \begin{codeblock}
   template <WeakInputIterator I> struct @\xname{pointer_type}@ {
-    using type = add_pointer_t<ReferenceType<I>>;
+    using type = add_pointer_t<@\oldtxt{ReferenceType}\newtxt{reference_t}@<I>>;
   };
   template <WeakInputIterator I>
     requires requires(I i) { { i.operator->() } -> auto&&; }
@@ -1943,18 +1958,18 @@ alias that collects an iterator's associated types. It is defined as if:
   };
   template <class> struct @\xname{iterator_traits}@ { };
   template <WeakIterator I> struct @\xname{iterator_traits}@<I> {
-    using difference_type = DifferenceType<I>;
+    using difference_type = @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I>;
     using value_type = void;
     using reference = void;
     using pointer = void;
     using iterator_category = output_iterator_tag;
   };
   template <WeakInputIterator I> struct @\xname{iterator_traits}@<I> {
-    using difference_type = DifferenceType<I>;
-    using value_type = ValueType<I>;
-    using reference = ReferenceType<I>;
+    using difference_type = @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I>;
+    using value_type = @\oldtxt{ValueType}\newtxt{value_type_t}@<I>;
+    using reference = @\oldtxt{ReferenceType}\newtxt{reference_t}@<I>;
     using pointer = typename @\xname{pointer_type}@<I>::type;
-    using iterator_category = IteratorCategory<I>;
+    using iterator_category = @\oldtxt{IteratorCategory}\newtxt{iterator_category_t}@<I>;
   };
   template <class I>
     using iterator_traits = @\xname{iterator_traits}@<I>;
@@ -1977,11 +1992,11 @@ function, a \Cpp program can do the following:
 \begin{codeblock}
 template <@\removed{class }@BidirectionalIterator@\added{ I}@>
 void reverse(@\changed{BidirectionalIterator}{I}@ first, @\changed{BidirectionalIterator}{I}@ last) {
-  @\changed{typename iterator_traits<BidirectionalIterator>::difference_type}{DifferenceType<I>}@ n =
+  @\removed{typename iterator_traits<BidirectionalIterator>::difference_type}\oldtxt{DifferenceType<I>}\newtxt{difference_type_t<I>}@ n =
     distance(first, last);
   --n;
   while(n > 0) {
-    @\changed{typename iterator_traits<BidirectionalIterator>::value_type}{ValueType<I>}@
+    @\removed{typename iterator_traits<BidirectionalIterator>::value_type}\oldtxt{ValueType<I>}\newtxt{value_type_t<I>}@
       tmp = *first;
     *first++ = *--last;
     *last = tmp;
@@ -2004,7 +2019,7 @@ older ones.
 namespace std {
   template <experimental::ranges_v1::WeakIterator Out>
   struct iterator_traits<Out> {
-    using difference_type   = experimental::ranges_v1::DifferenceType<Out>;
+    using difference_type   = experimental::ranges_v1::@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<Out>;
     using value_type        = @\seebelow@;
     using reference         = @\seebelow@;
     using pointer           = @\seebelow@;
@@ -2042,8 +2057,8 @@ The nested type \tcode{pointer} is computed as follows:
 
   template <experimental::ranges_v1::InputIterator In>
   struct iterator_traits<In> {
-    using difference_type   = experimental::ranges_v1::DifferenceType<In>;
-    using value_type        = experimental::ranges_v1::ValueType<In>;
+    using difference_type   = experimental::ranges_v1::@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<In>;
+    using value_type        = experimental::ranges_v1::@\oldtxt{ValueType}\newtxt{value_type_t}@<In>;
     using reference         = @\seebelow@;
     using pointer           = @\seebelow@;
     using iterator_category = @\seebelow@;
@@ -2057,7 +2072,7 @@ The nested type \tcode{reference} is computed as follows:
 \item If type \tcode{In} has a nested type \tcode{reference}, then
       \tcode{std::iterator_traits<In>::reference} is \tcode{In::reference}.
 \item Otherwise, \tcode{std::iterator_traits<In>::reference} is
-      \tcode{experimental::ranges_v1::ReferenceType<In>}.
+      \tcode{experimental::ranges_v1::\oldtxt{ReferenceType}\newtxt{reference_t}<In>}.
 \end{itemize}
 
 \pnum
@@ -2070,14 +2085,14 @@ The nested type \tcode{pointer} is computed as follows:
 \end{itemize}
 
 \pnum
-Let type \tcode{C} be \tcode{experimental::ranges_v1::IteratorCategory<In>}.
+Let type \tcode{C} be \tcode{experimental::ranges_v1::}\tcode{\oldtxt{IteratorCategory}}\tcode{\newtxt{iterator_category_t}}\tcode{<In>}.
 The nested type \tcode{std::\brk{}iterator_traits<In>::\brk{}iterator_category} is computed as
 follows:
 \begin{itemize}
 \item If \tcode{C} is the same as or inherits from \tcode{std::input_iterator_tag} or
       \tcode{std::output_iterator_tag}, \tcode{std::\brk{}iterator_traits<In>::\brk{}iterator_category}
       is \tcode{C}.
-\item If \tcode{experimental::ranges_v1::ReferenceType<In>} is not a reference type,
+\item If \tcode{experimental::ranges_v1::\oldtxt{ReferenceType}\newtxt{reference_t}<In>} is not a reference type,
       \tcode{std::\brk{}iterator_traits<In>::\brk{}iterator_category} is \tcode{std::input_iterator_tag}.
 \item If \tcode{C} is the same as or inherits from \tcode{experimental::\brk{}ranges_v1::\brk{}random_access_iterator_tag},
       \tcode{std::\brk{}iterator_traits<In>::\brk{}iterator_category} is \tcode{std::random_access_iterator_tag}.
@@ -2148,7 +2163,8 @@ and
 \tcode{random_access_iterator_tag}.
 For every \added{weak input }iterator of type
 \tcode{Iterator},
-\tcode{\changed{iterator_traits<Iterator>::it\-er\-a\-tor_ca\-te\-go\-ry}{It\-er\-a\-tor\-Ca\-te\-go\-ry<Iterator>}}
+\tcode{\removed{iterator_traits<Iterator>::it\-er\-a\-tor_ca\-te\-go\-ry}
+\oldtxt{It\-er\-a\-tor\-Ca\-te\-go\-ry}\newtxt{it\-er\-a\-tor_\-ca\-te\-go\-ry_t}\added{<Iterator>}}
 shall be defined to be the most specific category tag that describes the
 iterator's behavior.
 
@@ -2231,7 +2247,7 @@ inline void
 evolve(BidirectionalIterator first, BidirectionalIterator last) {
   evolve(first, last,
     @\removed{typename iterator_traits<BidirectionalIterator>::iterator_category()}@
-    @\added{IteratorCategory<BidirectionalIterator>\{\}}@);
+    @\oldtxt{IteratorCategory}\newtxt{iterator_category_t}\added{<BidirectionalIterator>\{\}}@);
 }
 
 template <class BidirectionalIterator>
@@ -2300,7 +2316,7 @@ template <class InputIterator, class Distance>
 \begin{addedblock}
 \begin{itemdecl}
 template <WeakIterator I>
-  void advance(I& i, DifferenceType<I> n);
+  void advance(I& i, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n);
 \end{itemdecl}
 \end{addedblock}
 
@@ -2347,7 +2363,7 @@ If \oldtxt{\tcode{I} and \tcode{S} model the concept} \tcode{SizedIteratorRange\
 
 \begin{itemdecl}
 template <Iterator I, Sentinel<I> S>
-  DifferenceType<I> advance(I& i, DifferenceType<I> n, S bound);
+  @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> advance(I& i, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n, S bound);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2391,7 +2407,7 @@ the ending position.
 \begin{addedblock}
 \begin{itemdecl}
 template <Iterator I, Sentinel<I> S>
-  DifferenceType<I> distance(I first, S last);
+  @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> distance(I first, S last);
 \end{itemdecl}
 \end{addedblock}
 
@@ -2427,7 +2443,7 @@ template <class ForwardIterator>
 \begin{addedblock}
 \begin{itemdecl}
 template <WeakIterator I>
-  I next(I x, DifferenceType<I> n = 1);
+  I next(I x, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n = 1);
 \end{itemdecl}
 \end{addedblock}
 
@@ -2449,7 +2465,7 @@ template <Iterator I, Sentinel<I> S>
 
 \begin{itemdecl}
 template <Iterator I, Sentinel<I> S>
-  I next(I x, DifferenceType<I> n, S bound);
+  I next(I x, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n, S bound);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2469,7 +2485,7 @@ template <class BidirectionalIterator>
 \begin{addedblock}
 \begin{itemdecl}
 template <BidirectionalIterator I>
-  I prev(I x, DifferenceType<I> n = 1);
+  I prev(I x, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n = 1);
 \end{itemdecl}
 \end{addedblock}
 
@@ -2481,7 +2497,7 @@ template <BidirectionalIterator I>
 \begin{addedblock}
 \begin{itemdecl}
 template <BidirectionalIterator I>
-  I prev(I x, DifferenceType<I> n, I bound);
+  I prev(I x, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n, I bound);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2523,10 +2539,10 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
     typedef typename iterator_traits<Iterator>::pointer         pointer;
 \end{codeblock}\end{removedblock}\begin{addedblock}\begin{codeblock}
     using iterator_type = I;
-    using difference_type = DifferenceType<I>;
-    using value_type = ValueType<I>;
-    using iterator_category = IteratorCategory<I>;
-    using reference = ReferenceType<I>;
+    using difference_type = @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I>;
+    using value_type = @\oldtxt{ValueType}\newtxt{value_type_t}@<I>;
+    using iterator_category = @\oldtxt{IteratorCategory}\newtxt{iterator_category_t}@<I>;
+    using reference = @\oldtxt{ReferenceType}\newtxt{reference_t}@<I>;
     using pointer = I;
 \end{codeblock}\end{addedblock}\begin{codeblock}
     reverse_iterator();
@@ -2593,13 +2609,13 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
       const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
   template <@\changed{class Iterator1}{BidirectionalIterator I1}@, @\changed{class Iterator2}{BidirectionalIterator I2}@>
       @\added{requires SizedIteratorRange<I2, I1>\newtxt{()}}@
-    @\changed{auto}{DifferenceType<I2>}@ operator-(
+    @\removed{auto}\oldtxt{DifferenceType<I2>}\newtxt{difference_type_t<I2>}@ operator-(
       const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
       const reverse_iterator<@\changed{Iterator2}{I2}@>& y)@\removed{ ->decltype(y.base() - x.base())}@;
   template <@\changed{class Iterator}{RandomAccessIterator I}@>
     reverse_iterator<@\changed{Iterator}{I}@>
       operator+(
-    @\changed{typename reverse_iterator<Iterator>::difference_type}{DifferenceType<I>}@ n,
+    @\removed{typename reverse_iterator<Iterator>::difference_type}\oldtxt{DifferenceType<I>}\newtxt{difference_type_t<I>}@ n,
     const reverse_iterator<@\changed{Iterator}{I}@>& x);
 
   template <@\changed{class Iterator}{BidirectionalIterator I}@>
@@ -3008,7 +3024,7 @@ template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class 
 \begin{itemdecl}
 template <@\changed{class Iterator1}{BidirectionalIterator I1}@, @\changed{class Iterator2}{BidirectionalIterator I2}@>
     @\added{requires SizedIteratorRange<I2, I1>\newtxt{()}}@
-  @\changed{auto}{DifferenceType<I2>}@ operator-(
+  @\removed{auto}\oldtxt{DifferenceType<I2>}\newtxt{difference_type_t<I2>}@ operator-(
     const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
     const reverse_iterator<@\changed{Iterator2}{I2}@>& y)@\removed{ ->decltype(y.base() - x.base())}@;
 \end{itemdecl}
@@ -3026,7 +3042,7 @@ template <@\changed{class Iterator1}{BidirectionalIterator I1}@, @\changed{class
 template <@\changed{class Iterator}{RandomAccessIterator I}@>
   reverse_iterator<@\changed{Iterator}{I}@>
     operator+(
-  @\changed{typename reverse_iterator<Iterator>::difference_type}{DifferenceType<I>}@ n,
+  @\removed{typename reverse_iterator<Iterator>::difference_type}\oldtxt{DifferenceType<I>}\newtxt{difference_type_t<I>}@ n,
   const reverse_iterator<@\changed{Iterator}{I}@>& x);
 \end{itemdecl}
 
@@ -3559,7 +3575,7 @@ vector<string> v2(make_move_iterator(s.begin()),
 \begin{codeblock}
 namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
   template <@\changed{class Iterator}{WeakInputIterator I}@>
-    @\added{requires Same<ReferenceType<I>, ValueType<I>\&>\newtxt{()}}@
+    @\added{requires Same<\oldtxt{ReferenceType}\newtxt{reference_t}<I>, \oldtxt{ValueType}\newtxt{value_type_t}<I>\&>\newtxt{()}}@
   class move_iterator {
   public:
 \end{codeblock}\begin{removedblock}\begin{codeblock}
@@ -3571,10 +3587,10 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
     typedef value_type&&                                          reference;
 \end{codeblock}\end{removedblock}\begin{addedblock}\begin{codeblock}
     using iterator_type = I;
-    using difference_type = DifferenceType<I>;
-    using value_type = ValueType<I>;
-    using iterator_category = IteratorCategory<I>;
-    using reference = ValueType<I>&&;
+    using difference_type = @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I>;
+    using value_type = @\oldtxt{ValueType}\newtxt{value_type_t}@<I>;
+    using iterator_category = @\oldtxt{IteratorCategory}\newtxt{iterator_category_t}@<I>;
+    using reference = @\oldtxt{ValueType}\newtxt{value_type_t}@<I>&&;
     using pointer = I;
 \end{codeblock}\end{addedblock}\begin{codeblock}
 
@@ -3640,13 +3656,13 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
 
   template <@\changed{class Iterator1}{WeakInputIterator I1}@, @\changed{class Iterator2}{WeakInputIterator I2}@>
       @\added{requires SizedIteratorRange<I2, I1>\newtxt{()}}@
-    @\changed{auto}{DifferenceType<I2>}@ operator-(
+    @\removed{auto}\oldtxt{DifferenceType<I2>}\newtxt{difference_type_t<I2>}@ operator-(
       const move_iterator<@\changed{Iterator1}{I1}@>& x,
       const move_iterator<@\changed{Iterator2}{I2}@>& y)@\removed{ ->decltype(y.base() - x.base())}@;
   template <@\changed{class Iterator}{RandomAccessIterator I}@>
     move_iterator<@\changed{Iterator}{I}@>
       operator+(
-        @\changed{typename move_iterator<Iterator>::difference_type}{DifferenceType<I>}@ n,
+        @\removed{typename move_iterator<Iterator>::difference_type}\oldtxt{DifferenceType<I>}\newtxt{difference_type_t<I>}@ n,
         const move_iterator<@\changed{Iterator}{I}@>& x);
   template <@\changed{class Iterator}{WeakInputIterator I}@>
     move_iterator<@\changed{Iterator}{I}@> make_move_iterator(@\changed{Iterator}{I}@ i);
@@ -4010,7 +4026,7 @@ template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class 
 \begin{itemdecl}
 template <@\changed{class Iterator1}{WeakInputIterator I1}@, @\changed{class Iterator2}{WeakInputIterator I2}@>
     @\added{requires SizedIteratorRange<I2, I1>\newtxt{()}}@
-  @\changed{auto}{DifferenceType<I2>}@ operator-(
+  @\removed{auto}\oldtxt{DifferenceType<I2>}\newtxt{difference_type_t<I2>}@ operator-(
     const move_iterator<@\changed{Iterator1}{I1}@>& x,
     const move_iterator<@\changed{Iterator2}{I2}@>& y)@\removed{ ->decltype(y.base() - x.base())}@;
 \end{itemdecl}
@@ -4026,7 +4042,7 @@ template <@\changed{class Iterator1}{WeakInputIterator I1}@, @\changed{class Ite
 template <@\changed{class Iterator}{RandomAccessIterator I}@>
   move_iterator<@\changed{Iterator}{I}@>
     operator+(
-      @\changed{typename move_iterator<Iterator>::difference_type}{DifferenceType<I>}@ n,
+      @\removed{typename move_iterator<Iterator>::difference_type}\oldtxt{DifferenceType<I>}\newtxt{difference_type_t<I>}@ n,
       const move_iterator<@\changed{Iterator}{I}@>& x);
 \end{itemdecl}
 
@@ -4111,13 +4127,13 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
     requires !Same<I, S>@\newtxt{()}@
   class common_iterator {
   public:
-    using difference_type = DifferenceType<I>;
-    using value_type = ValueType<I>;
+    using difference_type = @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I>;
+    using value_type = @\oldtxt{ValueType}\newtxt{value_type_t}@<I>;
     using iterator_category =
       conditional_t<@\oldtxt{ForwardIterator}\newtxt{\xname{fwd_iter}}@<I>,
                     std::forward_iterator_tag,
                     std::input_iterator_tag>;
-    using reference = ReferenceType<I>;
+    using reference = @\oldtxt{ReferenceType}\newtxt{reference_t}@<I>;
 
     common_iterator();
     common_iterator(I i);
@@ -4159,11 +4175,11 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
             InputIterator I2, @\xname{WeakSentinel}@<I2> S2>
     requires SizedIteratorRange<I1, I1>@\newtxt{()}@ && SizedIteratorRange<I2, I2>@\newtxt{()}@ &&
       @\newtxt{requires (const I1 i1, const S1 s1, const I2 i2, const S2 s2) \{}@
-        @\oldtxt{requires (I1 a, I2 b) \{ }@{@\oldtxt{a}\newtxt{i1}@-@\oldtxt{b}\newtxt{i2}@}->DifferenceType<I2>; {@\oldtxt{b}\newtxt{i2}@-@\oldtxt{a}\newtxt{i1}@}->DifferenceType<I2>;@\oldtxt{ \}}@
-        @\oldtxt{requires (I1 i, S2 s) \{ }@{@\oldtxt{i}\newtxt{i1}@-s@\newtxt{2}@}->DifferenceType<I2>; {s@\newtxt{2}@-@\oldtxt{i}\newtxt{i1}@}->DifferenceType<I2>;@\oldtxt{ \}}@
-        @\oldtxt{requires (I2 i, S1 s) \{ }@{@\oldtxt{i}\newtxt{i2}@-s@\newtxt{1}@}->DifferenceType<I2>; {s@\newtxt{1}@-@\oldtxt{i}\newtxt{i2}@}->DifferenceType<I2>;@\oldtxt{ \}}@
+        @\oldtxt{requires (I1 a, I2 b) \{ }@{@\oldtxt{a}\newtxt{i1}@-@\oldtxt{b}\newtxt{i2}@}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>; {@\oldtxt{b}\newtxt{i2}@-@\oldtxt{a}\newtxt{i1}@}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>;@\oldtxt{ \}}@
+        @\oldtxt{requires (I1 i, S2 s) \{ }@{@\oldtxt{i}\newtxt{i1}@-s@\newtxt{2}@}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>; {s@\newtxt{2}@-@\oldtxt{i}\newtxt{i1}@}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>;@\oldtxt{ \}}@
+        @\oldtxt{requires (I2 i, S1 s) \{ }@{@\oldtxt{i}\newtxt{i2}@-s@\newtxt{1}@}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>; {s@\newtxt{1}@-@\oldtxt{i}\newtxt{i2}@}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>;@\oldtxt{ \}}@
       @\newtxt{\}}@
-  DifferenceType<I2> operator-(
+  @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2> operator-(
     const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
 }@\newtxt{\}\}}@
 \end{codeblock}
@@ -4380,11 +4396,11 @@ template <InputIterator I1, @\xname{WeakSentinel}@<I1> S1,
           InputIterator I2, @\xname{WeakSentinel}@<I2> S2>
   requires SizedIteratorRange<I1, I1>@\newtxt{()}@ && SizedIteratorRange<I2, I2>@\newtxt{()}@ &&
     @\newtxt{requires (const I1 i1, const S1 s1, const I2 i2, const S2 s2) \{}@
-      @\oldtxt{requires (I1 a, I2 b) \{ }@{@\oldtxt{a}\newtxt{i1}@-@\oldtxt{b}\newtxt{i2}@}->DifferenceType<I2>; {@\oldtxt{b}\newtxt{i2}@-@\oldtxt{a}\newtxt{i1}@}->DifferenceType<I2>;@\oldtxt{ \}}@
-      @\oldtxt{requires (I1 i, S2 s) \{ }@{@\oldtxt{i}\newtxt{i1}@-s@\newtxt{2}@}->DifferenceType<I2>; {s@\newtxt{2}@-@\oldtxt{i}\newtxt{i1}@}->DifferenceType<I2>;@\oldtxt{ \}}@
-      @\oldtxt{requires (I2 i, S1 s) \{ }@{@\oldtxt{i}\newtxt{i2}@-s@\newtxt{1}@}->DifferenceType<I2>; {s@\newtxt{1}@-@\oldtxt{i}\newtxt{i2}@}->DifferenceType<I2>;@\oldtxt{ \}}@
+      @\oldtxt{requires (I1 a, I2 b) \{ }@{@\oldtxt{a}\newtxt{i1}@-@\oldtxt{b}\newtxt{i2}@}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>; {@\oldtxt{b}\newtxt{i2}@-@\oldtxt{a}\newtxt{i1}@}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>;@\oldtxt{ \}}@
+      @\oldtxt{requires (I1 i, S2 s) \{ }@{@\oldtxt{i}\newtxt{i1}@-s@\newtxt{2}@}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>; {s@\newtxt{2}@-@\oldtxt{i}\newtxt{i1}@}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>;@\oldtxt{ \}}@
+      @\oldtxt{requires (I2 i, S1 s) \{ }@{@\oldtxt{i}\newtxt{i2}@-s@\newtxt{1}@}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>; {s@\newtxt{1}@-@\oldtxt{i}\newtxt{i2}@}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>;@\oldtxt{ \}}@
     @\newtxt{\}}@
-DifferenceType<I2> operator-(
+@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2> operator-(
   const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
 \end{itemdecl}
 
@@ -4537,11 +4553,11 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
   class counted_iterator {
   public:
     using iterator_type = I;
-    using difference_type = DifferenceType<I>;
-    using reference = ReferenceType<I>;
+    using difference_type = @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I>;
+    using reference = @\oldtxt{ReferenceType}\newtxt{reference_t}@<I>;
 
     counted_iterator();
-    counted_iterator(I x, DifferenceType<I> n);
+    counted_iterator(I x, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n);
     template <WeakIterator U>
       requires Convertible@\newtxt{To}@<U, I>@\newtxt{()}@
     counted_iterator(const counted_iterator<U>& u);
@@ -4550,7 +4566,7 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
     counted_iterator& operator=(const counted_iterator<U>& u);
 
     I base() const;
-    DifferenceType<I> count() const;
+    @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> count() const;
     reference operator*() const;
 
     counted_iterator& operator++();
@@ -4570,9 +4586,9 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
       requires RandomAccessIterator<I>@\newtxt{()}@;
     @\unspec@ operator[](difference_type n) const
       requires RandomAccessIterator<I>@\newtxt{()}@;
-  protected:
-    I current;
-    DifferenceType<I> cnt;
+  @\oldtxt{protected}\newtxt{private}@:
+    I current; @\newtxt{// \expos}@
+    @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> cnt; @\newtxt{// \expos}@
   };
 
   template <WeakInputIterator I>
@@ -4650,23 +4666,23 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
 
   template <WeakIterator I1, WeakIterator I2>
       @\newtxt{requires Common<I1, I2>()}@
-    DifferenceType<I2> operator-(
+    @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2> operator-(
       const counted_iterator<I1>& x, const counted_iterator<I2>& y);
   template <WeakIterator I>
-    DifferenceType<I> operator-(
+    @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> operator-(
       const counted_iterator<I>& x, default_sentinel y);
   template <WeakIterator I>
-    DifferenceType<I> operator-(
+    @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> operator-(
       default_sentinel x, const counted_iterator<I>& y);
 
   template <RandomAccessIterator I>
     counted_iterator<I>
-      operator+(DifferenceType<I> n, const counted_iterator<I>& x);
+      operator+(@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n, const counted_iterator<I>& x);
   template <WeakIterator I>
-    counted_iterator<I> make_counted_iterator(I i, DifferenceType<I> n);
+    counted_iterator<I> make_counted_iterator(I i, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n);
 
   template <WeakIterator I>
-    void advance(counted_iterator<I>& i, DifferenceType<I> n);
+    void advance(counted_iterator<I>& i, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n);
 }@\newtxt{\}\}}@
 \end{codeblock}
 
@@ -4689,7 +4705,7 @@ are defined on a value-initialized iterator of type \tcode{I}.
 
 \indexlibrary{\idxcode{counted_iterator}!constructor}%
 \begin{itemdecl}
-counted_iterator(I i, DifferenceType<I> n);
+counted_iterator(I i, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4749,7 +4765,7 @@ I base() const;
 \indexlibrary{\idxcode{count}!\idxcode{counted_iterator}}%
 \indexlibrary{\idxcode{counted_iterator}!\idxcode{count}}%
 \begin{itemdecl}
-DifferenceType<I> count() const;
+@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> count() const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -5152,7 +5168,7 @@ elements of the same sequence~(\ref{iterators.counted}).
 \begin{itemdecl}
 template <WeakIterator I1, WeakIterator I2>
     @\newtxt{requires Common<I1, I2>()}@
-  DifferenceType<I2> operator-(
+  @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2> operator-(
     const counted_iterator<I1>& x, const counted_iterator<I2>& y);
 \end{itemdecl}
 
@@ -5170,7 +5186,7 @@ otherwise,} \tcode{y.count() - x.count()}.
 
 \begin{itemdecl}
 template <WeakIterator I>
-  DifferenceType<I> operator-(
+  @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> operator-(
     const counted_iterator<I>& x, default_sentinel y);
 \end{itemdecl}
 
@@ -5181,7 +5197,7 @@ template <WeakIterator I>
 
 \begin{itemdecl}
 template <WeakIterator I>
-  DifferenceType<I> operator-(
+  @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> operator-(
     default_sentinel x, const counted_iterator<I>& y);
 \end{itemdecl}
 
@@ -5195,7 +5211,7 @@ template <WeakIterator I>
 \begin{itemdecl}
 template <RandomAccessIterator I>
   counted_iterator<I>
-    operator+(DifferenceType<I> n, const counted_iterator<I>& x);
+    operator+(@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n, const counted_iterator<I>& x);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -5209,7 +5225,7 @@ template <RandomAccessIterator I>
 \indexlibrary{\idxcode{make_counted_iterator}}%
 \begin{itemdecl}
 template <WeakIterator I>
-  counted_iterator<I> make_counted_iterator(I i, DifferenceType<I> n);
+  counted_iterator<I> make_counted_iterator(I i, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -5223,7 +5239,7 @@ template <WeakIterator I>
 \indexlibrary{\idxcode{advance}}%
 \begin{itemdecl}
 template <WeakIterator I>
-  void advance(counted_iterator<I>& i, DifferenceType<I> n);
+  void advance(counted_iterator<I>& i, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -5290,7 +5306,9 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges_v1 \{}@
 
   template <Range R>
   using safe_iterator_t =
-    conditional_t<is_lvalue_reference<R>::value, IteratorType<R>, dangling<IteratorType<R>>>;
+    conditional_t<is_lvalue_reference<R>::value,
+      @\oldtxt{IteratorType}\newtxt{iterator_t}@<R>,
+      dangling<@\oldtxt{IteratorType}\newtxt{iterator_t}@<R>>>;
 }@\newtxt{\}\}}@
 \end{codeblock}
 
@@ -6393,20 +6411,20 @@ template <class T>
   @\newtxt{requires requires (T\& t) \{}@
     @\newtxt{\{ begin(t) \} -> Iterator; // possibly required to be equality preserving (\seebelow)}@
   @\newtxt{\}}@
-using IteratorType = decltype(begin(declval<T@\newtxt{\&}@>()));
+using @\oldtxt{IteratorType}\newtxt{iterator_t}@ = decltype(begin(declval<T@\newtxt{\&}@>()));
 
 template <class T>
   @\newtxt{requires requires (T\& t) \{}@
-    @\newtxt{typename IteratorType<T>;}@
-    @\newtxt{\{ end(t) \} -> Sentinel<IteratorType<T>{}>;}@
+    @\newtxt{typename \oldtxt{IteratorType}\newtxt{iterator_t}<T>;}@
+    @\newtxt{\{ end(t) \} -> Sentinel<\oldtxt{IteratorType}\newtxt{iterator_t}<T>{}>;}@
   @\newtxt{\}}@
-using SentinelType = decltype(end(declval<T@\newtxt{\&}@>()));
+using @\oldtxt{SentinelType}\newtxt{sentinel_t}@ = decltype(end(declval<T@\newtxt{\&}@>()));
 
 template <class T>
 concept bool Range@\newtxt{() \{}\oldtxt{ =}@
   @\newtxt{return}@ requires@\oldtxt{(T t)}@ {
-    typename IteratorType<T>;
-    typename SentinelType<T>;
+    typename @\oldtxt{IteratorType}\newtxt{iterator_t}@<T>;
+    typename @\oldtxt{SentinelType}\newtxt{sentinel_t}@<T>;
     @\oldtxt{\{ begin(t) \} -> IteratorType<T>;}@
     @\oldtxt{\{ end(t) \} -> SentinelType<T>;}@
     @\oldtxt{requires Sentinel<SentinelType<T>, IteratorType<T>{}>;}@
@@ -6429,14 +6447,15 @@ if and only if}
 and non-modifying. \enternote \tcode{begin(t)} and \tcode{end(t)} do not require
 implicit expression variants. \exitnote}
 
-\item \newtxt{If \tcode{IteratorType<T>} satisfies \tcode{ForwardIterator},
+\item \newtxt{If \tcode{\oldtxt{IteratorType<T>}}\tcode{\newtxt{iterator_t<T>}} satisfies \tcode{ForwardIterator},
 \tcode{begin(t)} is equality preserving.}
 \end{itemize}
 \end{itemdescr}
 
 \pnum \newtxt{\enternote
 Equality preservation of both \tcode{begin} and \tcode{end} enables passing a \tcode{Range}
-whose \tcode{IteratorType} satisfies \tcode{ForwardIterator} to multiple algorithms and
+whose \tcode{\oldtxt{IteratorType}}iterator type satisfies \tcode{ForwardIterator}
+to multiple algorithms and
 making multiple passes over the range by repeated calls to \tcode{begin} and \tcode{end}.
 Since \tcode{begin} is not required to be equality preserving when the return type does
 not satisfy \tcode{ForwardIterator}, repeated calls might not return equal values or
@@ -6471,7 +6490,7 @@ concept bool SizedRange@\newtxt{() \{}\oldtxt{ =}@
     @\newtxt{Range<T>() \&\&}@
     @\newtxt{requires (const remove_reference_t<T>\& t) \{}@
       @\newtxt{\{ size(t) \} -> Integral;}@
-      @\newtxt{\{ size(t) \} -> ConvertibleTo<DifferenceType<IteratorType<T>{}>{}>;}@
+      @\newtxt{\{ size(t) \} -> ConvertibleTo<\oldtxt{DifferenceType}difference_type_t<\oldtxt{IteratorType}iterator_t<T>{}>{}>;}@
     @\newtxt{\};}@
 @\newtxt{\}}@
 \end{itemdecl}
@@ -6483,11 +6502,11 @@ concept bool SizedRange@\newtxt{() \{}\oldtxt{ =}@
 \begin{itemize}
 \item \newtxt{Overload resolution~(\cxxref{over.match}) on the expression \tcode{size(t)} selects a unary non-member function ``\tcode{size}'' from a candidate set that includes the three overloads of \tcode{size} found in \tcode{<experimental/ranges_v1/iterator>}~(\ref{iterator.synopsis}) and the lookup set produced by argument-dependent lookup~(\cxxref{basic.lookup.argdep}).}
 \item \newtxt{\tcode{size(t)} returns the number of elements in \tcode{t}.}
-\item \newtxt{If \tcode{IteratorType<T>} satisfies \tcode{ForwardIterator},
+\item \newtxt{If \tcode{\oldtxt{IteratorType}iterator_t<T>} satisfies \tcode{ForwardIterator},
 \tcode{size(t)} is well-defined regardless of the evaluation of
 \tcode{begin(t)}. \enternote \tcode{size(t)} is otherwise not required be
 well-defined after evaluating \tcode{begin(t)}. For a \tcode{SizedRange}
-whose \tcode{IteratorType} does not model \tcode{ForwardIterator}, for
+whose \tcode{\oldtxt{IteratorType}}iterator type does not model \tcode{ForwardIterator}, for
 example, \tcode{size(t)} might only be well-defined if evaluated before
 the first call to \tcode{begin(t)}. \exitnote}
 \end{itemize}
@@ -6595,7 +6614,11 @@ For a type \tcode{T}, the value of \tcode{\xname{view_predicate<T>}} shall be:
 \begin{itemize}
 \item If \tcode{enable_view<T>} has a member type \tcode{type}, \tcode{enable_view<T>::type::value};
 \item If \tcode{T} is derived from \tcode{view_base}, \tcode{true};
-\item If both \tcode{T} and \tcode{const T} satisfy \tcode{Range} and \tcode{ReferenceType<IteratorType<T>{}>} is not the same type as \tcode{ReferenceType<IteratorType<const T>{}>}, \tcode{false}; \enternote Deep \tcode{const}-ness implies element ownership, whereas shallow \tcode{const}-ness implies reference semantics. \exitnote
+\item If both \tcode{T} and \tcode{const T} satisfy \tcode{Range} and \tcode{\oldtxt{ReferenceType}reference_t}
+\tcode{<\oldtxt{IteratorType}iterator_t<T>{}>} is not the same type as \tcode{\oldtxt{ReferenceType}reference_t}
+\tcode{<\oldtxt{IteratorType}iterator_t<const T>{}>},
+\tcode{false}; \enternote Deep \tcode{const}-ness implies element ownership, whereas shallow \tcode{const}-ness
+implies reference semantics. \exitnote
 \item Otherwise, \tcode{true}.
 \end{itemize}
 }
@@ -6609,8 +6632,8 @@ Below is a possible implementation of \oldtxt{the \tcode{is_view} trait} \newtxt
 template <class T>
 concept bool @\xname{ContainerLike}@ =
   Range<T>@\newtxt{()}@ && @\newtxt{Range<const T>() \&\&}@
-  !Same<ReferenceType<IteratorType<T@\oldtxt{\&}@>>,
-        ReferenceType<IteratorType<const T@\oldtxt{\&}@>>>@\newtxt{()}@;
+  !Same<@\oldtxt{ReferenceType}\newtxt{reference_t}@<@\oldtxt{IteratorType}\newtxt{iterator_t}@<T@\oldtxt{\&}@>>,
+        @\oldtxt{ReferenceType}\newtxt{reference_t}@<@\oldtxt{IteratorType}\newtxt{iterator_t}@<const T@\oldtxt{\&}@>>>@\newtxt{()}@;
 
 template <class T>
 @\oldtxt{struct is_view : false_type \{ \};}@
@@ -6644,7 +6667,7 @@ of an \tcode{Range} type for which \tcode{begin} and \tcode{end} return objects 
 \begin{codeblock}
 template <class T>
 concept bool BoundedRange@\newtxt{() \{}\oldtxt{ =}@
-  @\newtxt{return}@ Range<T>@\newtxt{()}@ && Same<IteratorType<T>, SentinelType<T>>@\newtxt{()}@;
+  @\newtxt{return}@ Range<T>@\newtxt{()}@ && Same<@\oldtxt{IteratorType}\newtxt{iterator_t}@<T>, @\oldtxt{SentinelType}\newtxt{sentinel_t}@<T>>@\newtxt{()}@;
 @\newtxt{\}}@
 \end{codeblock}
 
@@ -6658,7 +6681,7 @@ that satisfies} \tcode{InputIterator}~(\ref{iterators.input}).
 \begin{codeblock}
 template <class T>
 concept bool InputRange@\newtxt{() \{}\oldtxt{ =}@
-  @\newtxt{return}@ Range<T>@\newtxt{()}@ && InputIterator<IteratorType<T>>@\newtxt{()}@;
+  @\newtxt{return}@ Range<T>@\newtxt{()}@ && InputIterator<@\oldtxt{IteratorType}\newtxt{iterator_t}@<T>>@\newtxt{()}@;
 @\newtxt{\}}@
 \end{codeblock}
 
@@ -6673,7 +6696,7 @@ an \tcode{Range} type for which \tcode{begin} returns a type that satisfies
 \begin{codeblock}
 template <class R, class T>
 concept bool OutputRange() {
-  return Range<R>() && OutputIterator<IteratorType<R>, T>();
+  return Range<R>() && OutputIterator<@\oldtxt{IteratorType}\newtxt{iterator_t}@<R>, T>();
 }
 \end{codeblock}
 }
@@ -6688,7 +6711,7 @@ The \tcode{ForwardRange} concept \oldtxt{describes}\newtxt{specifies} requiremen
 \begin{codeblock}
 template <class T>
 concept bool ForwardRange@\newtxt{() \{}\oldtxt{ =}@
-  @\newtxt{return}@ InputRange<T>@\newtxt{()}@ && ForwardIterator<IteratorType<T>>@\newtxt{()}@;
+  @\newtxt{return}@ InputRange<T>@\newtxt{()}@ && ForwardIterator<@\oldtxt{IteratorType}\newtxt{iterator_t}@<T>>@\newtxt{()}@;
 @\newtxt{\}}@
 \end{codeblock}
 
@@ -6702,7 +6725,7 @@ The \tcode{BidirectionalRange} concept \oldtxt{describes}\newtxt{specifies} requ
 \begin{codeblock}
 template <class T>
 concept bool BidirectionalRange@\newtxt{() \{}\oldtxt{ =}@
-  @\newtxt{return}@ ForwardRange<T>@\newtxt{()}@ && BidirectionalIterator<IteratorType<T>>@\newtxt{()}@;
+  @\newtxt{return}@ ForwardRange<T>@\newtxt{()}@ && BidirectionalIterator<@\oldtxt{IteratorType}\newtxt{iterator_t}@<T>>@\newtxt{()}@;
 @\newtxt{\}}@
 \end{codeblock}
 
@@ -6716,7 +6739,7 @@ The \tcode{RandomAccessRange} concept \oldtxt{describes}\newtxt{specifies} requi
 \begin{codeblock}
 template <class T>
 concept bool RandomAccessRange@\newtxt{() \{}\oldtxt{ =}@
-  @\newtxt{return}@ BidirectionalRange<T>@\newtxt{()}@ && RandomAccessIterator<IteratorType<T>>@\newtxt{()}@;
+  @\newtxt{return}@ BidirectionalRange<T>@\newtxt{()}@ && RandomAccessIterator<@\oldtxt{IteratorType}\newtxt{iterator_t}@<T>>@\newtxt{()}@;
 @\newtxt{\}}@
 \end{codeblock}
 
@@ -6866,8 +6889,8 @@ template <@\oldtxt{class}\newtxt{_Auto}@ C> auto crend(const C& c) -> decltype(@
 
 \indexlibrary{\idxcode{distance(R\&\& r)}}%
 \begin{itemdecl}
-Range{R}
-DifferenceType<IteratorType<R>> distance(R&& r);
+template <Range R>
+@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<@\oldtxt{IteratorType}\newtxt{iterator_t}@<R>> distance(R&& r);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -6876,8 +6899,8 @@ DifferenceType<IteratorType<R>> distance(R&& r);
 
 \indexlibrary{\idxcode{distance(R\&\& r)}}%
 \begin{itemdecl}
-SizedRange{R}
-DifferenceType<IteratorType<R>> distance(R&& r);
+template <SizedRange R>
+@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<@\oldtxt{IteratorType}\newtxt{iterator_t}@<R>> distance(R&& r);
 \end{itemdecl}
 
 \begin{itemdescr}
