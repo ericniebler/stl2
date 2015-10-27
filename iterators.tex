@@ -357,7 +357,7 @@ referenced object.
 
 \pnum
 Let \tcode{v} be an rvalue or a lvalue of type (possibly \tcode{const}) \tcode{T}, and let \tcode{o}
-be a dereferenceable object of type \tcode{Out}. Then \tcode{MoveWritable<Out,T>()} is satisfied if and only if
+be a dereferenceable object of type \tcode{Out}. Then \tcode{MoveWritable<Out, T>()} is satisfied if and only if
 
 \begin{itemize}
 \item If \tcode{Out} is \tcode{Readable},
@@ -400,7 +400,7 @@ referenced object.
 \pnum
 Let \tcode{v} be an lvalue of type (possibly \tcode{const}) \tcode{T} or an rvalue
 of type \tcode{const T}, and let \tcode{o} be a dereferenceable object of type
-\tcode{Out}. Then \tcode{Writable<Out,T>()} is satisfied if and only if
+\tcode{Out}. Then \tcode{Writable<Out, T>()} is satisfied if and only if
 
 \begin{itemize}
 \item If \tcode{Out} is \tcode{Readable}, after the assignment \tcode{*o = v},
@@ -424,7 +424,7 @@ type and a \tcode{MoveWritable} type.
 \pnum
 Let \tcode{i} be an object of type \tcode{I}, and let \tcode{o} be a
 dereferenceable object of type \tcode{Out}. Then
-\tcode{IndirectlyMovable<I,Out>()} is satisfied if and only if
+\tcode{IndirectlyMovable<I, Out>()} is satisfied if and only if
 
 \begin{itemize}
 \item If \tcode{Out} is \tcode{Readable}, after the assignment
@@ -449,7 +449,7 @@ type and a \tcode{Writable} type.
 \pnum
 Let \tcode{i} be an object of type \tcode{I}, and let \tcode{o} be a
 dereferenceable object of type \tcode{Out}. Then
-\tcode{IndirectlyCopyable<I,Out>()} is satisfied if and only if
+\tcode{IndirectlyCopyable<I, Out>()} is satisfied if and only if
 
 \begin{itemize}
 \item If \tcode{Out} is \tcode{Readable}, after the assignment \tcode{*o = *i},
@@ -604,7 +604,7 @@ Each algorithm places additional requirements on the domain of
 These requirements can be inferred from the uses that algorithm
 makes of \tcode{==} and \tcode{!=}.
 \enterexample
-the call \tcode{find(a,b,x)}
+the call \tcode{find(a, b, x)}
 is defined only if the value of \tcode{a}
 has the property \textit{p}
 defined as follows:
@@ -944,7 +944,7 @@ notation via subscripting.
   template <class I>
   concept bool RandomAccessIterator() {
     return BidirectionalIterator<I>() &&
-      @\added{Strict}@TotallyOrdered<I>() &&
+      @\newtxt{Strict}@TotallyOrdered<I>() &&
       DerivedFrom<@\oldtxt{ValueType}\newtxt{value_type_t}@<I>, random_access_iterator_tag>() &&
       SizedIteratorRange<I, I>() && // see below
       requires (I i, const I j, const @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n) {
@@ -1117,8 +1117,16 @@ member function need not be defined.\exitnote
 \pnum
 There are several additional iterator concepts that are commonly applied to families of algorithms.
 These group together iterator requirements of algorithm families. There are four relational concepts
-for rearrangements: \tcode{Permutable}, \tcode{Mergeable}, \tcode{MergeMovable}, and \tcode{Sortable}.
+for rearrangements: \tcode{Permutable}, \tcode{Mergeable}, \oldtxt{\tcode{MergeMovable}}\newtxt{\tcode{MoveMergeable}}, and \tcode{Sortable}.
 There is one relational concept for comparing values from different sequences: \tcode{IndirectlyComparable}.
+
+{\color{newclr}
+\pnum
+\enternote The \tcode{equal_to<>} and \tcode{less<>}~(\ref{comparisons}) function types used in the
+concepts below impose additional constraints on their arguments beyond those that appear explicitly in the
+concepts' bodies. \tcode{equal_to<>} requires its arguments satisfy \tcode{EqualityComparable}~(\ref{concepts.lib.compare.equalitycomparable}),
+and \tcode{less<>} requires its arguments satisfy \tcode{StrictTotallyOrdered}~(\ref{concepts.lib.compare.stricttotallyordered}).\exitnote
+}
 
 \rSec2[commonalgoreq.indirectlycomparable]{Concept IndirectlyComparable}
 
@@ -1171,21 +1179,23 @@ algorithms that merge sorted sequences into an output sequence by copying elemen
   }
 \end{codeblock}
 
+\oldtxt{
 \pnum
 \enternote When \tcode{less<>} is used as the
-relation, the value type must satisfy \tcode{\added{Strict}TotallyOrdered}.\exitnote
+relation, the value type must satisfy \tcode{TotallyOrdered}.\exitnote
+}
 
-\rSec2[commonalgoreq.mergemovable]{Concept MergeMovable}
+\rSec2[commonalgoreq.mergemovable]{Concept MoveMergeable}
 
 \pnum
-The \tcode{MergeMovable} concept specifies the requirements of
+The \oldtxt{\tcode{MergeMovable}}\newtxt{\tcode{MoveMergeable}} concept specifies the requirements of
 algorithms that merge sorted sequences into an output sequence by moving elements.
 
-\indexlibrary{\idxcode{MergeMovable}}%
+\indexlibrary{\idxcode{MoveMergeable}}%
 \begin{codeblock}
   template <class I1, class I2, class Out,
       class R = less<>, class P1 = identity, class P2 = identity>
-  concept bool MergeMovable() {
+  concept bool @\oldtxt{MergeMovable}\newtxt{MoveMergeable}@() {
     return InputIterator<I1>() &&
       InputIterator<I2>() &&
       WeaklyIncrementable<Out>() &&
@@ -1195,15 +1205,17 @@ algorithms that merge sorted sequences into an output sequence by moving element
   }
 \end{codeblock}
 
+\oldtxt{
 \pnum
 \enternote When \tcode{less<>} is used as the
-relation, the value type must satisfy \tcode{\added{Strict}TotallyOrdered}.\exitnote
+relation, the value type must satisfy \tcode{TotallyOrdered}.\exitnote
+}
 
 \rSec2[commonalgoreq.sortable]{Concept Sortable}
 
 \pnum
-The \tcode{Sortable} concept specifies the common requirements
-of algorithms that permute sequences of iterators into an ordered sequence (e.g., \tcode{sort}).
+The \tcode{Sortable} concept specifies the common requirements of algorithms that permute
+sequences\oldtxt{ of iterators} into\oldtxt{ an} ordered sequence\newtxt{s} (e.g., \tcode{sort}).
 
 \indexlibrary{\idxcode{Sortable}}%
 \begin{codeblock}
@@ -1214,9 +1226,11 @@ of algorithms that permute sequences of iterators into an ordered sequence (e.g.
   }
 \end{codeblock}
 
+\oldtxt{
 \pnum
 \enternote When \tcode{less<>} is used as the
-relation, the value type must satisfy \tcode{\added{Strict}TotallyOrdered}.\exitnote
+relation, the value type must satisfy \tcode{TotallyOrdered}.\exitnote
+}
 
 \rSec1[iteratorranges]{Iterator range requirements}
 
@@ -1246,7 +1260,7 @@ between them in constant time.
 Let \tcode{a} be a valid iterator of type \tcode{I} and \tcode{b} be a valid sentinel of type
 \tcode{S}. Let \tcode{n} be the smallest value of type
 \tcode{\oldtxt{DifferenceType<I>}}\tcode{\newtxt{difference_type_t<I>}} such that after
-\tcode{n} applications of \tcode{++a}, \tcode{bool(a == b)}. Then
+\tcode{n} applications of \tcode{++a},\newtxt{ then} \tcode{bool(a == b)}. Then
 \tcode{SizedIteratorRange<I, S>()} is satisfied if and only if:
 
 \begin{itemize}
@@ -1353,7 +1367,7 @@ namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \
       const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
       const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
   template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
-      @\added{requires \added{Strict}TotallyOrdered<I1, I2>()}@
+      @\added{requires \newtxt{Strict}TotallyOrdered<I1, I2>()}@
     bool operator<(
       const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
       const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
@@ -1363,17 +1377,17 @@ namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \
       const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
       const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
   template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
-      @\added{requires \added{Strict}TotallyOrdered<I1, I2>()}@
+      @\added{requires \newtxt{Strict}TotallyOrdered<I1, I2>()}@
     bool operator>(
       const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
       const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
   template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
-      @\added{requires \added{Strict}TotallyOrdered<I1, I2>()}@
+      @\added{requires \newtxt{Strict}TotallyOrdered<I1, I2>()}@
     bool operator>=(
       const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
       const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
   template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
-      @\added{requires \added{Strict}TotallyOrdered<I1, I2>()}@
+      @\added{requires \newtxt{Strict}TotallyOrdered<I1, I2>()}@
     bool operator<=(
       const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
       const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
@@ -1417,19 +1431,19 @@ namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \
     bool operator!=(
       const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
   template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
-      @\added{requires \added{Strict}TotallyOrdered<I1, I2>()}@
+      @\added{requires \newtxt{Strict}TotallyOrdered<I1, I2>()}@
     bool operator<(
       const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
   template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
-      @\added{requires \added{Strict}TotallyOrdered<I1, I2>()}@
+      @\added{requires \newtxt{Strict}TotallyOrdered<I1, I2>()}@
     bool operator<=(
       const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
   template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
-      @\added{requires \added{Strict}TotallyOrdered<I1, I2>()}@
+      @\added{requires \newtxt{Strict}TotallyOrdered<I1, I2>()}@
     bool operator>(
       const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
   template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
-      @\added{requires \added{Strict}TotallyOrdered<I1, I2>()}@
+      @\added{requires \newtxt{Strict}TotallyOrdered<I1, I2>()}@
     bool operator>=(
       const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
 
@@ -1450,7 +1464,7 @@ namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \
 \begin{addedblock}
 \begin{codeblock}
   // \ref{iterators.common} Common iterators
-  template<class A, classB>
+  template<class A, class B>
   concept bool @\xname{WeaklyEqualityComparable}@ = @\seebelow@;  // \expos
   template<class S, class I>
   concept bool @\xname{WeakSentinel}@ = @\seebelow@;              // \expos
@@ -1596,11 +1610,11 @@ namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \
       class Distance = ptrdiff_t>
   class istream_iterator;
   template <class T, class charT, class traits, class Distance>
-    bool operator==(const istream_iterator<T,charT,traits,Distance>& x,
-            const istream_iterator<T,charT,traits,Distance>& y);
+    bool operator==(const istream_iterator<T, charT, traits, Distance>& x,
+            const istream_iterator<T, charT, traits, Distance>& y);
   template <class T, class charT, class traits, class Distance>
-    bool operator!=(const istream_iterator<T,charT,traits,Distance>& x,
-            const istream_iterator<T,charT,traits,Distance>& y);
+    bool operator!=(const istream_iterator<T, charT, traits, Distance>& x,
+            const istream_iterator<T, charT, traits, Distance>& y);
 
   template <class T, class charT = char, class traits = char_traits<charT> >
       class ostream_iterator;
@@ -1608,11 +1622,11 @@ namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \
   template<class charT, class traits = char_traits<charT> >
     class istreambuf_iterator;
   template <class charT, class traits>
-    bool operator==(const istreambuf_iterator<charT,traits>& a,
-            const istreambuf_iterator<charT,traits>& b);
+    bool operator==(const istreambuf_iterator<charT, traits>& a,
+            const istreambuf_iterator<charT, traits>& b);
   template <class charT, class traits>
-    bool operator!=(const istreambuf_iterator<charT,traits>& a,
-            const istreambuf_iterator<charT,traits>& b);
+    bool operator!=(const istreambuf_iterator<charT, traits>& a,
+            const istreambuf_iterator<charT, traits>& b);
 
   template <class charT, class traits = char_traits<charT> >
     class ostreambuf_iterator;
@@ -2215,7 +2229,7 @@ template<class T> struct iterator_category<BinaryTreeIterator<T> > {
 Typically, however, it would be easier to derive
 \tcode{BinaryTreeIterator<T>}
 from
-\tcode{iterator<bidirectional_iterator_tag,T,ptrdiff_t\removed{,T*,T\&}>}.
+\tcode{iterator<bidirectional_iterator_tag, T, ptrdiff_t\removed{, T*, T\&}>}.
 \exitexample
 
 \pnum
@@ -2567,7 +2581,7 @@ namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \
       const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
       const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
   template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
-      @\added{requires \added{Strict}TotallyOrdered<I1, I2>()}@
+      @\added{requires \newtxt{Strict}TotallyOrdered<I1, I2>()}@
     bool operator<(
       const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
       const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
@@ -2577,17 +2591,17 @@ namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \
       const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
       const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
   template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
-      @\added{requires \added{Strict}TotallyOrdered<I1, I2>()}@
+      @\added{requires \newtxt{Strict}TotallyOrdered<I1, I2>()}@
     bool operator>(
       const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
       const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
   template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
-      @\added{requires \added{Strict}TotallyOrdered<I1, I2>()}@
+      @\added{requires \newtxt{Strict}TotallyOrdered<I1, I2>()}@
     bool operator>=(
       const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
       const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
   template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
-      @\added{requires \added{Strict}TotallyOrdered<I1, I2>()}@
+      @\added{requires \newtxt{Strict}TotallyOrdered<I1, I2>()}@
     bool operator<=(
       const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
       const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
@@ -2921,7 +2935,7 @@ template <@\changed{class Iterator1}{BidirectionalIterator I1}@, @\changed{class
 \indexlibrary{\idxcode{operator<}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
 template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
-    @\added{requires \added{Strict}TotallyOrdered<I1, I2>()}@
+    @\added{requires \newtxt{Strict}TotallyOrdered<I1, I2>()}@
   bool operator<(
     const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
     const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
@@ -2955,7 +2969,7 @@ template <@\changed{class Iterator1}{BidirectionalIterator I1}@, @\changed{class
 \indexlibrary{\idxcode{operator>}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
 template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
-    @\added{requires \added{Strict}TotallyOrdered<I1, I2>()}@
+    @\added{requires \newtxt{Strict}TotallyOrdered<I1, I2>()}@
   bool operator>(
     const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
     const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
@@ -2972,7 +2986,7 @@ template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class 
 \indexlibrary{\idxcode{operator>=}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
 template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
-    @\added{requires \added{Strict}TotallyOrdered<I1, I2>()}@
+    @\added{requires \newtxt{Strict}TotallyOrdered<I1, I2>()}@
   bool operator>=(
     const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
     const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
@@ -2989,7 +3003,7 @@ template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class 
 \indexlibrary{\idxcode{operator<=}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
 template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
-    @\added{requires \added{Strict}TotallyOrdered<I1, I2>()}@
+    @\added{requires \newtxt{Strict}TotallyOrdered<I1, I2>()}@
   bool operator<=(
     const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
     const reverse_iterator<@\changed{Iterator2}{I2}@>& y);
@@ -3107,7 +3121,7 @@ functions making the insert iterators out of a container.
 namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \newtxt{\{ inline namespace v1} \{}@
   template <class Container>
   class back_insert_iterator @\changed{:}{\{}@
-    @\removed{public iterator<output_iterator_tag,void,void,void,void> \}}@
+    @\removed{public iterator<output_iterator_tag, void, void, void, void> \}}@
   protected:
     Container* container;
 
@@ -3246,7 +3260,7 @@ template <class Container>
 namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \newtxt{\{ inline namespace v1} \{}@
   template <class Container>
   class front_insert_iterator @\changed{:}{\{}@
-    @\removed{public iterator<output_iterator_tag,void,void,void,void> \}}@
+    @\removed{public iterator<output_iterator_tag, void, void, void, void> \}}@
   protected:
     Container* container;
 
@@ -3385,7 +3399,7 @@ template <class Container>
 namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \newtxt{\{ inline namespace v1} \{}@
   template <class Container>
   class insert_iterator @\changed{:}{\{}@
-    @\removed{public iterator<output_iterator_tag,void,void,void,void> \}}@
+    @\removed{public iterator<output_iterator_tag, void, void, void, void> \}}@
   protected:
     Container* container;
     typename Container::iterator iter;
@@ -3620,19 +3634,19 @@ namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \
     bool operator!=(
       const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
   template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
-      @\added{requires \added{Strict}TotallyOrdered<I1, I2>()}@
+      @\added{requires \newtxt{Strict}TotallyOrdered<I1, I2>()}@
     bool operator<(
       const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
   template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
-      @\added{requires \added{Strict}TotallyOrdered<I1, I2>()}@
+      @\added{requires \newtxt{Strict}TotallyOrdered<I1, I2>()}@
     bool operator<=(
       const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
   template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
-      @\added{requires \added{Strict}TotallyOrdered<I1, I2>()}@
+      @\added{requires \newtxt{Strict}TotallyOrdered<I1, I2>()}@
     bool operator>(
       const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
   template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
-      @\added{requires \added{Strict}TotallyOrdered<I1, I2>()}@
+      @\added{requires \newtxt{Strict}TotallyOrdered<I1, I2>()}@
     bool operator>=(
       const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
 
@@ -3949,7 +3963,7 @@ template <@\changed{class Iterator1}{InputIterator I1}@, @\changed{class Iterato
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator<}}%
 \begin{itemdecl}
 template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
-    @\added{requires \added{Strict}TotallyOrdered<I1, I2>()}@
+    @\added{requires \newtxt{Strict}TotallyOrdered<I1, I2>()}@
   bool operator<(
     const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
 \end{itemdecl}
@@ -3963,7 +3977,7 @@ template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class 
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator<=}}%
 \begin{itemdecl}
 template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
-    @\added{requires \added{Strict}TotallyOrdered<I1, I2>()}@
+    @\added{requires \newtxt{Strict}TotallyOrdered<I1, I2>()}@
   bool operator<=(
     const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
 \end{itemdecl}
@@ -3977,7 +3991,7 @@ template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class 
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator>}}%
 \begin{itemdecl}
 template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
-    @\added{requires \added{Strict}TotallyOrdered<I1, I2>()}@
+    @\added{requires \newtxt{Strict}TotallyOrdered<I1, I2>()}@
   bool operator>(
     const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
 \end{itemdecl}
@@ -3991,7 +4005,7 @@ template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class 
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator>=}}%
 \begin{itemdecl}
 template <@\changed{class Iterator1}{RandomAccessIterator I1}@, @\changed{class Iterator2}{RandomAccessIterator I2}@>
-    @\added{requires \added{Strict}TotallyOrdered<I1, I2>()}@
+    @\added{requires \newtxt{Strict}TotallyOrdered<I1, I2>()}@
   bool operator>=(
     const move_iterator<@\changed{Iterator1}{I1}@>& x, const move_iterator<@\changed{Iterator2}{I2}@>& y);
 \end{itemdecl}
@@ -5501,7 +5515,7 @@ namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1}} 
     @\added{typedef const T* pointer;}@
     typedef charT char_type;
     typedef traits traits_type;
-    typedef basic_istream<charT,traits> istream_type;
+    typedef basic_istream<charT, traits> istream_type;
     @\seebelow@ istream_iterator();
     istream_iterator(istream_type& s);
     istream_iterator(const istream_iterator& x) = default;
@@ -5509,19 +5523,19 @@ namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1}} 
 
     const T& operator*() const;
     const T* operator->() const;
-    istream_iterator<T,charT,traits,Distance>& operator++();
-    istream_iterator<T,charT,traits,Distance>  operator++(int);
+    istream_iterator<T, charT, traits, Distance>& operator++();
+    istream_iterator<T, charT, traits, Distance>  operator++(int);
   private:
-    basic_istream<charT,traits>* in_stream; // \expos
+    basic_istream<charT, traits>* in_stream; // \expos
     T value;                                // \expos
   };
 
   template <class T, class charT, class traits, class Distance>
-    bool operator==(const istream_iterator<T,charT,traits,Distance>& x,
-            const istream_iterator<T,charT,traits,Distance>& y);
+    bool operator==(const istream_iterator<T, charT, traits, Distance>& x,
+            const istream_iterator<T, charT, traits, Distance>& y);
   template <class T, class charT, class traits, class Distance>
-    bool operator!=(const istream_iterator<T,charT,traits,Distance>& x,
-            const istream_iterator<T,charT,traits,Distance>& y);
+    bool operator!=(const istream_iterator<T, charT, traits, Distance>& x,
+            const istream_iterator<T, charT, traits, Distance>& y);
 }@\added{\}\}}\newtxt{\}}@
 \end{codeblock}
 
@@ -5613,7 +5627,7 @@ const T* operator->() const;
 \indexlibrary{\idxcode{operator++}!\idxcode{istream_iterator}}%
 \indexlibrary{\idxcode{istream_iterator}!\idxcode{operator++}}%
 \begin{itemdecl}
-istream_iterator<T,charT,traits,Distance>& operator++();
+istream_iterator<T, charT, traits, Distance>& operator++();
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -5632,7 +5646,7 @@ istream_iterator<T,charT,traits,Distance>& operator++();
 \indexlibrary{\idxcode{operator++}!\idxcode{istream_iterator}}%
 \indexlibrary{\idxcode{istream_iterator}!\idxcode{operator++}}%
 \begin{itemdecl}
-istream_iterator<T,charT,traits,Distance> operator++(int);
+istream_iterator<T, charT, traits, Distance> operator++(int);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -5642,7 +5656,7 @@ istream_iterator<T,charT,traits,Distance> operator++(int);
 \pnum
 \effects
 \begin{codeblock}
-istream_iterator<T,charT,traits,Distance> tmp = *this;
+istream_iterator<T, charT, traits, Distance> tmp = *this;
 *in_stream >> value;
 return (tmp);
 \end{codeblock}
@@ -5652,8 +5666,8 @@ return (tmp);
 \indexlibrary{\idxcode{istream_iterator}!\idxcode{operator==}}%
 \begin{itemdecl}
 template <class T, class charT, class traits, class Distance>
-  bool operator==(const istream_iterator<T,charT,traits,Distance> &x,
-                  const istream_iterator<T,charT,traits,Distance> &y);
+  bool operator==(const istream_iterator<T, charT, traits, Distance> &x,
+                  const istream_iterator<T, charT, traits, Distance> &y);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -5667,8 +5681,8 @@ template <class T, class charT, class traits, class Distance>
 \indexlibrary{\idxcode{istream_iterator}!\idxcode{operator"!=}}%
 \begin{itemdecl}
 template <class T, class charT, class traits, class Distance>
-  bool operator!=(const istream_iterator<T,charT,traits,Distance> &x,
-                  const istream_iterator<T,charT,traits,Distance> &y);
+  bool operator!=(const istream_iterator<T, charT, traits, Distance> &x,
+                  const istream_iterator<T, charT, traits, Distance> &y);
 \end{itemdecl}
 
 \indexlibrary{\idxcode{istream_iterator}!\idxcode{operator"!=}}%
@@ -5715,19 +5729,19 @@ namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \
     @\added{typedef ptrdiff_t difference_type;}@
     typedef charT char_type;
     typedef traits traits_type;
-    typedef basic_ostream<charT,traits> ostream_type;
+    typedef basic_ostream<charT, traits> ostream_type;
     @\added{constexpr ostream_iterator() noexcept;}@
     ostream_iterator(ostream_type& s);
     ostream_iterator(ostream_type& s, const charT* delimiter);
-    ostream_iterator(const ostream_iterator<T,charT,traits>& x);
+    ostream_iterator(const ostream_iterator<T, charT, traits>& x);
    ~ostream_iterator();
-    ostream_iterator<T,charT,traits>& operator=(const T& value);
+    ostream_iterator<T, charT, traits>& operator=(const T& value);
 
-    ostream_iterator<T,charT,traits>& operator*();
-    ostream_iterator<T,charT,traits>& operator++();
-    ostream_iterator<T,charT,traits>& operator++(int);
+    ostream_iterator<T, charT, traits>& operator*();
+    ostream_iterator<T, charT, traits>& operator++();
+    ostream_iterator<T, charT, traits>& operator++(int);
   private:
-    basic_ostream<charT,traits>* out_stream;  // \expos
+    basic_ostream<charT, traits>* out_stream;  // \expos
     const charT* delim;                       // \expos
   };
 }@\added{\}\}}\newtxt{\}}@
@@ -5899,8 +5913,8 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges\oldtxt{_v1} 
     typedef charT                         char_type;
     typedef traits                        traits_type;
     typedef typename traits::int_type     int_type;
-    typedef basic_streambuf<charT,traits> streambuf_type;
-    typedef basic_istream<charT,traits>   istream_type;
+    typedef basic_streambuf<charT, traits> streambuf_type;
+    typedef basic_istream<charT, traits>   istream_type;
 
     class proxy;                          // \expos
 
@@ -5912,7 +5926,7 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges\oldtxt{_v1} 
     istreambuf_iterator(const proxy& p) noexcept;
     charT operator*() const;
     pointer operator->() const;
-    istreambuf_iterator<charT,traits>& operator++();
+    istreambuf_iterator<charT, traits>& operator++();
     proxy operator++(int);
     bool equal(const istreambuf_iterator& b) const;
   private:
@@ -5920,11 +5934,11 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges\oldtxt{_v1} 
   };
 
   template <class charT, class traits>
-    bool operator==(const istreambuf_iterator<charT,traits>& a,
-            const istreambuf_iterator<charT,traits>& b);
+    bool operator==(const istreambuf_iterator<charT, traits>& a,
+            const istreambuf_iterator<charT, traits>& b);
   template <class charT, class traits>
-    bool operator!=(const istreambuf_iterator<charT,traits>& a,
-            const istreambuf_iterator<charT,traits>& b);
+    bool operator!=(const istreambuf_iterator<charT, traits>& a,
+            const istreambuf_iterator<charT, traits>& b);
 }@\newtxt{\}\}\}}@
 \end{codeblock}
 
@@ -5936,8 +5950,8 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges\oldtxt{_v1} 
   template <class charT, class traits = char_traits<charT> >
   class istreambuf_iterator<charT, traits>::proxy { // \expos
     charT keep_;
-    basic_streambuf<charT,traits>* sbuf_;
-    proxy(charT c, basic_streambuf<charT,traits>* sbuf)
+    basic_streambuf<charT, traits>* sbuf_;
+    proxy(charT c, basic_streambuf<charT, traits>* sbuf)
       : keep_(c), sbuf_(sbuf) { }
   public:
     charT operator*() { return keep_; }
@@ -5947,7 +5961,7 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges\oldtxt{_v1} 
 
 \pnum
 Class
-\tcode{istreambuf_iterator<charT,traits>::proxy}
+\tcode{istreambuf_iterator<charT, traits>::proxy}
 is for exposition only.
 An implementation is permitted to provide equivalent functionality without
 providing a class with this name.
@@ -5976,8 +5990,8 @@ Constructs the end-of-stream iterator.
 
 \indexlibrary{\idxcode{istreambuf_iterator}!constructor}%
 \begin{itemdecl}
-istreambuf_iterator(basic_istream<charT,traits>& s) noexcept;
-istreambuf_iterator(basic_streambuf<charT,traits>* s) noexcept;
+istreambuf_iterator(basic_istream<charT, traits>& s) noexcept;
+istreambuf_iterator(basic_streambuf<charT, traits>* s) noexcept;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -6035,8 +6049,8 @@ member
 
 \indexlibrary{\idxcode{operator++}!\idxcode{istreambuf_iterator}}%
 \begin{itemdecl}
-istreambuf_iterator<charT,traits>&
-    istreambuf_iterator<charT,traits>::operator++();
+istreambuf_iterator<charT, traits>&
+    istreambuf_iterator<charT, traits>::operator++();
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -6052,7 +6066,7 @@ istreambuf_iterator<charT,traits>&
 \indexlibrary{\idxcode{operator++}!\idxcode{istreambuf_iterator}}%
 \indexlibrary{\idxcode{istreambuf_iterator}!\idxcode{operator++}}%
 \begin{itemdecl}
-proxy istreambuf_iterator<charT,traits>::operator++(int);
+proxy istreambuf_iterator<charT, traits>::operator++(int);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -6065,7 +6079,7 @@ proxy istreambuf_iterator<charT,traits>::operator++(int);
 
 \indexlibrary{\idxcode{equal}!\idxcode{istreambuf_iterator}}%
 \begin{itemdecl}
-bool equal(const istreambuf_iterator<charT,traits>& b) const;
+bool equal(const istreambuf_iterator<charT, traits>& b) const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -6083,8 +6097,8 @@ object they use.
 \indexlibrary{\idxcode{operator==}!\idxcode{istreambuf_iterator}}%
 \begin{itemdecl}
 template <class charT, class traits>
-  bool operator==(const istreambuf_iterator<charT,traits>& a,
-                  const istreambuf_iterator<charT,traits>& b);
+  bool operator==(const istreambuf_iterator<charT, traits>& a,
+                  const istreambuf_iterator<charT, traits>& b);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -6098,8 +6112,8 @@ template <class charT, class traits>
 \indexlibrary{\idxcode{operator"!=}!\idxcode{istreambuf_iterator}}%
 \begin{itemdecl}
 template <class charT, class traits>
-  bool operator!=(const istreambuf_iterator<charT,traits>& a,
-                  const istreambuf_iterator<charT,traits>& b);
+  bool operator!=(const istreambuf_iterator<charT, traits>& a,
+                  const istreambuf_iterator<charT, traits>& b);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -6117,12 +6131,12 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges\oldtxt{_v1} 
   class ostreambuf_iterator @\removed{:}@
     @\removed{public iterator<output_iterator_tag, void, void, void, void>}@ {
   public:
-    @\added{typedef output_iterator_tag           iterator_category;}@
-    @\added{typedef ptrdiff_t                     difference_type;}@
-    typedef charT                         char_type;
-    typedef traits                        traits_type;
-    typedef basic_streambuf<charT,traits> streambuf_type;
-    typedef basic_ostream<charT,traits>   ostream_type;
+    @\added{typedef output_iterator_tag            iterator_category;}@
+    @\added{typedef ptrdiff_t                      difference_type;}@
+    typedef charT                          char_type;
+    typedef traits                         traits_type;
+    typedef basic_streambuf<charT, traits> streambuf_type;
+    typedef basic_ostream<charT, traits>   ostream_type;
 
   public:
     @\added{constexpr ostreambuf_iterator() noexcept;}@
@@ -6204,7 +6218,7 @@ Initializes \tcode{sbuf_} with \tcode{s}.
 
 \indexlibrary{\idxcode{operator=}!\idxcode{ostreambuf_iterator}}%
 \begin{itemdecl}
-ostreambuf_iterator<charT,traits>&
+ostreambuf_iterator<charT, traits>&
   operator=(charT c);
 \end{itemdecl}
 
@@ -6231,7 +6245,7 @@ otherwise has no effect.
 
 \indexlibrary{\idxcode{operator*}!\idxcode{ostreambuf_iterator}}%
 \begin{itemdecl}
-ostreambuf_iterator<charT,traits>& operator*();
+ostreambuf_iterator<charT, traits>& operator*();
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -6242,8 +6256,8 @@ ostreambuf_iterator<charT,traits>& operator*();
 
 \indexlibrary{\idxcode{operator++}!\idxcode{ostreambuf_iterator}}%
 \begin{itemdecl}
-ostreambuf_iterator<charT,traits>& operator++();
-ostreambuf_iterator<charT,traits>& operator++(int);
+ostreambuf_iterator<charT, traits>& operator++();
+ostreambuf_iterator<charT, traits>& operator++(int);
 \end{itemdecl}
 
 \begin{itemdescr}
