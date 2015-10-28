@@ -1470,22 +1470,26 @@ namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \
   template<class S, class I>
   concept bool @\xname{WeakSentinel}@ = @\seebelow@;              // \expos
 
-  template <InputIterator I, @\xname{WeakSentinel}@<I> S> class common_iterator;
-  template <InputIterator I1, @\xname{WeakSentinel}@<I1> S1,
-            InputIterator I2, @\xname{WeakSentinel}@<I2> S2>
+  template <@\oldtxt{Input}@Iterator I, @\xname{WeakSentinel}@<I> S> class common_iterator;
+
+  @\newtxt{template <InputIterator I, class S>}@
+  @\newtxt{struct iterator_category<common_iterator<I, S>{}>;}@
+
+  template <@\oldtxt{InputIterator}\newtxt{class}@ I1, @\oldtxt{\xname{WeakSentinel}<I1>}\newtxt{class}@ S1,
+            @\oldtxt{InputIterator}\newtxt{class}@ I2, @\oldtxt{\xname{WeakSentinel}<I2>}\newtxt{class}@ S2>
     requires EqualityComparable<I1, I2>() && @\xname{WeaklyEqualityComparable}@<I1, S2> &&
       @\xname{WeaklyEqualityComparable}@<I2, S1>
   bool operator==(
     const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
-  template <InputIterator I1, @\xname{WeakSentinel}@<I1> S1,
-            InputIterator I2, @\xname{WeakSentinel}@<I2> S2>
+  template <@\oldtxt{InputIterator}\newtxt{class}@ I1, @\oldtxt{\xname{WeakSentinel}<I1>}\newtxt{class}@ S1,
+            @\oldtxt{InputIterator}\newtxt{class}@ I2, @\oldtxt{\xname{WeakSentinel}<I2>}\newtxt{class}@ S2>
     requires EqualityComparable<I1, I2>() && @\xname{WeaklyEqualityComparable}@<I1, S2> &&
       @\xname{WeaklyEqualityComparable}@<I2, S1>
   bool operator!=(
     const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
 
-  template <InputIterator I1, @\xname{WeakSentinel}@<I1> S1,
-            InputIterator I2, @\xname{WeakSentinel}@<I2> S2>
+  template <@\oldtxt{InputIterator}\newtxt{class}@ I1, @\oldtxt{\xname{WeakSentinel}<I1>}\newtxt{class}@ S1,
+            @\oldtxt{InputIterator}\newtxt{class}@ I2, @\oldtxt{\xname{WeakSentinel}<I2>}\newtxt{class}@ S2>
     requires SizedIteratorRange<I1, I1>() && SizedIteratorRange<I2, I2>() &&
       requires (const I1 i1, const S1 s1, const I2 i2, const S2 s2) {
         {i1-i2}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>; {i2-i1}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>;
@@ -1688,7 +1692,7 @@ namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \
 \begin{codeblock}
   template <@\oldtxt{class}\newtxt{_Auto}@ C> auto size(const C& c) -> decltype(c.size());
   template <@\oldtxt{class}\newtxt{_Auto}@ T, size_t N> constexpr size_t size(T (&array)[N]) noexcept;
-  template <@\oldtxt{class}\newtxt{_Auto}@ E> \newtxt{constexpr} size_t size(initializer_list<E> il) noexcept;
+  template <@\oldtxt{class}\newtxt{_Auto}@ E> @\newtxt{constexpr}@ size_t size(initializer_list<E> il) noexcept;
 
   // \ref{range.primitives}, Range primitives:
   @\oldtxt{Range\{R\}}\newtxt{template <Range R>}@
@@ -3605,7 +3609,8 @@ template <class Container>
 Class template \tcode{move_iterator} is an iterator adaptor
 with the same behavior as the underlying iterator except that its
 indirection operator implicitly converts the value returned by the
-underlying iterator's indirection operator to an rvalue reference.
+underlying iterator's indirection operator to an rvalue \oldoldtxt{reference}
+\newnewtxt{of the value type}.
 \removed{Some generic algorithms can be called with move iterators to replace
 copying with moving.} \ednote{This is untrue now. The algorithms that do
 copying are constrained with \tcode{IndirectlyCopyable}, which will reject
@@ -3630,7 +3635,7 @@ vector<string> v2(make_move_iterator(s.begin()),
 \begin{codeblock}
 namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \newtxt{\{ inline namespace v1} \{}@
   template <@\changed{class Iterator}{WeakInputIterator I}@>
-    @\added{requires Same<\oldtxt{ReferenceType}\newtxt{reference_t}<I>, \oldtxt{ValueType}\newtxt{value_type_t}<I>\&>()}@
+    @\oldtxt{requires Same<ReferenceType<I>, ValueType<I>\&>()}@
   class move_iterator {
   public:
 \end{codeblock}\begin{removedblock}\begin{codeblock}
@@ -3641,12 +3646,12 @@ namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \
     typedef typename iterator_traits<Iterator>::iterator_category iterator_category;
     typedef value_type&&                                          reference;
 \end{codeblock}\end{removedblock}\begin{addedblock}\begin{codeblock}
-    using iterator_type = I;
-    using difference_type = @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I>;
-    using value_type = @\oldtxt{ValueType}\newtxt{value_type_t}@<I>;
-    using iterator_category = @\oldtxt{IteratorCategory}\newtxt{iterator_category_t}@<I>;
-    using reference = @\oldtxt{ValueType}\newtxt{value_type_t}@<I>&&;
-    using pointer = I;
+    using iterator_type     = I;
+    using difference_type   = @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I>;
+    using value_type        = @\oldtxt{ValueType}\newtxt{value_type_t}@<I>;
+    using iterator_category = @\oldtxt{IteratorCategory<I>}\newtxt{\seebelow}@;
+    using reference         = @\oldtxt{ValueType<I>\&\&}\newtxt{\seebelow}@;
+    @\oldtxt{using pointer}@           @\oldtxt{= I;}@
 \end{codeblock}\end{addedblock}\begin{codeblock}
 
     move_iterator();
@@ -3658,9 +3663,9 @@ namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \
       @\added{requires ConvertibleTo<U, I>()}@
     move_iterator& operator=(const move_iterator<U>& u);
 
-    iterator_type base() const;
+    @\oldoldtxt{iterator_type}\newnewtxt{I}@ base() const;
     reference operator*() const;
-    pointer operator->() const;
+    @\oldoldtxt{pointer operator->() const;}@
 
     move_iterator& operator++();
     move_iterator operator++(int);
@@ -3724,6 +3729,25 @@ namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \
 }@\added{\}\}}\newtxt{\}}@
 \end{codeblock}
 
+{\color{newclr}
+\pnum
+If \tcode{is_base_of<input_iterator_tag, iterator_category_t<I>{}>::value}
+is \tcode{true}, the template specialization \tcode{move_iterator<I>} shall define the nested
+type named \tcode{iterator_category} as a synonym for \tcode{input_iterator_tag}, otherwise
+as a synonym for \tcode{weak_input_iterator_tag}.
+
+\pnum
+Let \tcode{\textit{R}} be \tcode{reference_t<I>}. If \tcode{is_reference<\textit{R}>::value}
+is \tcode{true}, the template specialization \tcode{move_iterator<I>} shall define the nested
+type named \tcode{reference} as a synonym for \tcode{remove_reference_t<\textit{R}>\&\&}, otherwise
+as a synonym for \tcode{\textit{R}}.
+
+\pnum
+\enternote \tcode{move_iterator} does not provide an \tcode{operator->} because the class member access
+expression \tcode{\textit{i}->\textit{m}} may have different semantics than the expression
+\tcode{(*\textit{i}).\textit{m}} when the expression \tcode{*\textit{i}} is an rvalue.\exitnote
+}
+
 \begin{removedblock}
 \rSec3[move.iter.requirements]{\tcode{move_iterator} requirements}
 
@@ -3747,8 +3771,8 @@ move_iterator();
 
 \begin{itemdescr}
 \pnum
-\effects Constructs a \tcode{move_iterator}, value
-initializing \tcode{current}. Iterator operations applied to the resulting
+\effects Constructs a \tcode{move_iterator}, value\newnewtxt{-}initializing
+\tcode{current}. Iterator operations applied to the resulting
 iterator have defined behavior if and only if the corresponding operations are defined
 on a value-initialized iterator of type \tcode{\changed{Iterator}{I}}.
 \end{itemdescr}
@@ -3812,7 +3836,7 @@ move_iterator& operator=(const move_iterator<U>& u);
 \indexlibrary{\idxcode{base}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{base}}%
 \begin{itemdecl}
-@\changed{Iterator}{I} base() const;
+@\changed{Iterator}{I}@ base() const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3832,7 +3856,7 @@ reference operator*() const;
 \pnum
 \oldoldtxt{\returns}
 \newnewtxt{\effects Equivalent to }
-\tcode{std::move(*current)}.
+\oldoldtxt{\tcode{std::move}}\newnewtxt{\tcode{static_cast<reference>}}\tcode{(*current)}.
 \end{itemdescr}
 
 \rSec4[move.iter.op.ref]{\tcode{move_iterator::operator->}}
@@ -3858,7 +3882,7 @@ move_iterator& operator++();
 
 \begin{itemdescr}
 \pnum
-\effects \tcode{++current}.
+\effects \newtxt{Equivalent to} \tcode{++current}.
 
 \pnum
 \returns \tcode{*this}.
@@ -3872,7 +3896,7 @@ move_iterator operator++(int);
 
 \begin{itemdescr}
 \pnum
-\effects
+\effects \newtxt{Equivalent to}
 \begin{codeblock}
 move_iterator tmp = *this;
 ++current;
@@ -3891,7 +3915,7 @@ move_iterator& operator--()@\removed{;}@
 
 \begin{itemdescr}
 \pnum
-\effects \tcode{\dcr{}current}.
+\effects \newtxt{Equivalent to} \tcode{\dcr{}current}.
 
 \pnum
 \returns \tcode{*this}.
@@ -3906,7 +3930,7 @@ move_iterator operator--(int)@\removed{;}@
 
 \begin{itemdescr}
 \pnum
-\effects
+\effects \newtxt{Equivalent to}
 \begin{codeblock}
 move_iterator tmp = *this;
 --current;
@@ -3941,7 +3965,7 @@ move_iterator& operator+=(difference_type n)@\removed{;}@
 
 \begin{itemdescr}
 \pnum
-\effects \tcode{current += n}.
+\effects \newtxt{Equivalent to} \tcode{current += n}.
 
 \pnum
 \returns \tcode{*this}.
@@ -3974,7 +3998,7 @@ move_iterator& operator-=(difference_type n)@\removed{;}@
 
 \begin{itemdescr}
 \pnum
-\effects \tcode{current -= n}.
+\effects \newtxt{Equivalent to} \tcode{current -= n}.
 
 \pnum
 \returns \tcode{*this}.
@@ -4195,36 +4219,36 @@ namespace std { namespace experimental { namespace ranges@\oldtxt{_v1} \newtxt{\
   concept bool @\xname{WeakSentinel}@ =        // \expos
     Iterator<I>() && Regular<S>() &&
     @\xname{WeaklyEqualityComparable}@<I, S>;
-  template <InputIterator I>
-    constexpr bool @\xname{fwd_iter}@ = false; // expos
-  template <ForwardIterator I>
-    constexpr bool @\xname{fwd_iter}@<I> = true;
+  @\oldtxt{template <InputIterator I>}@
+    @\oldtxt{constexpr bool \xname{fwd_iter} = false; // \expos}@
+  @\oldtxt{template <ForwardIterator I>}@
+    @\oldtxt{constexpr bool \xname{fwd_iter}<I> = true;}@
 
-  template <InputIterator I, @\xname{WeakSentinel}@<I> S>
+  template <@\oldtxt{Input}@Iterator I, @\xname{WeakSentinel}@<I> S>
     requires !Same<I, S>()
   class common_iterator {
   public:
     using difference_type = @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I>;
     using value_type = @\oldtxt{ValueType}\newtxt{value_type_t}@<I>;
-    using iterator_category =
-      conditional_t<@\xname{fwd_iter}@<I>,
-                    std::forward_iterator_tag,
-                    std::input_iterator_tag>;
-    using reference = @\oldtxt{ReferenceType}\newtxt{reference_t}@<I>;
+    @\oldtxt{using iterator_category =}@
+      @\oldtxt{conditional_t<\xname{fwd_iter}<I>,}@
+                    @\oldtxt{std::forward_iterator_tag,}@
+                    @\oldtxt{std::input_iterator_tag>;}@
+    @\oldtxt{using reference = ReferenceType<I>;}@
 
     common_iterator();
     common_iterator(I i);
     common_iterator(S s);
-    template <InputIterator U, @\xname{WeakSentinel}@<U> V>
+    template <@\oldtxt{InputIterator}\newtxt{class}@ U, @\oldtxt{\xname{WeakSentinel}<U>}\newtxt{class}@ V>
       requires ConvertibleTo<U, I>() && ConvertibleTo<V, S>()
     common_iterator(const common_iterator<U, V>& u);
-    template <InputIterator U, @\xname{WeakSentinel}@<U> V>
+    template <@\oldtxt{InputIterator}\newtxt{class}@ U, @\oldtxt{\xname{WeakSentinel}<U>}\newtxt{class}@ V>
       requires ConvertibleTo<U, I>() && ConvertibleTo<V, S>()
     common_iterator& operator=(const common_iterator<U, V>& u);
 
     ~common_iterator();
 
-    reference operator*() const;
+    @\oldtxt{reference}\newtxt{\seebelow}@ operator*() const;
 
     common_iterator& operator++();
     common_iterator operator++(int);
@@ -4235,21 +4259,26 @@ namespace std { namespace experimental { namespace ranges@\oldtxt{_v1} \newtxt{\
     S sent;           // \expos
   };
 
-  template <InputIterator I1, @\xname{WeakSentinel}@<I1> S1,
-            InputIterator I2, @\xname{WeakSentinel}@<I2> S2>
+  @\newtxt{template <InputIterator I, class S>}@
+  @\newtxt{struct iterator_category<common_iterator<I, S>{}> \{}@
+    @\newtxt{using type = \seebelow;}@
+  @\newtxt{\};}@
+
+  template <@\oldtxt{InputIterator}\newtxt{class}@ I1, @\oldtxt{\xname{WeakSentinel}<I1>}\newtxt{class}@ S1,
+            @\oldtxt{InputIterator}\newtxt{class}@ I2, @\oldtxt{\xname{WeakSentinel}<I2>}\newtxt{class}@ S2>
     requires EqualityComparable<I1, I2>() && @\xname{WeaklyEqualityComparable}@<I1, S2> &&
       @\xname{WeaklyEqualityComparable}@<I2, S1>
   bool operator==(
     const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
-  template <InputIterator I1, @\xname{WeakSentinel}@<I1> S1,
-            InputIterator I2, @\xname{WeakSentinel}@<I2> S2>
+  template <@\oldtxt{InputIterator}\newtxt{class}@ I1, @\oldtxt{\xname{WeakSentinel}<I1>}\newtxt{class}@ S1,
+            @\oldtxt{InputIterator}\newtxt{class}@ I2, @\oldtxt{\xname{WeakSentinel}<I2>}\newtxt{class}@ S2>
     requires EqualityComparable<I1, I2>() && @\xname{WeaklyEqualityComparable}@<I1, S2> &&
       @\xname{WeaklyEqualityComparable}@<I2, S1>
   bool operator!=(
     const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
 
-  template <InputIterator I1, @\xname{WeakSentinel}@<I1> S1,
-            InputIterator I2, @\xname{WeakSentinel}@<I2> S2>
+  template <@\oldtxt{InputIterator}\newtxt{class}@ I1, @\oldtxt{\xname{WeakSentinel}<I1>}\newtxt{class}@ S1,
+            @\oldtxt{InputIterator}\newtxt{class}@ I2, @\oldtxt{\xname{WeakSentinel}<I2>}\newtxt{class}@ S2>
     requires SizedIteratorRange<I1, I1>() && SizedIteratorRange<I2, I2>() &&
       requires (const I1 i1, const S1 s1, const I2 i2, const S2 s2) {
         {i1-i2}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>; {i2-i1}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>;
@@ -4260,6 +4289,19 @@ namespace std { namespace experimental { namespace ranges@\oldtxt{_v1} \newtxt{\
     const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
 }}}@\newtxt{\}}@
 \end{codeblock}
+
+{\color{newclr}
+\pnum
+For a type \tcode{I} that satisfies \tcode{InputIterator} and a type \tcode{S}, the partial
+specialization \tcode{iterator_category<common_iterator<I, S>{}>} shall define a nested
+type named \tcode{type} as follows:
+\begin{itemize}
+\item If \tcode{I} satisfies \tcode{ForwardIterator}, then \tcode{iterator_category<common_iterator<I, S>{}>::type}
+      shall be a synonym for \tcode{forward_iterator_tag}.
+\item Otherwise, \tcode{iterator_category<common_iterator<I, S>{}>::type} shall be a synonym for
+      \tcode{input_iterator_tag}.
+\end{itemize}
+}
 
 \pnum
 \enternote The use of the expository \tcode{\xname{WeaklyEqualityComparable}} and
@@ -4319,7 +4361,7 @@ unspecified whether any initialization is performed for \tcode{iter}.
 
 \indexlibrary{\idxcode{common_iterator}!constructor}%
 \begin{itemdecl}
-template <InputIterator U, @\xname{WeakSentinel}@<U> V>
+template <@\oldtxt{InputIterator}\newtxt{class}@ U, @\oldtxt{\xname{WeakSentinel}<U>}\newtxt{class}@ V>
   requires ConvertibleTo<U, I>() && ConvertibleTo<V, S>()
 common_iterator(const common_iterator<U, V>& u);
 \end{itemdecl}
@@ -4341,7 +4383,7 @@ It is unspecified whether any initialization is performed for \tcode{sent}.
 \indexlibrary{\idxcode{operator=}!\idxcode{common_iterator}}%
 \indexlibrary{\idxcode{common_iterator}!\idxcode{operator=}}%
 \begin{itemdecl}
-template <InputIterator U, @\xname{WeakSentinel}@<U> V>
+template <@\oldtxt{InputIterator}\newtxt{class}@ U, @\oldtxt{\xname{WeakSentinel}<U>}\newtxt{class}@ V>
   requires ConvertibleTo<U, I>() && ConvertibleTo<V, S>()
 common_iterator& operator=(const common_iterator<U, V>& u);
 \end{itemdecl}
@@ -4376,7 +4418,7 @@ Runs the destructor(s) for any members that are currently initialized.
 \indexlibrary{\idxcode{operator*}!\idxcode{common_iterator}}%
 \indexlibrary{\idxcode{common_iterator}!\idxcode{operator*}}%
 \begin{itemdecl}
-reference operator*() const;
+@\oldtxt{reference}\newtxt{decltype(auto)}@ operator*() const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4417,7 +4459,7 @@ common_iterator operator++(int);
 \requires \tcode{!is_sentinel}
 
 \pnum
-\effects
+\effects \newtxt{Equivalent to}
 \begin{codeblock}
 common_iterator tmp = *this;
 ++iter;
@@ -4430,8 +4472,8 @@ return tmp;
 \indexlibrary{\idxcode{operator==}!\idxcode{common_iterator}}%
 \indexlibrary{\idxcode{common_iterator}!\idxcode{operator==}}%
 \begin{itemdecl}
-template <InputIterator I1, @\xname{WeakSentinel}@<I1> S1,
-          InputIterator I2, @\xname{WeakSentinel}@<I2> S2>
+template <@\oldtxt{InputIterator}\newtxt{class}@ I1, @\oldtxt{\xname{WeakSentinel}<I1>}\newtxt{class}@ S1,
+          @\oldtxt{InputIterator}\newtxt{class}@ I2, @\oldtxt{\xname{WeakSentinel}<I2>}\newtxt{class}@ S2>
   requires EqualityComparable<I1, I2>() && @\xname{WeaklyEqualityComparable}@<I1, S2> &&
     @\xname{WeaklyEqualityComparable}@<I2, S1>
 bool operator==(
@@ -4454,8 +4496,8 @@ x.is_sentinel ?
 \indexlibrary{\idxcode{operator"!=}!\idxcode{common_iterator}}%
 \indexlibrary{\idxcode{common_iterator}!\idxcode{operator"!=}}%
 \begin{itemdecl}
-template <InputIterator I1, @\xname{WeakSentinel}@<I1> S1,
-          InputIterator I2, @\xname{WeakSentinel}@<I2> S2>
+template <@\oldtxt{InputIterator}\newtxt{class}@ I1, @\oldtxt{\xname{WeakSentinel}<I1>}\newtxt{class}@ S1,
+          @\oldtxt{InputIterator}\newtxt{class}@ I2, @\oldtxt{\xname{WeakSentinel}<I2>}\newtxt{class}@ S2>
   requires EqualityComparable<I1, I2>() && @\xname{WeaklyEqualityComparable}@<I1, S2> &&
     @\xname{WeaklyEqualityComparable}@<I2, S1>
 bool operator!=(
@@ -4472,8 +4514,8 @@ bool operator!=(
 \indexlibrary{\idxcode{operator-}!\idxcode{common_iterator}}%
 \indexlibrary{\idxcode{common_iterator}!\idxcode{operator-}}%
 \begin{itemdecl}
-template <InputIterator I1, @\xname{WeakSentinel}@<I1> S1,
-          InputIterator I2, @\xname{WeakSentinel}@<I2> S2>
+template <@\oldtxt{InputIterator}\newtxt{class}@ I1, @\oldtxt{\xname{WeakSentinel}<I1>}\newtxt{class}@ S1,
+          @\oldtxt{InputIterator}\newtxt{class}@ I2, @\oldtxt{\xname{WeakSentinel}<I2>}\newtxt{class}@ S2>
   requires SizedIteratorRange<I1, I1>() && SizedIteratorRange<I2, I2>() &&
     requires (const I1 i1, const S1 s1, const I2 i2, const S2 s2) {
       {i1-i2}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>; {i2-i1}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>;
@@ -5345,7 +5387,7 @@ template <WeakIterator I>
 \pnum
 \effects
 \begin{codeblock}
-i = make_counted_iterator(next(i.\oldtxt{base()}\newtxt{current}, n), i.\oldtxt{count()}\newtxt{cnt} - n);
+i = make_counted_iterator(next(i.@\oldtxt{base()}\newtxt{current}@, n), i.@\oldtxt{count()}\newtxt{cnt}@ - n);
 \end{codeblock}
 \end{itemdescr}
 
@@ -5418,7 +5460,7 @@ dangling() requires DefaultConstructible<T>();
 
 \begin{itemdescr}
 \pnum
-\effects Constructs a \tcode{dangling}, value initializing \tcode{value}.
+\effects Constructs a \tcode{dangling}, value\newtxt{-}initializing \tcode{value}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{dangling}!\idxcode{dangling}}%
@@ -5857,7 +5899,7 @@ istream_iterator@\oldoldtxt{<T, charT, traits, Distance>}@& operator++();
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{in_stream != @\oldoldtxt{0}\newnewtxt{nullptr}@}.
+\requires \tcode{in_stream != \oldoldtxt{0}\newnewtxt{nullptr}}.
 
 \pnum
 \effects
@@ -5876,7 +5918,7 @@ istream_iterator@\oldoldtxt{<T, charT, traits, Distance>}@ operator++(int);
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{in_stream != @\oldoldtxt{0}\newnewtxt{nullptr}@}.
+\requires \tcode{in_stream != \oldoldtxt{0}\newnewtxt{nullptr}}.
 
 \pnum
 \effects
