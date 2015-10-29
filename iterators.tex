@@ -934,13 +934,13 @@ notation via subscripting.
 
 \indexlibrary{\idxcode{RandomAccessIterator}}%
 \begin{codeblock}
-  template <class I>
-  concept bool @\xname{MutableIterator}@ = // \expos
-    Iterator<I>() &&
-    requires(const I i) {
-      { *i } -> auto&;
-      *i = *i;
-    };
+  @\oldtxt{template <class I>}@
+  @\oldtxt{concept bool \xname{MutableIterator} = // \expos}@
+    @\oldtxt{Iterator<I>() \&\&}@
+    @\oldtxt{requires(const I i) \{}@
+      @\oldtxt{\{ *i \} -> auto\&;}@
+      @\oldtxt{*i = *i;}@
+    @\oldtxt{\};}@
 
   template <class I>
   concept bool RandomAccessIterator() {
@@ -954,10 +954,10 @@ notation via subscripting.
         { n + j } -> Same<I>;
         { i -= n } -> Same<I&>;
         { j - n } -> Same<I>;
-        { j[n] } -> const @\oldtxt{ValueType}\newtxt{value_type_t}@<I>&;
-      } &&
-      (!@\xname{MutableIterator}@<I> ||
-        requires(const I i, const @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n) { i[n] = *i; *i = i[n]; });
+        { j[n] } -> @\oldtxt{const ValueType<I>\&}\newtxt{Same<reference_t<I>{}>}@;
+      } @\oldtxt{\&\&}@
+      @\oldtxt{(!\xname{MutableIterator}<I> ||}@
+        @\oldtxt{requires(const I i, const DifferenceType<I> n) \{ i[n] = *i; *i = i[n]; \})}@;
   }
 \end{codeblock}
 \end{addedblock}
@@ -1488,15 +1488,24 @@ namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \
   bool operator!=(
     const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
 
+  @\newtxt{template <WeaklyIncrementable I1, WeaklyIncrementable I2>}@
+  @\newtxt{using \xname{common_difference_type_t} = \seebelow; // \expos}@
+
+  @\newtxt{template <class I1, class S1, class I2, class S2>}@
+  @\newtxt{concept bool \xname{CommonSizedIteratorRange}() \{ // \expos}@
+    @\newtxt{return \seebelow;}@
+  @\newtxt{\}}@
+
   template <@\oldtxt{InputIterator}\newtxt{class}@ I1, @\oldtxt{\xname{WeakSentinel}<I1>}\newtxt{class}@ S1,
             @\oldtxt{InputIterator}\newtxt{class}@ I2, @\oldtxt{\xname{WeakSentinel}<I2>}\newtxt{class}@ S2>
-    requires SizedIteratorRange<I1, I1>() && SizedIteratorRange<I2, I2>() &&
-      requires (const I1 i1, const S1 s1, const I2 i2, const S2 s2) {
-        {i1-i2}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>; {i2-i1}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>;
-        {i1-s2}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>; {s2-i1}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>;
-        {i2-s1}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>; {s1-i2}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>;
-      }
-  @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2> operator-(
+    @\oldtxt{requires SizedIteratorRange<I1, I1>() \&\& SizedIteratorRange<I2, I2>() \&\&}@
+      @\oldtxt{requires (const I1 i1, const S1 s1, const I2 i2, const S2 s2) \{}@
+        @\oldtxt{\{i1-i2\}->DifferenceType<I2>; \{i2-i1\}->DifferenceType<I2>;}@
+        @\oldtxt{\{i1-s2\}->DifferenceType<I2>; \{s2-i1\}->DifferenceType<I2>;}@
+        @\oldtxt{\{i2-s1\}->DifferenceType<I2>; \{s1-i2\}->DifferenceType<I2>;}@
+      @\oldtxt{\}}@
+    @\newtxt{requires \xname{CommonSizedIteratorRange}<I1, S1, I2, S2>()}@
+  @\oldtxt{DifferenceType<I2>}\newtxt{\xname{common_difference_type_t}<I1, I2>}@ operator-(
     const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
 
   // \ref{default.sentinels} Default sentinels
@@ -2618,7 +2627,7 @@ namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \
       @\added{requires RandomAccessIterator<I>();}@
     reverse_iterator& operator-=(difference_type n)@\removed{;}@
       @\added{requires RandomAccessIterator<I>();}@
-    @\unspec@ operator[](difference_type n) const@\removed{;}@
+    @\oldoldtxt{\unspec}\newnewtxt{reference}@ operator[](difference_type n) const@\removed{;}@
       @\added{requires RandomAccessIterator<I>();}@
   @\oldoldtxt{protected}\newnewtxt{private}@:
     @\changed{Iterator}{I}@ current; @\newtxt{// \expos}@
@@ -2793,10 +2802,10 @@ reference operator*() const;
 
 \begin{itemdescr}
 \pnum
-\effects \newnewtxt{Equivalent to }
+\effects \newnewtxt{Equivalent to \tcode{*prev(current)}}
 \begin{codeblock}
-@\changed{Iterator}{I}@ tmp = current;
-return *--tmp;
+@\oldoldtxt{Iterator tmp = current;}@
+@\oldoldtxt{return *--tmp;}@
 \end{codeblock}
 
 \end{itemdescr}
@@ -2810,7 +2819,9 @@ pointer operator->() const;
 
 \begin{itemdescr}
 \pnum
-\returns \changed{\tcode{std::addressof(operator*())}}{\tcode{prev(current)}}.
+\oldoldtxt{\returns}
+\newnewtxt{\effects Equivalent to}
+\changed{\tcode{std::addressof(operator*())}}{\tcode{prev(current)}}.
 \end{itemdescr}
 
 \rSec4[reverse.iter.op++]{\tcode{operator++}}
@@ -2951,7 +2962,7 @@ reverse_iterator&
 
 \indexlibrary{\idxcode{operator[]}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
-@\unspec@ operator[](
+@\oldoldtxt{\unspec}\newnewtxt{reference}@ operator[](
   @\oldoldtxt{typename reverse_iterator<Iterator>::}@difference_type n) const@\removed{;}@
     @\added{requires RandomAccessIterator<I>();}@
 \end{itemdecl}
@@ -3682,7 +3693,7 @@ namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \
       @\added{requires RandomAccessIterator<I>();}@
     move_iterator& operator-=(difference_type n)@\removed{;}@
       @\added{requires RandomAccessIterator<I>();}@
-    @\unspec@ operator[](difference_type n) const@\removed{;}@
+    @\oldoldtxt{\unspec}\newnewtxt{reference}@ operator[](difference_type n) const@\removed{;}@
       @\added{requires RandomAccessIterator<I>();}@
 
   private:
@@ -4009,7 +4020,7 @@ move_iterator& operator-=(difference_type n)@\removed{;}@
 \indexlibrary{\idxcode{operator[]}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator[]}}%
 \begin{itemdecl}
-@\unspec@ operator[](difference_type n) const@\removed{;}@
+@\oldoldtxt{\unspec}\newnewtxt{reference}@ operator[](difference_type n) const@\removed{;}@
   @\added{requires RandomAccessIterator<I>();}@
 \end{itemdecl}
 
@@ -4017,7 +4028,7 @@ move_iterator& operator-=(difference_type n)@\removed{;}@
 \pnum
 \oldoldtxt{\returns}
 \newnewtxt{\effects Equivalent to }
-\tcode{std::move(current[n])}.
+\oldoldtxt{\tcode{std::move}}\newnewtxt{\tcode{static_cast<reference>}}\tcode{(current[n])}.
 \end{itemdescr}
 
 \rSec4[move.iter.op.comp]{\tcode{move_iterator} comparisons}
@@ -4248,7 +4259,7 @@ namespace std { namespace experimental { namespace ranges@\oldtxt{_v1} \newtxt{\
 
     ~common_iterator();
 
-    @\newtxt{\seebelow operator*();}@
+    @\newtxt{\seebelow}@ @{\newtxt{operator*();}@
     @\oldtxt{reference}\newtxt{\seebelow}@ operator*() const;
 
     common_iterator& operator++();
@@ -4265,6 +4276,20 @@ namespace std { namespace experimental { namespace ranges@\oldtxt{_v1} \newtxt{\
     @\newtxt{using type = \seebelow;}@
   @\newtxt{\};}@
 
+  @\newtxt{template <WeaklyIncrementable I1, WeaklyIncrementable I2>}@
+  @\newtxt{using \xname{common_difference_type_t} = // \expos}@
+    @\newtxt{common_type_t<difference_type_t<I1>, difference_type_t<I2>{}>;}@
+
+  @\newtxt{template <class I1, class S1, class I2, class S2>}@
+  @\newtxt{concept bool \xname{CommonSizedIteratorRange}() \{ // \expos}@
+    @\newtxt{return SizedIteratorRange<I1, I1>() \&\& SizedIteratorRange<I2, I2>() \&\&}@
+      @\newtxt{requires (const I1 i1, const S1 s1, const I2 i2, const S2 s2) \{}@
+        @\newtxt{\{i1-i2\}->\xname{common_difference_type_t}<I1, I2>; \{i2-i1\}->\xname{common_difference_type_t}<I1, I2>;}@
+        @\newtxt{\{i1-s2\}->\xname{common_difference_type_t}<I1, I2>; \{s2-i1\}->\xname{common_difference_type_t}<I1, I2>;}@
+        @\newtxt{\{i2-s1\}->\xname{common_difference_type_t}<I1, I2>; \{s1-i2\}->\xname{common_difference_type_t}<I1, I2>;}@
+      @\newtxt{\};}@
+  @\newtxt{\}}@
+
   template <@\oldtxt{InputIterator}\newtxt{class}@ I1, @\oldtxt{\xname{WeakSentinel}<I1>}\newtxt{class}@ S1,
             @\oldtxt{InputIterator}\newtxt{class}@ I2, @\oldtxt{\xname{WeakSentinel}<I2>}\newtxt{class}@ S2>
     requires EqualityComparable<I1, I2>() && @\xname{WeaklyEqualityComparable}@<I1, S2> &&
@@ -4280,13 +4305,14 @@ namespace std { namespace experimental { namespace ranges@\oldtxt{_v1} \newtxt{\
 
   template <@\oldtxt{InputIterator}\newtxt{class}@ I1, @\oldtxt{\xname{WeakSentinel}<I1>}\newtxt{class}@ S1,
             @\oldtxt{InputIterator}\newtxt{class}@ I2, @\oldtxt{\xname{WeakSentinel}<I2>}\newtxt{class}@ S2>
-    requires SizedIteratorRange<I1, I1>() && SizedIteratorRange<I2, I2>() &&
-      requires (const I1 i1, const S1 s1, const I2 i2, const S2 s2) {
-        {i1-i2}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>; {i2-i1}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>;
-        {i1-s2}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>; {s2-i1}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>;
-        {i2-s1}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>; {s1-i2}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>;
-      }
-  @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2> operator-(
+    @\oldtxt{requires SizedIteratorRange<I1, I1>() \&\& SizedIteratorRange<I2, I2>() \&\&}@
+      @\oldtxt{requires (const I1 i1, const S1 s1, const I2 i2, const S2 s2) \{}@
+        @\oldtxt{\{i1-i2\}->DifferenceType<I2>; \{i2-i1\}->DifferenceType<I2>;}@
+        @\oldtxt{\{i1-s2\}->DifferenceType<I2>; \{s2-i1\}->DifferenceType<I2>;}@
+        @\oldtxt{\{i2-s1\}->DifferenceType<I2>; \{s1-i2\}->DifferenceType<I2>;}@
+      @\oldtxt{\}}@
+    @\newtxt{requires \xname{CommonSizedIteratorRange}<I1, S1, I2, S2>()}@
+  @\oldtxt{DifferenceType<I2>}\newtxt{\xname{common_difference_type_t}<I1, I2>}@ operator-(
     const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
 }}}@\newtxt{\}}@
 \end{codeblock}
@@ -4330,10 +4356,14 @@ common_iterator();
 \begin{itemdescr}
 \pnum
 \effects Constructs a \tcode{common_iterator}, value-initializing \tcode{is_sentinel}
-and \tcode{iter}. It is unspecified whether any initialization is performed for
-\tcode{sent}. Iterator operations applied to the resulting iterator have defined
+and \tcode{iter}. Iterator operations applied to the resulting iterator have defined
 behavior if and only if the corresponding operations are defined on a
 value-initialized iterator of type \tcode{I}.
+
+\newtxt{
+\pnum
+\remarks} It is unspecified whether any initialization is performed for
+\tcode{sent}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{common_iterator}!constructor}%
@@ -4344,9 +4374,13 @@ common_iterator(I i);
 \begin{itemdescr}
 \pnum
 \effects Constructs a \tcode{common_iterator}, initializing
-\tcode{is_sentinel} with \tcode{false} and \tcode{iter} with \tcode{i}. It is
-unspecified whether any initialization is performed for \tcode{sent}.
+\tcode{is_sentinel} with \tcode{false} and \tcode{iter} with \tcode{i}.
 \end{itemdescr}
+
+\newtxt{
+\pnum
+\remarks} It is unspecified whether any initialization is performed for
+\tcode{sent}.
 
 \indexlibrary{\idxcode{common_iterator}!constructor}%
 \begin{itemdecl}
@@ -4356,9 +4390,13 @@ common_iterator(S s);
 \begin{itemdescr}
 \pnum
 \effects Constructs a \tcode{common_iterator}, initializing
-\tcode{is_sentinel} with \tcode{true} and \tcode{sent} with \tcode{s}. It is
-unspecified whether any initialization is performed for \tcode{iter}.
+\tcode{is_sentinel} with \tcode{true} and \tcode{sent} with \tcode{s}.
 \end{itemdescr}
+
+\newtxt{
+\pnum
+\remarks} It is unspecified whether any initialization is performed for
+\tcode{iter}.
 
 \indexlibrary{\idxcode{common_iterator}!constructor}%
 \begin{itemdecl}
@@ -4372,10 +4410,17 @@ common_iterator(const common_iterator<U, V>& u);
 \effects Constructs a \tcode{common_iterator}, initializing
 \tcode{is_sentinel} with \tcode{u.is_sentinel}.
 \begin{itemize}
-\item If \tcode{u.is_sentinel} is true, \tcode{sent} is initialized with \tcode{u.sent}.
-It is unspecified whether any initialization is performed for \tcode{iter}.
-\item If \tcode{u.is_sentinel} is false, \tcode{iter} is initialized with \tcode{u.iter}.
-It is unspecified whether any initialization is performed for \tcode{sent}.
+\item If \tcode{u.is_sentinel} is \tcode{true}, \tcode{sent} is initialized with \tcode{u.sent}.
+\item If \tcode{u.is_sentinel} is \tcode{false}, \tcode{iter} is initialized with \tcode{u.iter}.
+\end{itemize}
+
+\newtxt{
+\remarks}
+\begin{itemize}
+\item \newtxt{If \tcode{u.is_sentinel} is \tcode{true},} it is unspecified whether any initialization
+is performed for \tcode{iter}.
+\item \newtxt{If \tcode{u.is_sentinel} is \tcode{false},} it is unspecified whether any initialization
+is performed for \tcode{sent}.
 \end{itemize}
 \end{itemdescr}
 
@@ -4393,10 +4438,17 @@ common_iterator& operator=(const common_iterator<U, V>& u);
 \pnum
 \effects Assigns \tcode{u.is_sentinel} to \tcode{is_sentinel}.
 \begin{itemize}
-\item If \tcode{u.is_sentinel} is true, assigns \tcode{u.sent} to \tcode{sent}.
-It is unspecified whether any operation is performed on \tcode{iter}.
-\item If \tcode{u.is_sentinel} is false, assigns \tcode{u.iter} to \tcode{iter}.
-It is unspecified whether any operation is performed on \tcode{sent}.
+\item If \tcode{u.is_sentinel} is \tcode{true}, assigns \tcode{u.sent} to \tcode{sent}.
+\item If \tcode{u.is_sentinel} is \tcode{false}, assigns \tcode{u.iter} to \tcode{iter}.
+\end{itemize}
+
+\newtxt{
+\remarks}
+\begin{itemize}
+\item \newtxt{If \tcode{u.is_sentinel} is \tcode{true},} it is unspecified whether any operation
+is performed on \tcode{iter}.
+\item \newtxt{If \tcode{u.is_sentinel} is \tcode{false},} it is unspecified whether any operation
+is performed on \tcode{sent}.
 \end{itemize}
 
 \pnum
@@ -4411,7 +4463,7 @@ It is unspecified whether any operation is performed on \tcode{sent}.
 \begin{itemdescr}
 \pnum
 \effects
-Runs the destructor(s) for any members that are currently initialized.
+\oldtxt{Runs the destructor(s) for}\newtxt{Destroys} any members that are currently initialized.
 \end{itemdescr}
 
 \rSec4[common.iter.op.star]{\tcode{common_iterator::operator*}}
@@ -4428,8 +4480,8 @@ Runs the destructor(s) for any members that are currently initialized.
 \requires \tcode{!is_sentinel}
 
 \pnum
-@\oldtxt{\returns}@
-@\newtxt{\effects Equivalent to} \tcode{*iter}.
+\oldtxt{\returns}
+\newtxt{\effects Equivalent to} \tcode{*iter}.
 \end{itemdescr}
 
 \rSec4[common.iter.op.incr]{\tcode{common_iterator::operator++}}
@@ -4519,12 +4571,14 @@ bool operator!=(
 \begin{itemdecl}
 template <@\oldtxt{InputIterator}\newtxt{class}@ I1, @\oldtxt{\xname{WeakSentinel}<I1>}\newtxt{class}@ S1,
           @\oldtxt{InputIterator}\newtxt{class}@ I2, @\oldtxt{\xname{WeakSentinel}<I2>}\newtxt{class}@ S2>
-  requires SizedIteratorRange<I1, I1>() && SizedIteratorRange<I2, I2>() &&
-    requires (const I1 i1, const S1 s1, const I2 i2, const S2 s2) {
-      {i1-i2}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>; {i2-i1}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>;
-      {i1-s2}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>; {s2-i1}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>;
-      {i2-s1}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>; {s1-i2}->@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I2>;
-    }
+  @\oldtxt{requires SizedIteratorRange<I1, I1>() \&\& SizedIteratorRange<I2, I2>() \&\&}@
+    @\oldtxt{requires (const I1 i1, const S1 s1, const I2 i2, const S2 s2) \{}@
+      @\oldtxt{\{i1-i2\}->DifferenceType<I2>; \{i2-i1\}->DifferenceType<I2>;}@
+      @\oldtxt{\{i1-s2\}->DifferenceType<I2>; \{s2-i1\}->DifferenceType<I2>;}@
+      @\oldtxt{\{i2-s1\}->DifferenceType<I2>; \{s1-i2\}->DifferenceType<I2>;}@
+    @\oldtxt{\}}@
+  @\newtxt{requires \xname{CommonSizedIteratorRange}<I1, S1, I2, S2>()}@
+@\oldtxt{DifferenceType<I2>}\newtxt{\xname{common_difference_type_t}<I1, I2>}@ operator-(
   const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
 \end{itemdecl}
 
@@ -4690,7 +4744,7 @@ namespace std { namespace experimental { namespace ranges@\oldtxt{_v1} \newtxt{\
 
     I base() const;
     @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> count() const;
-    @\newtxt{\seebelow operator*()}@
+    @\newtxt{\seebelow}@ @\newtxt{operator*();}@
     @\oldtxt{reference}\newtxt{\seebelow}@ operator*() const;
 
     counted_iterator& operator++();
@@ -4708,9 +4762,9 @@ namespace std { namespace experimental { namespace ranges@\oldtxt{_v1} \newtxt{\
       requires RandomAccessIterator<I>();
     counted_iterator& operator-=(difference_type n)
       requires RandomAccessIterator<I>();
-    @\unspec@ operator[](difference_type n) const
+    @\oldoldtxt{\unspec}\newnewtxt{\seebelow}@ operator[](difference_type n) const
       requires RandomAccessIterator<I>();
-  @\oldoldtxt{protected}\newtxt{private}@:
+  @\oldoldtxt{protected}\newnewtxt{private}@:
     I current; @\newtxt{// \expos}@
     @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> cnt; @\newtxt{// \expos}@
   };
@@ -4902,7 +4956,7 @@ I base() const;
 \indexlibrary{\idxcode{operator*}!\idxcode{counted_iterator}}%
 \indexlibrary{\idxcode{counted_iterator}!\idxcode{operator*}}%
 \begin{itemdecl}
-@\newtxt{decltype(auto)} operator*();}@
+@\newtxt{decltype(auto) operator*();}@
 @\oldtxt{reference}\newtxt{decltype(auto)}@ operator*() const;
 \end{itemdecl}
 
@@ -5086,7 +5140,7 @@ cnt += n;
 \indexlibrary{\idxcode{operator[]}!\idxcode{counted_iterator}}%
 \indexlibrary{\idxcode{counted_iterator}!\idxcode{operator[]}}%
 \begin{itemdecl}
-  @\unspec@ operator[](difference_type n) const
+  @\oldoldtxt{\unspec}\newnewtxt{decltype(auto)}@ operator[](difference_type n) const
     requires RandomAccessIterator<I>();
 \end{itemdecl}
 
