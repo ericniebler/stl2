@@ -1773,12 +1773,14 @@ that are not already defined in namespace \tcode{std::experimental::ranges\oldtx
 entities, but there may be in the future.}
 \end{addedblock}
 
+{\color{newclr}
 \pnum
-\enternote The use of the exposition only \tcode{_Auto} concept in the above signatures
+\enternote The use of the exposition-only \tcode{_Auto} concept in the above signatures
 is to break a tie in overload resolution between similarly named functions in the \tcode{std}
 and \tcode{std::experimental::v1::ranges} namespaces. Since the functions that use
 \tcode{_Auto} are constrained, they are preferred to the unconstrained versions in namespace
 \tcode{std}.\exitnote
+}
 
 \rSec1[iterator.primitives]{Iterator primitives}
 
@@ -3894,6 +3896,7 @@ reference operator*() const;
 \oldoldtxt{\tcode{std::move}}\newnewtxt{\tcode{static_cast<reference>}}\tcode{(*current)}.
 \end{itemdescr}
 
+{\color{oldclr}
 \rSec4[move.iter.op.ref]{\tcode{move_iterator::operator->}}
 
 \indexlibrary{\idxcode{operator->}!\idxcode{move_iterator}}%
@@ -3906,6 +3909,7 @@ pointer operator->() const;
 \pnum
 \returns \tcode{current}.
 \end{itemdescr}
+}
 
 \rSec4[move.iter.op.incr]{\tcode{move_iterator::operator++}}
 
@@ -4285,6 +4289,7 @@ namespace std { namespace experimental { namespace ranges@\oldtxt{_v1} \newtxt{\
 
     @\newtxt{\seebelow}@ @{\newtxt{operator*();}@
     @\oldtxt{reference}\newtxt{\seebelow}@ operator*() const;
+    @\newtxt{\seebelow}@ @\newtxt{operator->() const requires Readable<I>();}@
 
     common_iterator& operator++();
     common_iterator operator++(int);
@@ -4507,6 +4512,43 @@ is performed on \tcode{sent}.
 \oldtxt{\returns}
 \newtxt{\effects Equivalent to} \tcode{*iter}.
 \end{itemdescr}
+
+{\color{newclr}
+\indexlibrary{\idxcode{operator->}!\idxcode{common_iterator}}%
+\indexlibrary{\idxcode{common_iterator}!\idxcode{operator->}}%
+\begin{itemdecl}
+@\newtxt{\seebelow}@ @\newtxt{operator->() const requires Readable<I>();}@
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{!is_sentinel}
+
+\pnum
+\effects Given an object \tcode{i} of type \tcode{I}
+\begin{itemize}
+\item if \tcode{I} is a pointer type or if the expression
+      \tcode{i.operator->()} is a well-formed expression, this function returns
+      \tcode{iter}.
+\item Otherwise, if the expression \tcode{*iter} is an lvalue, this function
+      is equivalent to \tcode{addressof(*iter)}.
+\item Otherwise, this function returns a proxy object of an unspecified type
+      equivalent to the following:
+      \begin{codeblock}
+      class proxy {               // \expos
+        value_type_t<I> keep_;
+        proxy(reference_t<I>&& x)
+          : keep_(std::move(x)) {}
+      public:
+        const value_type_t<I>* operator->() const {
+          return addressof(keep_);
+        }
+      };
+      \end{codeblock}
+      that is initialized with \tcode{*iter}.
+\end{itemize}
+\end{itemdescr}
+}
 
 \rSec4[common.iter.op.incr]{\tcode{common_iterator::operator++}}
 
@@ -5005,7 +5047,7 @@ counted_iterator& operator++();
 \requires \tcode{cnt > 0}
 
 \pnum
-\effects
+\effects \newtxt{Equivalent to}
 \begin{codeblock}
 ++current;
 @\dcr@cnt;
@@ -5026,7 +5068,7 @@ counted_iterator operator++(int);
 \requires \tcode{cnt > 0}
 
 \pnum
-\effects
+\effects \newtxt{Equivalent to}
 \begin{codeblock}
 counted_iterator tmp = *this;
 ++current;
@@ -5046,7 +5088,7 @@ return tmp;
 
 \begin{itemdescr}
 \pnum
-\effects
+\effects \newtxt{Equivalent to}
 \begin{codeblock}
 --current;
 ++cnt;
@@ -5065,7 +5107,7 @@ return tmp;
 
 \begin{itemdescr}
 \pnum
-\effects
+\effects \newtxt{Equivalent to}
 \begin{codeblock}
 counted_iterator tmp = *this;
 --current;
