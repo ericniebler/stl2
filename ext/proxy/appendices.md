@@ -56,39 +56,38 @@ template <class T, class X = std::remove_reference_t<T>>
 using __cref = std::add_lvalue_reference_t<std::add_const_t<X>>;
 template <class T>
 using __uncvref = std::remove_cv_t<std::remove_reference_t<T>>;
-
+template <class T, class U, class R = __builtin_common_t<T &, U &>>
+using __rref_res = std::conditional_t<__v<std::is_reference<R>>,
+  std::remove_reference_t<R> &&, R>;
 template <class T, class U>
-using __cond = decltype(true ? declval<T>() : declval<U>());
+using __cond_res = decltype(true ? declval<T>() : declval<U>());
 
 template <class From, class To>
-struct __copy_cv_ : __id<To> { };
+struct __copycv_ : __id<To> { };
 template <class From, class To>
-struct __copy_cv_<From const, To> : std::add_const<To> { };
+struct __copycv_<From const, To> : std::add_const<To> { };
 template <class From, class To>
-struct __copy_cv_<From volatile, To> : std::add_volatile<To> { };
+struct __copycv_<From volatile, To> : std::add_volatile<To> { };
 template <class From, class To>
-struct __copy_cv_<From const volatile, To> : std::add_cv<To> { };
+struct __copycv_<From const volatile, To> : std::add_cv<To> { };
 template <class From, class To>
-using __copy_cv = __t<__copy_cv_<From, To>>;
+using __copycv = __t<__copycv_<From, To>>;
 
 template <class T, class U>
 struct __builtin_common { };
 template <class T, class U>
 using __builtin_common_t = __t<__builtin_common<T, U>>;
 template <class T, class U>
-  requires _Valid<__cond, __cref<T>, __cref<U>>
+  requires _Valid<__cond_res, __cref<T>, __cref<U>>
 struct __builtin_common<T, U> :
-  std::decay<__cond<__cref<T>, __cref<U>>> { };
-template <class T, class U, class R = __builtin_common_t<T &, U &>>
-using __rref_res = std::conditional_t<__v<std::is_reference<R>>,
-  std::remove_reference_t<R> &&, R>;
+  std::decay<__cond_res<__cref<T>, __cref<U>>> { };
 template <class T, class U>
   requires _Valid<__builtin_common_t, T &, U &>
     && _ConvertibleTo<T &&, __rref_res<T, U>>
     && _ConvertibleTo<U &&, __rref_res<T, U>>
 struct __builtin_common<T &&, U &&> : __id<__rref_res<T, U>> { };
 template <class T, class U>
-using __lref_res = __cond<__copy_cv<T, U> &, __copy_cv<U, T> &>;
+using __lref_res = __cond_res<__copycv<T, U> &, __copycv<U, T> &>;
 template <class T, class U>
 struct __builtin_common<T &, U &> : __defer<__lref_res, T, U> { };
 template <class T, class U>
