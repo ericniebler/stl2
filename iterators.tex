@@ -1826,7 +1826,7 @@ In addition, the type\removed{s}
 @\tcode{\oldtxt{ReferenceType<Readable>}}\tcode{\newtxt{reference_t<R>}}@
 \end{codeblock}
 
-shall be an alias for \tcode{decltype(*declval<\oldtxt{Readable}\newtxt{R}>())}.
+shall be an alias for \tcode{decltype(*declval<\oldtxt{Readable}\newtxt{R\&}>())}.
 \end{addedblock}
 
 \begin{removedblock}
@@ -2021,15 +2021,15 @@ alias that collects an iterator's associated types. It is defined as if:
 
 \indexlibrary{\idxcode{iterator_traits}}%
 \begin{codeblock}
-  template <WeakInputIterator I> struct @\xname{pointer_type}@ {
+  template <WeakInputIterator I> struct @\xname{pointer_type}@ {        @\newtxt{// \expos}@
     using type = add_pointer_t<@\oldtxt{ReferenceType}\newtxt{reference_t}@<I>>;
   };
   template <WeakInputIterator I>
     requires requires(I i) { { i.operator->() } -> auto&&; }
-  struct @\xname{pointer_type}@<I> {
+  struct @\xname{pointer_type}@<I> {                                    @\newtxt{// \expos}@
     using type = decltype(declval<I>().operator->());
   };
-  template <class> struct @\xname{iterator_traits}@ { };
+  template <class> struct @\xname{iterator_traits}@ { };                @\newtxt{// \expos}@
   template <WeakIterator I> struct @\xname{iterator_traits}@<I> {
     using difference_type = @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I>;
     using value_type = void;
@@ -2037,7 +2037,7 @@ alias that collects an iterator's associated types. It is defined as if:
     using pointer = void;
     using iterator_category = output_iterator_tag;
   };
-  template <WeakInputIterator I> struct @\xname{iterator_traits}@<I> {
+  template <WeakInputIterator I> struct @\xname{iterator_traits}@<I> {  @\newtxt{// \expos}@
     using difference_type = @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I>;
     using value_type = @\oldtxt{ValueType}\newtxt{value_type_t}@<I>;
     using reference = @\oldtxt{ReferenceType}\newtxt{reference_t}@<I>;
@@ -2085,9 +2085,9 @@ void reverse(@\changed{BidirectionalIterator}{I}@ first, @\changed{Bidirectional
 
 \pnum
 To facilitate interoperability between new code using iterators conforming to this document
-and older code using iterators conforming to ISO/IEC 14882, three specializations of
-\tcode{std::iterator_traits} are provided to map the newer iterator categories to the
-older ones.
+and older code using iterators \oldtxt{conforming to}\newtxt{that conform to the iterator
+requirements specified in} ISO/IEC 14882, three specializations of \tcode{std::iterator_traits}
+are provided to map the newer iterator categories \newtxt{and associated types} to the older ones.
 
 \begin{codeblock}
 namespace std {
@@ -2183,6 +2183,13 @@ follows:
 \end{itemize}
 }
 
+{\color{newclr}
+\pnum
+\enternote Some implementations may find it necessary to add additional constraints to
+these partial specializations to prevent them from being considered for types that
+conform to the iterator requirements specified in ISO/IEC 14882.\exitnote
+}
+
 {\color{oldclr}
 \rSec2[iterator.basic]{Basic iterator}
 
@@ -2210,7 +2217,7 @@ namespace std { namespace experimental { namespace ranges_v1 {
 \pnum
 \enternote The \tcode{Pointer} and \tcode{Reference} template parameters, and the nested \tcode{pointer}
 and \tcode{reference} type aliases are for backward compatibility only; they are never used by any
-other part of this \oldtxt{standard}\newtxt{document}.\exitnote
+other part of this standard.\exitnote
 }
 
 \rSec2[std.iterator.tags]{Standard iterator tags}
@@ -3222,7 +3229,7 @@ namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \
   public:
     @\changed{typedef Container}{using}@ container_type@\added{ = Container}@;
     @\added{using difference_type = ptrdiff_t;}@
-    @\added{using iterator_category = output_iterator_tag;}@
+    @\oldtxt{using iterator_category = output_iterator_tag;}@
     @\added{\newnewtxt{constexpr} back_insert_iterator();}@
     explicit back_insert_iterator(Container& x);
     back_insert_iterator@\oldoldtxt{<Container>}@&
@@ -3361,7 +3368,7 @@ namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \
   public:
     @\changed{typedef Container}{using}@ container_type@\added{ = Container}@;
     @\added{using difference_type = ptrdiff_t;}@
-    @\added{using iterator_category = output_iterator_tag;}@
+    @\oldtxt{using iterator_category = output_iterator_tag;}@
     @\added{\newnewtxt{constexpr} front_insert_iterator();}@
     explicit front_insert_iterator(Container& x);
     front_insert_iterator@\oldoldtxt{<Container>}@&
@@ -3501,7 +3508,7 @@ namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \
   public:
     @\changed{typedef Container}{using}@ container_type@\added{ = Container}@;
     @\added{using difference_type = ptrdiff_t;}@
-    @\added{using iterator_category = output_iterator_tag;}@
+    @\oldtxt{using iterator_category = output_iterator_tag;}@
     @\added{insert_iterator();}@
     insert_iterator(Container& x, typename Container::iterator i);
     insert_iterator@\oldoldtxt{<Container>}@&
@@ -4530,7 +4537,7 @@ is performed on \tcode{sent}.
 \item if \tcode{I} is a pointer type or if the expression
       \tcode{i.operator->()} is a well-formed expression, this function returns
       \tcode{iter}.
-\item Otherwise, if the expression \tcode{*iter} is an lvalue, this function
+\item Otherwise, if the expression \tcode{*iter} is an glvalue, this function
       is equivalent to \tcode{addressof(*iter)}.
 \item Otherwise, this function returns a proxy object of an unspecified type
       equivalent to the following:
@@ -6170,7 +6177,7 @@ namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \
   class ostream_iterator@\removed{:}@
     @\removed{public iterator<output_iterator_tag, void, void, void, void>}@ {
   public:
-    @\added{typedef output_iterator_tag iterator_category;}@
+    @\oldtxt{typedef output_iterator_tag iterator_category;}@
     @\added{typedef ptrdiff_t difference_type;}@
     typedef charT char_type;
     typedef traits traits_type;
@@ -6627,7 +6634,7 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges\oldtxt{_v1} 
   class ostreambuf_iterator @\removed{:}@
     @\removed{public iterator<output_iterator_tag, void, void, void, void>}@ {
   public:
-    @\added{typedef output_iterator_tag}@            @\added{iterator_category;}@
+    @\oldtxt{typedef output_iterator_tag}@            @\oldtxt{iterator_category;}@
     @\added{typedef ptrdiff_t}@                      @\added{difference_type;}@
     typedef charT                          char_type;
     typedef traits                         traits_type;
