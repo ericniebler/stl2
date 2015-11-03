@@ -126,7 +126,7 @@ The Palo Alto report shows the constrained signature of the `for_each` algorithm
 
 ```c++
 template<InputIterator I, Semiregular F>
-  requires Function<F, value_type_t<I>>
+  requires Function<F, value_type_t<I>>()
 F for_each(I first, I last, F f);
 ```
 
@@ -245,7 +245,7 @@ In addition, this paper recommends adding a new customization point: `iter_move`
 template <class I>
 using __iter_move_t =
   conditional_t<
-    is_reference_v<reference_t<I>>,
+    is_reference<reference_t<I>>::value,
     remove_reference_t<reference_t<I>> &&,
     decay_t<reference_t<I>>;
 
@@ -286,11 +286,11 @@ With the existence of `iter_move`, it makes it possible to implement `iter_swap`
 
 ```c++
 template <Readable I1, Readable I2>
-  requires !Swappable<reference_t<I1>, reference_t<I2>> &&
-    IndirectlyMovable<I1, I2> && IndirectlyMovable<I2, I1>
+  requires !Swappable<reference_t<I1>, reference_t<I2>>() &&
+    IndirectlyMovable<I1, I2>() && IndirectlyMovable<I2, I1>()
 void iter_swap(I1 r1, I2 r2)
-  noexcept(is_nothrow_indirectly_movable_v<I1, I2> &&
-           is_nothrow_indirectly_movable_v<I2, I1>) {
+  noexcept(is_nothrow_indirectly_movable<I1, I2>::value &&
+           is_nothrow_indirectly_movable<I2, I1>::value) {
   value_type_t<I1> tmp = iter_move(r1);
   *r1 = iter_move(r2);
   *r2 = std::move(tmp);
@@ -388,7 +388,7 @@ With overloads of `iter_swap` that work for `Swappable` types and `IndirectlyMov
 template <class I1, class I2>
 concept bool IndirectlySwappable() {
   return Readable<I1>() && Readable<I2>() &&
-    requires (I1 i1, I2 i2) {
+    requires (const I1 i1, const I2 i2) {
       iter_swap(i1, i2);
       iter_swap(i2, i1);
       iter_swap(i1, i1);
@@ -568,87 +568,243 @@ In addition, `Relation<F, T, U>` requires `Relation<F, std::common_reference_t<c
 
 ### Chapter 20: General utilities
 
-To 20.2, add the following to the `<utility>` synopsis (*N.B.*, in namespace `std`):
+Change 20.10.2 [meta.type.synop], header `<type_traits>` synopsis, as indicated (*N.B.*, in namespace `std`):
 
-<span style="color:blue">[*Editorial note:* -- Future work: harmonize this with [N4426: Adding [nothrow\-]swappable traits](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4426.html). --*end note*]</span>
+<ednote>[*Editorial note:* -- `is_[nothrow_]swappable[_with]` traits taken from [N4511: Adding [nothrow\-]swappable traits](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4511.html). --*end note*]</ednote>
 
-> ```c++
-> // is_nothrow_swappable
-> template <class T, class U>
-> struct is_nothrow_swappable;
->
-> template <class T, class U>
-> constexpr bool is_nothrow_swappable_v = is_nothrow_swappable<T, U>::value;
-> ```
+<pre>
+namespace std {
+  [&hellip;]
+  // 20.10.4.3, type properties:
+  [&hellip;]
+  template &lt;class T&gt; struct is_move_assignable;
+  
+  <ins>template &lt;class T, class U&gt; struct is_swappable_with;</ins>
+  <ins>template &lt;class T&gt; struct is_swappable;</ins>
+  
+  template &lt;class T> struct is_destructible;
+  [&hellip;]
+  template &lt;class T> struct is_nothrow_move_assignable;
 
-Add subsection 20.2.6 `is_nothrow_swappable`  (*N.B.*, in namespace `std`):
+  <ins>template &lt;class T, class U&gt; struct is_nothrow_swappable_with;</ins>
+  <ins>template &lt;class T&gt; struct is_nothrow_swappable;</ins>
+  
+  template &lt;class T&gt; struct is_nothrow_destructible;
+  [&hellip;]
 
-> ```c++
-> template <class T, class U>
-> struct is_nothrow_swappable : false_type { };
-> template <class T, class U>
->   requires Swappable<T, U>()
-> struct is_nothrow_swappable<T, U> :
->   bool_constant<noexcept(swap(declval<T>(), declval<U>()))> { };
-> ```
+  // 20.10.7.6, other transformations:
+  [&hellip;]
+  template &lt;class... T&gt; struct common_reference;
+  <ins>template &lt;class T, class U, template &lt;class&gt; class TQual, template &lt;class&gt; class UQual&gt;</ins>
+    <ins>struct basic_common_reference { };</ins>
+  <ins>template &lt;class... T&gt; struct common_reference;</ins>
+  template &lt;class T&gt; struct underlying_type;
+  [&hellip;]
+  template &lt;class... T&gt;
+    using common_type_t = typename common_type&lt;T...&gt;::type;
+  <ins>template &lt;class... T&gt;</ins>
+    <ins>using common_reference_t = typename common_reference&lt;T...&gt;::type;</ins>
+  template &lt;class T&gt;
+    using underlying_type_t = typename underlying_type&lt;T&gt;::type;
+  [&hellip;]
+}
+</pre>
 
-To 20.10.2, add the following to the `<type_traits>` synopsis  (*N.B.*, in namespace `std`):
+Change 20.10.4.3 [meta.unary.prop], Table 49 — "Type property predicates", as indicated:
 
-> ```c++
-> // 20.10.7.6, other transformations:
-> ...
-> // common_reference
-> template <class T, class U, template <class> class TQual, template <class> class UQual>
-> struct basic_common_reference { };
-> template <class... T> struct common_reference;
-> ...
-> template <class... T>
->   using common_reference_t = typename common_reference<T...>::type;
-> ```
+<ednote>[*Editorial note:* -- The following is taken from [N4511: Adding [nothrow\-]swappable traits](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4511.html). --*end note*]</ednote>
+
+<blockquote>
+<table border="1">
+<caption>Table 49 &mdash; Type property predicates</caption>
+<tr>
+<th align="center">Template</th>
+<th align="center">Condition</th>
+<th align="center">Preconditions</th>
+</tr>
+
+<tr>
+<td colspan="3" align="center">
+<tt>&hellip;</tt>
+</td>
+</tr>
+
+<tr>
+<td>
+<ins><tt>template &lt;class T, class U&gt;<br/>
+struct is_swappable_with;</tt></ins>
+</td>
+
+<td>
+<ins>The expressions <tt>swap(declval&lt;T&gt;(), declval&lt;U&gt;())</tt> and<br/>
+<tt>swap(declval&lt;U&gt;(), declval&lt;T&gt;())</tt> are each well-formed<br/> 
+when treated as an unevaluated operand (Clause 5) in an overload-resolution<br/>
+context for swappable values (17.6.3.2 [swappable.requirements]). Access<br/> 
+checking is performed as if in a context unrelated to <tt>T</tt> and <tt>U</tt>. Only the<br/> 
+validity of the immediate context of the <tt>swap</tt> expressions is considered.<br/>
+[<i>Note</i>: The compilation of the expressions can result in side effects such<br/>
+as the instantiation of class template specializations and function template<br/>
+specializations, the generation of implicitly-defined functions, and so on. Such<br/>
+side effects are not in the "immediate context" and can result in the program<br/>
+being ill-formed. &mdash; <i>end note</i>]</ins>
+</td>
+
+<td>
+<ins><tt>T</tt> and <tt>U</tt> shall be complete types,<br/> 
+(possibly <i>cv</i>-qualified) <tt>void</tt>, or<br/>
+arrays of unknown bound.</ins>
+</td>
+</tr>
+
+<tr>
+<td>
+<ins><tt>template &lt;class T&gt;<br/>
+struct is_swappable;</tt></ins>
+</td>
+
+<td>
+<a name="is_swappable_spec"></a><ins>For a referenceable type <tt>T</tt>, the same result<br/>
+as <tt>is_swappable_with&lt;T&amp;, T&amp;&gt;::value</tt>,<br/> 
+otherwise <tt>false</tt>.</ins>
+</td>
+
+<td>
+<ins><tt>T</tt> shall be a complete type,<br/> 
+(possibly <i>cv</i>-qualified) <tt>void</tt>, or an<br/>
+array of unknown bound.</ins>
+</td>
+</tr>
+
+<tr>
+<td colspan="3" align="center">
+<tt>&hellip;</tt>
+</td>
+</tr>
+
+<tr>
+<td>
+<ins><tt>template &lt;class T, class U&gt;<br/>
+struct is_nothrow_swappable_with;</tt></ins>
+</td>
+
+<td>
+<ins><tt>is_swappable_with&lt;T, U&gt;::value</tt> is <tt>true</tt><br/> 
+and each <tt>swap</tt> expression of the definition of<br/> 
+<tt>is_swappable_with&lt;T, U&gt;</tt> is known not to throw<br/>
+any exceptions (5.3.7 [expr.unary.noexcept]).</ins>
+</td>
+
+<td>
+<ins><tt>T</tt> and <tt>U</tt> shall be complete types,<br/> 
+(possibly <i>cv</i>-qualified) <tt>void</tt>, or<br/>
+arrays of unknown bound.</ins>
+</td>
+</tr>
+
+<tr>
+<td>
+<ins><tt>template &lt;class T&gt;<br/>
+struct is_nothrow_swappable;</tt></ins>
+</td>
+
+<td>
+<ins>For a referenceable type <tt>T</tt>, the same result<br/>
+as <tt>is_nothrow_swappable_with&lt;T&amp;, T&amp;&gt;::value</tt>,<br/> 
+otherwise <tt>false</tt>.</ins>
+</td>
+
+<td>
+<ins><tt>T</tt> shall be a complete type,<br/> 
+(possibly <i>cv</i>-qualified) <tt>void</tt>, or an<br/>
+array of unknown bound.</ins>
+</td>
+</tr>
+
+<tr>
+<td colspan="3" align="center">
+<tt>&hellip;</tt>
+</td>
+</tr>
+
+</table>
+</blockquote>
 
 Change Table 57 Other Transformations as follows:
 
-> | Template | Condition | Comments |
-> |----------|-----------|----------|
-> | `template <class... T>` |  | The member typedef `type` shall be |
-> | `struct common_type;`   |  | defined or omitted as specified below. |
-> | | | If it is omitted, there shall be no |
-> | | | member `type`. <span style="color:red; text-decoration:line-through">All types</span><span style="color:#009a9a">Each type</span> in the |
-> | | | parameter pack `T` shall be complete or |
-> | | | (possibly *cv*) `void`. A program may |
-> | | | specialize this trait if at least one |
-> | | | template parameter in the |
-> | | | specialization <span style="color:red; text-decoration:line-through">is</span><span style="color:#009a9a">depends on</span> a user-defined type |
-> | | | <span style="color:#009a9a">and `sizeof...(T) == 2`</span>. &lbrack; *Note:* Such |
-> | | | specializations are needed only |
-> | | | when explicit conversions are desired |
-> | | | among the template arguments. --*end note* \] |
-> | | | |
-> | | | |
-> | <span style="color:#009a9a">`template <class T, class U,`</span> |  | <span style="color:#009a9a">The primary template shall have no member</span> |
-> | <span style="color:#009a9a">&nbsp;&nbsp;`template <class> class TQual,`</span> |  | <span style="color:#009a9a">typedef `type`. A program may specialize this trait</span> |
-> | <span style="color:#009a9a">&nbsp;&nbsp;`template <class> class UQual>`</span> |  | <span style="color:#009a9a">if at least one template parameter in the</span> |
-> | <span style="color:#009a9a">`struct basic_common_reference;`</span> |  | <span style="color:#009a9a">specialization depends on a user-defined type.</span> |
-> | | | <span style="color:#009a9a">In such a specialization, a member typedef</span> |
-> | | | <span style="color:#009a9a">`type` may be defined or omitted. If it is</span> |
-> | | | <span style="color:#009a9a">omitted, there shall be no member `type`.</span> |
-> | | | <span style="color:#009a9a">&lbrack; *Note:* -- Such specializations may be</span> |
-> | | | <span style="color:#009a9a">used to influence the result of</span>|
-> | | | <span style="color:#009a9a">`common_reference` --*end note* ]</span>|> | | | |
-> | | | |
-> | <span style="color:#009a9a">`template <class... T>`</span> |  | <span style="color:#009a9a">The member typedef `type` shall be</span> |
-> | <span style="color:#009a9a">`struct common_reference;`</span> |  | <span style="color:#009a9a">defined or omitted as specified below.</span> |
-> | | | <span style="color:#009a9a">If it is omitted, there shall be no</span> |
-> | | | <span style="color:#009a9a">member `type`. Each type in the</span> |
-> | | | <span style="color:#009a9a">parameter pack `T` shall be complete or</span> |
-> | | | <span style="color:#009a9a">(possibly *cv*) `void`. A program may</span> |
-> | | | <span style="color:#009a9a">specialize this trait if at least one</span> |
-> | | | <span style="color:#009a9a">template parameter in the</span> |
-> | | | <span style="color:#009a9a">specialization depends on a user-defined type</span> |
-> | | | <span style="color:#009a9a">and `sizeof...(T) == 2`. [ *Note:* Such</span> |
-> | | | <span style="color:#009a9a">specializations are needed to properly</span> |
-> | | | <span style="color:#009a9a">handle proxy reference types in generic</span> |
-> | | | <span style="color:#009a9a">code. --*end note* \]</span> |
+<blockquote>
+<table border="1">
+<caption>Table 49 &mdash; Type property predicates</caption>
+<tr>
+<th align="center">Template</th>
+<th align="center">Condition</th>
+<th align="center">Comments</th>
+</tr>
+
+<tr>
+<td colspan="3" align="center">
+<tt>&hellip;</tt>
+</td>
+</tr>
+
+<tr>
+<td>
+<tt>template <class... T><br/>
+struct common_type;</tt>
+</td>
+<td>
+</td>
+<td>
+The member typedef type shall be defined or omitted as specified below.<br/>
+If it is omitted, there shall be no member type. <del>All types</del><ins>Each type</ins> in<br/>
+the parameter pack <tt>T</tt> shall be complete or (possibly <em>cv</em>) <tt>void</tt>. A program<br/>
+may specialize this trait if at least one template parameter in the<br/>
+specialization <del>is</del><ins>depends on</ins> a user-defined type <ins>and <tt>sizeof...(T) == 2</tt></ins>.<br/>
+[ <em>Note:</em> Such specializations are needed only when explicit conversions<br/>
+are desired among the template arguments. &mdash;<em>end note</em> ]
+</td>
+</tr>
+
+<tr>
+<td>
+<ins><tt>template &lt;class T, class U,<br/>
+&nbsp;&nbsp;template &lt;class&gt; class TQual,<br/>
+&nbsp;&nbsp;template &lt;class&gt; class UQual&gt;<br/>
+struct basic_common_reference;</tt><ins>
+</td>
+<td></td>
+<td>
+<ins>The primary template shall have no member typedef <tt>type</tt>. A program<br/>
+may specialize this trait if at least one template parameter in the specialization<br/>
+depends on a user-defined type. In such a specialization, a member typedef<br/>
+<tt>type</tt> may be defined or omitted. If it is omitted, there shall be no member<br/>
+<tt>type</tt>. [ <em>Note:</em> Such specializations may be used to influence the result<br/>
+of <tt>common_reference</tt> &mdash;<em>end note</em> ]</ins>
+</td>
+</tr>
+
+<tr>
+<td>
+<ins><tt>template &lt;class... T&gt;<br/>
+struct common_reference;</tt></ins>
+</td>
+<td></td>
+<td>
+<ins>The member typedef type shall be defined or omitted as specified below. If<br/>
+it is omitted, there shall be no member type. Each type in the parameter pack <tt>T</tt><br/>
+shall be complete or (possibly <em>cv</em>) <tt>void</tt>. A program may specialize this<br/>
+trait if at least one template parameter in the specialization depends on a<br/>
+user-defined type and <tt>sizeof...(T) == 2</tt>. [ <em>Note:</em> Such specializations are<br/>
+needed to properly handle proxy reference types in generic code. &mdash;<em>end note</em> ]</ins>
+</td>
+</tr>
+
+<tr>
+<td colspan="3" align="center">
+<tt>&hellip;</tt>
+</td>
+</tr>
+</table>
+</blockquote>
 
 Delete [meta.trans.other]/p3 and replace it with the following:
 
@@ -656,13 +812,13 @@ Delete [meta.trans.other]/p3 and replace it with the following:
 >
 >> <span style="color:#009a9a">(3.1) -- If `A` and `B` are both lvalue reference types, `COMMON_REF(A, B)` is `COND_RES(COPYCV(X, Y) &, COPYCV(Y, X) &)`.
 >> (3.2) -- Otherwise, let `C` be `RREF_RES(COMMON_REF(X&, Y&))`. If `A` and `B` are both rvalue reference types, and `C` is well-formed, and `is_convertible<A, C>::value` and `is_convertible<B, C>::value` are true, then `COMMON_REF(A, B)` is `C`.
->> (3.3) -- Otherwise, let `D` be `COMMON_REF(const X&, Y&)`. If `A` is an rvalue reference and `B` is an lvalue reference and `D` is well-formed and `is_convertible<A, D>::value` is true, then `COMMON_REF(A, B)` is `D`.
+>> (3.3) -- Otherwise, let `D` be `COMMON_REF(const X&, Y&)`. If `A` is an rvalue reference and `B` is an lvalue reference and `D` is well-formed and `is_convertible<A, D>::value` is `true`, then `COMMON_REF(A, B)` is `D`.
 >> (3.4) -- Otherwise, if `A` is an lvalue reference and `B` is an rvalue reference, then `COMMON_REF(A, B)` is `COMMON_REF(B, A)`.
 >> (3.5) -- Otherwise, `COMMON_REF(A, B)` is `decay_t<COND_RES(CREF(A), CREF(B))>`.</span>
 >
 > <span style="color:#009a9a">If any of the types computed above are ill-formed, then `COMMON_REF(A, B)` is ill-formed.</span>
 >
-> <span style="color:#009a9a">4\. <span style="color:blue">[*Editorial note:* -- The following text in black is taken from the current C++17 draft --*end note*]</span></span> For the `common_type` trait applied to a parameter pack `T` of types, the member `type` shall be either defined or not present as follows:
+> <span style="color:#009a9a">4\.</span> <ednote>[*Editorial note:* -- The following text in black is taken from the current C++17 draft --*end note*]</ednote> For the `common_type` trait applied to a parameter pack `T` of types, the member `type` shall be either defined or not present as follows:
 >
 >> (4.1) -- If `sizeof...(T)` is zero, there shall be no member `type`.
 >> (4.2) -- Otherwise, if `sizeof...(T)` is one, let <span style="color:red; text-decoration:line-through">`T0`</span><span style="color:#009a9a">`T1`</span> denote the sole type in the pack `T`. The member typedef `type` shall denote the same type as `decay_t<`<span style="color:red; text-decoration:line-through">`T0`</span><span style="color:#009a9a">`T1`</span>`>`.
@@ -727,7 +883,7 @@ Add a new paragraph (2) to the description of `Readable`:
 > `iter_move(i)` selects a unary non-member function
 > "`iter_move`" from a candidate set that includes the
 > `iter_move` function found in
-> `<experimental/ranges_v1/iterator>` ([iterator.synopsis])
+> `<experimental/ranges/iterator>` ([iterator.synopsis])
 > and the lookup set produced by argument-dependent lookup
 > ([basic.lookup.argdep]).
 
@@ -796,7 +952,7 @@ Change concept `IndirectlySwappable` ([indirectlyswappable.iterators]) to be as 
 > template <class I1, class I2 = I1>
 > concept bool IndirectlySwappable() {
 >   return Readable<I1>() && Readable<I2>() &&
->     requires (I1 i1, I2 i2) {
+>     requires (const I1 i1, const I2 i2) {
 >       iter_swap(i1, i2);
 >       iter_swap(i2, i1);
 >       iter_swap(i1, i1);
@@ -811,7 +967,7 @@ Change the description of `IndirectlySwappable`:
 > `iter_swap` expressions selects a binary non-member function
 > "`iter_swap`" from a candidate set that includes the two
 > `iter_swap` functions found in
-> `<experimental/ranges_v1/iterator>` ([iterator.synopsis])
+> `<experimental/ranges/iterator>` ([iterator.synopsis])
 > and the lookup set produced by argument-dependent lookup
 > ([basic.lookup.argdep]).
 >
@@ -923,7 +1079,7 @@ Note: These definitions of `IndirectCallable` and `IndirectCallablePredicate` ar
 
 There are several options for preserving the full expressive power of the N4382 concepts should that prove desirable: (1) Require callability testing only with arguments "`value_type_t<Is>...`", "`reference_t<Is>..`" , and "`iter_common_reference_t<Is>...`", leaving the other combinations as merely documented constraints that are not required to be tested; (2) Actually test the full cross-product of argument types using meta-programming techniques, accepting the compile-time hit when argument lists get large. (The latter has been tested and shown to be feasable.)
 
-Change 24.6 "Header `<experimental/ranges_v1/iterator>` synopsis" ([iterator.synopsis]) by adding the following to namespace `std::experimental::ranges_v1`:
+Change 24.6 "Header `<experimental/ranges/iterator>` synopsis" ([iterator.synopsis]) by adding the following to namespace `std::experimental::ranges::v1`:
 
 > ```c++
 > // Exposition only
@@ -936,12 +1092,13 @@ Change 24.6 "Header `<experimental/ranges_v1/iterator>` synopsis" ([iterator.syn
 >   requires _Dereferenceable<I>
 > auto iter_move(I&& r) noexcept(see below) -> see below;
 >
+> // is_indirectly_movable (REF)
+> template <class I1, class I2>
+> struct is_indirectly_movable;
+>
 > // is_nothrow_indirectly_movable (REF)
 > template <class I1, class I2>
 > struct is_nothrow_indirectly_movable;
->
-> template <class I1, class I2>
-> constexpr bool is_nothrow_indirectly_movable_v = is_nothrow_indirectly_movable_t<I1, I2>::value;
 >
 > template <_Dereferenceable I>
 >   requires requires (I& r) { { iter_move(r) } -> auto&&; }
@@ -954,7 +1111,7 @@ Change 24.6 "Header `<experimental/ranges_v1/iterator>` synopsis" ([iterator.syn
 >   Readable _R2 = remove_reference_t<I2>>
 >   requires Swappable<reference_t<_R1>, reference_t<_R2>>()
 > void iter_swap(I1&& r1, I2&& r2)
->   noexcept(is_nothrow_swappable_v<reference_t<_R1>, reference_t<_R2>>);
+>   noexcept(is_nothrow_swappable_with<reference_t<_R1>, reference_t<_R2>>::value);
 >
 > template <class I1, class I2,
 >   Readable _R1 = std::remove_reference_t<I1>,
@@ -962,15 +1119,16 @@ Change 24.6 "Header `<experimental/ranges_v1/iterator>` synopsis" ([iterator.syn
 >   requires !Swappable<reference_t<_R1>, reference_t<_R2>>()
 >     && IndirectlyMovable<_R1, _R2>() && IndirectlyMovable<_R2, _R1>()
 > void iter_swap(I1&& r1, I2&& r2)
->   noexcept(is_nothrow_indirectly_movable_v<_R1, _R2> &&
->            is_nothrow_indirectly_movable_v<_R2, _R1>);
+>   noexcept(is_nothrow_indirectly_movable<_R1, _R2>::value &&
+>            is_nothrow_indirectly_movable<_R2, _R1>::value);
+>
+> // is_indirectly_swappable (REF)
+> template <class I1, class I2 = I1>
+> struct is_indirectly_swappable;
 >
 > // is_nothrow_indirectly_swappable (REF)
-> template <class I1, class I2>
+> template <class I1, class I2 = I1>
 > struct is_nothrow_indirectly_swappable;
->
-> template <class I1, class I2>
-> constexpr bool is_nothrow_indirectly_swappable_v = is_nothrow_indirectly_swappable_t<I1, I2>::value;
 >
 > template <Readable I>
 > using iter_common_reference_t =
@@ -997,7 +1155,7 @@ subsubsection, insert the following:
 > 
 > 3\. *Returns:* `std::move(*r)`
 >
-> <span style="color:blue">[*Editorial note:* -- Future work: Rather than defining a new `iter_swap` in namespace `std::experimental::ranges_v1`, it will probably be necessary to constrain the `iter_swap` in namespace `std` much the way the Ranges TS constrains `std::swap`. --*end note*]</span>
+> <span style="color:blue">[*Editorial note:* -- Future work: Rather than defining a new `iter_swap` in namespace `std::experimental::ranges::v1`, it will probably be necessary to constrain the `iter_swap` in namespace `std` much the way the Ranges TS constrains `std::swap`. --*end note*]</span>
 >
 > > ```c++
 > > template <class I1, class I2,
@@ -1005,7 +1163,7 @@ subsubsection, insert the following:
 > >   Readable _R2 = remove_reference_t<I2>>
 > >   requires Swappable<reference_t<_R1>, reference_t<_R2>>()
 > > void iter_swap(I1&& r1, I2&& r2)
-> >   noexcept(is_nothrow_swappable_v<reference_t<_R1>, reference_t<_R2>>);
+> >   noexcept(is_nothrow_swappable_with<reference_t<_R1>, reference_t<_R2>>::value);
 > > ```
 >
 > 4\. *Effects*: `swap(*r1, *r2)`
@@ -1017,8 +1175,8 @@ subsubsection, insert the following:
 > >   requires !Swappable<reference_t<_R1>, reference_t<_R2>>()
 > >     && IndirectlyMovable<_R1, _R2>() && IndirectlyMovable<_R2, _R1>()
 > > void iter_swap(I1&& r1, I2&& r2)
-> >   noexcept(is_nothrow_indirectly_movable_v<_R1, _R2> &&
-> >            is_nothrow_indirectly_movable_v<_R2, _R1>);
+> >   noexcept(is_nothrow_indirectly_movable<_R1, _R2>::value &&
+> >            is_nothrow_indirectly_movable<_R2, _R1>::value);
 > > ```
 >
 > 5\. *Effects*: Exchanges values referred to by two `Readable` objects.
@@ -1037,10 +1195,10 @@ To [iterator.assoc] (24.7.1), add the following definition of `rvalue_reference_
 
 > [...] In addition, the type
 > > ```c++
-> > reference_t<Readable>
+> > reference_t<R>
 > > ```
 >
-> shall be an alias for `decltype(*declval<Readable>())`.
+> shall be an alias for `decltype(*declval<R&>())`.
 
 ... to this:
 
@@ -1049,6 +1207,7 @@ To [iterator.assoc] (24.7.1), add the following definition of `rvalue_reference_
 > > ```c++
 > > template <_Dereferenceable I>
 > > using reference_t = decltype(*declval<I&>());
+> >
 > > template <_Dereferenceable I>
 > >   requires requires (I& r) {
 > >     { iter_move(r) } -> auto&&;
@@ -1057,10 +1216,10 @@ To [iterator.assoc] (24.7.1), add the following definition of `rvalue_reference_
 > >   decltype(iter_move(declval<I&>()));
 > > ```
 >
-> Overload resolution (13.3) on the expression `iter_move(t)` selects a
+> Overload resolution ([over.match]) on the expression `iter_move(t)` selects a
 > unary non-member function "`iter_move`" from a candidate set that includes
-> the function `iter_move` in `<experimental/ranges_v1/iterator>` (24.6) and
-> the lookup set produced by argument-dependent lookup (3.4.2).
+> the function `iter_move` in `<experimental/ranges/iterator>` ([iterator.synopsis]) and
+> the lookup set produced by argument-dependent lookup ([basic.lookup.argdep]).
 
 After subsubsection "Iterator operations" ([iterator.operations]), add a
 new subsubsection "Iterator traits" ([iterator.traits]). Under that
@@ -1068,7 +1227,15 @@ subsubsection, include the following:
 
 > > ```c++
 > > template <class In, class Out>
+> > struct is_indirectly_movable : false_type { };
+> >
+> > template <class In, class Out>
+> >   requires IndirectlyMovable<In, Out>()
+> > struct is_indirectly_movable<In, Out> : true_type { };
+> >
+> > template <class In, class Out>
 > > struct is_nothrow_indirectly_movable : false_type { };
+> >
 > > template <class In, class Out>
 > >   requires IndirectlyMovable<In, Out>()
 > > struct is_nothrow_indirectly_movable<In, Out> :
@@ -1079,38 +1246,51 @@ subsubsection, include the following:
 > >     is_nothrow_assignable<reference_t<Out>, value_type_t<In>>::value>
 > > { };
 > > 
+> > template <class I1, class I2 = I1>
+> > struct is_indirectly_swappable : false_type { };
+> >
 > > template <class I1, class I2>
+> >   requires IndirectlySwappable<I1, I2>()
+> > struct is_indirectly_swappable<I1, I2> : true_type { };
+> > 
+> > template <class I1, class I2 = I1>
 > > struct is_nothrow_indirectly_swappable : false_type { };
+> >
 > > template <class I1, class I2>
 > >   requires IndirectlySwappable<I1, I2>()
 > > struct is_nothrow_indirectly_swappable<I1, I2> :
 > >   bool_constant<
-> >     noexcept(iter_swap(declval<I1>(), declval<I2>())) &&
-> >     noexcept(iter_swap(declval<I2>(), declval<I1>())) &&
-> >     noexcept(iter_swap(declval<I1>(), declval<I1>())) &&
-> >     noexcept(iter_swap(declval<I2>(), declval<I2>()))>
+> >     noexcept(iter_swap(declval<I1&>(), declval<I2&>())) &&
+> >     noexcept(iter_swap(declval<I2&>(), declval<I1&>())) &&
+> >     noexcept(iter_swap(declval<I1&>(), declval<I1&>())) &&
+> >     noexcept(iter_swap(declval<I2&>(), declval<I2&>()))>
 > > { };
 > > ```
+>
+> 1\. Overload resolution ([over.match]) on the four expressions `iter_move(x, y)` selects a
+> binary non-member function "`iter_swap`" from a candidate set that includes
+> the two functions `iter_swap` in `<experimental/ranges/iterator>` ([iterator.synopsis]) and
+> the lookup set produced by argument-dependent lookup ([basic.lookup.argdep]).
 
 Change 25.1 "Algorithms: General" ([algorithms.general]) as follows:
 
-> <pre>
-> template&lt;InputIterator I, Sentinel&lt;I&gt; S, WeaklyIncrementable O,
->     class Proj = identity, IndirectCallableRelation&lt;projected&lt;I, Proj&gt;&gt; R = equal_to&lt;&gt;&gt;
->   requires IndirectlyCopyable&lt;I, O&gt;() &amp;&amp; (ForwardIterator&lt;I&gt;() ||
->     ForwardIterator&lt;O&gt;() <span style="color:red; text-decoration:line-through">|| Copyable&lt;value_type_t&lt;I&gt;&gt;()</span>)
+> <pre><code>
+> <span class="kw">template</span>&lt;InputIterator I, Sentinel&lt;I&gt; S, WeaklyIncrementable O,
+>     <span class="kw">class</span> Proj = identity, IndirectCallableRelation&lt;projected&lt;I, Proj&gt;&gt; R = equal_to&lt;&gt;&gt;
+>   <span class="kw">requires</span> IndirectlyCopyable&lt;I, O&gt;() &amp;&amp; (ForwardIterator&lt;I&gt;() ||
+>     ForwardIterator&lt;O&gt;() <del>|| Copyable&lt;value_type_t&lt;I&gt;&gt;()</del>)
 >   tagged_pair&lt;tag::in(I), tag::out(O)&gt;
 >     unique_copy(I first, S last, O result, R comp = R{}, Proj proj = Proj{});
 >
-> template&lt;InputRange Rng, WeaklyIncrementable O, class Proj = identity,
+> <span class="kw">template</span>&lt;InputRange Rng, WeaklyIncrementable O, <span class="kw">class</span> Proj = identity,
 >     IndirectCallableRelation&lt;projected&lt;IteratorType&lt;Rng&gt;, Proj&gt;&gt; R = equal_to&lt;&gt;&gt;
->   requires IndirectlyCopyable&lt;IteratorType&lt;Rng&gt;, O&gt;() &amp;&amp;
+>   <span class="kw">requires</span> IndirectlyCopyable&lt;IteratorType&lt;Rng&gt;, O&gt;() &amp;&amp;
 >     (ForwardIterator&lt;IteratorType&lt;Rng&gt;&gt;() || ForwardIterator&lt;O&gt;()
->       <span style="color:red; text-decoration:line-through">|| Copyable&lt;value_type_t&lt;IteratorType&lt;Rng&gt;&gt;&gt;()</span>)
+>       <del>|| Copyable&lt;value_type_t&lt;IteratorType&lt;Rng&gt;&gt;&gt;()</del>)
 >   tagged_pair&lt;tag::in(safe_iterator_t&lt;Rng&gt;), tag::out(O)&gt;
 >     unique_copy(Rng&amp;&amp; rng, O result, R comp = R{}, Proj proj = Proj{});
 >
-> </pre>
+> </code></pre>
 
 Make the identical change to 25.3.9 "Unique" ([alg.unique]).
 
