@@ -665,9 +665,9 @@ weak input iterators are not required to be comparable for equality.
       Readable<I>() &&
       requires(I i, const I ci) {
         typename @\oldtxt{IteratorCategory}\newtxt{iterator_category_t}@<I>;
+        requires DerivedFrom<@\oldtxt{IteratorCategory}\newtxt{iterator_category_t}@<I>, weak_input_iterator_tag>();
         { i++ } -> Readable; // not required to be equality preserving
         requires Same<@\oldtxt{ValueType}\newtxt{value_type_t}@<I>, @\oldtxt{ValueType}\newtxt{value_type_t}@<decltype(i++)>>();
-        requires DerivedFrom<@\oldtxt{IteratorCategory}\newtxt{iterator_category_t}@<I>, weak_input_iterator_tag>();
         { *ci } -> const @\oldtxt{ValueType}\newtxt{value_type_t}@<I>&;
       };
   }
@@ -688,8 +688,8 @@ The \tcode{InputIterator} concept is a refinement of \tcode{Iterator}~(\ref{iter
   template <class I>
   concept bool InputIterator() {
     return WeakInputIterator<I>() &&
-      Iterator<I>() &&
-      DerivedFrom<@\oldtxt{IteratorCategory}\newtxt{iterator_category_t}@<I>, input_iterator_tag>();
+      DerivedFrom<@\oldtxt{IteratorCategory}\newtxt{iterator_category_t}@<I>, input_iterator_tag>() &&
+      Iterator<I>();
   }
 \end{codeblock}
 
@@ -809,8 +809,8 @@ and adds the multi-pass guarantee, described below.
   template <class I>
   concept bool ForwardIterator() {
     return InputIterator<I>() &&
-      Incrementable<I>() &&
-      DerivedFrom<@\oldtxt{IteratorCategory}\newtxt{iterator_category_t}@<I>, forward_iterator_tag>();
+      DerivedFrom<@\oldtxt{IteratorCategory}\newtxt{iterator_category_t}@<I>, forward_iterator_tag>() &&
+      Incrementable<I>();
   }
 \end{codeblock}
 \end{addedblock}
@@ -945,8 +945,8 @@ notation via subscripting.
   template <class I>
   concept bool RandomAccessIterator() {
     return BidirectionalIterator<I>() &&
-      @\newtxt{Strict}@TotallyOrdered<I>() &&
       DerivedFrom<@\oldtxt{IteratorCategory}\newtxt{iterator_category_t}@<I>, random_access_iterator_tag>() &&
+      @\newtxt{Strict}@TotallyOrdered<I>() &&
       SizedIteratorRange<I, I>() && // see below
       requires (I i, const I j, const @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n) {
         { i += n } -> Same<I&>;
