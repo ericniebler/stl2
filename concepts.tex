@@ -322,8 +322,8 @@ Then \tcode{Assignable<T, U>()} is satisfied if and only if
 \begin{itemdecl}
 template <class T>
 concept bool Swappable() {
-  return requires(T&& t, T&& u) {
-    (void)swap(std::forward<T>(t), std::forward<T>(u));
+  return requires(T&& @\oldtxt{t}\newtxt{a}@, T&& @\oldtxt{u}\newtxt{b}@) {
+    @\oldtxt{(void)}\newtxt{ranges::}@swap(std::forward<T>(@\oldtxt{t}\newtxt{a}@), std::forward<T>(@\oldtxt{u}\newtxt{b}@));
   };
 }
 
@@ -333,21 +333,19 @@ concept bool Swappable() {
     Swappable<U>() &&
     Common<T, U>() &&
     requires(T&& t, U&& u) {
-      (void)swap(std::forward<T>(t), std::forward<U>(u));
-      (void)swap(std::forward<U>(u), std::forward<T>(t));
+      @\oldtxt{(void)}\newtxt{ranges::}@swap(std::forward<T>(t), std::forward<U>(u));
+      @\oldtxt{(void)}\newtxt{ranges::}@swap(std::forward<U>(u), std::forward<T>(t));
     };
 }
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\enternote The casts to \tcode{void} in the required expressions indicate
+\oldtxt{\enternote The casts to \tcode{void} in the required expressions indicate
 that the value---if any---of the call to \tcode{swap} does not participate in the
 semantics. Callers are effectively forbidden to rely on the return type or value of
 a call to \tcode{swap}, and user customizations of \tcode{swap} need not return
-equal values when given equal operands. \exitnote
-
-\ednote{The following is copied almost verbatim from [swappable.requirements]}
+equal values when given equal operands. \exitnote}
 
 \pnum
 This subclause provides definitions for swappable types and expressions. In these
@@ -357,8 +355,12 @@ denote an expression of type \tcode{U}.
 \pnum
 An object \tcode{t} is \defn{swappable with} an object \tcode{u} if and only if
 \tcode{Swappable<T, U>()} is satisfied. \tcode{Swappable<T, U>()} is satisfied if
-and only if:
+and only if\oldtxt{:} \newtxt{given distinct objects \tcode{tt} equal to \tcode{t}
+and \tcode{uu} equal to \tcode{u}, after evaluating either
+\tcode{ranges::swap(t, u)} or \tcode{ranges::swap(u, t)}, \tcode{tt} is equal to
+\tcode{u} and \tcode{uu} is equal to \tcode{t}.}
 
+{\color{oldclr}
 \begin{itemize}
 \item the requires clause above is evaluated in the context described below, and
 
@@ -391,6 +393,7 @@ qualified name lookup applied to the expression \tcode{std::swap(t, u)} or
 \enternote It is unspecified whether a library component that has a swappable
 requirement includes the header \tcode{<utility>} to ensure an appropriate
 evaluation context. \exitnote
+} %%\color{oldclr}
 
 \pnum
 An rvalue or lvalue \tcode{t} is \defn{swappable} if and only if \tcode{t} is
@@ -404,17 +407,17 @@ is performed in an appropriate context under the various conditions as follows:
 // Requires: \tcode{std::forward<T>(t)} shall be swappable with \tcode{std::forward<U>(u)}.
 template <class T, class U>
 void value_swap(T&& t, U&& u) {
-  using std::swap;
-  swap(std::forward<T>(t), std::forward<U>(u)); // OK: uses ``swappable with'' conditions
-                                                // for rvalues and lvalues
+  using std::@\newtxt{experimental::ranges::}@swap;
+  swap(std::forward<T>(t), std::forward<U>(u));         // OK: uses ``swappable with'' conditions
+                                                        // for rvalues and lvalues
 }
 
 // Requires: lvalues of \tcode{T} shall be swappable.
 template <class T>
 void lv_swap(T& t1, T& t2) {
-  using std::swap;
-  swap(t1, t2);                                 // OK: uses swappable conditions for
-}                                               // lvalues of type \tcode{T}
+  using std::@\newtxt{experimental::ranges::}@swap;
+  swap(t1, t2);                                         // OK: uses swappable conditions for
+}                                                       // lvalues of type \tcode{T}
 
 namespace N {
   struct A { int m; };
@@ -422,10 +425,10 @@ namespace N {
   Proxy proxy(A& a) { return Proxy{ &a }; }
 
   void swap(A& x, Proxy p) {
-    std::swap(x.m, p.a->m);                     // OK: uses context equivalent to swappable
-                                                // conditions for fundamental types
+    std::@\newtxt{experimental::ranges::}@swap(x.m, p.a->m);  // OK: uses context equivalent to swappable
+                                                   // conditions for fundamental types
   }
-  void swap(Proxy p, A& x) { swap(x, p); }      // satisfy symmetry constraint
+  void swap(Proxy p, A& x) { swap(x, p); }         // satisfy symmetry constraint
 }
 
 int main() {
