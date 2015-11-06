@@ -5,36 +5,25 @@
 \setcounter{section}{1}
 \rSec1[utility]{Utility components}
 
-\ednote{``\tcode{swap}'' is a customization point found by Argument-Dependent Lookup. Due to the nature of
-ADL, the \tcode{swap} in namespace \tcode{std} would be considered if either argument has namespace \tcode{std}
-as an associated type. If \tcode{std::swap} remains unconstrained, then the \tcode{Swappable} concept will
-erroneously return true for some types that are not in fact swappable. Below, we suggest adding constraints
-directly to the overloads of \tcode{swap} in namespace \tcode{std} rather than defining new constrained
-overloads of \tcode{swap} in namespace \tcode{std::experimental::ranges\oldtxt{_v1}}. The precise mechanism by which
-\tcode{swap} is constrained such that it is usable in build environments lacking the concepts language feature
-is unspecified.}
-
+{\color{oldoldclr}
 \synopsis{Header \tcode{<utility>} synopsis}
 
 \pnum
 Change the \tcode{<utility>} synopsis as follows:
 
 \begin{codeblock}
-@\added{namespace std \{}@
   // ... as before ..
 
   // \ref{utility.swap}, swap:
   template<class T>
-    @\added{requires experimental::ranges\oldtxt{_v1}::Movable<T>()}@
   void swap(T& a, T& b) noexcept(@\seebelow@);
 
   template <class T, size_t N>
-    @\added{requires requires (remove_all_extents_t<T>\& t) \{ swap(t, t); \}}@
   void swap(T (&a)[N], T (&b)[N]) noexcept(noexcept(swap(*a, *b)));}
 
   // ... as before ..
-@\added{\}}@
 \end{codeblock}
+}
 
 {\color{addclr}
 \pnum
@@ -44,7 +33,10 @@ Change the \tcode{<utility>} synopsis as follows:
 \begin{codeblock}
 @\added{namespace std \{ namespace experimental \{ namespace ranges\oldtxt{_v1}\newtxt{ \{ inline namespace v1} \{}@
   @\added{// \ref{utility.swap}, swap:}@
-  @\added{using std::swap;}@
+  @\oldtxt{using std::swap;}@
+  @\newtxt{namespace \{}@
+    @\newtxt{constexpr \unspec swap = \unspec;}@
+  @\newtxt{\}}@
 
   // \ref{utility.exchange}, exchange:
   template <@\removed{class}\added{Movable}@ T, class U=T>
@@ -68,10 +60,10 @@ Change the \tcode{<utility>} synopsis as follows:
     requires sizeof...(Tags) <= tuple_size<Base>::value
   struct tagged;
 
-  // \ref{tagged.special}, tagged specialized algorithms
-  template <class Base, class... Tags>
-    requires Swappable<Base&>()
-  void swap(tagged<Base, Tags...>& x, tagged<Base, Tags...>& y) noexcept(@\seebelow@);
+  @\oldtxt{// \ref{tagged.special}, tagged specialized algorithms}@
+  @\oldtxt{template <class Base, class... Tags>}@
+    @\oldtxt{requires Swappable<Base\&>()}@
+  @\oldtxt{void swap(tagged<Base, Tags...>\& x, tagged<Base, Tags...>\& y) noexcept(\seebelow);}@
 
   // \ref{tagged.pairs}, tagged pairs
   template <TaggedType T1, TaggedType T2> using tagged_pair = @\seebelow@;
@@ -84,7 +76,7 @@ namespace std {
   // \ref{tagged.astuple}, tuple-like access to tagged
   template <class Base, class... Tags>
   struct tuple_size<experimental::ranges@\oldtxt{_v1}@::tagged<Base, Tags...>>;
-  
+
   template <size_t N, class Base, class... Tags>
   struct tuple_element<N, experimental::ranges@\oldtxt{_v1}@::tagged<Base, Tags...>>;
 }
@@ -124,13 +116,74 @@ namespace std { namespace experimental { namespace ranges@\oldtxt{_v1}\newtxt{ \
 \setcounter{subsection}{1}
 \rSec2[utility.swap]{swap}
 
-\ednote{The following edits to the two \tcode{swap} overloads are to be applied to the versions in
-namespace \tcode{std}.}
-
+{\color{newclr}
 \indexlibrary{\idxcode{swap}}%
+\pnum The name \tcode{swap} denotes a customization point
+object~(\ref{customization.point.object}). The effect of the expression
+\tcode{ranges::swap(E1, E2)} for some expressions \tcode{E1}
+and \tcode{E2} is equivalent to:
+
+\begin{itemize}
+\item
+  \tcode{(void)swap(E1, E2)}, with overload resolution
+  performed in a context that includes the declarations
+\begin{codeblock}
+  template <class T>
+  void swap(T&, T&) = delete;
+  template <class T, size_t N>
+  void swap(T(&)[N], T(&)[N]) = delete;
+\end{codeblock}
+  and does not include a declaration of \tcode{ranges::swap}.
+  If the function selected by overload resolution does not
+  exchange the values denoted by \tcode{E1} and \tcode{E2},
+  the program is ill-formed with no diagnostic required.
+
+\item
+  Otherwise, \tcode{(void)swap_ranges(E1, E2)} if \tcode{E1} and
+  \tcode{E2} are lvalues of array types~(\cxxref{basic.compound})
+  of equal extent and \tcode{ranges::swap(*(E1), *(E2))}
+  is a valid expression, except that
+  \tcode{noexcept(ranges::swap(E1, E2))} is equal to
+  \tcode{noexcept(ranges::swap(*(E1), *(E2)))}.
+
+  \ednote{This formulation intentionally allows swapping arrays
+  with identical extent and differing element types, but only
+  when swapping the element types is well-defined. Swapping
+  arrays of \tcode{int} and \tcode{double} continues to be
+  unsound, but \tcode{Swappable<T\&, U\&>()} implies
+  \tcode{Swappable<T(\&)[N], U(\&)[N]>()}.}
+
+\item
+  Otherwise, if \tcode{E1} and \tcode{E2} are lvalues of the
+  same type \tcode{T} which meets the syntactic requirements of
+  \tcode{Movable<T>()}, exchanges the denoted values.
+  \tcode{ranges::swap(E1, E2)} is a constant expression if
+  the constructor selected by overload resolution for
+  \tcode{T\{std::move(E1)\}} is a constexpr constructor and
+  the expression \tcode{E1 = std::move(E2)} can appear in a
+  constexpr function. \tcode{noexcept(ranges::swap(E1, E2))}
+  is equal to \tcode{is_nothrow_move_constructible<T>::value
+  \&\& is_nothrow_move_assignable<T>::value}. If
+  \tcode{Movable<T>()} is not satisfied, the program is
+  ill-formed with no diagnostic required.
+  \tcode{ranges::swap(E1, E2)} has type \tcode{void}.
+
+\item
+  Otherwise, \tcode{ranges::swap(E1, E2)} is ill-formed.
+\end{itemize}
+
+\pnum
+\remark Whenever \tcode{ranges::swap(E1, E2} is a valid
+expression, it exchanges the values denoted by \tcode{E1}
+and \tcode{E2} and has type \tcode{void}.
+} %%\color{newclr}
+
+\ednote{\oldtxt{The following edits to the two \tcode{swap} overloads are to be applied to the versions in
+namespace \tcode{std}.}}
+
+{\color{oldoldclr}
 \begin{itemdecl}
 template<class T>
-  @\added{requires experimental::ranges\oldtxt{_v1}::Movable<T>()}@
 void swap(T& a, T& b) noexcept(@\seebelow@);
 \end{itemdecl}
 
@@ -140,11 +193,10 @@ void swap(T& a, T& b) noexcept(@\seebelow@);
 
 \begin{codeblock}
 is_nothrow_move_constructible<T>::value &&
-is_nothrow_move_assignable<T>::value @\added{\&\&}@
-@\added{is_nothrow_destructible<T>::value}@
+is_nothrow_move_assignable<T>::value @\oldtxt{\&\&}@
+@\oldtxt{is_nothrow_destructible<T>::value}@
 \end{codeblock}
 
-{\color{addclr}
 \pnum
 \remarks
 A library implementor is free to omit the \tcode{requires} clause so long as
@@ -155,8 +207,6 @@ is_move_constructible<T>::value &&
 is_move_assignable<T>::value &&
 is_destructible<T>::value
 \end{codeblock}
-\ednote{This is to support compilation environments that do not support concepts.}
-}
 
 \removed{
 \pnum
@@ -173,11 +223,11 @@ and
 \effects
 Exchanges values stored in two locations.
 \end{itemdescr}
+} %%\color{oldoldclr}
 
-\indexlibrary{\idxcode{swap}}%
+{\color{oldoldclr}
 \begin{itemdecl}
 template <class T, size_t N>
-  @\added{requires requires (remove_all_extents_t<T>\& t) \{ swap(t, t); \}}@
 void swap(T (&a)[N], T (&b)[N]) noexcept(noexcept(swap(*a, *b)));}
 \end{itemdecl}
 
@@ -187,21 +237,10 @@ void swap(T (&a)[N], T (&b)[N]) noexcept(noexcept(swap(*a, *b)));}
 \tcode{a[i]} shall be swappable with~(\ref{concepts.lib.corelang.swappable}) \tcode{b[i]}
 for all \tcode{i} in the range \range{0}{N}.
 
-{\color{addclr}
-\pnum
-\remarks
-A library implementor is free to omit the \tcode{requires} clause so long as
-this function does not participate in overload resolution if the following
-expression is ill-formed
-\begin{codeblock}
-swap(declval<remove_all_extents_t<T>&>(), declval<remove_all_extents_t<T>&>())
-\end{codeblock}
-\ednote{This is to support compilation environments that do not support concepts.}
-}
-
 \pnum
 \effects \tcode{swap_ranges(a, a + N, b)}
 \end{itemdescr}
+}
 
 \rSec2[utility.exchange]{exchange}
 
@@ -235,27 +274,27 @@ return old_val;
   template <class T = void>
     @\added{requires EqualityComparable<T>() || Same<T, void>()}@
   struct equal_to;
-  
+
   template <class T = void>
     @\added{requires EqualityComparable<T>() || Same<T, void>()}@
   struct not_equal_to;
-  
+
   template <class T = void>
     @\added{requires \added{Strict}TotallyOrdered<T>() || Same<T, void>()}@
   struct greater;
-  
+
   template <class T = void>
     @\added{requires \added{Strict}TotallyOrdered<T>() || Same<T, void>()}@
   struct less;
-  
+
   template <class T = void>
     @\added{requires \added{Strict}TotallyOrdered<T>() || Same<T, void>()}@
   struct greater_equal;
-  
+
   template <class T = void>
     @\added{requires \added{Strict}TotallyOrdered<T>() || Same<T, void>()}@
   struct less_equal;
-  
+
   @\added{struct identity;}@
 @\added{\}\}\}}\newtxt{\}}@
 \end{codeblock}
@@ -602,11 +641,13 @@ namespace std { namespace experimental { namespace ranges@\oldtxt{_v1} \newtxt{\
     tagged& operator=(U&& u) noexcept(@\seebelow@);
     void swap(tagged& that) noexcept(@\seebelow@)
       requires Swappable<Base&>();
+    @\newtxt{friend void swap(tagged\&, tagged\&) noexcept(\seebelow)}@
+      @\newtxt{requires Swappable<Base\&>();}@
   };
 
-  template <class Base, class... Tags>
-    requires Swappable<Base&>()
-  void swap(tagged<Base, Tags...>& x, tagged<Base, Tags...>& y) noexcept(@\seebelow@);
+  @\oldtxt{template <class Base, class... Tags>}@
+    @\oldtxt{requires Swappable<Base\&>()}@
+  @\oldtxt{void swap(tagged<Base, Tags...>\& x, tagged<Base, Tags...>\& y) noexcept(\seebelow);}@
 }}}@\newtxt{\}}@
 \end{codeblock}
 
@@ -761,12 +802,33 @@ noexcept(swap(declval<Base&>(), declval<Base&>()))
 
 \pnum
 \throws Nothing unless the call to \tcode{swap} on the \tcode{Base} sub-objects throws.
-
 \end{itemdescr}
 
-\rSec2[tagged.special]{\tcode{tagged} specialized algorithms}
-
+{\color{newclr}
 \indexlibrary{\idxcode{swap}!\tcode{tagged}}%
+\begin{itemdecl}
+friend void swap(tagged& lhs, tagged& rhs) noexcept(@\seebelow@)
+  requires Swappable<Base&>();
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\remarks The expression in the \tcode{noexcept} is equivalent to:
+
+\begin{codeblock}
+noexcept(lhs.swap(rhs))
+\end{codeblock}
+
+\pnum
+\effects \tcode{lhs.swap(rhs)}.
+
+\pnum
+\throws Nothing unless the call to \tcode{lhs.swap(rhs)} throws.
+\end{itemdescr}
+}
+
+{\color{oldclr}
+\rSec2[tagged.special]{\tcode{tagged} specialized algorithms}
 
 \begin{itemdecl}
 template<class Base, class... Tags>
@@ -779,6 +841,7 @@ void swap(tagged<Base, Tags...>& x, tagged<Base, Tags...>& y)
 \pnum
 \effects \tcode{x.swap(y)}
 \end{itemdescr}
+}
 
 \rSec2[tagged.astuple]{Tuple-like access to \tcode{tagged}}
 
