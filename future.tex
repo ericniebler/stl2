@@ -7,16 +7,6 @@ A proper and full implementation has many more moving parts. In addition, we can
 this work presents to address long-standing shortcomings in the Standard Library. Some of these
 future work items are described below.
 
-\rSec1[future.experience]{Implementation Experience with Concepts}
-
-\pnum
-The ideas presented here have been vetted in the range-v3~(\cite{range-v3}) library, which has seen both heavy
-development and heavy use over the past year and a half. However, this library is implemented in
-C++11 with the help of a library-based emulation layer for Concepts Lite. Andrew Sutton's origin~(\cite{origin})
-library implements many of these ideas using real concepts, but it's a subset of the work presented
-here. A critically important piece of this work will be to fully implement this design in C++17 with
-a compiler that supports Concepts.
-
 \rSec1[future.proxy]{Proxy Iterators}
 
 \pnum
@@ -166,36 +156,4 @@ and using them to improve the algorithm constraints is an important work item.
 \pnum
 Algorithms that do not mutate their input should accept \tcode{initializer_list} arguments wherever
 \tcode{Iterable}s are allowed. This requires extra overloads in places.
-
-\rSec1[future.moveiter]{Move Iterator}
-
-\pnum
-\tcode{move_iterator} is a problematic iterator today. Although it may claim to be Forward or better,
-in reality, it is likely to give strange results in multi-pass algorithms. That's because copying
-values from a \tcode{move_iterator} leaves the input sequence in an unspecified state. Decaying the
-category of \tcode{move_iterator} to Input seems reasonable, but it pessimizes code that
-initializes containers with \tcode{move_iterator}s, since a container like \tcode{vector} must
-incrementally grow the buffer when constructing from Input iterators, but it can preallocate an
-appropriately-sized buffer with Forward iterators.
-
-\pnum
-The design presented in this document offers a potential solution. By factoring the difference
-operation out of the iterator concept hierarchy and into a separate \tcode{SizedIteratorRange}
-concept, it opens the door to Input iterators that can be differenced to find the size of the range
-in \bigoh{1}. That would remove the pessimization should \tcode{move_iterator} be made Input and
-not Forward.
-
-\pnum
-There may still be reasons why decaying the category of \tcode{move_iterator} is undesirable.
-An algorithm that does not copy out of the input range would not misbehave when passed
-\tcode{move_iterator}s even if it is multi-pass. If the algorithm does not work with Input iterators,
-or if the algorithm works more efficiently with Forward iterators or better, then our efforts
-to ``fix'' \tcode{move_iterator} has caused real harm. Whether the cure is worse than the disease
-remains an open question.
-
-\pnum
-As an aside, it should be noted that a decomposition of the iterator concept hierarchy along
-the access/traversal boundary like suggested in ``New Iterator \oldtxt{Categories}\newtxt{Concepts}''
-(Abrahams et. al.~\cite{N1550}) would be a more complete fix, at the probable expense of greater
-complexity in the concepts and the algorithm constraints.
 }
