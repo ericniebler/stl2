@@ -1000,6 +1000,7 @@ objects~(\cxxref{func.require}) as arguments.
 the transition should we ever decide to support proxy iterators in the future. See the
 Future Work appendix~(\ref{future.proxy}).}
 
+{\color{oldclr}
 \rSec2[indirectcallables.as_function_t]{as_function_t type}
 
 \pnum
@@ -1023,6 +1024,7 @@ callable type~(\cxxref{func.def}) into a function object type~(\ref{function.obj
   using @\oldtxt{FunctionType}\newtxt{as_function_t}@ =
     decltype(@\xname{as_function}@(declval<T>()));
 \end{codeblock}
+} %% color{oldclr}
 
 \rSec2[indirectcallables.indirectfunc]{Indirect callables}
 
@@ -1040,33 +1042,36 @@ callable objects~(\cxxref{func.def}) as arguments.
   template <class F, class...Is>
   concept bool IndirectCallable() {
     return (Readable<Is>() && ...) &&
-      Function<@\oldtxt{FunctionType}\newtxt{as_function_t}@<F>, @\oldtxt{ValueType}\newtxt{value_type_t}@<Is>...>();
+      @\newtxt{Callable<F, value_type_t<Is>...>();}@
+      @\oldtxt{Function<FunctionType<F>, ValueType<Is>...>();}@
   }
 
   template <class F, class...Is>
   concept bool IndirectRegularCallable() {
     return (Readable<Is>() && ...) &&
-      RegularFunction<@\oldtxt{FunctionType}\newtxt{as_function_t}@<F>, @\oldtxt{ValueType}\newtxt{value_type_t}@<Is>...>();
+      @\newtxt{RegularCallable<F, value_type_t<Is>...>();}@
+      @\oldtxt{RegularFunction<FunctionType<F>, ValueType<Is>...>();}@
   }
 
   template <class F, class...Is>
   concept bool IndirectCallablePredicate() {
     return (Readable<Is>() && ...) &&
-      Predicate<@\oldtxt{FunctionType}\newtxt{as_function_t}@<F>, @\oldtxt{ValueType}\newtxt{value_type_t}@<Is>...>();
+      @\newtxt{Predicate<F, value_type_t<Is>...>();}@
+      @\oldtxt{Predicate<FunctionType<F>, ValueType<Is>...>();}@
   }
 
   template <class F, class I1, class I2 = I1>
   concept bool IndirectCallableRelation() {
-    return Readable<I1>() &&
-      Readable<I2>() &&
-      Relation<@\oldtxt{FunctionType}\newtxt{as_function_t}@<F>, @\oldtxt{ValueType}\newtxt{value_type_t}@<I1>, @\oldtxt{ValueType}\newtxt{value_type_t}@<I2>>();
+    return Readable<I1>() && Readable<I2>() &&
+      @\newtxt{Relation<F, value_type_t<I1>, value_type_t<I2>{}>();}@
+      @\oldtxt{Relation<FunctionType<F>, ValueType<I1>, ValueType<I2>{}>();}@
   }
 
   template <class F, class I1, class I2 = I1>
   concept bool IndirectCallableStrictWeakOrder() {
-    return Readable<I1>() &&
-      Readable<I2>() &&
-      StrictWeakOrder<@\oldtxt{FunctionType}\newtxt{as_function_t}@<F>, @\oldtxt{ValueType}\newtxt{value_type_t}@<I1>, @\oldtxt{ValueType}\newtxt{value_type_t}@<I2>>();
+    return Readable<I1>() && Readable<I2>() &&
+      @\newtxt{StrictWeakOrder<F, value_type_t<I1>, value_type_t<I2>{}>();}@
+      @\oldtxt{StrictWeakOrder<FunctionType<F>, ValueType<I1>, ValueType<I2>{}>();}@
   }
 
   @\oldtxt{template <class F, class...Is>}@
@@ -1074,9 +1079,10 @@ callable objects~(\cxxref{func.def}) as arguments.
     @\oldtxt{ResultType<FunctionType<F>, ValueType<Is>...>}@
 
   @\newtxt{template <class> struct indirect_result_of \{ \};}@
-  @\newtxt{IndirectCallable\{F, ...Is\}}@
+  @\newtxt{template <class F, class...Is>}@
+    @\newtxt{requires IndirectCallable<remove_reference_t<F>, Is...>()}@
   @\newtxt{struct indirect_result_of<F(Is...)> :}@
-    @\newtxt{result_of<as_function_t<F>(value_type_t<Is>...)> \{ \};}@
+    @\newtxt{result_of<F(value_type_t<Is>...)> \{ \};}@
 
   @\newtxt{template <class F>}@
   @\newtxt{using indirect_result_of_t = typename indirect_result_of<F>::type;}@
@@ -1094,12 +1100,13 @@ algorithms that accept callable objects and projections. It bundles a \tcode{Rea
 \indexlibrary{\idxcode{projected}}%
 \begin{codeblock}
   template <Readable I, IndirectRegularCallable<I> Proj>
-    requires RegularFunction<@\oldtxt{FunctionType}\newtxt{as_function_t}@<Proj@\newtxt{\&}@>, @\oldtxt{ValueType}\newtxt{reference_t}@<I>>@\newtxt{()}@
+    @\oldtxt{requires RegularFunction<FunctionType<Proj>, ValueType<I>{}>}@
+    @\newtxt{requires RegularCallable<Proj, reference_t<I>{}>()}@
   struct @\oldtxt{P}\newtxt{p}@rojected {
     @\oldtxt{using value_type = decay_t<ResultType<FunctionType<Proj>, ValueType<I>{}>{}>;}@
     @\oldtxt{ResultType<FunctionType<Proj>, ReferenceType<I>{}> operator*() const;}@
-    @\newtxt{using value_type = decay_t<result_of_t<as_function_t<Proj\&>(value_type_t<I>)>{}>;}@
-    @\newtxt{result_of_t<as_function_t<Proj\&>(reference_t<I>)> operator*() const;}@
+    @\newtxt{using value_type = decay_t<indirect_result_of_t<Proj\&(I)>{}>;}@
+    @\newtxt{result_of_t<Proj\&(reference_t<I>)> operator*() const;}@
   };
 
   template <WeaklyIncrementable I, class Proj>
