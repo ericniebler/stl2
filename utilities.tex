@@ -39,7 +39,7 @@ Change the \tcode{<utility>} synopsis as follows:
   @\newtxt{\}}@
 
   // \ref{utility.exchange}, exchange:
-  template <@\removed{class}\added{Movable}@ T, class U=T>
+  template <@\removed{class}\added{\oldtxt{Movable}\newtxt{MoveConstructible}}@ T, class U=T>
     @\added{requires Assignable<T\&, U>()}@
   T exchange(T& obj, U&& new_val);
 \end{codeblock}
@@ -156,16 +156,18 @@ and \tcode{E2} is equivalent to:
 \item
   Otherwise, if \tcode{E1} and \tcode{E2} are lvalues of the
   same type \tcode{T} which meets the syntactic requirements of
-  \tcode{Movable<T>()}, exchanges the denoted values.
+  \tcode{MoveConstructible<T>()} and
+  \tcode{Assignable<T\&, T\&\&>()}, exchanges the denoted values.
   \tcode{ranges::swap(E1, E2)} is a constant expression if
   the constructor selected by overload resolution for
   \tcode{T\{std::move(E1)\}} is a constexpr constructor and
   the expression \tcode{E1 = std::move(E2)} can appear in a
   constexpr function. \tcode{noexcept(ranges::swap(E1, E2))}
   is equal to \tcode{is_nothrow_move_constructible<T>::value
-  \&\& is_nothrow_move_assignable<T>::value}. If
-  \tcode{Movable<T>()} is not satisfied, the program is
-  ill-formed with no diagnostic required.
+  \&\& is_nothrow_move_assignable<T>::value}. If either
+  \tcode{MoveConstructible<T>()} or
+  \tcode{Assignable<T\&, T\&\&>()} is not satisfied, the program
+  is ill-formed with no diagnostic required.
   \tcode{ranges::swap(E1, E2)} has type \tcode{void}.
 
 \item
@@ -242,7 +244,7 @@ for all \tcode{i} in the range \range{0}{N}.
 \rSec2[utility.exchange]{exchange}
 
 \begin{itemdecl}
-template <@\removed{class}\added{Movable}@ T, class U=T>
+template <@\removed{class}\added{\oldtxt{Movable}\newtxt{MoveConstructible}}@ T, class U=T>
   @\added{requires Assignable<T\&, U>()}@
 T exchange(T& obj, U&& new_val);
 \end{itemdecl}
