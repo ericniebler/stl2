@@ -5,7 +5,7 @@
 \rSec0[concepts.lib]{Concepts library}
 
 \ednote{This chapter is inserted between the chapters [language.support] and [diagnostics]. All
-subsequence chapters should be renumbered as appropriate, but they aren't here for the sake of
+subsequent chapters should be renumbered as appropriate, but they aren't here for the sake of
 simplicity).}
 
 \rSec1[concepts.lib.general]{General}
@@ -43,15 +43,21 @@ The concepts in this Clause are defined in the namespace \tcode{std::experimenta
 An expression is \techterm{equality preserving} if, given equal inputs, the expression results in
 equal outputs. The inputs to an expression \oldtxt{is}\newtxt{are} the set of the expression's operands. The
 output of an expression is the expression's result and all operands modified by the expression.
-\enternote Not all input values must be valid for a given expression; e.g., for integers \tcode{a}
-and \tcode{b}, the expression \tcode{a / b} is not well-defined when \tcode{b} is \tcode{0}. This
-does not preclude the expression \tcode{a / b} being equality preserving. \exitnote
 
+\pnum
+Not all input values must be valid for a given expression; e.g., for integers \tcode{a}
+and \tcode{b}, the expression \tcode{a / b} is not well-defined when \tcode{b} is \tcode{0}. This
+does not preclude the expression \tcode{a / b} being equality preserving. \newtxt{The
+\techterm{domain} of an expression is the set of input values for which the
+expression is required to be well-defined.}
+
+\oldtxt{
 \pnum
 A \techterm{regular function} is a function that is equality preserving,
 i.e., a function that returns equal output when passed equal input. A regular
 function that returns a value may copy or move the returned object, or may return a
 reference. \enternote Regular functions may have side effects. \exitnote
+}
 
 \pnum
 Expressions required by this specification to be equality preserving are
@@ -527,14 +533,42 @@ not \tcode{Boolean} types.\exitexample
 \ednote{Remove table [equalitycomparable] in [utility.arg.requirements]. Replace references to
 [equalitycomparable] with [concepts.lib.compare.equalitycomparable].}
 
+{\color{newclr}
+\indexlibrary{\idxcode{WeaklyEqualityComparable}}%
+\begin{itemdecl}
+template <class T, class U>
+concept bool WeaklyEqualityComparable() {
+  return requires(const T t, const U u) {
+    { t == u } -> Boolean;
+    { u == t } -> Boolean;
+    { t != u } -> Boolean;
+    { u != t } -> Boolean;
+  };
+}
+\end{itemdecl}
+
+\begin{itemdescr}
+Let \tcode{t} and \tcode{u} be objects of types \tcode{T} and \tcode{U}.
+\tcode{WeaklyEqualityComparable<T, U>()} is satisfied if and only if:
+\begin{itemize}
+\item \tcode{t == u}, \tcode{u == t}, \tcode{t != u}, and \tcode{u != t}
+      have the same domain.
+\item \tcode{bool(u == t) == bool(t == u)}.
+\item \tcode{bool(t != u) == !bool(t == u)}.
+\item \tcode{bool(u != t) == bool(t != u)}.
+\end{itemize}
+\end{itemdescr}
+} %% color{newclr}
+
 \indexlibrary{\idxcode{EqualityComparable}}%
 \begin{itemdecl}
 template <class T>
 concept bool EqualityComparable() {
-  return requires(const T a, const T b) {
-    {a == b} -> Boolean;
-    {a != b} -> Boolean;
-  };
+  return @\newtxt{WeaklyEqualityComparable<T, T>();}@
+  @\oldtxt{requires(const T a, const T b) \{}@
+    @\oldtxt{\{a == b\} -> Boolean;}@
+    @\oldtxt{\{a != b\} -> Boolean;}@
+  @\oldtxt{\};}@
 }
 \end{itemdecl}
 
@@ -542,20 +576,20 @@ concept bool EqualityComparable() {
 \pnum
 Let \tcode{a} and \tcode{b} be objects
 of type \tcode{T}. \tcode{EqualityComparable<T>()}
-is satisfied if and only if
+is satisfied if and only if:
 
 \begin{itemize}
-\item \tcode{bool(a == a)}.
+\item \oldtxt{\tcode{bool(a == a)}.}
 \item \tcode{bool(a == b)} if and only if \tcode{a} is equal to \tcode{b}.
-\item \tcode{bool(a != b) == !bool(a == b)}.
+\item \oldtxt{\tcode{bool(a != b) == !bool(a == b)}.}
 \end{itemize}
 
 \pnum
 \enternote The requirement that the expression \tcode{a == b} is equality preserving
-implies that \tcode{==} is transitive and symmetric.\exitnote
-
+implies that \tcode{==} is \newtxt{reflexive, }transitive\newtxt{,} and symmetric.\exitnote
 \end{itemdescr}
 
+\indexlibrary{\idxcode{EqualityComparable}}%
 \begin{itemdecl}
 template <class T, class U>
 concept bool EqualityComparable() {
@@ -563,12 +597,13 @@ concept bool EqualityComparable() {
     EqualityComparable<T>() &&
     EqualityComparable<U>() &&
     EqualityComparable<@\oldtxt{CommonType}\newtxt{common_type_t}@<T, U>>() &&
-    requires(const T a, const U b) {
-      {a == b} -> Boolean;
-      {b == a} -> Boolean;
-      {a != b} -> Boolean;
-      {b != a} -> Boolean;
-    };
+    @\newtxt{WeaklyEqualityComparable<T, U>();}@
+    @\oldtxt{requires(const T a, const U b) \{}@
+      @\oldtxt{\{a == b\} -> Boolean;}@
+      @\oldtxt{\{b == a\} -> Boolean;}@
+      @\oldtxt{\{a != b\} -> Boolean;}@
+      @\oldtxt{\{b != a\} -> Boolean;}@
+    @\oldtxt{\};}@
 }
 \end{itemdecl}
 
@@ -576,15 +611,23 @@ concept bool EqualityComparable() {
 \pnum
 Let \tcode{a} be an object of type \tcode{T}, \tcode{b} be an object of type \tcode{U}, and \tcode{C} be
 \tcode{\oldtxt{CommonType}}\tcode{\newtxt{common_type_t}}\tcode{<T, U>}. Then \tcode{EqualityComparable<T, U>()}
-is satisfied if and only if
+is satisfied if and only if:
 
 \begin{itemize}
-\item \tcode{bool(a == b) == bool(C(a) == C(b)).}
-\item \tcode{bool(a != b) == bool(C(a) != C(b)).}
-\item \tcode{bool(b == a) == bool(C(b) == C(a)).}
-\item \tcode{bool(b != a) == bool(C(b) != C(a)).}
+\item \tcode{bool(a == b) == bool(C(a) == C(b))}.
+\item \oldtxt{\tcode{bool(a != b) == bool(C(a) != C(b))}.}
+\item \oldtxt{\tcode{bool(b == a) == bool(C(b) == C(a))}.}
+\item \oldtxt{\tcode{bool(b != a) == bool(C(b) != C(a))}.}
 \end{itemize}
 \end{itemdescr}
+
+{\color{newclr}
+\pnum
+\enternote The distinction between
+\tcode{Equal\-ity\-Comp\-arable<\brk{}T, \brk{}U>()} and
+\tcode{Weakly\-Equal\-ity\-Comp\-arable<T, U>()} is purely semantic.
+\exitnote
+} %% color{newclr}
 
 \rSec2[concepts.lib.compare.stricttotallyordered]{Concept StrictTotallyOrdered}
 
@@ -617,9 +660,9 @@ Then \tcode{\newtxt{Strict}TotallyOrdered<T>()} is satisfied if and only if
       \tcode{bool(a == b)} is \tcode{true}.
 \item If \tcode{bool(a < b)} and \tcode{bool(b < c)}, then
       \tcode{bool(a < c)}.
-\item \tcode{bool(a > b) == bool(b < a).}
-\item \tcode{bool(a <= b) == !bool(b < a).}
-\item \tcode{bool(a >= b) == !bool(a < b).}
+\item \tcode{bool(a > b) == bool(b < a)}.
+\item \tcode{bool(a <= b) == !bool(b < a)}.
+\item \tcode{bool(a >= b) == !bool(a < b)}.
 \end{itemize}
 
 {\color{oldclr}
@@ -941,7 +984,7 @@ concept bool Regular() {
 similarly to built-in types like \tcode{int} and that are comparable with \tcode{==}.\exitnote
 \end{itemdescr}
 
-\rSec1[concepts.lib.callables]{Callable concepts} %% FIXME: \oldtxt{Function}
+\rSec1[concepts.lib.callables]{Callable concepts}
 
 \rSec2[concepts.lib.callables.general]{In general}
 
@@ -949,7 +992,7 @@ similarly to built-in types like \tcode{int} and that are comparable with \tcode
 The \oldtxt{function }concepts in this section describe the requirements on function
 objects~(\ref{function.objects}) and their arguments.
 
-\rSec2[concepts.lib.callables.callable]{Concept Callable} %% FIXME: \oldtxt{Function}
+\rSec2[concepts.lib.callables.callable]{Concept Callable}
 
 \pnum
 \newtxt{The \tcode{Callable} concept specifies a relationship between a callable
@@ -981,7 +1024,7 @@ equality-preserving~(\ref{concepts.lib.general.equality}), a function that gener
 may satisfy \tcode{\oldtxt{Function}\newtxt{Callable}}.\exitnote
 \end{itemdescr}
 
-\rSec2[concepts.lib.callables.regularcallable]{Concept RegularCallable} %% FIXME: \oldtxt{RegularFunction}
+\rSec2[concepts.lib.callables.regularcallable]{Concept RegularCallable}
 
 \indexlibrary{\idxcode{RegularCallable}}%
 \begin{itemdecl}
@@ -1002,8 +1045,8 @@ annotation \oldtxt{on the function call expression }in the definition of \tcode{
 \tcode{Regular\oldtxt{Function}\newtxt{Callable}}.\exitnote
 
 \pnum
-\enternote There is no syntactic difference between \tcode{\oldtxt{Function}\newtxt{Callable}} and
-\tcode{Regular\oldtxt{Function}\newtxt{Callable}}.\exitnote
+\enternote The\oldtxt{re is no syntactic difference}\newtxt{ distinction} between \tcode{\oldtxt{Function}\newtxt{Callable}} and
+\tcode{Regular\oldtxt{Function}\newtxt{Callable}}\newtxt{ is purely semantic}.\exitnote
 \end{itemdescr}
 
 \rSec2[concepts.lib.callables.predicate]{Concept Predicate}
