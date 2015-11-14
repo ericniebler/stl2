@@ -25,7 +25,7 @@ as summarized in Table~\ref{tab:concepts.lib.summary}.
 \ref{concepts.lib.corelang}   & Core language concepts         &   \tcode{<experimental/ranges\oldtxt{_v1}/concepts>}      \\
 \ref{concepts.lib.compare}    & Comparison concepts            &                      \\
 \ref{concepts.lib.object}     & Object concepts                &                      \\
-\ref{concepts.lib.functions}  & Function concepts              &                      \\
+\ref{concepts.lib.callables}  & \oldtxt{Function}\newtxt{Callable} concepts              &                      \\
 \end{libsumtab}
 
 \oldtxt{
@@ -923,77 +923,83 @@ concept bool Regular() {
 similarly to built-in types like \tcode{int} and that are comparable with \tcode{==}.\exitnote
 \end{itemdescr}
 
-\rSec1[concepts.lib.functions]{Function concepts}
+\rSec1[concepts.lib.callables]{Callable concepts} %% FIXME: \oldtxt{Function}
 
-\rSec2[concepts.lib.functions.general]{In general}
+\rSec2[concepts.lib.callables.general]{In general}
 
 \pnum
-The function concepts in this section describe the requirements on function
+The \oldtxt{function }concepts in this section describe the requirements on function
 objects~(\ref{function.objects}) and their arguments.
 
-\rSec2[concepts.lib.functions.function]{Concept Function}
+\rSec2[concepts.lib.callables.callable]{Concept Callable} %% FIXME: \oldtxt{Function}
 
-\indexlibrary{\idxcode{Function}}%
+\pnum
+\newtxt{The \tcode{Callable} concept specifies a relationship between a callable
+type~(\cxxref{func.def}) \tcode{F} and a set of argument types \tcode{Args...} which
+can be evaluated by the library function \tcode{invoke}~(\ref{func.invoke}).}
+
+\indexlibrary{\idxcode{Callable}}%
 \begin{itemdecl}
 @\oldtxt{template <class F, class...Args>}@
 @\oldtxt{using ResultType = result_of_t<F(Args...)>;}@
 
 template <class F, class...Args>
-concept bool Function() {
+concept bool @\oldtxt{Function}\newtxt{Callable}@() {
   return CopyConstructible<F>() &&
     requires (F f, Args&&...args) {
-      typename @\oldtxt{ResultType<F, Args...>}\newtxt{result_of_t<F\&(Args...)>}@;
-      { f(std::forward<Args>(args)...) } // not required to be equality preserving
-        -> Same<@\oldtxt{ResultType<F, Args...>}\newtxt{result_of_t<F\&(Args...)>}@>;
+      @\newtxt{invoke(f, std::forward<Args>(args)...); // not required to be equality preserving}@
+      @\oldtxt{typename ResultType<F, Args...>;}@
+      @\oldtxt{\{ f(std::forward<Args>(args)...) \} // not required to be equality preserving}@
+        @\oldtxt{-> Same<ResultType<F, Args...>{}>;}@
     };
 }
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\enternote Since the function call
-expression of \tcode{Function} is not required to be
+\enternote Since the \newtxt{\tcode{invoke}} function call
+expression \oldtxt{of \tcode{Function}} is not required to be
 equality-preserving~(\ref{concepts.lib.general.equality}), a function that generates random numbers
-may satisfy \tcode{Function}.\exitnote
+may satisfy \tcode{\oldtxt{Function}\newtxt{Callable}}.\exitnote
 \end{itemdescr}
 
-\rSec2[concepts.lib.functions.regularfunction]{Concept RegularFunction}
+\rSec2[concepts.lib.callables.regularcallable]{Concept RegularCallable} %% FIXME: \oldtxt{RegularFunction}
 
-\indexlibrary{\idxcode{RegularFunction}}%
+\indexlibrary{\idxcode{RegularCallable}}%
 \begin{itemdecl}
 template <class F, class...Args>
-concept bool RegularFunction() {
-  return Function<F, Args...>();
+concept bool Regular@\oldtxt{Function}\newtxt{Callable}@() {
+  return @\oldtxt{Function}\newtxt{Callable}@<F, Args...>();
 }
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-The function call expression of \tcode{RegularFunction} shall be
+The \newtxt{\tcode{invoke}} function call expression \oldtxt{of \tcode{RegularFunction} }shall be
 equality-preserving~(\ref{concepts.lib.general.equality}). \enternote This requirement supersedes the
-annotation on the function call expression in the definition of \tcode{Function}. \exitnote
+annotation \oldtxt{on the function call expression }in the definition of \tcode{\oldtxt{Function}\newtxt{Callable}}. \exitnote
 
 \pnum
 \enternote A random number generator does not satisfy
-\tcode{RegularFunction}.\exitnote
+\tcode{Regular\oldtxt{Function}\newtxt{Callable}}.\exitnote
 
 \pnum
-\enternote There is no syntactic difference between \tcode{Function} and
-\tcode{RegularFunction}.\exitnote
+\enternote There is no syntactic difference between \tcode{\oldtxt{Function}\newtxt{Callable}} and
+\tcode{Regular\oldtxt{Function}\newtxt{Callable}}.\exitnote
 \end{itemdescr}
 
-\rSec2[concepts.lib.functions.predicate]{Concept Predicate}
+\rSec2[concepts.lib.callables.predicate]{Concept Predicate}
 
 \indexlibrary{\idxcode{Predicate}}%
 \begin{itemdecl}
 template <class F, class...Args>
 concept bool Predicate() {
-  return RegularFunction<F, Args...>() &&
+  return Regular@\oldtxt{Function}\newtxt{Callable}@<F, Args...>() &&
     Boolean<@\oldtxt{ResultType<F, Args...>}\newtxt{result_of_t<F\&(Args...)>}@>();
 }
 \end{itemdecl}
 
-\rSec2[concepts.lib.functions.relation]{Concept Relation}
+\rSec2[concepts.lib.callables.relation]{Concept Relation}
 
 \indexlibrary{\idxcode{Relation}}%
 \begin{itemdecl}
@@ -1026,7 +1032,7 @@ Then \tcode{Relation<R, T, U>()} is satisfied if and only if
 \end{itemize}
 \end{itemdescr}
 
-\rSec2[concepts.lib.functions.strictweakorder]{Concept StrictWeakOrder}
+\rSec2[concepts.lib.callables.strictweakorder]{Concept StrictWeakOrder}
 
 \indexlibrary{\idxcode{Relation}}%
 \begin{itemdecl}

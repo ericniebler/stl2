@@ -508,15 +508,15 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges\oldtxt{_v1} 
   template<@\oldtxt{Semiregular}\newtxt{class}@ T, WeakOutputIterator<T> O>
     O fill_n(O first, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<O> n, const T& value);
 
-  template<Function F, OutputIterator<@\oldtxt{ResultType<F>}\newtxt{result_of_t<F\&()>}@> O,
+  template<@\oldtxt{Function}\newtxt{Callable}@ F, OutputIterator<@\oldtxt{ResultType<F>}\newtxt{result_of_t<F\&()>}@> O,
       Sentinel<O> S>
     O generate(O first, S last, F gen);
 
-  template<Function F, OutputRange<@\oldtxt{ResultType<F>}\newtxt{result_of_t<F\&()>}@> Rng>
+  template<@\oldtxt{Function}\newtxt{Callable}@ F, OutputRange<@\oldtxt{ResultType<F>}\newtxt{result_of_t<F\&()>}@> Rng>
     @\oldtxt{IteratorType}\newtxt{safe_iterator_t}@<Rng>
       generate(Rng&@\newtxt{\&}@ rng, F gen);
 
-  template<Function F, WeakOutputIterator<@\oldtxt{ResultType<F>}\newtxt{result_of_t<F\&()>}@> O>
+  template<@\oldtxt{Function}\newtxt{Callable}@ F, WeakOutputIterator<@\oldtxt{ResultType<F>}\newtxt{result_of_t<F\&()>}@> O>
     O generate_n(O first, @\oldtxt{DistanceType}\newtxt{difference_type_t}@<O> n, F gen);
 
   template<ForwardIterator I, Sentinel<I> S, class T, class Proj = identity>
@@ -637,13 +637,15 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges\oldtxt{_v1} 
 
   // \ref{alg.random.shuffle}, shuffle:
   template<RandomAccessIterator I, Sentinel<I> S, class Gen>
-    requires Permutable<I>@\newtxt{()}@ && Convertible@\newtxt{To}@<@\oldtxt{ResultType<Gen>}\newtxt{result_of_t<Gen\&()>}@, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I>>@\newtxt{()}@ &&
-      UniformRandomNumberGenerator<remove_reference_t<Gen>>@\newtxt{()}@
+    requires Permutable<I>@\newtxt{()}@ &&
+      UniformRandomNumberGenerator<remove_reference_t<Gen>>@\newtxt{()}@ &&
+      Convertible@\newtxt{To}@<@\oldtxt{ResultType<Gen>}\newtxt{result_of_t<Gen\&()>}@, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I>>@\newtxt{()}@
     I shuffle(I first, S last, Gen&& g);
 
   template<RandomAccessRange Rng, class Gen>
-    requires Permutable<I>@\newtxt{()}@ && Convertible@\newtxt{To}@<@\oldtxt{ResultType<Gen>}\newtxt{result_of_t<Gen\&()>}@, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I>>@\newtxt{()}@ &&
-      UniformRandomNumberGenerator<remove_reference_t<Gen>>
+    requires Permutable<I>@\newtxt{()}@ &&
+      UniformRandomNumberGenerator<remove_reference_t<Gen>>@\newtxt{()}@ &&
+      Convertible@\newtxt{To}@<@\oldtxt{ResultType<Gen>}\newtxt{result_of_t<Gen\&()>}@, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I>>@\newtxt{()}@
     @\oldtxt{IteratorType}\newtxt{safe_iterator_t}@<Rng>
       shuffle(Rng&@\newtxt{\&}@ rng, Gen&& g);
 
@@ -1340,8 +1342,8 @@ construct \tcode{binary_pred(*first1, value)} contextually converted to \tcode{b
 apply any non-constant function through the dereferenced iterators.
 \end{removedblock}
 
-\begin{addedblock}
-\pnum
+{\color{oldclr} %% This note adds no value with the invoke change:
+\pnum           %% if(invoke(pred, invoke(proj, *first))) is self-evident.
 \enternote
 Projections and predicates are typically used as follows:
 
@@ -1351,7 +1353,7 @@ auto&& pred_ = @\oldtxt{callable}\newtxt{\xname{as_function}}@(pred);
 if(pred_(proj_(*first))) // ...
 \end{codeblock}
 \exitnote
-\end{addedblock}
+} %% color{oldclr}
 
 \pnum
 \enternote
@@ -1516,7 +1518,7 @@ template<InputRange Rng, class Proj = identity,
 \pnum
 \returns \tcode{true} if
 \range{first}{last} is empty or if
-\changed{\tcode{pred(*i)}}{\tcode{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *i))}}
+\changed{\tcode{pred(*i)}}{\tcode{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(pred, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i))}}
 is \tcode{true} for every iterator \tcode{i} in the range \range{first}{last},
 and \tcode{false} otherwise.
 
@@ -1551,7 +1553,7 @@ template<InputRange Rng, class Proj = identity,
 \returns \tcode{false} if \range{first}{last} is empty or
 if there is no iterator \tcode{i} in the range
 \range{first}{last} such that
-\changed{\tcode{pred(*i)}}{\tcode{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *i))}}
+\changed{\tcode{pred(*i)}}{\tcode{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(pred, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i))}}
 is \tcode{true}, and \tcode{true} otherwise.
 
 \pnum
@@ -1584,7 +1586,7 @@ template<InputRange Rng, class Proj = identity,
 \pnum
 \returns \tcode{true} if
 \range{first}{last} is empty or if
-\changed{\tcode{pred(*i)}}{\tcode{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *i))}}
+\changed{\tcode{pred(*i)}}{\tcode{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(pred, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i))}}
 is \tcode{false} for every iterator \tcode{i} in the range \range{first}{last},
 and \tcode{false} otherwise.
 
@@ -1631,7 +1633,7 @@ template<InputRange Rng, class Proj = identity,
 \effects
 \changed{Applies
 \tcode{f} to the result of dereferencing every iterator}{Calls
-\tcode{\textit{INVOKE}(f, \textit{INVOKE}(proj, *i))} for every iterator
+\tcode{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(f, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i))} for every iterator
 \tcode{i}} in the range
 \range{first}{last},
 starting from
@@ -1640,7 +1642,7 @@ and proceeding to
 \tcode{last - 1}.
 \enternote If the \changed{type of \tcode{first} satisfies the
 requirements of a mutable iterator}{result of
-\tcode{\textit{INVOKE}(proj, *i)} is a mutable reference}, \tcode{f} may apply
+\tcode{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i)} is a mutable reference}, \tcode{f} may apply
 nonconstant functions\removed{ through the dereferenced iterator}.\exitnote
 
 \pnum
@@ -1719,9 +1721,9 @@ in the range
 for which the following corresponding
 conditions hold:
 \changed{\tcode{*i == value}, \tcode{pred(*i) != false}, \tcode{pred(*i) == false}}
-{\tcode{\textit{INVOKE}(proj, *i) == value},
-\tcode{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *i)) != false},
-\tcode{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *i)) == false}}.
+{\tcode{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i) == value},
+\tcode{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(pred, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i)) != false},
+\tcode{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(pred, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i)) == false}}.
 Returns \tcode{last} if no such iterator is found.
 
 \pnum
@@ -1781,7 +1783,7 @@ such that for every non-negative integer
 \tcode{n < (last2 - first2)},
 the following \removed{corresponding }condition\removed{s} hold\added{s}:
 \tcode{\removed{*(i + n) == *(first2 + n), pred(*(i + n), *(first2 + n)) != false}
-\added{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *(i + n)), *(first2 + n)) != false}}.
+\added{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(pred, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *(i + n)), *(first2 + n)) != false}}.
 Returns \tcode{last1}
 if
 \range{first2}{last2} is empty or if
@@ -1847,7 +1849,7 @@ iterator
 in the range \range{first2}{last2}
 the following condition\removed{s} hold\added{s}:
 \tcode{\removed{*i == *j, pred(*i,*j) != false}
-\added{\textit{INVOKE}(pred,}\brk\added{ \textit{INVOKE}(proj1, *i), \textit{INVOKE}(proj2, *j)) != false}}.
+\added{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(pred,}\brk\added{ \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj1, *i), \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj2, *j)) != false}}.
 Returns \tcode{last1}
 if \range{first2}{last2} is empty or if
 no such iterator is found.
@@ -1902,7 +1904,7 @@ the range
 for which
 the following corresponding condition\removed{s} hold\added{s}:
 \tcode{\removed{*i == *(i + 1), pred(*i, *(i + 1)) != false}
-\added{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *i), \textit{INVOKE}(proj, *(i + 1))) != false}}.
+\added{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(pred, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i), \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *(i + 1))) != false}}.
 Returns \tcode{last}
 if no such iterator is found.
 
@@ -1963,7 +1965,7 @@ in the range \range{first}{last}
 for which the following corresponding
 conditions hold:
 \tcode{\changed{*i == value, pred(*i) != false}
-{\textit{INVOKE}(proj, *i) == value, \textit{INVOKE}(pred, \textit{INVOKE}(proj, *i)) != false}}.
+{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i) == value, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(pred, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i)) != false}}.
 
 \pnum
 \complexity
@@ -2062,7 +2064,7 @@ for which the following corresponding conditions hold:
 \item \tcode{!(*i == *(first2 + (i - first1)))}
 \end{removedblock}
 \item \tcode{\changed{pred(*i, *(first2 + (i - first1))) == false}
-{\textit{INVOKE}(pred, \textit{INVOKE}(proj1, *i), \textit{INVOKE}(proj2, *(first2 + (i - first1)))) == false}}
+{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(pred, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj1, *i), \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj2, *(first2 + (i - first1)))) == false}}
 \end{itemize}
 
 Returns the pair
@@ -2155,7 +2157,7 @@ if for every iterator
 in the range \range{first1}{last1}
 the following\removed{ corresponding} condition\removed{s} hold\added{s}:
 \tcode{\changed{*i == *(first2 + (i - first1)), pred(*i, *(first2 + (i - first1))) != false}
-{\textit{INVOKE}(pred, \textit{INVOKE}(proj1, *i), \textit{INVOKE}(proj2, *(first2 + (i - first1)))) != false}}.
+{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(pred, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj1, *i), \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj2, *(first2 + (i - first1)))) != false}}.
 Otherwise, returns
 \tcode{false}.
 
@@ -2327,7 +2329,7 @@ less than
 \tcode{last2 - first2}
 the following\removed{ corresponding} condition\removed{s} hold\added{s}:
 \tcode{\changed{*(i + n) == *(first2 + n), pred(*(i + n), *(first2 + n)) != false}
-{\textit{INVOKE}(pred, \textit{INVOKE}(proj1, *(i + n)), \textit{INVOKE}(proj2, *(first2 + n))) != false}}.
+{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(pred, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj1, *(i + n)), \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj2, *(first2 + n))) != false}}.
 Returns \tcode{first1}
 if \range{first2}{last2} is empty,
 otherwise returns \tcode{last1}
@@ -2398,7 +2400,7 @@ less than
 \tcode{count}
 the following\removed{ corresponding} condition\removed{s} hold\added{s}:
 \tcode{\changed{*(i + n) == value, pred(*(i + n),value) != false}
-{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *(i + n)), value) != false}}.
+{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(pred, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *(i + n)), value) != false}}.
 Returns \tcode{last}
 if no such iterator is found.
 
@@ -2511,7 +2513,7 @@ template<InputRange Rng, WeaklyIncrementable O, class Proj = identity,
 
 \pnum
 \effects Copies all of the elements referred to by the iterator \tcode{i} in the range \range{first}{last}
-for which \tcode{\changed{pred(*i)}{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *i))}} is \tcode{true}.
+for which \tcode{\changed{pred(*i)}{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(pred, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i))}} is \tcode{true}.
 
 \pnum
 \returns \changed{The end of the resulting range}{\tcode{\{last, result + (last - first)\}}}.
@@ -2886,10 +2888,10 @@ in the range
 \range{result}{result + \changed{(last1 - first1)}{$N$}}
 a new
 corresponding value equal to
-\tcode{\changed{op(*(first1 + (i - result)))}{\textit{INVOKE}(op, \textit{INVOKE}(proj, *(first1 + (i - result))))}}
+\tcode{\changed{op(*(first1 + (i - result)))}{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(op, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *(first1 + (i - result))))}}
 or
 \tcode{\changed{binary_op(*(first1 + (i - result)), *(first2 + (i - result)))}
-{\textit{INVOKE}(\brk{}binary_op, \textit{INVOKE}(proj1, *(first1 + (i - result))), \textit{INVOKE}(proj2, *(first2 + (i - result))))}}.
+{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(\brk{}binary_op, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj1, *(first1 + (i - result))), \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj2, *(first2 + (i - result))))}}.
 
 \pnum
 \requires
@@ -2981,8 +2983,8 @@ Substitutes elements referred by the iterator
 in the range \range{first}{last}
 with \tcode{new_value},
 when the following corresponding conditions hold:
-\tcode{\changed{*i == old_value}{\textit{INVOKE}(proj, *i) == old_value}},
-\tcode{\changed{pred(*i) != false}{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *i)) != false}}.
+\tcode{\changed{*i == old_value}{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i) == old_value}},
+\tcode{\changed{pred(*i) != false}{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(pred, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i)) != false}}.
 
 \begin{addedblock}
 \pnum
@@ -3085,8 +3087,8 @@ pred(*(first + (i - result))) != false
 \end{removedblock}
 \begin{addedblock}
 \begin{codeblock}
-@\textit{INVOKE}@(proj, *(first + (i - result))) == old_value
-@\textit{INVOKE}@(pred, @\textit{INVOKE}@(proj, *(first + (i - result)))) != false
+@\oldtxt{\textit{INVOKE}}\newtxt{invoke}@(proj, *(first + (i - result))) == old_value
+@\oldtxt{\textit{INVOKE}}\newtxt{invoke}@(pred, @\oldtxt{\textit{INVOKE}}\newtxt{invoke}@(proj, *(first + (i - result)))) != false
 \end{codeblock}
 \end{addedblock}
 
@@ -3173,15 +3175,15 @@ template<class OutputIterator, class Size, class Generator>
 \end{removedblock}
 \begin{addedblock}
 \begin{itemdecl}
-template<Function F, OutputIterator<@\oldtxt{ResultType<F>}\newtxt{result_of_t<F\&()>}@> O,
+template<@\oldtxt{Function}\newtxt{Callable}@ F, OutputIterator<@\oldtxt{ResultType<F>}\newtxt{result_of_t<F\&()>}@> O,
     Sentinel<O> S>
   O generate(O first, S last, F gen);
 
-template<Function F, OutputRange<@\oldtxt{ResultType<F>}\newtxt{result_of_t<F\&()>}@> Rng>
+template<@\oldtxt{Function}\newtxt{Callable}@ F, OutputRange<@\oldtxt{ResultType<F>}\newtxt{result_of_t<F\&()>}@> Rng>
   @\oldtxt{IteratorType}\newtxt{safe_iterator_t}@<Rng>
     generate(Rng&@\newtxt{\&}@ rng, F gen);
 
-template<Function F, WeakOutputIterator<@\oldtxt{ResultType<F>}\newtxt{result_of_t<F\&()>}@> O>
+template<@\oldtxt{Function}\newtxt{Callable}@ F, WeakOutputIterator<@\oldtxt{ResultType<F>}\newtxt{result_of_t<F\&()>}@> O>
   O generate_n(O first, @\oldtxt{DistanceType}\newtxt{difference_type_t}@<O> n, F gen);
 \end{itemdecl}
 \end{addedblock}
@@ -3189,12 +3191,15 @@ template<Function F, WeakOutputIterator<@\oldtxt{ResultType<F>}\newtxt{result_of
 \begin{itemdescr}
 \pnum
 \effects
-\changed{The first algorithm}{\tcode{generate}} invokes the function object \tcode{gen}
+\oldoldtxt{The first algorithm invokes the function object \tcode{gen}
 and assigns the return value of \tcode{gen} through all the iterators in the range
-\range{first}{last}. \changed{The second algorithm}{\tcode{generate_n}} invokes the
+\range{first}{last}. The second algorithm invokes the
 function object \tcode{gen} and assigns the return value of \tcode{gen} through all
 the iterators in the range \range{first}{first + n} if \tcode{n} is positive,
-otherwise it does nothing.
+otherwise it does nothing.}
+\newtxt{Assigns the value of \tcode{invoke(gen)} through successive iterators in the
+range \range{first}{last}, where \tcode{last} is \tcode{first + max(n, 0)} for
+\tcode{generate_n}.}
 
 \begin{removedblock}
 \pnum
@@ -3205,15 +3210,15 @@ shall be convertible to an integral type~(\cxxref{conv.integral}, \cxxref{class.
 \end{removedblock}
 
 \pnum
-\returns \added{\tcode{generate} returns \tcode{last}. }\tcode{generate_n} returns
-\tcode{first + n} for non-negative values of \tcode{n} and \tcode{first} for negative values.
+\returns \added{\oldtxt{\tcode{generate} returns }\tcode{last}. }\oldoldtxt{\tcode{generate_n} returns
+\tcode{first + n} for non-negative values of \tcode{n} and \tcode{first} for negative values.}
 
 \pnum
 \complexity
 Exactly
-\tcode{last - first},
+\tcode{last - first}\oldoldtxt{,
 \tcode{n}, or 0
-invocations of \tcode{gen} and assignments, respectively.
+invocations of \tcode{gen}}\newtxt{ evaluations of \tcode{invoke(gen)}} and assignments\oldoldtxt{, respectively}.
 \end{itemdescr}
 
 \rSec2[alg.remove]{Remove}
@@ -3264,8 +3269,8 @@ Eliminates all the elements referred to by iterator
 \tcode{i}
 in the range \range{first}{last}
 for which the following corresponding conditions hold:
-\tcode{\changed{*i == value}{\textit{INVOKE}(proj, *i) == value}},
-\tcode{\changed{pred(*i) != false}{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *i)) != false}}.
+\tcode{\changed{*i == value}{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i) == value}},
+\tcode{\changed{pred(*i) != false}{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(pred, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i)) != false}}.
 
 \pnum
 \returns
@@ -3347,8 +3352,8 @@ Copies all the elements referred to by the iterator
 in the range
 \range{first}{last}
 for which the following corresponding conditions do not hold:
-\tcode{\changed{*i == value}{\textit{INVOKE}(proj, *i) == value}},
-\tcode{\changed{pred(*i) != false}{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *i)) != false}}.
+\tcode{\changed{*i == value}{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i) == value}},
+\tcode{\changed{pred(*i) != false}{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(pred, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i)) != false}}.
 
 \pnum
 \returns
@@ -3401,9 +3406,9 @@ consecutive group of equivalent elements referred to by the iterator
 in the range
 \range{first + 1}{last}
 for which the following conditions hold:
-\tcode{\changed{*(i - 1) == *i}{\textit{INVOKE}(proj, *(i - 1)) == \textit{INVOKE}(proj, *i)}}
+\tcode{\changed{*(i - 1) == *i}{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *(i - 1)) == \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i)}}
 or
-\tcode{\changed{pred(*(i - 1), *i) != false}{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *(i - 1)), \textit{INVOKE}(proj, *i)) != false}}.
+\tcode{\changed{pred(*(i - 1), *i) != false}{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(pred, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *(i - 1)), \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i)) != false}}.
 
 \begin{removedblock}
 \pnum
@@ -3487,9 +3492,9 @@ the iterator
 in the range
 \range{first}{last}
 for which the following corresponding conditions hold:
-\tcode{\changed{*i == *(i - 1)}{\textit{INVOKE}(proj, *i) == \textit{INVOKE}(proj, *(i - 1))}}
+\tcode{\changed{*i == *(i - 1)}{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i) == \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *(i - 1))}}
 or
-\tcode{\changed{pred(*i, *(i - 1)) != false}{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *i), \textit{INVOKE}(proj, *(i - 1))) != false}}.
+\tcode{\changed{pred(*i, *(i - 1)) != false}{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(pred, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i), \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *(i - 1))) != false}}.
 
 \pnum
 \returns
@@ -3738,13 +3743,15 @@ template<class RandomAccessIterator, class UniformRandomNumberGenerator>
 \begin{addedblock}
 \begin{itemdecl}
 template<RandomAccessIterator I, Sentinel<I> S, class Gen>
-  requires Permutable<I>@\newtxt{()}@ && Convertible@\newtxt{To}@<@\oldtxt{ResultType<Gen>}\newtxt{result_of_t<Gen\&()>}@, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I>>@\newtxt{()}@ &&
-    UniformRandomNumberGenerator<remove_reference_t<Gen>>@\newtxt{()}@
+  requires Permutable<I>@\newtxt{()}@ &&
+    UniformRandomNumberGenerator<remove_reference_t<Gen>>@\newtxt{()}@ &&
+    Convertible@\newtxt{To}@<@\oldtxt{ResultType<Gen>}\newtxt{result_of_t<Gen\&()>}@, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I>>@\newtxt{()}@
   I shuffle(I first, S last, Gen&& g);
 
 template<RandomAccessRange Rng, class Gen>
-  requires Permutable<I>@\newtxt{()}@ && Convertible@\newtxt{To}@<@\oldtxt{ResultType<Gen>}\newtxt{result_of_t<Gen\&()>}@, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I>>@\newtxt{()}@ &&
-    UniformRandomNumberGenerator<remove_reference_t<Gen>>@\newtxt{()}@
+  requires Permutable<I>@\newtxt{()}@ &&
+    UniformRandomNumberGenerator<remove_reference_t<Gen>>@\newtxt{()}@ &&
+    Convertible@\newtxt{To}@<@\oldtxt{ResultType<Gen>}\newtxt{result_of_t<Gen\&()>}@, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I>>@\newtxt{()}@
   @\oldtxt{IteratorType}\newtxt{safe_iterator_t}@<Rng>
     shuffle(Rng&@\newtxt{\&}@ rng, Gen&& g);
 \end{itemdecl}
@@ -3821,7 +3828,7 @@ template<InputRange Rng, class Proj = identity,
 \range{first}{last} is empty or if
 \range{first}{last} is partitioned by \tcode{pred}\added{ and \tcode{proj}}, i.e. if all
 \changed{elements that satisfy \tcode{pred} appear}{iterators \tcode{i} for which
-\tcode{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *i)) != false} come} before those that do not\added{,
+\tcode{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(pred, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i)) != false} come} before those that do not\added{,
 for every \tcode{i} in \range{first}{last}}.
 
 \pnum
@@ -3862,15 +3869,15 @@ template<ForwardRange Rng, class Proj = identity,
 \begin{addedblock}
 \effects Permutes the elements in the range \range{first}{last} such that there exists and iterator \tcode{i}
 such that for every iterator \tcode{j} in the range \range{first}{i}
-\tcode{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *j)) != false}, and for every iterator \tcode{k} in the
-range \range{i}{last}, \tcode{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *k)) == false}
+\tcode{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(pred, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *j)) != false}, and for every iterator \tcode{k} in the
+range \range{i}{last}, \tcode{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(pred, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *k)) == false}
 \end{addedblock}
 
 \pnum
 \returns An iterator \tcode{i} such that for every iterator \tcode{j} in the range \range{first}{i}
-\tcode{\changed{pred(*j) != false}{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *j)) != false}},
+\tcode{\changed{pred(*j) != false}{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(pred, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *j)) != false}},
 and for every iterator \tcode{k} in the range \range{i}{last},
-\tcode{\changed{pred(*k) == false}{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *k)) == false}}.
+\tcode{\changed{pred(*k) == false}{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(pred, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *k)) == false}}.
 
 \begin{removedblock}
 \pnum
@@ -3922,8 +3929,8 @@ elements that do not satisfy it.
 \begin{addedblock}
 \effects Permutes the elements in the range \range{first}{last} such that there exists and iterator \tcode{i}
 such that for every iterator \tcode{j} in the range \range{first}{i}
-\tcode{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *j)) != false}, and for every iterator \tcode{k} in the
-range \range{i}{last}, \tcode{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *k)) == false}
+\tcode{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(pred, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *j)) != false}, and for every iterator \tcode{k} in the
+range \range{i}{last}, \tcode{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(pred, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *k)) == false}
 \end{addedblock}
 
 \pnum
@@ -3934,12 +3941,12 @@ such that for every iterator
 \tcode{j}
 in the range
 \range{first}{i},
-\tcode{\changed{pred(*j) != false}{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *j)) != false}},
+\tcode{\changed{pred(*j) != false}{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(pred, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *j)) != false}},
 and for every iterator
 \tcode{k}
 in the range
 \range{i}{last},
-\tcode{\changed{pred(*k) == false}{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *k)) == false}}.
+\tcode{\changed{pred(*k) == false}{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(pred, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *k)) == false}}.
 The relative order of the elements in both groups is preserved.
 
 \begin{removedblock}
@@ -4002,7 +4009,7 @@ either of the output ranges.
 \pnum
 \effects For each iterator \tcode{i} in \range{first}{last}, copies \tcode{*i} to the output range
 beginning with \tcode{out_true} if
-\tcode{\changed{pred(*i)}{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *i))}} is \tcode{true}, or to
+\tcode{\changed{pred(*i)}{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(pred, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i))}} is \tcode{true}, or to
 the output range beginning with \tcode{out_false} otherwise.
 
 \pnum
@@ -4043,7 +4050,7 @@ template<InputRange Rng, WeaklyIncrementable O1, WeaklyIncrementable O2,
 \pnum
 \effects For each iterator \tcode{i} in \range{first}{last}, moves \tcode{*i} to the output range
 beginning with \tcode{out_true} if
-\tcode{\textit{INVOKE}(pred, \textit{INVOKE}(proj, *i))} is \tcode{true}, or to
+\tcode{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(pred, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i))} is \tcode{true}, or to
 the output range beginning with \tcode{out_false} otherwise.
 
 \pnum
@@ -4109,7 +4116,7 @@ and one that uses an
 \tcode{\changed{Compare}{Comp}}
 is \changed{a function object
 type~(\ref{function.objects})}{a callable object~(\cxxref{func.require})}. The return value of \changed{the
-function call operation}{the \tcode{\textit{INVOKE}} operation} applied to
+function call operation}{the \tcode{\oldtxt{\textit{INVOKE}}\newtxt{invoke}} operation} applied to
 an object of type \tcode{\changed{Compare}{Comp}}, when contextually converted to
 \tcode{bool} (Clause~\cxxref{conv}),
 yields \tcode{true} if the first argument of the call
@@ -4141,7 +4148,7 @@ require a strict weak ordering relation, but the ``Palo Alto report'' is clear t
 Which is it?}
 
 \ednote{The following description of ``strict weak order'' has moved to the definition of the
-\tcode{StrictWeakOrder} concept~(\ref{concepts.lib.functions.strictweakorder}).}
+\tcode{StrictWeakOrder} concept~(\ref{concepts.lib.callables.strictweakorder}).}
 
 \begin{removedblock}
 \pnum
@@ -4202,7 +4209,7 @@ pointing to the sequence and every non-negative integer
 such that
 \tcode{i + n}
 is a valid iterator pointing to an element of the sequence,
-\tcode{\changed{comp(*(i + n), *i) == false}{\textit{INVOKE}(comp, \textit{INVOKE}(proj, *(i + n)), \textit{INVOKE}(proj, *i)) == false}}.
+\tcode{\changed{comp(*(i + n), *i) == false}{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(comp, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *(i + n)), \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i)) == false}}.
 
 \pnum
 A sequence
@@ -4596,7 +4603,7 @@ it holds that:\changed{
 \tcode{!(*j < *i)}
 or
 \tcode{comp(*j, *i) == false}}{
-\tcode{\textit{INVOKE}(comp, \textit{INVOKE}(proj, *j), \textit{INVOKE}(proj, *i)) == false}}.
+\tcode{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(comp, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *j), \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i)) == false}}.
 
 \begin{removedblock}
 \pnum
@@ -4666,7 +4673,7 @@ The elements
 of
 \range{first}{last}
 shall be partitioned with respect to the expression
-\tcode{\changed{e < value}{\textit{INVOKE}(comp, \textit{INVOKE}(proj, e), value)}}
+\tcode{\changed{e < value}{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(comp, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, e), value)}}
 \removed{or
 \tcode{comp(e, value)}}.
 
@@ -4683,7 +4690,7 @@ in the range
 the following corresponding conditions hold:
 \removed{\tcode{*j < value}
 or}
-\tcode{\changed{comp(*j, value) != false}{\textit{INVOKE}(comp, \textit{INVOKE}(proj, *j), value) != false}}.
+\tcode{\changed{comp(*j, value) != false}{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(comp, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *j), value) != false}}.
 
 \pnum
 \complexity
@@ -4730,7 +4737,7 @@ The elements
 of
 \range{first}{last}
 shall be partitioned with respect to the expression
-\tcode{\changed{!(value < e)}{!\textit{INVOKE}(comp, value, \textit{INVOKE}(proj, e))}}
+\tcode{\changed{!(value < e)}{!\oldtxt{\textit{INVOKE}}\newtxt{invoke}(comp, value, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, e))}}
 \removed{
 or
 \tcode{!comp(\brk{}value, e)}}.
@@ -4748,7 +4755,7 @@ in the range
 the following corresponding conditions hold:
 \removed{\tcode{!(value < *j)}
 or}
-\tcode{\changed{comp(value, *j) == false}{\textit{INVOKE}(comp, value, \textit{INVOKE}(proj, *j)) == false}}.
+\tcode{\changed{comp(value, *j) == false}{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(comp, value, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *j)) == false}}.
 
 \pnum
 \complexity
@@ -4797,9 +4804,9 @@ The elements
 of
 \range{first}{last}
 shall be partitioned with respect to the expressions
-\tcode{\changed{e < value}{\textit{INVOKE}(comp, \textit{INVOKE}(proj, e), value)}}
+\tcode{\changed{e < value}{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(comp, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, e), value)}}
 and
-\tcode{\changed{!(value < e)}{!\textit{INVOKE}(comp, value, \textit{INVOKE}(proj, e))}}
+\tcode{\changed{!(value < e)}{!\oldtxt{\textit{INVOKE}}\newtxt{invoke}(comp, value, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, e))}}
 \removed{or
 \tcode{comp(e, value)}
 and
@@ -4808,9 +4815,9 @@ Also, for all elements
 \tcode{e}
 of
 \tcode{[first, last)},
-\tcode{\changed{e < value}{\textit{INVOKE}(comp, \textit{INVOKE}(proj, e), value)}}
+\tcode{\changed{e < value}{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(comp, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, e), value)}}
 shall imply
-\tcode{\changed{!(value < e)}{!\textit{INVOKE}(comp, value, \textit{INVOKE}(proj, e))}}
+\tcode{\changed{!(value < e)}{!\oldtxt{\textit{INVOKE}}\newtxt{invoke}(comp, value, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, e))}}
 \removed{or
 \tcode{comp(e, value)}
 shall imply
@@ -4875,9 +4882,9 @@ The elements
 of
 \range{first}{last}
 are partitioned with respect to the expressions
-\tcode{\changed{e < value}{\textit{INVOKE}(comp, \textit{INVOKE}(proj, e), value)}}
+\tcode{\changed{e < value}{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(comp, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, e), value)}}
 and
-\tcode{\changed{!(value < e)}{!\textit{INVOKE}(comp, value, \textit{INVOKE}(proj, e))}}
+\tcode{\changed{!(value < e)}{!\oldtxt{\textit{INVOKE}}\newtxt{invoke}(comp, value, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, e))}}
 \removed{or
 \tcode{comp(e, value)}
 and
@@ -4886,9 +4893,9 @@ Also, for all elements
 \tcode{e}
 of
 \tcode{[first, last)},
-\tcode{\changed{e < value}{\textit{INVOKE}(comp, \textit{INVOKE}(proj, e), value)}}
+\tcode{\changed{e < value}{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(comp, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, e), value)}}
 shall imply
-\tcode{\changed{!(value < e)}{!\textit{INVOKE}(comp, value, \textit{INVOKE}(proj, e))}}
+\tcode{\changed{!(value < e)}{!\oldtxt{\textit{INVOKE}}\newtxt{invoke}(comp, value, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, e))}}
 \removed{or
 \tcode{comp(e, value)}
 shall imply
@@ -4903,8 +4910,8 @@ in the range
 \range{first}{last}
 that satisfies the corresponding conditions:
 \tcode{\changed{!(*i < value) \&\& !(value < *i)}{
-\textit{INVOKE}(comp, \textit{INVOKE}(proj, *i), value) == false \&\&
-\textit{INVOKE}(comp, value, \textit{INVOKE}(proj, *i)) == false}}
+\oldtxt{\textit{INVOKE}}\newtxt{invoke}(comp, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i), value) == false \&\&
+\oldtxt{\textit{INVOKE}}\newtxt{invoke}(comp, value, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i)) == false}}
 \removed{or}
 \tcode{\removed{comp(*i, value) == false \&\& comp(value, *i) == false}}.
 
@@ -5084,7 +5091,7 @@ the condition
 \removed{\tcode{*i < *(i - 1)}
 or, respectively,}
 \tcode{\changed{comp(*i, *(i - 1))}{
-\textit{INVOKE}(comp, \textit{INVOKE}(proj, *i), \textit{INVOKE}(proj, *(i - 1)))}}
+\oldtxt{\textit{INVOKE}}\newtxt{invoke}(comp, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i), \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *(i - 1)))}}
 will be false.
 
 \pnum
@@ -6129,7 +6136,7 @@ the following corresponding conditions hold:
 \removed{\tcode{!(*j < *i)}
 or}
 \tcode{\changed{comp(*j, *i) == false}{
-\textit{INVOKE}(comp, \textit{INVOKE}(proj, *j), \textit{INVOKE}(proj, *i)) == false}}.
+\oldtxt{\textit{INVOKE}}\newtxt{invoke}(comp, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *j), \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i)) == false}}.
 Returns
 \tcode{last}
 if
@@ -6180,7 +6187,7 @@ in the range
 the following corresponding conditions hold:
 \removed{\tcode{!(*i < *j)}
 or}
-\tcode{\changed{comp(*i, *j) == false}{\textit{INVOKE}(comp, \textit{INVOKE}(proj, *i), \textit{INVOKE}(proj, *j)) == false}}.
+\tcode{\changed{comp(*i, *j) == false}{\oldtxt{\textit{INVOKE}}\newtxt{invoke}(comp, \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *i), \oldtxt{\textit{INVOKE}}\newtxt{invoke}(proj, *j)) == false}}.
 Returns
 \tcode{last}
 if
