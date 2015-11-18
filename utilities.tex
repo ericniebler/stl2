@@ -528,7 +528,8 @@ template <> struct not_equal_to<void> {
 \begin{itemdecl}
 template <> struct greater<void> {
   template <class T, class U>
-    @\added{requires StrictTotallyOrdered<T, U>() \newtxt{|| \textit{BUILTIN_PTR_CMP}(T, >, U) // \seebelow}}@
+    @\added{requires StrictTotallyOrdered<T, U>()}@
+      @\newtxt{|| \textit{BUILTIN_PTR_CMP}(T, >, U) // \expos, \seebelow}@
   constexpr auto operator()(T&& t, U&& u) const
     -> decltype(std::forward<T>(t) > std::forward<U>(u));
 
@@ -545,7 +546,8 @@ template <> struct greater<void> {
 \begin{itemdecl}
 template <> struct less<void> {
   template <class T, class U>
-    @\added{requires StrictTotallyOrdered<T, U>() \newtxt{|| \textit{BUILTIN_PTR_CMP}(T, <, U) // \seebelow}}@
+    @\added{requires StrictTotallyOrdered<T, U>()}@
+      @\newtxt{|| \textit{BUILTIN_PTR_CMP}(T, <, U) // \expos, \seebelow}@
   constexpr auto operator()(T&& t, U&& u) const
     -> decltype(std::forward<T>(t) < std::forward<U>(u));
 
@@ -562,7 +564,8 @@ template <> struct less<void> {
 \begin{itemdecl}
 template <> struct greater_equal<void> {
   template <class T, class U>
-    @\added{requires StrictTotallyOrdered<T, U>() \newtxt{|| \textit{BUILTIN_PTR_CMP}(T, >=, U) // \seebelow}}@
+    @\added{requires StrictTotallyOrdered<T, U>()}@
+      @\newtxt{|| \textit{BUILTIN_PTR_CMP}(T, >=, U) // \expos, \seebelow}@
   constexpr auto operator()(T&& t, U&& u) const
     -> decltype(std::forward<T>(t) >= std::forward<U>(u));
 
@@ -579,7 +582,8 @@ template <> struct greater_equal<void> {
 \begin{itemdecl}
 template <> struct less_equal<void> {
   template <class T, class U>
-    @\added{requires StrictTotallyOrdered<T, U>() \newtxt{|| \textit{BUILTIN_PTR_CMP}(T, <=, U) // \seebelow}}@
+    @\added{requires StrictTotallyOrdered<T, U>()}@
+      @\newtxt{|| \textit{BUILTIN_PTR_CMP}(T, <=, U) // \expos, \seebelow}@
   constexpr auto operator()(T&& t, U&& u) const
     -> decltype(std::forward<T>(t) <= std::forward<U>(u));
 
@@ -602,30 +606,51 @@ do not. \ednote{The following sentence is taken from the proposed resolution of
 \tcode{greater_equal<void>}, and \tcode{less_equal<void>}, if the call operator calls a
 built-in operator comparing pointers, the call operator yields a total order.}
 
-\newtxt{
+{\color{newclr}
 \pnum
-Given a relational operator \tcode{\textit{OP}}, an object \tcode{x} of type \tcode{X},
-and an object \tcode{y} of type \tcode{Y}, let \tcode{\textit{BUILTIN_PTR_CMP}(X, \textit{OP}, Y)}
-be true if an only if \tcode{\textit{OP}} in the expression \tcode{(X\&\&)x \textit{OP} (Y\&\&)y} resolves
-to a built-in operator comparing pointers.
-}
+If \tcode{X} is an lvalue reference type, let \tcode{x} be an lvalue of type \tcode{X}, or an rvalue otherwise.
+If \tcode{Y} is an lvalue reference type, let \tcode{y} be an lvalue of type \tcode{Y}, or an rvalue otherwise.
+Given a relational operator \tcode{\textit{OP}}, \tcode{\textit{BUILTIN_PTR_CMP}(X, \textit{OP}, Y)}
+shall be \tcode{true} if an only if \tcode{\textit{OP}} in the expression \tcode{(X\&\&)x \textit{OP} (Y\&\&)y}
+resolves to a built-in operator comparing pointers.
 
-\newtxt{
+\pnum
+All specializations of \tcode{equal_to}, \tcode{not_equal_to}, \tcode{greater}, \tcode{less},
+\tcode{greater_equal}, and \tcode{less_equal} shall satisfy \tcode{DefaultConstructible}~(\ref{concepts.lib.object.defaultconstructible}).
+
 \pnum
 For all object types \tcode{T} for which there exists a specialization \tcode{less<T>},
 the instantiation \tcode{less<T>} shall satisfy \tcode{StrictWeakOrder<less<T>, T>()}~(\ref{concepts.lib.callables.strictweakorder}).
-In addition, \tcode{Relation<greater<T>, T>()}~(\ref{concepts.lib.callables.relation}), \tcode{Relation<greater_equal<T>, T>()},
-and \tcode{Relation<less_equal<T>, T>()} shall be satisfied and those class template
-instantiations shall be semantically consistent with \tcode{less<T>}~(\cxxref{operators}).
-}
 
-\newtxt{
 \pnum
 For all object types \tcode{T} for which there exists a specialization \tcode{equal_to<T>},
-the instantiation \tcode{equal_to<T>} shall satisfy \tcode{Relation<equal_to<T>, T>()},
+the instantiation \tcode{equal_to<T>} shall satisfy \tcode{Relation<equal_to<T>, T>()}~(\ref{concepts.lib.callables.relation}),
 and \tcode{equal_to<T>} shall induce an equivalence relation on its arguments.
-In addition, \tcode{Relation<not_equal_to<T>, T>()} shall be satisfied and that class template
-instantiation shall be semantically consistent with \tcode{equal_to<T>}~(\cxxref{operators}).
+
+\pnum
+For any (possibly \tcode{const}) lvalues \tcode{x} and \tcode{y} of types \tcode{T}, the following
+shall be true
+
+\begin{itemize}
+\item If there exists a specialization \tcode{not_equal_to<T>}, then the instantiation \tcode{not_equal_to<T>}
+      shall satisfy \tcode{Relation<not_equal_to<T>, T>()}, and \tcode{not_equal_to<T>\{\}(x, y)} shall
+      equal \tcode{!equal_to<T>\{\}(x, y)}.
+\item If there exists a specialization \tcode{greater<T>}, then the instantiation \tcode{greater<T>}
+      shall satisfy \tcode{Strict\-Weak\-Order<greater<T>, T>()}, and \tcode{greater<T>\{\}(x, y)} shall
+      equal \tcode{less<T>\{\}(y, x)}.
+\item If there exists a specialization \tcode{greater_equal<T>}, then the instantiation \tcode{greater_equal<T>}
+      shall satisfy \tcode{Relation<greater_equal<T>, T>()}, and \tcode{greater_equal<T>\{\}(x, y)} shall
+      equal \tcode{!less<T>\{\}(x, y)}.
+\item If there exists a specialization \tcode{less_equal<T>}, then the instantiation \tcode{less_equal<T>}
+      shall satisfy \tcode{Relation<greater_equal<T>, T>()}, and \tcode{less_equal<T>\{\}(x, y)} shall
+      equal \tcode{!less<T>\{\}(y, x)}.
+\end{itemize}
+
+\pnum
+For any pointer type \tcode{T}, the specializations \tcode{equal_to<T>}, \tcode{not_equal_to<T>}, \tcode{greater<T>},
+\tcode{less<T>}, \tcode{greater_equal<T>}, \tcode{less_equal<T>} shall yield the same results as
+\tcode{equal_to<void*>}, \tcode{not_equal_to<void*>}, \tcode{greater<void*>},
+\tcode{less<void*>}, \tcode{greater_equal<void*>}, \tcode{less_equal<void*>}, respectively.
 }
 
 \ednote{After subsection 20.9.12 [unord.hash] add the following subsection:}
