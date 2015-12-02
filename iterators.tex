@@ -7094,6 +7094,12 @@ For a type \tcode{T}, the value of \tcode{\xname{view_predicate<T>}} shall be:
 \begin{itemize}
 \item If \tcode{enable_view<T>} has a member type \tcode{type}, \tcode{enable_view<T>::type::value};
 \item \oldtxt{If}\newtxt{Otherwise, if} \tcode{T} is derived from \tcode{view_base}, \tcode{true};
+\item \newtxt{Otherwise, if \tcode{T} is an instantiation of class template
+\tcode{initializer_list}~(\cxxref{support.initlist}), 
+\tcode{set}~(\cxxref{set}), 
+\tcode{multiset}~(\cxxref{multiset}), 
+\tcode{unordered_set}~(\cxxref{unord.set}), or
+\tcode{unordered_multiset}~(\cxxref{unord.multiset}), \tcode{false}};
 \item \oldtxt{If}\newtxt{Otherwise, if} both \tcode{T} and \tcode{const T} satisfy \tcode{Range} and \tcode{\oldtxt{ReferenceType}reference_t}
 \tcode{<\oldtxt{IteratorType}iterator_t<T>{}>} is not the same type as \tcode{\oldtxt{ReferenceType}reference_t}
 \tcode{<\oldtxt{IteratorType}iterator_t<const T>{}>},
@@ -7103,37 +7109,33 @@ implies reference semantics. \exitnote
 \end{itemize}
 }
 
+{\color{oldclr}
 \pnum
 \enternote
-Below is a possible implementation of \oldtxt{the \tcode{is_view} trait} \newtxt{\tcode{\xname{view_predicate}}}.
+Below is a possible implementation of \tcode{\xname{view_predicate}}.
 
 \begin{codeblock}
 // \expos
 template <class T>
 concept bool @\xname{ContainerLike}@ =
-  Range<T>() && @\newtxt{Range<const T>() \&\&}@
-  !Same<@\oldtxt{ReferenceType}\newtxt{reference_t}@<@\oldtxt{IteratorType}\newtxt{iterator_t}@<T@\oldtxt{\&}@>>,
-        @\oldtxt{ReferenceType}\newtxt{reference_t}@<@\oldtxt{IteratorType}\newtxt{iterator_t}@<const T@\oldtxt{\&}@>>>();
+  Range<T>() && Range<const T>() &&
+  !Same<reference_t<iterator_t<T>>,
+        reference_t<iterator_t<const T>>>();
 
 template <class T>
-@\oldtxt{struct is_view : false_type \{ \};}@
-@\newtxt{constexpr bool \xname{view_predicate} = true;}@
+constexpr bool @\xname{view_predicate}@ = true;
 
-@\newtxt{template <class T>}@
-  @\newtxt{requires requires \{ typename enable_view<T>::type; \}}@
-@\newtxt{constexpr bool \xname{view_predicate}<T> = enable_view<T>::type::value;}@
+template <class T>
+  requires requires { typename enable_view<T>::type; }
+constexpr bool @\xname{view_predicate}@<T> = enable_view<T>::type::value;
 
-@\newtxt{template <\xname{ContainerLike} T>}@
-  @\newtxt{requires !(DerivedFrom<T, view_base>() ||}@
-             @\newtxt{requires \{ typename enable_view<T>::type; \})}@
-@\newtxt{constexpr bool \xname{view_predicate}<T> = false;}@
-
-@\oldtxt{template <Range T>}@
-  @\oldtxt{requires Derived<remove_reference_t<T>, view_base> ||}@
-    @\oldtxt{!\xname{ContainerLike}<remove_reference_t<T>{}>}@
-@\oldtxt{struct is_view<T> : true_type \{ \};}@
+template <@\xname{ContainerLike}@ T>
+  requires !(DerivedFrom<T, view_base>() ||
+             requires { typename enable_view<T>::type; })
+constexpr bool @\xname{view_predicate}@<T> = false;
 \end{codeblock}
 \exitnote
+}
 \end{itemdescr}
 
 \rSec3[ranges.bounded]{Bounded ranges}
