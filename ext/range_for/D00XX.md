@@ -19,26 +19,31 @@ tries to use such a range with the built-in range-based `for` loop, which requir
 and end to have the same type. This paper proposes to lift that restriction for C++17, thereby
 giving users of the Ranges TS the best possible experience.
 
-Implementation Experience
-=============
-
-The author has implemented the described resolution in the clang compiler. The implementation was
-as simple as removing the code that checks that `begin()` and `end()` return objects of the same
-type. After this change was made, non-bounded ranges (those for which `end()` returns a sentinel
-that is not an iterator) work with the built-in range-based `for` loop.
-
 Motivation and Scope
 =====
 
-The motivation is simple enough: to give the users of the Ranges TS the best possible experience.
-If the ranges they create with the Ranges TS are not usable with the built-in range-based `for`
-loop, it will reflect poorly both on the Ranges TS and on the range-based `for` loop. In all
-likelihood, a macro-based solution like [`BOOST_FOREACH`][2][@boost-foreach] will be invented to
-fill the gap.
+The existing range-based `for` loop is over-constrained. The end iterator is never incremented,
+decremented, or dereferenced. Requiring it to be an iterator serves no practical purpose.
 
-Also, it can be argued that the existing range-based `for` loop is over-constrained. The end
-iterator is never incremented, decremented, or dereferenced. Requiring it to be an iterator serves
-no practical purpose.
+Today, STL algorithms require the begin and end of a range to have the same type. That is sensibile
+given the fact that algorithms take the begin and end of a range as separate parameters. In the
+absence of concept checking, allowing their types to differ makes it rather easy to pass mismatched
+iterators. The range-based `for` loop has no such problem since it deals with ranges in whole.
+
+Loosening the type requirements of the range-based `for` loop gives users of the Ranges TS the best
+possible experience. If users create ranges with the Ranges TS are not usable with the built-in
+range-based `for` loop, they will be frustrated, and it will reflect poorly both on the Ranges TS
+and on the range-based `for` loop. In all likelihood, a macro-based solution like [`BOOST_FOREACH`][2][@boost-foreach]
+will be invented to fill the gap. That is best avoided.
+
+Implementation Experience
+=============
+
+The author has implemented the described resolution in the clang compiler, and Casey Carter has
+implemented it in gcc. For clang, the implementation was as simple as removing the code that checks
+that `begin()` and `end()` return objects of the same type. The change for gcc was equally trivial.
+After this change was made, non-bounded ranges (those for which `end()` returns a sentinel that is
+not an iterator) work with the built-in range-based `for` loop.
 
 Technical Specifications
 =====
