@@ -854,19 +854,15 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges\oldtxt{_v1} 
                     Proj proj = Proj{});
 
   // \ref{alg.merge}, merge:
-  \end{codeblock}
-    \ednote{REVIEW: Why does the Palo Alto TR require \tcode{Incrementable} instead of
-      \tcode{WeaklyIncrementable}?}
-  \begin{codeblock}
   template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
-      Incrementable O, class Comp = less<>, class Proj1 = identity,
+      @\newtxt{Weakly}@Incrementable O, class Comp = less<>, class Proj1 = identity,
       class Proj2 = identity>
     requires Mergeable<I1, I2, O, Comp, Proj1, Proj2>@\newtxt{()}@
     tagged_tuple<tag::in1(I1), tag::in2(I2), tag::out(O)>
       merge(I1 first1, S1 last1, I2 first2, S2 last2, O result,
             Comp comp = Comp{}, Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
 
-  template<InputRange Rng1, InputRange Rng2, Incrementable O, class Comp = less<>,
+  template<InputRange Rng1, InputRange Rng2, @\newtxt{Weakly}@Incrementable O, class Comp = less<>,
       class Proj1 = identity, class Proj2 = identity>
     requires Mergeable<@\oldtxt{IteratorType}\newtxt{iterator_t}@<Rng1>, @\oldtxt{IteratorType}\newtxt{iterator_t}@<Rng2>, O, Comp, Proj1, Proj2>@\newtxt{()}@
     tagged_tuple<tag::in1(@\oldtxt{IteratorType}\newtxt{safe_iterator_t}@<Rng1>),
@@ -879,14 +875,14 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges\oldtxt{_v1} 
     \ednote{A new algorithm, needed by \tcode{inplace_merge} and \tcode{stable_sort}.}
   \begin{codeblock}
   template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
-      Incrementable O, class Comp = less<>, class Proj1 = identity,
+      @\newtxt{Weakly}@Incrementable O, class Comp = less<>, class Proj1 = identity,
       class Proj2 = identity>
     requires MergeMovable<I1, I2, O, Comp, Proj1, Proj2>@\newtxt{()}@
     tagged_tuple<tag::in1(I1), tag::in2(I2), tag::out(O)>
       merge_move(I1 first1, S1 last1, I2 first2, S2 last2, O result,
                  Comp comp = Comp{}, Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
 
-  template<InputRange Rng1, InputRange Rng2, Incrementable O, class Comp = less<>,
+  template<InputRange Rng1, InputRange Rng2, @\newtxt{Weakly}@Incrementable O, class Comp = less<>,
       class Proj1 = identity, class Proj2 = identity>
     requires MergeMovable<@\oldtxt{IteratorType}\newtxt{iterator_t}@<Rng1>, @\oldtxt{IteratorType}\newtxt{iterator_t}@<Rng2>, O, Comp, Proj1, Proj2>@\newtxt{()}@
     tagged_tuple<tag::in1(@\oldtxt{IteratorType}\newtxt{safe_iterator_t}@<Rng1>),
@@ -4945,14 +4941,14 @@ template<class InputIterator1, class InputIterator2,
 \begin{addedblock}
 \begin{itemdecl}
 template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
-    Incrementable O, class Comp = less<>, class Proj1 = identity,
+    @\newtxt{Weakly}@Incrementable O, class Comp = less<>, class Proj1 = identity,
     class Proj2 = identity>
   requires Mergeable<I1, I2, O, Comp, Proj1, Proj2>@\newtxt{()}@
   tagged_tuple<tag::in1(I1), tag::in2(I2), tag::out(O)>
     merge(I1 first1, S1 last1, I2 first2, S2 last2, O result,
           Comp comp = Comp{}, Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
 
-template<InputRange Rng1, InputRange Rng2, Incrementable O, class Comp = less<>,
+template<InputRange Rng1, InputRange Rng2, @\newtxt{Weakly}@Incrementable O, class Comp = less<>,
     class Proj1 = identity, class Proj2 = identity>
   requires Mergeable<@\oldtxt{IteratorType}\newtxt{iterator_t}@<Rng1>, @\oldtxt{IteratorType}\newtxt{iterator_t}@<Rng2>, O, Comp, Proj1, Proj2>@\newtxt{()}@
   tagged_tuple<tag::in1(@\oldtxt{IteratorType}\newtxt{safe_iterator_t}@<Rng1>),
@@ -4967,10 +4963,15 @@ template<InputRange Rng1, InputRange Rng2, Incrementable O, class Comp = less<>,
 \pnum
 \effects\ Copies all the elements of the two ranges \range{first1}{last1} and
 \range{first2}{last2} into the range \range{result}{result_last}, where \tcode{result_last}
-is \tcode{result + (last1 - first1) + (last2 - first2)}, such that the resulting range satisfies
-\tcode{\removed{is_sorted(result, result_last)}}\removed{ or}
-\ednote{TODO The following postcondition isn't well-formed:}
-\tcode{is_sorted(result, result_last, comp)}\removed{, respectively}.
+is \tcode{result + (last1 - first1) + (last2 - first2)}\oldoldtxt{, such that the resulting range satisfies
+\tcode{is_sorted(result, result_last)} or
+\tcode{is_sorted(result, result_last, comp)}, respectively}.
+\newtxt{If an element \tcode{a} precedes \tcode{b} in an input range,
+\tcode{a} is copied into the output range before \tcode{b}. If \tcode{e1} is
+an element of \range{first1}{last1} and \tcode{e2} of \range{first2}{last2},
+\tcode{e2} is copied into the output range before \tcode{e1} if and only if
+\tcode{bool(invoke(comp, invoke(proj2, e2), invoke(proj1, e1)))} is
+\tcode{true}.}
 
 \pnum
 \requires The ranges \range{first1}{last1} and \range{first2}{last2} shall be
@@ -4980,7 +4981,7 @@ The resulting range shall not overlap with either of the original ranges.
 \pnum
 \returns
 \tcode{\removed{result + (last1 - first1) + (last2 - first2)}\added{
-make_tagged_tuple<tag::in1, tag::in2,}}{\\}\tcode{\added{tag::out>(last1, last2, result + (last1 - first1) + (last2 - first2))}}.
+make_tagged_tuple<tag::in1, tag::in2,}}{\\}\tcode{\added{tag::out>(last1, last2, \oldtxt{result + (last1 - first1) + (last2 - first2)}\newtxt{result_last})}}.
 
 \pnum
 \complexity
@@ -4996,14 +4997,14 @@ At most
 \indexlibrary{\idxcode{merge_move}}%
 \begin{itemdecl}
 template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
-    Incrementable O, class Comp = less<>, class Proj1 = identity,
+    @\newtxt{Weakly}@Incrementable O, class Comp = less<>, class Proj1 = identity,
     class Proj2 = identity>
   requires MergeMovable<I1, I2, O, Comp, Proj1, Proj2>@\newtxt{()}@
   tagged_tuple<tag::in1(I1), tag::in2(I2), tag::out(O)>
     merge_move(I1 first1, S1 last1, I2 first2, S2 last2, O result,
                Comp comp = Comp{}, Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
 
-template<InputRange Rng1, InputRange Rng2, Incrementable O, class Comp = less<>,
+template<InputRange Rng1, InputRange Rng2, @\newtxt{Weakly}@Incrementable O, class Comp = less<>,
     class Proj1 = identity, class Proj2 = identity>
   requires MergeMovable<@\oldtxt{IteratorType}\newtxt{iterator_t}@<Rng1>, @\oldtxt{IteratorType}\newtxt{iterator_t}@<Rng2>, O, Comp, Proj1, Proj2>@\newtxt{()}@
   tagged_tuple<tag::in1(@\oldtxt{IteratorType}\newtxt{safe_iterator_t}@<Rng1>),
@@ -5017,9 +5018,14 @@ template<InputRange Rng1, InputRange Rng2, Incrementable O, class Comp = less<>,
 \pnum
 \effects\ Moves all the elements of the two ranges \range{first1}{last1} and
 \range{first2}{last2} into the range \range{result}{result_last}, where \tcode{result_last}
-is \tcode{result + (last1 - first1) + (last2 - first2)}, such that the resulting range satisfies
-\ednote{TODO The following postcondition isn't well-formed:}
-\tcode{is_sorted(result, result_last, comp)}.
+is \tcode{result + (last1 - first1) + (last2 - first2)}\oldtxt{, such that the resulting range satisfies
+\tcode{is_sorted(result, result_last, comp)}}.
+\newtxt{If an element \tcode{a} precedes \tcode{b} in an input range,
+\tcode{a} is moved into the output range before \tcode{b}. If \tcode{e1} is
+an element of \range{first1}{last1} and \tcode{e2} of \range{first2}{last2},
+\tcode{e2} is moved into the output range before \tcode{e1} if and only if
+}\tcode{\newtxt{bool(invoke(comp, \brk{}invoke(proj2, e2), \brk{}invoke(proj1, e1)))}}\newtxt{
+is \tcode{true}.}
 
 \pnum
 \requires The ranges \range{first1}{last1} and \range{first2}{last2} shall be
@@ -5028,7 +5034,7 @@ The resulting range shall not overlap with either of the original ranges.
 
 \pnum
 \returns
-\tcode{make_tagged_tuple<tag::in1, tag::in2, tag::out>(last1, last2, result + (last1 - first1) + (last2 - first2))}.
+\tcode{make_tagged_tuple<tag::in1, tag::in2, tag::out>(last1, last2, \oldtxt{result + (last1 - first1) + (last2 - first2)}\newtxt{result_last})}.
 
 \pnum
 \complexity
