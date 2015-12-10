@@ -1,0 +1,230 @@
+%!TEX root = stl2-ts.tex
+\infannex{sentrework}{Iterator Design Rationale}
+
+\pnum
+The design of the iterator and sentinel concepts in this document differs
+substantially from the design presented in N4560. In short, N4560 had separate
+``weak'' and ``strong'' variants of \tcode{Iterator}, \tcode{InputIterator}, and
+\tcode{OutputIterator}; in the current design the ``strong''
+(\tcode{EqualityComparable}~(\ref{concepts.lib.compare.equalitycomparable})) variants have been removed and the \tcode{Weak}
+prefix has been elided from the names of the ``weak'' variants. This rationale
+justifies the change and clarifies that it does not diminish the expressive
+power of iterator / sentinel pairs and ranges.
+
+\rSec1[sentrework.problem]{Problem statement}
+
+\pnum
+Consider a threshold sentinel \tcode{S} with state consisting of a single
+integer \tcode{bound}. When compared for equality with an iterator, this
+sentinel's \tcode{==} returns \tcode{true} if and only if the iterator denotes
+a value greater than or equal to \tcode{bound}. \tcode{S} seems like a useful
+tool, and it's simple enough to be described completely in a couple of
+sentences. One would expect it to be expressible within the sentinel model of
+N4560. Given an array of integers:
+\begin{codeblock}
+  int i[] = {2,1,3};
+\end{codeblock}
+By any sensible definition of ``the same range,'' \range{i+1}{S\{2\}} and
+\range{i+1}{S\{3\}} (where \tcode{S\{n\}} is a threshold sentinel with
+\tcode{bound} of \tcode{n}) denote the same range. \tcode{*(i+1) == 1} is less
+than both bounds (\tcode{2} and \tcode{3}), and \tcode{*(i+2) == 3} is greater
+than or equal to both bounds, so both ranges have length of one and denote only
+the single integer with value \tcode{1}.
+
+\pnum
+N4560 requires iterators and their sentinels to satisfy the cross-type
+\tcode{EqualityComparable<T,U>()} concept~(\ref{concepts.lib.compare.equalitycomparable}).
+\tcode{EqualityComparable} effectively requires the values of the two
+participant types \tcode{T} and \tcode{U} to be put into correspondence: if two
+objects \tcode{t1} and \tcode{t2} of one type both compare equal to some value
+of the other type, those objects must be equal. The meaning of ``be equal'' is
+very clearly defined in the Ranges TS by the semantics of equality preserving
+expressions~(\ref{concepts.lib.general.equality}). If \tcode{t1} and \tcode{t2}
+are equal, the result of evaluating any expression required to be equality
+preserving must be the same for both \tcode{t1} and \tcode{t2}. Informally,
+the correspondence enforced by \tcode{EqualityComparable} requires values of the
+participant types to both represent the same abstract entities as personified by
+their common type.
+
+\pnum
+Returning to the example above, the consequences of the
+\tcode{EqualityComparable} requirement are clear: since \tcode{i+2 == S\{2\}}
+and \tcode{i+2 == S\{3\}}, \tcode{S\{2\}} and \tcode{S\{3\}} must be equal. If
+they are equal, then the ranges \range{i+0}{S\{2\}} and \range{i+0}{S\{3\}} must
+also denote the same range due to the equality preservation of the expressions
+involved. This is, however, not the case since \tcode{*(i+0) == 2} is greater
+than or equal to \tcode{2} but not greater than or equal to \tcode{3}.
+\tcode{EqualityComparable<S,int*>()} and therefore \tcode{Sentinel<S,int*>()}
+are not satisfied; \tcode{S} is not a valid sentinel for \tcode{int*}.
+
+\pnum
+Clearly there is a large class of useful sentinels that the N4560 model does
+not admit: stateful sentinels which might compare equal to the same iterator
+when they have differing state. N4560 constrains iterators and sentinels to
+both represent the abstract notion of ``position,'' which is not a good fit
+for stateful sentinels.
+
+\rSec1[sentrework.approach]{Fixing the problem}
+
+\pnum
+It seems odd to claim that the sentinel semantics are broken when there are two
+working implementations of the TS~(\cite{range-v3}, \cite{cmcstl2}) that haven't
+had any issues due to this semantic inconsistency. The clear implication is that
+the semantics of the N4560 model are not an exact match for the requirements of
+the algorithms. The semantics are likely overconstrained and could be relaxed
+without losing the properties the algorithms need to support equational
+reasoning.
+
+\rSec2[sentrework.approach.alg]{Look at the Algorithms}
+
+\pnum
+As is often the case, a problem in the semantics is best fixed by examining
+the algorithms and determining what behaviors they require to ensure their
+postconditions. The properties the algorithms require for sentinels are (where
+\tcode{s} denotes a sentinel value and \tcode{i} an iterator value):
+\begin{itemize}
+\item \tcode{i == s}, \tcode{s == i}, \tcode{i != s}, and \tcode{s != i} are
+      equality-preserving expressions with the same domain.
+\item Symmetry: \tcode{bool(i == s) == bool(s == i)} and
+      \tcode{bool(i != s) == bool(s != i)}.
+\item Complement: \tcode{bool(i != s) == !bool(i == s)}.
+\item \tcode{i == s} is well-defined when \range{i}{s} denotes a range.
+\end{itemize}
+
+\pnum
+The first three properties aren't specific to iterators and sentinels; they are
+general characteristics of the operators \tcode{==} and \tcode{!=} that are
+intuitively expected to hold whenever they are defined. As such, the
+\tcode{EqualityComparable} concepts should require them to hold and this
+particular set of properties can then be presented as a relaxation of
+\tcode{EqualityComparable<T,U>()}. The current design does exactly that,
+defining the concept
+\tcode{Weakly\-Equal\-ity\-Comp\-arable}~(\ref{concepts.lib.compare.equalitycomparable})
+with exactly the specified semantic requirements, and reformulating both the
+single and cross-type variants of \tcode{EqualityComparable} as refinements
+thereof.
+
+\pnum
+Notably, nothing in this list of properties requires comparison of sentinels
+with other sentinels -- it's not a useful feature for generic code. The
+requirement for equality comparison of sentinels in N4560 is a checkbox feature
+to enable satisfaction of cross-type \tcode{EqualityComparable}. Absent the
+\tcode{EqualityComparable} requirement, nothing in the design requires equality
+comparison for sentinels. It's nonsensical to require sentinels to have
+\tcode{Regular} types if \tcode{==} is never required to be valid or useful;
+they should be \tcode{Semiregular}.
+
+\pnum
+The list of properties also does not require that iterator types be
+\tcode{EqualityComparable} to participate in the \tcode{Sentinel} relationship.
+Just as removing the cross-type \tcode{EqualityComparable} requirement
+makes it unnecessary for sentinels to be \tcode{EqualityComparable} with
+other sentinels, it also removes the necessity for the iterator type to be
+\tcode{EqualityComparable}. In N4560 terms, \tcode{Sentinel} should be a
+relationship between a \tcode{WeakIterator} type that denotes an element of a
+range and a \tcode{Semiregular} type that represents an end-of-range calculation
+as a predicate over \tcode{WeakIterator} values embodied in the form of the
+\tcode{==} operator, i.e.:
+\begin{codeblock}
+template <class S, class I>
+concept bool Sentinel() {
+  return Semiregular<S>() && WeakIterator<I>() &&
+    WeaklyEqualityComparable<S, I>();
+}
+\end{codeblock}
+a non-weak iterator is capable of both denoting an element and the end of a
+range. In other words, a ``strong'' iterator is a type that is simultaneously a
+weak iterator and a sentinel for that weak iterator:
+\begin{codeblock}
+template <class I>
+concept bool Iterator() {
+  return Sentinel<I, I>() &&
+    EqualityComparable<I>(); // Keep the semantic property that == means
+                             // substitutable in equality-preserving expressions
+}
+\end{codeblock}
+
+\rSec1[sentrework.ram]{Ramifications}
+
+\pnum
+Correcting the inconsistency in the \tcode{Sentinel} semantics creates a class
+of ``weak'' ranges -- ranges with \tcode{WeakInput} or \tcode{WeakOutput}
+iterator types -- that the algorithms do not admit. It would appear that
+algorithms that accept input (output) ranges should possibly be relaxed to
+accept weak input (weak output) ranges instead. How would doing so constrain
+the implementations of the algorithms? Do weak ranges have less expressive power?
+
+\rSec2[sentrework.ram.singlepass]{Single-pass Algorithms}
+
+\pnum
+Algorithms that accept input or output iterators necessarily perform at most one
+pass over the range of elements those iterators reference. N4560's weak input and
+weak output iterators are consistent with those single-pass semantics. The
+sole distinction is support for equality comparison. How do algorithms use
+equality comparison with iterators for single-pass ranges?
+
+\pnum
+Oddly enough, the answer to the question posed is that algorithms need not ever
+use equality comparison on single-pass iterators. In the iterator pair model its
+necessary to compare an iterator denoting the current position in the range with
+the supplied end iterator to determine when the algorithm reaches the end of the
+range. An algorithm \textit{could} compare the ``current'' iterator with itself
+or a copy thereof, but it would be pointless to do so. An algorithm
+\textit{cannot} compare the ``current'' iterator with a copy of an earlier value
+it held because that operation is not required to be valid for single-pass
+iterators.
+
+\pnum
+The case is similar for the iterator / sentinel model. An algorithm compares the
+iterator with the sentinel to determine when the end of the range is reached,
+but cannot compare the iterator with a copy of an older value. It would again be
+pointless to compare the iterator with itself or a copy; there's no reason to
+test things known to be equal for equality. Consequently, relaxing the
+algorithms that use single-pass ranges to ``weak'' single-pass ranges doesn't
+reduce their power.
+
+\rSec2[sentrework.ram.merge]{Why ``strong'' Iterators?}
+
+\pnum
+Relaxing the algorithms necessitates relaxing the iterator operations
+(\tcode{advance} et al.~(\ref{iterator.operations})), which the algorithms use.
+Indeed there are many components in the specification that require a ``strong''
+iterator not because they need to compare iterator values for equality, but
+because iterator / sentinel pairs in N4560 necessarily used strong iterators.
+Once all such occurrences are relaxed, it becomes apparent that there is no need
+for separate ``weak'' and ``strong'' concepts for input and output iterators;
+the strong concepts are unused. The current design removes N4560's
+\tcode{InputIterator} and \tcode{OutputIterator} concepts and strips the
+\tcode{Weak} prefix from the names of N4560's \tcode{WeakInputIterator} and
+\tcode{WeakOutputIterator} since the name distinction is no longer necessary.
+
+\pnum
+After removing the distinction between weak and strong input and output
+iterators, the \tcode{Iterator} concept is insufficiently distinguished from
+\tcode{Sentinel} to deserve a separate named concept. The current design pushes
+\tcode{Iterator}'s \tcode{Sentinel<I,I>()} requirement up into
+\tcode{ForwardIterator} so that the semantics of forward and stronger iterators
+are unchanged, and pushes the \tcode{EqualityComparable} requirement from
+\tcode{Iterator} down into \tcode{Sentinel}, but only requires it when the
+iterator and sentinel types are the same. \tcode{Iterator} may then be struck
+from the design, and the \tcode{Weak} prefix stripped from \tcode{WeakIterator}
+as well.
+
+\pnum
+The end result of the design changes is to simplify the iterator concepts
+overall, resulting in a reduction of the number of iterator categories from
+N4560's seven to five as in \Cpp{}14.
+
+\rSec1[sentrework.conc]{Conclusions}
+
+\pnum
+The Ranges TS originally inherited the notions of distinct ``weak'' and
+``strong'' kinds of iterators from the Palo Alto report~(\ref{intro.refs}).
+The distinction was necessary in the Palo Alto design to capture the difference
+between a lone iterator that need not support equality comparison and iterator
+pairs that must support equality comparison to be capable of denoting ranges.
+The addition of sentinels to the TS design makes that distinction unnecessary:
+iterators denote elements, ranges are denoted by iterator / sentinel pairs. A
+homogeneous pair of iterators can denote a range by satisfying the
+\tcode{Sentinel} concept, there's no need for separate ``weak'' and
+``strong'' iterator concepts muddying the waters.
