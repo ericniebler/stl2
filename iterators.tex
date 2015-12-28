@@ -342,41 +342,45 @@ When instantiated with a type \tcode{I} \oldtxt{that has a nested type \tcode{el
 \tcode{shared_ptr<int>} are \tcode{Readable} and have an associated value type. But a smart pointer
 like \tcode{shared_ptr<void>} is not \tcode{Readable} and has no associated value type.\exitnote
 
-\rSec2[iterators.movewritable]{Concept MoveWritable}
+\rSec2[iterators.writable]{Concept Writable}
 
 \pnum
-The \tcode{MoveWritable} concept describes the requirements for moving a value into an iterator's
+The \tcode{\oldtxt{Move}Writable} concept describes the requirements for \oldtxt{moving}\newtxt{writing} a value into an iterator's
 referenced object.
 
-\indexlibrary{\idxcode{MoveWritable}}%
+\indexlibrary{\idxcode{Writable}}%
 \begin{codeblock}
   template <class Out, class T>
-  concept bool MoveWritable() {
+  concept bool @\oldtxt{Move}@Writable() {
     return Semiregular<Out>() &&
-      requires (Out o, T v) {
-        *o = std::move(v); // not required to be equality preserving
+      requires(Out o, T@\newtxt{\&\&}@ v) {
+        *o = std::@\oldtxt{move}\newtxt{forward<T>}@(v); // not required to be equality preserving
       };
   }
 \end{codeblock}
 
 \pnum
-Let \tcode{v} be an rvalue or a lvalue of type (possibly \tcode{const}) \tcode{T}, and let \tcode{o}
-be a dereferenceable object of type \tcode{Out}. Then \tcode{MoveWritable<Out, T>()} is satisfied if and only if
+Let \tcode{v} be an \oldtxt{rvalue or a lvalue of type (possibly \tcode{const})}\newtxt{an expression such that \tcode{decltype(v)} is} \tcode{T}, and let \tcode{o}
+be a dereferenceable object of type \tcode{Out}. Then \tcode{\oldtxt{Move}Writable<Out, T>()} is satisfied if and only if
 
 \begin{itemize}
-\item If \tcode{Out} is \tcode{Readable},
-then after the assignment \tcode{*o = std::move(v)}, \tcode{*o} is equal
+\item If \oldtxt{\tcode{Out} is }\tcode{Readable<Out>()\newtxt{ \&\& Same<value_type_t<Out>, decay_t<T>{>}()}}\newtxt{ is satisfied},
+then\newtxt{ \tcode{*o}} after the assignment\oldtxt{ \tcode{*o = std::move(v)}, \tcode{*o}} is equal
 to the value of \tcode{v} before the assignment.
 \end{itemize}
 
 \pnum
-After the expression \tcode{*o = std::move(v)}, object \tcode{o} is not required to be dereferenceable.
+After\newtxt{ evaluating} the \newtxt{assignment }expression\oldtxt{ \tcode{*o = std::move(v)}}, \oldtxt{object }\tcode{o} is not required to be dereferenceable.
 
 \pnum
-\tcode{v}'s state is unspecified. \enternote \tcode{v} must still meet the
-requirements of the library component that is using it. The operations listed
-in those requirements must work as specified whether \tcode{v} has been moved
+\oldtxt{\tcode{v}'s state}\newtxt{If \tcode{v} is an xvalue~(\cxxref{basic.lval}), the resulting
+state of the object it denotes} is unspecified. \enternote \oldtxt{\tcode{v}}\newtxt{The object} must still meet the
+requirements of \oldtxt{the}\newtxt{any} library component that is using it. The operations listed
+in those requirements must work as specified whether \oldtxt{\tcode{v}}\newtxt{the object} has been moved
 from or not.\exitnote
+
+\ednote{``If \tcode{v} is an xvalue'' suffices for now, but incorporating P0022's proxy
+ iterators will require a characterization of the ``xvalue-ness'' of a proxy reference type.}
 
 \pnum
 \enternote
@@ -384,13 +388,13 @@ The only valid use of an \tcode{operator*} is on the left side of the assignment
 \textit{Assignment through the same value of the writable type happens only once.}
 \exitnote
 
-\rSec2[iterators.writable]{Concept Writable}
+{\color{oldclr}
+\rSec2[iterators.oldwritable]{(Was) Concept Writable}
 
 \pnum
 The \tcode{Writable} concept describes the requirements for copying a value into an iterator's
 referenced object.
 
-\indexlibrary{\idxcode{Writable}}%
 \begin{codeblock}
   template <class Out, class T>
   concept bool Writable() {
@@ -410,71 +414,7 @@ of type \tcode{const T}, and let \tcode{o} be a dereferenceable object of type
 \item If \tcode{Out} is \tcode{Readable}, after the assignment \tcode{*o = v},
 \tcode{*o} is equal to the value of \tcode{v}.
 \end{itemize}
-
-\rSec2[iterators.indirectlymovable]{Concept IndirectlyMovable}
-
-\pnum
-The \tcode{IndirectlyMovable} concept describes the move relationship between a \tcode{Readable}
-type and a \tcode{MoveWritable} type.
-
-\indexlibrary{\idxcode{IndirectlyMovable}}%
-\begin{codeblock}
-  template <class I, class Out>
-  concept bool IndirectlyMovable() {
-    return Readable<I>() && MoveWritable<Out, @\oldtxt{ValueType}\newtxt{value_type_t}@<I>>();
-  }
-\end{codeblock}
-
-\pnum
-Let \tcode{i} be an object of type \tcode{I}, and let \tcode{o} be a
-dereferenceable object of type \tcode{Out}. Then
-\tcode{IndirectlyMovable<I, Out>()} is satisfied if and only if
-
-\begin{itemize}
-\item If \tcode{Out} is \tcode{Readable}, after the assignment
-\tcode{*o = std::move(*i)}, \tcode{*o} is equal to
-the value of \tcode{*i} before the assignment.
-\end{itemize}
-
-\rSec2[iterators.indirectlycopyable]{Concept IndirectlyCopyable}
-
-\pnum
-The \tcode{IndirectlyCopyable} concept describes the copy relationship between a \tcode{Readable}
-type and a \tcode{Writable} type.
-
-\indexlibrary{\idxcode{IndirectlyCopyable}}%
-\begin{codeblock}
-  template <class I, class Out>
-  concept bool IndirectlyCopyable() {
-    return IndirectlyMovable<I, Out>() && Writable<Out, @\oldtxt{ValueType}\newtxt{value_type_t}@<I>>();
-  }
-\end{codeblock}
-
-\pnum
-Let \tcode{i} be an object of type \tcode{I}, and let \tcode{o} be a
-dereferenceable object of type \tcode{Out}. Then
-\tcode{IndirectlyCopyable<I, Out>()} is satisfied if and only if
-
-\begin{itemize}
-\item If \tcode{Out} is \tcode{Readable}, after the assignment \tcode{*o = *i},
-\tcode{*o} is equal to the value of \tcode{*i}.
-\end{itemize}
-
-\rSec2[iterators.indirectlyswappable]{Concept IndirectlySwappable}
-
-\pnum
-The \tcode{IndirectlySwappable} concept describes a swappable relationship between the
-reference types of two \tcode{Readable} types.
-
-\indexlibrary{\idxcode{IndirectlySwappable}}%
-\begin{codeblock}
-  template <class I1, class I2 = I1>
-  concept bool IndirectlySwappable() {
-    return Readable<I1>() &&
-      Readable<I2>() &&
-      Swappable<@\oldtxt{ReferenceType}\newtxt{reference_t}@<I1>, @\oldtxt{ReferenceType}\newtxt{reference_t}@<I2>>();
-  }
-\end{codeblock}
+} %% color{oldclr}
 
 \rSec2[iterators.weaklyincrementable]{Concept WeaklyIncrementable}
 
@@ -1249,8 +1189,10 @@ member function need not be defined.\exitnote
 
 \pnum
 There are several additional iterator concepts that are commonly applied to families of algorithms.
-These group together iterator requirements of algorithm families. There are four relational concepts
-for rearrangements: \tcode{Permutable}, \tcode{Mergeable}, \oldtxt{\tcode{MergeMovable}}\newtxt{\tcode{MoveMergeable}}, and \tcode{Sortable}.
+These group together iterator requirements of algorithm families. \newtxt{There are three relational
+concepts that specify how element values are transferred between \tcode{Readable} and \tcode{Writable} types:
+\tcode{IndirectlyMovable}, \tcode{IndirectlyCopyable}, and \tcode{IndirectlySwappable}.} There are \oldtxt{four}\newtxt{three} relational concepts
+for rearrangements: \tcode{Permutable}, \tcode{Mergeable},\oldtxt{ \tcode{MergeMovable},} and \tcode{Sortable}.
 There is one relational concept for comparing values from different sequences: \tcode{IndirectlyComparable}.
 
 {\color{newclr}
@@ -1260,6 +1202,122 @@ concepts below impose additional constraints on their arguments beyond those tha
 concepts' bodies. \tcode{equal_to<>} requires its arguments satisfy \tcode{EqualityComparable}~(\ref{concepts.lib.compare.equalitycomparable}),
 and \tcode{less<>} requires its arguments satisfy \tcode{StrictTotallyOrdered}~(\ref{concepts.lib.compare.stricttotallyordered}).\exitnote
 }
+
+\rSec2[commonalgoreq.indirectlymovable]{Concept IndirectlyMovable}
+
+\pnum
+The \tcode{IndirectlyMovable} concept \oldtxt{describes}\newtxt{specifies} the\oldtxt{ move} relationship between a \tcode{Readable}
+type and a \tcode{\oldtxt{Move}Writable} type\newtxt{ between which values may be moved}.
+
+\indexlibrary{\idxcode{IndirectlyMovable}}%
+\begin{codeblock}
+  @\newtxt{template <class I>}@
+  @\newtxt{using rvalue_reference_t =}@
+    @\newtxt{decltype(std::move(declval<reference_t<I>{>}()));}@
+
+  template <class I@\newtxt{n}@, class Out>
+  concept bool IndirectlyMovable() {
+    return Readable<I@\newtxt{n}@>() &&
+      @\oldtxt{Move}@Writable<Out, @\oldtxt{ValueType<I>}\newtxt{rvalue_reference_t<In>}@>();
+  }
+\end{codeblock}
+
+\ednote{This is a simple version of \tcode{rvalue_reference_t} to be replaced
+with the formulation from P0022 when that proposal is integrated.}
+
+{\color{oldclr} %% Redundant with Writable
+\pnum
+Let \tcode{i} be an object of type \tcode{I}, and let \tcode{o} be a
+dereferenceable object of type \tcode{Out}. Then
+\tcode{IndirectlyMovable<I, Out>()} is satisfied if and only if
+
+\begin{itemize}
+\item If \tcode{Out} is \tcode{Readable}, after the assignment
+\tcode{*o = std::move(*i)}, \tcode{*o} is equal to
+the value of \tcode{*i} before the assignment.
+\end{itemize}
+} %% color{oldclr}
+
+{\color{newclr}
+\pnum
+The \tcode{IndirectlyMovableStorable} concept augments \tcode{IndirectlyMovable} with additional
+requirements enabling the transfer to be performed through an intermediate object of the
+\tcode{Readable} type's value type.
+
+\indexlibrary{\idxcode{IndirectlyMovableStorable}}%
+\begin{codeblock}
+  template <class In, class Out>
+  concept bool IndirectlyMovableStorable() {
+    return IndirectlyMovable<In, Out>() &&
+      Writable<Out, value_type_t<In>&&>() &&
+      Movable<value_type_t<In>>() &&
+      Constructible<value_type_t<In>, rvalue_reference_t<In>>() &&
+      Assignable<value_type_t<In>&, rvalue_reference_t<In>>();
+  }
+\end{codeblock}
+} %% color{newclr}
+
+\rSec2[commonalgoreq.indirectlycopyable]{Concept IndirectlyCopyable}
+
+\pnum
+The \tcode{IndirectlyCopyable} concept \oldtxt{describes}\newtxt{specifies} the\oldtxt{ copy} relationship between a \tcode{Readable}
+type and a \tcode{Writable} type\newtxt{ between which values may be transferred without necessarily moving}.
+
+\indexlibrary{\idxcode{IndirectlyCopyable}}%
+\begin{codeblock}
+  template <class I@\newtxt{n}@, class Out>
+  concept bool IndirectlyCopyable() {
+    return IndirectlyMovable<I@\newtxt{n}@, Out>() &&
+      Writable<Out, @\oldtxt{ValueType}\newtxt{reference_t}@<I@\newtxt{n}@>>();
+  }
+\end{codeblock}
+
+{\color{oldclr} %% Redundant with Writable
+\pnum
+Let \tcode{i} be an object of type \tcode{I}, and let \tcode{o} be a
+dereferenceable object of type \tcode{Out}. Then
+\tcode{IndirectlyCopyable<I, Out>()} is satisfied if and only if
+
+\begin{itemize}
+\item If \tcode{Out} is \tcode{Readable}, after the assignment \tcode{*o = *i},
+\tcode{*o} is equal to the value of \tcode{*i}.
+\end{itemize}
+} %% color{oldclr}
+
+{\color{newclr}
+\pnum
+The \tcode{IndirectlyCopyableStorable} concept augments \tcode{IndirectlyCopyable} with additional
+requirements enabling the transfer to be performed through an intermediate object of the
+\tcode{Readable} type's value type. It also requires the capability to make copies of values.
+
+\indexlibrary{\idxcode{IndirectlyCopyableStorable}}%
+\begin{codeblock}
+  template <class In, class Out>
+  concept bool IndirectlyCopyableStorable() {
+    return IndirectlyCopyable<In, Out>() &&
+      IndirectlyMovableStorable<In, Out>() &&
+      Writable<Out, const value_type_t<In>&>() &&
+      Copyable<value_type_t<In>>() &&
+      Constructible<value_type_t<In>, reference_t<In>>() &&
+      Assignable<value_type_t<In>&, reference_t<In>>();
+  }
+\end{codeblock}
+} %% color{newclr}
+
+\rSec2[commonalgoreq.indirectlyswappable]{Concept IndirectlySwappable}
+
+\pnum
+The \tcode{IndirectlySwappable} concept describes a swappable relationship between the
+reference types of two \tcode{Readable} types.
+
+\indexlibrary{\idxcode{IndirectlySwappable}}%
+\begin{codeblock}
+  template <class I1, class I2 = I1>
+  concept bool IndirectlySwappable() {
+    return Readable<I1>() && Readable<I2>() &&
+      Swappable<@\oldtxt{ReferenceType}\newtxt{reference_t}@<I1>, @\oldtxt{ReferenceType}\newtxt{reference_t}@<I2>>();
+  }
+\end{codeblock}
 
 \rSec2[commonalgoreq.indirectlycomparable]{Concept IndirectlyComparable}
 
@@ -1287,8 +1345,9 @@ elements in place by moving or swapping them.
   template <class I>
   concept bool Permutable() {
     return ForwardIterator<I>() &&
-      Movable<@\oldtxt{ValueType}\newtxt{value_type_t}@<I>>() &&
-      IndirectlyMovable<I, I>();
+      @\oldtxt{Movable<ValueType<I>{>}() \&\&}@
+      IndirectlyMovable@\newtxt{Storable}@<I, I>()@\newtxt{ \&\&}@
+      @\newtxt{IndirectlySwappable<I, I>()}@;
   }
 \end{codeblock}
 
@@ -1318,31 +1377,31 @@ algorithms that merge sorted sequences into an output sequence by copying elemen
 relation, the value type must satisfy \tcode{TotallyOrdered}.\exitnote
 }
 
-\rSec2[commonalgoreq.mergemovable]{Concept MoveMergeable}
+{\color{oldclr}
+\rSec2[commonalgoreq.mergemovable]{Concept MergeMovable}
 
 \pnum
-The \oldtxt{\tcode{MergeMovable}}\newtxt{\tcode{MoveMergeable}} concept specifies the requirements of
+The \tcode{MergeMovable} concept specifies the requirements of
 algorithms that merge sorted sequences into an output sequence by moving elements.
 
-\indexlibrary{\idxcode{MoveMergeable}}%
+\indexlibrary{\idxcode{MergeMovable}}%
 \begin{codeblock}
   template <class I1, class I2, class Out,
       class R = less<>, class P1 = identity, class P2 = identity>
-  concept bool @\oldtxt{MergeMovable}\newtxt{MoveMergeable}@() {
+  concept bool MergeMovable() {
     return InputIterator<I1>() &&
       InputIterator<I2>() &&
       WeaklyIncrementable<Out>() &&
       IndirectlyMovable<I1, Out>() &&
       IndirectlyMovable<I2, Out>() &&
-      IndirectCallableStrictWeakOrder<R, @\oldtxt{P}\newtxt{p}@rojected<I1, P1>, @\oldtxt{P}\newtxt{p}@rojected<I2, P2>>();
+      IndirectCallableStrictWeakOrder<R, Projected<I1, P1>, Projected<I2, P2>>();
   }
 \end{codeblock}
 
-\oldtxt{
 \pnum
 \enternote When \tcode{less<>} is used as the
 relation, the value type must satisfy \tcode{TotallyOrdered}.\exitnote
-}
+} %% color{oldclr}
 
 \rSec2[commonalgoreq.sortable]{Concept Sortable}
 
@@ -1554,6 +1613,30 @@ namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \
 
 \begin{addedblock}
 \begin{codeblock}
+  @\newtxt{template <Semiregular S> class move_sentinel;}@
+  @\newtxt{template <class I, Sentinel<I> S>}@
+    @\newtxt{bool operator==(}@
+      @\newtxt{const move_iterator<I>\& i, const move_sentinel<S>\& s);}@
+  @\newtxt{template <class I, Sentinel<I> S>}@
+    @\newtxt{bool operator==(}@
+      @\newtxt{const move_sentinel<S>\& s, const move_iterator<I>\& i);}@
+  @\newtxt{template <class I, Sentinel<I> S>}@
+    @\newtxt{bool operator!=(}@
+      @\newtxt{const move_iterator<I>\& i, const move_sentinel<S>\& s);}@
+  @\newtxt{template <class I, Sentinel<I> S>}@
+    @\newtxt{bool operator!=(}@
+      @\newtxt{const move_sentinel<S>\& s, const move_iterator<I>\& i);}@
+
+  @\newtxt{template <class I, SizedSentinel<I> S>}@
+    @\newtxt{difference_type_t<I> operator-(}@
+      @\newtxt{const move_sentinel<S>\& s, const move_iterator<I>\& i);}@
+  @\newtxt{template <class I, SizedSentinel<I> S>}@
+    @\newtxt{difference_type_t<I> operator-(}@
+      @\newtxt{const move_iterator<I>\& i, const move_sentinel<S>\& s);}@
+
+  @\newtxt{template <Semiregular S>}@
+    @\newtxt{move_sentinel<S> make_move_sentinel(S s);}@
+
   // \ref{iterators.common} Common iterators
   @\oldtxt{template<class A, class B>}@
   @\oldtxt{concept bool \xname{WeaklyEqualityComparable} = \seebelow;  // \expos}@
@@ -3732,10 +3815,8 @@ with the same behavior as the underlying iterator except that its
 indirection operator implicitly converts the value returned by the
 underlying iterator's indirection operator to an rvalue \oldoldtxt{reference}
 \newnewtxt{of the value type}.
-\removed{Some generic algorithms can be called with move iterators to replace
-copying with moving.} \ednote{This is untrue now. The algorithms that do
-copying are constrained with \tcode{IndirectlyCopyable}, which will reject
-\tcode{move_iterator}s.}
+Some generic algorithms can be called with move iterators to replace
+copying with moving.
 
 \pnum
 \enterexample
@@ -3749,6 +3830,32 @@ vector<string> v2(make_move_iterator(s.begin()),
 \end{codeblock}
 
 \exitexample
+
+\begin{addedblock}
+{\color{newclr}
+\pnum
+Class template \tcode{move_sentinel} is a sentinel adaptor useful for denoting
+ranges together with \tcode{move_iterator}. When an iterator type \tcode{I} and
+sentinel type \tcode{S} satisfy \tcode{Sentinel<S, I>()},
+\tcode{Sentinel<move_sentinel<S>, move_iterator<I>{>}()} is satisfied as well.
+
+\pnum
+\enterexample A \tcode{move_if} algorithm is easily implemented with
+\tcode{copy_if} using \tcode{move_iterator} and \tcode{move_sentinel}:
+
+\begin{codeblock}
+template <InputIterator I, Sentinel<I> S, WeaklyIncrementable O,
+          IndirectCallablePredicate<I> Pred>
+  requires IndirectlyMovable<I, O>()
+void move_if(I first, S last, O out, Pred pred)
+{
+  copy_if(move_iterator<I>{first}, move_sentinel<S>{last}, out, pred);
+}
+\end{codeblock}
+
+\exitexample
+} %% color{newclr}
+\end{addedblock}
 
 \rSec3[move.iterator]{Class template \tcode{move_iterator}}
 
@@ -4287,6 +4394,173 @@ template <@\removed{class Iterator}\oldtxt{Weak}\added{InputIterator I}@>
 \end{itemdescr}
 
 \begin{addedblock}
+{\color{newclr}
+\rSec3[move.sentinel]{Class template \tcode{move_sentinel}}
+
+\indexlibrary{\idxcode{move_sentinel}}%
+\begin{codeblock}
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+  template <Semiregular S>
+  class move_sentinel {
+  public:
+    constexpr move_sentinel();
+    explicit move_sentinel(S s);
+    move_sentinel(const move_sentinel<ConvertibleTo<S>>& s);
+    move_sentinel& operator=(const move_sentinel<ConvertibleTo<S>>& s);
+
+    S base() const;
+
+  private:
+    S last; // \expos
+  };
+
+  template <class I, Sentinel<I> S>
+    bool operator==(
+      const move_iterator<I>& i, const move_sentinel<S>& s);
+  template <class I, Sentinel<I> S>
+    bool operator==(
+      const move_sentinel<S>& s, const move_iterator<I>& i);
+  template <class I, Sentinel<I> S>
+    bool operator!=(
+      const move_iterator<I>& i, const move_sentinel<S>& s);
+  template <class I, Sentinel<I> S>
+    bool operator!=(
+      const move_sentinel<S>& s, const move_iterator<I>& i);
+
+  template <class I, SizedSentinel<I> S>
+    difference_type_t<I> operator-(
+      const move_sentinel<S>& s, const move_iterator<I>& i);
+  template <class I, SizedSentinel<I> S>
+    difference_type_t<I> operator-(
+      const move_iterator<I>& i, const move_sentinel<S>& s);
+
+  template <Semiregular S>
+    move_sentinel<S> make_move_sentinel(S s);
+}}}}
+\end{codeblock}
+
+\rSec3[move.sent.ops]{\tcode{move_sentinel} operations}
+
+\rSec4[move.sent.op.const]{\tcode{move_sentinel} constructors}
+
+\indexlibrary{\idxcode{move_sentinel}!\idxcode{move_sentinel}}%
+\begin{itemdecl}
+constexpr move_sentinel();
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Constructs a \tcode{move_sentinel}, value-initializing
+\tcode{last}. If \tcode{S} is a literal type, this constructor
+shall be a \tcode{constexpr} constructor.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{move_iterator}!constructor}%
+\begin{itemdecl}
+explicit move_sentinel(S s);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Constructs a \tcode{move_sentinel}, initializing
+\tcode{last} with \tcode{s}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{move_sentinel}!constructor}%
+\begin{itemdecl}
+move_sentinel(const move_sentinel<ConvertibleTo<S>>& s);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Constructs a \tcode{move_sentinel}, initializing
+\tcode{last} with \tcode{s.last}.
+\end{itemdescr}
+
+\rSec4[move.sent.op=]{\tcode{move_sentinel::operator=}}
+
+\indexlibrary{\idxcode{operator=}!\idxcode{move_sentinel}}%
+\indexlibrary{\idxcode{move_sentinel}!\idxcode{operator=}}%
+\begin{itemdecl}
+move_sentinel& operator=(const move_sentinel<ConvertibleTo<S>>& s);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Assigns \tcode{s.last} to \tcode{last}.
+\end{itemdescr}
+
+\rSec4[move.sent.op.comp]{\tcode{move_sentinel} comparisons}
+
+\indexlibrary{\idxcode{operator==}!\idxcode{move_sentinel}}%
+\indexlibrary{\idxcode{move_sentinel}!\idxcode{operator==}}%
+\begin{itemdecl}
+template <class I, Sentinel<I> S>
+  bool operator==(
+    const move_iterator<I>& i, const move_sentinel<S>& s);
+template <class I, Sentinel<I> S>
+  bool operator==(
+    const move_sentinel<S>& s, const move_iterator<I>& i);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to \tcode{i.current == s.last}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator"!=}!\idxcode{move_sentinel}}%
+\indexlibrary{\idxcode{move_sentinel}!\idxcode{operator"!=}}%
+\begin{itemdecl}
+template <class I, Sentinel<I> S>
+  bool operator!=(
+    const move_iterator<I>& i, const move_sentinel<S>& s);
+template <class I, Sentinel<I> S>
+  bool operator!=(
+    const move_sentinel<S>& s, const move_iterator<I>& i);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to \tcode{!(i == s)}.
+\end{itemdescr}
+
+\rSec4[move.sent.nonmember]{\tcode{move_sentinel} non-member functions}
+
+\indexlibrary{\idxcode{operator-}!\idxcode{move_sentinel}}%
+\indexlibrary{\idxcode{move_sentinel}!\idxcode{operator-}}%
+\begin{itemdecl}
+template <class I, SizedSentinel<I> S>
+  difference_type_t<I> operator-(
+    const move_sentinel<S>& s, const move_iterator<I>& i);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to \tcode{s.last - i.current}.
+\end{itemdescr}
+
+\begin{itemdecl}
+template <class I, SizedSentinel<I> S>
+  difference_type_t<I> operator-(
+    const move_iterator<I>& i, const move_sentinel<S>& s);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to \tcode{i.current - s.last}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{make_move_sentinel}}%
+\begin{itemdecl}
+template <Semiregular S>
+  move_sentinel<S> make_move_sentinel(S s);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{move_sentinel<S>(s)}.
+\end{itemdescr}
+} %% color{newclr}
 
 \rSec2[iterators.common]{Common iterators}
 
