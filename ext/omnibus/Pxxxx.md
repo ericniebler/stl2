@@ -16,18 +16,18 @@ Customization points are pain points, as the motivation of N4381 makes clear:
 > The correct usage of customization points like `swap` is to first bring the standard `swap` into scope with a using declaration, and then to call `swap` unqualified:
 
 > ```c++
-using std::swap;
-swap(a, b);
-```
+> using std::swap;
+> swap(a, b);
+> ```
 
 > One problem with this approach is that it is error-prone. It is all too easy to call (qualified) `std::swap` in a generic context, which is potentially wrong since it will fail to find any user-defined overloads.
 
 > Another potential problem – and one that will likely become bigger with the advent of Concepts Lite – is the inability to centralize constraints-checking. Suppose that a future version of `std::begin` requires that its argument model a Range concept. Adding such a constraint would have no effect on code that uses `std::begin` idiomatically:
 
 > ```c++
-using std::begin;
-begin(a);
-```
+> using std::begin;
+> begin(a);
+> ```
 
 > If the call to `begin` dispatches to a user-defined overload, then the constraint on `std::begin` has been bypassed.
 
@@ -41,14 +41,15 @@ The Ranges TS has another customization point problem that N4381 does not cover:
 
 ```c++
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
-template <class T>
-concept bool Swappable() {
+  template <class T>
+  concept bool Swappable() {
     return requires(T&& t, T&& u) {
-        (void)swap(std::forward<T>(t), std::forward<T>(u));
+      (void)swap(std::forward<T>(t), std::forward<T>(u));
     };
-}
+  }
 }}}}
 ```
+
 unqualified name lookup for the name `swap` could find the unconstrained `swap` in namespace `std` either directly - it's only a couple of hops up the namespace hierarchy - or via ADL if `std` is an associated namespace of `T` or `U`. If `std::swap` is unconstrained, the concept is "satisfied" for all types, and effectively useless. The Ranges TS deals with this problem by requiring changes to `std::swap`, a practice which has historically been forbidden for TSs. Applying similar constraints to all of the customization points defined in the TS by modifying the definitions in namespace `std` is an unsatisfactory solution, if not an altogether untenable.
 
 We propose a combination of the approach used in N4381 with a "poison pill" technique to correct the lookup problem. Namely, we specify that unqualified lookup intended to find user-defined overloads via ADL must be performed in a context that includes a deleted overload matching the signature of the implementation in namespace `std`. E.g., for the customization point `begin`, the unqualified lookup for `begin(E)` (for some arbitrary expression `E`) is performed in a context that includes the declaration `void begin(const auto&) = delete;`. This "poison pill" has two distinct effects on overload resolution. First, the poison pill hides the declaration in namespace `std` from normal unqualified lookup, simply by having the same name. Second, for actual argument expressions for which the overload in namespace `std` is viable and found by ADL, the poisin pill will also be viable causing overload resolution to fail due to ambiguity. The net effect is to preclude the overload in namespace `std` from being chosen by overload resolution, or indeed any overload found by ADL that is not more specialized or more constrained than the poison pill.
@@ -56,7 +57,7 @@ We propose a combination of the approach used in N4381 with a "poison pill" tech
 All of this complicated customization point machinery is necessary to facilitate strong semantics through the addition of constraints. Let `E` be an arbitrary expression that denotes a range. The type of `begin(E)` must satisfy `Iterator`, so the customization point `begin` should constrain its return type to satisfy `Iterator`. Similarly, `end` should constrain its return type to satisfy `Sentinel<decltype(end(E)), decltype(begin(E))>()` since the iterator and sentinel types of a range must satisfy `Sentinel`. The constraints on `begin` and `end` should apply equally to the `const` and/or `reverse` variants thereof: `cbegin`, `cend`, `rbegin`, `rend`, `crbegin`, and `crend`. The size of a `SizedRange` always has a type the satisfies `Integral`, so the customization point `size` should should constrain its return type to satisfy `Integral`. `empty` should constrain its return type to be exactly `bool`. (Requiring the return type of `empty` to satisfy `Boolean` would also be a reasonable choice, but there seems to be no motivating reason for that relaxation at this time.)
 
 Technical Specifications
-========================
+------------------------
 Add a new subsection to the end of [type.descriptions] to introduce *customization point object* as a term of art:
 
 > 1 A *customization point object* is a function object (20.9) with a literal class type that interacts with user-defined types while enforcing semantic requirements on that interaction.
@@ -75,25 +76,26 @@ Add a new subsection to the end of [type.descriptions] to introduce *customizati
 
 In [concepts.lib.corelang.swappable], replace references to `swap` in the concept definitions with references to `ranges::swap`, to make it clear that the name is used qualified here, and remove the casts to `void`:
 
-```c++
-template <class T>
-concept bool Swappable() {
-  return requires(T&& a, T&& b) {
-    ranges::swap(std::forward<T>(a), std::forward<T>(b));
-  };
-}
+> ```c++
+> template <class T>
+> concept bool Swappable() {
+>   return requires(T&& a, T&& b) {
+>     ranges::swap(std::forward<T>(a), std::forward<T>(b));
+>   };
+> }
+>
+> template <class T, class U>
+> concept bool Swappable() {
+>   return Swappable<T>() &&
+>     Swappable<U>() &&
+>     Common<T, U>() &&
+>     requires(T&& t, U&& u) {
+>       ranges::swap(std::forward<T>(t), std::forward<U>(u));
+>       ranges::swap(std::forward<U>(u), std::forward<T>(t));
+>     };
+> }
+> ```
 
-template <class T, class U>
-concept bool Swappable() {
-  return Swappable<T>() &&
-    Swappable<U>() &&
-    Common<T, U>() &&
-    requires(T&& t, U&& u) {
-      ranges::swap(std::forward<T>(t), std::forward<U>(u));
-      ranges::swap(std::forward<U>(u), std::forward<T>(t));
-    };
-}
-```
 Strike the entire note in paragraph 1 that explains the purpose of the casts to `void`.
 
 Change paragraph 3 to read:
@@ -115,13 +117,13 @@ Replace the entire content of [utility.swap] with:
 > The name `swap` denotes a customization point object (17.5.2.1.5). The effect of the expression `ranges::swap(E1, E2)` for some expressions `E1` and `E2` is equivalent to:
 
 > * `(void)swap(E1, E2)`, with overload resolution performed in a context that includes the declarations:
-```c++
-template <class T>
-void swap(T&, T&) = delete;
-template <class T, size_t N>
-void swap(T(&)[N], T(&)[N]) = delete;
-```
-and does not include a declaration of `ranges::swap`. If the function selected by overload resolution does not exchange the values denoted by `E1` and `E2`, the program is ill-formed with no diagnostic required.
+> ```c++
+> template <class T>
+> void swap(T&, T&) = delete;
+> template <class T, size_t N>
+> void swap(T(&)[N], T(&)[N]) = delete;
+> ```
+> and does not include a declaration of `ranges::swap`. If the function selected by overload resolution does not exchange the values denoted by `E1` and `E2`, the program is ill-formed with no diagnostic required.
 
 > * Otherwise, `(void)swap_ranges(E1, E2)` if `E1` and `E2` are lvalues of array types (3.9.2) of equal extent and `ranges::swap(*(E1), *(E2))` is a valid expression, except that `noexcept(ranges::swap(E1, E2))` is equal to `noexcept(ranges::swap(*(E1), *(E2)))`.
 
@@ -134,16 +136,18 @@ and does not include a declaration of `ranges::swap`. If the function selected b
 Note that This formulation intentionally allows swapping arrays with identical extent and differing element types, but only when swapping the element types is well-defined. Swapping arrays of `int` and `double` continues to be ill-formed, but arrays of `T` and `U` are swappable whenever `T&` and `U&` are swappable.
 
 In [taggedtup.tagged], add to the synopsis of class template `tagged` the declaration:
-```c++
-friend void swap(tagged&, tagged&) noexcept(see below )
-requires Swappable<Base&>();
-```
+
+> ```c++
+> friend void swap(tagged&, tagged&) noexcept(see below )
+> requires Swappable<Base&>();
+> ```
+
 and remove the non-member `swap` function declaration. Add paragraphs specifying the `swap` friend:
 
 > ```c++
-friend void swap(tagged& lhs, tagged& rhs) noexcept(see below )
-requires Swappable<Base&>();
-```
+> friend void swap(tagged& lhs, tagged& rhs) noexcept(see below )
+> requires Swappable<Base&>();
+> ```
 
 > 23 Remarks: The expression in the `noexcept` is equivalent to `noexcept(lhs.swap(rhs))`
 
@@ -155,71 +159,72 @@ Strike the section [tagged.special] that describes the non-member `swap` overloa
 
 From [iterator.synopsis], strike the declarations of the "Range access" customization points:
 
-```c++
-using std::begin;
-using std::end;
-template <class>
-  concept bool _Auto = true;
-template <_Auto C> constexpr auto cbegin(const C& c) noexcept(noexcept(begin(c)))
-  -> decltype(begin(c));
-template <_Auto C> constexpr auto cend(const C& c) noexcept(noexcept(end(c)))
-  -> decltype(end(c));
-template <_Auto C> auto rbegin(C& c) -> decltype(c.rbegin());
-template <_Auto C> auto rbegin(const C& c) -> decltype(c.rbegin());
-template <_Auto C> auto rend(C& c) -> decltype(c.rend());
-template <_Auto C> auto rend(const C& c) -> decltype(c.rend());
-template <_Auto T, size_t N> reverse_iterator<T*> rbegin(T (&array)[N]);
-template <_Auto T, size_t N> reverse_iterator<T*> rend(T (&array)[N]);
-template <_Auto E> reverse_iterator<const E*> rbegin(initializer_list<E> il);
-template <_Auto E> reverse_iterator<const E*> rend(initializer_list<E> il);
-template <_Auto C> auto crbegin(const C& c) -> decltype(ranges_v1::rbegin(c));
-template <_Auto C> auto crend(const C& c) -> decltype(ranges_v1::rend(c));
-template <class C> auto size(const C& c) -> decltype(c.size());
-template <class T, size_t N> constexpr size_t beginsize(T (&array)[N]) noexcept;
-template <class E> size_t size(initializer_list<E> il) noexcept;
-```
+> ```c++
+> using std::begin;
+> using std::end;
+> template <class>
+>   concept bool _Auto = true;
+> template <_Auto C> constexpr auto cbegin(const C& c) noexcept(noexcept(begin(c)))
+>   -> decltype(begin(c));
+> template <_Auto C> constexpr auto cend(const C& c) noexcept(noexcept(end(c)))
+>   -> decltype(end(c));
+> template <_Auto C> auto rbegin(C& c) -> decltype(c.rbegin());
+> template <_Auto C> auto rbegin(const C& c) -> decltype(c.rbegin());
+> template <_Auto C> auto rend(C& c) -> decltype(c.rend());
+> template <_Auto C> auto rend(const C& c) -> decltype(c.rend());
+> template <_Auto T, size_t N> reverse_iterator<T*> rbegin(T (&array)[N]);
+> template <_Auto T, size_t N> reverse_iterator<T*> rend(T (&array)[N]);
+> template <_Auto E> reverse_iterator<const E*> rbegin(initializer_list<E> il);
+> template <_Auto E> reverse_iterator<const E*> rend(initializer_list<E> il);
+> template <_Auto C> auto crbegin(const C& c) -> decltype(ranges_v1::rbegin(c));
+> template <_Auto C> auto crend(const C& c) -> decltype(ranges_v1::rend(c));
+> template <class C> auto size(const C& c) -> decltype(c.size());
+> template <class T, size_t N> constexpr size_t beginsize(T (&array)[N]) noexcept;
+> template <class E> size_t size(initializer_list<E> il) noexcept;
+> ```
 
 and replace with:
 
-```c++
-namespace {
-  constexpr unspecified begin = unspecified;
-  constexpr unspecified end = unspecified;
-  constexpr unspecified cbegin = unspecified;
-  constexpr unspecified cend = unspecified;
-  constexpr unspecified rbegin = unspecified;
-  constexpr unspecified rend = unspecified;
-  constexpr unspecified crbegin = unspecified;
-  constexpr unspecified crend = unspecified;
-}
-```
+> ```c++
+> namespace {
+>   constexpr unspecified begin = unspecified;
+>   constexpr unspecified end = unspecified;
+>   constexpr unspecified cbegin = unspecified;
+>   constexpr unspecified cend = unspecified;
+>   constexpr unspecified rbegin = unspecified;
+>   constexpr unspecified rend = unspecified;
+>   constexpr unspecified crbegin = unspecified;
+>   constexpr unspecified crend = unspecified;
+> }
+> ```
 
 and under the `// 24.11, Range primitives:` comment:
 
-```c++
-namespace {
-  constexpr unspecified size = unspecified;
-  constexpr unspecified empty = unspecified;
-  constexpr unspecified data = unspecified;
-  constexpr unspecified cdata = unspecified;
-}
-```
+> ```c++
+> namespace {
+>   constexpr unspecified size = unspecified;
+>   constexpr unspecified empty = unspecified;
+>   constexpr unspecified data = unspecified;
+>   constexpr unspecified cdata = unspecified;
+> }
+> ```
 
 In [ranges.range], define `iterator_t`, `sentinel_t`, and concept `Range` as:
 
-```c++
-template <class T>
-using iterator_t = decltype(ranges::begin(declval<T&>()));
-
-template <class T>
-using sentinel_t = decltype(ranges::end(declval<T&>()));
-
-template <class T>
-concept bool Range() {
-  return requires {
-    typename sentinel_t<T>;
-  };
-}```
+> ```c++
+> template <class T>
+> using iterator_t = decltype(ranges::begin(declval<T&>()));
+>
+> template <class T>
+> using sentinel_t = decltype(ranges::end(declval<T&>()));
+>
+> template <class T>
+> concept bool Range() {
+>   return requires {
+>     typename sentinel_t<T>;
+>   };
+> }
+> ```
 
 Strike paragraph 2.1.
 
@@ -387,7 +392,7 @@ void foo(R&&, I);
 ```
 overload resolution is ambiguous when passing an array as the second parameter of `foo`, since arrays decay to pointers. Resolving this ambiguity is not complicated, but would muddy the algorithm declarations. Instead of altering the declarations, we require implementors to resolve the ambiguity in a new paragraph at the end of [algorithms.general]:
 
-> Some algorithms declare both an overload that takes a `Range` and an `Iterator`, and an overload that takes two `Range` parameters. Since an array type (3.9.2) both satisfies `Range` and decays to a pointer (4.2) which satisfies `Iterator`, such overloads are ambiguous when an array is passed as the second argument. Implementations shall provide a mechanism to resolve this ambiguity in favor of the overload that takes two ranges.
+> 16 Some algorithms declare both an overload that takes a `Range` and an `Iterator`, and an overload that takes two `Range` parameters. Since an array type (3.9.2) both satisfies `Range` and decays to a pointer (4.2) which satisfies `Iterator`, such overloads are ambiguous when an array is passed as the second argument. Implementations shall provide a mechanism to resolve this ambiguity in favor of the overload that takes two ranges.
 
 The Ranges TS adds many "range" algorithm overloads that are specified to forward to "iterator" overloads. Implementing such a range overload by directly forwarding would create inefficiencies due to introducing additional copies or moves of the arguments, e.g. `find_if` could be implemented as:
 
@@ -420,9 +425,9 @@ safe_iterator_t<Rng>
 
 except that forwarding arguments in this manner is visible to users, and so not permitted under the as-if rule: the forwarding implementation sequences the calls to begin and end *before* the actual arguments to `pred` and `proj` are copied or moved, whereas the non-forwarding implementation sequences those class *after* the argument expressions to `pred` and `proj` are copied/moved into their argument objects. To provide increased implementor freedom to perform such optimizations, and to implement the iterator/range disambiguation for arrays discussed above, we propose that the number and order of template parameters to algorithms be unspecified, and that the creation of the actual argument objects from the argument expressions be decoupled from the algorithm invocation. Such a decoupling would allow an algorithm implementation to omit or delay creation of its nominal argument objects from the actual argument expressions. These proposals can each be specified with new paragraphs in [algorithm.general]:
 
-> The number and order of template parameters for algorithm declarations is unspecified, except where explicitly stated otherwise.
+> 17 The number and order of template parameters for algorithm declarations is unspecified, except where explicitly stated otherwise.
 
-> Despite that the algorithm declarations nominally accept parameters by value, it is unspecified when and if the argument expressions are used to initialize the actual parameters except that any such initialization shall be sequenced before (1.9) the algorithm returns. [ Note: The behavior of a program that modifies the values of the actual argument expressions is consequently undefined unless the algorithm return happens before (1.10) any such modifications. —end note ]
+> 18 Despite that the algorithm declarations nominally accept parameters by value, it is unspecified when and if the argument expressions are used to initialize the actual parameters except that any such initialization shall be sequenced before (1.9) the algorithm returns. [ Note: The behavior of a program that modifies the values of the actual argument expressions is consequently undefined unless the algorithm return happens before (1.10) any such modifications. —end note ]
 
 These changes make both of the example implementations of `find_if` above conforming.
 
@@ -481,154 +486,154 @@ and replace the entire content of [comparisons] with:
 > 1 The library provides basic function object classes for all of the comparison operators in the language (5.9, 5.10).
 
 > ```c++
-template <EqualityComparable T>
-struct equal_to<T> {
-  constexpr bool operator()(const T& x, const T& y) const;
-};
-```
+> template <EqualityComparable T>
+> struct equal_to<T> {
+>   constexpr bool operator()(const T& x, const T& y) const;
+> };
+> ```
 
 > 2 `operator()` returns `x == y`.
 
 > ```c++
-template <EqualityComparable T>
-struct not_equal_to<T> {
-  constexpr bool operator()(const T& x, const T& y) const;
-};
-```
+> template <EqualityComparable T>
+> struct not_equal_to<T> {
+>   constexpr bool operator()(const T& x, const T& y) const;
+> };
+> ```
 
 > 3 `operator()` returns `x != y`.
 
 > ```c++
-template <StrictTotallyOrdered T>
-struct greater<T> {
-  constexpr bool operator()(const T& x, const T& y) const;
-};
-template <class T>
-struct greater<T*> {
-  constexpr bool operator()(T* x, T* y) const;
-};
-```
+> template <StrictTotallyOrdered T>
+> struct greater<T> {
+>   constexpr bool operator()(const T& x, const T& y) const;
+> };
+> template <class T>
+> struct greater<T*> {
+>   constexpr bool operator()(T* x, T* y) const;
+> };
+> ```
 
 > 4 `operator()` returns `x > y`.
 
 > ```c++
-template <StrictTotallyOrdered T>
-struct less<T> {
-  constexpr bool operator()(const T& x, const T& y) const;
-};
-template <class T>
-struct less<T*> {
-  constexpr bool operator()(T* x, T* y) const;
-};
-```
+> template <StrictTotallyOrdered T>
+> struct less<T> {
+>   constexpr bool operator()(const T& x, const T& y) const;
+> };
+> template <class T>
+> struct less<T*> {
+>   constexpr bool operator()(T* x, T* y) const;
+> };
+> ```
 
 > 5 `operator()` returns `x < y`.
 
 > ```c++
-template <StrictTotallyOrdered T>
-struct greater_equal<T> {
-  constexpr bool operator()(const T& x, const T& y) const;
-};
-template <class T>
-struct greater_equal<T*> {
-  constexpr bool operator()(T* x, T* y) const;
-};
-```
+> template <StrictTotallyOrdered T>
+> struct greater_equal<T> {
+>   constexpr bool operator()(const T& x, const T& y) const;
+> };
+> template <class T>
+> struct greater_equal<T*> {
+>   constexpr bool operator()(T* x, T* y) const;
+> };
+> ```
 
 > 6 `operator()` returns `x >= y`.
 
 > ```c++
-template <StrictTotallyOrdered T>
-struct less_equal<T> {
-  constexpr bool operator()(const T& x, const T& y) const;
-};
-template <class T>
-struct less_equal<T*> {
-  constexpr bool operator()(T* x, T* y) const;
-};
-```
+> template <StrictTotallyOrdered T>
+> struct less_equal<T> {
+>   constexpr bool operator()(const T& x, const T& y) const;
+> };
+> template <class T>
+> struct less_equal<T*> {
+>   constexpr bool operator()(T* x, T* y) const;
+> };
+> ```
 
 > 7 `operator()` returns `x <= y`.
 
 > ```c++
-template <> struct equal_to<void> {
-  template <class T, class U>
-    requires EqualityComparable<T, U>()
-  constexpr auto operator()(T&& t, U&& u) const
-    -> decltype(std::forward<T>(t) == std::forward<U>(u));
-
+> template <> struct equal_to<void> {
+>   template <class T, class U>
+>     requires EqualityComparable<T, U>()
+>   constexpr auto operator()(T&& t, U&& u) const
+>     -> decltype(std::forward<T>(t) == std::forward<U>(u));
+>
 >   typedef unspecified is_transparent;
-};
-```
+> };
+> ```
 
 > 8 `operator()` returns `std::forward<T>(t) == std::forward<U>(u)`.
 
 > ```c++
-template <> struct not_equal_to<void> {
-  template <class T, class U>
-    requires EqualityComparable<T, U>()
-  constexpr auto operator()(T&& t, U&& u) const
-    -> decltype(std::forward<T>(t) != std::forward<U>(u));
-
+> template <> struct not_equal_to<void> {
+>   template <class T, class U>
+>     requires EqualityComparable<T, U>()
+>   constexpr auto operator()(T&& t, U&& u) const
+>     -> decltype(std::forward<T>(t) != std::forward<U>(u));
+>
 >   typedef unspecified is_transparent;
-};
-```
+> };
+> ```
 
 > 9 `operator()` returns `std::forward<T>(t) != std::forward<U>(u)`.
 
 > ```c++
-template <> struct greater<void> {
-  template <class T, class U>
-    requires StrictTotallyOrdered<T, U>()
-      || BUILTIN_PTR_CMP(T, >, U) // exposition only, see below
-  constexpr auto operator()(T&& t, U&& u) const
-    -> decltype(std::forward<T>(t) > std::forward<U>(u));
-
+> template <> struct greater<void> {
+>   template <class T, class U>
+>     requires StrictTotallyOrdered<T, U>()
+>       || BUILTIN_PTR_CMP(T, >, U) // exposition only, see below
+>   constexpr auto operator()(T&& t, U&& u) const
+>     -> decltype(std::forward<T>(t) > std::forward<U>(u));
+>
 >   typedef unspecified is_transparent;
-};
-```
+> };
+> ```
 
 > 10 `operator()` returns `std::forward<T>(t) > std::forward<U>(u)`.
 
 > ```c++
-template <> struct less<void> {
-  template <class T, class U>
-    requires StrictTotallyOrdered<T, U>()
-      || BUILTIN_PTR_CMP(T, <, U) // exposition only, see below
-  constexpr auto operator()(T&& t, U&& u) const
-    -> decltype(std::forward<T>(t) < std::forward<U>(u));
-
-    >   typedef unspecified is_transparent;
-};
-```
+> template <> struct less<void> {
+>   template <class T, class U>
+>     requires StrictTotallyOrdered<T, U>()
+>       || BUILTIN_PTR_CMP(T, <, U) // exposition only, see below
+>   constexpr auto operator()(T&& t, U&& u) const
+>     -> decltype(std::forward<T>(t) < std::forward<U>(u));
+>
+>   typedef unspecified is_transparent;
+> };
+> ```
 
 > 11 `operator()` returns `std::forward<T>(t) < std::forward<U>(u)`.
 
 > ```c++
-template <> struct greater_equal<void> {
-  template <class T, class U>
-    requires StrictTotallyOrdered<T, U>()
-      || BUILTIN_PTR_CMP(T, >=, U) // exposition only, see below
-  constexpr auto operator()(T&& t, U&& u) const
-    -> decltype(std::forward<T>(t) >= std::forward<U>(u));
-
+> template <> struct greater_equal<void> {
+>   template <class T, class U>
+>     requires StrictTotallyOrdered<T, U>()
+>       || BUILTIN_PTR_CMP(T, >=, U) // exposition only, see below
+>   constexpr auto operator()(T&& t, U&& u) const
+>     -> decltype(std::forward<T>(t) >= std::forward<U>(u));
+>
 >   typedef unspecified is_transparent;
-};
-```
+> };
+> ```
 
 > 12 `operator()` returns `std::forward<T>(t) >= std::forward<U>(u)`.
 
 > ```c++
-template <> struct less_equal<void> {
-  template <class T, class U>
-    requires StrictTotallyOrdered<T, U>()
-      || BUILTIN_PTR_CMP(T, <=, U) // exposition only, see below
-  constexpr auto operator()(T&& t, U&& u) const
-    -> decltype(std::forward<T>(t) <= std::forward<U>(u));
-
-    >   typedef unspecified is_transparent;
-};
-```
+> template <> struct less_equal<void> {
+>   template <class T, class U>
+>     requires StrictTotallyOrdered<T, U>()
+>       || BUILTIN_PTR_CMP(T, <=, U) // exposition only, see below
+>   constexpr auto operator()(T&& t, U&& u) const
+>     -> decltype(std::forward<T>(t) <= std::forward<U>(u));
+>
+>   typedef unspecified is_transparent;
+> };
+> ```
 
 > 13 `operator()` returns `std::forward<T>(t) <= std::forward<U>(u)`.
 
@@ -664,24 +669,24 @@ Rename section [concepts.lib.functions] to [concepts.lib.callables]; similarly r
 > 1 The `Callable` concept specifies a relationship between a callable type (20.9.1) `F` and a set of argument types `Args...` which can be evaluated by the library function `invoke` (20.9.3).
 
 > ```c++
-template <class F, class...Args>
-concept bool Callable() {
-  return CopyConstructible<F>() &&
-    requires (F f, Args&&...args) {
-      invoke(f, std::forward<Args>(args)...); // not required to be equality preserving
-    };
-}
-```
+> template <class F, class...Args>
+> concept bool Callable() {
+>   return CopyConstructible<F>() &&
+>     requires (F f, Args&&...args) {
+>       invoke(f, std::forward<Args>(args)...); // not required to be equality preserving
+>     };
+> }
+> ```
 
 > 2 [ Note: Since the `invoke` function call expression is not required to be equality-preserving (19.1.1), a function that generates random numbers may satisfy `Callable`. —end note ]
 
 and the section [concepts.lib.callables.regularcallable]:
 
 > ```c++
-concept bool RegularCallable() {
-  return Callable<F, Args...>();
-}
-```
+> concept bool RegularCallable() {
+>   return Callable<F, Args...>();
+> }
+> ```
 
 > 1 The `invoke` function call expression shall be equality-preserving (19.1.1). [ Note: This requirement supersedes the annotation in the definition of `Callable`. —end note ]
 
@@ -691,69 +696,70 @@ concept bool RegularCallable() {
 
 in section [concepts.lib.callables.predicate], replace references to `RegularFunction` with `RegularCallable`. In [function.objects], add to the synopsis of header `<experimental/ranges/functional>` the declaration:
 
-```c++
-template <class F, class... Args>
-result_of_t<F&&(Args&&...)> invoke(F&& f, Args&&... args);
-```
+> ```c++
+> template <class F, class... Args>
+> result_of_t<F&&(Args&&...)> invoke(F&& f, Args&&... args);
+> ```
 
 Insert a new subsection [func.invoke] under [function.objects]:
 
-> `result_of_t<F&&(Args&&...)> invoke(F&& f, Args&&... args);`
-
+> ```c++
+> result_of_t<F&&(Args&&...)> invoke(F&& f, Args&&... args);
+> ```
 > 1 Effects: Equivalent to `INVOKE(std::forward<F>(f), std::forward<Args>(args)...)` (20.9.2).
 
 Remove the section [indirectcallables.functiontype]. In [indirectcallables.indirectfunc], replace the concept definitions with:
 
 > ```c++
-template <class F, class...Is>
-concept bool IndirectCallable() {
-  return (Readable<Is>() && ...) &&
-    Callable<F, value_type_t<Is>...>();
-}
-
 > template <class F, class...Is>
-concept bool IndirectRegularCallable() {
-  return (Readable<Is>() && ...) &&
-    RegularCallable<F, value_type_t<Is>...>();
-}
-
+> concept bool IndirectCallable() {
+>   return (Readable<Is>() && ...) &&
+>     Callable<F, value_type_t<Is>...>();
+> }
+>
 > template <class F, class...Is>
-concept bool IndirectCallablePredicate() {
-  return (Readable<Is>() && ...) &&
-    Predicate<F, value_type_t<Is>...>();
-}
-
+> concept bool IndirectRegularCallable() {
+>   return (Readable<Is>() && ...) &&
+>     RegularCallable<F, value_type_t<Is>...>();
+> }
+>
+> template <class F, class...Is>
+> concept bool IndirectCallablePredicate() {
+>   return (Readable<Is>() && ...) &&
+>     Predicate<F, value_type_t<Is>...>();
+> }
+>
 > template <class F, class I1, class I2 = I1>
-concept bool IndirectCallableRelation() {
-  return Readable<I1>() && Readable<I2>() &&
-    Relation<F, value_type_t<I1>, value_type_t<I2>>();
-}
-
+> concept bool IndirectCallableRelation() {
+>   return Readable<I1>() && Readable<I2>() &&
+>     Relation<F, value_type_t<I1>, value_type_t<I2>>();
+> }
+>
 > template <class F, class I1, class I2 = I1>
-concept bool IndirectCallableStrictWeakOrder() {
-  return Readable<I1>() && Readable<I2>() &&
-    StrictWeakOrder<F, value_type_t<I1>, value_type_t<I2>>();
-}
-
+> concept bool IndirectCallableStrictWeakOrder() {
+>   return Readable<I1>() && Readable<I2>() &&
+>     StrictWeakOrder<F, value_type_t<I1>, value_type_t<I2>>();
+> }
+>
 > template <class> struct indirect_result_of { };
-template <class F, class...Is>
-requires IndirectCallable<remove_reference_t<F>, Is...>()
-struct indirect_result_of<F(Is...)> :
-  result_of<F(value_type_t<Is>...)> { };
-template <class F>
-using indirect_result_of_t = typename indirect_result_of<F>::type;
-```
+> template <class F, class...Is>
+> requires IndirectCallable<remove_reference_t<F>, Is...>()
+> struct indirect_result_of<F(Is...)> :
+>   result_of<F(value_type_t<Is>...)> { };
+> template <class F>
+> using indirect_result_of_t = typename indirect_result_of<F>::type;
+> ```
 
 Replace the definition of `projected` in [projected] with:
 
 > ```c++
-template <Readable I, IndirectRegularCallable<I> Proj>
-  requires RegularCallable<Proj, reference_t<I>>()
-struct projected {
-  using value_type = decay_t<indirect_result_of_t<Proj&(I)>>;
-  result_of_t<Proj&(reference_t<I>)> operator*() const;
-};
-```
+> template <Readable I, IndirectRegularCallable<I> Proj>
+>   requires RegularCallable<Proj, reference_t<I>>()
+> struct projected {
+>   using value_type = decay_t<indirect_result_of_t<Proj&(I)>>;
+>   result_of_t<Proj&(reference_t<I>)> operator*() const;
+> };
+> ```
 
 In [algorithm] replace references to `Function` with `Callable`. Strike paragraph [algorithm.general]/10 that describes how the algorithms use the removed `as_function` to implement predicate and projection callables. Replace all references to `INVOKE` in the algorithm descriptions with `invoke`. Replace the descriptive text in [alg.generate] with:
 
@@ -775,13 +781,13 @@ Consequently, we propose the addition of semantic requirements to the previously
 Replace the content of [concepts.lib.corelang.assignable] with:
 
 > ```c++
-template <class T, class U>
-concept bool Assignable() {
-  return Common<T, U>() && requires(T&& a, U&& b) {
-    { std::forward<T>(a) = std::forward<U>(b) } -> Same<T&>;
-  };
-}
-```
+> template <class T, class U>
+> concept bool Assignable() {
+>   return Common<T, U>() && requires(T&& a, U&& b) {
+>     { std::forward<T>(a) = std::forward<U>(b) } -> Same<T&>;
+>   };
+> }
+> ```
 
 > 1 Let `t` be an lvalue of type `T`, and `R` be the type `remove_reference_t<U>`. If `U` is an lvalue reference type, let `v` be a lvalue of type `R`; otherwise, let `v` be an rvalue of type `R`. Let `uu` be a distinct object of type `R` such that `uu == v`. Then `Assignable<T, U>()` is satisfied if and only if
 
@@ -798,32 +804,33 @@ concept bool Assignable() {
 The entire content of [concepts.lib.object.movable] becomes:
 
 > ```c++
-template <class T>
-concept bool Movable() {
-  return MoveConstructible<T>() &&
-    Assignable<T&, T&&>() &&
-    Swappable<T&>();
-}
-```
+> template <class T>
+> concept bool Movable() {
+>   return MoveConstructible<T>() &&
+>     Assignable<T&, T&&>() &&
+>     Swappable<T&>();
+> }
+> ```
 
 Since the prose requirements are now redundant. As are those in [concepts.lib.object.copyable], which also now becomes simply a concept definition:
 
 > ```c++
-template <class T>
-concept bool Copyable() {
-  return CopyConstructible<T>() &&
-    Movable<T>() &&
-    Assignable<T&, const T&>();
-}
-```
+> template <class T>
+> concept bool Copyable() {
+>   return CopyConstructible<T>() &&
+>     Movable<T>() &&
+>     Assignable<T&, const T&>();
+> }
+> ```
 
 It is now possible to change the `Movable` requirement on `exchange` in the `<experimental/ranges/utility>` header synopsis of [utility]/2 and its definition in [utility.exchange] to `MoveConstructible`:
 
 > ```c++
-template <MoveConstructible T, class U=T>
-requires Assignable<T&, U>()
-T exchange(T& obj, U&& new_val);
-```
+> template <MoveConstructible T, class U=T>
+> requires Assignable<T&, U>()
+> T exchange(T& obj, U&& new_val);
+> ```
+
 which suffices to implement `exchange` along with the stronger `Assignable` semantics. (A similar change could be applied to the definition of the default `swap` implementation. We don't propose this here as we've already included the effect in the definition of the `swap` customization point earlier.)
 
 
@@ -834,25 +841,25 @@ One of the differences between the iterator model of the Ranges TS and that of S
 Why is this even a concern? The specification of some functions in the library assumes they can be implemented to take advantage of size/distance information when available. In some cases the requirement is explicit:
 
 > ```c++
-template <Range R>
-DifferenceType<IteratorType<R>> distance(R&& r);
-```
+> template <Range R>
+> DifferenceType<IteratorType<R>> distance(R&& r);
+> ```
 
 > 1 Returns: `ranges::distance(begin(r), end(r))`
 
 > ```c++
-template <SizedRange R>
-DifferenceType<IteratorType<R>> distance(R&& r);
-```
+> template <SizedRange R>
+> DifferenceType<IteratorType<R>> distance(R&& r);
+> ```
 
 > 2 Returns: `size(r)`
 
 and in others, implicit:
 
 > ```c++
-template <Iterator I, Sentinel<I> S>
-void advance(I& i, S bound);
-```
+> template <Iterator I, Sentinel<I> S>
+> void advance(I& i, S bound);
+> ```
 
 > ...
 
@@ -917,16 +924,16 @@ If we can't put sentinels into a correspondence with iterators, then sentinels m
 All requirements but the last are not particular to iterators and sentinels. We propose they be combined into a new comparison concept:
 
 > ```c++
-template <class T, class U>
-concept bool WeaklyEqualityComparable() {
-  return requires(const T t, const U u) {
-    { t == u } -> Boolean;
-    { u == t } -> Boolean;
-    { t != u } -> Boolean;
-    { u != t } -> Boolean;
-  };
-}
-```
+> template <class T, class U>
+> concept bool WeaklyEqualityComparable() {
+>   return requires(const T t, const U u) {
+>     { t == u } -> Boolean;
+>     { u == t } -> Boolean;
+>     { t != u } -> Boolean;
+>     { u != t } -> Boolean;
+>   };
+> }
+> ```
 
 > 1 Let `t` and `u` be objects of types `T` and `U`. `WeaklyEqualityComparable<T, U>()` is satisfied if and only if:
 
@@ -957,16 +964,16 @@ In [concepts.lib.general.equality], remove the note from paragraph 1 and replace
 Replace [concepts.lib.compare.equalitycomparable] with:
 
 > ```c++
-template <class T, class U>
-concept bool WeaklyEqualityComparable() {
-  return requires(const T t, const U u) {
-    { t == u } -> Boolean;
-    { u == t } -> Boolean;
-    { t != u } -> Boolean;
-    { u != t } -> Boolean;
-  };
-}
-```
+> template <class T, class U>
+> concept bool WeaklyEqualityComparable() {
+>   return requires(const T t, const U u) {
+>     { t == u } -> Boolean;
+>     { u == t } -> Boolean;
+>     { t != u } -> Boolean;
+>     { u != t } -> Boolean;
+>   };
+> }
+> ```
 
 > Let `t` and `u` be objects of types `T` and `U`. `WeaklyEqualityComparable<T, U>()` is satisfied if and only if:
 
@@ -976,26 +983,26 @@ concept bool WeaklyEqualityComparable() {
 > * `bool(u != t) == bool(t != u)`.
 
 > ```c++
-template <class T>
-concept bool EqualityComparable() {
-  return WeaklyEqualityComparable<T, T>();
-}
-```
+> template <class T>
+> concept bool EqualityComparable() {
+>   return WeaklyEqualityComparable<T, T>();
+> }
+> ```
 
 > 1 Let `a` and `b` be objects of type `T`. `EqualityComparable<T>()` is satisfied if and only if `bool(a == b)` if and only if `a` is equal to `b`.
 
 > 2 [ Note: The requirement that the expression `a == b` is equality preserving implies that `==` is reflexive, transitive, and symmetric. —end note ]
 
 > ```c++
-template <class T, class U>
-concept bool EqualityComparable() {
-  return Common<T, U>() &&
-    EqualityComparable<T>() &&
-    EqualityComparable<U>() &&
-    EqualityComparable<common_type_t<T, U>>() &&
-    WeaklyEqualityComparable<T, U>();
-}
-```
+> template <class T, class U>
+> concept bool EqualityComparable() {
+>   return Common<T, U>() &&
+>     EqualityComparable<T>() &&
+>     EqualityComparable<U>() &&
+>     EqualityComparable<common_type_t<T, U>>() &&
+>     WeaklyEqualityComparable<T, U>();
+> }
+> ```
 
 > 3 Let `a` be an object of type `T`, `b` an object of type `U`, and `C` be `common_type_t<T, U>`. Then `EqualityComparable<T, U>()` is satisfied if and only if `bool(a == b) == bool(C(a) == C(b))`.
 
@@ -1018,13 +1025,13 @@ Replace the content of [iterators.sentinel] with:
 > 1 The Sentinel concept specifies the relationship between an `Iterator` type and a `Semiregular` type whose values denote a range.
 
 > ```c++
-template <class S, class I>
-concept bool Sentinel() {
-  return Semiregular<S>() &&
-    Iterator<I>() &&
-    WeaklyEqualityComparable<S, I>();
-}
-```
+> template <class S, class I>
+> concept bool Sentinel() {
+>   return Semiregular<S>() &&
+>     Iterator<I>() &&
+>     WeaklyEqualityComparable<S, I>();
+> }
+> ```
 
 > 2 Let `s` and `i` be values of type `S` and `I` such that `[i,s)` denotes a range. Types `S` and `I` satisfy `Sentinel<S, I>()` if and only if:
 
@@ -1034,24 +1041,24 @@ concept bool Sentinel() {
 
 > 3 The domain of `==` can change over time. Given an iterator `i` and sentinel `s` such that `[i,s)` denotes a range and `i != s`, `[i,s)` is not required to continue to denote a range after incrementing any iterator equal to `i`. [Note: Consequently, `i == s` is no longer required to be well-defined. - end note]
 
-Add new subsection "Concept SizedSentinel" [iterators.sizedSentinel]:
+Add new subsection "Concept SizedSentinel" [iterators.sizedsentinel]:
 
 > 1 The `SizedSentinel` concept specifies requirements on an `Iterator` (24.2.7) and a `Sentinel` that allow the use of the `-` operator to compute the distance between them in constant time.
 
 > ```c++
-template <class S, class I>
-constexpr bool disable_sized_sentinel = false;
-
 > template <class S, class I>
-concept bool SizedSentinel() {
-  return Sentinel<S, I>() &&
-  !disable_sized_sentinel<remove_cv_t<S>, remove_cv_t<I>> &&
-  requires (const I i, const S s) {
-    { s - i } -> Same<difference_type_t<I>>;
-    { i - s } -> Same<difference_type_t<I>>;
-  };
-}
-```
+> constexpr bool disable_sized_sentinel = false;
+>
+> template <class S, class I>
+> concept bool SizedSentinel() {
+>   return Sentinel<S, I>() &&
+>   !disable_sized_sentinel<remove_cv_t<S>, remove_cv_t<I>> &&
+>   requires (const I i, const S s) {
+>     { s - i } -> Same<difference_type_t<I>>;
+>     { i - s } -> Same<difference_type_t<I>>;
+>   };
+> }
+> ```
 
 > 3 Let `i` be an iterator of type `I`, and `s` a sentinel of type `S` such that `[i,s)` denotes a range. Let N be the smallest number of applications of `++i` necessary to make `bool(i == s)` be `true`. `SizedSentinel<S, I>()` is satisfied if and only if:
 
@@ -1077,132 +1084,132 @@ In section [iterators.forward], replace para 2 with:
 > 2 The `ForwardIterator` concept refines `InputIterator` (24.2.11), adding equality comparison and the multi-pass guarantee, described below.
 
 > ```c++
-template <class I>
-concept bool ForwardIterator() {
-  return InputIterator<I>() &&
-  DerivedFrom<iterator_category_t<I>, forward_iterator_tag>() &&
-  Incrementable<I>() &&
-  Sentinel<I, I>();
-}
-```
+> template <class I>
+> concept bool ForwardIterator() {
+>   return InputIterator<I>() &&
+>   DerivedFrom<iterator_category_t<I>, forward_iterator_tag>() &&
+>   Incrementable<I>() &&
+>   Sentinel<I, I>();
+> }
+> ```
 
 Remove section [iteratorranges].
 
 In section [iterator.synopsis], remove the definition of `weak_input_iterator_tag`, and define `input_iterator_tag` with no bases. Strip occurrences of the prefix `Weak`. Replace the declarations delimited by the comments `// XXX Common iterators`, `// XXX Default sentinels`, `// XXX Counted iterators`, `// XXX Unreachable sentinels` with:
 
 > ```c++
-// XXX Common iterators
-template <Iterator I, Sentinel<I> S>
-  requires !Same<I, S>()
-class common_iterator;
-
+> // XXX Common iterators
+> template <Iterator I, Sentinel<I> S>
+>   requires !Same<I, S>()
+> class common_iterator;
+>
 > template <Readable I, class S>
-struct value_type<common_iterator<I, S>>;
-
+> struct value_type<common_iterator<I, S>>;
+>
 > template <InputIterator I, class S>
-struct iterator_category<common_iterator<I, S>>;
-
+> struct iterator_category<common_iterator<I, S>>;
+>
 > template <ForwardIterator I, class S>
-struct iterator_category<common_iterator<I, S>>;
-
+> struct iterator_category<common_iterator<I, S>>;
+>
 > template <class I1, class I2, Sentinel<I2> S1, Sentinel<I1> S2>
-bool operator==(
-  const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
-template <class I1, class I2, Sentinel<I2> S1, Sentinel<I1> S2>
-  requires EqualityComparable<I1, I2>()
-bool operator==(
-  const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
-template <class I1, class I2, Sentinel<I2> S1, Sentinel<I1> S2>
-  requires EqualityComparable<I1, I2>()
-bool operator!=(
-  const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
-template <class I2, SizedSentinel<I2> I1, SizedSentinel<I2> S1, SizedSentinel<I1> S2>
-difference_type_t<I2> operator-(
-  const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
-
+> bool operator==(
+>   const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
+> template <class I1, class I2, Sentinel<I2> S1, Sentinel<I1> S2>
+>   requires EqualityComparable<I1, I2>()
+> bool operator==(
+>   const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
+> template <class I1, class I2, Sentinel<I2> S1, Sentinel<I1> S2>
+>   requires EqualityComparable<I1, I2>()
+> bool operator!=(
+>   const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
+> template <class I2, SizedSentinel<I2> I1, SizedSentinel<I2> S1, SizedSentinel<I1> S2>
+> difference_type_t<I2> operator-(
+>   const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
+>
 > // XXX Default sentinels
-class default_sentinel;
-
+> class default_sentinel;
+>
 > // XXX Counted iterators
-template <Iterator I> class counted_iterator;
-
+> template <Iterator I> class counted_iterator;
+>
 > template <class I1, class I2>
-  requires Common<I1, I2>()
-bool operator==(
-  const counted_iterator<I1>& x, const counted_iterator<I2>& y);
-bool operator==(
-  const counted_iterator<auto>& x, default_sentinel y);
-bool operator==(
-  default_sentinel x, const counted_iterator<auto>& yx);
-template <class I1, class I2>
-  requires Common<I1, I2>()
-bool operator!=(
-  const counted_iterator<I1>& x, const counted_iterator<I2>& y);
-bool operator!=(
-  const counted_iterator<auto>& x, default_sentinel y);
-bool operator!=(
-  default_sentinel x, const counted_iterator<auto>& y);
-template <class I1, class I2>
-  requires Common<I1, I2>()
-bool operator<(
-  const counted_iterator<I1>& x, const counted_iterator<I2>& y);
-template <class I1, class I2>
-  requires Common<I1, I2>()
-bool operator<=(
-  const counted_iterator<I1>& x, const counted_iterator<I2>& y);
-template <class I1, class I2>
-  requires Common<I1, I2>()
-bool operator>(
-  const counted_iterator<I1>& x, const counted_iterator<I2>& y);
-template <class I1, class I2>
-  requires Common<I1, I2>()
-bool operator>=(
-  const counted_iterator<I1>& x, const counted_iterator<I2>& y);
-template <class I1, class I2>
-  requires Common<I1, I2>()
-difference_type_t<I2> operator-(
-  const counted_iterator<I1>& x, const counted_iterator<I2>& y);
-template <class I>
-  difference_type_t<I> operator-(
-    const counted_iterator<I>& x, default_sentinel y);
-template <class I>
-  difference_type_t<I> operator-(
-    default_sentinel x, const counted_iterator<I>& y);
-template <RandomAccessIterator I>
-  counted_iterator<I>
-    operator+(difference_type_t<I> n, const counted_iterator<I>& x);
-template <Iterator I>
-  counted_iterator<I> make_counted_iterator(I i, difference_type_t<I> n);
-
+>   requires Common<I1, I2>()
+> bool operator==(
+>   const counted_iterator<I1>& x, const counted_iterator<I2>& y);
+> bool operator==(
+>   const counted_iterator<auto>& x, default_sentinel y);
+> bool operator==(
+>   default_sentinel x, const counted_iterator<auto>& yx);
+> template <class I1, class I2>
+>   requires Common<I1, I2>()
+> bool operator!=(
+>   const counted_iterator<I1>& x, const counted_iterator<I2>& y);
+> bool operator!=(
+>   const counted_iterator<auto>& x, default_sentinel y);
+> bool operator!=(
+>   default_sentinel x, const counted_iterator<auto>& y);
+> template <class I1, class I2>
+>   requires Common<I1, I2>()
+> bool operator<(
+>   const counted_iterator<I1>& x, const counted_iterator<I2>& y);
+> template <class I1, class I2>
+>   requires Common<I1, I2>()
+> bool operator<=(
+>   const counted_iterator<I1>& x, const counted_iterator<I2>& y);
+> template <class I1, class I2>
+>   requires Common<I1, I2>()
+> bool operator>(
+>   const counted_iterator<I1>& x, const counted_iterator<I2>& y);
+> template <class I1, class I2>
+>   requires Common<I1, I2>()
+> bool operator>=(
+>   const counted_iterator<I1>& x, const counted_iterator<I2>& y);
+> template <class I1, class I2>
+>   requires Common<I1, I2>()
+> difference_type_t<I2> operator-(
+>   const counted_iterator<I1>& x, const counted_iterator<I2>& y);
+> template <class I>
+>   difference_type_t<I> operator-(
+>     const counted_iterator<I>& x, default_sentinel y);
+> template <class I>
+>   difference_type_t<I> operator-(
+>     default_sentinel x, const counted_iterator<I>& y);
+> template <RandomAccessIterator I>
+>   counted_iterator<I>
+>     operator+(difference_type_t<I> n, const counted_iterator<I>& x);
 > template <Iterator I>
-  void advance(counted_iterator<I>& i, difference_type_t<I> n);
-
+>   counted_iterator<I> make_counted_iterator(I i, difference_type_t<I> n);
+>
+> template <Iterator I>
+>   void advance(counted_iterator<I>& i, difference_type_t<I> n);
+>
 > // XXX Unreachable sentinels
-class unreachable;
-template <Iterator I>
-  constexpr bool operator==(const I&, unreachable) noexcept;
-template <Iterator I>
-  constexpr bool operator==(unreachable, const I&) noexcept;
-template <Iterator I>
-  constexpr bool operator!=(const I&, unreachable) noexcept;
-template <Iterator I>
-  constexpr bool operator!=(unreachable, const I&) noexcept;
-```
+> class unreachable;
+> template <Iterator I>
+>   constexpr bool operator==(const I&, unreachable) noexcept;
+> template <Iterator I>
+>   constexpr bool operator==(unreachable, const I&) noexcept;
+> template <Iterator I>
+>   constexpr bool operator!=(const I&, unreachable) noexcept;
+> template <Iterator I>
+>   constexpr bool operator!=(unreachable, const I&) noexcept;
+> ```
 
-and replace the declarations in namespace `std`:
+and replace the block of declarations in namespace `std`:
 
 > ```c++
-namespace std {
-  // 24.6.2, iterator traits
-  template <experimental::ranges::Iterator I>
-  struct iterator_traits;
-  template <experimental::ranges::InputIterator I>
-  struct iterator_traits;
-  template <experimental::ranges::InputIterator I>
-    requires Sentinel<I, I>()
-  struct iterator_traits;
-}
-```
+> namespace std {
+>   // 24.6.2, iterator traits
+>   template <experimental::ranges::Iterator I>
+>   struct iterator_traits;
+>   template <experimental::ranges::InputIterator I>
+>   struct iterator_traits;
+>   template <experimental::ranges::InputIterator I>
+>     requires Sentinel<I, I>()
+>   struct iterator_traits;
+> }
+> ```
 
 In [iterator.assoc]/10, strip occurrences of the `Weak` prefix.
 
@@ -1219,15 +1226,10 @@ Replace the contents of [iterators.common], [default.sentinels], [iterators.coun
 
 Strip occurrences of the prefix `Weak` wherever it appears in clause [algorithms].
 
-[PR](https://github.com/ericniebler/stl2/pull/153)
-[Fixed promotion to SizedRange](https://github.com/CaseyCarter/stl2/issues/13)
-[Fixed [iterators.sentinel] needs improvement](https://github.com/CaseyCarter/stl2/issues/20)
-[Fixed Unimplementable requirements for advance and distance](https://github.com/ericniebler/stl2/issues/107)
-[Fixed SizedIteratorRange semantic requirements](https://github.com/ericniebler/stl2/issues/131)
-
 
 Merge Writable and MoveWritable
 ===============================
+
 
 [PR](https://github.com/ericniebler/stl2/pull/160)
 [Discussion](https://github.com/CaseyCarter/stl2/issues/17)
@@ -1247,7 +1249,7 @@ move_sentinel
 Implementation Experience
 =========================
 
-The proposed design is implemented on [a branch of our implementation of the Ranges TS][2][@cmcstl2].
+The proposed design changes are implemented in [CMCSTL2, a full implementation of the Ranges TS with proxy extensions][2][@cmcstl2].
 
 Motivation and Scope
 ====================

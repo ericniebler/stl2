@@ -1,10 +1,12 @@
-PANDOC = $(HOME)/.cabal/bin/pandoc
+DOCNO = P0370R0
 
-Pxxxx.html: Pxxxx.md header.html pandoc-template.html
+PANDOC = pandoc
+
+$(DOCNO).html: Pxxxx.md header.html pandoc-template.html
 	$(PANDOC) -f markdown_github+yaml_metadata_block+citations -t html -o $@ --filter pandoc-citeproc --csl=acm-sig-proceedings.csl --number-sections --toc -s -S --template=pandoc-template --include-before-body=header.html $<
 
 clean:
-	rm -f Pxxxx.html *~
+	rm -f $(DOCNO).html *~
 
-view: Pxxxx.html
-	gnome-www-browser Pxxxx.html
+view: $(DOCNO).html
+	gnome-www-browser $(DOCNO).html
