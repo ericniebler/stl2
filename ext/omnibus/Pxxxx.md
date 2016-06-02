@@ -235,9 +235,9 @@ Strike all content from [iterator.range]. Add a new subsection [iterator.range.b
 
 > * Otherwise, `(E) + 0` if `E` has array type (3.9.2).
 
-> * Otherwise, `(E).begin()` if its type `I` meets the syntactic requirements of `Iterator<I>()`. If `Iterator` is not satisfied, the program is ill-formed with no diagnostic required.
+> * Otherwise, `DECAY_COPY((E).begin())` if its type `I` meets the syntactic requirements of `Iterator<I>()`. If `Iterator` is not satisfied, the program is ill-formed with no diagnostic required.
 
-> * Otherwise, `begin(E)` if its type `I` meets the syntactic requirements of `Iterator<I>()` with overload resolution performed in a context that includes the declaration `void begin(auto&) = delete;` and does not include a declaration of `ranges::begin`. If `Iterator` is not satisfied, the program is ill-formed with no diagnostic required.
+> * Otherwise, `DECAY_COPY(begin(E))` if its type `I` meets the syntactic requirements of `Iterator<I>()` with overload resolution performed in a context that includes the declaration `void begin(auto&) = delete;` and does not include a declaration of `ranges::begin`. If `Iterator` is not satisfied, the program is ill-formed with no diagnostic required.
 
 > * Otherwise, `ranges::begin(E)` is ill-formed.
 
@@ -251,10 +251,10 @@ and a new subsection [iterator.range.end]:
 
 > * Otherwise, `(E) + extent<T>::value` if `E` has array type (3.9.2) `T`.
 
-> * Otherwise, `(E).end()` if its type `S` meets the syntactic requirements of `Sentinel<S, decltype(ranges::begin(E)>()`. If `Sentinel` is not satisfied, the program is ill-formed with no diagnostic
+> * Otherwise, `DECAY_COPY((E).end())` if its type `S` meets the syntactic requirements of `Sentinel<S, decltype(ranges::begin(E)>()`. If `Sentinel` is not satisfied, the program is ill-formed with no diagnostic
 required.
 
-> * Otherwise, `end(E)` if its type `S` meets the syntactic requirements of `Sentinel<S, decltype(ranges::begin(E))>()` with overload resolution performed in a context that includes the declaration `void end(auto&) = delete;` and does not include a declaration of `ranges::end`. If `Sentinel` is not satisfied, the program is ill-formed with no diagnostic required.
+> * Otherwise, `DECAY_COPY(end(E))` if its type `S` meets the syntactic requirements of `Sentinel<S, decltype(ranges::begin(E))>()` with overload resolution performed in a context that includes the declaration `void end(auto&) = delete;` and does not include a declaration of `ranges::end`. If `Sentinel` is not satisfied, the program is ill-formed with no diagnostic required.
 
 > * Otherwise, `ranges::end(E)` is ill-formed.
 
@@ -284,7 +284,7 @@ and a new subsection [iterator.range.rbegin]:
 
 > * Otherwise, `make_reverse_iterator((E) + extent<T>::value)` if `E` has array type (3.9.2) `T`.
 
-> * Otherwise, `(E).rbegin()` if its type `I` meets the syntactic requirements of `Iterator<I>()`. If `Iterator` is not satisfied, the program is ill-formed with no diagnostic required.
+> * Otherwise, `DECAY_COPY((E).rbegin())` if its type `I` meets the syntactic requirements of `Iterator<I>()`. If `Iterator` is not satisfied, the program is ill-formed with no diagnostic required.
 
 > * Otherwise, `make_reverse_iterator(ranges::end(E))` if both `ranges::begin(E)` and `ranges::end(E)` have the same type `I` which meets the syntactic requirements of `BidirectionalIterator<I>()` (24.2.16). If `BidirectionalIterator` is not satisfied, the program is ill-formed with no diagnostic required.
 
@@ -300,7 +300,7 @@ and a new subsection [iterator.range.rend]:
 
 > * Otherwise, `make_reverse_iterator((E) + 0)` if `E` has array type (3.9.2).
 
-> * Otherwise, `(E).rend()` if its type `S` meets the syntactic requirements of `Sentinel<S, decltype(ranges::rbegin(E))>()`. If `Sentinel` is not satisfied, the program is ill-formed with no diagnostic required.
+> * Otherwise, `DECAY_COPY((E).rend())` if its type `S` meets the syntactic requirements of `Sentinel<S, decltype(ranges::rbegin(E))>()`. If `Sentinel` is not satisfied, the program is ill-formed with no diagnostic required.
 
 > * Otherwise, `make_reverse_iterator(ranges::begin(E))` if both `ranges::begin(E)` and `ranges::end(E)` have the same type `I` which meets the syntactic requirements of `BidirectionalIterator<I>()` (24.2.16). If `BidirectionalIterator` is not satisfied, the program is ill-formed with no diagnostic required.
 
@@ -330,11 +330,11 @@ In [range.primitives], remove paragraphs 1-3 that define overloads of `size`. Ad
 
 > * `extent<T>::value` if `T` is an array type (3.9.2).
 
-> * Otherwise, `((const T&)(E)).size()` if its type `I` satisfies `Integral<I>()` and `disable_sized_range<T>` (24.9.2.3) is `false`.
+> * Otherwise, `DECAY_COPY(((const T&)(E)).size())` if its type `I` satisfies `Integral<I>()` and `disable_sized_range<T>` (24.9.2.3) is `false`.
 
-> * Otherwise, `size((const T&)(E))` if its type `I` satisfies `Integral<I>()` with overload resolution performed in a context that includes the declaration `void size(const auto&) = delete;` and does not include a declaration of `ranges::size`, and `disable_sized_range<T>` is `false`.
+> * Otherwise, `DECAY_COPY(size((const T&)(E)))` if its type `I` satisfies `Integral<I>()` with overload resolution performed in a context that includes the declaration `void size(const auto&) = delete;` and does not include a declaration of `ranges::size`, and `disable_sized_range<T>` is `false`.
 
-> * Otherwise, `ranges::cend(E) - ranges::cbegin(E)`, except that `E` is only evaluated once, if the types `I` and `S` of `ranges::cbegin(E)` and `ranges::cend(E)` meet the syntactic requirements of `SizedSentinel<S, I>()` (24.2.9), and `ForwardIterator<I>()`. If `SizedSentinel` and `ForwardIterator` are not satisfied, the program is ill-formed with no diagnostic required.
+> * Otherwise, `DECAY_COPY(ranges::cend(E) - ranges::cbegin(E))`, except that `E` is only evaluated once, if the types `I` and `S` of `ranges::cbegin(E)` and `ranges::cend(E)` meet the syntactic requirements of `SizedSentinel<S, I>()` (24.2.9), and `ForwardIterator<I>()`. If `SizedSentinel` and `ForwardIterator` are not satisfied, the program is ill-formed with no diagnostic required.
 
 > * Otherwise, `ranges::size(E)` is ill-formed.
 
@@ -360,7 +360,7 @@ and a new subsection [range.primitives.data]:
 
 > * `ranges::data((const T&)(E))` if `E` is an rvalue of type `T`. This usage is deprecated. [Note: This deprecated usage exists so that `ranges::data(E)` behaves similarly to `std::data(E)` as defined in the C++ Working Paper when `E` is an rvalue. —end note ]
 
-> * Otherwise, `(E).data()` if it has pointer to object type.
+> * Otherwise, `DECAY_COPY((E).data())` if it has pointer to object type.
 
 > * Otherwise, `ranges::begin(E)` if it has pointer to object type.
 
