@@ -69,7 +69,7 @@ Add a new subsection to the end of [type.descriptions] to introduce *customizati
 
 > 6 The library defines several named customization point objects. In every translation unit where such a name is defined, it shall refer to the same instance of the customization point object.
 
-> 7 [ Note: Many of the customization points objects in the library evaluate function call expressions with an unqualified name which results in a call to a user-defined function found by argument dependent name lookup (3.4.2). To preclude such an expression resulting in a call to unconstrained functions with the same name in namespace `std`, customization point objects specify that lookup for these expressions is performed in a context that includes deleted overloads matching the signatures of overloads defined in namespace `std`. When the deleted overloads are viable, user-defined overloads must be more specialized (14.5.6.2) or more constrained (Concepts TS [temp.constr.order]) to be used by a customization point object. —end note]
+> 7 [ Note: Many of the customization points objects in the library evaluate function call expressions with an unqualified name which results in a call to a user-defined function found by argument dependent name lookup (3.4.2). To preclude such an expression resulting in a call to unconstrained functions with the same name in namespace `std`, customization point objects specify that lookup for these expressions is performed in a context that includes deleted overloads matching the signatures of overloads defined in namespace `std`. When the deleted overloads are viable, user-defined overloads must be more specialized (14.5.6.2) or more constrained (Concepts TS [temp.constr.order]) to be used by a customization point object. ---end note]
 
 In [concepts.lib.corelang.swappable], replace references to `swap` in the concept definitions with references to `ranges::swap`, to make it clear that the name is used qualified here, and remove the casts to `void`:
 
@@ -231,7 +231,7 @@ Strike all content from [iterator.range]. Add a new subsection [iterator.range.b
 
 > 1 The name `begin` denotes a customization point object (17.5.2.1.5). The effect of the expression `ranges::begin(E)` for some expression `E` is equivalent to:
 
-> * `ranges::begin((const T&)(E))` if `E` is an rvalue of type `T`. This usage is deprecated. [Note: This deprecated usage exists so that `ranges::begin(E)` behaves similarly to `std::begin(E)` as defined in ISO/IEC 14882 when `E` is an rvalue. —end note ]
+> * `ranges::begin((const T&)(E))` if `E` is an rvalue of type `T`. This usage is deprecated. [Note: This deprecated usage exists so that `ranges::begin(E)` behaves similarly to `std::begin(E)` as defined in ISO/IEC 14882 when `E` is an rvalue. ---end note ]
 
 > * Otherwise, `(E) + 0` if `E` has array type (3.9.2).
 
@@ -247,7 +247,7 @@ and a new subsection [iterator.range.end]:
 
 > 1 The name `end` denotes a customization point object (17.5.2.1.5). The effect of the expression `ranges::end(E)` for some expression `E` is equivalent to:
 
-> * `ranges::end((const T&)(E))` if `E` is an rvalue of type `T`. This usage is deprecated. [Note: This deprecated usage exists so that `ranges::end(E)` behaves similarly to `std::end(E)` as defined in ISO/IEC 14882 when `E` is an rvalue. —end note ]
+> * `ranges::end((const T&)(E))` if `E` is an rvalue of type `T`. This usage is deprecated. [Note: This deprecated usage exists so that `ranges::end(E)` behaves similarly to `std::end(E)` as defined in ISO/IEC 14882 when `E` is an rvalue. ---end note ]
 
 > * Otherwise, `(E) + extent<T>::value` if `E` has array type (3.9.2) `T`.
 
@@ -264,23 +264,23 @@ and a new subsection [iterator.range.cbegin]:
 
 > 1 The name `cbegin` denotes a customization point object (17.5.2.1.5). The effect of the expression `ranges::cbegin(E)` for some expression `E` of type `T` is equivalent to `ranges::begin((const T&)(E))`.
 
-> 2 Use of `ranges::cbegin(E)` with rvalue `E` is deprecated. [ Note: This deprecated usage exists so that `ranges::cbegin(E)` behaves similarly to `std::cbegin(E)` as defined in ISO/IEC 14882 when `E` is an rvalue. —end note ]
+> 2 Use of `ranges::cbegin(E)` with rvalue `E` is deprecated. [ Note: This deprecated usage exists so that `ranges::cbegin(E)` behaves similarly to `std::cbegin(E)` as defined in ISO/IEC 14882 when `E` is an rvalue. ---end note ]
 
-> 3 [ Note: Whenever `ranges::cbegin(E)` is a valid expression, the type of `ranges::cbegin(E)` satisfies `Iterator`. —end note ]
+> 3 [ Note: Whenever `ranges::cbegin(E)` is a valid expression, the type of `ranges::cbegin(E)` satisfies `Iterator`. ---end note ]
 
 and a new subsection [iterator.range.cend]:
 
 > 1 The name `cend` denotes a customization point object (17.5.2.1.5). The effect of the expression `ranges::cend(E)` for some expression `E` of type `T` is equivalent to `ranges::end((const T&)(E))`.
 
-> 2 Use of `ranges::cend(E)` with rvalue `E` is deprecated. [ Note: This deprecated usage exists so that `ranges::cend(E)` behaves similarly to `std::cend(E)` as defined in ISO/IEC 14882 when `E` is an rvalue. —end note ]
+> 2 Use of `ranges::cend(E)` with rvalue `E` is deprecated. [ Note: This deprecated usage exists so that `ranges::cend(E)` behaves similarly to `std::cend(E)` as defined in ISO/IEC 14882 when `E` is an rvalue. ---end note ]
 
-> 3 [ Note: Whenever `ranges::cend(E)` is a valid expression, the types of `ranges::cend(E)` and `ranges::cbegin(E)` satisfy `Sentinel`. —end note ]
+> 3 [ Note: Whenever `ranges::cend(E)` is a valid expression, the types of `ranges::cend(E)` and `ranges::cbegin(E)` satisfy `Sentinel`. ---end note ]
 
 and a new subsection [iterator.range.rbegin]:
 
 > 1 The name `rbegin` denotes a customization point object (17.5.2.1.5). The effect of the expression `ranges::rbegin(E)` for some expression `E` is equivalent to:
 
-> * `ranges::rbegin((const T&)(E))` if `E` is an rvalue of type `T`. This usage is deprecated. [Note: This deprecated usage exists so that `ranges::rbegin(E)` behaves similarly to `std::rbegin(E)` as defined in ISO/IEC 14882 when `E` is an rvalue. —end note ]
+> * `ranges::rbegin((const T&)(E))` if `E` is an rvalue of type `T`. This usage is deprecated. [Note: This deprecated usage exists so that `ranges::rbegin(E)` behaves similarly to `std::rbegin(E)` as defined in ISO/IEC 14882 when `E` is an rvalue. ---end note ]
 
 > * Otherwise, `make_reverse_iterator((E) + extent<T>::value)` if `E` has array type (3.9.2) `T`.
 
@@ -296,7 +296,7 @@ and a new subsection [iterator.range.rend]:
 
 > 1 The name `rend` denotes a customization point object (17.5.2.1.5). The effect of the expression `ranges::rend(E)` for some expression `E` is equivalent to:
 
-> * `ranges::rend((const T&)(E))` if `E` is an rvalue of type `T`. This usage is deprecated. [Note: This deprecated usage exists so that `ranges::rend(E)` behaves similarly to `std::rend(E)` as defined in ISO/IEC 14882 when `E` is an rvalue. —end note ]
+> * `ranges::rend((const T&)(E))` if `E` is an rvalue of type `T`. This usage is deprecated. [Note: This deprecated usage exists so that `ranges::rend(E)` behaves similarly to `std::rend(E)` as defined in ISO/IEC 14882 when `E` is an rvalue. ---end note ]
 
 > * Otherwise, `make_reverse_iterator((E) + 0)` if `E` has array type (3.9.2).
 
@@ -312,17 +312,17 @@ and a new subsection [iterator.range.crbegin]:
 
 > 1 The name `crbegin` denotes a customization point object (17.5.2.1.5). The effect of the expression `ranges::crbegin(E)` for some expression `E` of type `T` is equivalent to `ranges::rbegin((const T&)(E))`.
 
-> 2 Use of `ranges::crbegin(E)` with rvalue `E` is deprecated. [ Note: This deprecated usage exists so that `ranges::crbegin(E)` behaves similarly to `std::crbegin(E)` as defined in ISO/IEC 14882 when `E` is an rvalue. —end note ]
+> 2 Use of `ranges::crbegin(E)` with rvalue `E` is deprecated. [ Note: This deprecated usage exists so that `ranges::crbegin(E)` behaves similarly to `std::crbegin(E)` as defined in ISO/IEC 14882 when `E` is an rvalue. ---end note ]
 
-> 3 [ Note: Whenever `ranges::crbegin(E)` is a valid expression, the type of `ranges::crbegin(E)` satisfies `Iterator`. —end note ]
+> 3 [ Note: Whenever `ranges::crbegin(E)` is a valid expression, the type of `ranges::crbegin(E)` satisfies `Iterator`. ---end note ]
 
 and a new subsection [iterator.range.crend]:
 
 > 1 The name `crend` denotes a customization point object (17.5.2.1.5). The effect of the expression `ranges::crend(E)` for some expression `E` of type `T` is equivalent to `ranges::rend((const T&)(E))`.
 
-> 2 Use of `ranges::crend(E)` with rvalue `E` is deprecated. [ Note: This deprecated usage exists so that `ranges::crend(E)` behaves similarly to `std::crend(E)` as defined in ISO/IEC 14882 when `E` is an rvalue. —end note ]
+> 2 Use of `ranges::crend(E)` with rvalue `E` is deprecated. [ Note: This deprecated usage exists so that `ranges::crend(E)` behaves similarly to `std::crend(E)` as defined in ISO/IEC 14882 when `E` is an rvalue. ---end note ]
 
-> 3 [ Note: Whenever `ranges::crend(E)` is a valid expression, the types of `ranges::crend(E)` and `ranges::crbegin(E)` satisfy `Sentinel`. —end note ]
+> 3 [ Note: Whenever `ranges::crend(E)` is a valid expression, the types of `ranges::crend(E)` and `ranges::crbegin(E)` satisfy `Sentinel`. ---end note ]
 
 In [range.primitives], remove paragraphs 1-3 that define overloads of `size`. Add a new subsection [range.primitives.size]:
 
@@ -338,7 +338,7 @@ In [range.primitives], remove paragraphs 1-3 that define overloads of `size`. Ad
 
 > * Otherwise, `ranges::size(E)` is ill-formed.
 
-> 2 [ Note: Whenever `ranges::size(E)` is a valid expression, the type of `ranges::size(E)` satisfies `Integral`. —end note ]
+> 2 [ Note: Whenever `ranges::size(E)` is a valid expression, the type of `ranges::size(E)` satisfies `Integral`. ---end note ]
 
 and new subsection [range.primitives.empty]:
 
@@ -358,7 +358,7 @@ and a new subsection [range.primitives.data]:
 
 > 1 The name `data` denotes a customization point object (17.5.2.1.5). The effect of the expression `ranges::data(E)` for some expression `E` is equivalent to:
 
-> * `ranges::data((const T&)(E))` if `E` is an rvalue of type `T`. This usage is deprecated. [Note: This deprecated usage exists so that `ranges::data(E)` behaves similarly to `std::data(E)` as defined in the C++ Working Paper when `E` is an rvalue. —end note ]
+> * `ranges::data((const T&)(E))` if `E` is an rvalue of type `T`. This usage is deprecated. [Note: This deprecated usage exists so that `ranges::data(E)` behaves similarly to `std::data(E)` as defined in the C++ Working Paper when `E` is an rvalue. ---end note ]
 
 > * Otherwise, `DECAY_COPY((E).data())` if it has pointer to object type.
 
@@ -372,9 +372,9 @@ and a new subsection [range.primitives.cdata]:
 
 > 1 The name `cdata` denotes a customization point object (17.5.2.1.5). The effect of the expression `ranges::cdata(E)` for some expression `E` of type `T` is equivalent to `ranges::data((const T&)(E))`.
 
-> 2 Use of `ranges::cdata(E)` with rvalue `E` is deprecated. [ Note: This deprecated usage exists so that `ranges::cdata(E)` has behavior consistent with `ranges::data(E)` when `E` is an rvalue. —end note ]
+> 2 Use of `ranges::cdata(E)` with rvalue `E` is deprecated. [ Note: This deprecated usage exists so that `ranges::cdata(E)` has behavior consistent with `ranges::data(E)` when `E` is an rvalue. ---end note ]
 
-> 3 [ Note: Whenever `ranges::cdata(E)` is a valid expression, it has pointer to object type. —end note ]
+> 3 [ Note: Whenever `ranges::cdata(E)` is a valid expression, it has pointer to object type. ---end note ]
 
 Algorithms
 ==========
@@ -424,7 +424,7 @@ except that forwarding arguments in this manner is visible to users, and so not 
 
 > 17 The number and order of template parameters for algorithm declarations is unspecified, except where explicitly stated otherwise.
 
-> 18 Despite that the algorithm declarations nominally accept parameters by value, it is unspecified when and if the argument expressions are used to initialize the actual parameters except that any such initialization shall be sequenced before (1.9) the algorithm returns. [ Note: The behavior of a program that modifies the values of the actual argument expressions is consequently undefined unless the algorithm return happens before (1.10) any such modifications. —end note ]
+> 18 Despite that the algorithm declarations nominally accept parameters by value, it is unspecified when and if the argument expressions are used to initialize the actual parameters except that any such initialization shall be sequenced before (1.9) the algorithm returns. [ Note: The behavior of a program that modifies the values of the actual argument expressions is consequently undefined unless the algorithm return happens before (1.10) any such modifications. ---end note ]
 
 These changes make both of the example implementations of `find_if` above conforming.
 
@@ -675,7 +675,7 @@ Rename section [concepts.lib.functions] to [concepts.lib.callables]; similarly r
 > }
 > ```
 
-> 2 [ Note: Since the `invoke` function call expression is not required to be equality-preserving (19.1.1), a function that generates random numbers may satisfy `Callable`. —end note ]
+> 2 [ Note: Since the `invoke` function call expression is not required to be equality-preserving (19.1.1), a function that generates random numbers may satisfy `Callable`. ---end note ]
 
 and the section [concepts.lib.callables.regularcallable]:
 
@@ -685,11 +685,11 @@ and the section [concepts.lib.callables.regularcallable]:
 > }
 > ```
 
-> 1 The `invoke` function call expression shall be equality-preserving (19.1.1). [ Note: This requirement supersedes the annotation in the definition of `Callable`. —end note ]
+> 1 The `invoke` function call expression shall be equality-preserving (19.1.1). [ Note: This requirement supersedes the annotation in the definition of `Callable`. ---end note ]
 
-> 2 [ Note: A random number generator does not satisfy `RegularCallable`. —end note ]
+> 2 [ Note: A random number generator does not satisfy `RegularCallable`. ---end note ]
 
-> 3 [ Note: The distinction between `Callable` and `RegularCallable` is purely semantic. —end note ]
+> 3 [ Note: The distinction between `Callable` and `RegularCallable` is purely semantic. ---end note ]
 
 in section [concepts.lib.callables.predicate], replace references to `RegularFunction` with `RegularCallable`. In [function.objects], add to the synopsis of header `<experimental/ranges/functional>` the declaration:
 
@@ -794,7 +794,7 @@ Replace the content of [concepts.lib.corelang.assignable] with:
 
 >   * `t == uu`.
 
->   * If `v` is a non-const rvalue, its resulting state is unspecified. [Note: `v` must still meet the requirements of the library component that is using it. The operations listed in those requirements must work as specified. —end note ]
+>   * If `v` is a non-const rvalue, its resulting state is unspecified. [Note: `v` must still meet the requirements of the library component that is using it. The operations listed in those requirements must work as specified. ---end note ]
 
 >   * Otherwise, `v` is not modified.
 
@@ -988,7 +988,7 @@ Replace [concepts.lib.compare.equalitycomparable] with:
 
 > 1 Let `a` and `b` be objects of type `T`. `EqualityComparable<T>()` is satisfied if and only if `bool(a == b)` if and only if `a` is equal to `b`.
 
-> 2 [ Note: The requirement that the expression `a == b` is equality preserving implies that `==` is reflexive, transitive, and symmetric. —end note ]
+> 2 [ Note: The requirement that the expression `a == b` is equality preserving implies that `==` is reflexive, transitive, and symmetric. ---end note ]
 
 > ```c++
 > template <class T, class U>
@@ -1032,9 +1032,9 @@ Replace the content of [iterators.sentinel] with:
 
 > 2 Let `s` and `i` be values of type `S` and `I` such that `[i,s)` denotes a range. Types `S` and `I` satisfy `Sentinel<S, I>()` if and only if:
 
-> (2.1) — i == s is well-defined.
+> (2.1) --- i == s is well-defined.
 
-> (2.2) — If bool(i != s) then i is dereferenceable and [++i,s) denotes a range.
+> (2.2) --- If bool(i != s) then i is dereferenceable and [++i,s) denotes a range.
 
 > 3 The domain of `==` can change over time. Given an iterator `i` and sentinel `s` such that `[i,s)` denotes a range and `i != s`, `[i,s)` is not required to continue to denote a range after incrementing any iterator equal to `i`. [Note: Consequently, `i == s` is no longer required to be well-defined. - end note]
 
@@ -1059,16 +1059,16 @@ Add new subsection "Concept SizedSentinel" [iterators.sizedsentinel]:
 
 > 3 Let `i` be an iterator of type `I`, and `s` a sentinel of type `S` such that `[i,s)` denotes a range. Let N be the smallest number of applications of `++i` necessary to make `bool(i == s)` be `true`. `SizedSentinel<S, I>()` is satisfied if and only if:
 
-> (3.1) — If N is representable by `difference_type_t<I>`, then `s - i` is well-defined and equals N.
+> (3.1) --- If N is representable by `difference_type_t<I>`, then `s - i` is well-defined and equals N.
 
-> (3.2) — If −N is representable by `difference_type_t<I>`, then `i - s` is well-defined and equals −N.
+> (3.2) --- If -N is representable by `difference_type_t<I>`, then `i - s` is well-defined and equals -N.
 
 > 4 The `disable_sized_sentinel<S, I>` predicate provides a mechanism to enable use of sentinels and iterators with the library that meet the syntactic requirements but do not in fact satisfy `SizedSentinel`.
 
-> 5 [ Note: A program that instantiates a library template that requires `SizedSentinel` with an iterator type `I` and sentinel type `S` that meet the syntactic requirements of `SizedSentinel<S, I>()` but do not satisfy `SizedSentinel` is ill-formed with no diagnostic required unless `disable_sized_sentinel<S, I>` evaluates to true (17.5.1.3). —end note ]
+> 5 [ Note: A program that instantiates a library template that requires `SizedSentinel` with an iterator type `I` and sentinel type `S` that meet the syntactic requirements of `SizedSentinel<S, I>()` but do not satisfy `SizedSentinel` is ill-formed with no diagnostic required unless `disable_sized_sentinel<S, I>` evaluates to true (17.5.1.3). ---end note ]
 
 > 5 [ Note: The `SizedSentinel` concept is satisfied by pairs of `RandomAccessIterator`s
-and by counted iterators and their sentinels. —end note ]
+and by counted iterators and their sentinels. ---end note ]
 
 **Replace all references to `SizedIteratorRange<I, S>` in the document with references to `SizedSentinel<S, I>`.**
 

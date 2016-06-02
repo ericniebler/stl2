@@ -6,6 +6,9 @@ PANDOC = pandoc
 $(DOCNO).html: Pxxxx.md header.html pandoc-template.html
 	$(PANDOC) -f markdown_github+yaml_metadata_block+citations -t html -o $@ --filter pandoc-citeproc --csl=acm-sig-proceedings.csl --number-sections --toc -s -S --template=pandoc-template --include-before-body=header.html $<
 
+$(DOCNO).pdf: Pxxxx.md
+	$(PANDOC) -f markdown_github+yaml_metadata_block+citations -t latex -o $@ --filter pandoc-citeproc --csl=acm-sig-proceedings.csl --number-sections --toc -s -S $<
+
 header.html: header.html.in Makefile
 	sed 's/%%DOCNO%%/$(DOCNO)/g' < $< > $@
 
