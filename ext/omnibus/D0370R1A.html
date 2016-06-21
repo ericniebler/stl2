@@ -84,9 +84,11 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <li><a href="#iteratorsentinel-overhaul"><span class="toc-section-number">7</span> Iterator/Sentinel Overhaul</a><ul>
 <li><a href="#technical-specifications-1"><span class="toc-section-number">7.1</span> Technical Specifications</a></li>
 </ul></li>
-<li><a href="#merge-writable-and-movewritable"><span class="toc-section-number">8</span> Merge <code>Writable</code> and <code>MoveWritable</code></a></li>
-<li><a href="#mergemergemovable-fix"><span class="toc-section-number">9</span> Merge/MergeMovable fix</a></li>
-<li><a href="#move_sentinel"><span class="toc-section-number">10</span> <code>move_sentinel</code></a></li>
+<li><a href="#a-sentinel-for-move_iterator"><span class="toc-section-number">8</span> A Sentinel for <code>move_iterator</code></a><ul>
+<li><a href="#technical-specifications-2"><span class="toc-section-number">8.1</span> Technical Specifications</a></li>
+</ul></li>
+<li><a href="#merge-writable-and-movewritable"><span class="toc-section-number">9</span> Merge <code>Writable</code> and <code>MoveWritable</code></a></li>
+<li><a href="#mergemergemovable-fix"><span class="toc-section-number">10</span> Merge/MergeMovable fix</a></li>
 <li><a href="#implementation-experience"><span class="toc-section-number">11</span> Implementation Experience</a></li>
 <li><a href="#acknowledgements"><span class="toc-section-number">12</span> Acknowledgements</a></li>
 <li><a href="#references">References</a></li>
@@ -1393,14 +1395,155 @@ difference_type_t&lt;I2&gt; <span class="kw">operator</span>-(
 iterator/sentinel pairs satisfy the EqualityComparable concept”</p>
 <p>Replace the contents of [iterators.common], [default.sentinels], [iterators.counted], and [unreachable.sentinels] with the contents of the sections of the same name in N4569.</p>
 <p>Strip occurrences of the prefix <code>Weak</code> wherever it appears in clause [algorithms].</p>
-<h1 id="merge-writable-and-movewritable"><span class="header-section-number">8</span> Merge <code>Writable</code> and <code>MoveWritable</code></h1>
+<h1 id="a-sentinel-for-move_iterator"><span class="header-section-number">8</span> A Sentinel for <code>move_iterator</code></h1>
+<p>In C++14, it is possible to wrap a pair of input iterators into <code>move_iterator</code> and pass it to an algorithm so as to convert copies into moves:</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> InputIterator&gt;
+<span class="dt">void</span> foo(InputIterator first, InputIterator last) {
+  bar(make_move_iterator(first), make_move_iterator(last));
+}</code></pre></div>
+<p>In the Ranges design, ranges are typically denoted by iterator/sentinel pairs:</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;InputIterator I, Sentinel&lt;I&gt; S&gt;
+<span class="dt">void</span> foo(I first, S last) {
+  bar(make_move_iterator(first), ???);
+}</code></pre></div>
+<p>What do we pass to <code>bar</code> to denote the end of the “moved” range? <code>make_move_iterator(next(first, last))</code> is not usable if the range is single-pass. There are at least three potential solutions:</p>
+<ol>
+<li><p>Define a <code>move_sentinel&lt;S&gt;</code> wrapper class that satisfies <code>Sentinel&lt;move_sentinel&lt;S&gt;, move_iterator&lt;I&gt;&gt;()</code> when <code>Sentinel&lt;S, I&gt;()</code> is satisfied. For ease of use, and consistency of interface, define a <code>make_move_sentinel</code> deducing helper function. This approach maintains a clear distinction between the adapted range and the underlying range. The definition of <code>foo</code> becomes:</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;InputIterator I, Sentinel&lt;I&gt; S&gt;
+<span class="dt">void</span> foo(I first, S last) {
+  bar(make_move_iterator(first), make_move_sentinel(last));
+}</code></pre></div>
+<p>This approach is straightforward, and while perhaps lacking elegance, gets the job done.</p></li>
+<li><p>Define operator overloads for <code>==</code> and <code>!=</code> that accept <code>move_iterator&lt;I&gt;</code> and <code>Sentinel&lt;I&gt;</code> so that move iterators can use the sentinels of their base iterators directly:</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">Sentinel{S, I}
+<span class="dt">bool</span> <span class="kw">operator</span>==(<span class="dt">const</span> move_iterator&lt;I&gt;&amp; i, <span class="dt">const</span> S&amp; s) {
+  <span class="kw">return</span> i.current_ == s;
+}
+<span class="co">// Define != similarly, and the symmetric overloads.</span></code></pre></div>
+<p><code>foo</code> can be simpler since it passes the sentinel directly:</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;InputIterator I, Sentinel&lt;I&gt; S&gt;
+<span class="dt">void</span> foo(I first, S last) {
+  bar(make_move_iterator(first), last);
+}</code></pre></div>
+<p>This approach requires less syntax at the callsite. It is a bit lax in that it allows comparing adapted iterators with unadapted sentinels, potentially creating confusion in code readers about which iterators/sentinels are adapted and which are from the base range.</p></li>
+<li><p>Ignore the problem until Ranges TS2 comes along with support for view adaptors, and the solution will look something like:</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;InputIterator I, Sentinel&lt;I&gt; S&gt;
+<span class="dt">void</span> foo(I first, S last) {
+  bar(make_iterator_range(first, last) | view::move);
+}
+<span class="co">// Or even better:</span>
+<span class="dt">void</span> foo(InputRange&amp;&amp; rng) {
+  bar(rng | view::move);
+}</code></pre></div>
+<p>Adapting iterator/sentinel pairs together instead of individually is preferable: it allows the library to check for errors, and to optimize the special case when <code>last</code> is also an iterator by producing a bounded range (a range whose <code>begin</code> and <code>end</code> have the same type).</p></li>
+</ol>
+<p>The view adapter is clearly the preferable solution in the long run, but would require the introduction of too much additional machinery into the current TS to be a viable solution in the short-term. Implementation experience using the underlying sentinels directly with the move iterators was not positive: it results in less clear code, and is fragile in the face of poorly constrained iterators/sentinels. We thereforer propose the first approach as an interim solution to this problem.</p>
+<h2 id="technical-specifications-2"><span class="header-section-number">8.1</span> Technical Specifications</h2>
+<p>Add the following declarations to the synopsis of the <code>&lt;experimental/ranges/iterator&gt;</code> head in [iterator.synopsis], after between the <code>move_iterator</code> and <code>common_iterator</code> declarations:</p>
+<blockquote>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;Semiregular S&gt; <span class="kw">class</span> move_sentinel;
+<span class="kw">template</span> &lt;<span class="kw">class</span> I, Sentinel&lt;I&gt; S&gt;
+  <span class="dt">bool</span> <span class="kw">operator</span>==(
+    <span class="dt">const</span> move_iterator&lt;I&gt;&amp; i, <span class="dt">const</span> move_sentinel&lt;S&gt;&amp; s);
+<span class="kw">template</span> &lt;<span class="kw">class</span> I, Sentinel&lt;I&gt; S&gt;
+  <span class="dt">bool</span> <span class="kw">operator</span>==(
+    <span class="dt">const</span> move_sentinel&lt;S&gt;&amp; s, <span class="dt">const</span> move_iterator&lt;I&gt;&amp; i);
+<span class="kw">template</span> &lt;<span class="kw">class</span> I, Sentinel&lt;I&gt; S&gt;
+  <span class="dt">bool</span> <span class="kw">operator</span>!=(
+    <span class="dt">const</span> move_iterator&lt;I&gt;&amp; i, <span class="dt">const</span> move_sentinel&lt;S&gt;&amp; s);
+<span class="kw">template</span> &lt;<span class="kw">class</span> I, Sentinel&lt;I&gt; S&gt;
+  <span class="dt">bool</span> <span class="kw">operator</span>!=(
+    <span class="dt">const</span> move_sentinel&lt;S&gt;&amp; s, <span class="dt">const</span> move_iterator&lt;I&gt;&amp; i);
+<span class="kw">template</span> &lt;<span class="kw">class</span> I, SizedSentinel&lt;I&gt; S&gt;
+  difference_type_t&lt;I&gt; <span class="kw">operator</span>-(
+    <span class="dt">const</span> move_sentinel&lt;S&gt;&amp; s, <span class="dt">const</span> move_iterator&lt;I&gt;&amp; i);
+<span class="kw">template</span> &lt;<span class="kw">class</span> I, SizedSentinel&lt;I&gt; S&gt;
+  difference_type_t&lt;I&gt; <span class="kw">operator</span>-(
+    <span class="dt">const</span> move_iterator&lt;I&gt;&amp; i, <span class="dt">const</span> move_sentinel&lt;S&gt;&amp; s);
+<span class="kw">template</span> &lt;Semiregular S&gt;
+  move_sentinel&lt;S&gt; make_move_sentinel(S s);</code></pre></div>
+</blockquote>
+<p>Insert a new subsection [move.sentinel] under [iterators.move]:</p>
+<blockquote>
+<p>24.7.3.4 Class template <code>move_sentinel</code> [move.sentinel]</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">namespace</span> std { <span class="kw">namespace</span> experimental { <span class="kw">namespace</span> ranges { <span class="kw">inline</span> <span class="kw">namespace</span> v1 {
+  <span class="kw">template</span> &lt;Semiregular S&gt;
+  <span class="kw">class</span> move_sentinel {
+  <span class="kw">public</span>:
+    <span class="kw">constexpr</span> move_sentinel();
+    <span class="kw">explicit</span> move_sentinel(S s);
+    move_sentinel(<span class="dt">const</span> move_sentinel&lt;ConvertibleTo&lt;S&gt;&gt;&amp; s);
+    move_sentinel&amp; <span class="kw">operator</span>=(<span class="dt">const</span> move_sentinel&lt;ConvertibleTo&lt;S&gt;&gt;&amp; s);
+    S base() <span class="dt">const</span>;
+  <span class="kw">private</span>:
+    S last; <span class="co">// exposition only</span>
+  };
+  <span class="kw">template</span> &lt;<span class="kw">class</span> I, Sentinel&lt;I&gt; S&gt;
+    <span class="dt">bool</span> <span class="kw">operator</span>==(
+      <span class="dt">const</span> move_iterator&lt;I&gt;&amp; i, <span class="dt">const</span> move_sentinel&lt;S&gt;&amp; s);
+  <span class="kw">template</span> &lt;<span class="kw">class</span> I, Sentinel&lt;I&gt; S&gt;
+    <span class="dt">bool</span> <span class="kw">operator</span>==(
+      <span class="dt">const</span> move_sentinel&lt;S&gt;&amp; s, <span class="dt">const</span> move_iterator&lt;I&gt;&amp; i);
+  <span class="kw">template</span> &lt;<span class="kw">class</span> I, Sentinel&lt;I&gt; S&gt;
+    <span class="dt">bool</span> <span class="kw">operator</span>!=(
+      <span class="dt">const</span> move_iterator&lt;I&gt;&amp; i, <span class="dt">const</span> move_sentinel&lt;S&gt;&amp; s);
+  <span class="kw">template</span> &lt;<span class="kw">class</span> I, Sentinel&lt;I&gt; S&gt;
+    <span class="dt">bool</span> <span class="kw">operator</span>!=(
+      <span class="dt">const</span> move_sentinel&lt;S&gt;&amp; s, <span class="dt">const</span> move_iterator&lt;I&gt;&amp; i);
+  <span class="kw">template</span> &lt;<span class="kw">class</span> I, SizedSentinel&lt;I&gt; S&gt;
+    difference_type_t&lt;I&gt; <span class="kw">operator</span>-(
+      <span class="dt">const</span> move_sentinel&lt;S&gt;&amp; s, <span class="dt">const</span> move_iterator&lt;I&gt;&amp; i);
+  <span class="kw">template</span> &lt;<span class="kw">class</span> I, SizedSentinel&lt;I&gt; S&gt;
+    difference_type_t&lt;I&gt; <span class="kw">operator</span>-(
+      <span class="dt">const</span> move_iterator&lt;I&gt;&amp; i, <span class="dt">const</span> move_sentinel&lt;S&gt;&amp; s);
+  <span class="kw">template</span> &lt;Semiregular S&gt;
+    move_sentinel&lt;S&gt; make_move_sentinel(S s);
+}}}}</code></pre></div>
+<p>24.7.3.5 <code>move_sentinel</code> operations [move.sent.ops]<br />
+24.7.3.5.1 <code>move_sentinel</code> constructors [move.sent.op.const]</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">constexpr</span> move_sentinel();</code></pre></div>
+<p>1 Effects: Constructs a <code>move_sentinel</code>, value-initializing <code>last</code>. If <code>S</code> is a literal type, this constructor shall be a <code>constexpr</code> constructor.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">explicit</span> move_sentinel(S s);</code></pre></div>
+<p>2 Effects: Constructs a move_sentinel, initializing last with s.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">move_sentinel(<span class="dt">const</span> move_sentinel&lt;ConvertibleTo&lt;S&gt;&gt;&amp; s);</code></pre></div>
+<p>3 Effects: Constructs a move_sentinel, initializing last with s.last.</p>
+<p>24.7.3.5.2 <code>move_sentinel::operator=</code> [move.sent.op=]</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">move_sentinel&amp; <span class="kw">operator</span>=(<span class="dt">const</span> move_sentinel&lt;ConvertibleTo&lt;S&gt;&gt;&amp; s);</code></pre></div>
+<p>1 Effects: Assigns <code>s.last</code> to <code>last</code>.</p>
+<p>24.7.3.5.3 <code>move_sentinel</code> comparisons [move.sent.op.comp]</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> I, Sentinel&lt;I&gt; S&gt;
+  <span class="dt">bool</span> <span class="kw">operator</span>==(
+    <span class="dt">const</span> move_iterator&lt;I&gt;&amp; i, <span class="dt">const</span> move_sentinel&lt;S&gt;&amp; s);<span class="er">```</span>
+<span class="kw">template</span> &lt;<span class="kw">class</span> I, Sentinel&lt;I&gt; S&gt;
+  <span class="dt">bool</span> <span class="kw">operator</span>==(
+    <span class="dt">const</span> move_sentinel&lt;S&gt;&amp; s, <span class="dt">const</span> move_iterator&lt;I&gt;&amp; i);</code></pre></div>
+<p>1 Effects: Equivalent to <code>i.current == s.last</code>.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> I, Sentinel&lt;I&gt; S&gt;
+  <span class="dt">bool</span> <span class="kw">operator</span>!=(
+    <span class="dt">const</span> move_iterator&lt;I&gt;&amp; i, <span class="dt">const</span> move_sentinel&lt;S&gt;&amp; s);
+<span class="kw">template</span> &lt;<span class="kw">class</span> I, Sentinel&lt;I&gt; S&gt;
+  <span class="dt">bool</span> <span class="kw">operator</span>!=(
+    <span class="dt">const</span> move_sentinel&lt;S&gt;&amp; s, <span class="dt">const</span> move_iterator&lt;I&gt;&amp; i);</code></pre></div>
+<p>2 Effects: Equivalent to <code>!(i == s)</code>.</p>
+<p>24.7.3.5.4 <code>move_sentinel</code> non-member functions [move.sent.nonmember]</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> I, SizedSentinel&lt;I&gt; S&gt;
+  difference_type_t&lt;I&gt; <span class="kw">operator</span>-(
+    <span class="dt">const</span> move_sentinel&lt;S&gt;&amp; s, <span class="dt">const</span> move_iterator&lt;I&gt;&amp; i);</code></pre></div>
+<p>1 Effects: Equivalent to <code>s.last - i.current</code>.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> I, SizedSentinel&lt;I&gt; S&gt;
+  difference_type_t&lt;I&gt; <span class="kw">operator</span>-(
+    <span class="dt">const</span> move_iterator&lt;I&gt;&amp; i, <span class="dt">const</span> move_sentinel&lt;S&gt;&amp; s);</code></pre></div>
+<p>2 Effects: Equivalent to <code>i.current - s.last</code>.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;Semiregular S&gt;
+move_sentinel&lt;S&gt; make_move_sentinel(S s);</code></pre></div>
+<p>3 Returns: <code>move_sentinel&lt;S&gt;(s)</code>.</p>
+</blockquote>
+<h1 id="merge-writable-and-movewritable"><span class="header-section-number">9</span> Merge <code>Writable</code> and <code>MoveWritable</code></h1>
 <p><a href="https://github.com/ericniebler/stl2/pull/160">PR</a></p>
 <p><a href="https://github.com/CaseyCarter/stl2/issues/17">Discussion</a></p>
-<h1 id="mergemergemovable-fix"><span class="header-section-number">9</span> Merge/MergeMovable fix</h1>
+<h1 id="mergemergemovable-fix"><span class="header-section-number">10</span> Merge/MergeMovable fix</h1>
 <p><a href="https://github.com/ericniebler/stl2/pull/157">PR</a></p>
 <p>(This simply relaxed an overconstrained parameter, maybe could integrate into the Writable/MoveWritable discussion.)</p>
-<h1 id="move_sentinel"><span class="header-section-number">10</span> <code>move_sentinel</code></h1>
-<p><a href="https://github.com/ericniebler/stl2/pull/160">PR</a></p>
 <h1 id="implementation-experience"><span class="header-section-number">11</span> Implementation Experience</h1>
 <p>The proposed design changes are implemented in <a href="https://github.com/CaseyCarter/cmcstl2" title="CMCSTL2: Casey Carter&#39;s reference implementation of STL2">CMCSTL2, a full implementation of the Ranges TS with proxy extensions</a><span class="citation">[1]</span>.</p>
 <h1 id="acknowledgements"><span class="header-section-number">12</span> Acknowledgements</h1>
