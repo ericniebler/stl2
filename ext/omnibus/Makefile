@@ -1,19 +1,20 @@
 # Update in header.html as well.
-DOCNO = D0370R1A
+DOCNO = P0370
+REV = 1
 
 PANDOC = pandoc
 
-$(DOCNO).html: Pxxxx.md header.html pandoc-template.html
+$(DOCNO)R$(REV).html: P0370.md header.html pandoc-template.html
 	$(PANDOC) -f markdown_github+yaml_metadata_block+citations -t html -o $@ --filter pandoc-citeproc --csl=acm-sig-proceedings.csl --number-sections --toc -s -S --template=pandoc-template --include-before-body=header.html $<
 
-$(DOCNO).pdf: Pxxxx.md
+$(DOCNO)R$(REV).pdf: P0370.md
 	$(PANDOC) -f markdown_github+yaml_metadata_block+citations -t latex -o $@ --filter pandoc-citeproc --csl=acm-sig-proceedings.csl --number-sections --toc -s -S $<
 
 header.html: header.html.in Makefile
-	sed 's/%%DOCNO%%/$(DOCNO)/g' < $< > $@
+	sed 's/%%DOCNO%%/$(DOCNO)R$(REV)/g' < $< > $@
 
 clean:
-	rm -f $(DOCNO).html *~
+	rm -f $(DOCNO)R$(REV).html *~
 
-view: $(DOCNO).html
-	gnome-www-browser $(DOCNO).html
+view: $(DOCNO)R$(REV).html
+	gnome-www-browser $(DOCNO)R$(REV).html
