@@ -1,8 +1,9 @@
 # Update in header.html as well.
 DOCNO = 0370
 REV = 1
+PD = D
 SOURCE = P$(DOCNO).md
-TARGET = P$(DOCNO)R$(REV)
+TARGET = $(PD)$(DOCNO)R$(REV)
 PANDOC = pandoc
 
 $(TARGET).html: $(SOURCE) header.html pandoc-template.html
