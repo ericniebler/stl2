@@ -79,17 +79,16 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </ul></li>
 </ul></li>
 <li><a href="#algorithms"><span class="toc-section-number">2</span> Algorithms</a></li>
-<li><a href="#function-objects"><span class="toc-section-number">3</span> Function Objects</a></li>
-<li><a href="#function---callable"><span class="toc-section-number">4</span> Function -&gt; Callable</a></li>
-<li><a href="#assignable-semantics"><span class="toc-section-number">5</span> Assignable Semantics</a></li>
-<li><a href="#customization-points"><span class="toc-section-number">6</span> Customization Points</a><ul>
-<li><a href="#technical-specifications"><span class="toc-section-number">6.1</span> Technical Specifications</a></li>
+<li><a href="#function---callable"><span class="toc-section-number">3</span> Function -&gt; Callable</a></li>
+<li><a href="#assignable-semantics"><span class="toc-section-number">4</span> Assignable Semantics</a></li>
+<li><a href="#customization-points"><span class="toc-section-number">5</span> Customization Points</a><ul>
+<li><a href="#technical-specifications"><span class="toc-section-number">5.1</span> Technical Specifications</a></li>
 </ul></li>
-<li><a href="#iteratorsentinel-overhaul"><span class="toc-section-number">7</span> Iterator/Sentinel Overhaul</a><ul>
-<li><a href="#technical-specifications-1"><span class="toc-section-number">7.1</span> Technical Specifications</a></li>
+<li><a href="#iteratorsentinel-overhaul"><span class="toc-section-number">6</span> Iterator/Sentinel Overhaul</a><ul>
+<li><a href="#technical-specifications-1"><span class="toc-section-number">6.1</span> Technical Specifications</a></li>
 </ul></li>
-<li><a href="#implementation-experience"><span class="toc-section-number">8</span> Implementation Experience</a></li>
-<li><a href="#acknowledgements"><span class="toc-section-number">9</span> Acknowledgements</a></li>
+<li><a href="#implementation-experience"><span class="toc-section-number">7</span> Implementation Experience</a></li>
+<li><a href="#acknowledgements"><span class="toc-section-number">8</span> Acknowledgements</a></li>
 <li><a href="#references">References</a></li>
 </ul>
 </div>
@@ -142,246 +141,7 @@ safe_iterator_t&lt;Rng&gt;
 <p>18 Despite that the algorithm declarations nominally accept parameters by value, it is unspecified when and if the argument expressions are used to initialize the actual parameters except that any such initialization shall be sequenced before (1.9) the algorithm returns. [ Note: The behavior of a program that modifies the values of the actual argument expressions is consequently undefined unless the algorithm return happens before (1.10) any such modifications. —end note ]</p>
 </blockquote>
 <p>These changes make both of the example implementations of <code>find_if</code> above conforming.</p>
-<h1 id="function-objects"><span class="header-section-number">3</span> Function Objects</h1>
-<p>The resolution of LWG2450 ensures that the transparent specialiations of <code>greater</code>, <code>less</code>, <code>greater_equal</code>, and <code>less_equal</code> use the same ordering as the specializations for pointers when applied to pointer types. The function objects in the Ranges TS should behave similarly. Further the constraints on the comparison function objects seem to put the cart before the horse. <code>equal_to</code>, for example, is specified in the Ranges TS as:</p>
-<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> T = <span class="dt">void</span>&gt;
-  requires EqualityComparable&lt;T&gt;() || Same&lt;T, <span class="dt">void</span>&gt;()
-<span class="kw">struct</span> equal_to;</code></pre></div>
-<p>which forbids specialization of <code>equal_to</code> for types <code>T</code> that do not satisfy <code>EqualityComparable&lt;T&gt;() || Same&lt;T, void&gt;()</code>, i.e., are not <code>void</code> or <code>EqualityComparable</code>. It seems that non-<code>EqualityComparable</code> types are <em>exactly</em> the types for which a user might want to specialize <code>equal_to</code>. For types that <em>are</em> <code>EqualityComparable</code>, the default implementation will work correctly with no need for specialization. It would seem that the <code>EqualityComparable</code> requirement on <code>equal_to</code> - and the similar requirements for the other comparision function objects - is actually a requirement for the default implementation that should not be applied to the base template.</p>
-<p>Both of these issues can be corrected by respecifying the function objects. In [function.objects]/2, the synopsis of <code>&lt;experimental/ranges/functional&gt;</code>, replace the declarations of the comparison function objects with:</p>
-<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="co">// 20.9.5, comparisons:</span>
-<span class="kw">template</span> &lt;<span class="kw">class</span> T = <span class="dt">void</span>&gt;
-<span class="kw">struct</span> equal_to; <span class="co">// not defined</span>
-<span class="kw">template</span>&lt;EqualityComparable T&gt; <span class="kw">struct</span> equal_to&lt;T&gt;;
-
-<span class="kw">template</span> &lt;<span class="kw">class</span> T = <span class="dt">void</span>&gt;
-<span class="kw">struct</span> not_equal_to; <span class="co">// not defined</span>
-<span class="kw">template</span>&lt;EqualityComparable T&gt; <span class="kw">struct</span> not_equal_to&lt;T&gt;;
-
-<span class="kw">template</span> &lt;<span class="kw">class</span> T = <span class="dt">void</span>&gt;
-<span class="kw">struct</span> greater; <span class="co">// not defined</span>
-<span class="kw">template</span>&lt;StrictTotallyOrdered T&gt; <span class="kw">struct</span> greater&lt;T&gt;;
-<span class="kw">template</span>&lt;<span class="kw">class</span> T&gt; <span class="kw">struct</span> greater&lt;T*&gt;;
-
-<span class="kw">template</span> &lt;<span class="kw">class</span> T = <span class="dt">void</span>&gt;
-<span class="kw">struct</span> less; <span class="co">// not defined</span>
-<span class="kw">template</span>&lt;StrictTotallyOrdered T&gt; <span class="kw">struct</span> less&lt;T&gt;;
-<span class="kw">template</span>&lt;<span class="kw">class</span> T&gt; <span class="kw">struct</span> less&lt;T*&gt;;
-
-<span class="kw">template</span> &lt;<span class="kw">class</span> T = <span class="dt">void</span>&gt;
-<span class="kw">struct</span> greater_equal; <span class="co">// not defined</span>
-<span class="kw">template</span>&lt;StrictTotallyOrdered T&gt; <span class="kw">struct</span> greater_equal&lt;T&gt;;
-<span class="kw">template</span>&lt;<span class="kw">class</span> T&gt; <span class="kw">struct</span> greater_equal&lt;T*&gt;;
-
-<span class="kw">template</span> &lt;<span class="kw">class</span> T = <span class="dt">void</span>&gt;
-<span class="kw">struct</span> less_equal; <span class="co">// not defined</span>
-<span class="kw">template</span>&lt;StrictTotallyOrdered T&gt; <span class="kw">struct</span> less_equal&lt;T&gt;;
-<span class="kw">template</span>&lt;<span class="kw">class</span> T&gt; <span class="kw">struct</span> less_equal&lt;T*&gt;;
-
-<span class="kw">template</span>&lt;&gt; <span class="kw">struct</span> equal_to&lt;<span class="dt">void</span>&gt;;
-<span class="kw">template</span>&lt;&gt; <span class="kw">struct</span> not_equal_to&lt;<span class="dt">void</span>&gt;;
-<span class="kw">template</span>&lt;&gt; <span class="kw">struct</span> greater&lt;<span class="dt">void</span>&gt;;
-<span class="kw">template</span>&lt;&gt; <span class="kw">struct</span> less&lt;<span class="dt">void</span>&gt;;
-<span class="kw">template</span>&lt;&gt; <span class="kw">struct</span> greater_equal&lt;<span class="dt">void</span>&gt;;
-<span class="kw">template</span>&lt;&gt; <span class="kw">struct</span> less_equal&lt;<span class="dt">void</span>&gt;;</code></pre></div>
-<p>and replace the entire content of [comparisons] with:</p>
-<blockquote>
-<p>1 The library provides basic function object classes for all of the comparison operators in the language (5.9, 5.10).</p>
-</blockquote>
-<blockquote>
-<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;EqualityComparable T&gt;
-<span class="kw">struct</span> equal_to&lt;T&gt; {
-  <span class="kw">constexpr</span> <span class="dt">bool</span> <span class="kw">operator</span>()(<span class="dt">const</span> T&amp; x, <span class="dt">const</span> T&amp; y) <span class="dt">const</span>;
-};</code></pre></div>
-</blockquote>
-<blockquote>
-<p>2 <code>operator()</code> returns <code>x == y</code>.</p>
-</blockquote>
-<blockquote>
-<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;EqualityComparable T&gt;
-<span class="kw">struct</span> not_equal_to&lt;T&gt; {
-  <span class="kw">constexpr</span> <span class="dt">bool</span> <span class="kw">operator</span>()(<span class="dt">const</span> T&amp; x, <span class="dt">const</span> T&amp; y) <span class="dt">const</span>;
-};</code></pre></div>
-</blockquote>
-<blockquote>
-<p>3 <code>operator()</code> returns <code>x != y</code>.</p>
-</blockquote>
-<blockquote>
-<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;StrictTotallyOrdered T&gt;
-<span class="kw">struct</span> greater&lt;T&gt; {
-  <span class="kw">constexpr</span> <span class="dt">bool</span> <span class="kw">operator</span>()(<span class="dt">const</span> T&amp; x, <span class="dt">const</span> T&amp; y) <span class="dt">const</span>;
-};
-<span class="kw">template</span> &lt;<span class="kw">class</span> T&gt;
-<span class="kw">struct</span> greater&lt;T*&gt; {
-  <span class="kw">constexpr</span> <span class="dt">bool</span> <span class="kw">operator</span>()(T* x, T* y) <span class="dt">const</span>;
-};</code></pre></div>
-</blockquote>
-<blockquote>
-<p>4 <code>operator()</code> returns <code>x &gt; y</code>.</p>
-</blockquote>
-<blockquote>
-<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;StrictTotallyOrdered T&gt;
-<span class="kw">struct</span> less&lt;T&gt; {
-  <span class="kw">constexpr</span> <span class="dt">bool</span> <span class="kw">operator</span>()(<span class="dt">const</span> T&amp; x, <span class="dt">const</span> T&amp; y) <span class="dt">const</span>;
-};
-<span class="kw">template</span> &lt;<span class="kw">class</span> T&gt;
-<span class="kw">struct</span> less&lt;T*&gt; {
-  <span class="kw">constexpr</span> <span class="dt">bool</span> <span class="kw">operator</span>()(T* x, T* y) <span class="dt">const</span>;
-};</code></pre></div>
-</blockquote>
-<blockquote>
-<p>5 <code>operator()</code> returns <code>x &lt; y</code>.</p>
-</blockquote>
-<blockquote>
-<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;StrictTotallyOrdered T&gt;
-<span class="kw">struct</span> greater_equal&lt;T&gt; {
-  <span class="kw">constexpr</span> <span class="dt">bool</span> <span class="kw">operator</span>()(<span class="dt">const</span> T&amp; x, <span class="dt">const</span> T&amp; y) <span class="dt">const</span>;
-};
-<span class="kw">template</span> &lt;<span class="kw">class</span> T&gt;
-<span class="kw">struct</span> greater_equal&lt;T*&gt; {
-  <span class="kw">constexpr</span> <span class="dt">bool</span> <span class="kw">operator</span>()(T* x, T* y) <span class="dt">const</span>;
-};</code></pre></div>
-</blockquote>
-<blockquote>
-<p>6 <code>operator()</code> returns <code>x &gt;= y</code>.</p>
-</blockquote>
-<blockquote>
-<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;StrictTotallyOrdered T&gt;
-<span class="kw">struct</span> less_equal&lt;T&gt; {
-  <span class="kw">constexpr</span> <span class="dt">bool</span> <span class="kw">operator</span>()(<span class="dt">const</span> T&amp; x, <span class="dt">const</span> T&amp; y) <span class="dt">const</span>;
-};
-<span class="kw">template</span> &lt;<span class="kw">class</span> T&gt;
-<span class="kw">struct</span> less_equal&lt;T*&gt; {
-  <span class="kw">constexpr</span> <span class="dt">bool</span> <span class="kw">operator</span>()(T* x, T* y) <span class="dt">const</span>;
-};</code></pre></div>
-</blockquote>
-<blockquote>
-<p>7 <code>operator()</code> returns <code>x &lt;= y</code>.</p>
-</blockquote>
-<blockquote>
-<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;&gt; <span class="kw">struct</span> equal_to&lt;<span class="dt">void</span>&gt; {
-  <span class="kw">template</span> &lt;<span class="kw">class</span> T, <span class="kw">class</span> U&gt;
-    requires EqualityComparable&lt;T, U&gt;()
-  <span class="kw">constexpr</span> <span class="kw">auto</span> <span class="kw">operator</span>()(T&amp;&amp; t, U&amp;&amp; u) <span class="dt">const</span>
-    -&gt; <span class="kw">decltype</span>(std::forward&lt;T&gt;(t) == std::forward&lt;U&gt;(u));
-
-  <span class="kw">typedef</span> unspecified is_transparent;
-};</code></pre></div>
-</blockquote>
-<blockquote>
-<p>8 <code>operator()</code> returns <code>std::forward&lt;T&gt;(t) == std::forward&lt;U&gt;(u)</code>.</p>
-</blockquote>
-<blockquote>
-<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;&gt; <span class="kw">struct</span> not_equal_to&lt;<span class="dt">void</span>&gt; {
-  <span class="kw">template</span> &lt;<span class="kw">class</span> T, <span class="kw">class</span> U&gt;
-    requires EqualityComparable&lt;T, U&gt;()
-  <span class="kw">constexpr</span> <span class="kw">auto</span> <span class="kw">operator</span>()(T&amp;&amp; t, U&amp;&amp; u) <span class="dt">const</span>
-    -&gt; <span class="kw">decltype</span>(std::forward&lt;T&gt;(t) != std::forward&lt;U&gt;(u));
-
-  <span class="kw">typedef</span> unspecified is_transparent;
-};</code></pre></div>
-</blockquote>
-<blockquote>
-<p>9 <code>operator()</code> returns <code>std::forward&lt;T&gt;(t) != std::forward&lt;U&gt;(u)</code>.</p>
-</blockquote>
-<blockquote>
-<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;&gt; <span class="kw">struct</span> greater&lt;<span class="dt">void</span>&gt; {
-  <span class="kw">template</span> &lt;<span class="kw">class</span> T, <span class="kw">class</span> U&gt;
-    requires StrictTotallyOrdered&lt;T, U&gt;()
-      || BUILTIN_PTR_CMP(T, &gt;, U) <span class="co">// exposition only, see below</span>
-  <span class="kw">constexpr</span> <span class="kw">auto</span> <span class="kw">operator</span>()(T&amp;&amp; t, U&amp;&amp; u) <span class="dt">const</span>
-    -&gt; <span class="kw">decltype</span>(std::forward&lt;T&gt;(t) &gt; std::forward&lt;U&gt;(u));
-
-  <span class="kw">typedef</span> unspecified is_transparent;
-};</code></pre></div>
-</blockquote>
-<blockquote>
-<p>10 <code>operator()</code> returns <code>std::forward&lt;T&gt;(t) &gt; std::forward&lt;U&gt;(u)</code>.</p>
-</blockquote>
-<blockquote>
-<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;&gt; <span class="kw">struct</span> less&lt;<span class="dt">void</span>&gt; {
-  <span class="kw">template</span> &lt;<span class="kw">class</span> T, <span class="kw">class</span> U&gt;
-    requires StrictTotallyOrdered&lt;T, U&gt;()
-      || BUILTIN_PTR_CMP(T, &lt;, U) <span class="co">// exposition only, see below</span>
-  <span class="kw">constexpr</span> <span class="kw">auto</span> <span class="kw">operator</span>()(T&amp;&amp; t, U&amp;&amp; u) <span class="dt">const</span>
-    -&gt; <span class="kw">decltype</span>(std::forward&lt;T&gt;(t) &lt; std::forward&lt;U&gt;(u));
-
-  <span class="kw">typedef</span> unspecified is_transparent;
-};</code></pre></div>
-</blockquote>
-<blockquote>
-<p>11 <code>operator()</code> returns <code>std::forward&lt;T&gt;(t) &lt; std::forward&lt;U&gt;(u)</code>.</p>
-</blockquote>
-<blockquote>
-<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;&gt; <span class="kw">struct</span> greater_equal&lt;<span class="dt">void</span>&gt; {
-  <span class="kw">template</span> &lt;<span class="kw">class</span> T, <span class="kw">class</span> U&gt;
-    requires StrictTotallyOrdered&lt;T, U&gt;()
-      || BUILTIN_PTR_CMP(T, &gt;=, U) <span class="co">// exposition only, see below</span>
-  <span class="kw">constexpr</span> <span class="kw">auto</span> <span class="kw">operator</span>()(T&amp;&amp; t, U&amp;&amp; u) <span class="dt">const</span>
-    -&gt; <span class="kw">decltype</span>(std::forward&lt;T&gt;(t) &gt;= std::forward&lt;U&gt;(u));
-
-  <span class="kw">typedef</span> unspecified is_transparent;
-};</code></pre></div>
-</blockquote>
-<blockquote>
-<p>12 <code>operator()</code> returns <code>std::forward&lt;T&gt;(t) &gt;= std::forward&lt;U&gt;(u)</code>.</p>
-</blockquote>
-<blockquote>
-<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;&gt; <span class="kw">struct</span> less_equal&lt;<span class="dt">void</span>&gt; {
-  <span class="kw">template</span> &lt;<span class="kw">class</span> T, <span class="kw">class</span> U&gt;
-    requires StrictTotallyOrdered&lt;T, U&gt;()
-      || BUILTIN_PTR_CMP(T, &lt;=, U) <span class="co">// exposition only, see below</span>
-  <span class="kw">constexpr</span> <span class="kw">auto</span> <span class="kw">operator</span>()(T&amp;&amp; t, U&amp;&amp; u) <span class="dt">const</span>
-    -&gt; <span class="kw">decltype</span>(std::forward&lt;T&gt;(t) &lt;= std::forward&lt;U&gt;(u));
-
-  <span class="kw">typedef</span> unspecified is_transparent;
-};</code></pre></div>
-</blockquote>
-<blockquote>
-<p>13 <code>operator()</code> returns <code>std::forward&lt;T&gt;(t) &lt;= std::forward&lt;U&gt;(u)</code>.</p>
-</blockquote>
-<blockquote>
-<p>14 For templates <code>greater</code>, <code>less</code>, <code>greater_equal</code>, and <code>less_equal</code>, the specializations for any pointer type yield a total order, even if the built-in operators <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code> do not. [Editor’s note: The following sentence is taken from the proposed resolution of LWG #2450.] For template specializations <code>greater&lt;void&gt;</code>, <code>less&lt;void&gt;</code>, <code>greater_equal&lt;void&gt;</code>, and <code>less_equal&lt;void&gt;</code>, if the call operator calls a built-in operator comparing pointers, the call operator yields a total order.</p>
-</blockquote>
-<blockquote>
-<p>15 If <code>X</code> is an lvalue reference type, let <code>x</code> be an lvalue of type <code>X</code>, or an rvalue otherwise. If <code>Y</code> is an lvalue reference type, let <code>y</code> be an lvalue of type <code>Y</code>, or an rvalue otherwise. Given a relational operator <code>OP</code>, <code>BUILTIN_PTR_CMP(X, OP, Y)</code> shall be true if an only if <code>OP</code> in the expression <code>(X&amp;&amp;)x OP (Y&amp;&amp;)y</code> resolves to a built-in operator comparing pointers.</p>
-</blockquote>
-<blockquote>
-<p>16 All specializations of <code>equal_to</code>, <code>not_equal_to</code>, <code>greater</code>, <code>less</code>, <code>greater_equal</code>, and <code>less_equal</code> shall satisfy <code>DefaultConstructible</code> (19.4.3).</p>
-</blockquote>
-<blockquote>
-<p>17 For all object types <code>T</code> for which there exists a specialization <code>less&lt;T&gt;</code>, the instantiation <code>less&lt;T&gt;</code> shall satisfy <code>StrictWeakOrder&lt;less&lt;T&gt;, T&gt;()</code> (19.5.6).</p>
-</blockquote>
-<blockquote>
-<p>18 For all object types <code>T</code> for which there exists a specialization <code>equal_to&lt;T&gt;</code>, the instantiation <code>equal_to&lt;T&gt;</code> shall satisfy <code>Relation&lt;equal_to&lt;T&gt;, T&gt;()</code> (19.5.5), and <code>equal_to&lt;T&gt;</code> shall induce an equivalence relation on its arguments.</p>
-</blockquote>
-<blockquote>
-<p>19 For any (possibly const) lvalues <code>x</code> and <code>y</code> of types <code>T</code>, the following shall be true</p>
-</blockquote>
-<blockquote>
-<ul>
-<li>If there exists a specialization <code>not_equal_to&lt;T&gt;</code>, then the instantiation <code>not_equal_to&lt;T&gt;</code> shall satisfy <code>Relation&lt;not_equal_to&lt;T&gt;, T&gt;()</code>, and <code>not_equal_to&lt;T&gt;{}(x, y)</code> shall equal <code>!equal_to&lt;T&gt;{}(x, y)</code>.</li>
-</ul>
-</blockquote>
-<blockquote>
-<ul>
-<li>If there exists a specialization <code>greater&lt;T&gt;</code>, then the instantiation <code>greater&lt;T&gt;</code> shall satisfy <code>StrictWeakOrder&lt;greater&lt;T&gt;, T&gt;()</code>, and <code>greater&lt;T&gt;{}(x, y)</code> shall equal <code>less&lt;T&gt;{}(y, x)</code>.</li>
-</ul>
-</blockquote>
-<blockquote>
-<ul>
-<li>If there exists a specialization <code>greater_equal&lt;T&gt;</code>, then the instantiation <code>greater_equal&lt;T&gt;</code> shall satisfy <code>Relation&lt;greater_equal&lt;T&gt;, T&gt;()</code>, and <code>greater_equal&lt;T&gt;{}(x, y)</code> shall equal <code>!less&lt;T&gt;{}(x, y)</code>.</li>
-</ul>
-</blockquote>
-<blockquote>
-<ul>
-<li>If there exists a specialization <code>less_equal&lt;T&gt;</code>, then the instantiation <code>less_equal&lt;T&gt;</code> shall satisfy <code>Relation&lt;greater_equal&lt;T&gt;, T&gt;()</code>, and <code>less_equal&lt;T&gt;{}(x, y)</code> shall equal <code>!less&lt;T&gt;{}(y, x)</code>.</li>
-</ul>
-</blockquote>
-<blockquote>
-<p>20 For any pointer type <code>T</code>, the specializations <code>equal_to&lt;T&gt;</code>, <code>not_equal_to&lt;T&gt;</code>, <code>greater&lt;T&gt;</code>, <code>less&lt;T&gt;</code>, <code>greater_equal&lt;T&gt;</code>, <code>less_equal&lt;T&gt;</code> shall yield the same results as <code>equal_to&lt;void*&gt;</code>, <code>not_equal_to&lt;void*&gt;</code>, <code>greater&lt;void*&gt;</code>, <code>less&lt;void*&gt;</code>, <code>greater_equal&lt;void*&gt;</code>, <code>less_equal&lt;void*&gt;</code>, respectively.</p>
-</blockquote>
-<h1 id="function---callable"><span class="header-section-number">4</span> Function -&gt; Callable</h1>
+<h1 id="function---callable"><span class="header-section-number">3</span> Function -&gt; Callable</h1>
 <p>A thorough examination of the Ranges TS shows that the <code>Function</code> concept family (<code>Function</code>, <code>RegularFunction</code>, <code>Predicate</code>, <code>Relation</code>, and <code>StrictWeakOrder</code>; described in [concepts.lib.functions]) is only used in the definition of the <code>IndirectCallableXXX</code> concept family. All predicates and projections used by the algorithms are actually <em>callables</em>: object types that are evaluated via the <code>INVOKE</code> metasyntactic function. We propose to greatly simplify the specification by importing <code>std::invoke</code> from the C++ WP and replacing the <code>Function</code> concept family with a similar family of <code>Callable</code> concepts. This enables the replacement of all declarations of the form <code>Function&lt;FunctionType&lt;F&gt;, Args...&gt;</code> with <code>Callable&lt;F, Args...&gt;</code>, and elimination of the <code>as_function</code> machinery.</p>
 <p>Rename section [concepts.lib.functions] to [concepts.lib.callables]; similarly rename all subsections of the form [concepts.lib.functions.Xfunction] to [concepts.lib.callables.Xcallable]. Replace the content of the section now named [concepts.lib.callables.callable]:</p>
 <blockquote>
@@ -483,7 +243,7 @@ requires IndirectCallable&lt;remove_reference_t&lt;F&gt;, Is...&gt;()
 <blockquote>
 <p>Complexity: Exactly <code>last - first</code> evaluations of <code>invoke(gen)</code> and assignments.</p>
 </blockquote>
-<h1 id="assignable-semantics"><span class="header-section-number">5</span> Assignable Semantics</h1>
+<h1 id="assignable-semantics"><span class="header-section-number">4</span> Assignable Semantics</h1>
 <p>There seems to be some confusion in the Ranges TS about the relationship between the <code>Movable</code> and <code>Swappable</code> concepts. For example, the <code>Permutable</code> concept is required by algorithms that swap range elements, and it requires <code>IndirectlyMovable</code> instead of <code>IndirectlySwappable</code>. The specification of <code>swap</code> itself requires <code>Movable</code> elements. Does that imply that a <code>Movable</code> type <code>T</code> must satisfy <code>Swappable</code>? Certainly we experienced C++ programmers know the requirements for <code>std::swap</code> well enough that we often conflate movability with swappability.</p>
 <p>Unfortunately, the answer to this leading question is “no.” If <code>a</code> and <code>b</code> are lvalues of some <code>Movable</code> type <code>T</code>, then certainly <code>std::swap(a, b)</code> will swap the denoted values. However, <code>Swappable</code> requires that an overload found by ADL, if any, must exchange the denoted values. There is nothing in the <code>Movable</code> concept that forbids definition of a function <code>swap</code> that accepts two lvalue references to <code>T</code> and launches the missiles. We <em>could</em> redress this issue by better distinguishing move and swap operations, fastidiously requiring <code>Swappable</code> in the proper places, and attempting to better educate C++ users. However, it is our belief that this issue is so engrained in C++ culture that it would be best to make it valid.</p>
 <p>Consequently, we propose the addition of semantic requirements to the previously purely syntactic <code>Assignable</code> concept, which when combined with <code>MoveConstructible</code> suffice to support implementation of the “default” <code>swap</code>. Specifically, we relocate the semantic requirements on the assignment expressions from <code>Movable</code> and <code>Copyable</code> to <code>Assignable</code>, which also simplifies the definitions of those two concepts. We then add a <code>Swappable</code> requirement to <code>Movable</code>, bringing <code>Swappable</code> properly into the object concept hierarchy.</p>
@@ -549,7 +309,7 @@ requires Assignable&lt;T&amp;, U&gt;()
 T exchange(T&amp; obj, U&amp;&amp; new_val);</code></pre></div>
 </blockquote>
 <p>which suffices to implement <code>exchange</code> along with the stronger <code>Assignable</code> semantics. (A similar change could be applied to the definition of the default <code>swap</code> implementation. We don’t propose this here as we’ve already included the effect in the definition of the <code>swap</code> customization point earlier.)</p>
-<h1 id="customization-points"><span class="header-section-number">6</span> Customization Points</h1>
+<h1 id="customization-points"><span class="header-section-number">5</span> Customization Points</h1>
 <p>Customization points are pain points, as the motivation of N4381 makes clear:</p>
 <blockquote>
 <p>The correct usage of customization points like <code>swap</code> is to first bring the standard <code>swap</code> into scope with a using declaration, and then to call <code>swap</code> unqualified:</p>
@@ -588,7 +348,7 @@ begin(a);</code></pre></div>
 <p>unqualified name lookup for the name <code>swap</code> could find the unconstrained <code>swap</code> in namespace <code>std</code> either directly - it’s only a couple of hops up the namespace hierarchy - or via ADL if <code>std</code> is an associated namespace of <code>T</code> or <code>U</code>. If <code>std::swap</code> is unconstrained, the concept is “satisfied” for all types, and effectively useless. The Ranges TS deals with this problem by requiring changes to <code>std::swap</code>, a practice which has historically been forbidden for TSs. Applying similar constraints to all of the customization points defined in the TS by modifying the definitions in namespace <code>std</code> is an unsatisfactory solution, if not an altogether untenable.</p>
 <p>We propose a combination of the approach used in N4381 with a “poison pill” technique to correct the lookup problem. Namely, we specify that unqualified lookup intended to find user-defined overloads via ADL must be performed in a context that includes a deleted overload matching the signature of the implementation in namespace <code>std</code>. E.g., for the customization point <code>begin</code>, the unqualified lookup for <code>begin(E)</code> (for some arbitrary expression <code>E</code>) is performed in a context that includes the declaration <code>void begin(const auto&amp;) = delete;</code>. This “poison pill” has two distinct effects on overload resolution. First, the poison pill hides the declaration in namespace <code>std</code> from normal unqualified lookup, simply by having the same name. Second, for actual argument expressions for which the overload in namespace <code>std</code> is viable and found by ADL, the poisin pill will also be viable causing overload resolution to fail due to ambiguity. The net effect is to preclude the overload in namespace <code>std</code> from being chosen by overload resolution, or indeed any overload found by ADL that is not more specialized or more constrained than the poison pill.</p>
 <p>All of this complicated customization point machinery is necessary to facilitate strong semantics through the addition of constraints. Let <code>E</code> be an arbitrary expression that denotes a range. The type of <code>begin(E)</code> must satisfy <code>Iterator</code>, so the customization point <code>begin</code> should constrain its return type to satisfy <code>Iterator</code>. Similarly, <code>end</code> should constrain its return type to satisfy <code>Sentinel&lt;decltype(end(E)), decltype(begin(E))&gt;()</code> since the iterator and sentinel types of a range must satisfy <code>Sentinel</code>. The constraints on <code>begin</code> and <code>end</code> should apply equally to the <code>const</code> and/or <code>reverse</code> variants thereof: <code>cbegin</code>, <code>cend</code>, <code>rbegin</code>, <code>rend</code>, <code>crbegin</code>, and <code>crend</code>. The size of a <code>SizedRange</code> always has a type the satisfies <code>Integral</code>, so the customization point <code>size</code> should should constrain its return type to satisfy <code>Integral</code>. <code>empty</code> should constrain its return type to be exactly <code>bool</code>. (Requiring the return type of <code>empty</code> to satisfy <code>Boolean</code> would also be a reasonable choice, but there seems to be no motivating reason for that relaxation at this time.)</p>
-<h2 id="technical-specifications"><span class="header-section-number">6.1</span> Technical Specifications</h2>
+<h2 id="technical-specifications"><span class="header-section-number">5.1</span> Technical Specifications</h2>
 <p>Add a new subsection to the end of [type.descriptions] to introduce <em>customization point object</em> as a term of art:</p>
 <blockquote>
 <p>1 A <em>customization point object</em> is a function object (20.9) with a literal class type that interacts with user-defined types while enforcing semantic requirements on that interaction.</p>
@@ -1023,7 +783,7 @@ required.</li>
 <blockquote>
 <p>3 [ Note: Whenever <code>ranges::cdata(E)</code> is a valid expression, it has pointer to object type. —end note ]</p>
 </blockquote>
-<h1 id="iteratorsentinel-overhaul"><span class="header-section-number">7</span> Iterator/Sentinel Overhaul</h1>
+<h1 id="iteratorsentinel-overhaul"><span class="header-section-number">6</span> Iterator/Sentinel Overhaul</h1>
 <p>One of the differences between the iterator model of the Ranges TS and that of Standard C++ is that the difference operation, as represented in the <code>SizedIteratorRange</code> concept, has been made semi-orthogonal to iterator category. Random access iterators <em>must</em> satisfy <code>SizedIteratorRange</code>, iterators of other categories <em>may</em> satisfy <code>SizedIteratorRange</code>. <code>SizedRange</code> provides a similar facility for ranges that know how many elements they contain, even if pairs of their iterators don’t know how far apart they are. The TS has a mechanism for ranges to opt out of “sized-ness”, but doesn’t provide a similar mechanism for iterator and sentinel type pairs to opt out of “sized-ness.”</p>
 <p>Why is this even a concern? The specification of some functions in the library assumes they can be implemented to take advantage of size/distance information when available. In some cases the requirement is explicit:</p>
 <blockquote>
@@ -1134,7 +894,7 @@ concept <span class="dt">bool</span> WeaklyEqualityComparable() {
 <p>Comparing sentinels with other sentinels isn’t the only operation that is not useful to generic code: the algorithms never compare input / output iterators with input / output iterators. They only compare input / output iterators with sentinels. The reason for this is fairly obvious: input / output ranges are single-pass, so an iterator + sentinel algorithm only has access to one valid iterator value at a time; the “current” value. Obviously the “current” value is always equal to itself.</p>
 <p>The only difference between the <code>Weak</code> and non-<code>Weak</code> variants of the <code>Iterator</code>, <code>InputIterator</code>, and <code>OutputIterator</code> concepts is the requirement for equality comparison. Why have concepts that only differ by the addition of a useless requirement? Indeed the <code>==</code> operator is slightly worse than useless since its domain is so narrow: It always either returns <code>true</code> or has undefined behavior. Of course, now that we’ve relaxed the Sentinel relationship the design can support “weak” ranges: ranges delimited by a “weak” iterator and a sentinel. We therefore propose that <code>Sentinel</code> be relaxed to specify the relationship between a <code>WeakIterator</code> and a <code>Semiregular</code> type that denote a range.</p>
 <p>We also propose that <code>ForwardIterator&lt;I&gt;</code> be specified to refine <code>Sentinel&lt;I, I&gt;</code> instead of <code>Iterator</code>, after which it becomes clear that the <code>Iterator</code>, <code>InputIterator</code>, and <code>OutputIterator</code> concepts have become extraneous. The algorithms and operations can all be respecified in terms of the <code>Weak</code> variants where necessary. We propose doing so, eliminating the non-<code>Weak</code> concepts altogether, and then stripping the <code>Weak</code> prefix from the names of <code>WeakIterator</code>, <code>WeakInputIterator</code>, and <code>WeakOutputIterator</code>.</p>
-<h2 id="technical-specifications-1"><span class="header-section-number">7.1</span> Technical Specifications</h2>
+<h2 id="technical-specifications-1"><span class="header-section-number">6.1</span> Technical Specifications</h2>
 <p>In [concepts.lib.general.equality], remove the note from paragraph 1 and replace paragraph 2 with:</p>
 <blockquote>
 <p>Not all input values must be valid for a given expression; e.g., for integers <code>a</code> and <code>b</code>, the expression <code>a / b</code> is not well-defined when <code>b</code> is <code>0</code>. This does not preclude the expression <code>a / b</code> being equality preserving. The <em>domain</em> of an expression is the set of input values for which the expression is required to be well-defined.</p>
@@ -1400,9 +1160,9 @@ difference_type_t&lt;I2&gt; <span class="kw">operator</span>-(
 iterator/sentinel pairs satisfy the EqualityComparable concept”</p>
 <p>Replace the contents of [iterators.common], [default.sentinels], [iterators.counted], and [unreachable.sentinels] with the contents of the sections of the same name in N4569.</p>
 <p>Strip occurrences of the prefix <code>Weak</code> wherever it appears in clause [algorithms].</p>
-<h1 id="implementation-experience"><span class="header-section-number">8</span> Implementation Experience</h1>
+<h1 id="implementation-experience"><span class="header-section-number">7</span> Implementation Experience</h1>
 <p>The proposed design changes are implemented in <a href="https://github.com/CaseyCarter/cmcstl2" title="CMCSTL2: Casey Carter&#39;s reference implementation of STL2">CMCSTL2, a full implementation of the Ranges TS with proxy extensions</a><span class="citation">[1]</span>.</p>
-<h1 id="acknowledgements"><span class="header-section-number">9</span> Acknowledgements</h1>
+<h1 id="acknowledgements"><span class="header-section-number">8</span> Acknowledgements</h1>
 <p>The authors would like to thank Andrew Sutton and Sean Parent for their participation in the discussions that produced most of the ideas herein.</p>
 <h1 id="references" class="unnumbered">References</h1>
 <div id="refs" class="references">
