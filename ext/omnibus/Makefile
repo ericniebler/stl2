@@ -1,7 +1,7 @@
 # Update in header.html as well.
 DOCNO = 0370
 REV = 1
-PD = D
+PD = P
 SOURCE = P$(DOCNO).md
 TARGET = $(PD)$(DOCNO)R$(REV)
 PANDOC = pandoc
