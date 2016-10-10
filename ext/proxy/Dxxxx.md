@@ -6,7 +6,7 @@ title: Proxy Iterators for the Ranges Extensions
 Introduction
 =====
 
-This paper presents an extension to [the Ranges design][1][@n4382] that makes *proxy iterators* full-fledged members of the STL iterator hierarchy. This solves the "`vector<bool>`-is-not-a-container" problem along with several other problems that become apparent when working with range adaptors. It achieves this without [fracturing the `Iterator` concept hierarchy][2][@new-iter-concepts] and without breaking iterators apart into [separate traversal and access pieces][3][@n1873].
+This paper presents an extension to [the Ranges design][1][@n4569] that makes *proxy iterators* full-fledged members of the STL iterator hierarchy. This solves the "`vector<bool>`-is-not-a-container" problem along with several other problems that become apparent when working with range adaptors. It achieves this without [fracturing the `Iterator` concept hierarchy][2][@new-iter-concepts] and without breaking iterators apart into [separate traversal and access pieces][3][@n1873].
 
 The design presented makes only local changes to some Iterator concepts, fixes some existing library issues, and fills in a gap left by the addition of move semantics. To wit: the functions `std::swap` and `std::iter_swap` have been part of C++ since C++98. With C++11, the language got move semantics and `std::move`, but not `std::iter_move`. This arguably is an oversight. By adding it and making both `iter_swap` and `iter_move` customization points, iterators can control how elements are swapped and moved by permuting algorithms.
 
@@ -19,7 +19,7 @@ The design is presented as a series of diffs to the latest draft of the Ranges E
 Implementation Experience
 =============
 
-Everything suggested here has been implemented in C++11, where Concepts Lite has been simulated with the help of generalized SFINAE for expressions. In addition, a partial implementation using Concepts [exists][9][@cmcstl2] that works with the "`-std=c++1z`" support in gcc trunk.
+Everything suggested here has been implemented in C++11, where Concepts has been simulated with the help of generalized SFINAE for expressions. In addition, a full implementation using Concepts [exists][9][@cmcstl2] that works with the "`-std=c++1z`" support in gcc trunk.
 
 Motivation and Scope
 =====
@@ -96,7 +96,7 @@ The fundamental problem is that with proxies, the expression `move(*j)` is movin
 
 ### Iterator associated types
 
-The value and reference associated types must be related to each other in a way that can be relied upon by the algorithms. The Palo Alto report defines a `Readable` concept that expresses this relationship as follows (updated for the new Concepts Lite syntax):
+The value and reference associated types must be related to each other in a way that can be relied upon by the algorithms. The Palo Alto report defines a `Readable` concept that expresses this relationship as follows (updated for the new Concepts syntax):
 
 ```c++
 template< class I >
@@ -251,8 +251,8 @@ using __iter_move_t =
 
 template <class I>
 __iter_move_t<I> iter_move(I r)
-  noexcept(noexcept(__iter_move_t<I>(std::move(*r)))) {
-  return std::move(*r);
+  noexcept(noexcept(static_cast<__iter_move_t<I>>(*r))) {
+  return static_cast<__iter_move_t<I>>(*r);
 }
 ```
 
@@ -267,7 +267,6 @@ value_type_t<I> tmp = std::move(*it);
 can be upgraded to use `iter_move` as follows:
 
 ```c++
-using std::iter_move;
 value_type_t<I> tmp = iter_move(it);
 // ...
 *it = std::move(tmp);
@@ -287,10 +286,11 @@ With the existence of `iter_move`, it makes it possible to implement `iter_swap`
 ```c++
 template <Readable I1, Readable I2>
   requires !Swappable<reference_t<I1>, reference_t<I2>>() &&
-    IndirectlyMovable<I1, I2>() && IndirectlyMovable<I2, I1>()
+    IndirectlyMovableStorable<I1, I2>() &&
+    IndirectlyMovableStorable<I2, I1>()
 void iter_swap(I1 r1, I2 r2)
-  noexcept(is_nothrow_indirectly_movable<I1, I2>::value &&
-           is_nothrow_indirectly_movable<I2, I1>::value) {
+  noexcept(is_nothrow_indirectly_movable_v<I1, I2> &&
+           is_nothrow_indirectly_movable_v<I2, I1>) {
   value_type_t<I1> tmp = iter_move(r1);
   *r1 = iter_move(r2);
   *r2 = std::move(tmp);
@@ -342,47 +342,9 @@ using iter_common_reference_t =
   common_reference_t<reference_t<I>, value_type_t<I>&>;
 ```
 
-#### Concepts IndirectlyMovable and IndirectlyCopyable
-
-Often we want to move elements indirectly, from one type that is readable to another that is writable. `IndirectlyMovable` groups the necessary requirements. We can derive those requirements by looking at the implementation of `iter_swap` above that uses `iter_move`. They are:
-
-1. `value_type_t<In> value = iter_move(in)`
-2. `value = iter_move(in) // by extension`
-3. `*out = iter_move(in)`
-4. `*out = std::move(value)`
-
-We can formalize this as follows:
-
-```c++
-template <class In, class Out>
-concept bool IndirectlyMovable() {
-  return Readable<In>() && Movable<value_type_t<In>>() &&
-    Constructible<value_type_t<In>, rvalue_reference_t<In>>() &&
-    Assignable<value_type_t<I>&, rvalue_reference_t<In>>() &&
-    MoveWritable<Out, rvalue_reference_t<In>>() &&
-    MoveWritable<Out, value_type_t<I>>();
-}
-```
-
-Although more strict than the Palo Alto formulation, which only requires `*out = move(*in)`, this concept gives algorithm implementors greater license for storing intermediates when moving elements indirectly, a capability required by many of the permuting algorithms.
-
-The `IndirectlyCopyable` concept is defined similarly:
-
-```c++
-template <class In, class Out>
-concept bool IndirectlyCopyable() {
-  return IndirectlyMovable<In, Out>() &&
-    Copyable<value_type_t<In>>() &&
-    Constructible<value_type_t<In>, reference_t<In>>() &&
-    Assignable<value_type_t<I>&, reference_t<In>>() &&
-    Writable<Out, reference_t<In>>() &&
-    Writable<Out, value_type_t<I>>();
-}
-```
-
 #### Concept IndirectlySwappable
 
-With overloads of `iter_swap` that work for `Swappable` types and `IndirectlyMovable` types, the `IndirectlySwappable` concept is trivially implemented in terms of `iter_swap`, with extra checks to test for symmetry:
+With overloads of `iter_swap` that work for `Swappable` types and `IndirectlyMovableStorable` types, the `IndirectlySwappable` concept is trivially implemented in terms of `iter_swap`, with extra checks to test for symmetry:
 
 ```c++
 template <class I1, class I2>
@@ -505,7 +467,7 @@ Notice the "inheritance" from `bool&`. When doing template type deduction, a `bo
 Technical Specifications
 =====
 
-This section is written as a set of diffs against N4382, "C++ Extensions for Ranges" and N4141 (C++14), except where otherwise noted.
+This section is written as a set of diffs against N4569, "C++ Extensions for Ranges" and N4141 (C++14), except where otherwise noted.
 
 ### Chapter 19: Concepts
 
@@ -568,9 +530,9 @@ In addition, `Relation<F, T, U>` requires `Relation<F, std::common_reference_t<c
 
 ### Chapter 20: General utilities
 
-Change 20.10.2 [meta.type.synop], header `<type_traits>` synopsis, as indicated (*N.B.*, in namespace `std`):
+Change [meta.type.synop], header `<type_traits>` synopsis, as indicated (*N.B.*, in namespace `std`):
 
-<ednote>[*Editorial note:* -- `is_[nothrow_]swappable[_with]` traits taken from [N4511: Adding [nothrow\-]swappable traits](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4511.html). --*end note*]</ednote>
+<ednote>[*Editorial note:* -- `is_[nothrow_]swappable[_with]` traits taken from the current Working Draft of C++17. --*end note*]</ednote>
 
 <pre>
 namespace std {
@@ -607,12 +569,25 @@ namespace std {
   template &lt;class T&gt;
     using underlying_type_t = typename underlying_type&lt;T&gt;::type;
   [&hellip;]
+
+  // 20.15.4.3, type properties
+  [&hellip;]
+  <ins>template &lt;class T, class U&gt; constexpr bool is_swappable_with_v</ins>
+    <ins>= is_swappable_with&lt;T, U&gt;::value;</ins>
+  <ins>template &lt;class T&gt; constexpr bool is_swappable_v</ins>
+    <ins>= is_swappable&lt;T&gt;::value;</ins>
+  [&hellip;]
+  <ins>template &lt;class T, class U&gt; constexpr bool is_nothrow_swappable_with_v</ins>
+    <ins>= is_nothrow_swappable_with&lt;T, U&gt;::value;</ins>
+  <ins>template &lt;class T&gt; constexpr bool is_nothrow_swappable_v</ins>
+    <ins>= is_nothrow_swappable&lt;T&gt;::value;</ins>
+  [&hellip;]
 }
 </pre>
 
-Change 20.10.4.3 [meta.unary.prop], Table 49 — "Type property predicates", as indicated:
+Change [meta.unary.prop], Table 49 — "Type property predicates", as indicated:
 
-<ednote>[*Editorial note:* -- The following is taken from [N4511: Adding [nothrow\-]swappable traits](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4511.html). --*end note*]</ednote>
+<ednote>[*Editorial note:* -- The following is taken from the current Working Draft of C++17. --*end note*]</ednote>
 
 <blockquote>
 <table border="1">
@@ -664,7 +639,7 @@ struct is_swappable;</tt></ins>
 
 <td>
 <a name="is_swappable_spec"></a><ins>For a referenceable type <tt>T</tt>, the same result<br/>
-as <tt>is_swappable_with&lt;T&amp;, T&amp;&gt;::value</tt>,<br/> 
+as <tt>is_swappable_with_v&lt;T&amp;, T&amp;&gt;</tt>,<br/> 
 otherwise <tt>false</tt>.</ins>
 </td>
 
@@ -688,7 +663,7 @@ struct is_nothrow_swappable_with;</tt></ins>
 </td>
 
 <td>
-<ins><tt>is_swappable_with&lt;T, U&gt;::value</tt> is <tt>true</tt><br/> 
+<ins><tt>is_swappable_with_v&lt;T, U&gt;</tt> is <tt>true</tt><br/> 
 and each <tt>swap</tt> expression of the definition of<br/> 
 <tt>is_swappable_with&lt;T, U&gt;</tt> is known not to throw<br/>
 any exceptions (5.3.7 [expr.unary.noexcept]).</ins>
@@ -709,7 +684,7 @@ struct is_nothrow_swappable;</tt></ins>
 
 <td>
 <ins>For a referenceable type <tt>T</tt>, the same result<br/>
-as <tt>is_nothrow_swappable_with&lt;T&amp;, T&amp;&gt;::value</tt>,<br/> 
+as <tt>is_nothrow_swappable_with_v&lt;T&amp;, T&amp;&gt;</tt>,<br/> 
 otherwise <tt>false</tt>.</ins>
 </td>
 
@@ -733,7 +708,7 @@ Change Table 57 Other Transformations as follows:
 
 <blockquote>
 <table border="1">
-<caption>Table 49 &mdash; Type property predicates</caption>
+<caption>Table 57 &mdash; Other transformations</caption>
 <tr>
 <th align="center">Template</th>
 <th align="center">Condition</th>
@@ -755,7 +730,7 @@ struct common_type;</tt>
 </td>
 <td>
 The member typedef type shall be defined or omitted as specified below.<br/>
-If it is omitted, there shall be no member type. <del>All types</del><ins>Each type</ins> in<br/>
+If it is omitted, there shall be no member <tt>type</tt>. <del>All types</del><ins>Each type</ins> in<br/>
 the parameter pack <tt>T</tt> shall be complete or (possibly <em>cv</em>) <tt>void</tt>. A program<br/>
 may specialize this trait if at least one template parameter in the<br/>
 specialization <del>is</del><ins>depends on</ins> a user-defined type <ins>and <tt>sizeof...(T) == 2</tt></ins>.<br/>
@@ -808,7 +783,7 @@ needed to properly handle proxy reference types in generic code. &mdash;<em>end 
 
 Delete [meta.trans.other]/p3 and replace it with the following:
 
-> <span style="color:#009a9a">3\. Let `CREF(A)` be `add_lvalue_reference_t<const remove_reference_t<A>>`. Let `UNCVREF(A)` be `remove_cv_t<remove_reference_t<A>>`. Let `XREF(A)` denote a unary template `T` such that `T<UNCVREF(A)>` denotes the same type as `A`. Let `COPYCV(FROM, TO)` be an alias for type `TO` with the addition of `FROM`'s top-level cv-qualifiers. [*Example:* -- `COPYCV(int const, short volatile)` is an alias for `short const volatile`. -- *end example*] Let `RREF_RES(Z)` be `remove_reference_t<Z>&&` if `Z` is a reference type or `Z` otherwise. Let `COND_RES(X, Y)` be `decltype(declval<bool>() ? declval<X>() : declval<Y>())`. Given types `A` and `B`, let `X` be `remove_reference_t<A>`, let `Y` be `remove_reference_t<B>`, and let `COMMON_REF(A, B)` be:</span>
+> <span style="color:#009a9a">3\. Let `CREF(A)` be `add_lvalue_reference_t<const remove_reference_t<A>>`. Let `UNCVREF(A)` be `remove_cv_t<remove_reference_t<A>>`. Let `XREF(A)` denote a unary template `T` such that `T<UNCVREF(A)>` denotes the same type as `A`. Let `COPYCV(FROM, TO)` be an alias for type `TO` with the addition of `FROM`'s top-level *cv*-qualifiers. [*Example:* -- `COPYCV(const int, volatile short)` is an alias for `const volatile short`. -- *end example*] Let `RREF_RES(Z)` be `remove_reference_t<Z>&&` if `Z` is a reference type or `Z` otherwise. Let `COND_RES(X, Y)` be `decltype(declval<bool>() ? declval<X>() : declval<Y>())`. Given types `A` and `B`, let `X` be `remove_reference_t<A>`, let `Y` be `remove_reference_t<B>`, and let `COMMON_REF(A, B)` be:</span>
 >
 >> <span style="color:#009a9a">(3.1) -- If `A` and `B` are both lvalue reference types, `COMMON_REF(A, B)` is `COND_RES(COPYCV(X, Y) &, COPYCV(Y, X) &)`.
 >> (3.2) -- Otherwise, let `C` be `RREF_RES(COMMON_REF(X&, Y&))`. If `A` and `B` are both rvalue reference types, and `C` is well-formed, and `is_convertible<A, C>::value` and `is_convertible<B, C>::value` are true, then `COMMON_REF(A, B)` is `C`.
@@ -840,7 +815,7 @@ Delete [meta.trans.other]/p3 and replace it with the following:
 >> <span style="color:#009a9a">(5.1) -- If `sizeof...(T)` is zero, there shall be no member `type`.
 >> (5.2) -- Otherwise, if `sizeof...(T)` is one, let `T1` denote the sole type in the pack `T`. The member typedef `type` shall denote the same type as `T1`.
 >> (5.3) -- Otherwise, if `sizeof...(T)` is two, let `T1` and `T2` denote the two types in the pack `T`. Then</span>
->>> <span style="color:#009a9a">(5.3.1) -- If `COMMON_REF(T1, T2)` denotes a valid reference type then the member typedef `type` denotes that type.
+>>> <span style="color:#009a9a">(5.3.1) -- If `COMMON_REF(T1, T2)` is well-formed and denotes a reference type then the member typedef `type` denotes that type.
 >>> (5.3.2) -- Otherwise, if `basic_common_reference<UNCVREF(T1), UNCVREF(T2), XREF(T1), XREF(T2)>::type` is well-formed, then the member typedef `type` denotes that type.
 >>> (5.3.3) -- Otherwise, if `common_type_t<T1, T2>` is well-formed, then the member typedef `type` denotes that type.
 >>> (5.3.4) -- Otherwise, there shall be no member `type`.</span>
@@ -851,7 +826,7 @@ Delete [meta.trans.other]/p3 and replace it with the following:
 
 ### Chapter 24. Iterators
 
-Change concept `Readable` ([readable.iterators]) as follows:
+Change concept `Readable` ([iterators.readable]) as follows:
 
 > ```c++
 > template <class I>
@@ -862,7 +837,7 @@ Change concept `Readable` ([readable.iterators]) as follows:
 >       typename reference_t<I>;
 >       typename rvalue_reference_t<I>;
 >       { *i } -> Same<reference_t<I>>;
->       { iter_move(i) } -> Same<rvalue_reference_t<I>>;
+>       { ranges::iter_move(i) } -> Same<rvalue_reference_t<I>>;
 >     } &&
 >     // Relationships between associated types
 >     CommonReference<reference_t<I>, value_type_t<I>&>() &&
@@ -877,207 +852,133 @@ Change concept `Readable` ([readable.iterators]) as follows:
 > }
 > ```
 
-Add a new paragraph (2) to the description of `Readable`:
-
-> 2\. Overload resolution ([over.match]) on the expression
-> `iter_move(i)` selects a unary non-member function
-> "`iter_move`" from a candidate set that includes the
-> `iter_move` function found in
-> `<experimental/ranges/iterator>` ([iterator.synopsis])
-> and the lookup set produced by argument-dependent lookup
-> ([basic.lookup.argdep]).
-
-Change concept `IndirectlyMovable` ([indirectlymovable.iterators]) to be as follows:
+Change "Indirect callables" ([indirectcallables.indirectfunc]) as described as follows: Change `IndirectCallable`, `IndirectRegularCallable`, `IndirectCallablePredicate`, `IndirectCallableRelation`, `IndirectCallableStrictWeakOrder`, and `indirect_result_of` as follows:
 
 > ```c++
-> template <class In, class Out>
-> concept bool IndirectlyMovable() {
->   return Readable<In>() && Movable<value_type_t<In>>() &&
->     Constructible<value_type_t<In>, rvalue_reference_t<In>>() &&
->     Assignable<value_type_t<In>&, rvalue_reference_t<In>>() &&
->     MoveWritable<Out, rvalue_reference_t<In>>() &&
->     MoveWritable<Out, value_type_t<In>>();
+> template <class F>
+> concept bool IndirectCallable() {
+>   return Callable<F>();
 > }
+> template <class F, class I>
+> concept bool IndirectCallable() {
+>   return Readable<I>() &&
+>     Callable<F, value_type_t<I>>() &&
+>     Callable<F, reference_t<I>>() &&
+>     Callable<F, iter_common_reference_t<I>>();
+> }
+> template <class F, class I1, class I2>
+> concept bool IndirectCallable() {
+>   return Readable<I1>() && Readable<I2>() &&
+>     Callable<F, value_type_t<I1>, value_type_t<I2>>() &&
+>     Callable<F, value_type_t<I1>, reference_t<I2>>() &&
+>     Callable<F, reference_t<I1>, value_type_t<I2>>() &&
+>     Callable<F, reference_t<I1>, reference_t<I2>>() &&
+>     Callable<F, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
+> }
+> 
+> template <class F>
+> concept bool IndirectRegularCallable() {
+>   return RegularCallable<F>();
+> }
+> template <class F, class I>
+> concept bool IndirectRegularCallable() {
+>   return Readable<I>() &&
+>     RegularCallable<F, value_type_t<I>>() &&
+>     RegularCallable<F, reference_t<I>>() &&
+>     RegularCallable<F, iter_common_reference_t<I>>();
+> }
+> template <class F, class I1, class I2>
+> concept bool IndirectRegularCallable() {
+>   return Readable<I1>() && Readable<I2>() &&
+>     RegularCallable<F, value_type_t<I1>, value_type_t<I2>>() &&
+>     RegularCallable<F, value_type_t<I1>, reference_t<I2>>() &&
+>     RegularCallable<F, reference_t<I1>, value_type_t<I2>>() &&
+>     RegularCallable<F, reference_t<I1>, reference_t<I2>>() &&
+>     RegularCallable<F, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
+> }
+> 
+> template <class F, class I>
+> concept bool IndirectCallablePredicate() {
+>   return Readable<I>() &&
+>     Predicate<F, value_type_t<I>>() &&
+>     Predicate<F, reference_t<I>>() &&
+>     Predicate<F, iter_common_reference_t<I>>();
+> }
+> template <class F, class I1, class I2>
+> concept bool IndirectCallablePredicate() {
+>   return Readable<I1>() && Readable<I2>() &&
+>     Predicate<F, value_type_t<I1>, value_type_t<I2>>() &&
+>     Predicate<F, value_type_t<I1>, reference_t<I2>>() &&
+>     Predicate<F, reference_t<I1>, value_type_t<I2>>() &&
+>     Predicate<F, reference_t<I1>, reference_t<I2>>() &&
+>     Predicate<F, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
+> }
+> 
+> template <class F, class I1, class I2 = I1>
+> concept bool IndirectCallableRelation() {
+>   return Readable<I1>() && Readable<I2>() &&
+>     Relation<F, value_type_t<I1>, value_type_t<I2>>() &&
+>     Relation<F, value_type_t<I1>, reference_t<I2>>() &&
+>     Relation<F, reference_t<I1>, value_type_t<I2>>() &&
+>     Relation<F, reference_t<I1>, reference_t<I2>>() &&
+>     Relation<F, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
+> }
+> 
+> template <class F, class I1, class I2 = I1>
+> concept bool IndirectCallableStrictWeakOrder() {
+>   return Readable<I1>() && Readable<I2>() &&
+>     StrictWeakOrder<F, value_type_t<I1>, value_type_t<I2>>() &&
+>     StrictWeakOrder<F, value_type_t<I1>, reference_t<I2>>() &&
+>     StrictWeakOrder<F, reference_t<I1>, value_type_t<I2>>() &&
+>     StrictWeakOrder<F, reference_t<I1>, reference_t<I2>>() &&
+>     StrictWeakOrder<F, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
+> }
+>
+> template <class> struct indirect_result_of { };
+> template <class F, class... Is>
+>   requires IndirectCallable<F, Is...>()
+> struct indirect_result_of<F(Is...)> :
+>   result_of<F(reference_t<Is>...)> { };
 > ```
 
-Change the description of the `IndirectlyMovable` concept ([indirectlymovable.iterators]), to be:
+Note: These definitions of `IndirectCallable` and `IndirectCallablePredicate` are less general than the ones in N4569 that they replace. The original definitions are variadic but these handle only up to 2 arguments. The Standard Library never requires callback functions to accept more than two arguments, so the reduced expressive power does not impact the Standard Library; however, it may impact user code. The complication is the need to check callability with a cross-product of the parameters' `value_type_t` and `reference_t`s, which is difficult to express using Concepts and results in an explosion of tests to be performed as the number of parameters increases.
 
-> 2\. Let `i` be an object of type `In`, let `o` be a dereferenceable
-> object of type `Out`, and let `v` be an object of type
-> `value_type_t<In>`. Then `IndirectlyMovable<In, Out>()` is satisfied
-> if and only if
-> (2.1) -- The expression `value_type_t<In>(iter_move(i))` has a value
-> that is equal to the value `*i` had before the expression was
-> evaluated.
-> (2.2) -- After the assignment `v = iter_move(i)`, `v` is equal
-> to the value of `*i` before the assignment.
-> (2.3) -- If `Out` is `Readable`, after the assignment
-> `*o = iter_move(i)`, `*o` is equal to the value of `*i` before
-> the assignment.
-> (2.4) -- If `Out` is `Readable`, after the assignment
-> `*o = std::move(v)`, `*o` is equal to the value of `*i` before
-> the assignment.
+There are several options for preserving the full expressive power of the N4569 concepts should that prove desirable: (1) Require callability testing only with arguments "`value_type_t<Is>...`", "`reference_t<Is>...`" , and "`iter_common_reference_t<Is>...`", leaving the other combinations as merely documented constraints that are not required to be tested; (2) Actually test the full cross-product of argument types using meta-programming techniques, accepting the compile-time hit when argument lists get large. (The latter has been tested and shown to be feasable.)
 
-Change concept `IndirectlyCopyable` ([indirectlycopyable.iterators]) to be as follows:
+Change the definition of the `projected` struct ([projected]) to the following:
 
 > ```c++
-> template <class In, class Out>
-> concept bool IndirectlyCopyable() {
->   return IndirectlyMovable<In, Out>() && Copyable<value_type_t<In>>() &&
->     Constructible<value_type_t<In>, reference_t<In>>() &&
->     Assignable<value_type_t<In>&, reference_t<In>>() &&
->     Writable<Out, reference_t<In>>() &&
->     Writable<Out, value_type_t<In>>();
-> }
+> template <Readable I, IndirectRegularCallable<I> Proj>
+> struct projected {
+>   using value_type = decay_t<indirect_result_of_t<Proj&(I)>>;
+>   indirect_result_of_t<Proj&(I)> operator*() const;
+> };
 > ```
 
-Change the description of the `IndirectlyCopyable` concept ([indirectlycopyable.iterators]), to be:
 
-> 2\. Let `i` be an object of type `In`, let `o` be a dereferenceable
-> object of type `Out`, and let `v` be a `const` object of type
-> `value_type_t<In>`. Then `IndirectlyCopyable<In, Out>()` is satisfied
-> if and only if
-> (2.1) -- The expression `value_type_t<In>(*i)` has a value
-> that is equal to the value of `*i`.
-> (2.2) -- After the assignment `v = *i`, `v` is equal
-> to the value of `*i`.
-> (2.3) -- If `Out` is `Readable`, after the assignment
-> `*o = *i`, `*o` is equal to the value of `*i`.
-> (2.4) -- If `Out` is `Readable`, after the assignment
-> `*o = v`, `*o` is equal to the value of `v`.
+Remove the definition of the `rvalue_reference_t` type alias in  `IndirectlyMovable` ([commonalgoreq.indirectlymovable]).
 
-Change concept `IndirectlySwappable` ([indirectlyswappable.iterators]) to be as follows:
+Change concept `IndirectlySwappable` ([commonalgoreq.indirectlyswappable]) to be as follows:
 
 > ```c++
 > template <class I1, class I2 = I1>
 > concept bool IndirectlySwappable() {
 >   return Readable<I1>() && Readable<I2>() &&
 >     requires (const I1 i1, const I2 i2) {
->       iter_swap(i1, i2);
->       iter_swap(i2, i1);
->       iter_swap(i1, i1);
->       iter_swap(i2, i2);
+>       ranges::iter_swap(i1, i2);
+>       ranges::iter_swap(i2, i1);
+>       ranges::iter_swap(i1, i1);
+>       ranges::iter_swap(i2, i2);
 >     };
 > }
 > ```
 
 Change the description of `IndirectlySwappable`:
 
-> 1\. Overload resolution ([over.match]) on each of the four
-> `iter_swap` expressions selects a binary non-member function
-> "`iter_swap`" from a candidate set that includes the two
-> `iter_swap` functions found in
-> `<experimental/ranges/iterator>` ([iterator.synopsis])
-> and the lookup set produced by argument-dependent lookup
-> ([basic.lookup.argdep]).
->
-> 2\. Given an object `i1` of type `I1` and an object `i2` of
+> 1\. Given an object `i1` of type `I1` and an object `i2` of
 > type `I2`, `IndirectlySwappable<I1, I2>()` is satisfied if after
-> `iter_swap(i1, i2)`, the value of `*i1` is equal to the value of
-> `*i2` before the call, and *vice versa*.
-
-Swap subsections 24.3.3 ([projected.indirectcallables]) and 24.3.4 ([indirectfunct.indirectcallables]), and change the definition of the `projected` struct ([projected.indirectcallables]) to the following:
-
-> ```c++
-> template <Readable I, IndirectRegularCallable<I> Proj>
-> struct projected {
->   using value_type = decay_t<result_of_t<as_function_t<Proj&>(value_type_t<I>)>>;
->   auto operator*() const ->
->     result_of_t<as_function_t<Proj&>(reference_t<I>)>;
-> };
->
-> template <WeaklyIncrementable I, class Proj>
-> struct difference_type<projected<I, Proj>> {
->   using type = difference_type_t<I>;
-> };
-> ```
-
-Change 24.3.4 "Indirect callables" ([indirectfunc.indirectcallables]) as described as follows: Change `IndirectCallable`, `IndirectRegularCallable`, `IndirectCallablePredicate`, `IndirectCallableRelation`, and `IndirectCallableStrictWeakOrder` as follows:
-
-> ```c++
-> template <class F>
-> concept bool IndirectCallable() {
->   return Function<as_function_t<F>>();
-> }
-> template <class F, class I>
-> concept bool IndirectCallable() {
->   return Readable<I>() &&
->     Function<as_function_t<F>, value_type_t<I>>() &&
->     Function<as_function_t<F>, reference_t<I>>() &&
->     Function<as_function_t<F>, iter_common_reference_t<I>>();
-> }
-> template <class F, class I1, class I2>
-> concept bool IndirectCallable() {
->   return Readable<I1>() && Readable<I2>() &&
->     Function<as_function_t<F>, value_type_t<I1>, value_type_t<I2>>() &&
->     Function<as_function_t<F>, value_type_t<I1>, reference_t<I2>>() &&
->     Function<as_function_t<F>, reference_t<I1>, value_type_t<I2>>() &&
->     Function<as_function_t<F>, reference_t<I1>, reference_t<I2>>() &&
->     Function<as_function_t<F>, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
-> }
-> 
-> template <class F>
-> concept bool IndirectRegularCallable() {
->   return RegularFunction<as_function_t<F>>();
-> }
-> template <class F, class I>
-> concept bool IndirectRegularCallable() {
->   return Readable<I>() &&
->     RegularFunction<as_function_t<F>, value_type_t<I>>() &&
->     RegularFunction<as_function_t<F>, reference_t<I>>() &&
->     RegularFunction<as_function_t<F>, iter_common_reference_t<I>>();
-> }
-> template <class F, class I1, class I2>
-> concept bool IndirectRegularCallable() {
->   return Readable<I1>() && Readable<I2>() &&
->     RegularFunction<as_function_t<F>, value_type_t<I1>, value_type_t<I2>>() &&
->     RegularFunction<as_function_t<F>, value_type_t<I1>, reference_t<I2>>() &&
->     RegularFunction<as_function_t<F>, reference_t<I1>, value_type_t<I2>>() &&
->     RegularFunction<as_function_t<F>, reference_t<I1>, reference_t<I2>>() &&
->     RegularFunction<as_function_t<F>, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
-> }
-> 
-> template <class F, class I>
-> concept bool IndirectCallablePredicate() {
->   return Readable<I>() &&
->     Predicate<as_function_t<F>, value_type_t<I>>() &&
->     Predicate<as_function_t<F>, reference_t<I>>() &&
->     Predicate<as_function_t<F>, iter_common_reference_t<I>>();
-> }
-> template <class F, class I1, class I2>
-> concept bool IndirectCallablePredicate() {
->   return Readable<I1>() && Readable<I2>() &&
->     Predicate<as_function_t<F>, value_type_t<I1>, value_type_t<I2>>() &&
->     Predicate<as_function_t<F>, value_type_t<I1>, reference_t<I2>>() &&
->     Predicate<as_function_t<F>, reference_t<I1>, value_type_t<I2>>() &&
->     Predicate<as_function_t<F>, reference_t<I1>, reference_t<I2>>() &&
->     Predicate<as_function_t<F>, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
-> }
-> 
-> template <class F, class I1, class I2 = I1>
-> concept bool IndirectCallableRelation() {
->   return Readable<I1>() && Readable<I2>() &&
->     Relation<as_function_t<F>, value_type_t<I1>, value_type_t<I2>>() &&
->     Relation<as_function_t<F>, value_type_t<I1>, reference_t<I2>>() &&
->     Relation<as_function_t<F>, reference_t<I1>, value_type_t<I2>>() &&
->     Relation<as_function_t<F>, reference_t<I1>, reference_t<I2>>() &&
->     Relation<as_function_t<F>, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
-> }
-> 
-> template <class F, class I1, class I2 = I1>
-> concept bool IndirectCallableStrictWeakOrder() {
->   return Readable<I1>() && Readable<I2>() &&
->     StrictWeakOrder<as_function_t<F>, value_type_t<I1>, value_type_t<I2>>() &&
->     StrictWeakOrder<as_function_t<F>, value_type_t<I1>, reference_t<I2>>() &&
->     StrictWeakOrder<as_function_t<F>, reference_t<I1>, value_type_t<I2>>() &&
->     StrictWeakOrder<as_function_t<F>, reference_t<I1>, reference_t<I2>>() &&
->     StrictWeakOrder<as_function_t<F>, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
-> }
-> ```
-
-Note: These definitions of `IndirectCallable` and `IndirectCallablePredicate` are less general than the ones in N4382 that they replace. The original definitions are variadic but these handle only up to 2 arguments. The Standard Library never requires callback functions to accept more than two arguments, so the reduced expressive power does not impact the Standard Library; however, it may impact user code. The complication is the need to check callability with a cross-product of the parameters' `value_type_t` and `reference_t`s, which is difficult to express using Concepts Lite and results in an explosion of tests to be performed as the number of parameters increases.
-
-There are several options for preserving the full expressive power of the N4382 concepts should that prove desirable: (1) Require callability testing only with arguments "`value_type_t<Is>...`", "`reference_t<Is>..`" , and "`iter_common_reference_t<Is>...`", leaving the other combinations as merely documented constraints that are not required to be tested; (2) Actually test the full cross-product of argument types using meta-programming techniques, accepting the compile-time hit when argument lists get large. (The latter has been tested and shown to be feasable.)
+> `ranges::iter_swap(i1, i2)`, the value of `*i1` is equal to the 
+> value of `*i2` before the call, and *vice versa*.
 
 Change 24.6 "Header `<experimental/ranges/iterator>` synopsis" ([iterator.synopsis]) by adding the following to namespace `std::experimental::ranges::v1`:
 
@@ -1088,9 +989,9 @@ Change 24.6 "Header `<experimental/ranges/iterator>` synopsis" ([iterator.synops
 >   requires (T& t) { {*t} -> auto&&; };
 >
 > // iter_move (REF)
-> template <class I>
->   requires _Dereferenceable<I>
-> auto iter_move(I&& r) noexcept(see below) -> see below;
+> namespace {
+>   constexpr *unspecified* iter_move = *unspecified*;
+> }
 >
 > // is_indirectly_movable (REF)
 > template <class I1, class I2>
@@ -1100,27 +1001,20 @@ Change 24.6 "Header `<experimental/ranges/iterator>` synopsis" ([iterator.synops
 > template <class I1, class I2>
 > struct is_nothrow_indirectly_movable;
 >
+> template <class I1, class I2> constexpr bool is_indirectly_movable_v
+>   = is_indirectly_movable<I1, I2>::value;
+> template <class I1, class I2> constexpr bool is_nothrow_indirectly_movable_v
+>   = is_nothrow_indirectly_movable<I1, I2>::value;
+>
 > template <_Dereferenceable I>
->   requires requires (I& r) { { iter_move(r) } -> auto&&; }
+>   requires requires (I& r) { { ranges::iter_move(r) } -> auto&&; }
 > using rvalue_reference_t =
->   decltype(iter_move(declval<I&>()));
+>   decltype(ranges::iter_move(declval<I&>()));
 >
 > // iter_swap (REF)
-> template <class I1, class I2,
->   Readable _R1 = remove_reference_t<I1>,
->   Readable _R2 = remove_reference_t<I2>>
->   requires Swappable<reference_t<_R1>, reference_t<_R2>>()
-> void iter_swap(I1&& r1, I2&& r2)
->   noexcept(is_nothrow_swappable_with<reference_t<_R1>, reference_t<_R2>>::value);
->
-> template <class I1, class I2,
->   Readable _R1 = std::remove_reference_t<I1>,
->   Readable _R2 = std::remove_reference_t<I2>>
->   requires !Swappable<reference_t<_R1>, reference_t<_R2>>()
->     && IndirectlyMovable<_R1, _R2>() && IndirectlyMovable<_R2, _R1>()
-> void iter_swap(I1&& r1, I2&& r2)
->   noexcept(is_nothrow_indirectly_movable<_R1, _R2>::value &&
->            is_nothrow_indirectly_movable<_R2, _R1>::value);
+> namespace {
+>   constexpr *unspecified* iter_swap = *unspecified*;
+> }
 >
 > // is_indirectly_swappable (REF)
 > template <class I1, class I2 = I1>
@@ -1135,63 +1029,92 @@ Change 24.6 "Header `<experimental/ranges/iterator>` synopsis" ([iterator.synops
 >   common_reference_t<reference_t<I>, value_type_t<I>&>;
 > ```
 
-Before subsubsection "Iterator associated types" ([iterator.assoc]), add a
-new subsubsection "Iterator utilities" ([iterator.utils]). Under that
-subsubsection, insert the following:
+Before subsubsection "Iterator associated types" ([iterator.assoc]), add a new subsubsection "Iterator utilities" ([iterator.utils]). Under that subsubsection, insert the following:
 
-> > ```c++
-> > template <class I>
-> >   requires _Dereferenceable<I>
-> > auto iter_move(I&& r) noexcept(see below) -> see below;
-> > ```
+> 24.6.? *iter_move*                     [iterator.utils.iter_move]
 >
-> 1\. The return type is `Ret` where `Ret` is
-> `remove_reference_t<reference_t<I>>&&` if `I` is
-> a reference type; `decay_t<I>`, otherwise.
-> 2\. The expression in the `noexcept` is equivalent to:
-> > ```c++
-> > noexcept(Ret(std::move(*r)))
-> > ```
-> 
-> 3\. *Returns:* `std::move(*r)`
+> 1\. The name `iter_move` denotes a *customization point object* (17.5.2.1.5 [customization.point.object]). The effect of the expression `ranges::iter_move(E)` for some expression `E` is equivalent to `iter_move(E)`, with overload resolution performed in a context described below. `ranges::iter_move(E)` is equality-preserving ([concepts.lib.general.equality]).
 >
-> <span style="color:blue">[*Editorial note:* -- Future work: Rather than defining a new `iter_swap` in namespace `std::experimental::ranges::v1`, it will probably be necessary to constrain the `iter_swap` in namespace `std` much the way the Ranges TS constrains `std::swap`. --*end note*]</span>
+> 2\. The context in which the expression `iter_move(E)` is evaluated
 >
-> > ```c++
-> > template <class I1, class I2,
-> >   Readable _R1 = remove_reference_t<I1>,
-> >   Readable _R2 = remove_reference_t<I2>>
-> >   requires Swappable<reference_t<_R1>, reference_t<_R2>>()
-> > void iter_swap(I1&& r1, I2&& r2)
-> >   noexcept(is_nothrow_swappable_with<reference_t<_R1>, reference_t<_R2>>::value);
-> > ```
+> > -- does not include a declaration of `ranges::iter_move`,
+> >
+> > -- includes the lookup set produced by argument-dependent lookup ([basic.lookup.argdep]), and
+> >
+> > -- includes an `iter_move` function template equivalent to the following:
+> >
+> > > ```c++
+> > > // Exposition only
+> > > template <_Dereferenceable I>
+> > > *see below* iter_move(I&& r) noexcept(*see below*);
+> > > ```
+> > > > 2.1. The return type is `Ret` where `Ret` is
+> > > > `remove_reference_t<reference_t<I>>&&` if 
+> > > > `reference_t<I>` is a reference type;
+> > > > `decay_t<reference_t<I>>`, otherwise.
+> > > >
+> > > > 2.2. The expression in the `noexcept` is equivalent to:
+> > > > > ```c++
+> > > > > noexcept(static_cast<Ret>(*r))
+> > > > > ```
+> > > >
+> > > > 2.3. *Effects:* Equivalent to `static_cast<Ret>(*r)`
 >
-> 4\. *Effects*: `swap(*r1, *r2)`
+> 3\. If the `iter_move` function selected by overload resolution ([over.match]) is not equality-preserving ([concepts.lib.general.equality]), or if `iter_move(r)` does not equal `*r`, the program is ill-formed with no diagnostic required.
 >
-> > ```c++
-> > template <class I1, class I2,
-> >   Readable _R1 = std::remove_reference_t<I1>,
-> >   Readable _R2 = std::remove_reference_t<I2>>
-> >   requires !Swappable<reference_t<_R1>, reference_t<_R2>>()
-> >     && IndirectlyMovable<_R1, _R2>() && IndirectlyMovable<_R2, _R1>()
-> > void iter_swap(I1&& r1, I2&& r2)
-> >   noexcept(is_nothrow_indirectly_movable<_R1, _R2>::value &&
-> >            is_nothrow_indirectly_movable<_R2, _R1>::value);
-> > ```
+> 24.6.? *iter_swap*                     [iterator.utils.iter_swap]
 >
-> 5\. *Effects*: Exchanges values referred to by two `Readable` objects.
+> 1\. The name `iter_swap` denotes a *customization point object* (17.5.2.1.5 [customization.point.object]). The effect of the expression `ranges::iter_swap(E1, E2)` for some expressions `E1` and `E2` is equivalent to `(void)iter_swap(E1, E2)`, with overload resolution performed in a context described below:
 >
-> 6\. \[*Example:* Below is a possible implementation:
-> > ```c++
-> > value_type_t<_R1> tmp(iter_move(r1));
-> > *r1 = iter_move(r2);
-> > *r2 = std::move(tmp);
-> > ```
+> 2\. The context in which the expression `(void)iter_swap(E1, E2)` is evaluated
 >
-> -- *end example*\]
+> > -- does not include a declaration of `ranges::iter_swap`,
+> >
+> > -- includes the lookup set produced by argument-dependent lookup ([basic.lookup.argdep]), and
+> >
+> > -- includes `iter_swap` function template(s) equivalent to the following:
+> >
+> > > ```c++
+> > > // Exposition only
+> > > template <class I1, class I2>
+> > > void iter_swap(I1&&, I2&&) = delete;
+> > >
+> > > // Exposition only
+> > > template <class I1, class I2,
+> > >   Readable _R1 = remove_reference_t<I1>,
+> > >   Readable _R2 = remove_reference_t<I2>>
+> > >   requires Swappable<reference_t<_R1>, reference_t<_R2>>()
+> > > void iter_swap(I1&& r1, I2&& r2)
+> > >   noexcept(is_nothrow_swappable_with_v<reference_t<_R1>, reference_t<_R2>>);
+> > > ```
+> > > > 2.1. *Effects:* Equivalent to `ranges::swap(*r1, *r2)`
+> > >
+> > > ```c++
+> > > // Exposition only
+> > > template <class I1, class I2,
+> > >   Readable _R1 = std::remove_reference_t<I1>,
+> > >   Readable _R2 = std::remove_reference_t<I2>>
+> > >   requires !Swappable<reference_t<_R1>, reference_t<_R2>>()
+> > >     && IndirectlyMovableStorable<_R1, _R2>() &&
+> > >        IndirectlyMovableStorable<_R2, _R1>()
+> > > void iter_swap(I1&& r1, I2&& r2)
+> > >   noexcept(is_nothrow_indirectly_movable_v<_R1, _R2> &&
+> > >            is_nothrow_indirectly_movable_v<_R2, _R1>);
+> > > ```
+> > > > 2.2. *Effects*: Exchanges values referred to by two `Readable` objects.
+> > > >
+> > > > 2.3. \[*Example:* Below is a possible implementation:
+> > > > > ```c++
+> > > > > value_type_t<_R1> tmp(iter_move(r1));
+> > > > > *r1 = iter_move(r2);
+> > > > > *r2 = std::move(tmp);
+> > > > > ```
+> > > > >
+> > > > -- *end example*\]
+>
+> 3\. If the `iter_swap` function selected by overload resolution ([over.match]) does not swap the values denoted by the expressions `E1` and `E2`, the program is ill-formed with no diagnostic required.
 
-
-To [iterator.assoc] (24.7.1), add the following definition of `rvalue_reference_t` by changing this:
+Change the name of subsection "Iterator associated types" (24.6.1) [iterator.assoc] back to "Iterator traits". To that section add the following definition of `rvalue_reference_t` by changing this:
 
 > [...] In addition, the type
 > > ```c++
@@ -1210,21 +1133,19 @@ To [iterator.assoc] (24.7.1), add the following definition of `rvalue_reference_
 > >
 > > template <_Dereferenceable I>
 > >   requires requires (I& r) {
-> >     { iter_move(r) } -> auto&&;
+> >     { ranges::iter_move(r) } -> auto&&;
 > >   }
 > > using rvalue_reference_t =
-> >   decltype(iter_move(declval<I&>()));
+> >   decltype(ranges::iter_move(declval<I&>()));
 > > ```
+
+After paragraph 12, add the following paragraph 13:
+
+> 13\. The class templates `is_indirectly_movable`,
+> `is_nothrow_indirectly_movable`, `is_indirectly_swappable`,
+> and `is_nothrow_indirectly_swappable` shall be defined
+> as follows:
 >
-> Overload resolution ([over.match]) on the expression `iter_move(t)` selects a
-> unary non-member function "`iter_move`" from a candidate set that includes
-> the function `iter_move` in `<experimental/ranges/iterator>` ([iterator.synopsis]) and
-> the lookup set produced by argument-dependent lookup ([basic.lookup.argdep]).
-
-After subsubsection "Iterator operations" ([iterator.operations]), add a
-new subsubsection "Iterator traits" ([iterator.traits]). Under that
-subsubsection, include the following:
-
 > > ```c++
 > > template <class In, class Out>
 > > struct is_indirectly_movable : false_type { };
@@ -1239,7 +1160,7 @@ subsubsection, include the following:
 > > template <class In, class Out>
 > >   requires IndirectlyMovable<In, Out>()
 > > struct is_nothrow_indirectly_movable<In, Out> :
-> >   bool_constant<
+> >   std::integral_constant<bool,
 > >     is_nothrow_constructible<value_type_t<In>, rvalue_reference_t<In>>::value &&
 > >     is_nothrow_assignable<value_type_t<In> &, rvalue_reference_t<In>>::value &&
 > >     is_nothrow_assignable<reference_t<Out>, rvalue_reference_t<In>>::value &&
@@ -1259,40 +1180,13 @@ subsubsection, include the following:
 > > template <class I1, class I2>
 > >   requires IndirectlySwappable<I1, I2>()
 > > struct is_nothrow_indirectly_swappable<I1, I2> :
-> >   bool_constant<
-> >     noexcept(iter_swap(declval<I1&>(), declval<I2&>())) &&
-> >     noexcept(iter_swap(declval<I2&>(), declval<I1&>())) &&
-> >     noexcept(iter_swap(declval<I1&>(), declval<I1&>())) &&
-> >     noexcept(iter_swap(declval<I2&>(), declval<I2&>()))>
+> >   std::integral_constant<bool,
+> >     noexcept(ranges::iter_swap(declval<I1&>(), declval<I2&>())) &&
+> >     noexcept(ranges::iter_swap(declval<I2&>(), declval<I1&>())) &&
+> >     noexcept(ranges::iter_swap(declval<I1&>(), declval<I1&>())) &&
+> >     noexcept(ranges::iter_swap(declval<I2&>(), declval<I2&>()))>
 > > { };
 > > ```
->
-> 1\. Overload resolution ([over.match]) on the four expressions `iter_move(x, y)` selects a
-> binary non-member function "`iter_swap`" from a candidate set that includes
-> the two functions `iter_swap` in `<experimental/ranges/iterator>` ([iterator.synopsis]) and
-> the lookup set produced by argument-dependent lookup ([basic.lookup.argdep]).
-
-Change 25.1 "Algorithms: General" ([algorithms.general]) as follows:
-
-> <pre><code>
-> <span class="kw">template</span>&lt;InputIterator I, Sentinel&lt;I&gt; S, WeaklyIncrementable O,
->     <span class="kw">class</span> Proj = identity, IndirectCallableRelation&lt;projected&lt;I, Proj&gt;&gt; R = equal_to&lt;&gt;&gt;
->   <span class="kw">requires</span> IndirectlyCopyable&lt;I, O&gt;() &amp;&amp; (ForwardIterator&lt;I&gt;() ||
->     ForwardIterator&lt;O&gt;() <del>|| Copyable&lt;value_type_t&lt;I&gt;&gt;()</del>)
->   tagged_pair&lt;tag::in(I), tag::out(O)&gt;
->     unique_copy(I first, S last, O result, R comp = R{}, Proj proj = Proj{});
->
-> <span class="kw">template</span>&lt;InputRange Rng, WeaklyIncrementable O, <span class="kw">class</span> Proj = identity,
->     IndirectCallableRelation&lt;projected&lt;IteratorType&lt;Rng&gt;, Proj&gt;&gt; R = equal_to&lt;&gt;&gt;
->   <span class="kw">requires</span> IndirectlyCopyable&lt;IteratorType&lt;Rng&gt;, O&gt;() &amp;&amp;
->     (ForwardIterator&lt;IteratorType&lt;Rng&gt;&gt;() || ForwardIterator&lt;O&gt;()
->       <del>|| Copyable&lt;value_type_t&lt;IteratorType&lt;Rng&gt;&gt;&gt;()</del>)
->   tagged_pair&lt;tag::in(safe_iterator_t&lt;Rng&gt;), tag::out(O)&gt;
->     unique_copy(Rng&amp;&amp; rng, O result, R comp = R{}, Proj proj = Proj{});
->
-> </code></pre>
-
-Make the identical change to 25.3.9 "Unique" ([alg.unique]).
 
 Acknowledgements
 =====
@@ -1399,17 +1293,19 @@ references:
     year: 2015
     month: 9
     day: 9
-- id: n4382
-  title: 'N4382: Working Draft: C++ Extensions for Ranges'
+- id: n4569
+  title: 'N4569: Working Draft: C++ Extensions for Ranges'
   type: article
   author:
   - family: Niebler
     given: Eric
+  - family: Carter
+    given: Casey
   issued:
-    year: 2015
-    month: 4
-    day: 12
-  URL: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4382.pdf
+    year: 2016
+    month: 2
+    day: 15
+  URL: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/n4569.pdf
 - id: sgi-stl
   title: 'SGI Standard Template Library Programmer''s Guide'
   type: webpage
@@ -1431,7 +1327,7 @@ references:
     day: 11
 ...
 
-[1]: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4382.pdf "Working Draft: C++ Extensions for Ranges"
+[1]: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/n4569.pdf "Working Draft: C++ Extensions for Ranges"
 [2]: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2004/n1640.html "New Iterator Concepts"
 [3]: http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2005/n1873.html "The Cursor/Property Map Abstraction"
 [4]: http://www.gotw.ca/publications/mill09.htm "When is a container not a container?"
