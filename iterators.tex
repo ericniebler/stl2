@@ -6772,7 +6772,7 @@ different types of sequences, the library formalizes not just the interfaces but
 also the semantics and complexity assumptions of ranges.
 
 \pnum
-This \oldtxt{International Standard}\newtxt{document} defines three fundamental categories of ranges
+This \newtxt{document} defines three fundamental categories of ranges
 based on the syntax and semantics supported by each: \techterm{range},
 \techterm{sized range} and \techterm{view}, as shown in
 Table~\ref{tab:ranges.relations}.
@@ -6789,60 +6789,50 @@ Table~\ref{tab:ranges.relations}.
 
 \pnum
 The \tcode{Range} concept requires only that \tcode{begin} and \tcode{end}
-return an iterator and a sentinel. \oldtxt{\enternote An iterator is a valid sentinel.
-\exitnote} The \tcode{SizedRange} concept refines \tcode{Range} \oldtxt{but adds}
+return an iterator and a sentinel. The \tcode{SizedRange} concept refines \tcode{Range}
 \newtxt{with} the requirement that the number of elements in the range can be determined
-in constant time \oldtxt{with}\newtxt{using} the \tcode{size} function. The \tcode{View} concept
-\oldtxt{describes}\newtxt{specifies} requirements on an \tcode{Range} type
+in constant time \newtxt{using} the \tcode{size} function. The \tcode{View} concept
+\newtxt{specifies} requirements on an \tcode{Range} type
 with constant-time copy and assign operations.
 
 \pnum
-In addition to the three fundamental range categories, this \oldtxt{standard}\newtxt{document} defines
+In addition to the three fundamental range categories, this \newtxt{document} defines
 a number of convenience refinements of \tcode{Range} that group together requirements
 that appear often in the concepts, algorithms, and range adaptors.
 \techterm{Bounded ranges} are ranges for which \tcode{begin} and \tcode{end} return objects of the
 same type. \techterm{Random access ranges} are ranges for which
-\tcode{begin} returns a \oldtxt{model of}\newtxt{type that satisfies}
+\tcode{begin} returns a \newtxt{type that satisfies}
 \tcode{RandomAccessIterator}~(\ref{iterators.random.access}). The range
 categories \techterm{bidirectional ranges},
 \techterm{forward ranges},
 \techterm{input ranges}, and
 \techterm{output ranges} are defined similarly.
-\oldtxt{\enternote There are no \techterm{weak input ranges} or
-\techterm{weak output ranges} because of the \tcode{EqualityComparable}
-requirement on iterators and sentinels. \exitnote}
 
 \rSec3[ranges.range]{Ranges}
 
 \pnum
 The \tcode{Range} concept defines the requirements of a type that allows
 iteration over its elements by providing a \tcode{begin} iterator and an
-\tcode{end}\oldtxt{ iterator or} sentinel.
+\tcode{end} sentinel.
 \enternote Most algorithms requiring this concept simply forward to an
 \tcode{Iterator}-based algorithm by calling \tcode{begin} and \tcode{end}. \exitnote
 
 \begin{itemdecl}
 template <class T>
-using @\oldtxt{IteratorType}\newtxt{iterator_t}@ = decltype(@\newtxt{ranges::}@begin(declval<T@\newtxt{\&}@>()));
+using @\newtxt{iterator_t}@ = decltype(@\newtxt{ranges::}@begin(declval<T@\newtxt{\&}@>()));
 
 template <class T>
-using @\oldtxt{SentinelType}\newtxt{sentinel_t}@ = decltype(@\newtxt{ranges::}@end(declval<T@\newtxt{\&}@>()));
+using @\newtxt{sentinel_t}@ = decltype(@\newtxt{ranges::}@end(declval<T@\newtxt{\&}@>()));
 
 template <class T>
 concept bool Range() {
-  return requires@\oldtxt{(T t)}@ {
-    @\oldtxt{typename IteratorType<T>;}@
-    typename @\oldtxt{SentinelType}\newtxt{sentinel_t}@<T>;
-    @\oldtxt{\{ begin(t) \} -> IteratorType<T>;}@
-    @\oldtxt{\{ end(t) \} -> SentinelType<T>;}@
-    @\oldtxt{requires Sentinel<SentinelType<T>, IteratorType<T>{}>;}@
+  return requires {
+    typename @\newtxt{sentinel_t}@<T>;
   };
 @\newtxt{\}}@
 \end{itemdecl}
 
 \begin{itemdescr}
-
-\oldtxt{\tcode{begin} and \tcode{end} are required to be amortized constant time.}
 
 \pnum
 \newtxt{Given an lvalue \tcode{t} of type \tcode{remove_reference_t<T>}, \tcode{Range<T>()} is satisfied
@@ -6855,14 +6845,14 @@ if and only if}
 and non-modifying. \enternote \tcode{begin(t)} and \tcode{end(t)} do not require
 implicit expression variants. \exitnote}
 
-\item \newtxt{If \tcode{\oldtxt{IteratorType<T>}}\tcode{\newtxt{iterator_t<T>}} satisfies \tcode{ForwardIterator},
+\item \newtxt{If \tcode{\newtxt{iterator_t<T>}} satisfies \tcode{ForwardIterator},
 \tcode{begin(t)} is equality preserving.}
 \end{itemize}
 \end{itemdescr}
 
 \pnum \newtxt{\enternote
 Equality preservation of both \tcode{begin} and \tcode{end} enables passing a \tcode{Range}
-whose \tcode{\oldtxt{IteratorType}}iterator type satisfies \tcode{ForwardIterator}
+whose iterator type satisfies \tcode{ForwardIterator}
 to multiple algorithms and
 making multiple passes over the range by repeated calls to \tcode{begin} and \tcode{end}.
 Since \tcode{begin} is not required to be equality preserving when the return type does
@@ -6873,32 +6863,21 @@ might not be well-defined; \tcode{begin} should be called at most once for such 
 \rSec3[ranges.sized]{Sized ranges}
 
 \pnum
-The \tcode{SizedRange} concept \oldtxt{describes}\newtxt{specifies} the requirements
+The \tcode{SizedRange} concept \newtxt{specifies} the requirements
 of a \tcode{Range} type that knows its size in constant time with the
 \tcode{size} function.
 
 \begin{itemdecl}
-@\oldtxt{// \expos}@
-@\oldtxt{template <class T>}@
-@\oldtxt{concept bool \xname{SizedRangeLike} =}@
-  @\oldtxt{Range<T> \&\&}@
-  @\oldtxt{requires(T t) \{}@
-    @\oldtxt{\{ size(t) \} -> Integral;}@
-    @\oldtxt{requires Convertible<decltype(size(t)),}@
-                         @\oldtxt{DifferenceType<IteratorType<T>{>}{>};}@
-  @\oldtxt{\};}@
-
 @\newtxt{template <class R>}@
 @\newtxt{constexpr bool disable_sized_range = false;}@
 
 template <class T>
 concept bool SizedRange() {
-  @\oldtxt{\xname{SizedRangeLike}<T> \&\& is_sized_range<T>::value;}@
   @\newtxt{return Range<T>() \&\&}@
     @\newtxt{!disable_sized_range<remove_cv_t<remove_reference_t<T>{>}{>} \&\&}@
     @\newtxt{requires (const remove_reference_t<T>\& t) \{}@
       @\newtxt{\{ ranges::size(t) \} -> Integral;}@
-      @\newtxt{\{ ranges::size(t) \} -> ConvertibleTo<\oldtxt{DifferenceType}difference_type_t<\oldtxt{IteratorType}iterator_t<T>{>}{>};}@
+      @\newtxt{\{ ranges::size(t) \} -> ConvertibleTo<difference_type_t<iterator_t<T>{>}{>};}@
     @\newtxt{\};}@
 @\newtxt{\}}@
 \end{itemdecl}
@@ -6910,11 +6889,11 @@ Given an lvalue \tcode{t} of type \tcode{remove_reference_t<T>}, \tcode{SizedRan
 
 \begin{itemize}
 \item \tcode{size(t)} returns the number of elements in \tcode{t}.
-\item If \tcode{\oldtxt{IteratorType}iterator_t<T>} satisfies \tcode{ForwardIterator},
+\item If \tcode{iterator_t<T>} satisfies \tcode{ForwardIterator},
 \tcode{size(t)} is well-defined regardless of the evaluation of
 \tcode{begin(t)}. \enternote \tcode{size(t)} is otherwise not required be
 well-defined after evaluating \tcode{begin(t)}. For a \tcode{SizedRange}
-whose \tcode{\oldtxt{IteratorType}}iterator type does not model \tcode{ForwardIterator}, for
+whose iterator type does not model \tcode{ForwardIterator}, for
 example, \tcode{size(t)} might only be well-defined if evaluated before
 the first call to \tcode{begin(t)}. \exitnote
 \end{itemize}
@@ -6971,7 +6950,7 @@ struct disable_sized_range<R> : false_type { };
 \rSec3[ranges.view]{Views}
 
 \pnum
-The \tcode{View} concept \oldtxt{describes}\newtxt{specifies} the requirements of a
+The \tcode{View} concept \newtxt{specifies} the requirements of a
 \tcode{Range} type that has constant time copy, move and assignment operators; that
 is, the cost of these operations is not proportional to the number of elements in
 the \tcode{View}.
@@ -7007,43 +6986,32 @@ template <class T>
 concept bool View() {
   return Range<T>() &&
     Semiregular<T>() &&
-    @\oldtxt{is_view}\newtxt{\xname{view_predicate}}@<T>@\oldtxt{::value}@;
+    @\newtxt{\xname{view_predicate}}@<T>;
 @\newtxt{\}}@
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
 Since the difference between \tcode{Range} and \tcode{View} is largely semantic, the
-two are differentiated with the help of the \tcode{\oldtxt{is}\newtxt{enable}_view}
-trait. Users may specialize \oldtxt{the} \tcode{\oldtxt{is}\newtxt{enable}_view}
-\oldtxt{trait} \newtxt{to derive from \tcode{true_type} or \tcode{false_type}}.
-\oldtxt{By default, \tcode{\oldtxt{is_view}\newtxt{\xname{view_predicate}}}
-uses the following heuristics to determine whether a \tcode{Range} type \tcode{T}
-is a \tcode{View}:}
-\begin{itemize}
-\item \oldtxt{If \tcode{T} derives from \tcode{view_base}, \tcode{is_view<T>::value}
-is true.}
-\item \oldtxt{If a top-level \tcode{const} changes \tcode{T}'s \tcode{IteratorType}'s
-\tcode{ReferenceType} type, \tcode{is_view<T>::value}
-is false. \enternote Deep \tcode{const}-ness implies element ownership, whereas shallow
-\tcode{const}-ness implies reference semantics. \exitnote}
-\end{itemize}
+two are differentiated with the help of the \tcode{\newtxt{enable}_view}
+trait. Users may specialize \tcode{\newtxt{enable}_view}
+\newtxt{to derive from \tcode{true_type} or \tcode{false_type}}.
 
 {\color{newclr}
 \pnum
 For a type \tcode{T}, the value of \tcode{\xname{view_predicate<T>}} shall be:
 \begin{itemize}
 \item If \tcode{enable_view<T>} has a member type \tcode{type}, \tcode{enable_view<T>::type::value};
-\item \oldtxt{If}\newtxt{Otherwise, if} \tcode{T} is derived from \tcode{view_base}, \tcode{true};
+\item \newtxt{Otherwise, if} \tcode{T} is derived from \tcode{view_base}, \tcode{true};
 \item \newtxt{Otherwise, if \tcode{T} is an instantiation of class template
 \tcode{initializer_list}~(\cxxref{support.initlist}),
 \tcode{set}~(\cxxref{set}),
 \tcode{multiset}~(\cxxref{multiset}),
 \tcode{unordered_set}~(\cxxref{unord.set}), or
 \tcode{unordered_multiset}~(\cxxref{unord.multiset}), \tcode{false}};
-\item \oldtxt{If}\newtxt{Otherwise, if} both \tcode{T} and \tcode{const T} satisfy \tcode{Range} and \tcode{\oldtxt{ReferenceType}reference_t}
-\tcode{<\oldtxt{IteratorType}iterator_t<T>{>}} is not the same type as \tcode{\oldtxt{ReferenceType}reference_t}
-\tcode{<\oldtxt{IteratorType}iterator_t<const T>{>}},
+\item \newtxt{Otherwise, if} both \tcode{T} and \tcode{const T} satisfy \tcode{Range} and \tcode{reference_t}
+\tcode{<iterator_t<T>{>}} is not the same type as \tcode{reference_t}
+\tcode{<iterator_t<const T>{>}},
 \tcode{false}; \enternote Deep \tcode{const}-ness implies element ownership, whereas shallow \tcode{const}-ness
 implies reference semantics. \exitnote
 \item Otherwise, \tcode{true}.
@@ -7082,7 +7050,7 @@ constexpr bool @\xname{view_predicate}@<T> = false;
 \rSec3[ranges.bounded]{Bounded ranges}
 
 \pnum
-The \tcode{BoundedRange} concept \oldtxt{describes}\newtxt{specifies} requirements
+The \tcode{BoundedRange} concept \newtxt{specifies} requirements
 of an \tcode{Range} type for which \tcode{begin} and \tcode{end} return objects of
 the same type. \enternote The standard containers~(\cxxref{containers})
 \oldtxt{are models of} \newtxt{satisfy} \tcode{BoundedRange}.\exitnote
