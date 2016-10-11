@@ -780,7 +780,7 @@ satisfy \tcode{EqualityComparable}.
 \begin{codeblock}
   template <class I, class T>
   concept bool OutputIterator() {
-    return @\oldtxt{Weak}@Iterator<I>() && Writable<I, T>();
+    return Iterator<I>() && Writable<I, T>();
   }
 \end{codeblock}
 \end{addedblock}
@@ -796,7 +796,7 @@ They should be
 \term{single pass}
 algorithms.
 \removed{Equality and inequality might not be defined.}
-Algorithms that take \oldtxt{weak }output iterators can be used with ostreams as the destination
+Algorithms that take output iterators can be used with ostreams as the destination
 for placing data through the
 \tcode{ostream_iterator}
 class as well as with insert iterators and insert pointers.
@@ -851,14 +851,14 @@ are valid and have the indicated semantics, and
 \begin{addedblock}
 \pnum
 The \tcode{ForwardIterator} concept refines \tcode{InputIterator}~(\ref{iterators.input}),
-\oldtxt{and adds}\newtxt{adding equality comparison and} the multi-pass guarantee, described below.
+\newtxt{adding equality comparison and} the multi-pass guarantee, described below.
 
 \indexlibrary{\idxcode{ForwardIterator}}%
 \begin{codeblock}
   template <class I>
   concept bool ForwardIterator() {
     return InputIterator<I>() &&
-      DerivedFrom<@\oldtxt{IteratorCategory}\newtxt{iterator_category_t}@<I>, forward_iterator_tag>() &&
+      DerivedFrom<@\newtxt{iterator_category_t}@<I>, forward_iterator_tag>() &&
       Incrementable<I>()@\newtxt{ \&\&}@
       @\newtxt{Sentinel<I, I>()}@;
   }
@@ -927,7 +927,7 @@ and adds the ability to move an iterator backward as well as forward.
   template <class I>
   concept bool BidirectionalIterator() {
     return ForwardIterator<I>() &&
-      DerivedFrom<@\oldtxt{IteratorCategory}\newtxt{iterator_category_t}@<I>, bidirectional_iterator_tag>() &&
+      DerivedFrom<@\newtxt{iterator_category_t}@<I>, bidirectional_iterator_tag>() &&
       requires (I i) {
         { @\dcr@i } -> Same<I&>;
         { i@\dcr@ } -> Same<I>;
@@ -984,30 +984,20 @@ notation via subscripting.
 
 \indexlibrary{\idxcode{RandomAccessIterator}}%
 \begin{codeblock}
-  @\oldtxt{template <class I>}@
-  @\oldtxt{concept bool \xname{MutableIterator} = // \expos}@
-    @\oldtxt{Iterator<I>() \&\&}@
-    @\oldtxt{requires(const I i) \{}@
-      @\oldtxt{\{ *i \} -> auto\&;}@
-      @\oldtxt{*i = *i;}@
-    @\oldtxt{\};}@
-
   template <class I>
   concept bool RandomAccessIterator() {
     return BidirectionalIterator<I>() &&
-      DerivedFrom<@\oldtxt{IteratorCategory}\newtxt{iterator_category_t}@<I>, random_access_iterator_tag>() &&
+      DerivedFrom<@\newtxt{iterator_category_t}@<I>, random_access_iterator_tag>() &&
       @\newtxt{Strict}@TotallyOrdered<I>() &&
-      Sized@\oldtxt{IteratorRange}\newtxt{Sentinel}@<I, I>() &&
-      requires (I i, const I j, const @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n) {
+      Sized@\newtxt{Sentinel}@<I, I>() &&
+      requires (I i, const I j, const @\newtxt{difference_type_t}@<I> n) {
         { i += n } -> Same<I&>;
         { j + n } -> Same<I>;
         { n + j } -> Same<I>;
         { i -= n } -> Same<I&>;
         { j - n } -> Same<I>;
-        { j[n] } -> @\oldtxt{const ValueType<I>\&}\newtxt{Same<reference_t<I>{}>}@;
-      } @\oldtxt{\&\&}@
-      @\oldtxt{(!\xname{MutableIterator}<I> ||}@
-        @\oldtxt{requires(const I i, const DifferenceType<I> n) \{ i[n] = *i; *i = i[n]; \})}@;
+        { j[n] } -> @\newtxt{Same<reference_t<I>{}>}@;
+      };
   }
 \end{codeblock}
 \end{addedblock}
@@ -1018,7 +1008,7 @@ notation via subscripting.
 \pnum
 Let \tcode{a} and \tcode{b} be valid iterators of type \tcode{I} such that \tcode{b} is reachable
 from \tcode{a}. Let \tcode{n} be the smallest value of type
-\tcode{\oldtxt{DifferenceType<I>}}\tcode{\newtxt{difference_type_t<I>}} such that after
+\tcode{\newtxt{difference_type_t<I>}} such that after
 \tcode{n} applications of \tcode{++a}, then \tcode{bool(a == b)}. Then
 \tcode{RandomAccessIterator<I>()} is satisfied if and only if:
 
@@ -1053,7 +1043,7 @@ Future Work appendix~(\ref{future.proxy}).}
 \rSec2[indirectcallables.as_function_t]{as_function_t type}
 
 \pnum
-The \tcode{\oldtxt{FunctionType}}\tcode{as_function_t} is an alias used to turn a
+The \tcode{as_function_t} is an alias used to turn a
 callable type~(\cxxref{func.def}) into a function object type~(\ref{function.objects}).
 
 \indexlibrary{\idxcode{function_t}}%
@@ -1070,7 +1060,7 @@ callable type~(\cxxref{func.def}) into a function object type~(\ref{function.obj
   }
 
   template <class T>
-  using @\oldtxt{FunctionType}\newtxt{as_function_t}@ =
+  using @\newtxt{as_function_t}@ =
     decltype(@\xname{as_function}@(declval<T>()));
 \end{codeblock}
 } %% color{oldclr}
@@ -1092,40 +1082,31 @@ callable objects~(\cxxref{func.def}) as arguments.
   concept bool IndirectCallable() {
     return (Readable<Is>() && ...) &&
       @\newtxt{Callable<F, value_type_t<Is>...>();}@
-      @\oldtxt{Function<FunctionType<F>, ValueType<Is>...>();}@
   }
 
   template <class F, class... Is>
   concept bool IndirectRegularCallable() {
     return (Readable<Is>() && ...) &&
       @\newtxt{RegularCallable<F, value_type_t<Is>...>();}@
-      @\oldtxt{RegularFunction<FunctionType<F>, ValueType<Is>...>();}@
   }
 
   template <class F, class... Is>
   concept bool IndirectCallablePredicate() {
     return (Readable<Is>() && ...) &&
       @\newtxt{Predicate<F, value_type_t<Is>...>();}@
-      @\oldtxt{Predicate<FunctionType<F>, ValueType<Is>...>();}@
   }
 
   template <class F, class I1, class I2 = I1>
   concept bool IndirectCallableRelation() {
     return Readable<I1>() && Readable<I2>() &&
       @\newtxt{Relation<F, value_type_t<I1>, value_type_t<I2>{}>();}@
-      @\oldtxt{Relation<FunctionType<F>, ValueType<I1>, ValueType<I2>{}>();}@
   }
 
   template <class F, class I1, class I2 = I1>
   concept bool IndirectCallableStrictWeakOrder() {
     return Readable<I1>() && Readable<I2>() &&
       @\newtxt{StrictWeakOrder<F, value_type_t<I1>, value_type_t<I2>{}>();}@
-      @\oldtxt{StrictWeakOrder<FunctionType<F>, ValueType<I1>, ValueType<I2>{}>();}@
   }
-
-  @\oldtxt{template <class F, class... Is>}@
-  @\oldtxt{using IndirectCallableResultType =}@
-    @\oldtxt{ResultType<FunctionType<F>, ValueType<Is>...>}@
 
   @\newtxt{template <class> struct indirect_result_of \{ \};}@
   @\newtxt{template <class F, class... Is>}@
@@ -1140,11 +1121,11 @@ callable objects~(\cxxref{func.def}) as arguments.
 \rSec2[projected]{Class template \tcode{projected}}
 
 \pnum
-The \tcode{\oldtxt{P}\newtxt{p}rojected} class template is intended for use when specifying the constraints of
+The \tcode{\newtxt{p}rojected} class template is intended for use when specifying the constraints of
 algorithms that accept callable objects and projections. It bundles a \tcode{Readable} type
 \tcode{I} and a function \tcode{Proj} into a new \tcode{Readable} type whose
 \tcode{reference} type is the result of applying \tcode{Proj} to the
-\tcode{\oldtxt{ReferenceType}}\tcode{\newtxt{reference_t}} of \tcode{I}.
+\tcode{\newtxt{reference_t}} of \tcode{I}.
 
 \indexlibrary{\idxcode{projected}}%
 \begin{codeblock}
