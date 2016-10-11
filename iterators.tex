@@ -1130,23 +1130,20 @@ algorithms that accept callable objects and projections. It bundles a \tcode{Rea
 \indexlibrary{\idxcode{projected}}%
 \begin{codeblock}
   template <Readable I, IndirectRegularCallable<I> Proj>
-    @\oldtxt{requires RegularFunction<FunctionType<Proj>, ValueType<I>{}>}@
     @\newtxt{requires RegularCallable<Proj, reference_t<I>{}>()}@
-  struct @\oldtxt{P}\newtxt{p}@rojected {
-    @\oldtxt{using value_type = decay_t<ResultType<FunctionType<Proj>, ValueType<I>{}>{}>;}@
-    @\oldtxt{ResultType<FunctionType<Proj>, ReferenceType<I>{}> operator*() const;}@
+  struct @\newtxt{p}@rojected {
     @\newtxt{using value_type = decay_t<indirect_result_of_t<Proj\&(I)>{}>;}@
     @\newtxt{result_of_t<Proj\&(reference_t<I>)> operator*() const;}@
   };
 
   template <WeaklyIncrementable I, class Proj>
-  struct difference_type<@\oldtxt{P}\newtxt{p}@rojected<I, Proj>> {
-    using type = @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I>;
+  struct difference_type<@\newtxt{p}@rojected<I, Proj>> {
+    using type = @\newtxt{difference_type_t}@<I>;
   };
 \end{codeblock}
 
 \pnum
-\enternote \tcode{\oldtxt{P}\newtxt{p}rojected} is only used to ease constraints specification. Its
+\enternote \tcode{\newtxt{p}rojected} is only used to ease constraints specification. Its
 member function need not be defined.\exitnote
 
 \rSec1[commonalgoreq]{Common algorithm requirements}
@@ -1157,8 +1154,8 @@ member function need not be defined.\exitnote
 There are several additional iterator concepts that are commonly applied to families of algorithms.
 These group together iterator requirements of algorithm families. \newtxt{There are three relational
 concepts that specify how element values are transferred between \tcode{Readable} and \tcode{Writable} types:
-\tcode{IndirectlyMovable}, \tcode{IndirectlyCopyable}, and \tcode{IndirectlySwappable}.} There are \oldtxt{four}\newtxt{three} relational concepts
-for rearrangements: \tcode{Permutable}, \tcode{Mergeable},\oldtxt{ \tcode{MergeMovable},} and \tcode{Sortable}.
+\tcode{IndirectlyMovable}, \tcode{IndirectlyCopyable}, and \tcode{IndirectlySwappable}.} There are \newtxt{three} relational concepts
+for rearrangements: \tcode{Permutable}, \tcode{Mergeable}, and \tcode{Sortable}.
 There is one relational concept for comparing values from different sequences: \tcode{IndirectlyComparable}.
 
 {\color{newclr}
@@ -1172,8 +1169,8 @@ and \tcode{less<>} requires its arguments satisfy \tcode{StrictTotallyOrdered}~(
 \rSec2[commonalgoreq.indirectlymovable]{Concept IndirectlyMovable}
 
 \pnum
-The \tcode{IndirectlyMovable} concept \oldtxt{describes}\newtxt{specifies} the\oldtxt{ move} relationship between a \tcode{Readable}
-type and a \tcode{\oldtxt{Move}Writable} type\newtxt{ between which values may be moved}.
+The \tcode{IndirectlyMovable} concept \newtxt{specifies} the relationship between a \tcode{Readable}
+type and a \tcode{Writable} type\newtxt{ between which values may be moved}.
 
 \indexlibrary{\idxcode{IndirectlyMovable}}%
 \begin{codeblock}
@@ -1184,7 +1181,7 @@ type and a \tcode{\oldtxt{Move}Writable} type\newtxt{ between which values may b
   template <class I@\newtxt{n}@, class Out>
   concept bool IndirectlyMovable() {
     return Readable<I@\newtxt{n}@>() &&
-      @\oldtxt{Move}@Writable<Out, @\oldtxt{ValueType<I>}\newtxt{rvalue_reference_t<In>}@>();
+      Writable<Out, @\newtxt{rvalue_reference_t<In>}@>();
   }
 \end{codeblock}
 
@@ -1226,7 +1223,7 @@ requirements enabling the transfer to be performed through an intermediate objec
 \rSec2[commonalgoreq.indirectlycopyable]{Concept IndirectlyCopyable}
 
 \pnum
-The \tcode{IndirectlyCopyable} concept \oldtxt{describes}\newtxt{specifies} the\oldtxt{ copy} relationship between a \tcode{Readable}
+The \tcode{IndirectlyCopyable} concept \newtxt{specifies} the relationship between a \tcode{Readable}
 type and a \tcode{Writable} type\newtxt{ between which values may be transferred without necessarily moving}.
 
 \indexlibrary{\idxcode{IndirectlyCopyable}}%
@@ -1234,7 +1231,7 @@ type and a \tcode{Writable} type\newtxt{ between which values may be transferred
   template <class I@\newtxt{n}@, class Out>
   concept bool IndirectlyCopyable() {
     return IndirectlyMovable<I@\newtxt{n}@, Out>() &&
-      Writable<Out, @\oldtxt{ValueType}\newtxt{reference_t}@<I@\newtxt{n}@>>();
+      Writable<Out, @\newtxt{reference_t}@<I@\newtxt{n}@>>();
   }
 \end{codeblock}
 
@@ -1281,7 +1278,7 @@ reference types of two \tcode{Readable} types.
   template <class I1, class I2 = I1>
   concept bool IndirectlySwappable() {
     return Readable<I1>() && Readable<I2>() &&
-      Swappable<@\oldtxt{ReferenceType}\newtxt{reference_t}@<I1>, @\oldtxt{ReferenceType}\newtxt{reference_t}@<I2>>();
+      Swappable<@\newtxt{reference_t}@<I1>, @\newtxt{reference_t}@<I2>>();
   }
 \end{codeblock}
 
@@ -1296,7 +1293,7 @@ compare values from two different sequences.
   template <class I1, class I2, class R = equal_to<>, class P1 = identity,
     class P2 = identity>
   concept bool IndirectlyComparable() {
-    return IndirectCallableRelation<R, @\oldtxt{P}\newtxt{p}@rojected<I1, P1>, @\oldtxt{P}\newtxt{p}@rojected<I2, P2>>();
+    return IndirectCallableRelation<R, @\newtxt{p}@rojected<I1, P1>, @\newtxt{p}@rojected<I2, P2>>();
   }
 \end{codeblock}
 
@@ -1311,7 +1308,6 @@ elements in place by moving or swapping them.
   template <class I>
   concept bool Permutable() {
     return ForwardIterator<I>() &&
-      @\oldtxt{Movable<ValueType<I>{>}() \&\&}@
       IndirectlyMovable@\newtxt{Storable}@<I, I>()@\newtxt{ \&\&}@
       @\newtxt{IndirectlySwappable<I, I>()}@;
   }
@@ -1333,15 +1329,9 @@ algorithms that merge sorted sequences into an output sequence by copying elemen
       WeaklyIncrementable<Out>() &&
       IndirectlyCopyable<I1, Out>() &&
       IndirectlyCopyable<I2, Out>() &&
-      IndirectCallableStrictWeakOrder<R, @\oldtxt{P}\newtxt{p}@rojected<I1, P1>, @\oldtxt{P}\newtxt{p}@rojected<I2, P2>>();
+      IndirectCallableStrictWeakOrder<R, @\newtxt{p}@rojected<I1, P1>, @\newtxt{p}@rojected<I2, P2>>();
   }
 \end{codeblock}
-
-\oldtxt{
-\pnum
-\enternote When \tcode{less<>} is used as the
-relation, the value type must satisfy \tcode{TotallyOrdered}.\exitnote
-}
 
 {\color{oldclr}
 \rSec2[commonalgoreq.mergemovable]{Concept MergeMovable}
@@ -1373,35 +1363,28 @@ relation, the value type must satisfy \tcode{TotallyOrdered}.\exitnote
 
 \pnum
 The \tcode{Sortable} concept specifies the common requirements of algorithms that permute
-sequences\oldtxt{ of iterators} into\oldtxt{ an} ordered sequence\newtxt{s} (e.g., \tcode{sort}).
+sequences into ordered sequence\newtxt{s} (e.g., \tcode{sort}).
 
 \indexlibrary{\idxcode{Sortable}}%
 \begin{codeblock}
   template <class I, class R = less<>, class P = identity>
   concept bool Sortable() {
     return Permutable<I>() &&
-      IndirectCallableStrictWeakOrder<R, @\oldtxt{P}\newtxt{p}@rojected<I, P>>();
+      IndirectCallableStrictWeakOrder<R, @\newtxt{p}@rojected<I, P>>();
   }
 \end{codeblock}
 
-\oldtxt{
-\pnum
-\enternote When \tcode{less<>} is used as the
-relation, the value type must satisfy \tcode{TotallyOrdered}.\exitnote
-}
 \end{addedblock}
 
 \rSec1[iterator.synopsis]{Header \tcode{<experimental/ranges/iterator>} synopsis}
 
-\indexlibrary{\idxhdr{experimental/ranges\oldtxt{_v1}/iterator}}%
+\indexlibrary{\idxhdr{experimental/ranges/iterator}}%
 \begin{codeblock}
-namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \newtxt{\{ inline namespace v1} \{}@
+namespace std { @\added{namespace experimental \{ namespace ranges \newtxt{\{ inline namespace v1} \{}@
   // \ref{iterator.primitives}, primitives:
   template<class Iterator> @\changed{struct}{using}@ iterator_traits@\added{ = \seebelow}@;
   @\removed{template<class T> struct iterator_traits<T*>;}@
 
-  @\oldtxt{template<class Category, class T, class Distance = ptrdiff_t,}@
-       @\oldtxt{class Pointer = T*, class Reference = T\&> struct iterator;}@
 \end{codeblock}
 
 \begin{addedblock}
@@ -1409,19 +1392,18 @@ namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \
   template <class> struct difference_type;
   template <class> struct value_type;
   template <class> struct iterator_category;
-  template <class @\oldtxt{WeaklyIncrementable}\newtxt{T}@> using @\oldtxt{DifferenceType}\newtxt{difference_type_t}@
-    = typename difference_type<@\oldtxt{WeaklyIncrementable}\newtxt{T}@>::type;
-  template <class @\oldtxt{Readable}\newtxt{T}@> using @\oldtxt{ValueType}\newtxt{value_type_t}@
-    = typename value_type<@\oldtxt{Readable}\newtxt{T}@>::type;
-  template <class @\oldtxt{WeakInputIterator}\newtxt{T}@> using @\oldtxt{IteratorCategory}\newtxt{iterator_category_t}@
-    = typename iterator_category<@\oldtxt{WeakInputIterator}\newtxt{T}@>::type;
+  template <class @\newtxt{T}@> using @\newtxt{difference_type_t}@
+    = typename difference_type<@\newtxt{T}@>::type;
+  template <class @\newtxt{T}@> using @\newtxt{value_type_t}@
+    = typename value_type<@\newtxt{T}@>::type;
+  template <class @\newtxt{T}@> using @\newtxt{iterator_category_t}@
+    = typename iterator_category<@\newtxt{T}@>::type;
 
 \end{codeblock}
 \end{addedblock}
 \begin{codeblock}
   struct output_iterator_tag { };
-  @\oldtxt{struct weak_input_iterator_tag \{ \};}@
-  struct input_iterator_tag @\oldtxt{: public weak_input_iterator_tag }@{ };
+  struct input_iterator_tag { };
   struct forward_iterator_tag :@\removed{ public}@ input_iterator_tag { };
   struct bidirectional_iterator_tag :@\removed{ public}@ forward_iterator_tag { };
   struct random_access_iterator_tag :@\removed{ public}@ bidirectional_iterator_tag { };
@@ -1445,24 +1427,24 @@ namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \
 \end{removedblock}
 \begin{addedblock}
 \begin{codeblock}
-  template <@\oldtxt{Weak}@Iterator I>
-    void advance(I& i, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n);
+  template <Iterator I>
+    void advance(I& i, \newtxt{difference_type_t}@<I> n);
   template <Iterator I, Sentinel<I> S>
     void advance(I& i, S bound);
   template <Iterator I, Sentinel<I> S>
-    @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> advance(I& i, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n, S bound);
+    \newtxt{difference_type_t}@<I> advance(I& i, \newtxt{difference_type_t}@<I> n, S bound);
   template <Iterator I, Sentinel<I> S>
-    @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> distance(I first, S last);
-  template <@\oldtxt{Weak}@Iterator I>
-    I next(I x, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n = 1);
+    \newtxt{difference_type_t}@<I> distance(I first, S last);
+  template <Iterator I>
+    I next(I x, \newtxt{difference_type_t}@<I> n = 1);
   template <Iterator I, Sentinel<I> S>
     I next(I x, S bound);
   template <Iterator I, Sentinel<I> S>
-    I next(I x, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n, S bound);
+    I next(I x, \newtxt{difference_type_t}@<I> n, S bound);
   template <BidirectionalIterator I>
-    I prev(I x, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n = 1);
+    I prev(I x, \newtxt{difference_type_t}@<I> n = 1);
   template <BidirectionalIterator I>
-    I prev(I x, @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I> n, I bound);
+    I prev(I x, \newtxt{difference_type_t}@<I> n, I bound);
 \end{codeblock}
 \end{addedblock}
 
@@ -1472,7 +1454,7 @@ namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \
   @\added{\itshape{\rmfamily{// \ref{iterators.reverse} Reverse iterators}}}@
   template <@\changed{class Iterator}{BidirectionalIterator I}@> class reverse_iterator;
 
-  template <class @\removed{Iterator1}\oldtxt{BidirectionalIterator }\added{I1}@, class @\removed{Iterator2}\oldtxt{BidirectionalIterator }\added{I2}@>
+  template <class @\removed{Iterator1}\added{I1}@, class @\removed{Iterator2}\added{I2}@>
       @\added{requires EqualityComparable<I1, I2>()}@
     bool operator==(
       const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
@@ -1482,7 +1464,7 @@ namespace std { @\added{namespace experimental \{ namespace ranges\oldtxt{_v1} \
     @\added{bool operator!=(}@
       @\added{const reverse_iterator<I1>\& x,}@
       @\added{const reverse_iterator<I2>\& y);}@
-  template <class @\removed{Iterator1}\oldtxt{RandomAccessIterator }\added{I1}@, class @\removed{Iterator2}\oldtxt{RandomAccessIterator }\added{I2}@>
+  template <class @\removed{Iterator1}\added{I1}@, class @\removed{Iterator2}\added{I2}@>
       @\added{requires \newtxt{Strict}TotallyOrdered<I1, I2>()}@
     bool operator<(
       const reverse_iterator<@\changed{Iterator1}{I1}@>& x,
