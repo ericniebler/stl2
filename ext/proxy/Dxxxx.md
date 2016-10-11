@@ -1033,7 +1033,7 @@ Before subsubsection "Iterator associated types" ([iterator.assoc]), add a new s
 
 > 24.6.? *iter_move*                     [iterator.utils.iter_move]
 >
-> 1\. The name `iter_move` denotes a *customization point object* (17.5.2.1.5 [customization.point.object]). The effect of the expression `ranges::iter_move(E)` for some expression `E` is equivalent to `iter_move(E)`, with overload resolution performed in a context described below. `ranges::iter_move(E)` is equality-preserving ([concepts.lib.general.equality]).
+> 1\. The name `iter_move` denotes a *customization point object* (17.5.2.1.5 [customization.point.object]). The effect of the expression `ranges::iter_move(E)` for some expression `E` is equivalent to `iter_move(E)`, with overload resolution performed in a context described below.
 >
 > 2\. The context in which the expression `iter_move(E)` is evaluated
 >
@@ -1060,7 +1060,7 @@ Before subsubsection "Iterator associated types" ([iterator.assoc]), add a new s
 > > > >
 > > > > 2.3. *Effects:* Equivalent to `static_cast<Ret>(*r)`
 >
-> 3\. If the `iter_move` function selected by overload resolution ([over.match]) is not equality-preserving ([concepts.lib.general.equality]), or if `iter_move(r)` does not equal `*r`, the program is ill-formed with no diagnostic required.
+> 3\. If, for the `iter_move` function selected by overload resolution ([over.match]), `iter_move(r)` does not equal `*r`, the program is ill-formed with no diagnostic required.
 >
 > 24.6.? *iter_swap*                     [iterator.utils.iter_swap]
 >
