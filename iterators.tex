@@ -2039,25 +2039,25 @@ alias that collects an iterator's associated types. It is defined as if:
   template <InputIterator I> struct @\xname{pointer_type}@ {        @\newtxt{// \expos}@
     using type = add_pointer_t<@\newtxt{reference_t}@<I>>;
   };
-  template <@\oldtxt{Weak}@InputIterator I>
+  template <InputIterator I>
     requires requires(I i) { { i.operator->() } -> auto&&; }
   struct @\xname{pointer_type}@<I> {                                    @\newtxt{// \expos}@
     using type = decltype(declval<I>().operator->());
   };
   template <class> struct @\xname{iterator_traits}@ { };                @\newtxt{// \expos}@
-  template <@\oldtxt{Weak}@Iterator I> struct @\xname{iterator_traits}@<I> {
-    using difference_type = @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I>;
+  template <Iterator I> struct @\xname{iterator_traits}@<I> {
+    using difference_type = @\newtxt{difference_type_t}@<I>;
     using value_type = void;
     using reference = void;
     using pointer = void;
     using iterator_category = output_iterator_tag;
   };
-  template <@\oldtxt{Weak}@InputIterator I> struct @\xname{iterator_traits}@<I> {  @\newtxt{// \expos}@
-    using difference_type = @\oldtxt{DifferenceType}\newtxt{difference_type_t}@<I>;
-    using value_type = @\oldtxt{ValueType}\newtxt{value_type_t}@<I>;
-    using reference = @\oldtxt{ReferenceType}\newtxt{reference_t}@<I>;
+  template <InputIterator I> struct @\xname{iterator_traits}@<I> {  @\newtxt{// \expos}@
+    using difference_type = @\newtxt{difference_type_t}@<I>;
+    using value_type = @\newtxt{value_type_t}@<I>;
+    using reference = @\newtxt{reference_t}@<I>;
     using pointer = typename @\xname{pointer_type}@<I>::type;
-    using iterator_category = @\oldtxt{IteratorCategory}\newtxt{iterator_category_t}@<I>;
+    using iterator_category = @\newtxt{iterator_category_t}@<I>;
   };
   template <class I>
     using iterator_traits = @\xname{iterator_traits}@<I>;
@@ -2066,7 +2066,6 @@ alias that collects an iterator's associated types. It is defined as if:
 \pnum
 \enternote
 \tcode{iterator_traits} is an alias template
-\oldtxt{to intentionally break code that tries to specialize it}
 \newtxt{to prevent user code from specializing it}.
 \exitnote
 
@@ -2081,11 +2080,11 @@ function, a \Cpp program can do the following:
 \begin{codeblock}
 template <@\removed{class }@BidirectionalIterator@\added{ I}@>
 void reverse(@\changed{BidirectionalIterator}{I}@ first, @\changed{BidirectionalIterator}{I}@ last) {
-  @\removed{typename iterator_traits<BidirectionalIterator>::difference_type}\oldtxt{DifferenceType<I>}\newtxt{difference_type_t<I>}@ n =
+  @\removed{typename iterator_traits<BidirectionalIterator>::difference_type}\newtxt{difference_type_t<I>}@ n =
     distance(first, last);
   --n;
   while(n > 0) {
-    @\removed{typename iterator_traits<BidirectionalIterator>::value_type}\oldtxt{ValueType<I>}\newtxt{value_type_t<I>}@
+    @\removed{typename iterator_traits<BidirectionalIterator>::value_type}\newtxt{value_type_t<I>}@
       tmp = *first;
     *first++ = *--last;
     *last = tmp;
@@ -2100,15 +2099,15 @@ void reverse(@\changed{BidirectionalIterator}{I}@ first, @\changed{Bidirectional
 
 \pnum
 To facilitate interoperability between new code using iterators conforming to this document
-and older code using iterators \oldtxt{conforming to}\newtxt{that conform to the iterator
+and older code using iterators \newtxt{that conform to the iterator
 requirements specified in} ISO/IEC 14882, three specializations of \tcode{std::iterator_traits}
 are provided to map the newer iterator categories \newtxt{and associated types} to the older ones.
 
 \begin{codeblock}
 namespace std {
-  template <experimental::ranges@\oldtxt{_v1}@::@\oldtxt{Weak}@Iterator Out>
+  template <experimental::ranges::Iterator Out>
   struct iterator_traits<Out> {
-    using difference_type   = experimental::ranges@\oldtxt{_v1}@::@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<Out>;
+    using difference_type   = experimental::ranges::@\newtxt{difference_type_t}@<Out>;
     using value_type        = @\seebelow@;
     using reference         = @\seebelow@;
     using pointer           = @\seebelow@;
@@ -2119,7 +2118,7 @@ namespace std {
 \pnum
 The nested type \tcode{value_type} is computed as follows:
 \begin{itemize}
-\item If \oldtxt{type \tcode{Out} has a nested type \tcode{value_type}}
+\item If 
       \newtxt{\tcode{Out::value_type} is valid and denotes a type}, then
       \tcode{std::iterator_traits<Out>::value_type} is \tcode{Out::value_type}.
 \item Otherwise, \tcode{std::iterator_traits<Out>::value_type} is \tcode{void}.
@@ -2128,7 +2127,7 @@ The nested type \tcode{value_type} is computed as follows:
 \pnum
 The nested type \tcode{reference} is computed as follows:
 \begin{itemize}
-\item If \oldtxt{type \tcode{Out} has a nested type \tcode{reference}}
+\item If 
       \newtxt{\tcode{Out::reference} is valid and denotes a type}, then
       \tcode{std::iterator_traits<Out>::reference} is \tcode{Out::\brk{}reference}.
 \item Otherwise, \tcode{std::iterator_traits<Out>::reference} is \tcode{void}.
@@ -2137,21 +2136,21 @@ The nested type \tcode{reference} is computed as follows:
 \pnum
 The nested type \tcode{pointer} is computed as follows:
 \begin{itemize}
-\item If \oldtxt{type \tcode{Out} has a nested type \tcode{pointer}}
+\item If 
       \newtxt{\tcode{Out::pointer} is valid and denotes a type}, then
       \tcode{std::iterator_traits<Out>::pointer} is \tcode{Out::pointer}.
 \item Otherwise, \tcode{std::iterator_traits<Out>::pointer} is \tcode{void}.
 \end{itemize}
 
 \begin{codeblock}
-  template <experimental::ranges@\oldtxt{_v1}@::@\oldtxt{Weak}@InputIterator @\oldtxt{Weak}@In>
-  struct iterator_traits<@\oldtxt{Weak}@In> { };
+  template <experimental::ranges::InputIterator In>
+  struct iterator_traits<In> { };
 
-  template <experimental::ranges@\oldtxt{_v1}@::InputIterator In>
+  template <experimental::ranges::InputIterator In>
     @\newtxt{requires Sentinel<In, In>()}@
   struct iterator_traits<In> {
-    using difference_type   = experimental::ranges@\oldtxt{_v1}@::@\oldtxt{DifferenceType}\newtxt{difference_type_t}@<In>;
-    using value_type        = experimental::ranges@\oldtxt{_v1}@::@\oldtxt{ValueType}\newtxt{value_type_t}@<In>;
+    using difference_type   = experimental::ranges::@\newtxt{difference_type_t}@<In>;
+    using value_type        = experimental::ranges::@\newtxt{value_type_t}@<In>;
     using reference         = @\seebelow@;
     using pointer           = @\seebelow@;
     using iterator_category = @\seebelow@;
