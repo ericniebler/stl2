@@ -90,9 +90,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </ul>
 </div>
 <h1 id="introduction"><span class="header-section-number">1</span> Introduction</h1>
-<!-- This paper presents several design changes to N4560, the working paper for the Technical Specification for C++ Extensions for Ranges (the "Ranges TS"). Each change will be presented herein in a separate section that motivates the change and describes the design problem that change is meant to address. Technical specifications are relatively brief, since the complete specification and wording of all the changes is in N4569, a document that speculatively integrates these changes completely with the wording of N4560. This process is "unusual" in that the proposal authors failed to grok the process changes resulting from incorporating the evolving proposal into a TS working paper.
-
-To throw some more fuel on the fires of confusion: the first design change presented herein (customization point redesign) *is* present in N4560. However, it was not included in the text of the proposal P0021R0 that was voted to become the initial text of the new TS working paper in Kona. The change was "backdoored" into the WP between P0021 and the publication of N4560 in the post-Kona mailing. -->
+<p>This paper presents a design change to <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4560.pdf" title="Working Draft: C++ Extensions for Ranges">N4560, the working paper for the Technical Specification for C++ Extensions for Ranges (the “Ranges TS”)</a><span class="citation">[3]</span>. This work has already been speculatively integrated - along with the proposals in <a href="http://wg21.link/p0370">P0370 “Ranges TS Design Updates Omnibus”</a><span class="citation">[1]</span> - with the text of the working paper. The resulting document is <a href="http://wg21.link/p0459">P0459 “C++ Extensions for Ranges: Speculative Combined Proposals”</a><span class="citation">[4]</span>. We briefly discuss how the design of the <code>Writable</code> and <code>MoveWritable</code> concepts impacts the specification of algorithms, and propose to correct the problem by merging the two into a single concept.</p>
 <!--
 ## Revision history
 ### R0 -> R1
@@ -131,7 +129,7 @@ concept <span class="dt">bool</span> Writable() {
 <p>The existence of the two distinct concepts results in a partitioning of algorithms into two sets: those that are based on <code>MoveWritable</code> or refinements thereof that always move, and those based on <code>Writable</code> or refinements thereof that could copy or move or do <em>both</em>. In practice, algorithms in the <code>Writable</code>/<code>IndirectlyCopyable</code> are always specified to copy; passing <code>move_iterator</code>s to these algorithms results in either (a) a diagnosis that the program is ill-formed when the value type of the iterator is not copyable, or (b) undefined behavior when the value type of the iterator <em>is</em> copyable, but the expression <code>*out = *in</code> does not leave the value of <code>*in</code> unchanged as required by the semantic constraints of <code>Writable</code>. As a result, we need distinct “copy” and “move” variants of algorithms resulting in proliferation. In N4560, for example, there are <code>partition_move</code> and <code>merge_move</code> algorithms as a result of this issue.</p>
 <p>The need to choose between <code>Writable</code> and <code>MoveWritable</code> also complicates generic code. Consider a simplified variant of the <code>transform</code> algorithm:</p>
 <div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span>&lt;InputIterator I, Sentinel&lt;I&gt; S, WeaklyIncrementable O, <span class="kw">class</span> F&gt;
-  requires Writable&lt;O, indirect_result_of_t&lt;F&amp;(reference_t&lt;I&gt;)&gt;&gt;()
+  requires Writable&lt;O, indirect_result_of_t&lt;F&amp;(I)&gt;&gt;()
 <span class="dt">void</span> transform(I first, S last, O result, F op);</code></pre></div>
 <p>Presumably, implementation of this algorithm requires an assignment expression like <code>*result = op(*first);</code>. We’re again constrained (pun intended) by the choice of concepts: if <code>op(*first)</code> returns an rvalue of type <code>T</code>, <code>Writable</code> unnecesarily requires <code>T</code> to be copyable. If <code>op(*first)</code> returns an lvalue, <code>MoveWritable</code> would allow it to be modified by the assignment. None of the concepts defined in N4560 enable us to constrain <code>transform</code> in a manner that is compatible with its semantics in C++14.</p>
 <p>Separately, there is a problem using the existing concepts to constrain algorithms that create temporaries. Such algorithms typically require the ability to:</p>
@@ -141,9 +139,9 @@ concept <span class="dt">bool</span> Writable() {
 <li>transfer values between multiple temporaries</li>
 <li>transfer a value from a temporary into an output sequence</li>
 </ol>
-<p>These algorithms are underconstrained in N4560. Wrapping the requirements up into convenient named packages would eases the specification of algorithms.</p>
+<p>These algorithms are underconstrained in N4560. Wrapping the requirements up into convenient named packages would ease the specification of algorithms.</p>
 <h1 id="proposed-design"><span class="header-section-number">2</span> Proposed Design</h1>
-<p>We propose coalescing the existing <code>Writable</code> and <code>MoveWritable</code> concepts into a single <code>Writable</code> concept, and adding concepts <code>IndirectlyMoveStorable</code> and <code>IndirectlyCopyStorable</code> for constraining algorithms that use temporaries.</p>
+<p>We propose coalescing the existing <code>Writable</code> and <code>MoveWritable</code> concepts into a single <code>Writable</code> concept, and adding concepts <code>IndirectlyMovableStorable</code> and <code>IndirectlyCopyableStorable</code> for constraining algorithms that use temporaries.</p>
 <h2 id="coalescing-writable-and-movewritable"><span class="header-section-number">2.1</span> Coalescing <code>Writable</code> and <code>MoveWritable</code></h2>
 <div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> O, <span class="kw">class</span> T&gt;
 concept <span class="dt">bool</span> Writable() {
@@ -330,9 +328,7 @@ concept <span class="dt">bool</span> IndirectlyCopyableStorable() {
 {
   copy_if(move_iterator&lt;I&gt;{first}, move_sentinel&lt;S&gt;{last}, out, pred);
 }</code></pre></div>
-<ul>
-<li>end example ]</li>
-</ul>
+<p>– end example ]</p>
 </blockquote>
 <p>Insert a new subsection [move.sentinel] under [iterators.move]:</p>
 <blockquote>
@@ -1406,11 +1402,23 @@ Strip occurrences of the prefix `Weak` wherever it appears in clause [algorithms
 The authors would like to thank Andrew Sutton and Sean Parent for their participation in the discussions that produced most of the ideas herein.
 -->
 <h3 id="implementation-experience"><span class="header-section-number">3.0.1</span> Implementation Experience</h3>
-<p>The proposed design changes are implemented in <a href="https://github.com/CaseyCarter/cmcstl2" title="CMCSTL2: Casey Carter&#39;s reference implementation of STL2">CMCSTL2, a full implementation of the Ranges TS with proxy extensions</a><span class="citation">[1]</span>.</p>
+<p>The proposed design changes are implemented in both <a href="https://github.com/CaseyCarter/cmcstl2" title="CMCSTL2: Casey Carter&#39;s reference implementation of STL2">CMCSTL2, a full implementation of the Ranges TS with proxy extensions</a><span class="citation">[2]</span>, and <a href="http://github.com/ericniebler/range-v3" title="Range v3">range-v3</a><span class="citation">[5]</span>.</p>
 <h1 id="references" class="unnumbered">References</h1>
 <div id="refs" class="references">
+<div id="ref-p0370">
+<p>[1] Carter, C. and Niebler, E. 2016. P0370R1: Ranges TS Design Updates Omnibus.</p>
+</div>
 <div id="ref-cmcstl2">
-<p>[1] CMCSTL2: <em><a href="https://github.com/CaseyCarter/cmcstl2" class="uri">https://github.com/CaseyCarter/cmcstl2</a></em>. Accessed: 2016-05-26.</p>
+<p>[2] CMCSTL2: <em><a href="https://github.com/CaseyCarter/cmcstl2" class="uri">https://github.com/CaseyCarter/cmcstl2</a></em>. Accessed: 2016-05-26.</p>
+</div>
+<div id="ref-n4560">
+<p>[3] Niebler, E. and Carter, C. 2015. N4560: Working Draft: C++ Extensions for Ranges.</p>
+</div>
+<div id="ref-p0459">
+<p>[4] Niebler, E. and Carter, C. 2016. P0459: C++ Extensions for Ranges: Speculative Combined Proposals.</p>
+</div>
+<div id="ref-range-v3">
+<p>[5] Range v3: <em><a href="http://github.com/ericniebler/range-v3" class="uri">http://github.com/ericniebler/range-v3</a></em>. Accessed: 2014-10-08.</p>
 </div>
 </div>
 </body>
