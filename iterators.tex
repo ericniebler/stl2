@@ -376,34 +376,6 @@ The only valid use of an \tcode{operator*} is on the left side of the assignment
 \textit{Assignment through the same value of the writable type happens only once.}
 \exitnote
 
-{\color{oldclr}
-\rSec2[iterators.oldwritable]{(Was) Concept Writable}
-
-\pnum
-The \tcode{Writable} concept describes the requirements for copying a value into an iterator's
-referenced object.
-
-\begin{codeblock}
-  template <class Out, class T>
-  concept bool Writable() {
-    return MoveWritable<Out, T>() &&
-      requires (Out o, const T v) {
-        *o = v; // not required to be equality preserving
-      };
-  }
-\end{codeblock}
-
-\pnum
-Let \tcode{v} be an lvalue of type (possibly \tcode{const}) \tcode{T} or an rvalue
-of type \tcode{const T}, and let \tcode{o} be a dereferenceable object of type
-\tcode{Out}. Then \tcode{Writable<Out, T>()} is satisfied if and only if
-
-\begin{itemize}
-\item If \tcode{Out} is \tcode{Readable}, after the assignment \tcode{*o = v},
-\tcode{*o} is equal to the value of \tcode{v}.
-\end{itemize}
-} %% color{oldclr}
-
 \rSec2[iterators.weaklyincrementable]{Concept WeaklyIncrementable}
 
 \pnum
@@ -570,36 +542,6 @@ requirements on a\newtxt{n} \tcode{Iterator} and a \tcode{Sentinel}
 that allow the use of the \tcode{-} operator to compute the distance
 between them in constant time.
 
-{\color{oldclr}
-\indexlibrary{\idxcode{SizedIteratorRange}}%
-\begin{itemdecl}
-  template <class I, class S>
-  concept bool SizedIteratorRange() {
-    return Sentinel<S, I>() &&
-      requires (const I i, const S j) {
-        { i - i } -> difference_type_t<I>;
-        { j - j } -> difference_type_t<I>;
-        { i - j } -> difference_type_t<I>;
-        { j - i } -> difference_type_t<I>;
-      };
-  }
-\end{itemdecl}
-
-\pnum
-Let \tcode{a} be a valid iterator of type \tcode{I} and \tcode{b} be
-a valid sentinel of type \tcode{S}. Let \tcode{n} be the smallest value
-of type \tcode{difference_type_t<I>} such that after \tcode{n}
-applications of \tcode{++a}, then \tcode{bool(a == b)}.
-Then \tcode{SizedIteratorRange<I, S>()} is satisfied if and only if:
-
-\begin{itemize}
-\item \tcode{(b - a) == n}.
-\item \tcode{(a - b) == -n}.
-\item \tcode{(a - a) == 0}.
-\item \tcode{(b - b) == 0}.
-\end{itemize}
-} %% color{oldclr}
-
 \indexlibrary{\idxcode{SizedSentinel}}%
 {\color{newclr}
 \begin{itemdecl}
@@ -654,46 +596,6 @@ concept is satisfied by pairs of
 \tcode{RandomAccessIterator}s~(\ref{iterators.random.access}) and by
 counted iterators and their sentinels~(\ref{counted.iterator}).\exitnote
 
-{\color{oldclr}
-\rSec2[iterators.olditerator]{(Was) Concept Iterator}
-
-\pnum
-The \tcode{Iterator} concept refines \tcode{WeakIterator}~(\ref{iterators.iterator}) and adds
-the requirement that the iterator is equality comparable.
-
-\pnum
-In the \tcode{Iterator} concept, the set of values over which
-\tcode{==} is (required to be) defined can change over time.
-Each algorithm places additional requirements on the domain of
-\tcode{==} for the iterator values it uses.
-These requirements can be inferred from the uses that algorithm
-makes of \tcode{==} and \tcode{!=}.
-\enterexample
-the call \tcode{find(a, b, x)}
-is defined only if the value of \tcode{a}
-has the property \textit{p}
-defined as follows:
-\tcode{b} has property \textit{p}
-and a value \tcode{i}
-has property \textit{p}
-if
-\tcode{(*i==x)}
-or if
-\tcode{(*i!=x}
-and
-\tcode{++i}
-has property
-\textit{p}).
-\exitexample
-
-\begin{itemdecl}
-  template <class I>
-  concept bool Iterator() {
-    return WeakIterator<I>() &&
-      EqualityComparable<I>();
-  }
-\end{itemdecl}
-} %% color{oldclr}
 \end{addedblock}
 
 \ednote{Section ``Input iterators'' renamed to ``Concept InputIterator'' below:}
@@ -726,40 +628,6 @@ input iterators are not required to be comparable for equality.
   }
 \end{codeblock}
 \end{addedblock}
-
-{\color{oldclr}
-\rSec2[iterators.oldinput]{(Was) Concept InputIterator}
-
-\pnum
-The \tcode{InputIterator} concept is a refinement of \tcode{Iterator}~(\ref{iterators.iterator}) and
-\tcode{WeakInputIterator}~(\ref{iterators.input}).
-
-\begin{codeblock}
-  template <class I>
-  concept bool InputIterator() {
-    return WeakInputIterator<I>() &&
-      DerivedFrom<IteratorCategory<I>, input_iterator_tag>() &&
-      Iterator<I>();
-  }
-\end{codeblock}
-
-\pnum
-\enternote
-Since \tcode{InputIterator} is only \tcode{WeaklyIncrementable},
-\tcode{a == b}
-does not imply
-\tcode{++a == ++b}.
-(Equality does not guarantee the substitution property or referential transparency.)
-Algorithms on input iterators should never attempt to pass through the same iterator twice.
-They should be
-\term{single pass}
-algorithms.
-\tcode{value_type_t<I>} is not required
-to be a \tcode{Copyable}
-type~(\ref{concepts.lib.object.copyable}). These algorithms can be used with
-istreams as the source of the input data through the \tcode{istream_iterator} class template.
-\exitnote
-} %% color{oldclr}
 
 \ednote{Section ``Output iterators'' renamed to ``Concept OutputIterator'' below:}
 
@@ -801,28 +669,6 @@ for placing data through the
 \tcode{ostream_iterator}
 class as well as with insert iterators and insert pointers.
 \exitnote
-
-\begin{addedblock}
-{\color{oldclr}
-\rSec2[iterators.oldoutput]{(Was) Concept OutputIterator}
-
-\pnum
-The \tcode{OutputIterator} concept is a refinement of \tcode{Iterator}~(\ref{iterators.iterator}) and
-\tcode{WeakOutputIterator}~(\ref{iterators.output}).
-
-\begin{codeblock}
-  template <class I, class T>
-  concept bool OutputIterator() {
-    return WeakOutputIterator<I, T>() && Iterator<I>();
-  }
-\end{codeblock}
-
-\pnum
-\enternote Output iterators are used by single-pass
-algorithms that write into a bounded range, like \tcode{generate}.
-\exitnote
-} %% color{oldclr}
-\end{addedblock}
 
 \rSec2[iterators.forward]{Concept ForwardIterator}
 
@@ -1039,32 +885,6 @@ objects~(\cxxref{func.require}) as arguments.
 the transition should we ever decide to support proxy iterators in the future. See the
 Future Work appendix~(\ref{future.proxy}).}
 
-{\color{oldclr}
-\rSec2[indirectcallables.as_function_t]{as_function_t type}
-
-\pnum
-The \tcode{as_function_t} is an alias used to turn a
-callable type~(\cxxref{func.def}) into a function object type~(\ref{function.objects}).
-
-\indexlibrary{\idxcode{function_t}}%
-\begin{codeblock}
-  // Exposition only
-  template <class T>
-    requires is_member_pointer<decay_t<T>>::value
-  auto @\xname{as_function}@(T&& t) {
-    return mem_fn(t);
-  }
-  template <class T>
-  T @\xname{as_function}@(T&& t) {
-    return std::forward<T>(t);
-  }
-
-  template <class T>
-  using @\newtxt{as_function_t}@ =
-    decltype(@\xname{as_function}@(declval<T>()));
-\end{codeblock}
-} %% color{oldclr}
-
 \rSec2[indirectcallables.indirectfunc]{Indirect callables}
 
 \pnum
@@ -1188,19 +1008,6 @@ type and a \tcode{Writable} type\newtxt{ between which values may be moved}.
 \ednote{This is a simple version of \tcode{rvalue_reference_t} to be replaced
 with the formulation from P0022 when that proposal is integrated.}
 
-{\color{oldclr} %% Redundant with Writable
-\pnum
-Let \tcode{i} be an object of type \tcode{I}, and let \tcode{o} be a
-dereferenceable object of type \tcode{Out}. Then
-\tcode{IndirectlyMovable<I, Out>()} is satisfied if and only if
-
-\begin{itemize}
-\item If \tcode{Out} is \tcode{Readable}, after the assignment
-\tcode{*o = std::move(*i)}, \tcode{*o} is equal to
-the value of \tcode{*i} before the assignment.
-\end{itemize}
-} %% color{oldclr}
-
 {\color{newclr}
 \pnum
 The \tcode{IndirectlyMovableStorable} concept augments \tcode{IndirectlyMovable} with additional
@@ -1234,18 +1041,6 @@ type and a \tcode{Writable} type\newtxt{ between which values may be transferred
       Writable<Out, @\newtxt{reference_t}@<I@\newtxt{n}@>>();
   }
 \end{codeblock}
-
-{\color{oldclr} %% Redundant with Writable
-\pnum
-Let \tcode{i} be an object of type \tcode{I}, and let \tcode{o} be a
-dereferenceable object of type \tcode{Out}. Then
-\tcode{IndirectlyCopyable<I, Out>()} is satisfied if and only if
-
-\begin{itemize}
-\item If \tcode{Out} is \tcode{Readable}, after the assignment \tcode{*o = *i},
-\tcode{*o} is equal to the value of \tcode{*i}.
-\end{itemize}
-} %% color{oldclr}
 
 {\color{newclr}
 \pnum
@@ -1332,32 +1127,6 @@ algorithms that merge sorted sequences into an output sequence by copying elemen
       IndirectCallableStrictWeakOrder<R, @\newtxt{p}@rojected<I1, P1>, @\newtxt{p}@rojected<I2, P2>>();
   }
 \end{codeblock}
-
-{\color{oldclr}
-\rSec2[commonalgoreq.mergemovable]{Concept MergeMovable}
-
-\pnum
-The \tcode{MergeMovable} concept specifies the requirements of
-algorithms that merge sorted sequences into an output sequence by moving elements.
-
-\indexlibrary{\idxcode{MergeMovable}}%
-\begin{codeblock}
-  template <class I1, class I2, class Out,
-      class R = less<>, class P1 = identity, class P2 = identity>
-  concept bool MergeMovable() {
-    return InputIterator<I1>() &&
-      InputIterator<I2>() &&
-      WeaklyIncrementable<Out>() &&
-      IndirectlyMovable<I1, Out>() &&
-      IndirectlyMovable<I2, Out>() &&
-      IndirectCallableStrictWeakOrder<R, Projected<I1, P1>, Projected<I2, P2>>();
-  }
-\end{codeblock}
-
-\pnum
-\enternote When \tcode{less<>} is used as the
-relation, the value type must satisfy \tcode{TotallyOrdered}.\exitnote
-} %% color{oldclr}
 
 \rSec2[commonalgoreq.sortable]{Concept Sortable}
 
@@ -3922,23 +3691,6 @@ reference operator*() const;
 \removed{\tcode{std::move}}\added{\tcode{static_cast<reference>}}\tcode{(*current)}.
 \end{itemdescr}
 
-\begin{removedblock}
-{\color{oldclr}
-\rSec4[move.iter.op.ref]{\tcode{move_iterator::operator->}}
-
-\indexlibrary{\idxcode{operator->}!\idxcode{move_iterator}}%
-\indexlibrary{\idxcode{move_iterator}!\idxcode{operator->}}%
-\begin{itemdecl}
-pointer operator->() const;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\returns \tcode{current}.
-\end{itemdescr}
-} %% color{oldclr}
-\end{removedblock}
-
 \rSec4[move.iter.op.incr]{\tcode{move_iterator::operator++}}
 
 \indexlibrary{\idxcode{operator++}!\idxcode{move_iterator}}%
@@ -4802,91 +4554,6 @@ Class \tcode{default_sentinel} is an empty type used to denote the end of a
 range. It is intended to be used together with iterator types that know the bound
 of their range (e.g., \tcode{counted_iterator}~(\ref{counted.iterator})).
 
-{\color{oldclr}
-\rSec3[default.sent.ops]{\tcode{default_sentinel} operations}
-
-\rSec4[default.sent.op.comp]{\tcode{default_sentinel} comparisons}
-
-\indexlibrary{\idxcode{operator==}!\idxcode{default_sentinel}}%
-\indexlibrary{\idxcode{default_sentinel}!\idxcode{operator==}}%
-\begin{itemdecl}
-constexpr bool operator==(default_sentinel x, default_sentinel y) noexcept;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\returns \tcode{true}
-\end{itemdescr}
-
-\indexlibrary{\idxcode{operator"!=}!\idxcode{default_sentinel}}%
-\indexlibrary{\idxcode{default_sentinel}!\idxcode{operator"!=}}%
-\begin{itemdecl}
-constexpr bool operator!=(default_sentinel x, default_sentinel y) noexcept;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\returns \tcode{false}
-\end{itemdescr}
-
-\indexlibrary{\idxcode{operator<}!\idxcode{default_sentinel}}%
-\indexlibrary{\idxcode{default_sentinel}!\idxcode{operator<}}%
-\begin{itemdecl}
-constexpr bool operator<(default_sentinel x, default_sentinel y) noexcept;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\returns \tcode{false}
-\end{itemdescr}
-
-\indexlibrary{\idxcode{operator<=}!\idxcode{default_sentinel}}%
-\indexlibrary{\idxcode{default_sentinel}!\idxcode{operator<=}}%
-\begin{itemdecl}
-constexpr bool operator<=(default_sentinel x, default_sentinel y) noexcept;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\returns \tcode{true}
-\end{itemdescr}
-
-\indexlibrary{\idxcode{operator>}!\idxcode{default_sentinel}}%
-\indexlibrary{\idxcode{default_sentinel}!\idxcode{operator>}}%
-\begin{itemdecl}
-constexpr bool operator>(default_sentinel x, default_sentinel y) noexcept;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\returns \tcode{false}
-\end{itemdescr}
-
-\indexlibrary{\idxcode{operator>=}!\idxcode{default_sentinel}}%
-\indexlibrary{\idxcode{default_sentinel}!\idxcode{operator>=}}%
-\begin{itemdecl}
-constexpr bool operator>=(default_sentinel x, default_sentinel y) noexcept;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\returns \tcode{true}
-\end{itemdescr}
-
-\rSec4[default.sent.nonmember]{\tcode{default_sentinel} non-member functions}
-
-\indexlibrary{\idxcode{operator-}!\idxcode{default_sentinel}}%
-\indexlibrary{\idxcode{default_sentinel}!\idxcode{operator-}}%
-\begin{itemdecl}
-constexpr ptrdiff_t operator-(default_sentinel x, default_sentinel y) noexcept;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\returns \tcode{0}
-\end{itemdescr}
-} %% color{oldclr}
-
 \rSec2[iterators.counted]{Counted iterators}
 
 \pnum
@@ -5340,20 +5007,6 @@ sequence~(\ref{iterators.counted}).
 \tcode{x.\newtxt{cnt} == 0}.
 \end{itemdescr}
 
-{\color{oldclr}
-\begin{itemdecl}
-template <WeakIterator I>
-  bool operator==(
-    default_sentinel x, const counted_iterator<I>& y);
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\effects Equivalent to
-\tcode{y.cnt == 0}.
-\end{itemdescr}
-} %% color{oldclr}
-
 \indexlibrary{\idxcode{operator"!=}!\idxcode{counted_iterator}}%
 \indexlibrary{\idxcode{counted_iterator}!\idxcode{operator"!=}}%
 \begin{itemdecl}
@@ -5400,31 +5053,6 @@ elements of the same sequence~(\ref{iterators.counted}).
 counts down, not up.
 }
 \end{itemdescr}
-
-{\color{oldclr}
-\begin{itemdecl}
-template <WeakIterator I>
-  bool operator<(
-    const counted_iterator<I>& x, default_sentinel y);
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\returns
-\tcode{x.count() != 0}.
-\end{itemdescr}
-
-\begin{itemdecl}
-template <WeakIterator I>
-  bool operator<(
-    default_sentinel x, const counted_iterator<I>& y);
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\returns \tcode{false}.
-\end{itemdescr}
-} %% color{oldclr}
 
 \indexlibrary{\idxcode{operator<=}!\idxcode{counted_iterator}}%
 \indexlibrary{\idxcode{counted_iterator}!\idxcode{operator<=}}%
@@ -5576,37 +5204,6 @@ i = make_counted_iterator(next(i.@\newtxt{current}@, n), i.@\newtxt{cnt}@ - n);
 \end{codeblock}
 \end{itemdescr}
 
-{\color{oldclr}
-\rSec3[counted.traits.specializations]{Specializations of \tcode{common_type}}
-
-\indexlibrary{\idxcode{common_type}}%
-\begin{itemdecl}
-namespace std {
-  template<experimental::ranges_v1::WeakIterator I>
-  struct common_type<experimental::ranges_v1::counted_iterator<I>,
-                     experimental::ranges_v1::default_sentinel> {
-    using type = experimental::ranges_v1::common_iterator<
-      experimental::ranges_v1::counted_iterator<I>,
-      experimental::ranges_v1::default_sentinel>;
-  };
-  template<experimental::ranges_v1::WeakIterator I>
-  struct common_type<experimental::ranges_v1::default_sentinel,
-                     experimental::ranges_v1::counted_iterator<I>> {
-    using type = experimental::ranges_v1::common_iterator<
-      experimental::ranges_v1::counted_iterator<I>,
-      experimental::ranges_v1::default_sentinel>;
-  };
-}
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\enternote By specializing \tcode{common_type} this way, \tcode{counted_iterator}
-and \tcode{default_sentinel} can satisfy the \tcode{Common} requirement of the
-\tcode{EqualityComparable} concept.\exitnote
-\end{itemdescr}
-} %% color{oldclr}
-
 \rSec2[dangling.wrappers]{Dangling wrapper}
 
 \rSec3[dangling.wrap]{Class template \tcode{dangling}}
@@ -5727,17 +5324,6 @@ template <Iterator I>
 \returns \tcode{false}.
 \end{itemdescr}
 
-{\color{oldclr}
-\begin{itemdecl}
-constexpr bool operator==(unreachable, unreachable) noexcept;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\returns \tcode{true}.
-\end{itemdescr}
-} %% color{oldclr}
-
 \rSec4[unreachable.sentinel.op!=]{\tcode{operator!=}}
 
 \indexlibrary{\idxcode{operator"!=}!\idxcode{unreachable}}%
@@ -5754,31 +5340,6 @@ template <Iterator I>
 \returns
 \newtxt{\tcode{true}.}
 \end{itemdescr}
-
-{\color{oldclr}
-\rSec3[unreachable.traits.specializations]{Specializations of \tcode{common_type}}
-
-\indexlibrary{\idxcode{common_type}}%
-\begin{itemdecl}
-namespace std {
-  template<experimental::ranges_v1::Iterator I>
-  struct common_type<I, experimental::ranges_v1::unreachable> {
-    using type = experimental::ranges_v1::common_iterator<I, experimental::ranges_v1::unreachable>;
-  };
-  template<experimental::ranges_v1::Iterator I>
-  struct common_type<experimental::ranges_v1::unreachable, I> {
-    using type = experimental::ranges_v1::common_iterator<I, experimental::ranges_v1::unreachable>;
-  };
-}
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\enternote By specializing \tcode{common_type} this way, any iterator and
-\tcode{unreachable} can satisfy the \tcode{Common} requirement of the
-\tcode{EqualityComparable} concept.\exitnote
-\end{itemdescr}
-} %% color{oldclr}
 \end{addedblock}
 
 \rSec1[iterators.stream]{Stream iterators}
@@ -6216,11 +5777,6 @@ if(delim != @\removed{0}\added{nullptr}@)
   *out_stream << delim;
 return *this;
 \end{codeblock}
-
-{\color{oldclr}
-\pnum
-\requires \tcode{out_stream != 0}.
-} %%\color{oldclr}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{operator*}!\idxcode{ostream_iterator}}%
@@ -6910,41 +6466,6 @@ diagnostic required unless
 \tcode{disable_sized_range<remove_cv_t<remove_reference_t<R>{>}{>}} evaluates
 to \tcode{true}~(\ref{structure.requirements}). \exitnote
 } %% color{newclr}
-
-{\color{oldclr}
-\pnum
-For any type \tcode{T}, \tcode{disable_sized_range<T>}
-derives from \tcode{false_type} if \tcode{T}
-is a non-reference cv-unqualified type, and from
-\tcode{disable_sized_range<remove_cv_t<remove_reference_t<T>{>}{>}} otherwise.
-
-\pnum
-Users are free to specialize \tcode{disable_sized_range}.
-\enternote Users must specialize
-\tcode{disable_sized_range} so that its member
-\tcode{value} is \tcode{true} to override the default for \tcode{Range} types that meet only the
-syntactic requirements of \tcode{SizedRange} when instantiating a library
-template that has differing behavior for \tcode{Range} and \tcode{SizedRange}. \exitnote
-
-\pnum
-\enternote A possible implementation for
-\tcode{disable_sized_range} is given below:
-
-\begin{codeblock}
-// \expos
-template <class T>
-using @\xname{uncvref}@ = remove_cv_t<remove_reference_t<T>>;
-
-template <class R>
-struct disable_sized_range :
-  disable_sized_range<@\xname{uncvref}@<R>> { };
-
-template <class R>
-  requires Same<R, @\xname{uncvref}@<R>>()
-struct disable_sized_range<R> : false_type { };
-\end{codeblock}
-\exitnote
-} %% color{oldclr}
 \end{itemdescr}
 
 \rSec3[ranges.view]{Views}
@@ -7017,34 +6538,6 @@ implies reference semantics. \exitnote
 \item Otherwise, \tcode{true}.
 \end{itemize}
 } %% color{newclr}
-
-{\color{oldclr}
-\pnum
-\enternote
-Below is a possible implementation of \tcode{\xname{view_predicate}}.
-
-\begin{codeblock}
-// \expos
-template <class T>
-concept bool @\xname{ContainerLike}@ =
-  Range<T>() && Range<const T>() &&
-  !Same<reference_t<iterator_t<T>>,
-        reference_t<iterator_t<const T>>>();
-
-template <class T>
-constexpr bool @\xname{view_predicate}@ = true;
-
-template <class T>
-  requires requires { typename enable_view<T>::type; }
-constexpr bool @\xname{view_predicate}@<T> = enable_view<T>::type::value;
-
-template <@\xname{ContainerLike}@ T>
-  requires !(DerivedFrom<T, view_base>() ||
-             requires { typename enable_view<T>::type; })
-constexpr bool @\xname{view_predicate}@<T> = false;
-\end{codeblock}
-\exitnote
-} %% color{oldclr}
 \end{itemdescr}
 
 \rSec3[ranges.bounded]{Bounded ranges}
@@ -7517,30 +7010,6 @@ types of \tcode{ranges::crend(E)} and \tcode{ranges::crbegin(E)} satisfy
 {\color{newclr}
 \rSec1[range.primitives]{Range primitives}
 }
-
-{\color{oldclr}
-\indexlibrary{\idxcode{size}}%
-\begin{itemdecl}
-template <_Auto C> auto size(const C& c) -> decltype(c.size());
-\end{itemdecl}
-\begin{itemdescr}
-\pnum \returns \tcode{c.size()}.
-\end{itemdescr}
-
-\begin{itemdecl}
-template <_Auto T, size_t N> constexpr size_t size(T (&array)[N]) noexcept;
-\end{itemdecl}
-\begin{itemdescr}
-\pnum \returns \tcode{N}.
-\end{itemdescr}
-
-\begin{itemdecl}
-template <_Auto E> constexpr size_t size(initializer_list<E> il) noexcept;
-\end{itemdecl}
-\begin{itemdescr}
-\pnum \returns \tcode{il.size()}.
-\end{itemdescr}
-} %%\color{oldclr}
 
 {\color{newclr}
 \indexlibrary{\idxcode{distance(R\&\& r)}}%
