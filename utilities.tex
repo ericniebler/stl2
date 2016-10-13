@@ -5,45 +5,26 @@
 \setcounter{section}{1}
 \rSec1[utility]{Utility components}
 
-{\color{oldoldclr}
-\synopsis{Header \tcode{<utility>} synopsis}
-
-\pnum
-Change the \tcode{<utility>} synopsis as follows:
-
-\begin{codeblock}
-  // ... as before ..
-
-  // \ref{utility.swap}, swap:
-  template<class T>
-  void swap(T& a, T& b) noexcept(@\seebelow@);
-
-  template <class T, size_t N>
-  void swap(T (&a)[N], T (&b)[N]) noexcept(noexcept(swap(*a, *b)));}
-
-  // ... as before ..
-\end{codeblock}
-}
-
 {\color{addclr}
 \pnum
-\synopsis{Header \tcode{<experimental/ranges\oldtxt{_v1}/utility>} synopsis}
+\synopsis{Header \tcode{<experimental/ranges/utility>} synopsis}
 }
 
 \begin{codeblock}
-@\added{namespace std \{ namespace experimental \{ namespace ranges\oldtxt{_v1}\newtxt{ \{ inline namespace v1} \{}@
-  @\added{// \ref{utility.swap}, swap:}@
-  @\oldtxt{using std::swap;}@
-  @\newtxt{namespace \{}@
-    @\newtxt{constexpr \unspec swap = \unspec;}@
-  @\newtxt{\}}@
+@\added{namespace std \{ namespace experimental \{ namespace ranges \{ inline namespace v1 \{}@
+  // \ref{utility.swap}, swap:
+  @\removed{template <class T> void swap(T\& a, T\& b) noexcept(\seebelow);}@
+  @\removed{template <class T, size_t N> void swap(T (\&a)[N], T (\&b)[N]) noexcept(noexcept(swap(*a, *b)));}@
+  @\added{namespace \{}@
+    @\added{constexpr \unspec swap = \unspec;}@
+  @\added{\}}@
 
   // \ref{utility.exchange}, exchange:
-  template <@\removed{class}\added{\oldtxt{Movable}\newtxt{MoveConstructible}}@ T, class U=T>
+  template <@\changed{class}{MoveConstructible}@ T, class U=T>
     @\added{requires Assignable<T\&, U>()}@
   T exchange(T& obj, U&& new_val);
 \end{codeblock}
-{\color{addclr}
+\begin{addedblock}
 \begin{codeblock}
   // \ref{taggedtup.tagged}, struct with named accessors
   template <class T>
@@ -60,63 +41,44 @@ Change the \tcode{<utility>} synopsis as follows:
     requires sizeof...(Tags) <= tuple_size<Base>::value
   struct tagged;
 
-  @\oldtxt{// \ref{tagged.special}, tagged specialized algorithms}@
-  @\oldtxt{template <class Base, class... Tags>}@
-    @\oldtxt{requires Swappable<Base\&>()}@
-  @\oldtxt{void swap(tagged<Base, Tags...>\& x, tagged<Base, Tags...>\& y) noexcept(\seebelow);}@
-
   // \ref{tagged.pairs}, tagged pairs
   template <TaggedType T1, TaggedType T2> using tagged_pair = @\seebelow@;
 
   template <TagSpecifier Tag1, TagSpecifier Tag2, class T1, class T2>
   constexpr tagged_pair<Tag1(V1), Tag2(V2)> make_tagged_pair(T1&& x, T2&& y);
-}}}@\newtxt{\}}@
+}}}}
 
 namespace std {
   // \ref{tagged.astuple}, tuple-like access to tagged
   template <class Base, class... Tags>
-  struct tuple_size<experimental::ranges@\oldtxt{_v1}@::tagged<Base, Tags...>>;
+  struct tuple_size<experimental::ranges::tagged<Base, Tags...>>;
 
   template <size_t N, class Base, class... Tags>
-  struct tuple_element<N, experimental::ranges@\oldtxt{_v1}@::tagged<Base, Tags...>>;
+  struct tuple_element<N, experimental::ranges::tagged<Base, Tags...>>;
 }
 \end{codeblock}
-}
+\end{addedblock}
 
-{\color{addclr}
+\begin{addedblock}
 \pnum
 Any entities declared or defined directly in namespace \tcode{std} in header \tcode{<utility>}
-that are not already defined in namespace \tcode{std::experimental::ranges\oldtxt{_v1}\newtxt{::v1}} in header
-\tcode{<experimental/ranges\oldtxt{_v1}/utility>} are imported with
+that are not already defined in namespace \tcode{std::experimental::ranges::v1} in header
+\tcode{<experimental/ranges/utility>} are imported with
 \grammarterm{using-declaration}{s}~(\cxxref{namespace.udecl}). \enterexample
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges@\oldtxt{_v1}\newtxt{ \{ inline namespace v1}@ {
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
   using std::pair;
   using std::make_pair;
   // ... others
-}}}@\newtxt{\}}@
+}}}}
 \end{codeblock}
 \exitexample
-
-{\color{oldclr}
-\pnum
-Any nested namespaces defined directly in namespace \tcode{std} in header \tcode{<utility>}
-that are not already defined in namespace \tcode{std::experimental::ranges\oldtxt{_v1}} in header
-\tcode{<experimental/ranges\oldtxt{_v1}/utility>} are aliased with a
-\grammarterm{namespace-alias-definition}~(\cxxref{namespace.alias}). \enterexample
-\begin{codeblock}
-namespace std { namespace experimental { namespace ranges_v1 {
-  namespace rel_ops = std::rel_ops;
-}}}
-\end{codeblock}
-\exitexample
-} %%\color{oldclr}
-} %%\color{addclr}
+\end{addedblock}
 
 \setcounter{subsection}{1}
 \rSec2[utility.swap]{swap}
 
-{\color{newclr}
+\begin{addedblock}
 \indexlibrary{\idxcode{swap}}%
 \pnum The name \tcode{swap} denotes a customization point
 object~(\ref{customization.point.object}). The effect of the expression
@@ -178,12 +140,9 @@ and \tcode{E2} is equivalent to:
 \remark Whenever \tcode{ranges::swap(E1, E2)} is a valid
 expression, it exchanges the values denoted by \tcode{E1}
 and \tcode{E2} and has type \tcode{void}.
-} %%\color{newclr}
+\end{addedblock}
 
-\ednote{\oldtxt{The following edits to the two \tcode{swap} overloads are to be applied to the versions in
-namespace \tcode{std}.}}
-
-{\color{oldoldclr}
+\begin{removedblock}
 \begin{itemdecl}
 template<class T>
 void swap(T& a, T& b) noexcept(@\seebelow@);
@@ -222,9 +181,9 @@ and
 \effects
 Exchanges values stored in two locations.
 \end{itemdescr}
-} %%\color{oldoldclr}
+\end{removedblock}
 
-{\color{oldoldclr}
+\begin{removedblock}
 \begin{itemdecl}
 template <class T, size_t N>
 void swap(T (&a)[N], T (&b)[N]) noexcept(noexcept(swap(*a, *b)));}
@@ -239,12 +198,12 @@ for all \tcode{i} in the range \range{0}{N}.
 \pnum
 \effects \tcode{swap_ranges(a, a + N, b)}
 \end{itemdescr}
-}
+\end{removedblock}
 
 \rSec2[utility.exchange]{exchange}
 
 \begin{itemdecl}
-template <@\removed{class}\added{\oldtxt{Movable}\newtxt{MoveConstructible}}@ T, class U=T>
+template <@\changed{class}{MoveConstructible}@ T, class U=T>
   @\added{requires Assignable<T\&, U>()}@
 T exchange(T& obj, U&& new_val);
 \end{itemdecl}
@@ -266,93 +225,75 @@ return old_val;
 
 \setcounter{Paras}{1}
 \pnum
-\synopsis{Header \tcode{<\added{experimental/ranges\oldtxt{_v1}/}functional>} synopsis}
+\synopsis{Header \tcode{<\added{experimental/ranges/}functional>} synopsis}
 
 \begin{codeblock}
-@\added{namespace std \{ namespace experimental \{ namespace ranges\oldtxt{_v1}\newtxt{ \{ inline namespace v1} \{}@
-  @\newtxt{// \ref{func.invoke}, invoke:}@
-  @\newtxt{template <class F, class... Args>}@
-  @\newtxt{result_of_t<F\&\&(Args\&\&...)> invoke(F\&\& f, Args\&\&... args);}@
+@\added{namespace std \{ namespace experimental \{ namespace ranges \{ inline namespace v1 \{}@
+  @\added{// \ref{func.invoke}, invoke:}@
+  @\added{template <class F, class... Args>}@
+  @\added{result_of_t<F\&\&(Args\&\&...)> invoke(F\&\& f, Args\&\&... args);}@
 
-  @\newtxt{// \ref{comparisons}, comparisons:}@
-  template <class T = void>
-    @\oldtxt{requires EqualityComparable<T>() || Same<T, void>()}@
-  struct equal_to; @\newtxt{// not defined}@
-  @\newtxt{template<EqualityComparable T> struct equal_to<T>;}@
+  @\added{// \ref{comparisons}, comparisons:}@
+  template <class T = void> struct equal_to; @\added{// not defined}@
+  template <class T = void> struct not_equal_to; @\added{// not defined}@
+  template <class T = void> struct greater; @\added{// not defined}@
+  template <class T = void> struct less; @\added{// not defined}@
+  template <class T = void> struct greater_equal; @\added{// not defined}@
+  template <class T = void> struct less_equal; @\added{// not defined}@
+  @\added{template <EqualityComparable T> struct equal_to<T>;}@
+  @\added{template <EqualityComparable T> struct not_equal_to<T>;}@
+  @\added{template <StrictTotallyOrdered T> struct greater<T>;}@
+  @\added{template <StrictTotallyOrdered T> struct less<T>;}@
+  @\added{template <StrictTotallyOrdered T> struct greater_equal<T>;}@
+  @\added{template <StrictTotallyOrdered T> struct less_equal<T>;}@
+  template <> struct equal_to<void>;
+  template <> struct not_equal_to<void>;
+  template <> struct greater<void>;
+  template <> struct less<void>;
+  template <> struct greater_equal<void>;
+  template <> struct less_equal<void>;
+  @\added{template <class T> struct greater<T*>;}@
+  @\added{template <class T> struct less<T*>;}@
+  @\added{template <class T> struct greater_equal<T*>;}@
+  @\added{template <class T> struct less_equal<T*>;}@
 
-  template <class T = void>
-    @\oldtxt{requires EqualityComparable<T>() || Same<T, void>()}@
-  struct not_equal_to; @\newtxt{// not defined}@
-  @\newtxt{template<EqualityComparable T> struct not_equal_to<T>;}@
-
-  template <class T = void>
-    @\oldtxt{requires StrictTotallyOrdered<T>() || Same<T, void>()}@
-  struct greater; @\newtxt{// not defined}@
-  @\newtxt{template<StrictTotallyOrdered T> struct greater<T>;}@
-  @\newtxt{template<class T> struct greater<T*>;}@
-
-  template <class T = void>
-    @\oldtxt{requires StrictTotallyOrdered<T>() || Same<T, void>()}@
-  struct less; @\newtxt{// not defined}@
-  @\newtxt{template<StrictTotallyOrdered T> struct less<T>;}@
-  @\newtxt{template<class T> struct less<T*>;}@
-
-  template <class T = void>
-    @\oldtxt{requires StrictTotallyOrdered<T>() || Same<T, void>()}@
-  struct greater_equal; @\newtxt{// not defined}@
-  @\newtxt{template<StrictTotallyOrdered T> struct greater_equal<T>;}@
-  @\newtxt{template<class T> struct greater_equal<T*>;}@
-
-  template <class T = void>
-    @\oldtxt{requires StrictTotallyOrdered<T>() || Same<T, void>()}@
-  struct less_equal; @\newtxt{// not defined}@
-  @\newtxt{template<StrictTotallyOrdered T> struct less_equal<T>;}@
-  @\newtxt{template<class T> struct less_equal<T*>;}@
-
-  @\newtxt{template<> struct equal_to<void>;}@
-  @\newtxt{template<> struct not_equal_to<void>;}@
-  @\newtxt{template<> struct greater<void>;}@
-  @\newtxt{template<> struct less<void>;}@
-  @\newtxt{template<> struct greater_equal<void>;}@
-  @\newtxt{template<> struct less_equal<void>;}@
-
-  @\newtxt{// \ref{func.identity}, identity:}@
+  @\added{// \ref{func.identity}, identity:}@
   @\added{struct identity;}@
-@\added{\}\}\}}\newtxt{\}}@
+@\added{\}\}\}\}}@
 \end{codeblock}
 
-{\color{addclr}
+\begin{addedblock}
 \pnum
 Any entities declared or defined directly in namespace \tcode{std} in header \tcode{<functional>}
-that are not already defined in namespace \tcode{std::experimental::ranges\oldtxt{_v1}} in header
-\tcode{<experimental/ranges\oldtxt{_v1}/functional>} are imported with
+that are not already defined in namespace \tcode{std::experimental::ranges} in header
+\tcode{<experimental/ranges/functional>} are imported with
 \grammarterm{using-declaration}{s}~(\cxxref{namespace.udecl}). \enterexample
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges@\oldtxt{_v1}\newtxt{ \{ inline namespace v1}@ {
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
   using std::reference_wrapper;
   using std::ref;
   // ... others
-}}}@\newtxt{\}}@
+}}}}
 \end{codeblock}
 \exitexample
 
 \pnum
 Any nested namespaces defined directly in namespace \tcode{std} in header \tcode{<functional>}
-that are not already defined in namespace \tcode{std::experimental::ranges\oldtxt{_v1}} in header
-\tcode{<experimental/ranges\oldtxt{_v1}/functional>} are aliased with a
+that are not already defined in namespace \tcode{std::experimental::ranges} in header
+\tcode{<experimental/ranges/functional>} are aliased with a
 \grammarterm{namespace-alias-definition}~(\cxxref{namespace.alias}). \enterexample
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges@\oldtxt{_v1}\newtxt{ \{ inline namespace v1}@ {
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
   namespace placeholders = std::placeholders;
-}}}@\newtxt{\}}@
+}}}}
 \end{codeblock}
 \exitexample
-}
+\end{addedblock}
 
 \ednote{Before [refwrap], insert the following section and renumber subsequent sections
 as appropriate. (Renumbering hasn't been performed herein to ease review.)}
 
-{\color{newclr}
+\begin{addedblock}
 \setcounter{subsection}{2}
 \rSec2[func.invoke]{Function template invoke}
 \begin{itemdecl}
@@ -363,7 +304,7 @@ result_of_t<F&&(Args&&...)> invoke(F&& f, Args&&... args);
 \pnum
 \effects Equivalent to \tcode{\textit{INVOKE}(std::forward<F>(f), std::forward<Args>(args)...)}~(\cxxref{func.require}).
 \end{itemdescr}
-} %% color{newclr}
+\end{addedblock}
 
 \setcounter{subsection}{4}
 \rSec2[comparisons]{Comparisons}
@@ -374,9 +315,8 @@ operators in the language~(\cxxref{expr.rel}, \cxxref{expr.eq}).
 
 \indexlibrary{\idxcode{equal_to}}%
 \begin{itemdecl}
-template <@\oldoldtxt{class T = void}\newtxt{EqualityComparable T}@>
-  @\oldtxt{requires EqualityComparable<T>() || Same<T, void>()}@
-struct equal_to@\newtxt{<T>}@ {
+template <@\changed{class}{EqualityComparable} T\removed{ = void}@>
+struct equal_to@\added{<T>}@ {
   constexpr bool operator()(const T& x, const T& y) const;
   @\removed{typedef T first_argument_type;}@
   @\removed{typedef T second_argument_type;}@
@@ -391,9 +331,8 @@ struct equal_to@\newtxt{<T>}@ {
 
 \indexlibrary{\idxcode{not_equal_to}}%
 \begin{itemdecl}
-template <@\oldoldtxt{class T = void}\newtxt{EqualityComparable T}@>
-  @\oldtxt{requires EqualityComparable<T>() || Same<T, void>()}@
-struct not_equal_to@\newtxt{<T>}@ {
+template <@\changed{class}{EqualityComparable} T\removed{ = void}@>
+struct not_equal_to@\added{<T>}@ {
   constexpr bool operator()(const T& x, const T& y) const;
   @\removed{typedef T first_argument_type;}@
   @\removed{typedef T second_argument_type;}@
@@ -408,18 +347,17 @@ struct not_equal_to@\newtxt{<T>}@ {
 
 \indexlibrary{\idxcode{greater}}%
 \begin{itemdecl}
-template <@\oldoldtxt{class T = void}\newtxt{StrictTotallyOrdered T}@>
-  @\oldtxt{requires StrictTotallyOrdered<T>() || Same<T, void>()}@
-struct greater@\newtxt{<T>}@ {
+template <@\changed{class}{StrictTotallyOrdered} T\removed{ = void}@>
+struct greater@\added{<T>}@ {
   constexpr bool operator()(const T& x, const T& y) const;
   @\removed{typedef T first_argument_type;}@
   @\removed{typedef T second_argument_type;}@
   @\removed{typedef bool result_type;}@
 };
-@\newtxt{template <class T>}@
-@\newtxt{struct greater<T*> \{}@
-  @\newtxt{constexpr bool operator()(T* x, T* y) const;}@
-@\newtxt{\};}@
+@\added{template <class T>}@
+@\added{struct greater<T*> \{}@
+  @\added{constexpr bool operator()(T* x, T* y) const;}@
+@\added{\};}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -429,18 +367,17 @@ struct greater@\newtxt{<T>}@ {
 
 \indexlibrary{\idxcode{less}}%
 \begin{itemdecl}
-template <@\oldoldtxt{class T = void}\newtxt{StrictTotallyOrdered T}@>
-  @\oldtxt{requires StrictTotallyOrdered<T>() || Same<T, void>()}@
-struct less@\newtxt{<T>}@ {
+template <@\changed{class}{StrictTotallyOrdered} T\removed{ = void}@>
+struct less@\added{<T>}@ {
   constexpr bool operator()(const T& x, const T& y) const;
   @\removed{typedef T first_argument_type;}@
   @\removed{typedef T second_argument_type;}@
   @\removed{typedef bool result_type;}@
 };
-@\newtxt{template <class T>}@
-@\newtxt{struct less<T*> \{}@
-  @\newtxt{constexpr bool operator()(T* x, T* y) const;}@
-@\newtxt{\};}@
+@\added{template <class T>}@
+@\added{struct less<T*> \{}@
+  @\added{constexpr bool operator()(T* x, T* y) const;}@
+@\added{\};}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -450,18 +387,17 @@ struct less@\newtxt{<T>}@ {
 
 \indexlibrary{\idxcode{greater_equal}}%
 \begin{itemdecl}
-template <@\oldoldtxt{class T = void}\newtxt{StrictTotallyOrdered T}@>
-  @\oldtxt{requires StrictTotallyOrdered<T>() || Same<T, void>()}@
-struct greater_equal@\newtxt{<T>}@ {
+template <@\changed{class}{StrictTotallyOrdered} T\removed{ = void}@>
+struct greater_equal@\added{<T>}@ {
   constexpr bool operator()(const T& x, const T& y) const;
   @\removed{typedef T first_argument_type;}@
   @\removed{typedef T second_argument_type;}@
   @\removed{typedef bool result_type;}@
 };
-@\newtxt{template <class T>}@
-@\newtxt{struct greater_equal<T*> \{}@
-  @\newtxt{constexpr bool operator()(T* x, T* y) const;}@
-@\newtxt{\};}@
+@\added{template <class T>}@
+@\added{struct greater_equal<T*> \{}@
+  @\added{constexpr bool operator()(T* x, T* y) const;}@
+@\added{\};}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -471,18 +407,17 @@ struct greater_equal@\newtxt{<T>}@ {
 
 \indexlibrary{\idxcode{less_equal}}%
 \begin{itemdecl}
-template <@\oldoldtxt{class T = void}\newtxt{StrictTotallyOrdered T}@>
-  @\oldtxt{requires StrictTotallyOrdered<T>() || Same<T, void>()}@
-struct less_equal@\newtxt{<T>}@ {
+template <@\changed{class}{StrictTotallyOrdered} T\removed{ = void}@>
+struct less_equal@\added{<T>}@ {
   constexpr bool operator()(const T& x, const T& y) const;
   @\removed{typedef T first_argument_type;}@
   @\removed{typedef T second_argument_type;}@
   @\removed{typedef bool result_type;}@
 };
-@\newtxt{template <class T>}@
-@\newtxt{struct less_equal<T*> \{}@
-  @\newtxt{constexpr bool operator()(T* x, T* y) const;}@
-@\newtxt{\};}@
+@\added{template <class T>}@
+@\added{struct less_equal<T*> \{}@
+  @\added{constexpr bool operator()(T* x, T* y) const;}@
+@\added{\};}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -529,7 +464,7 @@ template <> struct not_equal_to<void> {
 template <> struct greater<void> {
   template <class T, class U>
     @\added{requires StrictTotallyOrdered<T, U>()}@
-      @\newtxt{|| \textit{BUILTIN_PTR_CMP}(T, >, U) // \expos, \seebelow}@
+      @\added{|| \textit{BUILTIN_PTR_CMP}(T, >, U) // \expos, \seebelow}@
   constexpr auto operator()(T&& t, U&& u) const
     -> decltype(std::forward<T>(t) > std::forward<U>(u));
 
@@ -547,7 +482,7 @@ template <> struct greater<void> {
 template <> struct less<void> {
   template <class T, class U>
     @\added{requires StrictTotallyOrdered<T, U>()}@
-      @\newtxt{|| \textit{BUILTIN_PTR_CMP}(T, <, U) // \expos, \seebelow}@
+      @\added{|| \textit{BUILTIN_PTR_CMP}(T, <, U) // \expos, \seebelow}@
   constexpr auto operator()(T&& t, U&& u) const
     -> decltype(std::forward<T>(t) < std::forward<U>(u));
 
@@ -565,7 +500,7 @@ template <> struct less<void> {
 template <> struct greater_equal<void> {
   template <class T, class U>
     @\added{requires StrictTotallyOrdered<T, U>()}@
-      @\newtxt{|| \textit{BUILTIN_PTR_CMP}(T, >=, U) // \expos, \seebelow}@
+      @\added{|| \textit{BUILTIN_PTR_CMP}(T, >=, U) // \expos, \seebelow}@
   constexpr auto operator()(T&& t, U&& u) const
     -> decltype(std::forward<T>(t) >= std::forward<U>(u));
 
@@ -583,7 +518,7 @@ template <> struct greater_equal<void> {
 template <> struct less_equal<void> {
   template <class T, class U>
     @\added{requires StrictTotallyOrdered<T, U>()}@
-      @\newtxt{|| \textit{BUILTIN_PTR_CMP}(T, <=, U) // \expos, \seebelow}@
+      @\added{|| \textit{BUILTIN_PTR_CMP}(T, <=, U) // \expos, \seebelow}@
   constexpr auto operator()(T&& t, U&& u) const
     -> decltype(std::forward<T>(t) <= std::forward<U>(u));
 
@@ -602,11 +537,11 @@ For templates \tcode{greater}, \tcode{less}, \tcode{greater_equal}, and
 even if the built-in operators \tcode{<}, \tcode{>}, \tcode{<=}, \tcode{>=}
 do not. \ednote{The following sentence is taken from the proposed resolution of
 \href{https://cplusplus.github.io/LWG/lwg-active.html\#2450}{LWG \#2450}.}
-\newtxt{For template specializations \tcode{greater<void>}, \tcode{less<void>},
+\added{For template specializations \tcode{greater<void>}, \tcode{less<void>},
 \tcode{greater_equal<void>}, and \tcode{less_equal<void>}, if the call operator calls a
 built-in operator comparing pointers, the call operator yields a total order.}
 
-{\color{newclr}
+\begin{addedblock}
 \pnum
 If \tcode{X} is an lvalue reference type, let \tcode{x} be an lvalue of type \tcode{X}, or an rvalue otherwise.
 If \tcode{Y} is an lvalue reference type, let \tcode{y} be an lvalue of type \tcode{Y}, or an rvalue otherwise.
@@ -651,7 +586,7 @@ For any pointer type \tcode{T}, the specializations \tcode{equal_to<T>}, \tcode{
 \tcode{less<T>}, \tcode{greater_equal<T>}, \tcode{less_equal<T>} shall yield the same results as
 \tcode{equal_to<void*>}, \tcode{not_equal_to<void*>}, \tcode{greater<void*>},
 \tcode{less<void*>}, \tcode{greater_equal<void*>}, \tcode{less_equal<void*>}, respectively.
-}
+\end{addedblock}
 
 \ednote{After subsection 20.9.12 [unord.hash] add the following subsection:}
 
@@ -665,7 +600,7 @@ struct identity {
   template <class T>
   constexpr T&& operator()(T&& t) const noexcept;
 
-  @\newtxt{typedef \unspec is_transparent;}@
+  typedef @\unspec@ is_transparent;
 };
 \end{itemdecl}
 
@@ -681,7 +616,7 @@ bikeshed naming discussion here>.}
 
 \setcounter{section}{14}
 
-{\color{addclr}
+\begin{addedblock}
 \rSec1[taggedtup]{Tagged tuple-like types}
 
 \rSec2[taggedtup.general]{In general}
@@ -710,9 +645,9 @@ is zero-based.
 
 \indexlibrary{\idxcode{tagged}}%
 \begin{codeblock}
-// defined in header <experimental/ranges\oldtxt{_v1}/utility>
+// defined in header <experimental/ranges/utility>
 
-namespace std { namespace experimental { namespace ranges@\oldtxt{_v1} \newtxt{\{ inline namespace v1}@ {
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
   template <class T>
   concept bool TagSpecifier() {
     return @\impdef@;
@@ -733,16 +668,16 @@ namespace std { namespace experimental { namespace ranges@\oldtxt{_v1} \newtxt{\
     tagged(const tagged&) = default;
     tagged &operator=(tagged&&) = default;
     tagged &operator=(const tagged&) = default;
-    template <@\oldtxt{typename}\newtxt{class}@ Other>
+    template <class Other>
       requires Constructible<Base, Other>()
     tagged(tagged<Other, Tags...> &&that) noexcept(@\seebelow@);
-    template <@\oldtxt{typename}\newtxt{class}@ Other>
+    template <class Other>
       requires Constructible<Base, const Other&>()
     tagged(const tagged<Other, Tags...> &that);
-    template <@\oldtxt{typename}\newtxt{class}@ Other>
+    template <class Other>
       requires Assignable<Base&, Other>()
     tagged& operator=(tagged<Other, Tags...>&& that) noexcept(@\seebelow@);
-    template <@\oldtxt{typename}\newtxt{class}@ Other>
+    template <class Other>
       requires Assignable<Base&, const Other&>()
     tagged& operator=(const tagged<Other, Tags...>& that);
     template <class U>
@@ -750,14 +685,10 @@ namespace std { namespace experimental { namespace ranges@\oldtxt{_v1} \newtxt{\
     tagged& operator=(U&& u) noexcept(@\seebelow@);
     void swap(tagged& that) noexcept(@\seebelow@)
       requires Swappable<Base&>();
-    @\newtxt{friend void swap(tagged\&, tagged\&) noexcept(\seebelow)}@
-      @\newtxt{requires Swappable<Base\&>();}@
+    friend void swap(tagged&, tagged&) noexcept(@\seebelow@)
+      requires Swappable<Base&>();
   };
-
-  @\oldtxt{template <class Base, class... Tags>}@
-    @\oldtxt{requires Swappable<Base\&>()}@
-  @\oldtxt{void swap(tagged<Base, Tags...>\& x, tagged<Base, Tags...>\& y) noexcept(\seebelow);}@
-}}}@\newtxt{\}}@
+}}}}
 \end{codeblock}
 
 \pnum A \techterm{tagged getter} is an empty trivial class type that has a named member function that
@@ -799,7 +730,7 @@ type with return type \tcode{T} which satisfies \tcode{TagSpecifier<T>()}. Let
 
 \indexlibrary{\idxcode{tagged}!\idxcode{tagged}}
 \begin{itemdecl}
-template <@\oldtxt{typename}\newtxt{class}@ Other>
+template <class Other>
   requires Constructible<Base, Other>()
 tagged(tagged<Other, Tags...> &&that) noexcept(@\seebelow@);
 \end{itemdecl}
@@ -818,7 +749,7 @@ is_nothrow_constructible<Base, Other>::value
 
 \indexlibrary{\idxcode{tagged}!\idxcode{tagged}}
 \begin{itemdecl}
-template <@\oldtxt{typename}\newtxt{class}@ Other>
+template <class Other>
   requires Constructible<Base, const Other&>()
 tagged(const tagged<Other, Tags...>& that);
 \end{itemdecl}
@@ -831,7 +762,7 @@ tagged(const tagged<Other, Tags...>& that);
 \indexlibrary{\idxcode{operator=}!\idxcode{tagged}}
 \indexlibrary{\idxcode{tagged}!\idxcode{operator=}}
 \begin{itemdecl}
-template <@\oldtxt{typename}\newtxt{class}@ Other>
+template <class Other>
   requires Assignable<Base&, Other>()
 tagged& operator=(tagged<Other, Tags...>&& that) noexcept(@\seebelow@);
 \end{itemdecl}
@@ -854,7 +785,7 @@ is_nothrow_assignable<Base&, Other>::value
 \indexlibrary{\idxcode{operator=}!\idxcode{tagged}}
 \indexlibrary{\idxcode{tagged}!\idxcode{operator=}}
 \begin{itemdecl}
-template <@\oldtxt{typename}\newtxt{class}@ Other>
+template <class Other>
   requires Assignable<Base&, const Other&>()
 tagged& operator=(const tagged<Other, Tags...>& that);
 \end{itemdecl}
@@ -913,7 +844,6 @@ noexcept(swap(declval<Base&>(), declval<Base&>()))
 \throws Nothing unless the call to \tcode{swap} on the \tcode{Base} sub-objects throws.
 \end{itemdescr}
 
-{\color{newclr}
 \indexlibrary{\idxcode{swap}!\tcode{tagged}}%
 \begin{itemdecl}
 friend void swap(tagged& lhs, tagged& rhs) noexcept(@\seebelow@)
@@ -934,23 +864,6 @@ noexcept(lhs.swap(rhs))
 \pnum
 \throws Nothing unless the call to \tcode{lhs.swap(rhs)} throws.
 \end{itemdescr}
-}
-
-{\color{oldclr}
-\rSec2[tagged.special]{\tcode{tagged} specialized algorithms}
-
-\begin{itemdecl}
-template<class Base, class... Tags>
-  requires Swappable<Base&>()
-void swap(tagged<Base, Tags...>& x, tagged<Base, Tags...>& y)
-  noexcept(noexcept(x.swap(y)));
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\effects \tcode{x.swap(y)}
-\end{itemdescr}
-}
 
 \rSec2[tagged.astuple]{Tuple-like access to \tcode{tagged}}
 
@@ -959,11 +872,11 @@ void swap(tagged<Base, Tags...>& x, tagged<Base, Tags...>& y)
 \begin{itemdecl}
 namespace std {
   template <class Base, class... Tags>
-  struct tuple_size<experimental::ranges@\oldtxt{_v1}@::tagged<Base, Tags...>>
+  struct tuple_size<experimental::ranges::tagged<Base, Tags...>>
     : tuple_size<Base> { };
 
   template <size_t N, class Base, class... Tags>
-  struct tuple_element<N, experimental::ranges@\oldtxt{_v1}@::tagged<Base, Tags...>>
+  struct tuple_element<N, experimental::ranges::tagged<Base, Tags...>>
     : tuple_element<N, Base> { };
 }
 \end{itemdecl}
@@ -971,14 +884,14 @@ namespace std {
 \rSec2[tagged.pairs]{Alias template \tcode{tagged_pair}}
 
 \begin{codeblock}
-// defined in header <experimental/ranges\oldtxt{_v1}/utility>
+// defined in header <experimental/ranges/utility>
 
-namespace std { namespace experimental { namespace ranges@\oldtxt{_v1}\newtxt{ \{ inline namespace v1}@ {
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
   // ...
   template <TaggedType T1, TaggedType T2>
   using tagged_pair = tagged<pair<@\textit{TAGELEM}@(T1), @\textit{TAGELEM}@(T2)>,
                              @\textit{TAGSPEC}@(T1), @\textit{TAGSPEC}@(T2)>;
-}}}@\newtxt{\}}@
+}}}}
 \end{codeblock}
 
 \pnum \enterexample
@@ -994,12 +907,12 @@ assert(&p.max() == &p.second);
 
 \indexlibrary{\idxcode{make_tagged_pair}}%
 \begin{itemdecl}
-// defined in header <experimental/ranges\oldtxt{_v1}/utility>
+// defined in header <experimental/ranges/utility>
 
-namespace std { namespace experimental { namespace ranges@\oldtxt{_v1}\newtxt{ \{ inline namespace v1}@ {
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
   template <TagSpecifier Tag1, TagSpecifier Tag2, class T1, class T2>
     constexpr tagged_pair<Tag1(V1), Tag2(V2)> make_tagged_pair(T1&& x, T2&& y);
-}}}@\newtxt{\}}@
+}}}}
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -1027,13 +940,12 @@ a \Cpp program may contain:
 \exitexample
 \end{itemdescr}
 
-{\color{addclr}
 \rSec2[tagged.tuple]{Alias template \tcode{tagged_tuple}}
 
-\synopsis{Header \tcode{<experimental/ranges\oldtxt{_v1}/tuple>} synopsis}
+\synopsis{Header \tcode{<experimental/ranges/tuple>} synopsis}
 
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges@\oldtxt{_v1}\newtxt{ \{ inline namespace v1}@ {
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
   template <TaggedType... Types>
   using tagged_tuple = tagged<tuple<@\textit{TAGELEM}@(Types)...>,
                               @\textit{TAGSPEC}@(Types)...>;
@@ -1041,23 +953,22 @@ namespace std { namespace experimental { namespace ranges@\oldtxt{_v1}\newtxt{ \
   template<TagSpecifier...Tags, class... Types>
     requires sizeof...(Tags) == sizeof...(Types)
       constexpr tagged_tuple<Tags(@\textit{VTypes}@)...>> make_tagged_tuple(Types&&... t);
-}}}@\newtxt{\}}@
+}}}}
 \end{codeblock}
 
 \pnum
 Any entities declared or defined in namespace \tcode{std} in header \tcode{<tuple>}
-that are not already defined in namespace \tcode{std::experimental::ranges\oldtxt{_v1}} in header
-\tcode{<experimental/ranges\oldtxt{_v1}/tuple>} are imported with
+that are not already defined in namespace \tcode{std::experimental::ranges} in header
+\tcode{<experimental/ranges/tuple>} are imported with
 \grammarterm{using-declaration}{s}~(\cxxref{namespace.udecl}). \enterexample
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges@\oldtxt{_v1}\newtxt{ \{ inline namespace v1}@ {
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
   using std::tuple;
   using std::make_tuple;
   // ... others
-}}}@\newtxt{\}}@
+}}}}
 \end{codeblock}
 \exitexample
-}
 
 \begin{codeblock}
 template <TaggedType... Types>
@@ -1112,4 +1023,4 @@ tagged_tuple<tag::in1(int), tag::in2(int&), tag::out(const float&)>
 \end{codeblock}
 \exitexample
 \end{itemdescr}
-}
+\end{addedblock}

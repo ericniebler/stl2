@@ -22,42 +22,28 @@ comparison concepts, object concepts, and function concepts
 as summarized in Table~\ref{tab:concepts.lib.summary}.
 
 \begin{libsumtab}{Fundamental concepts library summary}{tab:concepts.lib.summary}
-\ref{concepts.lib.corelang}   & Core language concepts         &   \tcode{<experimental/ranges\oldtxt{_v1}/concepts>}      \\
+\ref{concepts.lib.corelang}   & Core language concepts         &   \tcode{<experimental/ranges/concepts>}      \\
 \ref{concepts.lib.compare}    & Comparison concepts            &                      \\
 \ref{concepts.lib.object}     & Object concepts                &                      \\
-\ref{concepts.lib.callables}  & \oldtxt{Function}\newtxt{Callable} concepts              &                      \\
+\ref{concepts.lib.callables}  & Callable concepts              &                      \\
 \end{libsumtab}
 
-\oldtxt{
 \pnum
-In this Clause, \tcode{CamelCase} identifiers ending with ``\tcode{Type}'' denote
-alias templates.
-}
-
-\pnum
-The concepts in this Clause are defined in the namespace \tcode{std::experimental::ranges\oldtxt{_v1}\newtxt{::v1}}.
+The concepts in this Clause are defined in the namespace \tcode{std::experimental::ranges::v1}.
 
 \rSec2[concepts.lib.general.equality]{Equality Preservation}
 
 \pnum
 An expression is \techterm{equality preserving} if, given equal inputs, the expression results in
-equal outputs. The inputs to an expression \oldtxt{is}\newtxt{are} the set of the expression's operands. The
+equal outputs. The inputs to an expression are the set of the expression's operands. The
 output of an expression is the expression's result and all operands modified by the expression.
 
 \pnum
 Not all input values must be valid for a given expression; e.g., for integers \tcode{a}
 and \tcode{b}, the expression \tcode{a / b} is not well-defined when \tcode{b} is \tcode{0}. This
-does not preclude the expression \tcode{a / b} being equality preserving. \newtxt{The
+does not preclude the expression \tcode{a / b} being equality preserving. The
 \techterm{domain} of an expression is the set of input values for which the
-expression is required to be well-defined.}
-
-\oldtxt{
-\pnum
-A \techterm{regular function} is a function that is equality preserving,
-i.e., a function that returns equal output when passed equal input. A regular
-function that returns a value may copy or move the returned object, or may return a
-reference. \enternote Regular functions may have side effects. \exitnote
-}
+expression is required to be well-defined.
 
 \pnum
 Expressions required by this specification to be equality preserving are
@@ -222,24 +208,21 @@ it could be a different type. \tcode{C} may not be unique.\exitnote
 
 \indexlibrary{\idxcode{Common}}%
 \begin{itemdecl}
-@\oldtxt{template <class T, class U>}@
-@\oldtxt{using CommonType = common_type_t<T, U>;}@
-
 template <class T, class U>
 concept bool Common() {
   return requires (T t, U u) {
-    typename @\oldtxt{CommonType}\newtxt{common_type_t}@<T, U>;
-    typename @\oldtxt{CommonType}\newtxt{common_type_t}@<U, T>;
-    requires Same<@\oldtxt{CommonType}\newtxt{common_type_t}@<U, T>, @\oldtxt{CommonType}\newtxt{common_type_t}@<T, U>>();
-    @\oldtxt{CommonType}\newtxt{common_type_t}@<T, U>(std::forward<T>(t));
-    @\oldtxt{CommonType}\newtxt{common_type_t}@<T, U>(std::forward<U>(u));
+    typename common_type_t<T, U>;
+    typename common_type_t<U, T>;
+    requires Same<common_type_t<U, T>, common_type_t<T, U>>();
+    common_type_t<T, U>(std::forward<T>(t));
+    common_type_t<T, U>(std::forward<U>(u));
   };
 }
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-Let \tcode{C} be \tcode{\oldtxt{CommonType}}\tcode{\newtxt{common_type_t}}\tcode{<T, U>}. Let \tcode{t1} and \tcode{t2} be objects
+Let \tcode{C} be \tcode{common_type_t<T, U>}. Let \tcode{t1} and \tcode{t2} be objects
 of type \tcode{T}, and \tcode{u1} and \tcode{u2} be objects of type \tcode{U}.
 \tcode{Common<T, U>()} is satisfied if and only if
 \begin{itemize}
@@ -303,9 +286,9 @@ for example, \tcode{char}.
 
 \indexlibrary{\idxcode{Assignable}}%
 \begin{itemdecl}
-template <class T, class U@\oldtxt{ = T}@>
+template <class T, class U>
 concept bool Assignable() {
-  return @\newtxt{Common<T, U>() \&\& }@requires(T&& a, U&& b) {
+  return Common<T, U>() && requires(T&& a, U&& b) {
     { std::forward<T>(a) = std::forward<U>(b) } -> Same<T&>;
   };
 }
@@ -313,24 +296,24 @@ concept bool Assignable() {
 
 \begin{itemdescr}
 \pnum
-Let \tcode{t} be an lvalue of type \tcode{T}\newtxt{, and \tcode{R} be the
-type \tcode{remove_reference_t<U>}}. If \tcode{U} is an lvalue reference
-type, let \tcode{v} be a lvalue of type \tcode{\oldtxt{U}\newtxt{R}};
-otherwise, let \tcode{v} be an rvalue of type \tcode{\oldtxt{U}\newtxt{R}}.
-\newtxt{Let \tcode{uu} be a distinct object of type \tcode{R} such that
-\tcode{uu == v}.}
+Let \tcode{t} be an lvalue of type \tcode{T}, and \tcode{R} be the
+type \tcode{remove_reference_t<U>}. If \tcode{U} is an lvalue reference
+type, let \tcode{v} be a lvalue of type \tcode{R};
+otherwise, let \tcode{v} be an rvalue of type \tcode{R}.
+Let \tcode{uu} be a distinct object of type \tcode{R} such that
+\tcode{uu == v}.
 Then \tcode{Assignable<T, U>()} is satisfied if and only if
 
 \begin{itemize}
 \item \tcode{std::addressof(t = v) == std::addressof(t)}.
-\item \newtxt{After evaluating \tcode{t = v}:}
+\item After evaluating \tcode{t = v}:
 \begin{itemize}
-\item \newtxt{\tcode{t == uu}.}
-\item \newtxt{If \tcode{v} is a non-\tcode{const} rvalue, its resulting
+\item \tcode{t == uu}.
+\item If \tcode{v} is a non-\tcode{const} rvalue, its resulting
 state is unspecified. \enternote \tcode{v} must still meet the requirements
 of the library component that is using it. The operations listed in those
-requirements must work as specified. \exitnote}
-\item \newtxt{Otherwise, \tcode{v} is not modified.}
+requirements must work as specified. \exitnote
+\item Otherwise, \tcode{v} is not modified.
 \end{itemize}
 \end{itemize}
 \end{itemdescr}
@@ -343,8 +326,8 @@ requirements must work as specified. \exitnote}
 \begin{itemdecl}
 template <class T>
 concept bool Swappable() {
-  return requires(T&& @\oldtxt{t}\newtxt{a}@, T&& @\oldtxt{u}\newtxt{b}@) {
-    @\oldtxt{(void)}\newtxt{ranges::}@swap(std::forward<T>(@\oldtxt{t}\newtxt{a}@), std::forward<T>(@\oldtxt{u}\newtxt{b}@));
+  return requires(T&& a, T&& b) {
+    ranges::swap(std::forward<T>(a), std::forward<T>(b));
   };
 }
 
@@ -354,20 +337,13 @@ concept bool Swappable() {
     Swappable<U>() &&
     Common<T, U>() &&
     requires(T&& t, U&& u) {
-      @\oldtxt{(void)}\newtxt{ranges::}@swap(std::forward<T>(t), std::forward<U>(u));
-      @\oldtxt{(void)}\newtxt{ranges::}@swap(std::forward<U>(u), std::forward<T>(t));
+      ranges::swap(std::forward<T>(t), std::forward<U>(u));
+      ranges::swap(std::forward<U>(u), std::forward<T>(t));
     };
 }
 \end{itemdecl}
 
 \begin{itemdescr}
-\pnum
-\oldtxt{\enternote The casts to \tcode{void} in the required expressions indicate
-that the value---if any---of the call to \tcode{swap} does not participate in the
-semantics. Callers are effectively forbidden to rely on the return type or value of
-a call to \tcode{swap}, and user customizations of \tcode{swap} need not return
-equal values when given equal operands. \exitnote}
-
 \pnum
 This subclause provides definitions for swappable types and expressions. In these
 definitions, let \tcode{t} denote an expression of type \tcode{T}, and let \tcode{u}
@@ -376,45 +352,10 @@ denote an expression of type \tcode{U}.
 \pnum
 An object \tcode{t} is \defn{swappable with} an object \tcode{u} if and only if
 \tcode{Swappable<T, U>()} is satisfied. \tcode{Swappable<T, U>()} is satisfied if
-and only if\oldtxt{:} \newtxt{given distinct objects \tcode{tt} equal to \tcode{t}
+and only if given distinct objects \tcode{tt} equal to \tcode{t}
 and \tcode{uu} equal to \tcode{u}, after evaluating either
 \tcode{ranges::swap(t, u)} or \tcode{ranges::swap(u, t)}, \tcode{tt} is equal to
-\tcode{u} and \tcode{uu} is equal to \tcode{t}.}
-
-{\color{oldclr}
-\begin{itemize}
-\item the requires clause above is evaluated in the context described below, and
-
-\item these expressions have the following effects:
-
-\begin{itemize}
-\item the object referred to by \tcode{t} has the value originally held by \tcode{u} and
-\item the object referred to by \tcode{u} has the value originally held by \tcode{t}.
-\end{itemize}
-\end{itemize}
-
-\pnum
-The context in which the requires clause is evaluated shall
-ensure that a binary non-member function named ``\tcode{swap}'' is selected via overload
-resolution~(\cxxref{over.match}) on a candidate set that includes:
-
-\begin{itemize}
-\item the two \tcode{swap} function templates defined in
-\tcode{<utility>}~(\ref{utility}) and
-
-\item the lookup set produced by argument-dependent lookup~(\cxxref{basic.lookup.argdep}).
-\end{itemize}
-
-\enternote If \tcode{T} and \tcode{U} are both fundamental types or arrays of
-fundamental types and the declarations from the header \tcode{<utility>} are in
-scope, the overall lookup set described above is equivalent to that of the
-qualified name lookup applied to the expression \tcode{std::swap(t, u)} or
-\tcode{std::swap(u, t)} as appropriate. \exitnote
-
-\enternote It is unspecified whether a library component that has a swappable
-requirement includes the header \tcode{<utility>} to ensure an appropriate
-evaluation context. \exitnote
-} %%\color{oldclr}
+\tcode{u} and \tcode{uu} is equal to \tcode{t}.
 
 \pnum
 An rvalue or lvalue \tcode{t} is \defn{swappable} if and only if \tcode{t} is
@@ -428,7 +369,7 @@ is performed in an appropriate context under the various conditions as follows:
 // Requires: \tcode{std::forward<T>(t)} shall be swappable with \tcode{std::forward<U>(u)}.
 template <class T, class U>
 void value_swap(T&& t, U&& u) {
-  using std::@\newtxt{experimental::ranges::}@swap;
+  using std::experimental::ranges::swap;
   swap(std::forward<T>(t), std::forward<U>(u));         // OK: uses ``swappable with'' conditions
                                                         // for rvalues and lvalues
 }
@@ -436,7 +377,7 @@ void value_swap(T&& t, U&& u) {
 // Requires: lvalues of \tcode{T} shall be swappable.
 template <class T>
 void lv_swap(T& t1, T& t2) {
-  using std::@\newtxt{experimental::ranges::}@swap;
+  using std::experimental::ranges::swap;
   swap(t1, t2);                                         // OK: uses swappable conditions for
 }                                                       // lvalues of type \tcode{T}
 
@@ -446,7 +387,7 @@ namespace N {
   Proxy proxy(A& a) { return Proxy{ &a }; }
 
   void swap(A& x, Proxy p) {
-    std::@\newtxt{experimental::ranges::}@swap(x.m, p.a->m);  // OK: uses context equivalent to swappable
+    std::experimental::ranges::swap(x.m, p.a->m);  // OK: uses context equivalent to swappable
                                                    // conditions for fundamental types
   }
   void swap(Proxy p, A& x) { swap(x, p); }         // satisfy symmetry constraint
@@ -482,7 +423,7 @@ The \tcode{Boolean} concept describes the requirements on a type that is usable 
 \begin{itemdecl}
 template <class B>
 concept bool Boolean() {
-  return @\newtxt{MoveConstructible<B>() \&\& // (see \ref{concepts.lib.object.moveconstructible})}@
+  return MoveConstructible<B>() && // (see \ref{concepts.lib.object.moveconstructible})
     requires(const B b1, const B b2, const bool a) {
       bool(b1);
       { b1 } -> bool;
@@ -533,7 +474,6 @@ not \tcode{Boolean} types.\exitexample
 \ednote{Remove table [equalitycomparable] in [utility.arg.requirements]. Replace references to
 [equalitycomparable] with [concepts.lib.compare.equalitycomparable].}
 
-{\color{newclr}
 \indexlibrary{\idxcode{WeaklyEqualityComparable}}%
 \begin{itemdecl}
 template <class T, class U>
@@ -558,17 +498,12 @@ Let \tcode{t} and \tcode{u} be objects of types \tcode{T} and \tcode{U}.
 \item \tcode{bool(u != t) == bool(t != u)}.
 \end{itemize}
 \end{itemdescr}
-} %% color{newclr}
 
 \indexlibrary{\idxcode{EqualityComparable}}%
 \begin{itemdecl}
 template <class T>
 concept bool EqualityComparable() {
-  return @\newtxt{WeaklyEqualityComparable<T, T>();}@
-  @\oldtxt{requires(const T a, const T b) \{}@
-    @\oldtxt{\{a == b\} -> Boolean;}@
-    @\oldtxt{\{a != b\} -> Boolean;}@
-  @\oldtxt{\};}@
+  return WeaklyEqualityComparable<T, T>();
 }
 \end{itemdecl}
 
@@ -579,14 +514,12 @@ of type \tcode{T}. \tcode{EqualityComparable<T>()}
 is satisfied if and only if:
 
 \begin{itemize}
-\item \oldtxt{\tcode{bool(a == a)}.}
 \item \tcode{bool(a == b)} if and only if \tcode{a} is equal to \tcode{b}.
-\item \oldtxt{\tcode{bool(a != b) == !bool(a == b)}.}
 \end{itemize}
 
 \pnum
 \enternote The requirement that the expression \tcode{a == b} is equality preserving
-implies that \tcode{==} is \newtxt{reflexive, }transitive\newtxt{,} and symmetric.\exitnote
+implies that \tcode{==} is reflexive, transitive, and symmetric.\exitnote
 \end{itemdescr}
 
 \indexlibrary{\idxcode{EqualityComparable}}%
@@ -596,50 +529,39 @@ concept bool EqualityComparable() {
   return Common<T, U>() &&
     EqualityComparable<T>() &&
     EqualityComparable<U>() &&
-    EqualityComparable<@\oldtxt{CommonType}\newtxt{common_type_t}@<T, U>>() &&
-    @\newtxt{WeaklyEqualityComparable<T, U>();}@
-    @\oldtxt{requires(const T a, const U b) \{}@
-      @\oldtxt{\{a == b\} -> Boolean;}@
-      @\oldtxt{\{b == a\} -> Boolean;}@
-      @\oldtxt{\{a != b\} -> Boolean;}@
-      @\oldtxt{\{b != a\} -> Boolean;}@
-    @\oldtxt{\};}@
+    EqualityComparable<common_type_t<T, U>>() &&
+    WeaklyEqualityComparable<T, U>();
 }
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
 Let \tcode{a} be an object of type \tcode{T}, \tcode{b} be an object of type \tcode{U}, and \tcode{C} be
-\tcode{\oldtxt{CommonType}}\tcode{\newtxt{common_type_t}}\tcode{<T, U>}. Then \tcode{EqualityComparable<T, U>()}
+\tcode{common_type_t<T, U>}. Then \tcode{EqualityComparable<T, U>()}
 is satisfied if and only if:
 
 \begin{itemize}
 \item \tcode{bool(a == b) == bool(C(a) == C(b))}.
-\item \oldtxt{\tcode{bool(a != b) == bool(C(a) != C(b))}.}
-\item \oldtxt{\tcode{bool(b == a) == bool(C(b) == C(a))}.}
-\item \oldtxt{\tcode{bool(b != a) == bool(C(b) != C(a))}.}
 \end{itemize}
 \end{itemdescr}
 
-{\color{newclr}
 \pnum
 \enternote The distinction between
 \tcode{Equal\-ity\-Comp\-arable<\brk{}T, \brk{}U>()} and
 \tcode{Weakly\-Equal\-ity\-Comp\-arable<T, U>()} is purely semantic.
 \exitnote
-} %% color{newclr}
 
 \rSec2[concepts.lib.compare.stricttotallyordered]{Concept StrictTotallyOrdered}
 
 \ednote{Remove table [lessthancomparable] in [utility.arg.requirements]. Replace uses of
-\tcode{LessThanComparable} with \tcode{\newtxt{Strict}TotallyOrdered} (acknowledging that this is a breaking
+\tcode{LessThanComparable} with \tcode{StrictTotallyOrdered} (acknowledging that this is a breaking
 change that makes type requirements stricter). Replace references to [lessthancomparable] with
 references to [concepts.lib.compare.stricttotallyordered]}
 
 \indexlibrary{\idxcode{StrictTotallyOrdered}}%
 \begin{itemdecl}
 template <class T>
-concept bool @\newtxt{Strict}@TotallyOrdered() {
+concept bool StrictTotallyOrdered() {
   return EqualityComparable<T>() &&
     requires (const T a, const T b) {
       { a < b } -> Boolean;
@@ -653,7 +575,7 @@ concept bool @\newtxt{Strict}@TotallyOrdered() {
 \begin{itemdescr}
 \pnum
 Let \tcode{a}, \tcode{b}, and \tcode{c} be objects of type \tcode{T}.
-Then \tcode{\newtxt{Strict}TotallyOrdered<T>()} is satisfied if and only if
+Then \tcode{StrictTotallyOrdered<T>()} is satisfied if and only if
 
 \begin{itemize}
 \item Exactly one of \tcode{bool(a < b)}, \tcode{bool(b < a)}, or
@@ -665,21 +587,15 @@ Then \tcode{\newtxt{Strict}TotallyOrdered<T>()} is satisfied if and only if
 \item \tcode{bool(a >= b) == !bool(a < b)}.
 \end{itemize}
 
-{\color{oldclr}
-\pnum
-\enternote Not all arguments will be well-formed for a given type. For example, $NaN$ is not a
-well-formed floating point value, and many types' moved-from states are not well-formed. This
-does not mean that the type does not satisfy \tcode{\newtxt{Strict}TotallyOrdered}.\exitnote
-}
 \end{itemdescr}
 
 \begin{itemdecl}
 template <class T, class U>
-concept bool @\newtxt{Strict}@TotallyOrdered() {
+concept bool StrictTotallyOrdered() {
   return Common<T, U>() &&
-    @\newtxt{Strict}@TotallyOrdered<T>() &&
-    @\newtxt{Strict}@TotallyOrdered<U>() &&
-    @\newtxt{Strict}@TotallyOrdered<@\oldtxt{CommonType}\newtxt{common_type_t}@<T, U>>() &&
+    StrictTotallyOrdered<T>() &&
+    StrictTotallyOrdered<U>() &&
+    StrictTotallyOrdered<common_type_t<T, U>>() &&
     EqualityComparable<T, U>() &&
     requires (const T t, const U u) {
       { t < u } -> Boolean;
@@ -697,8 +613,8 @@ concept bool @\newtxt{Strict}@TotallyOrdered() {
 \begin{itemdescr}
 \pnum
 Let \tcode{t} be an object of type T, \tcode{u} be an object
-of type \tcode{U}, and \tcode{C} be \tcode{\oldtxt{CommonType}}\tcode{\newtxt{common_type_t}}\tcode{<T, U>}.
-Then  \tcode{\newtxt{Strict}TotallyOrdered<T, U>()} is satisfied if and only if
+of type \tcode{U}, and \tcode{C} be \tcode{common_type_t<T, U>}.
+Then  \tcode{StrictTotallyOrdered<T, U>()} is satisfied if and only if
 
 \begin{itemize}
 \item \tcode{bool(t < u) == bool(C(t) < C(u)).}
@@ -822,7 +738,7 @@ references to [moveconstructible] with references to
 template <class T>
 concept bool MoveConstructible() {
   return Constructible<T, remove_cv_t<T>&&>() &&
-    Convertible@\newtxt{To}@<remove_cv_t<T>&&, T>();
+    ConvertibleTo<remove_cv_t<T>&&, T>();
 }
 \end{itemdecl}
 
@@ -861,9 +777,9 @@ template <class T>
 concept bool CopyConstructible() {
   return MoveConstructible<T>() &&
     Constructible<T, const remove_cv_t<T>&>() &&
-    Convertible@\newtxt{To}@<remove_cv_t<T>&, T>() &&
-    Convertible@\newtxt{To}@<const remove_cv_t<T>&, T>() &&
-    Convertible@\newtxt{To}@<const remove_cv_t<T>&&, T>();
+    ConvertibleTo<remove_cv_t<T>&, T>() &&
+    ConvertibleTo<const remove_cv_t<T>&, T>() &&
+    ConvertibleTo<const remove_cv_t<T>&&, T>();
 }
 \end{itemdecl}
 
@@ -896,30 +812,10 @@ references to [moveassignable] with references to
 template <class T>
 concept bool Movable() {
   return MoveConstructible<T>() &&
-    Assignable<T&, T&&>() @\newtxt{\&\&}@
-    @\newtxt{Swappable<T\&>()}@;
+    Assignable<T&, T&&>() &&
+    Swappable<T&>();
 }
 \end{itemdecl}
-
-{\color{oldclr}
-\begin{itemdescr}
-\pnum
-Let \tcode{rv} be an rvalue of type \tcode{T}
-and let \tcode{t} be an lvalue of type \tcode{T}. Then
-\tcode{Movable<T>()} is satisfied if and only if
-
-\begin{itemize}
-\item After the assignment \tcode{t = rv}, \tcode{t} is equal to the value
-of \tcode{rv} before the assignment.
-\end{itemize}
-
-\pnum
-\tcode{rv}'s resulting state is unspecified. \enternote \tcode{rv} must still meet the
-requirements of the library component that is using it. The operations listed
-in those requirements must work as specified whether \tcode{rv} has been moved
-from or not.\exitnote
-\end{itemdescr}
-} %% color{oldclr}
 
 \rSec2[concepts.lib.object.copyable]{Concept Copyable}
 \ednote{Remove table [copyassignable] in [utility.arg.requirements]. Replace
@@ -935,19 +831,6 @@ concept bool Copyable() {
     Assignable<T&, const T&>();
 }
 \end{itemdecl}
-
-{\color{oldclr}
-\begin{itemdescr}
-\pnum
-Let \tcode{t} be an lvalue of type \tcode{T}, and \tcode{v} be an lvalue of type (possibly
-\tcode{const}) \tcode{T} or an rvalue of type \tcode{const T}. Then
-\tcode{Copyable<T>()} is satisfied if and only if
-
-\begin{itemize}
-\item After the assignment \tcode{t = v}, \tcode{t} is equal to \tcode{v}.
-\end{itemize}
-\end{itemdescr}
-} %% color{oldclr}
 
 \rSec2[concepts.lib.object.semiregular]{Concept Semiregular}
 
@@ -989,39 +872,33 @@ similarly to built-in types like \tcode{int} and that are comparable with \tcode
 \rSec2[concepts.lib.callables.general]{In general}
 
 \pnum
-The \oldtxt{function }concepts in this section describe the requirements on function
+The concepts in this section describe the requirements on function
 objects~(\ref{function.objects}) and their arguments.
 
 \rSec2[concepts.lib.callables.callable]{Concept Callable}
 
 \pnum
-\newtxt{The \tcode{Callable} concept specifies a relationship between a callable
+The \tcode{Callable} concept specifies a relationship between a callable
 type~(\cxxref{func.def}) \tcode{F} and a set of argument types \tcode{Args...} which
-can be evaluated by the library function \tcode{invoke}~(\ref{func.invoke}).}
+can be evaluated by the library function \tcode{invoke}~(\ref{func.invoke}).
 
 \indexlibrary{\idxcode{Callable}}%
 \begin{itemdecl}
-@\oldtxt{template <class F, class...Args>}@
-@\oldtxt{using ResultType = result_of_t<F(Args...)>;}@
-
 template <class F, class...Args>
-concept bool @\oldtxt{Function}\newtxt{Callable}@() {
+concept bool Callable() {
   return CopyConstructible<F>() &&
     requires (F f, Args&&...args) {
-      @\newtxt{invoke(f, std::forward<Args>(args)...); // not required to be equality preserving}@
-      @\oldtxt{typename ResultType<F, Args...>;}@
-      @\oldtxt{\{ f(std::forward<Args>(args)...) \} // not required to be equality preserving}@
-        @\oldtxt{-> Same<ResultType<F, Args...>{}>;}@
+      invoke(f, std::forward<Args>(args)...); // not required to be equality preserving
     };
 }
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\enternote Since the \newtxt{\tcode{invoke}} function call
-expression \oldtxt{of \tcode{Function}} is not required to be
+\enternote Since the \tcode{invoke} function call
+expression is not required to be
 equality-preserving~(\ref{concepts.lib.general.equality}), a function that generates random numbers
-may satisfy \tcode{\oldtxt{Function}\newtxt{Callable}}.\exitnote
+may satisfy \tcode{Callable}.\exitnote
 \end{itemdescr}
 
 \rSec2[concepts.lib.callables.regularcallable]{Concept RegularCallable}
@@ -1029,24 +906,24 @@ may satisfy \tcode{\oldtxt{Function}\newtxt{Callable}}.\exitnote
 \indexlibrary{\idxcode{RegularCallable}}%
 \begin{itemdecl}
 template <class F, class...Args>
-concept bool Regular@\oldtxt{Function}\newtxt{Callable}@() {
-  return @\oldtxt{Function}\newtxt{Callable}@<F, Args...>();
+concept bool RegularCallable() {
+  return Callable<F, Args...>();
 }
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-The \newtxt{\tcode{invoke}} function call expression \oldtxt{of \tcode{RegularFunction} }shall be
+The \tcode{invoke} function call expression shall be
 equality-preserving~(\ref{concepts.lib.general.equality}). \enternote This requirement supersedes the
-annotation \oldtxt{on the function call expression }in the definition of \tcode{\oldtxt{Function}\newtxt{Callable}}. \exitnote
+annotation in the definition of \tcode{Callable}. \exitnote
 
 \pnum
 \enternote A random number generator does not satisfy
-\tcode{Regular\oldtxt{Function}\newtxt{Callable}}.\exitnote
+\tcode{RegularCallable}.\exitnote
 
 \pnum
-\enternote The\oldtxt{re is no syntactic difference}\newtxt{ distinction} between \tcode{\oldtxt{Function}\newtxt{Callable}} and
-\tcode{Regular\oldtxt{Function}\newtxt{Callable}}\newtxt{ is purely semantic}.\exitnote
+\enternote The distinction between \tcode{Callable} and
+\tcode{RegularCallable} is purely semantic.\exitnote
 \end{itemdescr}
 
 \rSec2[concepts.lib.callables.predicate]{Concept Predicate}
@@ -1055,8 +932,8 @@ annotation \oldtxt{on the function call expression }in the definition of \tcode{
 \begin{itemdecl}
 template <class F, class...Args>
 concept bool Predicate() {
-  return Regular@\oldtxt{Function}\newtxt{Callable}@<F, Args...>() &&
-    Boolean<@\oldtxt{ResultType<F, Args...>}\newtxt{result_of_t<F\&(Args...)>}@>();
+  return RegularCallable<F, Args...>() &&
+    Boolean<result_of_t<F&(Args...)>>();
 }
 \end{itemdecl}
 
@@ -1074,7 +951,7 @@ concept bool Relation() {
   return Relation<R, T>() &&
     Relation<R, U>() &&
     Common<T, U>() &&
-    Relation<R, @\oldtxt{CommonType}\newtxt{common_type_t}@<T, U>>() &&
+    Relation<R, common_type_t<T, U>>() &&
     Predicate<R, T, U>() &&
     Predicate<R, U, T>();
 }
@@ -1084,7 +961,7 @@ concept bool Relation() {
 \pnum
 Let \tcode{r} be any object of type \tcode{R}, \tcode{a} be any
 object of type \tcode{T}, \tcode{b} be any
-object of type \tcode{U}, and \tcode{C} be \tcode{\oldtxt{CommonType}}\tcode{\newtxt{common_type_t}}\tcode{<T, U>}.
+object of type \tcode{U}, and \tcode{C} be \tcode{common_type_t<T, U>}.
 Then \tcode{Relation<R, T, U>()} is satisfied if and only if
 
 \begin{itemize}

@@ -1,15 +1,15 @@
 \rSec0[numerics]{Numerics library}
 
-{\color{newclr}
-\synopsis{Header \tcode{<experimental/ranges\oldtxt{_v1}/random>} synopsis}
+\begin{addedblock}
+\synopsis{Header \tcode{<experimental/ranges/random>} synopsis}
 
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges@\oldtxt{_v1}\newtxt{ \{ inline namespace v1}@ {
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
   template <class G>
   concept bool UniformRandomNumberGenerator() { return @\seebelow@; }
-}}}@\newtxt{\}}@
+}}}}
 \end{codeblock}
-}
+\end{addedblock}
 
 \setcounter{section}{4}
 \rSec1[rand]{Random number generation}
@@ -26,20 +26,18 @@ namespace std { namespace experimental { namespace ranges@\oldtxt{_v1}\newtxt{ \
 
 \begin{addedblock}
 \begin{codeblock}
-@\newtxt{// defined in <experimental/ranges\oldtxt{_v1}/random>}@
+// defined in <experimental/ranges/random>
 
-namespace std { @\newtxt{namespace experimental \{ namespace ranges\oldtxt{_v1} \{ inline namespace v1 \{}@
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
   template <class G>
-  concept bool UniformRandomNumberGenerator@\newtxt{() \{}\oldtxt{ =}@
-    @\newtxt{return}@ requires (G g) {
-      @\oldtxt{typename ResultType<G>;}@
-      @\oldtxt{requires UnsignedIntegral<ResultType<G>{}>;}@
-      { g() } -> @\oldtxt{Same<ResultType<G>{}>}\newtxt{UnsignedIntegral}@; @\newtxt{// not required to be equality preserving}@
-      { G::min() } -> Same<@\oldtxt{ResultType<G>}\newtxt{result_of_t<G\&()>}@>;
-      { G::max() } -> Same<@\oldtxt{ResultType<G>}\newtxt{result_of_t<G\&()>}@>;
+  concept bool UniformRandomNumberGenerator() {
+    return requires (G g) {
+      { g() } -> UnsignedIntegral; // not required to be equality preserving
+      { G::min() } -> Same<result_of_t<G&()>>;
+      { G::max() } -> Same<result_of_t<G&()>>;
     };
-  @\newtxt{\}}@
-}@\newtxt{\}\}\}}@
+  }
+}}}}
 \end{codeblock}
 \end{addedblock}
 
@@ -62,14 +60,14 @@ of being returned.
 
 \begin{addedblock}
 \pnum
-Let \tcode{g} be any object of type \tcode{G}. Then \oldtxt{type \tcode{G} models}
-\tcode{UniformRandomNumberGenerator\newtxt{<G>()}} \newtxt{is satisfied} if and only if
+Let \tcode{g} be any object of type \tcode{G}. Then
+\tcode{UniformRandomNumberGenerator<G>()} is satisfied if and only if
 
 \begin{itemize}
 \item Both \tcode{G::min()} and \tcode{G::max()} are constant expressions~(\cxxref{expr.const}).
-\item \tcode{\oldtxt{(}G::min() < G::max()\oldtxt{) != false}}.
-\item \tcode{\oldtxt{(}G::min() <= g()\oldtxt{ <= G::max()) != false}}.
-\item \newtxt{\tcode{g() <= G::max()}.}
+\item \tcode{G::min() < G::max()}.
+\item \tcode{G::min() <= g()}.
+\item \tcode{g() <= G::max()}.
 \item \tcode{g()} has amortized constant complexity.
 \end{itemize}
 

@@ -7,8 +7,8 @@
 \tcode{tagged_tuple}~(\ref{tagged.tuple}), and \tcode{tag::in}~(\ref{alg.tagspec}).
 
 \begin{codeblock}
-namespace std { @\newtxt{namespace experimental \{ namespace ranges\oldtxt{_v1} \{ inline namespace v1 \{}@
-  @\newtxt{namespace tag \{ struct __specifier_tag \{ \}; \}}@
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+  namespace tag { struct __specifier_tag { }; }
 
   template <class T>
   struct __tag_spec { };
@@ -20,56 +20,57 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges\oldtxt{_v1} 
   template <class Spec, class Arg>
   struct __tag_elem<Spec(Arg)> { using type = Arg; };
 
-  @\newtxt{template <class T>}@
-  @\newtxt{concept bool TagSpecifier() \{}@
-    @\newtxt{return DerivedFrom<T, tag::__specifier_tag>();}@
-  @\newtxt{\}}@
+  template <class T>
+  concept bool TagSpecifier() {
+    return DerivedFrom<T, tag::__specifier_tag>();
+  }
 
-  @\newtxt{template <class T>}@
-  @\newtxt{concept bool TaggedType() \{}@
-    @\newtxt{return requires \{}@
-      @\newtxt{typename __tag_spec<T>::type;}@
-      @\newtxt{requires TagSpecifier<typename __tag_spec<T>::type>();}@
-    @\newtxt{\};}@
-  @\newtxt{\}}@
+  template <class T>
+  concept bool TaggedType() {
+    return requires {
+      typename __tag_spec<T>::type;
+      requires TagSpecifier<typename __tag_spec<T>::type>();
+    };
+  }
 
-  template <class Base, @\oldtxt{class}\newtxt{TagSpecifier}@...Tags>
-    @\newtxt{requires sizeof...(Tags) >= tuple_size<Base>::value}@
+  template <class Base, TagSpecifier... Tags>
+    requires sizeof...(Tags) >= tuple_size<Base>::value
   struct tagged;
-  @\newtxt{\}\}\}}@
+  }}}
 
   template <class Base, class...Tags>
-  struct tuple_size<@\newtxt{experimental::ranges\oldtxt{_v1}::}@tagged<Base, Tags...>>
+  struct tuple_size<experimental::ranges::tagged<Base, Tags...>>
     : tuple_size<Base> { };
   template <size_t N, class Base, class...Tags>
-  struct tuple_element<N, @\newtxt{experimental::ranges\oldtxt{_v1}::}@tagged<Base, Tags...>>
+  struct tuple_element<N, experimental::ranges::tagged<Base, Tags...>>
     : tuple_element<N, Base> { };
 
-  @\newtxt{namespace experimental \{ namespace ranges\oldtxt{_v1} \{ inline namespace v1 \{}@
+  namespace experimental { namespace ranges { inline namespace v1 {
+
   struct __getters {
   private:
-    template <class, @\oldtxt{class}\newtxt{TagSpecifier}@...>
-      @\newtxt{requires sizeof...(Tags) >= tuple_size<Base>::value}@
+    template <class, TagSpecifier...>
+      requires sizeof...(Tags) >= tuple_size<Base>::value
     friend struct tagged;
-    template <class Type, class Indices, @\oldtxt{class}\newtxt{TagSpecifier}@...Tags>
+    template <class Type, class Indices, TagSpecifier... Tags>
     struct collect_;
-    template <class Type, std::size_t...Is, @\oldtxt{class}\newtxt{TagSpecifier}@...Tags>
+    template <class Type, std::size_t...Is, TagSpecifier... Tags>
     struct collect_<Type, index_sequence<Is...>, Tags...>
       : Tags::template getter<Type, Is>... {
       collect_() = default;
       collect_(const collect_&) = default;
       collect_& operator=(const collect_&) = default;
     private:
-      template <class @\newtxt{Base}@, @\oldtxt{class...}\newtxt{TagSpecifier...Tags}@>
-        @\newtxt{requires sizeof...(Tags) <= tuple_size<Base>::value}@
+      template <class Base, TagSpecifier... Tags>
+        requires sizeof...(Tags) <= tuple_size<Base>::value
       friend struct tagged;
       ~collect_() = default;
     };
-    template <class Type, @\oldtxt{class}\newtxt{TagSpecifier}@...Tags>
+    template <class Type, TagSpecifier... Tags>
     using collect = collect_<Type, make_index_sequence<sizeof...(Tags)>, Tags...>;
   };
 
-  template <class Base, @\oldtxt{class}\newtxt{TagSpecifier}@...Tags>
+  template <class Base, TagSpecifier... Tags>
   struct tagged
     : Base, __getters::collect<tagged<Base, Tags...>, Tags...> {
     using Base::Base;
@@ -79,47 +80,47 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges\oldtxt{_v1} 
     tagged &operator=(tagged&&) = default;
     tagged &operator=(const tagged&) = default;
     template <typename Other>
-      requires Constructible<Base, Other>@\newtxt{()}@
+      requires Constructible<Base, Other>()
     tagged(tagged<Other, Tags...> &&that)
       : Base(static_cast<Other &&>(that)) { }
     template <typename Other>
-      requires Constructible<Base, const Other&>@\newtxt{()}@
+      requires Constructible<Base, const Other&>()
     tagged(const tagged<Other, Tags...> &that)
       : Base(static_cast<const Other&>(that)) { }
     template <typename Other>
-      requires Assignable<Base@\newtxt{\&}@, Other>@\newtxt{()}@
+      requires Assignable<Base&, Other>()
     tagged& operator=(tagged<Other, Tags...>&& that) {
       static_cast<Base&>(*this) = static_cast<Other&&>(that);
       return *this;
     }
     template <typename Other>
-      requires Assignable<Base@\newtxt{\&}@, const Other&>@\newtxt{()}@
+      requires Assignable<Base&, const Other&>()
     tagged& operator=(const tagged<Other, Tags...>& that) {
       static_cast<Base&>(*this) = static_cast<const Other&>(that);
       return *this;
     }
     template <class U>
-      requires Assignable<Base@\newtxt{\&}@, U>@\newtxt{()}@ && !Same<decay_t<U>, tagged>@\newtxt{()}@
+      requires Assignable<Base&, U>() && !Same<decay_t<U>, tagged>()
     tagged& operator=(U&& u) {
       static_cast<Base&>(*this) = std::forward<U>(u);
       return *this;
     }
   };
 
-  template <@\oldtxt{class}\newtxt{TaggedType}@ F, @\oldtxt{class}\newtxt{TaggedType}@ S>
+  template <TaggedType F, TaggedType S>
   using tagged_pair =
     tagged<pair<typename __tag_elem<F>::type, typename __tag_elem<S>::type>,
            typename __tag_spec<F>::type, typename __tag_spec<S>::type>;
 
-  template <@\oldtxt{class}\newtxt{TaggedType}@...Types>
+  template <TaggedType... Types>
   using tagged_tuple =
     tagged<tuple<typename __tag_elem<Types>::type...>,
            typename __tag_spec<Types>::type...>;
 
   namespace tag {
-    struct in : @\newtxt{__specifier_tag}@ {
+    struct in : __specifier_tag {
     private:
-      friend @\oldtxt{struct}@ __getters;
+      friend __getters;
       template <class Derived, size_t I>
       struct getter {
         getter() = default;
@@ -135,11 +136,11 @@ namespace std { @\newtxt{namespace experimental \{ namespace ranges\oldtxt{_v1} 
           return get<I>(static_cast<const Derived &>(*this));
         }
       private:
-        friend @\oldtxt{struct}@ __getters;
+        friend __getters;
         ~getter() = default;
       };
     }
     // Other tag specifiers defined similarly, see \ref{alg.tagspec}
   }
-}@\newtxt{\}\}\}}@
+}}}}
 \end{codeblock}
