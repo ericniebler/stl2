@@ -13,9 +13,9 @@
 
 FIGURES = $(patsubst %.dot,%.pdf,$(wildcard *.dot))
 
-TSPDF = pdflatex -jobname=$(TARGET) D4569.tex | grep -v "^Overfull"
+TSPDF = pdflatex -jobname=$(TARGET) $(TARGET).tex | grep -v "^Overfull"
 
-TARGET = D4569
+TARGET = ranges
 
 export TOOLS=./tools
 
