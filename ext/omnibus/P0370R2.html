@@ -49,12 +49,12 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
   <tr>
     <td width="172" align="left" valign="top">Document number:</td>
     <td width="435">
-      P0370R1
+      P0370R2
     </td>
   </tr>
   <tr>
     <td width="172" align="left" valign="top">Date:</td>
-    <td width="435">2016-07-05</td>
+    <td width="435">2016-10-17</td>
   </tr>
   <tr>
     <td width="172" align="left" valign="top">Project:</td>
@@ -162,7 +162,8 @@ concept <span class="dt">bool</span> Callable() {
 </blockquote>
 <p>and the section [concepts.lib.callables.regularcallable]:</p>
 <blockquote>
-<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">concept <span class="dt">bool</span> RegularCallable() {
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> F, <span class="kw">class</span>...Args&gt;
+concept <span class="dt">bool</span> RegularCallable() {
   <span class="kw">return</span> Callable&lt;F, Args...&gt;();
 }</code></pre></div>
 </blockquote>
@@ -177,29 +178,31 @@ concept <span class="dt">bool</span> Callable() {
 </blockquote>
 <p>in section [concepts.lib.callables.predicate], replace references to <code>RegularFunction</code> with <code>RegularCallable</code>. In [function.objects], add to the synopsis of header <code>&lt;experimental/ranges/functional&gt;</code> the declaration:</p>
 <blockquote>
-<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> F, <span class="kw">class</span>... Args&gt;
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="co">// 20.9.3, invoke:</span>
+<span class="kw">template</span> &lt;<span class="kw">class</span> F, <span class="kw">class</span>... Args&gt;
 result_of_t&lt;F&amp;&amp;(Args&amp;&amp;...)&gt; invoke(F&amp;&amp; f, Args&amp;&amp;... args);</code></pre></div>
 </blockquote>
 <p>Insert a new subsection [func.invoke] under [function.objects]:</p>
 <blockquote>
-<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">result_of_t&lt;F&amp;&amp;(Args&amp;&amp;...)&gt; invoke(F&amp;&amp; f, Args&amp;&amp;... args);</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> F, <span class="kw">class</span>... Args&gt;
+result_of_t&lt;F&amp;&amp;(Args&amp;&amp;...)&gt; invoke(F&amp;&amp; f, Args&amp;&amp;... args);</code></pre></div>
 <p>1 Effects: Equivalent to <code>INVOKE(std::forward&lt;F&gt;(f), std::forward&lt;Args&gt;(args)...)</code> (20.9.2).</p>
 </blockquote>
 <p>Remove the section [indirectcallables.functiontype]. In [indirectcallables.indirectfunc], replace the concept definitions with:</p>
 <blockquote>
-<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> F, <span class="kw">class</span>...Is&gt;
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> F, <span class="kw">class</span>... Is&gt;
 concept <span class="dt">bool</span> IndirectCallable() {
   <span class="kw">return</span> (Readable&lt;Is&gt;() &amp;&amp; ...) &amp;&amp;
     Callable&lt;F, value_type_t&lt;Is&gt;...&gt;();
 }
 
-<span class="kw">template</span> &lt;<span class="kw">class</span> F, <span class="kw">class</span>...Is&gt;
+<span class="kw">template</span> &lt;<span class="kw">class</span> F, <span class="kw">class</span>... Is&gt;
 concept <span class="dt">bool</span> IndirectRegularCallable() {
   <span class="kw">return</span> (Readable&lt;Is&gt;() &amp;&amp; ...) &amp;&amp;
     RegularCallable&lt;F, value_type_t&lt;Is&gt;...&gt;();
 }
 
-<span class="kw">template</span> &lt;<span class="kw">class</span> F, <span class="kw">class</span>...Is&gt;
+<span class="kw">template</span> &lt;<span class="kw">class</span> F, <span class="kw">class</span>... Is&gt;
 concept <span class="dt">bool</span> IndirectCallablePredicate() {
   <span class="kw">return</span> (Readable&lt;Is&gt;() &amp;&amp; ...) &amp;&amp;
     Predicate&lt;F, value_type_t&lt;Is&gt;...&gt;();
@@ -218,7 +221,7 @@ concept <span class="dt">bool</span> IndirectCallableStrictWeakOrder() {
 }
 
 <span class="kw">template</span> &lt;<span class="kw">class</span>&gt; <span class="kw">struct</span> indirect_result_of { };
-<span class="kw">template</span> &lt;<span class="kw">class</span> F, <span class="kw">class</span>...Is&gt;
+<span class="kw">template</span> &lt;<span class="kw">class</span> F, <span class="kw">class</span>... Is&gt;
 requires IndirectCallable&lt;remove_reference_t&lt;F&gt;, Is...&gt;()
 <span class="kw">struct</span> indirect_result_of&lt;F(Is...)&gt; :
   result_of&lt;F(value_type_t&lt;Is&gt;...)&gt; { };
@@ -252,13 +255,13 @@ requires IndirectCallable&lt;remove_reference_t&lt;F&gt;, Is...&gt;()
 <blockquote>
 <div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> T, <span class="kw">class</span> U&gt;
 concept <span class="dt">bool</span> Assignable() {
-  <span class="kw">return</span> Common&lt;T, U&gt;() &amp;&amp; requires(T&amp;&amp; a, U&amp;&amp; b) {
-    { std::forward&lt;T&gt;(a) = std::forward&lt;U&gt;(b) } -&gt; Same&lt;T&amp;&gt;;
+  <span class="kw">return</span> Common&lt;T, U&gt;() &amp;&amp; requires(T&amp;&amp; t, U&amp;&amp; u) {
+    { std::forward&lt;T&gt;(t) = std::forward&lt;U&gt;(u) } -&gt; Same&lt;T&amp;&gt;;
   };
 }</code></pre></div>
 </blockquote>
 <blockquote>
-<p>1 Let <code>t</code> be an lvalue of type <code>T</code>, and <code>R</code> be the type <code>remove_reference_t&lt;U&gt;</code>. If <code>U</code> is an lvalue reference type, let <code>v</code> be a lvalue of type <code>R</code>; otherwise, let <code>v</code> be an rvalue of type <code>R</code>. Let <code>uu</code> be a distinct object of type <code>R</code> such that <code>uu == v</code>. Then <code>Assignable&lt;T, U&gt;()</code> is satisfied if and only if</p>
+<p>1 Let <code>t</code> be an lvalue of type <code>T</code>, and <code>R</code> be the type <code>remove_reference_t&lt;U&gt;</code>. If <code>U</code> is an lvalue reference type, let <code>v</code> be an lvalue of type <code>R</code>; otherwise, let <code>v</code> be an rvalue of type <code>R</code>. Let <code>uu</code> be a distinct object of type <code>R</code> such that <code>uu == v</code>. Then <code>Assignable&lt;T, U&gt;()</code> is satisfied if and only if</p>
 </blockquote>
 <blockquote>
 <ul>
@@ -290,7 +293,7 @@ concept <span class="dt">bool</span> Assignable() {
 <div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> T&gt;
 concept <span class="dt">bool</span> Movable() {
   <span class="kw">return</span> MoveConstructible&lt;T&gt;() &amp;&amp;
-    Assignable&lt;T&amp;, T&amp;&amp;&gt;() &amp;&amp;
+    Assignable&lt;T&amp;, T&gt;() &amp;&amp;
     Swappable&lt;T&amp;&gt;();
 }</code></pre></div>
 </blockquote>
@@ -361,7 +364,7 @@ begin(a);</code></pre></div>
 <p>3 All instances of a specific customization point object type shall be equal.</p>
 </blockquote>
 <blockquote>
-<p>4 The type of a customization point object <code>T</code> shall satisfy <code>Function&lt;const T, Args..&gt;()</code> (19.5.2) when the types of <code>Args...</code> meet the requirements specified in that customization point object’s definition. Otherwise, <code>T</code> shall not have a function call operator that participates in overload resolution.</p>
+<p>4 The type of a customization point object <code>T</code> shall satisfy <code>Callable&lt;const T, Args..&gt;()</code> (19.5.2) when the types of <code>Args...</code> meet the requirements specified in that customization point object’s definition. Otherwise, <code>T</code> shall not have a function call operator that participates in overload resolution.</p>
 </blockquote>
 <blockquote>
 <p>5 Each customization point object type constrains its return type to satisfy a particular concept.</p>
@@ -424,7 +427,7 @@ concept <span class="dt">bool</span> Swappable() {
 </blockquote>
 <blockquote>
 <ul>
-<li>Otherwise, if <code>E1</code> and <code>E2</code> are lvalues of the same type <code>T</code> which meets the syntactic requirements of <code>MoveConstructible&lt;T&gt;()</code> and <code>Assignable&lt;T&amp;, T&amp;&amp;&gt;()</code>, exchanges the denoted values. <code>ranges::swap(E1, E2)</code> is a constant expression if the constructor selected by overload resolution for <code>T{std::move(E1)}</code> is a <code>constexpr</code> constructor and the expression <code>E1 = std::move(E2)</code> can appear in a <code>constexpr</code> function. <code>noexcept(ranges::swap(E1, E2))</code> is equal to <code>is_nothrow_move_constructible&lt;T&gt;::value &amp;&amp; is_nothrow_move_assignable&lt;T&gt;::value</code>. If either <code>MoveConstructible&lt;T&gt;()</code> or <code>Assignable&lt;T&amp;, T&amp;&amp;&gt;()</code> is not satisfied, the program is ill-formed with no diagnostic required. <code>ranges::swap(E1, E2)</code> has type <code>void</code>.</li>
+<li>Otherwise, if <code>E1</code> and <code>E2</code> are lvalues of the same type <code>T</code> which meets the syntactic requirements of <code>MoveConstructible&lt;T&gt;()</code> and <code>Assignable&lt;T&amp;, T&gt;()</code>, exchanges the denoted values. <code>ranges::swap(E1, E2)</code> is a constant expression if the constructor selected by overload resolution for <code>T{std::move(E1)}</code> is a <code>constexpr</code> constructor and the expression <code>E1 = std::move(E2)</code> can appear in a <code>constexpr</code> function. <code>noexcept(ranges::swap(E1, E2))</code> is equal to <code>is_nothrow_move_constructible&lt;T&gt;::value &amp;&amp; is_nothrow_move_assignable&lt;T&gt;::value</code>. If either <code>MoveConstructible&lt;T&gt;()</code> or <code>Assignable&lt;T&amp;, T&gt;()</code> is not satisfied, the program is ill-formed with no diagnostic required. <code>ranges::swap(E1, E2)</code> has type <code>void</code>.</li>
 </ul>
 </blockquote>
 <blockquote>
@@ -450,7 +453,7 @@ requires Swappable&lt;Base&amp;&gt;();</code></pre></div>
 <p>23 Remarks: The expression in the <code>noexcept</code> is equivalent to <code>noexcept(lhs.swap(rhs))</code></p>
 </blockquote>
 <blockquote>
-<p>24 Effects: <code>lhs.swap(rhs)</code>.</p>
+<p>24 Effects: Equivalent to: <code>lhs.swap(rhs)</code>.</p>
 </blockquote>
 <blockquote>
 <p>25 Throws: Nothing unless the call to <code>lhs.swap(rhs)</code> throws.</p>
@@ -504,22 +507,33 @@ requires Swappable&lt;Base&amp;&gt;();</code></pre></div>
 </blockquote>
 <p>In [ranges.range], define <code>iterator_t</code>, <code>sentinel_t</code>, and concept <code>Range</code> as:</p>
 <blockquote>
-<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> T&gt;
-<span class="kw">using</span> iterator_t = <span class="kw">decltype</span>(ranges::begin(declval&lt;T&amp;&gt;()));
-
-<span class="kw">template</span> &lt;<span class="kw">class</span> T&gt;
-<span class="kw">using</span> sentinel_t = <span class="kw">decltype</span>(ranges::end(declval&lt;T&amp;&gt;()));
-
-<span class="kw">template</span> &lt;<span class="kw">class</span> T&gt;
-concept <span class="dt">bool</span> Range() {
-  <span class="kw">return</span> requires {
-    <span class="kw">typename</span> sentinel_t&lt;T&gt;;
-  };
-}</code></pre></div>
+<p>```c++<br />
+template <class T><br />
+using iterator_t = decltype(ranges::begin(declval<T&>()));</p>
+<p>template <class T><br />
+using sentinel_t = decltype(ranges::end(declval<T&>()));</p>
+<p>template <class T><br />
+concept bool Range() {<br />
+return requires(T&amp;&amp; t) {<br />
+ranges::end(t);<br />
+};<br />
+}</p>
 </blockquote>
-<p>Strike paragraph 2.1.</p>
-<p>In [ranges.sized], replace references to <code>size</code> with <code>ranges::size</code>, again to make it clear that no ADL happens in the pertinent expressions. Strike paragraph 2.1.</p>
-<p>Strike all content from [iterator.range]. Add a new subsection [iterator.range.begin]:</p>
+<p>Strike the note immediately following (“The semantics of end (24.11.2)…”).</p>
+<p>In [ranges.sized], replace the syntax of the <code>SizedRange</code> concept with:</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> T&gt;
+concept <span class="dt">bool</span> SizedRange() {
+  <span class="kw">return</span> Range&lt;T&gt; &amp;&amp;
+    !disable_sized_range&lt;remove_cv_t&lt;remove_reference_t&lt;T&gt;&gt;&gt; &amp;&amp;
+    requires(<span class="dt">const</span> remove_reference_t&lt;T&gt;&amp; t) {
+      { ranges::size(t) } -&gt; ConvertibleTo&lt;difference_type_t&lt;iterator_t&lt;T&gt;&gt;&gt;;
+    };
+}</code></pre></div>
+<p>Replace paragraphs 3 through 5 with:</p>
+<blockquote>
+<p>[ Note: The <code>disable_sized_range</code> predicate provides a mechanism to enable use of range types with the library that meet the syntactic requirements but do not in fact satisfy <code>SizedRange</code>. A program that instantiates a library template that requires a <code>Range</code> with such a range type <code>R</code> is ill-formed with no diagnostic required unless <code>disable_sized_range&lt;remove_cv_t&lt;remove_reference_t&lt;R&gt;&gt;&gt;</code> evaluates to <code>true</code> (17.5.1.3). —end note ]</p>
+</blockquote>
+<p>Strike all content from [iterator.range]. Add a new subsection [iterator.range.begin] with title <code>begin</code>:</p>
 <blockquote>
 <p>1 The name <code>begin</code> denotes a customization point object (17.5.2.1.5). The effect of the expression <code>ranges::begin(E)</code> for some expression <code>E</code> is equivalent to:</p>
 </blockquote>
@@ -551,7 +565,7 @@ concept <span class="dt">bool</span> Range() {
 <blockquote>
 <p>2 Remark: Whenever <code>ranges::begin(E)</code> is a valid expression, the type of <code>ranges::begin(E)</code> satisfies <code>Iterator</code>.</p>
 </blockquote>
-<p>and a new subsection [iterator.range.end]:</p>
+<p>and a new subsection [iterator.range.end] with title <code>end</code>:</p>
 <blockquote>
 <p>1 The name <code>end</code> denotes a customization point object (17.5.2.1.5). The effect of the expression <code>ranges::end(E)</code> for some expression <code>E</code> is equivalent to:</p>
 </blockquote>
@@ -584,7 +598,7 @@ required.</li>
 <blockquote>
 <p>2 Remark: Whenever <code>ranges::end(E)</code> is a valid expression, the types of <code>ranges::end(E)</code> and <code>ranges::begin(E)</code> satisfy <code>Sentinel</code>.</p>
 </blockquote>
-<p>and a new subsection [iterator.range.cbegin]:</p>
+<p>and a new subsection [iterator.range.cbegin] with title <code>cbegin</code>:</p>
 <blockquote>
 <p>1 The name <code>cbegin</code> denotes a customization point object (17.5.2.1.5). The effect of the expression <code>ranges::cbegin(E)</code> for some expression <code>E</code> of type <code>T</code> is equivalent to <code>ranges::begin((const T&amp;)(E))</code>.</p>
 </blockquote>
@@ -594,7 +608,7 @@ required.</li>
 <blockquote>
 <p>3 [ Note: Whenever <code>ranges::cbegin(E)</code> is a valid expression, the type of <code>ranges::cbegin(E)</code> satisfies <code>Iterator</code>. —end note ]</p>
 </blockquote>
-<p>and a new subsection [iterator.range.cend]:</p>
+<p>and a new subsection [iterator.range.cend] with title <code>cend</code>:</p>
 <blockquote>
 <p>1 The name <code>cend</code> denotes a customization point object (17.5.2.1.5). The effect of the expression <code>ranges::cend(E)</code> for some expression <code>E</code> of type <code>T</code> is equivalent to <code>ranges::end((const T&amp;)(E))</code>.</p>
 </blockquote>
@@ -604,7 +618,7 @@ required.</li>
 <blockquote>
 <p>3 [ Note: Whenever <code>ranges::cend(E)</code> is a valid expression, the types of <code>ranges::cend(E)</code> and <code>ranges::cbegin(E)</code> satisfy <code>Sentinel</code>. —end note ]</p>
 </blockquote>
-<p>and a new subsection [iterator.range.rbegin]:</p>
+<p>and a new subsection [iterator.range.rbegin] with title <code>rbegin</code>:</p>
 <blockquote>
 <p>1 The name <code>rbegin</code> denotes a customization point object (17.5.2.1.5). The effect of the expression <code>ranges::rbegin(E)</code> for some expression <code>E</code> is equivalent to:</p>
 </blockquote>
@@ -636,7 +650,7 @@ required.</li>
 <blockquote>
 <p>2 Remark: Whenever <code>ranges::rbegin(E)</code> is a valid expression, the type of <code>ranges::rbegin(E)</code> satisfies <code>Iterator</code>.</p>
 </blockquote>
-<p>and a new subsection [iterator.range.rend]:</p>
+<p>and a new subsection [iterator.range.rend] with title <code>rend</code>:</p>
 <blockquote>
 <p>1 The name <code>rend</code> denotes a customization point object (17.5.2.1.5). The effect of the expression <code>ranges::rend(E)</code> for some expression <code>E</code> is equivalent to:</p>
 </blockquote>
@@ -668,7 +682,7 @@ required.</li>
 <blockquote>
 <p>2 Remark: Whenever <code>ranges::rend(E)</code> is a valid expression, the types of <code>ranges::rend(E)</code> and <code>ranges::rbegin(E)</code> satisfy <code>Sentinel</code>.</p>
 </blockquote>
-<p>and a new subsection [iterator.range.crbegin]:</p>
+<p>and a new subsection [iterator.range.crbegin] with title <code>crbegin</code>:</p>
 <blockquote>
 <p>1 The name <code>crbegin</code> denotes a customization point object (17.5.2.1.5). The effect of the expression <code>ranges::crbegin(E)</code> for some expression <code>E</code> of type <code>T</code> is equivalent to <code>ranges::rbegin((const T&amp;)(E))</code>.</p>
 </blockquote>
@@ -678,7 +692,7 @@ required.</li>
 <blockquote>
 <p>3 [ Note: Whenever <code>ranges::crbegin(E)</code> is a valid expression, the type of <code>ranges::crbegin(E)</code> satisfies <code>Iterator</code>. —end note ]</p>
 </blockquote>
-<p>and a new subsection [iterator.range.crend]:</p>
+<p>and a new subsection [iterator.range.crend] with title <code>crend</code>:</p>
 <blockquote>
 <p>1 The name <code>crend</code> denotes a customization point object (17.5.2.1.5). The effect of the expression <code>ranges::crend(E)</code> for some expression <code>E</code> of type <code>T</code> is equivalent to <code>ranges::rend((const T&amp;)(E))</code>.</p>
 </blockquote>
@@ -688,7 +702,7 @@ required.</li>
 <blockquote>
 <p>3 [ Note: Whenever <code>ranges::crend(E)</code> is a valid expression, the types of <code>ranges::crend(E)</code> and <code>ranges::crbegin(E)</code> satisfy <code>Sentinel</code>. —end note ]</p>
 </blockquote>
-<p>In [range.primitives], remove paragraphs 1-3 that define overloads of <code>size</code>. Add a new subsection [range.primitives.size]:</p>
+<p>In [range.primitives], remove paragraphs 1-3 that define overloads of <code>size</code>. Add a new subsection [range.primitives.size] with title <code>size</code>:</p>
 <blockquote>
 <p>1 The name <code>size</code> denotes a customization point object (17.5.2.1.5). The effect of the expression <code>ranges::size(E)</code> for some expression <code>E</code> with type <code>T</code> is equivalent to:</p>
 </blockquote>
@@ -720,7 +734,7 @@ required.</li>
 <blockquote>
 <p>2 [ Note: Whenever <code>ranges::size(E)</code> is a valid expression, the type of <code>ranges::size(E)</code> satisfies <code>Integral</code>. —end note ]</p>
 </blockquote>
-<p>and new subsection [range.primitives.empty]:</p>
+<p>and new subsection [range.primitives.empty] with title <code>empty</code>:</p>
 <blockquote>
 <p>1 The name <code>empty</code> denotes a customization point object (17.5.2.1.5). The effect of the expression <code>ranges::empty(E)</code> for some expression <code>E</code> is equivalent to:</p>
 </blockquote>
@@ -747,7 +761,7 @@ required.</li>
 <blockquote>
 <p>2 Remark: Whenever <code>ranges::empty(E)</code> is a valid expression, it has type <code>bool</code>.</p>
 </blockquote>
-<p>and a new subsection [range.primitives.data]:</p>
+<p>and a new subsection [range.primitives.data] with title <code>data</code>:</p>
 <blockquote>
 <p>1 The name <code>data</code> denotes a customization point object (17.5.2.1.5). The effect of the expression <code>ranges::data(E)</code> for some expression <code>E</code> is equivalent to:</p>
 </blockquote>
@@ -774,7 +788,7 @@ required.</li>
 <blockquote>
 <p>2 Remark: Whenever <code>ranges::data(E)</code> is a valid expression, it has pointer to object type.</p>
 </blockquote>
-<p>and a new subsection [range.primitives.cdata]:</p>
+<p>and a new subsection [range.primitives.cdata] with title <code>cdata</code>:</p>
 <blockquote>
 <p>1 The name <code>cdata</code> denotes a customization point object (17.5.2.1.5). The effect of the expression <code>ranges::cdata(E)</code> for some expression <code>E</code> of type <code>T</code> is equivalent to <code>ranges::data((const T&amp;)(E))</code>.</p>
 </blockquote>
@@ -904,7 +918,7 @@ concept <span class="dt">bool</span> WeaklyEqualityComparable() {
 <blockquote>
 <div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> T, <span class="kw">class</span> U&gt;
 concept <span class="dt">bool</span> WeaklyEqualityComparable() {
-  <span class="kw">return</span> requires(<span class="dt">const</span> T t, <span class="dt">const</span> U u) {
+  <span class="kw">return</span> requires(<span class="dt">const</span> T&amp; t, <span class="dt">const</span> U&amp; u) {
     { t == u } -&gt; Boolean;
     { u == t } -&gt; Boolean;
     { t != u } -&gt; Boolean;
@@ -930,7 +944,12 @@ concept <span class="dt">bool</span> EqualityComparable() {
 }</code></pre></div>
 </blockquote>
 <blockquote>
-<p>1 Let <code>a</code> and <code>b</code> be objects of type <code>T</code>. <code>EqualityComparable&lt;T&gt;()</code> is satisfied if and only if <code>bool(a == b)</code> if and only if <code>a</code> is equal to <code>b</code>.</p>
+<p>1 Let <code>a</code> and <code>b</code> be objects of type <code>T</code>. <code>EqualityComparable&lt;T&gt;()</code> is satisfied if and only if:</p>
+</blockquote>
+<blockquote>
+<ul>
+<li><code>bool(a == b)</code> if and only if <code>a</code> is equal to <code>b</code>.</li>
+</ul>
 </blockquote>
 <blockquote>
 <p>2 [ Note: The requirement that the expression <code>a == b</code> is equality preserving implies that <code>==</code> is reflexive, transitive, and symmetric. —end note ]</p>
@@ -946,11 +965,16 @@ concept <span class="dt">bool</span> EqualityComparable() {
 }</code></pre></div>
 </blockquote>
 <blockquote>
-<p>3 Let <code>a</code> be an object of type <code>T</code>, <code>b</code> an object of type <code>U</code>, and <code>C</code> be <code>common_type_t&lt;T, U&gt;</code>. Then <code>EqualityComparable&lt;T, U&gt;()</code> is satisfied if and only if <code>bool(a == b) == bool(C(a) == C(b))</code>.</p>
+<p>3 Let <code>a</code> be an object of type <code>T</code>, <code>b</code> an object of type <code>U</code>, and <code>C</code> be <code>common_type_t&lt;T, U&gt;</code>. Then <code>EqualityComparable&lt;T, U&gt;()</code> is satisfied if and only if:</p>
 </blockquote>
-<p>In [iterator.requirements.general]/1, strike the words “for which equality is defined” (all iterators have a difference type in the Ranges TS). In paras 2 and 3 and table 4, replace “seven” with “five” and strike references to weak input / output iterators. Strike the word “Weak” from para 5. Replace paras 7 through 9 with:</p>
 <blockquote>
-<p>7 Most of the library’s algorithmic templates that operate on data structures have interfaces that use ranges. A range is an iterator and a <em>sentinel</em> that designate the beginning and end of the computation.</p>
+<ul>
+<li><code>bool(a == b) == bool(C(a) == C(b))</code>.</li>
+</ul>
+</blockquote>
+<p>In [iterator.requirements.general]/1, strike the words “for which equality is defined” (all iterators have a difference type in the Ranges TS). In paras 2 and 3 and table 4, replace “seven” with “five” and strike references to weak input and weak output iterators. Strike the word “Weak” from para 5. Replace paras 7 through 9 with:</p>
+<blockquote>
+<p>7 Most of the library’s algorithmic templates that operate on data structures have interfaces that use ranges. A range is an iterator and a <em>sentinel</em> that designate the beginning and end of the computation. An iterator and a sentinel denoting a range are comparable. A sentinel denotes an element when it compares equal to an iterator <code>i</code> and <code>i</code> points to that element. The types of a sentinel and an iterator that denote a range satisfy <code>Sentinel</code> (24.2.8).</p>
 </blockquote>
 <blockquote>
 <p>8 A sentinel <code>s</code> is called <em>reachable</em> from an iterator <code>i</code> if and only if there is a finite sequence of applications of the expression <code>++i</code> that makes <code>i == s</code>. If <code>s</code> is reachable from <code>i</code>, they denote a range.</p>
@@ -961,7 +985,7 @@ concept <span class="dt">bool</span> EqualityComparable() {
 <blockquote>
 <p>10 A range <code>[i,s)</code> is valid if and only if <code>s</code> is reachable from <code>i</code>. The result of the application of functions in the library to invalid ranges is undefined.</p>
 </blockquote>
-<p>Strike paragraph 13.</p>
+<p>Strike paragraph 13 (“In the following sections…”).</p>
 <p>Strike section [iterators.iterator], and rename section [iterators.weakiterator] to [iterators.iterator]. Strike the prefix <code>Weak</code> wherever it appears in the section.</p>
 <p>Replace the content of [iterators.sentinel] with:</p>
 <blockquote>
@@ -979,13 +1003,13 @@ concept <span class="dt">bool</span> Sentinel() {
 <p>2 Let <code>s</code> and <code>i</code> be values of type <code>S</code> and <code>I</code> such that <code>[i,s)</code> denotes a range. Types <code>S</code> and <code>I</code> satisfy <code>Sentinel&lt;S, I&gt;()</code> if and only if:</p>
 </blockquote>
 <blockquote>
-<p>(2.1) — i == s is well-defined.</p>
+<p>(2.1) — <code>i == s</code> is well-defined.</p>
 </blockquote>
 <blockquote>
-<p>(2.2) — If bool(i != s) then i is dereferenceable and [++i,s) denotes a range.</p>
+<p>(2.2) — If <code>bool(i != s)</code> then <code>i</code> is dereferenceable and <code>[++i,s)</code> denotes a range.</p>
 </blockquote>
 <blockquote>
-<p>3 The domain of <code>==</code> can change over time. Given an iterator <code>i</code> and sentinel <code>s</code> such that <code>[i,s)</code> denotes a range and <code>i != s</code>, <code>[i,s)</code> is not required to continue to denote a range after incrementing any iterator equal to <code>i</code>. [Note: Consequently, <code>i == s</code> is no longer required to be well-defined. - end note]</p>
+<p>3 The domain of <code>==</code> can change over time. Given an iterator <code>i</code> and sentinel <code>s</code> such that <code>[i,s)</code> denotes a range and <code>i != s</code>, <code>[i,s)</code> is not required to continue to denote a range after incrementing any iterator equal to <code>i</code>. [Note: Consequently, <code>i == s</code> is no longer required to be well-defined. —end note]</p>
 </blockquote>
 <p>Add new subsection “Concept SizedSentinel” [iterators.sizedsentinel]:</p>
 <blockquote>
@@ -999,26 +1023,23 @@ concept <span class="dt">bool</span> Sentinel() {
 concept <span class="dt">bool</span> SizedSentinel() {
   <span class="kw">return</span> Sentinel&lt;S, I&gt;() &amp;&amp;
   !disable_sized_sentinel&lt;remove_cv_t&lt;S&gt;, remove_cv_t&lt;I&gt;&gt; &amp;&amp;
-  requires (<span class="dt">const</span> I i, <span class="dt">const</span> S s) {
+  requires(<span class="dt">const</span> I&amp; i, <span class="dt">const</span> S&amp; s) {
     { s - i } -&gt; Same&lt;difference_type_t&lt;I&gt;&gt;;
     { i - s } -&gt; Same&lt;difference_type_t&lt;I&gt;&gt;;
   };
 }</code></pre></div>
 </blockquote>
 <blockquote>
-<p>3 Let <code>i</code> be an iterator of type <code>I</code>, and <code>s</code> a sentinel of type <code>S</code> such that <code>[i,s)</code> denotes a range. Let N be the smallest number of applications of <code>++i</code> necessary to make <code>bool(i == s)</code> be <code>true</code>. <code>SizedSentinel&lt;S, I&gt;()</code> is satisfied if and only if:</p>
+<p>3 Let <code>i</code> be an iterator of type <code>I</code>, and <code>s</code> a sentinel of type <code>S</code> such that <code>[i,s)</code> denotes a range. Let <code>N</code> be the smallest number of applications of <code>++i</code> necessary to make <code>bool(i == s)</code> be <code>true</code>. <code>SizedSentinel&lt;S, I&gt;()</code> is satisfied if and only if:</p>
 </blockquote>
 <blockquote>
-<p>(3.1) — If N is representable by <code>difference_type_t&lt;I&gt;</code>, then <code>s - i</code> is well-defined and equals N.</p>
+<p>(3.1) — If <code>N</code> is representable by <code>difference_type_t&lt;I&gt;</code>, then <code>s - i</code> is well-defined and equals <code>N</code>.</p>
 </blockquote>
 <blockquote>
-<p>(3.2) — If -N is representable by <code>difference_type_t&lt;I&gt;</code>, then <code>i - s</code> is well-defined and equals -N.</p>
+<p>(3.2) — If <code>-N</code> is representable by <code>difference_type_t&lt;I&gt;</code>, then <code>i - s</code> is well-defined and equals <code>-N</code>.</p>
 </blockquote>
 <blockquote>
-<p>4 The <code>disable_sized_sentinel&lt;S, I&gt;</code> predicate provides a mechanism to enable use of sentinels and iterators with the library that meet the syntactic requirements but do not in fact satisfy <code>SizedSentinel</code>.</p>
-</blockquote>
-<blockquote>
-<p>5 [ Note: A program that instantiates a library template that requires <code>SizedSentinel</code> with an iterator type <code>I</code> and sentinel type <code>S</code> that meet the syntactic requirements of <code>SizedSentinel&lt;S, I&gt;()</code> but do not satisfy <code>SizedSentinel</code> is ill-formed with no diagnostic required unless <code>disable_sized_sentinel&lt;S, I&gt;</code> evaluates to true (17.5.1.3). —end note ]</p>
+<p>4 [ Note: The <code>disable_sized_sentinel&lt;S, I&gt;</code> predicate provides a mechanism to enable use of sentinels and iterators with the library that meet the syntactic requirements but do not in fact satisfy <code>SizedSentinel</code>. A program that instantiates a library template that requires <code>SizedSentinel</code> with an iterator type <code>I</code> and sentinel type <code>S</code> that meet the syntactic requirements of <code>SizedSentinel&lt;S, I&gt;()</code> but do not satisfy <code>SizedSentinel</code> is ill-formed with no diagnostic required unless <code>disable_sized_sentinel&lt;S, I&gt;</code> evaluates to true (17.5.1.3). —end note ]</p>
 </blockquote>
 <blockquote>
 <p>5 [ Note: The <code>SizedSentinel</code> concept is satisfied by pairs of <code>RandomAccessIterator</code>s<br />
@@ -1035,9 +1056,9 @@ and by counted iterators and their sentinels. —end note ]</p>
 <div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> I&gt;
 concept <span class="dt">bool</span> ForwardIterator() {
   <span class="kw">return</span> InputIterator&lt;I&gt;() &amp;&amp;
-  DerivedFrom&lt;iterator_category_t&lt;I&gt;, forward_iterator_tag&gt;() &amp;&amp;
-  Incrementable&lt;I&gt;() &amp;&amp;
-  Sentinel&lt;I, I&gt;();
+    DerivedFrom&lt;iterator_category_t&lt;I&gt;, forward_iterator_tag&gt;() &amp;&amp;
+    Incrementable&lt;I&gt;() &amp;&amp;
+    Sentinel&lt;I, I&gt;();
 }</code></pre></div>
 </blockquote>
 <p>Remove section [iteratorranges].</p>
@@ -1065,9 +1086,9 @@ concept <span class="dt">bool</span> ForwardIterator() {
 <span class="dt">bool</span> <span class="kw">operator</span>==(
   <span class="dt">const</span> common_iterator&lt;I1, S1&gt;&amp; x, <span class="dt">const</span> common_iterator&lt;I2, S2&gt;&amp; y);
 <span class="kw">template</span> &lt;<span class="kw">class</span> I1, <span class="kw">class</span> I2, Sentinel&lt;I2&gt; S1, Sentinel&lt;I1&gt; S2&gt;
-  requires EqualityComparable&lt;I1, I2&gt;()
 <span class="dt">bool</span> <span class="kw">operator</span>!=(
   <span class="dt">const</span> common_iterator&lt;I1, S1&gt;&amp; x, <span class="dt">const</span> common_iterator&lt;I2, S2&gt;&amp; y);
+
 <span class="kw">template</span> &lt;<span class="kw">class</span> I2, SizedSentinel&lt;I2&gt; I1, SizedSentinel&lt;I2&gt; S1, SizedSentinel&lt;I1&gt; S2&gt;
 difference_type_t&lt;I2&gt; <span class="kw">operator</span>-(
   <span class="dt">const</span> common_iterator&lt;I1, S1&gt;&amp; x, <span class="dt">const</span> common_iterator&lt;I2, S2&gt;&amp; y);
@@ -1157,8 +1178,7 @@ difference_type_t&lt;I2&gt; <span class="kw">operator</span>-(
 <p>In [iterator.stdtraits], Add the clause <code>requires Sentinel&lt;I, In&gt;()</code> to the declaration of the <code>iterator_traits</code> partial specialization that has no <code>Weak</code> prefix. Strip occurrences of the <code>Weak</code> prefix.</p>
 <p>In [std.iterator.tags], strike <code>weak_input_iterator_tag</code> as in the synopsis.</p>
 <p>Replace the content of [iterator.operations] with the content of the section of the same name in N4569.</p>
-<p>In [iterators.common]/2, strike “, and for use in common_type specializations that are required to make<br />
-iterator/sentinel pairs satisfy the EqualityComparable concept”</p>
+<p>In [iterators.common]/2, strike “, and for use in common_type specializations that are required to make iterator/sentinel pairs satisfy the EqualityComparable concept”</p>
 <p>Replace the contents of [iterators.common], [default.sentinels], [iterators.counted], and [unreachable.sentinels] with the contents of the sections of the same name in N4569.</p>
 <p>Strip occurrences of the prefix <code>Weak</code> wherever it appears in clause [algorithms].</p>
 <h1 id="implementation-experience"><span class="header-section-number">7</span> Implementation Experience</h1>

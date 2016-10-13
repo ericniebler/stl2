@@ -1,6 +1,6 @@
 # Update in header.html as well.
 DOCNO = 0370
-REV = 1
+REV = 2
 PD = P
 SOURCE = P$(DOCNO).md
 TARGET = $(PD)$(DOCNO)R$(REV)
