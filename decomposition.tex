@@ -46,11 +46,11 @@ void swap(T&, T&);
 \end{codeblock}
 and the \tcode{Function} concept:
 \begin{codeblock}
-template <class F, class ...Args>
+template <class F, class... Args>
 concept bool Function =
   Destructible<T> &&
   CopyConstructible<T> &&
-  requires(F f, Args...args) {
+  requires(F f, Args... args) {
     typename ResultType<F, Args...>;
     { &f } -> Same<F*>;
     { f.~F() } noexcept;   // oops, Destructible<T> already requires this
@@ -224,13 +224,13 @@ object types - namely addressability.
 
 \rSec2[decomposition.concepts.constructible]{Constructible (\ref{concepts.lib.object.constructible})}
 \begin{codeblock}
-template <class T, class ...Args>
+template <class T, class... Args>
 concept bool Constructible() {
-  return requires (Args&&...args) {
+  return requires (Args&&... args) {
     T{std::forward<Args>(args)...};
   } &&
   (is_reference<T>::value ||
-    (Destructible<T>() && requires (Args&&...args) {
+    (Destructible<T>() && requires (Args&&... args) {
       new T{std::forward<Args>(args)...};
     }));
 }
@@ -361,10 +361,10 @@ stronger concepts makes it possible to do so without adding verbiage to the spec
 Pushing requirements down the hierarchy allows for reuse of requirements without replication. The
 \tcode{Function} concept becomes:
 \begin{codeblock}
-template <class F, class ...Args>
+template <class F, class... Args>
 concept bool Function() {
   return CopyConstructible<T>() &&
-    requires (F f, Args&&...args) {
+    requires (F f, Args&&... args) {
       typename result_of_t<F&(Args...)>;
       { f(std::forward<Args>(args)...) } ->
         Same<result_of_t<F&(Args...)>>;
