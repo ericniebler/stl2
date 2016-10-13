@@ -86,7 +86,7 @@ Alto Report acknowledges the existence of such useful relaxations of \tcode{Regu
 its decomposition of \tcode{Semiregular} into \tcode{Movable} and \tcode{Copyable} in
 Appendix D.1.
 
-\pnum 
+\pnum
 It seems that the solution to the design problems the feature concepts present is to
 pre-compose the useful families of object types and insert them into the \tcode{Regular}
 hierarchy, allowing us to eliminate the feature concepts from the design altogether. The
@@ -94,7 +94,7 @@ determination of which combinations are in fact useful is guided by a few few si
 informed by usage in the standard library and the requirements of the \tcode{Regular} hierarchy:
 \begin{itemize}
 \item Addressability is fundamental. Objects whose addresses cannot be taken with \tcode{\&}
-simply are not value-semantic objects. 
+simply are not value-semantic objects.
 \item Destruction is prerequisite to construction. It must be forbidden to create an
 object which cannot be destroyed. This is so fundamental a notion to C++ that the
 standard library requires it implicitly.
@@ -122,7 +122,7 @@ concept syntax, with axioms elided for brevity):
 \begin{codeblock}
 template <class T>
 concept bool Movable() {
-  return requires (T a, T b, const T t) {
+  return requires(T a, T b, const T t) {
     // requirements for move construction
     T{std::move(a)};
     // requirements for move assignment
@@ -144,7 +144,7 @@ concept bool Movable() {
 template <class T>
 concept bool Copyable() {
   return Movable<T>() && // refines Movable with
-    requires (T a, const T b) {
+    requires(T a, const T b) {
       // copy construction
       T{b};
       // copy assignment
@@ -206,7 +206,7 @@ brevity. Each concept is fully specified in [concepts.lib.object] (\ref{concepts
 \begin{codeblock}
 template <class T>
 concept bool Destructible() {
-  return requires (T t, const T ct, const T* p) {
+  return requires(T t, const T ct, const T* p) {
     { t.@$\sim$@T() } noexcept;
     delete p;
     delete[] p;
@@ -226,11 +226,11 @@ object types - namely addressability.
 \begin{codeblock}
 template <class T, class... Args>
 concept bool Constructible() {
-  return requires (Args&&... args) {
+  return requires(Args&&... args) {
     T{std::forward<Args>(args)...};
   } &&
   (is_reference<T>::value ||
-    (Destructible<T>() && requires (Args&&... args) {
+    (Destructible<T>() && requires(Args&&... args) {
       new T{std::forward<Args>(args)...};
     }));
 }
@@ -246,7 +246,7 @@ and refines \tcode{Destructible} per ``destruction is prerequisite to constructi
 template <class T>
 concept bool DefaultConstructible() {
   return Constructible<T>() &&
-    requires (const size_t n) {
+    requires(const size_t n) {
       new T[n]{};
     };
 }
@@ -262,7 +262,7 @@ accessible, and that \tcode{T} not have an explicit default constructor.
 template <class T>
 concept bool MoveConstructible() {
   return Constructible<T, remove_cv_t<T>&&>() &&
-    requires (remove_cv_t<T> t) {
+    requires(remove_cv_t<T> t) {
       new T[1]{std::move(t)};
     };
 }
@@ -277,7 +277,7 @@ template <class T>
 concept bool CopyConstructible() {
   return MoveConstructible<T>() &&
     Constructible<T, const remove_cv_t<T>&>() &&
-    requires (const remove_cv_t<T> b) {
+    requires(const remove_cv_t<T> b) {
       new T[1]{b};
     };
 }
@@ -364,7 +364,7 @@ Pushing requirements down the hierarchy allows for reuse of requirements without
 template <class F, class... Args>
 concept bool Function() {
   return CopyConstructible<T>() &&
-    requires (F f, Args&&... args) {
+    requires(F f, Args&&... args) {
       typename result_of_t<F&(Args...)>;
       { f(std::forward<Args>(args)...) } ->
         Same<result_of_t<F&(Args...)>>;
