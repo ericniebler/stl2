@@ -161,15 +161,12 @@ values are always non-singular.
 
 \begin{addedblock}
 \pnum
-A
-\term{sentinel}
-is an abstraction of a past-the-end iterator. An iterator and a sentinel denoting a range
-are comparable.
-A sentinel denotes an element when it compares equal to
-an iterator \tcode{i}, and
-\tcode{i} points to that element. The types of a sentinel
-and an iterator that denote a range must satisfy
-\tcode{Sentinel}~(\ref{iterators.sentinel}).
+Most of the library's algorithmic templates that operate on data structures have
+interfaces that use ranges. A range is an iterator and a \term{sentinel} that designate
+the beginning and end of the computation. An iterator and a sentinel denoting a range
+are comparable. A sentinel denotes an element when it compares equal to an iterator
+\tcode{i}, and \tcode{i} points to that element. The types of a sentinel and an
+iterator that denote a range must satisfy \tcode{Sentinel}~(\ref{iterators.sentinel}).
 \end{addedblock}
 
 \pnum
@@ -191,18 +188,20 @@ is reachable from
 they \changed{refer to elements of the same sequence}{denote a range}.
 
 \pnum
-Most of the library's algorithmic templates that operate on data structures have interfaces that use ranges.
-A
+\removed{Most of the library's algorithmic templates that operate on data structures
+have interfaces that use ranges. A
 \term{range}
-is \changed{a pair of iterators }{an iterator and a sentinel} that designate the beginning and end of the computation.
+is a pair of iterators that designate the beginning and end of the computation.}
 A range \removed{\range{i}{i}}\added{\range{i}{s}}
-is an empty range\added{ if \tcode{i == s}};
+is \removed{an} empty \removed{range}\added{ if \tcode{i == s}};
 \removed{in general, a range \range{i}{j}}\added{otherwise, \range{i}{s}}
 refers to the elements in the data structure starting with the element
 pointed to by
 \tcode{i}
 and up to but not including the element pointed to by
 \added{the first iterator} \tcode{j} \added{such that \tcode{j == s}}.
+
+\pnum
 Range \removed{\range{i}{j}}\added{\range{i}{s}}
 is valid if and only if
 \removed{\tcode{j}}\added{\tcode{s}}
@@ -549,7 +548,7 @@ between them in constant time.
   concept bool SizedSentinel() {
     return Sentinel<S, I>() &&
       !disable_sized_sentinel<remove_cv_t<S>, remove_cv_t<I>> &&
-      requires (const I i, const S s) {
+      requires(const I& i, const S& s) {
         { s - i } -> Same<difference_type_t<I>>;
         { i - s } -> Same<difference_type_t<I>>;
       };
@@ -574,12 +573,10 @@ necessary to make \tcode{bool(i == s)} be \tcode{true}.
 \end{itemdescr}
 
 \pnum
-The \tcode{disable_sized_sentinel<S, I>} predicate provides a mechanism to
+\enternote The \tcode{disable_sized_sentinel<S, I>} predicate provides a mechanism to
 enable use of sentinels and iterators with the library that meet the
 syntactic requirements but do not in fact satisfy \tcode{SizedSentinel}.
-
-\pnum
-\enternote A program that instantiates a library template that requires
+A program that instantiates a library template that requires
 \tcode{SizedSentinel} with an iterator type \tcode{I} and sentinel type
 \tcode{S} that meet the syntactic requirements of \tcode{SizedSentinel<S, I>()}
 but do not satisfy \tcode{SizedSentinel} is ill-formed with no diagnostic required
@@ -1143,7 +1140,7 @@ namespace std { @\added{namespace experimental \{ namespace ranges \{ inline nam
   // \ref{iterator.primitives}, primitives:
   template<class Iterator> @\changed{struct}{using}@ iterator_traits@\added{ = \seebelow}@;
   @\removed{template<class T> struct iterator_traits<T*>;}@
-  
+
   @\removed{template<class Category, class T, class Distance = ptrdiff_t,}@
        @\removed{class Pointer = T*, class Reference = T\&> struct iterator;}@
 
@@ -1750,7 +1747,7 @@ is implemented as if:
 Users may specialize \tcode{iterator_category} on user-defined types.
 
 \pnum
-If 
+If
 \tcode{T::iterator_category} is valid and denotes a type, then the
 type \tcode{iterator_category<T>::type} is computed as follows:
 \begin{itemize}
@@ -1880,7 +1877,7 @@ namespace std {
 \pnum
 The nested type \tcode{value_type} is computed as follows:
 \begin{itemize}
-\item If 
+\item If
       \tcode{Out::value_type} is valid and denotes a type, then
       \tcode{std::iterator_traits<Out>::value_type} is \tcode{Out::value_type}.
 \item Otherwise, \tcode{std::iterator_traits<Out>::value_type} is \tcode{void}.
@@ -1889,7 +1886,7 @@ The nested type \tcode{value_type} is computed as follows:
 \pnum
 The nested type \tcode{reference} is computed as follows:
 \begin{itemize}
-\item If 
+\item If
       \tcode{Out::reference} is valid and denotes a type, then
       \tcode{std::iterator_traits<Out>::reference} is \tcode{Out::\brk{}reference}.
 \item Otherwise, \tcode{std::iterator_traits<Out>::reference} is \tcode{void}.
@@ -1898,7 +1895,7 @@ The nested type \tcode{reference} is computed as follows:
 \pnum
 The nested type \tcode{pointer} is computed as follows:
 \begin{itemize}
-\item If 
+\item If
       \tcode{Out::pointer} is valid and denotes a type, then
       \tcode{std::iterator_traits<Out>::pointer} is \tcode{Out::pointer}.
 \item Otherwise, \tcode{std::iterator_traits<Out>::pointer} is \tcode{void}.
@@ -1923,7 +1920,7 @@ The nested type \tcode{pointer} is computed as follows:
 \pnum
 The nested type \tcode{reference} is computed as follows:
 \begin{itemize}
-\item If 
+\item If
       \tcode{In::reference} is valid and denotes a type, then
       \tcode{std::iterator_traits<In>::reference} is \tcode{In::reference}.
 \item Otherwise, \tcode{std::iterator_traits<In>::reference} is
@@ -4487,7 +4484,7 @@ bool operator==(
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to 
+\effects Equivalent to
 \begin{codeblock}
 x.is_sentinel ?
     (y.is_sentinel || y.iter == x.sent) :
@@ -4507,7 +4504,7 @@ bool operator!=(
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to 
+\effects Equivalent to
 \tcode{!(x == y)}.
 \end{itemdescr}
 
@@ -4521,7 +4518,7 @@ difference_type_t<I2> operator-(
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to 
+\effects Equivalent to
 \begin{codeblock}
 x.is_sentinel ?
     (y.is_sentinel ? 0 : x.sent - y.iter) :
@@ -4778,7 +4775,7 @@ decltype(auto) operator*() const;
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to 
+\effects Equivalent to
 \tcode{*current}.
 \end{itemdescr}
 
@@ -4878,7 +4875,7 @@ return tmp;
 \requires \tcode{n <= cnt}
 
 \pnum
-\effects Equivalent to 
+\effects Equivalent to
 \tcode{counted_iterator(current + n, cnt - n)}.
 \end{itemdescr}
 
@@ -4920,7 +4917,7 @@ cnt -= n;
 \requires \tcode{-n <= cnt}
 
 \pnum
-\effects Equivalent to 
+\effects Equivalent to
 \tcode{counted_iterator(current - n, cnt + n)}.
 \end{itemdescr}
 
@@ -4962,7 +4959,7 @@ cnt += n;
 \requires \tcode{n <= cnt}
 
 \pnum
-\effects Equivalent to 
+\effects Equivalent to
 \tcode{current[n]}.
 \end{itemdescr}
 
@@ -4983,7 +4980,7 @@ template <class I1, class I2>
 sequence~(\ref{iterators.counted}).
 
 \pnum
-\effects Equivalent to 
+\effects Equivalent to
 \tcode{x.cnt == y.cnt}.
 \end{itemdescr}
 
@@ -4996,7 +4993,7 @@ sequence~(\ref{iterators.counted}).
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to 
+\effects Equivalent to
 \tcode{x.cnt == 0}.
 \end{itemdescr}
 
@@ -5019,7 +5016,7 @@ template <class I1, class I2>
 elements of the same sequence~(\ref{iterators.counted}).
 
 \pnum
-\effects Equivalent to 
+\effects Equivalent to
 \tcode{!(x == y)}.
 \end{itemdescr}
 
@@ -5038,7 +5035,7 @@ template <class I1, class I2>
 elements of the same sequence~(\ref{iterators.counted}).
 
 \pnum
-\effects Equivalent to 
+\effects Equivalent to
 \tcode{y.cnt < x.cnt}.
 
 \note The argument order in the \textit{Effects} clause is reversed because \tcode{cnt}
@@ -5061,7 +5058,7 @@ template <class I1, class I2>
 elements of the same sequence~(\ref{iterators.counted}).
 
 \pnum
-\effects Equivalent to 
+\effects Equivalent to
 \tcode{!(y < x)}.
 \end{itemdescr}
 
@@ -5080,7 +5077,7 @@ template <class I1, class I2>
 elements of the same sequence~(\ref{iterators.counted}).
 
 \pnum
-\effects Equivalent to 
+\effects Equivalent to
 \tcode{y < x}.
 \end{itemdescr}
 
@@ -5099,7 +5096,7 @@ template <class I1, class I2>
 elements of the same sequence~(\ref{iterators.counted}).
 
 \pnum
-\effects Equivalent to 
+\effects Equivalent to
 \tcode{!(x < y)}.
 \end{itemdescr}
 
@@ -5120,7 +5117,7 @@ elements of the same sequence~(\ref{iterators.counted}).
 elements of the same sequence~(\ref{iterators.counted}).
 
 \pnum
-\effects Equivalent to 
+\effects Equivalent to
 \tcode{y.cnt - x.cnt}.
 \end{itemdescr}
 
@@ -5132,7 +5129,7 @@ template <class I>
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to 
+\effects Equivalent to
 \tcode{-x.cnt}.
 \end{itemdescr}
 
@@ -5144,7 +5141,7 @@ template <class I>
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to 
+\effects Equivalent to
 \tcode{y.cnt}.
 \end{itemdescr}
 
@@ -5161,7 +5158,7 @@ template <RandomAccessIterator I>
 \requires \tcode{n <= x.cnt}.
 
 \pnum
-\effects Equivalent to 
+\effects Equivalent to
 \tcode{x + n}.
 \end{itemdescr}
 
@@ -5534,7 +5531,7 @@ const T* operator->() const;
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to 
+\effects Equivalent to
 \changed{\tcode{\&(operator*())}}{\tcode{std::addressof(operator*())}}.
 \end{itemdescr}
 
@@ -6023,7 +6020,7 @@ proxy istreambuf_iterator<charT, traits>::operator++(int);
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to 
+\effects Equivalent to
 \tcode{proxy(sbuf_->sbumpc(), sbuf_)}.
 \end{itemdescr}
 
@@ -6374,8 +6371,8 @@ using sentinel_t = decltype(ranges::end(declval<T&>()));
 
 template <class T>
 concept bool Range() {
-  return requires {
-    typename sentinel_t<T>;
+  return requires(T&& t) {
+    ranges::end(t);
   };
 }
 \end{itemdecl}
@@ -6416,15 +6413,14 @@ of a \tcode{Range} type that knows its size in constant time with the
 \tcode{size} function.
 
 \begin{itemdecl}
-template <class R>
+template <class>
 constexpr bool disable_sized_range = false;
 
 template <class T>
 concept bool SizedRange() {
   return Range<T>() &&
     !disable_sized_range<remove_cv_t<remove_reference_t<T>>> &&
-    requires (const remove_reference_t<T>& t) {
-      { ranges::size(t) } -> Integral;
+    requires(const remove_reference_t<T>& t) {
       { ranges::size(t) } -> ConvertibleTo<difference_type_t<iterator_t<T>>>;
     };
 }
@@ -6446,13 +6442,10 @@ the first call to \tcode{begin(t)}. \exitnote
 \end{itemize}
 
 \pnum
-The \tcode{disable_sized_range} predicate provides a mechanism to enable use
+\enternote The \tcode{disable_sized_range} predicate provides a mechanism to enable use
 of range types with the library that meet the syntactic requirements but do
-not in fact satisfy \tcode{SizedRange}.
-
-\pnum
-\enternote A program that instantiates a library template that requires a
-\tcode{Range} with such a range type \tcode{R} is ill-formed with no
+not in fact satisfy \tcode{SizedRange}. A program that instantiates a library template
+that requires a \tcode{Range} with such a range type \tcode{R} is ill-formed with no
 diagnostic required unless
 \tcode{disable_sized_range<remove_cv_t<remove_reference_t<R>{>}{>}} evaluates
 to \tcode{true}~(\ref{structure.requirements}). \exitnote
@@ -6772,13 +6765,13 @@ The name \tcode{begin} denotes a customization point
   type~(\cxxref{basic.compound}).
 
 \item
-  Otherwise, \tcode{(E).begin()} if its type \tcode{I} meets the
+  Otherwise, \tcode{DECAY_COPY((E).begin())} if its type \tcode{I} meets the
   syntactic requirements of \tcode{Iterator<I>()}. If
   \tcode{Iterator} is not satisfied, the program is ill-formed
   with no diagnostic required.
 
 \item
-  Otherwise, \tcode{begin(E)} if its type \tcode{I} meets the
+  Otherwise, \tcode{DECAY_COPY(begin(E))} if its type \tcode{I} meets the
   syntactic requirements of \tcode{Iterator<I>()} with overload
   resolution performed in a context that includes the declaration
   \tcode{void begin(auto\&) = delete;} and does not include
@@ -6813,14 +6806,14 @@ object~(\ref{customization.point.object}). The effect of the expression
   type~(\cxxref{basic.compound}) \tcode{T}.
 
 \item
-  Otherwise, \tcode{(E).end()} if its type \tcode{S} meets the
+  Otherwise, \tcode{DECAY_COPY((E).end())} if its type \tcode{S} meets the
   syntactic requirements of
   \tcode{Sentinel<\brk{}S, decltype(\brk{}ranges::\brk{}begin(E)>()}. If
   \tcode{Sentinel} is not satisfied, the program is ill-formed with
   no diagnostic required.
 
 \item
-  Otherwise, \tcode{end(E)} if its type \tcode{S} meets the
+  Otherwise, \tcode{DECAY_COPY(end(E))} if its type \tcode{S} meets the
   syntactic requirements of
   \tcode{Sentinel<\brk{}S, decltype(\brk{}ranges::\brk{}begin(E))>()} with overload
   resolution performed in a context that includes the declaration
@@ -6892,7 +6885,7 @@ to:
   \tcode{E} has array type~(\cxxref{basic.compound}) \tcode{T}.
 
 \item
-  Otherwise, \tcode{(E).rbegin()} if its type \tcode{I} meets the
+  Otherwise, \tcode{DECAY_COPY((E).rbegin())} if its type \tcode{I} meets the
   syntactic requirements of \tcode{Iterator<I>()}. If \tcode{Iterator}
   is not satisfied, the program is ill-formed with no diagnostic
   required.
@@ -6932,7 +6925,7 @@ object~(\ref{customization.point.object}). The effect of the expression
   array type~(\cxxref{basic.compound}).
 
 \item
-  Otherwise, \tcode{(E).rend()} if its type \tcode{S} meets the
+  Otherwise, \tcode{DECAY_COPY((E).rend())} if its type \tcode{S} meets the
   syntactic requirements of
   \tcode{Sentinel<\brk{}S, decltype(\brk{}ranges::\brk{}rbegin(E))>()}. If
   \tcode{Sentinel} is not satisfied, the program is ill-formed with
@@ -7025,13 +7018,13 @@ object~(\ref{customization.point.object}). The effect of the expression
   type~(\cxxref{basic.compound}).
 
 \item
-  Otherwise, \tcode{((const T\&)(E)).size()} if its type \tcode{I}
+  Otherwise, \tcode{DECAY_COPY(((const T\&)(E)).size())} if its type \tcode{I}
   satisfies \tcode{Integral<I>()} and
   \tcode{disable_\-sized_\-range<T>}~(\ref{ranges.sized}) is
   \tcode{false}.
 
 \item
-  Otherwise, \tcode{size((const T\&)(E))} if its type \tcode{I}
+  Otherwise, \tcode{DECAY_COPY(size((const T\&)(E)))} if its type \tcode{I}
   satisfies \tcode{Integral<I>()} with overload resolution
   performed in a context that includes the declaration
   \tcode{void size(const auto\&) = delete;} and does not include
@@ -7040,13 +7033,14 @@ object~(\ref{customization.point.object}). The effect of the expression
 
 \item
   Otherwise,
-  \tcode{ranges::cend(E) - ranges::cbegin(E)}, except that \tcode{E}
+  \tcode{DECAY_COPY(ranges::cend(E) - ranges::cbegin(E))}, except that \tcode{E}
   is only evaluated once, if the types \tcode{I} and \tcode{S} of
   \tcode{ranges::cbegin(E)} and \tcode{ranges::cend(E)} meet the
   syntactic requirements of
-  \tcode{SizedSentinel<S, I>()}~(\ref{iterators.sizedsentinel}).
-  If \tcode{SizedSentinel} is not satisfied, the program is
-  ill-formed with no diagnostic required.
+  \tcode{SizedSentinel<S, I>()}~(\ref{iterators.sizedsentinel}) and
+  \tcode{ForwardIterator<I>()}. If \tcode{SizedSentinel} and
+  \tcode{ForwardIterator} are not satisfied, the program is ill-formed with no
+  diagnostic required.
 
 \item
   Otherwise, \tcode{ranges::size(E)} is ill-formed.
@@ -7072,7 +7066,8 @@ equivalent to:
 
 \item
   Otherwise, \tcode{bool(ranges::begin(E) != ranges::end(E))},
-  except that \tcode{E} is only evaluated once.
+  except that \tcode{E} is only evaluated once, if the type of
+  \tcode{ranges::begin(E)} satisfies \tcode{ForwardIterator}.
 
 \item
   Otherwise, \tcode{ranges::empty(E)} is ill-formed.
@@ -7098,7 +7093,7 @@ equivalent to:
   Paper when \tcode{E} is an rvalue. \exitnote
 
 \item
-  Otherwise, \tcode{(E).data()} if it has pointer to object type.
+  Otherwise, \tcode{DECAY_COPY((E).data())} if it has pointer to object type.
 
 \item
   Otherwise, \tcode{ranges::begin(E)} if it has pointer to object type.
