@@ -1,4 +1,3 @@
-# Update in header.html as well.
 DOCNO = 0370
 REV = 2
 PD = P
