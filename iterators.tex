@@ -339,33 +339,33 @@ referenced object.
   template <class Out, class T>
   concept bool Writable() {
     return Semiregular<Out>() &&
-      requires(Out o, T&& v) {
-        *o = std::forward<T>(v); // not required to be equality preserving
+      requires(Out o, T&& t) {
+        *o = std::forward<T>(t); // not required to be equality preserving
       };
   }
 \end{codeblock}
 
 \pnum
-Let \tcode{t} be an an expression such that \tcode{decltype(t)} is \tcode{T}, and let \tcode{o}
+Let \tcode{E} be an an expression such that \tcode{decltype(E)} is \tcode{T}, and let \tcode{o}
 be a dereferenceable object of type \tcode{Out}. Then \tcode{Writable<Out, T>()} is satisfied if and only if
 
 \begin{itemize}
 \item If \tcode{Readable<Out>() \&\& Same<value_type_t<Out>, decay_t<T>{>}()} is satisfied,
 then \tcode{*o} after the assignment is equal
-to the value of \tcode{t} before the assignment.
+to the value of \tcode{E} before the assignment.
 \end{itemize}
 
 \pnum
 After evaluating the assignment expression, \tcode{o} is not required to be dereferenceable.
 
 \pnum
-If \tcode{v} is an xvalue~(\cxxref{basic.lval}), the resulting
+If \tcode{E} is an xvalue~(\cxxref{basic.lval}), the resulting
 state of the object it denotes is unspecified. \enternote The object must still meet the
 requirements of any library component that is using it. The operations listed
 in those requirements must work as specified whether the object has been moved
 from or not.\exitnote
 
-\ednote{``If \tcode{t} is an xvalue'' suffices for now, but incorporating P0022's proxy
+\ednote{``If \tcode{E} is an xvalue'' suffices for now, but incorporating P0022's proxy
  iterators will require a characterization of the ``xvalue-ness'' of a proxy reference type.}
 
 \pnum
@@ -967,7 +967,7 @@ member function need not be defined.\exitnote
 There are several additional iterator concepts that are commonly applied to families of algorithms.
 These group together iterator requirements of algorithm families. There are three relational
 concepts that specify how element values are transferred between \tcode{Readable} and \tcode{Writable} types:
-\tcode{IndirectlyMovable}, \tcode{IndirectlyCopyable}, and \tcode{IndirectlySwappable}. There are three relational concepts
+\tcode{Indirectly\-Movable}, \tcode{Indirectly\-Copyable}, and \tcode{Indirectly\-Swappable}. There are three relational concepts
 for rearrangements: \tcode{Permutable}, \tcode{Mergeable}, and \tcode{Sortable}.
 There is one relational concept for comparing values from different sequences: \tcode{IndirectlyComparable}.
 
@@ -985,9 +985,9 @@ type and a \tcode{Writable} type between which values may be moved.
 
 \indexlibrary{\idxcode{IndirectlyMovable}}%
 \begin{codeblock}
-  template <class I>
+  template <class In>
   using rvalue_reference_t =
-    decltype(std::move(declval<reference_t<I>>()));
+    decltype(std::move(declval<reference_t<In>>()));
 
   template <class In, class Out>
   concept bool IndirectlyMovable() {
@@ -1009,7 +1009,7 @@ requirements enabling the transfer to be performed through an intermediate objec
   template <class In, class Out>
   concept bool IndirectlyMovableStorable() {
     return IndirectlyMovable<In, Out>() &&
-      Writable<Out, value_type_t<In>&&>() &&
+      Writable<Out, value_type_t<In>>() &&
       Movable<value_type_t<In>>() &&
       Constructible<value_type_t<In>, rvalue_reference_t<In>>() &&
       Assignable<value_type_t<In>&, rvalue_reference_t<In>>();
@@ -1020,13 +1020,13 @@ requirements enabling the transfer to be performed through an intermediate objec
 
 \pnum
 The \tcode{IndirectlyCopyable} concept specifies the relationship between a \tcode{Readable}
-type and a \tcode{Writable} type between which values may be transferred without necessarily moving.
+type and a \tcode{Writable} type between which values may be copied.
 
 \indexlibrary{\idxcode{IndirectlyCopyable}}%
 \begin{codeblock}
   template <class In, class Out>
   concept bool IndirectlyCopyable() {
-    return IndirectlyMovable<In, Out>() &&
+    return Readable<In>() &&
       Writable<Out, reference_t<In>>();
   }
 \end{codeblock}
@@ -1041,7 +1041,6 @@ requirements enabling the transfer to be performed through an intermediate objec
   template <class In, class Out>
   concept bool IndirectlyCopyableStorable() {
     return IndirectlyCopyable<In, Out>() &&
-      IndirectlyMovableStorable<In, Out>() &&
       Writable<Out, const value_type_t<In>&>() &&
       Copyable<value_type_t<In>>() &&
       Constructible<value_type_t<In>, reference_t<In>>() &&
@@ -1320,6 +1319,7 @@ namespace std { @\added{namespace experimental \{ namespace ranges \{ inline nam
 \begin{addedblock}
 \begin{codeblock}
   template <Semiregular S> class move_sentinel;
+
   template <class I, Sentinel<I> S>
     bool operator==(
       const move_iterator<I>& i, const move_sentinel<S>& s);
@@ -3437,8 +3437,8 @@ vector<string> v2(make_move_iterator(s.begin()),
 \begin{addedblock}
 \pnum
 Class template \tcode{move_sentinel} is a sentinel adaptor useful for denoting
-ranges together with \tcode{move_iterator}. When an iterator type \tcode{I} and
-sentinel type \tcode{S} satisfy \tcode{Sentinel<S, I>()},
+ranges together with \tcode{move_iterator}. When an input iterator type
+\tcode{I} and sentinel type \tcode{S} satisfy \tcode{Sentinel<S, I>()},
 \tcode{Sentinel<move_sentinel<S>, move_iterator<I>{>}()} is satisfied as well.
 
 \pnum
