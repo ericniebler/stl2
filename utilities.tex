@@ -45,7 +45,7 @@
   template <TaggedType T1, TaggedType T2> using tagged_pair = @\seebelow@;
 
   template <TagSpecifier Tag1, TagSpecifier Tag2, class T1, class T2>
-  constexpr tagged_pair<Tag1(V1), Tag2(V2)> make_tagged_pair(T1&& x, T2&& y);
+  constexpr @\seebelow@ make_tagged_pair(T1&& x, T2&& y);
 }}}}
 
 namespace std {
@@ -640,7 +640,7 @@ templates \tcode{tagged_pair}~(\ref{tagged.pairs}) and
 \tcode{tagged_tuple}~(\ref{tagged.tuple}).
 
 \pnum In the class synopsis below, let $i$ be in the range
-\range{0}{sizeof...(Tags)} in order and $T_i$ be the $i^{th}$ type in \tcode{Tags}, where indexing
+\range{0}{sizeof...(Tags)} and $T_i$ be the $i^{th}$ type in \tcode{Tags}, where indexing
 is zero-based.
 
 \indexlibrary{\idxcode{tagged}}%
@@ -911,18 +911,17 @@ assert(&p.max() == &p.second);
 
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
   template <TagSpecifier Tag1, TagSpecifier Tag2, class T1, class T2>
-    constexpr tagged_pair<Tag1(V1), Tag2(V2)> make_tagged_pair(T1&& x, T2&& y);
+    constexpr @\seebelow@ make_tagged_pair(T1&& x, T2&& y);
 }}}}
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\returns \tcode{tagged_pair<Tag1(V1), Tag2(V2)>(std::forward<T1>(x), std::forward<T2>(y))};
+Let \tcode{P} be the type of \tcode{make_pair(std::forward<T1>(x), std::forward<T2>(y))}.
+Then the return type is \tcode{tagged<P, Tag1, Tag2>}.
 
-where \tcode{V1} and \tcode{V2} are determined as follows: Let \tcode{Ui} be
-\tcode{decay_t<Ti>} for each \tcode{Ti}. Then each \tcode{Vi} is \tcode{X\&}
-if \tcode{Ui} equals \tcode{reference_wrapper<X>}, otherwise \tcode{Vi} is
-\tcode{Ui}.
+\pnum
+\returns \tcode{\{std::forward<T1>(x), std::forward<T2>(y)\}}.
 
 \pnum
 \enterexample
@@ -952,7 +951,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 
   template <TagSpecifier... Tags, class... Types>
     requires sizeof...(Tags) == sizeof...(Types)
-      constexpr tagged_tuple<Tags(@\textit{VTypes}@)...>> make_tagged_tuple(Types&&... t);
+      constexpr @\seebelow@ make_tagged_tuple(Types&&... t);
 }}}}
 \end{codeblock}
 
@@ -987,26 +986,21 @@ assert(&t.out() == &get<1>(t));
 
 \rSec3[tagged.tuple.creation]{Tagged tuple creation functions}
 
-\pnum
-In the function descriptions that follow, let $i$ be in the range \range{0}{sizeof...(Types)}
-in order and let $T_i$ be the $i^{th}$ type in a template parameter pack named \tcode{Types},
-where indexing is zero-based.
-
 \indexlibrary{\idxcode{make_tagged_tuple}}%
 \indexlibrary{\idxcode{tagged_tuple}!\idxcode{make_tagged_tuple}}%
 \begin{itemdecl}
 template <TagSpecifier... Tags, class... Types>
   requires sizeof...(Tags) == sizeof...(Types)
-    constexpr tagged_tuple<Tags(@\textit{VTypes}@)...>> make_tagged_tuple(Types&&... t);
+    constexpr @\seebelow@ make_tagged_tuple(Types&&... t);
 \end{itemdecl}
 
-\begin{itemdescr} \pnum Let \tcode{$U_i$} be \tcode{decay_t<$T_i$>} for each
-$T_i$ in \tcode{Types}. Then each $V_i$ in \tcode{VTypes} is
-\tcode{X\&} if $U_i$ equals \tcode{reference_wrapper<X>}, otherwise
-$V_i$ is $U_i$.
+\begin{itemdescr}
+\pnum
+Let \tcode{T} be the type of \tcode{make_tuple(std::forward<Types>(t)...)}.
+Then the return type is \tcode{tagged<T, Tags...>}.
 
 \pnum
-\returns \tcode{tagged_tuple<Tags(\textit{VTypes})...>(std::forward<Types>(t)...)}.
+\returns \tcode{tagged<T, Tags...>(std::forward<Types>(t)...)}.
 
 \pnum
 \enterexample
