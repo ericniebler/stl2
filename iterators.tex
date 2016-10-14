@@ -202,7 +202,7 @@ and up to but not including the element pointed to by
 \added{the first iterator} \tcode{j} \added{such that \tcode{j == s}}.
 
 \pnum
-Range \removed{\range{i}{j}}\added{\range{i}{s}}
+\changed{R}{A r}ange \changed{\range{i}{j}}{\range{i}{s}}
 is valid if and only if
 \removed{\tcode{j}}\added{\tcode{s}}
 is reachable from
@@ -284,18 +284,23 @@ A \tcode{Readable} type has an associated value type that can be accessed with t
 \indexlibrary{\idxcode{value_type_t}}%
 \begin{codeblock}
   template <class> struct value_type { };
+
   template <class T>
   struct value_type<T*>
     : enable_if<is_object<T>::value, remove_cv_t<T>> { };
+
   template <class I>
     requires is_array<I>::value
   struct value_type<I> : value_type<decay_t<I>> { };
+
   template <class I>
   struct value_type<I const> : value_type<decay_t<I>> { };
+
   template <class T>
     requires requires { typename T::value_type; }
   struct value_type<T>
     : enable_if<is_object<typename T::value_type>::value, typename T::value_type> { };
+
   template <class T>
     requires requires { typename T::element_type; }
   struct value_type<T>
@@ -573,7 +578,7 @@ necessary to make \tcode{bool(i == s)} be \tcode{true}.
 \end{itemdescr}
 
 \pnum
-\enternote The \tcode{disable_sized_sentinel<S, I>} predicate provides a mechanism to
+\enternote \tcode{disable_sized_sentinel} provides a mechanism to
 enable use of sentinels and iterators with the library that meet the
 syntactic requirements but do not in fact satisfy \tcode{SizedSentinel}.
 A program that instantiates a library template that requires
@@ -1354,6 +1359,7 @@ namespace std { @\added{namespace experimental \{ namespace ranges \{ inline nam
 
   template <InputIterator I, class S>
   struct iterator_category<common_iterator<I, S>>;
+
   template <ForwardIterator I, class S>
   struct iterator_category<common_iterator<I, S>>;
 
@@ -1689,25 +1695,31 @@ namespace std {
 \indexlibrary{\idxcode{difference_type}}%
 \begin{codeblock}
   template <class> struct difference_type { };
+
   template <class T>
   struct difference_type<T*>
     : enable_if<is_object<T>::value, ptrdiff_t> { };
+
   template <class I>
     requires is_array<I>::value
   struct difference_type<I> : difference_type<decay_t<I>> { };
+
   template <class I>
   struct difference_type<I const> : difference_type<decay_t<I>> { };
+
   template <class T>
     requires requires { typename T::difference_type; }
   struct difference_type<T> {
     using type = typename T::difference_type;
   };
+
   template <class T>
     requires !requires { typename T::difference_type; } &&
       requires(const T& a, const T& b) { { a - b } -> Integral; }
   struct difference_type<T>
     : make_signed< decltype(declval<T>() - declval<T>()) > {
   };
+
   template <class T>
     using difference_type_t = typename difference_type<T>::type;
 \end{codeblock}
@@ -1729,16 +1741,20 @@ is implemented as if:
 \indexlibrary{\idxcode{iterator_category}}%
 \begin{codeblock}
   template <class> struct iterator_category { };
+
   template <class T>
   struct iterator_category<T*>
     : enable_if<is_object<T>::value, random_access_iterator_tag> { };
+
   template <class T>
   struct iterator_category<T const> : iterator_category<T> { };
+
   template <class T>
     requires requires { typename T::iterator_category; }
   struct iterator_category<T> {
     using type = @\seebelow@;
   };
+
   template <class T>
     using iterator_category_t = typename iterator_category<T>::type;
 \end{codeblock}
