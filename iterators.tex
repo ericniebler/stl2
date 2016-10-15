@@ -202,7 +202,7 @@ and up to but not including the element pointed to by
 \added{the first iterator} \tcode{j} \added{such that \tcode{j == s}}.
 
 \pnum
-Range \removed{\range{i}{j}}\added{\range{i}{s}}
+\changed{R}{A r}ange \changed{\range{i}{j}}{\range{i}{s}}
 is valid if and only if
 \removed{\tcode{j}}\added{\tcode{s}}
 is reachable from
@@ -284,18 +284,23 @@ A \tcode{Readable} type has an associated value type that can be accessed with t
 \indexlibrary{\idxcode{value_type_t}}%
 \begin{codeblock}
   template <class> struct value_type { };
+
   template <class T>
   struct value_type<T*>
     : enable_if<is_object<T>::value, remove_cv_t<T>> { };
+
   template <class I>
     requires is_array<I>::value
   struct value_type<I> : value_type<decay_t<I>> { };
+
   template <class I>
   struct value_type<I const> : value_type<decay_t<I>> { };
+
   template <class T>
     requires requires { typename T::value_type; }
   struct value_type<T>
     : enable_if<is_object<typename T::value_type>::value, typename T::value_type> { };
+
   template <class T>
     requires requires { typename T::element_type; }
   struct value_type<T>
@@ -331,7 +336,7 @@ like \tcode{shared_ptr<void>} is not \tcode{Readable} and has no associated valu
 \rSec2[iterators.writable]{Concept Writable}
 
 \pnum
-The \tcode{Writable} concept describes the requirements for writing a value into an iterator's
+The \tcode{Writable} concept specifies the requirements for writing a value into an iterator's
 referenced object.
 
 \indexlibrary{\idxcode{Writable}}%
@@ -339,33 +344,33 @@ referenced object.
   template <class Out, class T>
   concept bool Writable() {
     return Semiregular<Out>() &&
-      requires(Out o, T&& v) {
-        *o = std::forward<T>(v); // not required to be equality preserving
+      requires(Out o, T&& t) {
+        *o = std::forward<T>(t); // not required to be equality preserving
       };
   }
 \end{codeblock}
 
 \pnum
-Let \tcode{t} be an an expression such that \tcode{decltype(t)} is \tcode{T}, and let \tcode{o}
+Let \tcode{E} be an an expression such that \tcode{decltype(E)} is \tcode{T}, and let \tcode{o}
 be a dereferenceable object of type \tcode{Out}. Then \tcode{Writable<Out, T>()} is satisfied if and only if
 
 \begin{itemize}
 \item If \tcode{Readable<Out>() \&\& Same<value_type_t<Out>, decay_t<T>{>}()} is satisfied,
 then \tcode{*o} after the assignment is equal
-to the value of \tcode{t} before the assignment.
+to the value of \tcode{E} before the assignment.
 \end{itemize}
 
 \pnum
 After evaluating the assignment expression, \tcode{o} is not required to be dereferenceable.
 
 \pnum
-If \tcode{v} is an xvalue~(\cxxref{basic.lval}), the resulting
+If \tcode{E} is an xvalue~(\cxxref{basic.lval}), the resulting
 state of the object it denotes is unspecified. \enternote The object must still meet the
 requirements of any library component that is using it. The operations listed
 in those requirements must work as specified whether the object has been moved
 from or not.\exitnote
 
-\ednote{``If \tcode{t} is an xvalue'' suffices for now, but incorporating P0022's proxy
+\ednote{``If \tcode{E} is an xvalue'' suffices for now, but incorporating P0022's proxy
  iterators will require a characterization of the ``xvalue-ness'' of a proxy reference type.}
 
 \pnum
@@ -377,8 +382,9 @@ The only valid use of an \tcode{operator*} is on the left side of the assignment
 \rSec2[iterators.weaklyincrementable]{Concept WeaklyIncrementable}
 
 \pnum
-The \tcode{WeaklyIncrementable} concept describes types that can be incremented with the pre-
-and post-increment operators. The increment operations are not required to be equality-preserving,
+The \tcode{WeaklyIncrementable} concept specifies the requirements on
+types that can be incremented with the pre- and post-increment operators.
+The increment operations are not required to be equality-preserving,
 nor is the type required to be \tcode{EqualityComparable}.
 
 \indexlibrary{\idxcode{WeaklyIncrementable}}%
@@ -403,7 +409,7 @@ are valid, \tcode{i} is said to be \techterm{incrementable}. Then
 \begin{itemize}
 \item \tcode{++i} is valid if and only if \tcode{i++} is valid.
 \item If \tcode{i} is incrementable, then both \tcode{++i}
-  and \tcode{i++} moves \tcode{i} to the next element.
+  and \tcode{i++} advance \tcode{i} to the next element.
 \item If \tcode{i} is incrementable, then \tcode{\&++i == \&i}.
 \end{itemize}
 
@@ -421,7 +427,7 @@ template.\exitnote
 \rSec2[iterators.incrementable]{Concept Incrementable}
 
 \pnum
-The \tcode{Incrementable} concept describes types that can be incremented with the pre-
+The \tcode{Incrementable} concept specifies requirements on types that can be incremented with the pre-
 and post-increment operators. The increment operations are required to be equality-preserving,
 and the type is required to be \tcode{EqualityComparable}. \enternote This requirement
 supersedes the annotations on the increment expressions in the definition of
@@ -573,7 +579,7 @@ necessary to make \tcode{bool(i == s)} be \tcode{true}.
 \end{itemdescr}
 
 \pnum
-\enternote The \tcode{disable_sized_sentinel<S, I>} predicate provides a mechanism to
+\enternote \tcode{disable_sized_sentinel} provides a mechanism to
 enable use of sentinels and iterators with the library that meet the
 syntactic requirements but do not in fact satisfy \tcode{SizedSentinel}.
 A program that instantiates a library template that requires
@@ -602,8 +608,9 @@ counted iterators and their sentinels~(\ref{counted.iterator}).\exitnote
 The \tcode{InputIterator} concept is a refinement of
 \tcode{Iterator}~(\ref{iterators.iterator}). It
 defines requirements for a type whose referenced values can be read (from the requirement for
-\tcode{Readable}~(\ref{iterators.readable})) and which can be both pre- and post-incremented. However,
-input iterators are not required to be comparable for equality.
+\tcode{Readable}~(\ref{iterators.readable})) and which can be both pre- and post-incremented.
+\enternote Unlike in ISO/IEC 14882, input iterators are not required to satisfy
+\tcode{EqualityComparable}~(\ref{concepts.lib.compare.equalitycomparable}).\exitnote
 
 \indexlibrary{\idxcode{InputIterator}}%
 \begin{codeblock}
@@ -690,7 +697,7 @@ are valid and have the indicated semantics, and
 \begin{addedblock}
 \pnum
 The \tcode{ForwardIterator} concept refines \tcode{InputIterator}~(\ref{iterators.input}),
-adding equality comparison and the multi-pass guarantee, described below.
+adding equality comparison and the multi-pass guarantee, specified below.
 
 \indexlibrary{\idxcode{ForwardIterator}}%
 \begin{codeblock}
@@ -967,7 +974,7 @@ member function need not be defined.\exitnote
 There are several additional iterator concepts that are commonly applied to families of algorithms.
 These group together iterator requirements of algorithm families. There are three relational
 concepts that specify how element values are transferred between \tcode{Readable} and \tcode{Writable} types:
-\tcode{IndirectlyMovable}, \tcode{IndirectlyCopyable}, and \tcode{IndirectlySwappable}. There are three relational concepts
+\tcode{Indirectly\-Movable}, \tcode{Indirectly\-Copyable}, and \tcode{Indirectly\-Swappable}. There are three relational concepts
 for rearrangements: \tcode{Permutable}, \tcode{Mergeable}, and \tcode{Sortable}.
 There is one relational concept for comparing values from different sequences: \tcode{IndirectlyComparable}.
 
@@ -985,9 +992,9 @@ type and a \tcode{Writable} type between which values may be moved.
 
 \indexlibrary{\idxcode{IndirectlyMovable}}%
 \begin{codeblock}
-  template <class I>
+  template <class In>
   using rvalue_reference_t =
-    decltype(std::move(declval<reference_t<I>>()));
+    decltype(std::move(declval<reference_t<In>>()));
 
   template <class In, class Out>
   concept bool IndirectlyMovable() {
@@ -1009,7 +1016,7 @@ requirements enabling the transfer to be performed through an intermediate objec
   template <class In, class Out>
   concept bool IndirectlyMovableStorable() {
     return IndirectlyMovable<In, Out>() &&
-      Writable<Out, value_type_t<In>&&>() &&
+      Writable<Out, value_type_t<In>>() &&
       Movable<value_type_t<In>>() &&
       Constructible<value_type_t<In>, rvalue_reference_t<In>>() &&
       Assignable<value_type_t<In>&, rvalue_reference_t<In>>();
@@ -1020,13 +1027,13 @@ requirements enabling the transfer to be performed through an intermediate objec
 
 \pnum
 The \tcode{IndirectlyCopyable} concept specifies the relationship between a \tcode{Readable}
-type and a \tcode{Writable} type between which values may be transferred without necessarily moving.
+type and a \tcode{Writable} type between which values may be copied.
 
 \indexlibrary{\idxcode{IndirectlyCopyable}}%
 \begin{codeblock}
   template <class In, class Out>
   concept bool IndirectlyCopyable() {
-    return IndirectlyMovable<In, Out>() &&
+    return Readable<In>() &&
       Writable<Out, reference_t<In>>();
   }
 \end{codeblock}
@@ -1041,7 +1048,6 @@ requirements enabling the transfer to be performed through an intermediate objec
   template <class In, class Out>
   concept bool IndirectlyCopyableStorable() {
     return IndirectlyCopyable<In, Out>() &&
-      IndirectlyMovableStorable<In, Out>() &&
       Writable<Out, const value_type_t<In>&>() &&
       Copyable<value_type_t<In>>() &&
       Constructible<value_type_t<In>, reference_t<In>>() &&
@@ -1052,7 +1058,7 @@ requirements enabling the transfer to be performed through an intermediate objec
 \rSec2[commonalgoreq.indirectlyswappable]{Concept IndirectlySwappable}
 
 \pnum
-The \tcode{IndirectlySwappable} concept describes a swappable relationship between the
+The \tcode{IndirectlySwappable} concept specifies a swappable relationship between the
 reference types of two \tcode{Readable} types.
 
 \indexlibrary{\idxcode{IndirectlySwappable}}%
@@ -1320,6 +1326,7 @@ namespace std { @\added{namespace experimental \{ namespace ranges \{ inline nam
 \begin{addedblock}
 \begin{codeblock}
   template <Semiregular S> class move_sentinel;
+
   template <class I, Sentinel<I> S>
     bool operator==(
       const move_iterator<I>& i, const move_sentinel<S>& s);
@@ -1354,6 +1361,7 @@ namespace std { @\added{namespace experimental \{ namespace ranges \{ inline nam
 
   template <InputIterator I, class S>
   struct iterator_category<common_iterator<I, S>>;
+
   template <ForwardIterator I, class S>
   struct iterator_category<common_iterator<I, S>>;
 
@@ -1689,25 +1697,31 @@ namespace std {
 \indexlibrary{\idxcode{difference_type}}%
 \begin{codeblock}
   template <class> struct difference_type { };
+
   template <class T>
   struct difference_type<T*>
     : enable_if<is_object<T>::value, ptrdiff_t> { };
+
   template <class I>
     requires is_array<I>::value
   struct difference_type<I> : difference_type<decay_t<I>> { };
+
   template <class I>
   struct difference_type<I const> : difference_type<decay_t<I>> { };
+
   template <class T>
     requires requires { typename T::difference_type; }
   struct difference_type<T> {
     using type = typename T::difference_type;
   };
+
   template <class T>
     requires !requires { typename T::difference_type; } &&
       requires(const T& a, const T& b) { { a - b } -> Integral; }
   struct difference_type<T>
     : make_signed< decltype(declval<T>() - declval<T>()) > {
   };
+
   template <class T>
     using difference_type_t = typename difference_type<T>::type;
 \end{codeblock}
@@ -1729,16 +1743,20 @@ is implemented as if:
 \indexlibrary{\idxcode{iterator_category}}%
 \begin{codeblock}
   template <class> struct iterator_category { };
+
   template <class T>
   struct iterator_category<T*>
     : enable_if<is_object<T>::value, random_access_iterator_tag> { };
+
   template <class T>
   struct iterator_category<T const> : iterator_category<T> { };
+
   template <class T>
     requires requires { typename T::iterator_category; }
   struct iterator_category<T> {
     using type = @\seebelow@;
   };
+
   template <class T>
     using iterator_category_t = typename iterator_category<T>::type;
 \end{codeblock}
@@ -2521,7 +2539,7 @@ reverse_iterator();
 \begin{itemdescr}
 \pnum
 \effects
-Value initializes
+Value-initializes
 \tcode{current}.
 Iterator operations applied to the resulting iterator have defined behavior
 if and only if the corresponding operations are defined on a
@@ -3437,8 +3455,8 @@ vector<string> v2(make_move_iterator(s.begin()),
 \begin{addedblock}
 \pnum
 Class template \tcode{move_sentinel} is a sentinel adaptor useful for denoting
-ranges together with \tcode{move_iterator}. When an iterator type \tcode{I} and
-sentinel type \tcode{S} satisfy \tcode{Sentinel<S, I>()},
+ranges together with \tcode{move_iterator}. When an input iterator type
+\tcode{I} and sentinel type \tcode{S} satisfy \tcode{Sentinel<S, I>()},
 \tcode{Sentinel<move_sentinel<S>, move_iterator<I>{>}()} is satisfied as well.
 
 \pnum
@@ -4200,7 +4218,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 
     ~common_iterator();
 
-    @\seebelow@ {operator*();
+    @\seebelow@ operator*();
     @\seebelow@ operator*() const;
     @\seebelow@ operator->() const requires Readable<I>();
 
@@ -5673,9 +5691,9 @@ namespace std { @\added{namespace experimental \{ namespace ranges \{ inline nam
     typedef traits traits_type;
     typedef basic_ostream<charT, traits> ostream_type;
     @\added{constexpr ostream_iterator() noexcept;}@
-    ostream_iterator(ostream_type& s) noexcept;
-    ostream_iterator(ostream_type& s, const charT* delimiter) noexcept;
-    ostream_iterator(const ostream_iterator@\removed{<T, charT, traits>}@& x) noexcept;
+    ostream_iterator(ostream_type& s) @\added{noexcept}@;
+    ostream_iterator(ostream_type& s, const charT* delimiter) @\added{noexcept}@;
+    ostream_iterator(const ostream_iterator@\removed{<T, charT, traits>}@& x) @\added{noexcept}@;
    ~ostream_iterator();
     ostream_iterator@\removed{<T, charT, traits>}@& operator=(const T& value);
 
@@ -5686,7 +5704,7 @@ namespace std { @\added{namespace experimental \{ namespace ranges \{ inline nam
     basic_ostream<charT, traits>* out_stream;  // \expos
     const charT* delim;                        // \expos
   };
-}@\added{\}\}}\}@
+}@\added{\}\}\}}@
 \end{codeblock}
 
 \rSec3[ostream.iterator.cons.des]{\tcode{ostream_iterator} constructors and destructor}
@@ -5706,7 +5724,7 @@ Initializes \tcode{out_stream} and \tcode{delim} with \removed{null}\added{\tcod
 
 \indexlibrary{\idxcode{ostream_iterator}!constructor}%
 \begin{itemdecl}
-ostream_iterator(ostream_type& s) noexcept;
+ostream_iterator(ostream_type& s) @\added{noexcept}@;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -5717,7 +5735,7 @@ Initializes \tcode{out_stream} with \tcode{\&s} and \tcode{delim} with \removed{
 
 \indexlibrary{\idxcode{ostream_iterator}!constructor}%
 \begin{itemdecl}
-ostream_iterator(ostream_type& s, const charT* delimiter) noexcept;
+ostream_iterator(ostream_type& s, const charT* delimiter) @\added{noexcept}@;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -5728,7 +5746,7 @@ Initializes \tcode{out_stream} with \tcode{\&s} and \tcode{delim} with \tcode{de
 
 \indexlibrary{\idxcode{ostream_iterator}!constructor}%
 \begin{itemdecl}
-ostream_iterator(const ostream_iterator& x) noexcept;
+ostream_iterator(const ostream_iterator& x) @\added{noexcept}@;
 \end{itemdecl}
 
 \begin{itemdescr}
