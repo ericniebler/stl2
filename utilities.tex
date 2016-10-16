@@ -220,6 +220,61 @@ return old_val;
 \end{codeblock}
 \end{itemdescr}
 
+\setcounter{section}{6}
+\rSec1[memory]{Memory}
+\setcounter{Paras}{0}
+\pnum
+\synopsis{Header \tcode{<\newtxt{experimental/ranges/}memory>} synopsis}
+
+\begin{codeblock}
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+  template <InputIterator I, Sentinel<I> S, ForwardIterator O>
+    requires Constructible<value_type_t<O>, reference_t<O>>() \&\&
+             Same<value_type_t<O>\&, reference_t<O>>
+  tagged_pair<tag::in(I), tag::out(O)>
+    uninitialized_copy(I first, S last, O result);
+
+  template <InputRange Rng, class O>
+    requires ForwardIterator<O>() \&\&
+             Constructible<value_type_t<O>, reference_t<iterator_t<Rng>>>() \&\&
+             Same<value_type_t<O>\&, reference_t<O>>
+  tagged_pair<tag::in(safe_iterator_t<Rng>), tag::out(O)>
+    uninitialized_copy(Rng\&\& rng, O\&\& result);
+\end{codeblock}
+
+\setcounter{Paras}{0}
+\pnum
+\effects Copies elements in the range \tcode{[first, last)} into the range
+\tcode{[result, (result + (last - first))} starting from \tcode{first} and proceeding
+to \tcode{last}. For each non-negative integer \tcode{n < (last - first)}, performs
+\tcode{::new(static_cast<void*>(\&*(result + n)) T(*(first + n))}.
+
+\pnum
+\returns \tcode{\{last, result + (last - first)\}}.
+
+\pnum
+\requires \tcode{result} shall not be in the range \tcode{[first, last)}.
+
+\pnum
+\complexity Exactly \tcode{last - first} copy constructions.
+
+\begin{codeblock}
+  template <InputIterator I, OutputIterator O>
+    requires Constructible<value_type_t<O>, reference_t<I>>() &&
+             Same<value_type_t<O>&, reference_t<O>>
+  tagged_pair<tag::in(I), tag::out(O)>
+    uninitialized_copy_n(I&& first, difference_type_t<I> n, O&& out)
+\end{codeblock}
+
+\pnum
+\effects For each non-negative integer $i < n$, performs
+\tcode{::new(static_cast<void*>(\&*(result + i)) T(*(first + i))}.
+
+\pnum
+\returns \tcode{\{first + n, result + n\}}.
+
+\pnum Exactly \tcode{n} copy constructions.
+
 \setcounter{section}{8}
 \rSec1[function.objects]{Function objects}
 
