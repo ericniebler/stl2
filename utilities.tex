@@ -220,6 +220,99 @@ return old_val;
 \end{codeblock}
 \end{itemdescr}
 
+\setcounter{section}{6}
+\rSec1[memory]{Memory}
+\synopsis{Header \tcode{<\newtxt{experimental/ranges/}memory>} synopsis}
+\setcounter{subsection}{11}
+\rSec2[specialized.algorithms]{Specialized algorithms}
+\rSec3[uninitialized.copy]{uninitialized_copy}
+\begin{codeblock}
+namespace std { @\newtxt{namespace experimental \{ namespace ranges \{ inline namespace v1 \{}@
+  template <@\oldtxt{class}\newtxt{InputIterator}@ @\oldtxt{InputIterator}\newtxt{I}@, @\newtxt{Sentinel<I> S, }@
+            @\oldtxt{class ForwardIterator}\newtxt{ForwardIterator O}@>
+    @\newtxt{requires Constructible<value_type_t<O>, reference_t<O>{>}() \&\&}@
+             @\newtxt{Same<value_type_t<O>\&, reference_t<O>{>}}@
+  @\oldtxt{ForwardIterator}\newtxt{tagged_pair<tag::in(I), tag::out(O)>}@
+    uninitialized_copy(@\oldtxt{InputIterator}\newtxt{I}@ first, @\oldtxt{InputIterator}\newtxt{S}@ last, @\oldtxt{ForwardIterator}\newtxt{O}@ result);
+\end{codeblock}
+
+{\color{newclr}
+\begin{codeblock}
+  template <InputRange Rng, class O>
+    requires ForwardIterator<O>() &&
+             Constructible<value_type_t<O>, reference_t<iterator_t<Rng>>>() &&
+             Same<value_type_t<O>&, reference_t<O>>
+  tagged_pair<tag::in(safe_iterator_t<Rng>), tag::out(O)>
+    uninitialized_copy(Rng&& rng, O&& result);
+\end{codeblock}
+
+\setcounter{Paras}{0}
+\pnum
+\effects Copies elements in the range \tcode{[first, last)} into the range
+\tcode{[result, (result + (last - first))} starting from \tcode{first} and proceeding
+to \tcode{last}. For each non-negative integer \tcode{n < (last - first)}, performs
+\tcode{::new(static_cast<void*>(\&*(result + n)) T(*(first + n))}.
+
+\pnum
+\returns \tcode{\{last, result + (last - first)\}}.
+
+\pnum
+\requires \tcode{result} shall not be in the range \tcode{[first, last)}.
+
+\pnum
+\complexity Exactly \tcode{last - first} copies.
+
+\begin{codeblock}
+  template <@\oldtxt{class}\newtxt{InputIterator}@ @\oldtxt{InputIterator}\newtxt{I}@, @\oldtxt{class Size, class ForwardIterator}\newtxt{OutputIterator O}@>
+    @\newtxt{requires Constructible<value_type_t<O>, reference_t<I>{>}() \&\&}@
+             @\newtxt{Same<value_type_t<O>\&, reference_t<O>{>}}@
+  @\oldtxt{ForwardIterator}\newtxt{tagged_pair<tag::in(I), tag::out(O)>}@
+    uninitialized_copy_n(@\oldtxt{InputIterator}\newtxt{I\&\&}@ first, @\oldtxt{Size}\newtxt{difference_type_t<I>}@ n, @\oldtxt{ForwardIterator}\newtxt{O\&\&}@ out)
+\end{codeblock}
+
+\pnum
+\effects For each non-negative integer $i < n$, performs
+\tcode{::new(static_cast<void*>(\&*(result + i)) T(*(first + i))}.
+
+\pnum
+\returns \tcode{\{first + n, result + n\}}.
+
+\pnum Exactly \tcode{n} copies.
+} %% \color{newclr}
+
+\rSec3[uninitialized.fill]{uninitialized_fill}
+\begin{codeblock}
+  template <@\oldtxt{class}\newtxt{CopyConstructible}@ @\oldtxt{ForwardIterator}\newtxt{T}@, @\oldtxt{class}\newtxt{OutputIterator<const T\&>}@ @\oldtxt{T}\newtxt{O},@
+            @\newtxt{Sentinel<O> S}@>
+    @\newtxt{requires Same<value_type_t<T>\&, reference_t<T>{>}}@
+    @\oldtxt{void}\newtxt{O}@ fill(@\oldtxt{ForwardIterator}\newtxt{O}@ first, @\oldtxt{ForwardIterator}\newtxt{S}@ last, const T& value);
+
+  @\newtxt{template <CopyConstructible T, OutputRange<const T\&> Rng>}@
+    @\newtxt{requires Same<value_type_t<T>\&, reference_t<T>{>}}@
+  @\newtxt{safe_iterator_t<Rng>}@
+    @\newtxt{fill(Rng\&\& rng, const T\& value);}@
+
+  template <@\oldtxt{class}\newtxt{CopyConstructible}@ @\oldtxt{ForwardIterator}\newtxt{T}@, @\oldtxt{class Size, class}\newtxt{OutputIterator<const T\&>}@ @\oldtxt{T}\newtxt{O}@>
+    @\newtxt{requires Same<value_type_t<T>\&, reference_t<T>{>}}@
+  @\oldtxt{ForwardIterator}\newtxt{O}@ fill_n(@\oldtxt{ForwardIterator}\newtxt{O}@ first, @\oldtxt{Size}\newtxt{difference_type_t<O>}@, const T& value);
+}@\newtxt{\}\}\}}@
+\end{codeblock}
+
+{\color{newclr}
+\setcounter{Paras}{0}
+\pnum
+\effects \tcode{fill} copies \tcode{value} through all the iterators in range
+\tcode{[first, last)}. \tcode{fill_n} copies \tcode{value} through all the
+iterators in the range \tcode{[first, first + n)}, otherwise it does nothing.
+
+\pnum
+\returns \tcode{fill} returns \tcode{last}. \tcode{fill_n} returns \tcode{first + n} for
+non-negative values of \tcode{n} and \tcode{first} for negative values.
+
+\pnum
+\complexity Exactly \tcode{last - first}, \tcode{n}, or 0 assignments, respectively.
+} %% color{newclr}
+
 \setcounter{section}{8}
 \rSec1[function.objects]{Function objects}
 
