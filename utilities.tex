@@ -226,20 +226,25 @@ return old_val;
 \pnum
 \synopsis{Header \tcode{<\newtxt{experimental/ranges/}memory>} synopsis}
 
-\begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
-  template <InputIterator I, Sentinel<I> S, ForwardIterator O>
-    requires Constructible<value_type_t<O>, reference_t<O>>() \&\&
-             Same<value_type_t<O>\&, reference_t<O>>
-  tagged_pair<tag::in(I), tag::out(O)>
-    uninitialized_copy(I first, S last, O result);
 
+\begin{codeblock}
+namespace std { @\newtxt{namespace experimental \{ namespace ranges \{ inline namespace v1 \{}@
+  template <@\oldtxt{class}\newtxt{InputIterator}@ @\oldtxt{InputIterator}\newtxt{I}@, @\newtxt{Sentinel<I> S, }@
+            @\oldtxt{class ForwardIterator}\newtxt{ForwardIterator O}@>
+    @\newtxt{requires Constructible<value_type_t<O>, reference_t<O>>() \&\&}@
+             @\newtxt{Same<value_type_t<O>\&, reference_t<O>>}@
+  @\oldtxt{ForwardIterator}\newtxt{tagged_pair<tag::in(I), tag::out(O)>}@
+    uninitialized_copy(@\oldtxt{InputIterator}\newtxt{I}@ first, @\oldtxt{InputIterator}\newtxt{S}@ last, @\oldtxt{ForwardIterator}\newtxt{O}@ result);
+\end{codeblock}
+
+{\color{newclr}
+\begin{codeblock}
   template <InputRange Rng, class O>
-    requires ForwardIterator<O>() \&\&
-             Constructible<value_type_t<O>, reference_t<iterator_t<Rng>>>() \&\&
-             Same<value_type_t<O>\&, reference_t<O>>
+    requires ForwardIterator<O>() &&
+             Constructible<value_type_t<O>, reference_t<iterator_t<Rng>>>() &&
+             Same<value_type_t<O>&, reference_t<O>>
   tagged_pair<tag::in(safe_iterator_t<Rng>), tag::out(O)>
-    uninitialized_copy(Rng\&\& rng, O\&\& result);
+    uninitialized_copy(Rng&& rng, O&& result);
 \end{codeblock}
 
 \setcounter{Paras}{0}
@@ -274,6 +279,39 @@ to \tcode{last}. For each non-negative integer \tcode{n < (last - first)}, perfo
 \returns \tcode{\{first + n, result + n\}}.
 
 \pnum Exactly \tcode{n} copy constructions.
+} %% \color{newclr}
+
+\begin{codeblock}
+  template <@\oldtxt{class}\newtxt{CopyConstructible}@ @\oldtxt{ForwardIterator}\newtxt{T}@, @\oldtxt{class}\newtxt{OutputIterator<const T\&>}@ @\oldtxt{T}\newtxt{O},@
+            @\newtxt{Sentinel<O> S}@>
+    @\newtxt{requires Same<value_type_t<T>\&, reference_t<T>>}@
+    @\oldtxt{void}\newtxt{O}@ fill(@\oldtxt{ForwardIterator}\newtxt{O}@ first, @\oldtxt{ForwardIterator}\newtxt{S}@ last, const T& value);
+
+  @\newtxt{template <CopyConstructible T, OutputRange<const T\&> Rng>}@
+    @\newtxt{requires Same<value_type_t<T>\&, reference_t<T>>}@
+  @\newtxt{safe_iterator_t<Rng>}@
+    @\newtxt{fill(Rng\&\& rng, const T\& value);}@
+
+  template <@\oldtxt{class}\newtxt{CopyConstructible}@ @\oldtxt{ForwardIterator}\newtxt{T}@, @\oldtxt{class Size, class}\newtxt{OutputIterator<const T\&>}@ @\oldtxt{T}\newtxt{O}@>
+    @\newtxt{requires Same<value_type_t<T>\&, reference_t<T>>}@
+  @\oldtxt{ForwardIterator}\newtxt{O}@ fill_n(@\oldtxt{ForwardIterator}\newtxt{O}@ first, @\oldtxt{Size}\newtxt{difference_type_t<O>}@, const T& value);
+}@\newtxt{\}\}\}}@
+\end{codeblock}
+
+{\color{newclr}
+\setcounter{Paras}{0}
+\pnum
+\effects \tcode{fill} copy constructs \tcode{value} through all the iterators in range
+\tcode{[first, last)}. \tcode{fill_n} copy constructs \tcode{value} through all the
+iterators in the range \tcode{[first, first + n)}, otherwise it does nothing.
+
+\pnum
+\returns \tcode{fill} returns \tcode{last}. \tcode{fill_n} returns \tcode{first + n} for
+non-negative values of \tcode{n} and \tcode{first} for negative values.
+
+\pnum
+\complexity Exactly \tcode{last - first}, \tcode{n}, or 0 assignments, respectively.
+} %% color{newclr}
 
 \setcounter{section}{8}
 \rSec1[function.objects]{Function objects}
