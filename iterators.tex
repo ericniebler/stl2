@@ -266,14 +266,33 @@ The \tcode{Readable} concept is satisfied by types that are readable by
 applying \tcode{operator*} including pointers, smart pointers, and iterators.
 
 \indexlibrary{\idxcode{Readable}}%
+
 \begin{codeblock}
   template <class I>
   concept bool Readable() {
-    return Semiregular<I>() &&
-      requires(const I i) {
-        typename value_type_t<I>;
-        { *i } -> const value_type_t<I>&; // pre: i is dereferenceable
-      };
+    @\oldtxt{return Semiregular<I>() \&\&}@
+      @\oldtxt{requires(const I i) \{}@
+        @\oldtxt{typename value_type_t<I>;}@
+        @\oldtxt{\{ *i \} -> const value_type_t<I>\&; // pre: i is dereferenceable}@
+      @\oldtxt{\};}@
+    @\newtxt{return Movable<I>() \&\& DefaultConstructible<I>() \&\&}@
+      @\newtxt{requires(const I\& i) \{}@
+        @\newtxt{typename value_type_t<I>;}@
+        @\newtxt{typename reference_t<I>;}@
+        @\newtxt{typename rvalue_reference_t<I>;}@
+        @\newtxt{\{ *i \} -> Same<reference_t<I>{}>;}@
+        @\newtxt{\{ ranges::iter_move(i) \} -> Same<rvalue_reference_t<I>{}>;}@
+      @\newtxt{\} \&\&}@
+      @\newtxt{// Relationships between associated types}@
+      @\newtxt{CommonReference<reference_t<I>, value_type_t<I>\&>() \&\&}@
+      @\newtxt{CommonReference<reference_t<I>, rvalue_reference_t<I>{}>() \&\&}@
+      @\newtxt{CommonReference<rvalue_reference_t<I>, const value_type_t<I>\&>() \&\&}@
+      @\newtxt{Same<}@
+        @\newtxt{common_reference_t<reference_t<I>, value_type_t<I>{}>,}@
+        @\newtxt{value_type_t<I>{}>() \&\&}@
+      @\newtxt{Same<}@
+        @\newtxt{common_reference_t<rvalue_reference_t<I>, value_type_t<I>{}>,}@
+        @\newtxt{value_type_t<I>{}>();}@
   }
 \end{codeblock}
 
@@ -897,6 +916,7 @@ callable objects~(\cxxref{func.def}) as arguments.
 \indexlibrary{\idxcode{IndirectCallablePredicate}}%
 \indexlibrary{\idxcode{IndirectCallableRelation}}%
 \indexlibrary{\idxcode{IndirectCallableStrictWeakOrder}}%
+{\color{oldclr}
 \begin{codeblock}
   template <class F, class... Is>
   concept bool IndirectCallable() {
@@ -937,6 +957,95 @@ callable objects~(\cxxref{func.def}) as arguments.
   template <class F>
   using indirect_result_of_t = typename indirect_result_of<F>::type;
 \end{codeblock}
+\color{newclr}
+\begin{codeblock}
+  template <class F>
+  concept bool IndirectCallable() {
+    return Callable<F>();
+  }
+  template <class F, class I>
+  concept bool IndirectCallable() {
+    return Readable<I>() &&
+      Callable<F, value_type_t<I>>() &&
+      Callable<F, reference_t<I>>() &&
+      Callable<F, iter_common_reference_t<I>>();
+  }
+  template <class F, class I1, class I2>
+  concept bool IndirectCallable() {
+    return Readable<I1>() && Readable<I2>() &&
+      Callable<F, value_type_t<I1>, value_type_t<I2>>() &&
+      Callable<F, value_type_t<I1>, reference_t<I2>>() &&
+      Callable<F, reference_t<I1>, value_type_t<I2>>() &&
+      Callable<F, reference_t<I1>, reference_t<I2>>() &&
+      Callable<F, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
+  }
+
+  template <class F>
+  concept bool IndirectRegularCallable() {
+    return RegularCallable<F>();
+  }
+  template <class F, class I>
+  concept bool IndirectRegularCallable() {
+    return Readable<I>() &&
+      RegularCallable<F, value_type_t<I>>() &&
+      RegularCallable<F, reference_t<I>>() &&
+      RegularCallable<F, iter_common_reference_t<I>>();
+  }
+  template <class F, class I1, class I2>
+  concept bool IndirectRegularCallable() {
+    return Readable<I1>() && Readable<I2>() &&
+      RegularCallable<F, value_type_t<I1>, value_type_t<I2>>() &&
+      RegularCallable<F, value_type_t<I1>, reference_t<I2>>() &&
+      RegularCallable<F, reference_t<I1>, value_type_t<I2>>() &&
+      RegularCallable<F, reference_t<I1>, reference_t<I2>>() &&
+      RegularCallable<F, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
+  }
+
+  template <class F, class I>
+  concept bool IndirectCallablePredicate() {
+    return Readable<I>() &&
+      Predicate<F, value_type_t<I>>() &&
+      Predicate<F, reference_t<I>>() &&
+      Predicate<F, iter_common_reference_t<I>>();
+  }
+  template <class F, class I1, class I2>
+  concept bool IndirectCallablePredicate() {
+    return Readable<I1>() && Readable<I2>() &&
+      Predicate<F, value_type_t<I1>, value_type_t<I2>>() &&
+      Predicate<F, value_type_t<I1>, reference_t<I2>>() &&
+      Predicate<F, reference_t<I1>, value_type_t<I2>>() &&
+      Predicate<F, reference_t<I1>, reference_t<I2>>() &&
+      Predicate<F, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
+  }
+
+  template <class F, class I1, class I2 = I1>
+  concept bool IndirectCallableRelation() {
+    return Readable<I1>() && Readable<I2>() &&
+      Relation<F, value_type_t<I1>, value_type_t<I2>>() &&
+      Relation<F, value_type_t<I1>, reference_t<I2>>() &&
+      Relation<F, reference_t<I1>, value_type_t<I2>>() &&
+      Relation<F, reference_t<I1>, reference_t<I2>>() &&
+      Relation<F, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
+  }
+
+  template <class F, class I1, class I2 = I1>
+  concept bool IndirectCallableStrictWeakOrder() {
+    return Readable<I1>() && Readable<I2>() &&
+      StrictWeakOrder<F, value_type_t<I1>, value_type_t<I2>>() &&
+      StrictWeakOrder<F, value_type_t<I1>, reference_t<I2>>() &&
+      StrictWeakOrder<F, reference_t<I1>, value_type_t<I2>>() &&
+      StrictWeakOrder<F, reference_t<I1>, reference_t<I2>>() &&
+      StrictWeakOrder<F, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
+  }
+
+  template <class> struct indirect_result_of { };
+
+  template <class F, class... Is>
+    requires IndirectCallable<F, Is...>()
+  struct indirect_result_of<F(Is...)> :
+    result_of<F(reference_t<Is>...)> { };
+\end{codeblock}
+} %\color{oldclr}
 
 \rSec2[projected]{Class template \tcode{projected}}
 
@@ -950,10 +1059,10 @@ algorithms that accept callable objects and projections. It bundles a \tcode{Rea
 \indexlibrary{\idxcode{projected}}%
 \begin{codeblock}
   template <Readable I, IndirectRegularCallable<I> Proj>
-    requires RegularCallable<Proj, reference_t<I>>()
+    @\oldtxt{requires RegularCallable<Proj, reference_t<I>{}>()}@
   struct projected {
     using value_type = decay_t<indirect_result_of_t<Proj&(I)>>;
-    result_of_t<Proj&(reference_t<I>)> operator*() const;
+    @\newtxt{indirect_}@result_of_t<Proj&(@\oldtxt{reference_t<}@I@\oldtxt{>}@)> operator*() const;
   };
 
   template <WeaklyIncrementable I, class Proj>
@@ -992,9 +1101,9 @@ type and a \tcode{Writable} type between which values may be moved.
 
 \indexlibrary{\idxcode{IndirectlyMovable}}%
 \begin{codeblock}
-  template <class In>
-  using rvalue_reference_t =
-    decltype(std::move(declval<reference_t<In>>()));
+  @\oldtxt{template <class In>}@
+  @\oldtxt{using rvalue_reference_t =}@
+    @\oldtxt{decltype(std::move(declval<reference_t<In>{}>()));}@
 
   template <class In, class Out>
   concept bool IndirectlyMovable() {
@@ -1002,9 +1111,6 @@ type and a \tcode{Writable} type between which values may be moved.
       Writable<Out, rvalue_reference_t<In>>();
   }
 \end{codeblock}
-
-\ednote{This is a simple version of \tcode{rvalue_reference_t} to be replaced
-with the formulation from P0022 when that proposal is integrated.}
 
 \pnum
 The \tcode{IndirectlyMovableStorable} concept augments \tcode{IndirectlyMovable} with additional
@@ -1059,16 +1165,30 @@ requirements enabling the transfer to be performed through an intermediate objec
 
 \pnum
 The \tcode{IndirectlySwappable} concept specifies a swappable relationship between the
-reference types of two \tcode{Readable} types.
+\oldtxt{reference types of}\newtxt{values referenced by} two \tcode{Readable} types.
 
 \indexlibrary{\idxcode{IndirectlySwappable}}%
 \begin{codeblock}
   template <class I1, class I2 = I1>
   concept bool IndirectlySwappable() {
     return Readable<I1>() && Readable<I2>() &&
-      Swappable<reference_t<I1>, reference_t<I2>>();
+      @\oldtxt{Swappable<reference_t<I1>, reference_t<I2>{}>();}@
+      @\newtxt{requires(const I1 i1, const I2 i2) \{}@
+        @\newtxt{ranges::iter_swap(i1, i2);}@
+        @\newtxt{ranges::iter_swap(i2, i1);}@
+        @\newtxt{ranges::iter_swap(i1, i1);}@
+        @\newtxt{ranges::iter_swap(i2, i2);}@
+      @\newtxt{\};}@
   }
 \end{codeblock}
+
+{\color{newclr}
+\pnum
+Given an object \tcode{i1} of type \tcode{I1} and an object \tcode{i2} of
+type \tcode{I2}, \tcode{IndirectlySwappable<I1, I2>()} is satisfied if after
+\tcode{ranges::iter_swap(i1, i2)}, the value of \tcode{*i1} is equal to the
+value of \tcode{*i2} before the call, and \textit{vice versa}.
+} %\color{newclr}
 
 \rSec2[commonalgoreq.indirectlycomparable]{Concept IndirectlyComparable}
 
@@ -1144,29 +1264,72 @@ sequences into ordered sequences (e.g., \tcode{sort}).
 \begin{codeblock}
 namespace std { @\added{namespace experimental \{ namespace ranges \{ inline namespace v1 \{}@
   // \ref{iterator.primitives}, primitives:
+\end{codeblock}
+{\color{newclr}
+\begin{codeblock}
+  // \expos
+  template <class T> concept bool _Dereferenceable
+    = requires(T& t) { {*t} -> auto&&; };
+
+  // \ref{iterator.utils}, utilities:
+  namespace {
+    // \ref{iterator.utils.iter_move}, iter_move:
+    constexpr @\unspec@ iter_move = @\unspec@;
+
+    // \ref{iterator.utils.iter_swap}, iter_swap:
+    constexpr @\unspec@ iter_swap = @\unspec@;
+  }
+\end{codeblock}
+} %\color{newclr}
+\begin{addedblock}
+\begin{codeblock}
+  @\newnewtxt{// \ref{iterator.traits}, traits:}@
+  template <class> struct difference_type;
+  template <class> struct value_type;
+  template <class> struct iterator_category;
+
+  template <class T> using difference_type_t
+    = typename difference_type<T>::type;
+
+  template <class T> using value_type_t
+    = typename value_type<T>::type;
+
+  template <class T> using iterator_category_t
+    = typename iterator_category<T>::type;
+
+  @\newtxt{template <_Dereferenceable T> using reference_t}@
+    @\newtxt{= decltype(*declval<T\&>());}@
+
+  @\newtxt{template <_Dereferenceable T>}@
+      @\newtxt{requires \seebelow{ }using rvalue_reference_t}@
+    @\newtxt{= decltype(ranges::iter_move(declval<T\&>()));}@
+
+  @\newtxt{template <Readable T> using iter_common_reference_t}@
+    @\newtxt{= common_reference_t<reference_t<T>, value_type_t<T>\&>;}@
+
+  @\newtxt{template <class I1, class I2> struct is_indirectly_movable;}@
+  @\newtxt{template <class I1, class I2 = I1> struct is_indirectly_swappable;}@
+  @\newtxt{template <class I1, class I2> struct is_nothrow_indirectly_movable;}@
+  @\newtxt{template <class I1, class I2 = I1> struct is_nothrow_indirectly_swappable;}@
+
+  @\newtxt{template <class I1, class I2> constexpr bool is_indirectly_movable_v}@
+    @\newtxt{= is_indirectly_movable<I1, I2>::value;}@
+  @\newtxt{template <class I1, class I2> constexpr bool is_indirectly_swappable_v}@
+    @\newtxt{= is_indirectly_swappable<I1, I2>::value;}@
+  @\newtxt{template <class I1, class I2> constexpr bool is_nothrow_indirectly_movable_v}@
+    @\newtxt{= is_nothrow_indirectly_movable<I1, I2>::value;}@
+  @\newtxt{template <class I1, class I2> constexpr bool is_nothrow_indirectly_swappable_v}@
+    @\newtxt{= is_nothrow_indirectly_swappable<I1, I2>::value;}@
+\end{codeblock}
+\end{addedblock}
+\begin{codeblock}
   template <class Iterator> @\changed{struct}{using}@ iterator_traits@\added{ = \seebelow}@;
   @\removed{template <class T> struct iterator_traits<T*>;}@
 
   @\removed{template <class Category, class T, class Distance = ptrdiff_t,}@
        @\removed{class Pointer = T*, class Reference = T\&> struct iterator;}@
 
-\end{codeblock}
-
-\begin{addedblock}
-\begin{codeblock}
-  template <class> struct difference_type;
-  template <class> struct value_type;
-  template <class> struct iterator_category;
-  template <class T> using difference_type_t
-    = typename difference_type<T>::type;
-  template <class T> using value_type_t
-    = typename value_type<T>::type;
-  template <class T> using iterator_category_t
-    = typename iterator_category<T>::type;
-
-\end{codeblock}
-\end{addedblock}
-\begin{codeblock}
+  @\newnewtxt{// \ref{std.iterator.tags}, iterator tags}@
   struct output_iterator_tag { };
   struct input_iterator_tag { };
   struct forward_iterator_tag :@\removed{ public}@ input_iterator_tag { };
@@ -1582,7 +1745,125 @@ entities, but there may be in the future.}
 To simplify the task of defining iterators, the library provides
 several classes and functions:
 
-\rSec2[iterator.assoc]{Iterator \textcolor{remclr}{traits}\textcolor{addclr}{associated types}}
+{\color{newclr}
+\rSec2[iterator.utils]{Iterator utilities}
+
+\rSec3[iterator.utils.iter_move]{iter_move}
+
+\pnum
+The name \tcode{iter_move} denotes a \techterm{customization point
+object}~(\ref{customization.point.object}). The effect of the expression
+\tcode{ranges::iter_move(E)} for some expression \tcode{E} is equivalent to
+\tcode{iter_move(E)}, with overload resolution~(\cxxref{over.match}) performed
+in a context described below.
+
+\pnum
+The context in which the expression \tcode{iter_move(E)} is evaluated
+\begin{itemize}
+\item does not include a declaration of \tcode{ranges::iter_move},
+\item includes the lookup set produced by argument-dependent
+  lookup~(\cxxref{basic.lookup.argdep}), and
+\item includes an \tcode{iter_move} function template equivalent to the
+  following:
+\begin{itemdecl}
+// \expos
+template <_Dereferenceable I>
+@\seebelow@ iter_move(I&& r) noexcept(@\seebelow@);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+The return type is \tcode{Ret} where \tcode{Ret} is
+\tcode{remove_reference_t<reference_t<I>{}>\&\&} if
+\tcode{reference_t<I>} is a reference type;
+\tcode{decay_t<reference_t<I>{}>}, otherwise.
+
+\pnum
+The expression in the \tcode{noexcept} is equivalent to:
+\begin{codeblock}
+noexcept(static_cast<Ret>(*r))
+\end{codeblock}
+
+\pnum
+Effects: Equivalent to \tcode{static_cast<Ret>(*r)}
+\end{itemdescr}
+\end{itemize}
+
+\pnum
+If, for the \tcode{iter_move} function selected by overload resolution,
+\tcode{iter_move(E)} does not equal \tcode{*E}, the program is ill-formed with
+no diagnostic required.
+
+\rSec3[iterator.utils.iter_swap]{iter_swap}
+
+\pnum
+The name \tcode{iter_swap} denotes a \techterm{customization point
+object}~(\ref{customization.point.object}). The effect of the expression
+\tcode{ranges::iter_swap(E1, E2)} for some expressions \tcode{E1} and \tcode{E2}
+is equivalent to \tcode{(void)iter_swap(E1, E2)}, with overload
+resolution~(\cxxref{over.match}) performed in a context described below:
+
+\pnum
+The context in which the expression \tcode{(void)iter_swap(E1, E2)} is evaluated
+
+\begin{itemize}
+\item does not include a declaration of \tcode{ranges::iter_swap},
+\item includes the lookup set produced by argument-dependent
+  lookup~(\cxxref{basic.lookup.argdep}), and
+\item includes \tcode{iter_swap} function template(s) equivalent to the
+  following:
+\begin{itemdecl}
+// \expos
+template <class I1, class I2>
+void iter_swap(I1&&, I2&&) = delete;
+
+// \expos
+template <class I1, class I2,
+  Readable _R1 = remove_reference_t<I1>,
+  Readable _R2 = remove_reference_t<I2>>
+  requires Swappable<reference_t<_R1>, reference_t<_R2>>()
+void iter_swap(I1&& r1, I2&& r2)
+  noexcept(is_nothrow_swappable_with_v<reference_t<_R1>, reference_t<_R2>>);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to \tcode{ranges::swap(*r1, *r2)}
+\end{itemdescr}
+
+\begin{itemdecl}
+template <class I1, class I2,
+  Readable _R1 = std::remove_reference_t<I1>,
+  Readable _R2 = std::remove_reference_t<I2>>
+  requires !Swappable<reference_t<_R1>, reference_t<_R2>>()
+    && IndirectlyMovableStorable<_R1, _R2>() &&
+       IndirectlyMovableStorable<_R2, _R1>()
+void iter_swap(I1&& r1, I2&& r2)
+  noexcept(is_nothrow_indirectly_movable_v<_R1, _R2> &&
+           is_nothrow_indirectly_movable_v<_R2, _R1>);
+\end{itemdecl}
+\begin{itemdescr}
+\end{itemdescr}
+\pnum
+\effects Exchanges values referred to by two \tcode{Readable} objects.
+
+\pnum
+\enterexample Below is a possible implementation:
+\begin{codeblock}
+value_type_t<_R1> tmp(iter_move(r1));
+*r1 = iter_move(r2);
+*r2 = std::move(tmp);
+\end{codeblock}
+\exitexample
+\end{itemize}
+
+\pnum
+If the \tcode{iter_swap} function selected by overload resolution does not swap
+the values denoted by the expressions \tcode{E1} and \tcode{E2}, the program is
+ill-formed with no diagnostic required.
+} %\color{newclr}
+
+\rSec2[iterator.traits]{Iterator traits}
 
 \pnum
 To implement algorithms only in terms of iterators, it is often necessary to
@@ -1613,16 +1894,11 @@ iterator_category_t<II>
 \end{addedblock}
 
 be defined as the iterator's difference type, value type and iterator category, respectively.
-In addition, the type\removed{s}
-
-\begin{addedblock}
+\oldoldtxt{In addition, the types}
 \begin{codeblock}
-@\tcode{reference_t<R>}
+@\oldtxt{reference_t<R>}@
 \end{codeblock}
-
-shall be an alias for \tcode{decltype(*declval<R\&>())}.
-\end{addedblock}
-
+\oldtxt{shall be an alias for \tcode{decltype(*declval<R\&>())}.}
 \begin{removedblock}
 \begin{codeblock}
 iterator_traits<Iterator>::reference
@@ -1805,6 +2081,73 @@ an implementation may define
 \end{codeblock}
 \exitnote
 \end{removedblock}
+
+{\color{newclr}
+\pnum
+\indexlibrary{\idxcode{rvalue_reference_t}}%
+\tcode{rvalue_reference_t<T>} is implemented as if:
+
+\begin{itemdecl}
+  template <_Dereferenceable T>
+      requires @\seebelow{ }@using rvalue_reference_t
+    = decltype(ranges::iter_move(declval<T&>()));
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+The expression in the \tcode{requires} clause is equivalent to:
+\begin{codeblock}
+requires(T& t) { { ranges::iter_move(t) } -> auto&&; }
+\end{codeblock}
+\end{itemdescr}
+
+\pnum
+The class templates \tcode{is_indirectly_movable},
+\tcode{is_nothrow_indirectly_movable}, \tcode{is_indirectly_swappable},
+and \tcode{is_nothrow_indirectly_swappable} shall be defined as follows:
+
+\begin{codeblock}
+template <class In, class Out>
+struct is_indirectly_movable : false_type { };
+
+template <class In, class Out>
+  requires IndirectlyMovable<In, Out>()
+struct is_indirectly_movable<In, Out> : true_type { };
+
+template <class In, class Out>
+struct is_nothrow_indirectly_movable : false_type { };
+
+template <class In, class Out>
+  requires IndirectlyMovable<In, Out>()
+struct is_nothrow_indirectly_movable<In, Out> :
+  std::integral_constant<bool,
+    is_nothrow_constructible<value_type_t<In>, rvalue_reference_t<In>>::value &&
+    is_nothrow_assignable<value_type_t<In> &, rvalue_reference_t<In>>::value &&
+    is_nothrow_assignable<reference_t<Out>, rvalue_reference_t<In>>::value &&
+    is_nothrow_assignable<reference_t<Out>, value_type_t<In>>::value>
+{ };
+
+template <class I1, class I2 = I1>
+struct is_indirectly_swappable : false_type { };
+
+template <class I1, class I2>
+  requires IndirectlySwappable<I1, I2>()
+struct is_indirectly_swappable<I1, I2> : true_type { };
+
+template <class I1, class I2 = I1>
+struct is_nothrow_indirectly_swappable : false_type { };
+
+template <class I1, class I2>
+  requires IndirectlySwappable<I1, I2>()
+struct is_nothrow_indirectly_swappable<I1, I2> :
+  std::integral_constant<bool,
+    noexcept(ranges::iter_swap(declval<I1&>(), declval<I2&>())) &&
+    noexcept(ranges::iter_swap(declval<I2&>(), declval<I1&>())) &&
+    noexcept(ranges::iter_swap(declval<I1&>(), declval<I1&>())) &&
+    noexcept(ranges::iter_swap(declval<I2&>(), declval<I2&>()))>
+{ };
+\end{codeblock}
+} %\color{newclr}
 
 \begin{addedblock}
 \pnum
