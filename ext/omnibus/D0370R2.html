@@ -49,7 +49,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
   <tr>
     <td width="172" align="left" valign="top">Document number:</td>
     <td width="435">
-      P0370R2
+      D0370R2
     </td>
   </tr>
   <tr>
@@ -94,19 +94,20 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </ul>
 </div>
 <h1 id="introduction"><span class="header-section-number">1</span> Introduction</h1>
-<p>This paper presents several design changes to N4560, the working paper for the Technical Specification for C++ Extensions for Ranges (the “Ranges TS”). Each change will be presented herein in a separate section that motivates the change and describes the design problem that change is meant to address. Technical specifications are relatively brief, since the complete specification and wording of all the changes is in N4569, a document that speculatively integrates these changes completely with the wording of N4560. This process is “unusual” in that the proposal authors failed to grok the process changes resulting from incorporating the evolving proposal into a TS working paper.</p>
-<p>To throw some more fuel on the fires of confusion: the first design change presented herein (customization point redesign) <em>is</em> present in N4560. However, it was not included in the text of the proposal P0021R0 that was voted to become the initial text of the new TS working paper in Kona. The change was “backdoored” into the WP between P0021 and the publication of N4560 in the post-Kona mailing.</p>
+<p>This paper presents several design changes to <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4560.pdf" title="N4560: Working Draft: C++ Extensions for Ranges">N4560, the working paper for the Technical Specification for C++ Extensions for Ranges (the “Ranges TS”)</a><span class="citation">[3]</span>. Each change is presented herein in a separate section that motivates the change and describes the design problem that change is meant to address. The complete specification and wording of all the changes is incorporated with the wording from the working draft in <a href="http://wg21.link/p0459r0" title="P0459R0: C++ Extensions for Ranges, Speculative Combined Proposals">P0459 “C++ Extensions for Ranges: Speculative Combined Proposals”</a><span class="citation">[4]</span>.</p>
+<p>To throw some more fuel on the fires of confusion: the first design change presented herein (customization point redesign) <em>is</em> present in N4560. However, it was not included in the text of the proposal <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/p0021r0.pdf" title="P0021R0: Working Draft, C++ Extensions for Ranges">P0021R0</a><span class="citation">[5]</span> that was voted to become the initial text of the new TS working paper in Kona. The change was “backdoored” into the WP between P0021 and the publication of N4560 in the post-Kona mailing.</p>
 <h2 id="revision-history"><span class="header-section-number">1.1</span> Revision history</h2>
 <h3 id="r1---r2"><span class="header-section-number">1.1.1</span> R1 -&gt; R2</h3>
 <ul>
 <li><p>Much editorial wording cleanup.</p></li>
 <li><p>Provide simplified wording for the specification of the <code>Range</code> and <code>SizedRange</code> concepts.</p></li>
+<li><p>Incorporate wording from P0459 directly instead of by reference.</p></li>
 </ul>
 <h3 id="r0---r1"><span class="header-section-number">1.1.2</span> R0 -&gt; R1</h3>
 <ul>
 <li><p>Remove the section proposing relaxed semantics for the comparison function objects. Further reflection on this change during the meeting, and discussions of <a href="http://wg21.link/P0307">P0307: Making Optional Greater Equal Again</a> and <a href="http://wg21.link/P0181">P0181: Ordered By Default</a>, make it clear that this is the wrong approach.</p></li>
-<li><p>Remove the <code>move_sentinel</code> section that discussed adapting an iterator/sentinel pair into a “move” range. LEWG felt there was not sufficient motivation to address this problem at this time.</p></li>
-<li><p>Remove the empty section “Merge <code>Writable</code> and <code>MoveWritable</code>.”</p></li>
+<li><p>Remove the empty section “Merge <code>Writable</code> and <code>MoveWritable</code>.” (Which is actually proposed in P0441 “Merge <code>Writable</code> and <code>MoveWritable</code>.)</p></li>
+<li><p>Remove the <code>move_sentinel</code> section that discussed adapting an iterator/sentinel pair into a “move” range. LEWG felt there was not sufficient motivation to address this problem at this time. (This proposal returns in P0441 in which it is better motivated.)</p></li>
 </ul>
 <h1 id="algorithms"><span class="header-section-number">2</span> Algorithms</h1>
 <p>There are several small issues that apply to many or all of the algorithm specifications that must be addressed by the addition of requirements in [algorithms.general]. First, an ambiguity exists for algorithms with both a two-range overload and a range + iterator overload, e.g.:</p>
@@ -320,7 +321,7 @@ T exchange(T&amp; obj, U&amp;&amp; new_val);</code></pre></div>
 </blockquote>
 <p>which suffices to implement <code>exchange</code> along with the stronger <code>Assignable</code> semantics. (A similar change could be applied to the definition of the default <code>swap</code> implementation. We don’t propose this here as we’ve already included the effect in the definition of the <code>swap</code> customization point earlier.)</p>
 <h1 id="customization-points"><span class="header-section-number">5</span> Customization Points</h1>
-<p>Customization points are pain points, as the motivation of N4381 makes clear:</p>
+<p>Customization points are pain points, as the motivation of <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4381.html" title="N4381: Suggested Design for Customization Points">N4381</a><span class="citation">[2]</span> makes clear:</p>
 <blockquote>
 <p>The correct usage of customization points like <code>swap</code> is to first bring the standard <code>swap</code> into scope with a using declaration, and then to call <code>swap</code> unqualified:</p>
 </blockquote>
@@ -1183,9 +1184,538 @@ difference_type_t&lt;I2&gt; <span class="kw">operator</span>-(
 <p>In [iterator.assoc]/10, strip occurrences of the <code>Weak</code> prefix.</p>
 <p>In [iterator.stdtraits], Add the clause <code>requires Sentinel&lt;I, In&gt;()</code> to the declaration of the <code>iterator_traits</code> partial specialization that has no <code>Weak</code> prefix. Strip occurrences of the <code>Weak</code> prefix.</p>
 <p>In [std.iterator.tags], strike <code>weak_input_iterator_tag</code> as in the synopsis.</p>
-<p>Replace the content of [iterator.operations] with the content of the section of the same name in N4569.</p>
-<p>In [iterators.common]/2, strike “, and for use in common_type specializations that are required to make iterator/sentinel pairs satisfy the EqualityComparable concept”</p>
-<p>Replace the contents of [iterators.common], [default.sentinels], [iterators.counted], and [unreachable.sentinels] with the contents of the sections of the same name in N4569.</p>
+<p>Replace the content of [iterator.operations] with:</p>
+<blockquote>
+<p>24.6.5 Iterator operations [iterator.operations]</p>
+<p>1 Since only types that satisfy <code>RandomAccessIterator</code> provide the <code>+</code> operator, and types that satisfy <code>SizedSentinel</code> provide the <code>-</code> operator, the library provides four function templates <code>advance</code>, <code>distance</code>, <code>next</code>, and <code>prev</code>. These function templates use <code>+</code> and <code>-</code> for random access iterators and ranges that satisfy <code>SizedSentinel</code>, respectively (and are, therefore, constant time for them); for output, input, forward and bidirectional iterators they use <code>++</code> to provide linear time implementations.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;Iterator I&gt;
+  <span class="dt">void</span> advance(I&amp; i, difference_type_t&lt;I&gt; n);</code></pre></div>
+<p>2 <em>Requires:</em> <code>n</code> shall be negative only for bidirectional iterators.</p>
+<p>3 <em>Effects:</em> For random access iterators, equivalent to <code>i += n</code>. Otherwise, increments (or decrements for negative <code>n</code>) iterator reference <code>i</code> by <code>n</code>.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;Iterator I, Sentinel&lt;I&gt; S&gt;
+  <span class="dt">void</span> advance(I&amp; i, S bound);</code></pre></div>
+<p>4 <em>Requires:</em> If <code>Assignable&lt;I&amp;, S&gt;()</code> is not satisfied, <code>[i,bound)</code> shall denote a range.</p>
+<p>5 <em>Effects:</em></p>
+<p>(5.1) — If <code>Assignable&lt;I&amp;, S&gt;()</code> is satisfied, equivalent to <code>i = std::move(bound)</code>.</p>
+<p>(5.2) — Otherwise, if <code>SizedSentinel&lt;S, I&gt;()</code> is satisfied, equivalent to <code>advance(i, bound - i)</code>.</p>
+<p>(5.3) — Otherwise, increments <code>i</code> until <code>i == bound</code>.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;Iterator I, Sentinel&lt;I&gt; S&gt;
+  difference_type_t&lt;I&gt; advance(I&amp; i, difference_type_t&lt;I&gt; n, S bound);</code></pre></div>
+<p>6 <em>Requires:</em> If <code>n &gt; 0</code>, <code>[i,bound)</code> shall denote a range. If <code>n == 0</code>, <code>[i,bound)</code> or <code>[bound,i)</code> shall denote a range. If <code>n &lt; 0</code>, <code>[bound,i)</code> shall denote a range and <code>(BidirectionalIterator&lt;I&gt;() &amp;&amp; Same&lt;I, &gt; S&gt;())</code> shall be satisfied.</p>
+<p>7 <em>Effects:</em></p>
+<p>(7.1) — If <code>SizedSentinel&lt;S, I&gt;()</code> is satisfied:</p>
+<p>(7.1.1) — If <code>|n| &gt;= |bound - i|</code>, equivalent to <code>advance(i, bound)</code>.</p>
+<p>(7.1.2) — Otherwise, equivalent to <code>advance(i, n)</code>.</p>
+<p>(7.2) — Otherwise, increments (or decrements for negative <code>n</code>) iterator <code>i</code> either <code>n</code> times or until <code>i == bound</code>, whichever comes first.</p>
+<p>8 <em>Returns:</em> <code>n - M</code>, where <code>M</code> is the distance from the starting position of <code>i</code> to the ending position.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;Iterator I, Sentinel&lt;I&gt; S&gt;
+  difference_type_t&lt;I&gt; distance(I first, S last);</code></pre></div>
+<p>9 <em>Requires:</em> <code>[first,last)</code> shall denote a range, or <code>(Same&lt;S, I&gt;() &amp;&amp; SizedSentinel&lt;S, I&gt;())</code> shall be satisfied and <code>[last,first)</code> shall denote a range.</p>
+<p>10 <em>Effects:</em> If <code>SizedSentinel&lt;S, I&gt;()</code> is satisfied, returns <code>(last - first)</code>; otherwise, returns the number of increments needed to get from <code>first</code> to <code>last</code>.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;Iterator I&gt;
+  I next(I x, difference_type_t&lt;I&gt; n = <span class="dv">1</span>);</code></pre></div>
+<p>11 <em>Effects:</em> Equivalent to <code>advance(x, n); return x;</code></p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;Iterator I, Sentinel&lt;I&gt; S&gt;
+  I next(I x, S bound);</code></pre></div>
+<p>12 <em>Effects:</em> Equivalent to <code>advance(x, bound); return x;</code></p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;Iterator I, Sentinel&lt;I&gt; S&gt;
+  I next(I x, difference_type_t&lt;I&gt; n, S bound);</code></pre></div>
+<p>13 <em>Effects:</em> Equivalent to <code>advance(x, n, bound); return x;</code></p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;BidirectionalIterator I&gt;
+  I prev(I x, difference_type_t&lt;I&gt; n = <span class="dv">1</span>);</code></pre></div>
+<p>14 <em>Effects:</em> Equivalent to <code>advance(x, -n); return x;</code></p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;BidirectionalIterator I&gt;
+  I prev(I x, difference_type_t&lt;I&gt; n, I bound);</code></pre></div>
+<p>15 <em>Effects:</em> Equivalent to <code>advance(x, -n, bound); return x;</code></p>
+</blockquote>
+<p>Replace the contents of [iterators.common] with:</p>
+<blockquote>
+<p>24.7.4 Common iterators [iterators.common]</p>
+<p>1 Class template <code>common_iterator</code> is an iterator/sentinel adaptor that is capable of representing a nonbounded range of elements (where the types of the iterator and sentinel differ) as a bounded range (where they are the same). It does this by holding either an iterator or a sentinel, and implementing the equality comparison operators appropriately.</p>
+<p>2 [ <em>Note:</em> The <code>common_iterator</code> type is useful for interfacing with legacy code that expects the begin and end of a range to have the same type.—<em>end note</em> ]</p>
+<p>3 [ <em>Example:</em></p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> ForwardIterator&gt;
+<span class="dt">void</span> fun(ForwardIterator begin, ForwardIterator end);
+
+list&lt;<span class="dt">int</span>&gt; s;
+<span class="co">// populate the list s</span>
+<span class="kw">using</span> CI =
+  common_iterator&lt;counted_iterator&lt;list&lt;<span class="dt">int</span>&gt;::iterator&gt;,
+                  default_sentinel&gt;;
+<span class="co">// call fun on a range of 10 ints</span>
+fun(CI(make_counted_iterator(s.begin(), <span class="dv">10</span>)),
+    CI(default_sentinel()));</code></pre></div>
+<p>—<em>end example</em> ]</p>
+<p>24.7.4.1 Class template <code>common_iterator</code> [common.iterator]</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">namespace</span> std { <span class="kw">namespace</span> experimental { <span class="kw">namespace</span> ranges { <span class="kw">inline</span> <span class="kw">namespace</span> v1 {
+<span class="kw">template</span> &lt;Iterator I, Sentinel&lt;I&gt; S&gt;
+  requires !Same&lt;I, S&gt;()
+<span class="kw">class</span> common_iterator {
+<span class="kw">public</span>:
+  <span class="kw">using</span> difference_type = difference_type_t&lt;I&gt;;
+
+  common_iterator();
+  common_iterator(I i);
+  common_iterator(S s);
+  common_iterator(<span class="dt">const</span> common_iterator&lt;ConvertibleTo&lt;I&gt;, ConvertibleTo&lt;S&gt;&gt;&amp; u);
+  common_iterator&amp; <span class="kw">operator</span>=(<span class="dt">const</span> common_iterator&lt;ConvertibleTo&lt;I&gt;, ConvertibleTo&lt;S&gt;&gt;&amp; u);
+
+  ~common_iterator();
+
+  see below <span class="kw">operator</span>*();
+  see below <span class="kw">operator</span>*() <span class="dt">const</span>;
+  see below <span class="kw">operator</span>-&gt;() <span class="dt">const</span> requires Readable&lt;I&gt;();
+
+  common_iterator&amp; <span class="kw">operator</span>++();
+  common_iterator <span class="kw">operator</span>++(<span class="dt">int</span>);
+
+<span class="kw">private</span>:
+  <span class="dt">bool</span> is_sentinel; <span class="co">// exposition only</span>
+  I iter;           <span class="co">// exposition only</span>
+  S sent;           <span class="co">// exposition only</span>
+};
+
+<span class="kw">template</span> &lt;Readable I, <span class="kw">class</span> S&gt;
+<span class="kw">struct</span> value_type&lt;common_iterator&lt;I, S&gt;&gt; {
+  <span class="kw">using</span> type = value_type_t&lt;I&gt;;
+};
+
+<span class="kw">template</span> &lt;InputIterator I, <span class="kw">class</span> S&gt;
+<span class="kw">struct</span> iterator_category&lt;common_iterator&lt;I, S&gt;&gt; {
+  <span class="kw">using</span> type = input_iterator_tag;
+};
+
+<span class="kw">template</span> &lt;ForwardIterator I, <span class="kw">class</span> S&gt;
+<span class="kw">struct</span> iterator_category&lt;common_iterator&lt;I, S&gt;&gt; {
+  <span class="kw">using</span> type = forward_iterator_tag;
+};
+
+<span class="kw">template</span> &lt;<span class="kw">class</span> I1, <span class="kw">class</span> I2, Sentinel&lt;I2&gt; S1, Sentinel&lt;I1&gt; S2&gt;
+<span class="dt">bool</span> <span class="kw">operator</span>==(
+  <span class="dt">const</span> common_iterator&lt;I1, S1&gt;&amp; x, <span class="dt">const</span> common_iterator&lt;I2, S2&gt;&amp; y);
+<span class="kw">template</span> &lt;<span class="kw">class</span> I1, <span class="kw">class</span> I2, Sentinel&lt;I2&gt; S1, Sentinel&lt;I1&gt; S2&gt;
+  requires EqualityComparable&lt;I1, I2&gt;()
+<span class="dt">bool</span> <span class="kw">operator</span>==(
+  <span class="dt">const</span> common_iterator&lt;I1, S1&gt;&amp; x, <span class="dt">const</span> common_iterator&lt;I2, S2&gt;&amp; y);
+<span class="kw">template</span> &lt;<span class="kw">class</span> I1, <span class="kw">class</span> I2, Sentinel&lt;I2&gt; S1, Sentinel&lt;I1&gt; S2&gt;
+<span class="dt">bool</span> <span class="kw">operator</span>!=(
+  <span class="dt">const</span> common_iterator&lt;I1, S1&gt;&amp; x, <span class="dt">const</span> common_iterator&lt;I2, S2&gt;&amp; y);
+
+<span class="kw">template</span> &lt;<span class="kw">class</span> I2, SizedSentinel&lt;I2&gt; I1, SizedSentinel&lt;I2&gt; S1, SizedSentinel&lt;I1&gt; S2&gt;
+difference_type_t&lt;I2&gt; <span class="kw">operator</span>-(
+  <span class="dt">const</span> common_iterator&lt;I1, S1&gt;&amp; x, <span class="dt">const</span> common_iterator&lt;I2, S2&gt;&amp; y);
+}}}}</code></pre></div>
+<p>1 [ <em>Note:</em> It is unspecified whether <code>common_iterator</code>’s members <code>iter</code> and <code>sent</code> have distinct addresses or not. —<em>end note</em> ]</p>
+<p>24.7.4.2 <code>common_iterator</code> operations [common.iter.ops]</p>
+<p>24.7.4.2.1 <code>common_iterator</code> constructors [common.iter.op.const]</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">common_iterator();</code></pre></div>
+<p>1 <em>Effects:</em> Constructs a <code>common_iterator</code>, value-initializing <code>is_sentinel</code> and <code>iter</code>. Iterator operations applied to the resulting iterator have defined behavior if and only if the corresponding operations are defined on a value-initialized iterator of type <code>I</code>.</p>
+<p>2 <em>Remarks:</em> It is unspecified whether any initialization is performed for <code>sent</code>.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">common_iterator(I i);</code></pre></div>
+<p>3 <em>Effects:</em> Constructs a <code>common_iterator</code>, initializing <code>is_sentinel</code> with <code>false</code> and <code>iter</code> with <code>i</code>.</p>
+<p>4 <em>Remarks:</em> It is unspecified whether any initialization is performed for <code>sent</code>.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">common_iterator(S s);</code></pre></div>
+<p>5 <em>Effects:</em> Constructs a <code>common_iterator</code>, initializing <code>is_sentinel</code> with <code>true</code> and <code>sent</code> with <code>s</code>.</p>
+<p>6 <em>Remarks:</em> It is unspecified whether any initialization is performed for <code>iter</code>.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">common_iterator(<span class="dt">const</span> common_iterator&lt;ConvertibleTo&lt;I&gt;, ConvertibleTo&lt;S&gt;&gt;&amp; u);</code></pre></div>
+<p>7 <em>Effects:</em> Constructs a <code>common_iterator</code>, initializing <code>is_sentinel</code> with <code>u.is_sentinel</code>.</p>
+<p>(7.1) — If <code>u.is_sentinel</code> is <code>true</code>, <code>sent</code> is initialized with <code>u.sent</code>.</p>
+<p>(7.2) — If <code>u.is_sentinel</code> is <code>false</code>, <code>iter</code> is initialized with <code>u.iter</code>.</p>
+<p>8 <em>Remarks:</em></p>
+<p>(8.1) — If <code>u.is_sentinel</code> is <code>true</code>, it is unspecified whether any initialization is performed for <code>iter</code>.</p>
+<p>(8.2) — If <code>u.is_sentinel</code> is <code>false</code>, it is unspecified whether any initialization is performed for <code>sent</code>.</p>
+<p>24.7.4.2.2 <code>common_iterator::operator=</code> [common.iter.op=]</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">common_iterator&amp; <span class="kw">operator</span>=(<span class="dt">const</span> common_iterator&lt;ConvertibleTo&lt;I&gt;, ConvertibleTo&lt;S&gt;&gt;&amp; u);</code></pre></div>
+<p>1 <em>Effects:</em> Assigns <code>u.is_sentinel</code> to <code>is_sentinel</code>.</p>
+<p>(1.1) — If <code>u.is_sentinel</code> is <code>true</code>, assigns <code>u.sent</code> to <code>sent</code>.</p>
+<p>(1.2) — If <code>u.is_sentinel</code> is <code>false</code>, assigns <code>u.iter</code> to <code>iter</code>.</p>
+<p><em>Remarks:</em></p>
+<p>(1.3) — If <code>u.is_sentinel</code> is <code>true</code>, it is unspecified whether any operation is performed on <code>iter</code>.</p>
+<p>(1.4) — If <code>u.is_sentinel</code> is <code>false</code>, it is unspecified whether any operation is performed on <code>sent</code>.</p>
+<p>2 <em>Returns:</em> <code>*this</code></p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">~common_iterator();</code></pre></div>
+<p>3 <em>Effects:</em> Destroys any members that are currently initialized.</p>
+<p>24.7.4.2.3 <code>common_iterator::operator*</code> [common.iter.op.star]</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">decltype</span>(<span class="kw">auto</span>) <span class="kw">operator</span>*();
+<span class="kw">decltype</span>(<span class="kw">auto</span>) <span class="kw">operator</span>*() <span class="dt">const</span>;</code></pre></div>
+<p>1 <em>Requires:</em> <code>!is_sentinel</code></p>
+<p>2 <em>Effects:</em> Equivalent to <code>*iter</code>.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">see below <span class="kw">operator</span>-&gt;() <span class="dt">const</span> requires Readable&lt;I&gt;();</code></pre></div>
+<p>3 <em>Requires:</em> <code>!is_sentinel</code></p>
+<p>4 <em>Effects:</em> Given an object <code>i</code> of type <code>I</code></p>
+<p>(4.1) — if <code>I</code> is a pointer type or if the expression <code>i.operator-&gt;()</code> is well-formed, this function returns <code>iter</code>.</p>
+<p>(4.2) — Otherwise, if the expression <code>*iter</code> is a glvalue, this function is equivalent to <code>addressof(*iter)</code>.</p>
+<p>(4.3) — Otherwise, this function returns a proxy object of an unspecified type equivalent to the following:</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">class</span> proxy { <span class="co">// exposition only</span>
+  value_type_t&lt;I&gt; keep_;
+  proxy(reference_t&lt;I&gt;&amp;&amp; x)
+    : keep_(std::move(x)) {}
+<span class="kw">public</span>:
+  <span class="dt">const</span> value_type_t&lt;I&gt;* <span class="kw">operator</span>-&gt;() <span class="dt">const</span> {
+    <span class="kw">return</span> addressof(keep_);
+  }
+};</code></pre></div>
+<p>that is initialized with <code>*iter</code>.</p>
+<p>24.7.4.2.4 <code>common_iterator::operator++</code> [common.iter.op.incr]</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">common_iterator&amp; <span class="kw">operator</span>++();</code></pre></div>
+<p>1 <em>Requires:</em> <code>!is_sentinel</code></p>
+<p>2 <em>Effects:</em> <code>++iter</code>.</p>
+<p>3 <em>Returns:</em> <code>*this</code>.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">common_iterator <span class="kw">operator</span>++(<span class="dt">int</span>);</code></pre></div>
+<p>4 <em>Requires:</em> <code>!is_sentinel</code></p>
+<p>5 <em>Effects:</em> Equivalent to</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">common_iterator tmp = *<span class="kw">this</span>;
+++iter;
+<span class="kw">return</span> tmp;</code></pre></div>
+<p>24.7.4.2.5 <code>common_iterator</code> comparisons [common.iter.op.comp]</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> I1, <span class="kw">class</span> I2, Sentinel&lt;I2&gt; S1, Sentinel&lt;I1&gt; S2&gt;
+<span class="dt">bool</span> <span class="kw">operator</span>==(
+  <span class="dt">const</span> common_iterator&lt;I1, S1&gt;&amp; x, <span class="dt">const</span> common_iterator&lt;I2, S2&gt;&amp; y);</code></pre></div>
+<p>1 <em>Effects:</em> Equivalent to</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">  x.is_sentinel ?
+    (y.is_sentinel || y.iter == x.sent) :
+    (!y.is_sentinel || x.iter == y.sent)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> I1, <span class="kw">class</span> I2, Sentinel&lt;I2&gt; S1, Sentinel&lt;I1&gt; S2&gt;
+  requires EqualityComparable&lt;I1, I2&gt;()
+<span class="dt">bool</span> <span class="kw">operator</span>==(
+  <span class="dt">const</span> common_iterator&lt;I1, S1&gt;&amp; x, <span class="dt">const</span> common_iterator&lt;I2, S2&gt;&amp; y);</code></pre></div>
+<p>2 <em>Effects:</em> Equivalent to</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">  x.is_sentinel ?
+    (y.is_sentinel || y.iter == x.sent) :
+    (y.is_sentinel ?
+      x.iter == y.sent :
+      x.iter == y.iter);</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> I1, <span class="kw">class</span> I2, Sentinel&lt;I2&gt; S1, Sentinel&lt;I1&gt; S2&gt;
+<span class="dt">bool</span> <span class="kw">operator</span>!=(
+  <span class="dt">const</span> common_iterator&lt;I1, S1&gt;&amp; x, <span class="dt">const</span> common_iterator&lt;I2, S2&gt;&amp; y);</code></pre></div>
+<p>3 <em>Effects:</em> Equivalent to <code>!(x == y)</code>.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> I2, SizedSentinel&lt;I2&gt; I1, SizedSentinel&lt;I2&gt; S1, SizedSentinel&lt;I1&gt; S2&gt;
+difference_type_t&lt;I2&gt; <span class="kw">operator</span>-(
+  <span class="dt">const</span> common_iterator&lt;I1, S1&gt;&amp; x, <span class="dt">const</span> common_iterator&lt;I2, S2&gt;&amp; y);</code></pre></div>
+<p>4 <em>Effects:</em> Equivalent to</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">  x.is_sentinel ?
+    (y.is_sentinel ? <span class="dv">0</span> : x.sent - y.iter) :
+    (y.is_sentinel ?
+      x.iter - y.sent :
+      x.iter - y.iter);</code></pre></div>
+</blockquote>
+<p>Replace the content of [default.sentinels] with:</p>
+<blockquote>
+<p>24.7.5 Default sentinels [default.sentinels]</p>
+<p>24.7.5.1 Class <code>default_sentinel</code> [default.sent]</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">namespace</span> std { <span class="kw">namespace</span> experimental { <span class="kw">namespace</span> ranges { <span class="kw">inline</span> <span class="kw">namespace</span> v1 {
+  <span class="kw">class</span> default_sentinel { };
+}}}}</code></pre></div>
+<p>1 Class <code>default_sentinel</code> is an empty type used to denote the end of a range. It is intended to be used together with iterator types that know the bound of their range (e.g., <code>counted_iterator</code> (24.7.6.1)).</p>
+</blockquote>
+<p>Replace the content of [iterators.counted] with:</p>
+<blockquote>
+<p>24.7.6 Counted iterators [iterators.counted]</p>
+<p>1 Class template <code>counted_iterator</code> is an iterator adaptor with the same behavior as the underlying iterator except that it keeps track of its distance from its starting position. It can be used together with class <code>default_sentinel</code> in calls to generic algorithms to operate on a range of <code>N</code> elements starting at a given position without needing to know the end position <em>a priori</em>.</p>
+<p>2 [ <em>Example:</em></p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">  list&lt;string&gt; s;
+  <span class="co">// populate the list s with at least 10 strings</span>
+  vector&lt;string&gt; v(make_counted_iterator(s.begin(), <span class="dv">10</span>),
+  default_sentinel()); <span class="co">// copies 10 strings into v</span></code></pre></div>
+<p>—<em>end example</em> ]</p>
+<p>3 Two values <code>i1</code> and <code>i2</code> of (possibly differing) types <code>counted_iterator&lt;I1&gt;</code> and <code>counted_iterator&lt;I2&gt;</code> refer to elements of the same sequence if and only if <code>next(i1.base(), i1.count())</code> and <code>next(i2.base(), i2.count())</code> refer to the same (possibly past-the-end) element.</p>
+<p>24.7.6.1 Class template <code>counted_iterator</code> [counted.iterator]</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">namespace</span> std { <span class="kw">namespace</span> experimental { <span class="kw">namespace</span> ranges { <span class="kw">inline</span> <span class="kw">namespace</span> v1 {
+<span class="kw">template</span> &lt;Iterator I&gt;
+<span class="kw">class</span> counted_iterator {
+<span class="kw">public</span>:
+  <span class="kw">using</span> iterator_type = I;
+  <span class="kw">using</span> difference_type = difference_type_t&lt;I&gt;;
+
+  counted_iterator();
+  counted_iterator(I x, difference_type_t&lt;I&gt; n);
+  counted_iterator(<span class="dt">const</span> counted_iterator&lt;ConvertibleTo&lt;I&gt;&gt;&amp; i);
+  counted_iterator&amp; <span class="kw">operator</span>=(<span class="dt">const</span> counted_iterator&lt;ConvertibleTo&lt;I&gt;&gt;&amp; i);
+
+  I base() <span class="dt">const</span>;
+  difference_type_t&lt;I&gt; count() <span class="dt">const</span>;
+  see below <span class="kw">operator</span>*();
+  see below <span class="kw">operator</span>*() <span class="dt">const</span>;
+
+  counted_iterator&amp; <span class="kw">operator</span>++();
+  counted_iterator <span class="kw">operator</span>++(<span class="dt">int</span>);
+  counted_iterator&amp; <span class="kw">operator</span>--()
+    requires BidirectionalIterator&lt;I&gt;();
+  counted_iterator <span class="kw">operator</span>--(<span class="dt">int</span>)
+    requires BidirectionalIterator&lt;I&gt;();
+
+  counted_iterator <span class="kw">operator</span>+ (difference_type n) <span class="dt">const</span>
+    requires RandomAccessIterator&lt;I&gt;();
+  counted_iterator&amp; <span class="kw">operator</span>+=(difference_type n)
+    requires RandomAccessIterator&lt;I&gt;();
+  counted_iterator <span class="kw">operator</span>- (difference_type n) <span class="dt">const</span>
+    requires RandomAccessIterator&lt;I&gt;();
+  counted_iterator&amp; <span class="kw">operator</span>-=(difference_type n)
+    requires RandomAccessIterator&lt;I&gt;();
+  see below <span class="kw">operator</span>[](difference_type n) <span class="dt">const</span>
+    requires RandomAccessIterator&lt;I&gt;();
+<span class="kw">private</span>:
+  I current;                <span class="co">// exposition only</span>
+  difference_type_t&lt;I&gt; cnt; <span class="co">// exposition only</span>
+};
+
+<span class="kw">template</span> &lt;Readable I&gt;
+<span class="kw">struct</span> value_type&lt;counted_iterator&lt;I&gt;&gt; {
+  <span class="kw">using</span> type = value_type_t&lt;I&gt;;
+};
+
+<span class="kw">template</span> &lt;InputIterator I&gt;
+<span class="kw">struct</span> iterator_category&lt;counted_iterator&lt;I&gt;&gt; {
+  <span class="kw">using</span> type = iterator_category_t&lt;I&gt;;
+};
+
+<span class="kw">template</span> &lt;<span class="kw">class</span> I1, <span class="kw">class</span> I2&gt;
+  requires Common&lt;I1, I2&gt;()
+<span class="dt">bool</span> <span class="kw">operator</span>==(
+  <span class="dt">const</span> counted_iterator&lt;I1&gt;&amp; x, <span class="dt">const</span> counted_iterator&lt;I2&gt;&amp; y);
+<span class="dt">bool</span> <span class="kw">operator</span>==(
+  <span class="dt">const</span> counted_iterator&lt;<span class="kw">auto</span>&gt;&amp; x, default_sentinel);
+<span class="dt">bool</span> <span class="kw">operator</span>==(
+  default_sentinel, <span class="dt">const</span> counted_iterator&lt;<span class="kw">auto</span>&gt;&amp; x);
+
+<span class="kw">template</span> &lt;<span class="kw">class</span> I1, <span class="kw">class</span> I2&gt;
+  requires Common&lt;I1, I2&gt;()
+<span class="dt">bool</span> <span class="kw">operator</span>!=(
+  <span class="dt">const</span> counted_iterator&lt;I1&gt;&amp; x, <span class="dt">const</span> counted_iterator&lt;I2&gt;&amp; y);
+<span class="dt">bool</span> <span class="kw">operator</span>!=(
+  <span class="dt">const</span> counted_iterator&lt;<span class="kw">auto</span>&gt;&amp; x, default_sentinel y);
+<span class="dt">bool</span> <span class="kw">operator</span>!=(
+  default_sentinel x, <span class="dt">const</span> counted_iterator&lt;<span class="kw">auto</span>&gt;&amp; y);
+
+<span class="kw">template</span> &lt;<span class="kw">class</span> I1, <span class="kw">class</span> I2&gt;
+  requires Common&lt;I1, I2&gt;()
+<span class="dt">bool</span> <span class="kw">operator</span>&lt;(
+  <span class="dt">const</span> counted_iterator&lt;I1&gt;&amp; x, <span class="dt">const</span> counted_iterator&lt;I2&gt;&amp; y);
+<span class="kw">template</span> &lt;<span class="kw">class</span> I1, <span class="kw">class</span> I2&gt;
+  requires Common&lt;I1, I2&gt;()
+<span class="dt">bool</span> <span class="kw">operator</span>&lt;=(
+  <span class="dt">const</span> counted_iterator&lt;I1&gt;&amp; x, <span class="dt">const</span> counted_iterator&lt;I2&gt;&amp; y);
+<span class="kw">template</span> &lt;<span class="kw">class</span> I1, <span class="kw">class</span> I2&gt;
+  requires Common&lt;I1, I2&gt;()
+<span class="dt">bool</span> <span class="kw">operator</span>&gt;(
+  <span class="dt">const</span> counted_iterator&lt;I1&gt;&amp; x, <span class="dt">const</span> counted_iterator&lt;I2&gt;&amp; y);
+<span class="kw">template</span> &lt;<span class="kw">class</span> I1, <span class="kw">class</span> I2&gt;
+  requires Common&lt;I1, I2&gt;()
+<span class="dt">bool</span> <span class="kw">operator</span>&gt;=(
+  <span class="dt">const</span> counted_iterator&lt;I1&gt;&amp; x, <span class="dt">const</span> counted_iterator&lt;I2&gt;&amp; y);
+<span class="kw">template</span> &lt;<span class="kw">class</span> I1, <span class="kw">class</span> I2&gt;
+  requires Common&lt;I1, I2&gt;()
+difference_type_t&lt;I2&gt; <span class="kw">operator</span>-(
+  <span class="dt">const</span> counted_iterator&lt;I1&gt;&amp; x, <span class="dt">const</span> counted_iterator&lt;I2&gt;&amp; y);
+<span class="kw">template</span> &lt;<span class="kw">class</span> I&gt;
+difference_type_t&lt;I&gt; <span class="kw">operator</span>-(
+  <span class="dt">const</span> counted_iterator&lt;I&gt;&amp; x, default_sentinel y);
+<span class="kw">template</span> &lt;<span class="kw">class</span> I&gt;
+difference_type_t&lt;I&gt; <span class="kw">operator</span>-(
+  default_sentinel x, <span class="dt">const</span> counted_iterator&lt;I&gt;&amp; y);
+
+<span class="kw">template</span> &lt;RandomAccessIterator I&gt;
+counted_iterator&lt;I&gt;
+  <span class="kw">operator</span>+(difference_type_t&lt;I&gt; n, <span class="dt">const</span> counted_iterator&lt;I&gt;&amp; x);
+<span class="kw">template</span> &lt;Iterator I&gt;
+  counted_iterator&lt;I&gt; make_counted_iterator(I i, difference_type_t&lt;I&gt; n);
+<span class="kw">template</span> &lt;Iterator I&gt;
+  <span class="dt">void</span> advance(counted_iterator&lt;I&gt;&amp; i, difference_type_t&lt;I&gt; n);
+}}}}</code></pre></div>
+<p>24.7.6.2 <code>counted_iterator</code> operations [counted.iter.ops]</p>
+<p>24.7.6.2.1 <code>counted_iterator</code> constructors [counted.iter.op.const]</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">counted_iterator();</code></pre></div>
+<p>1 <em>Effects:</em> Constructs a <code>counted_iterator</code>, value-initializing <code>current</code> and <code>cnt</code>. Iterator operations applied to the resulting iterator have defined behavior if and only if the corresponding operations are defined on a value-initialized iterator of type <code>I</code>.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">counted_iterator(I i, difference_type_t&lt;I&gt; n);</code></pre></div>
+<p>2 <em>Requires:</em> <code>n &gt;= 0</code></p>
+<p>3 <em>Effects:</em> Constructs a <code>counted_iterator</code>, initializing current with <code>i</code> and <code>cnt</code> with <code>n</code>.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">counted_iterator(<span class="dt">const</span> counted_iterator&lt;ConvertibleTo&lt;I&gt;&gt;&amp; i);</code></pre></div>
+<p>4 <em>Effects:</em> Constructs a <code>counted_iterator</code>, initializing <code>current</code> with <code>i.current</code> and <code>cnt</code> with <code>i.cnt</code>.</p>
+<p>24.7.6.2.2 <code>counted_iterator::operator=</code> [counted.iter.op=]</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">counted_iterator&amp; <span class="kw">operator</span>=(<span class="dt">const</span> counted_iterator&lt;ConvertibleTo&lt;I&gt;&gt;&amp; i);</code></pre></div>
+<p>1 <em>Effects:</em> Assigns <code>i.current</code> to <code>current</code> and <code>i.cnt</code> to <code>cnt</code>.</p>
+<p>24.7.6.2.3 <code>counted_iterator</code> conversion [counted.iter.op.conv]</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">I base() <span class="dt">const</span>;</code></pre></div>
+<p>1 <em>Returns:</em> <code>current</code>.</p>
+<p>24.7.6.2.4 <code>counted_iterator</code> count [counted.iter.op.cnt]</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">difference_type_t&lt;I&gt; count() <span class="dt">const</span>;</code></pre></div>
+<p>1 <em>Returns:</em> <code>cnt</code>.</p>
+<p>24.7.6.2.5 <code>counted_iterator::operator*</code> [counted.iter.op.star]</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">decltype</span>(<span class="kw">auto</span>) <span class="kw">operator</span>*();
+<span class="kw">decltype</span>(<span class="kw">auto</span>) <span class="kw">operator</span>*() <span class="dt">const</span>;</code></pre></div>
+<p>1 <em>Effects:</em> Equivalent to <code>*current</code>.</p>
+<p>24.7.6.2.6 <code>counted_iterator::operator++</code> [counted.iter.op.incr]</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">counted_iterator&amp; <span class="kw">operator</span>++();</code></pre></div>
+<p>1 <em>Requires:</em> <code>cnt &gt; 0</code><br />
+2 <em>Effects:</em> Equivalent to</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">  ++current;
+  --cnt;</code></pre></div>
+<p>3 <em>Returns:</em> <code>*this</code>.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">counted_iterator <span class="kw">operator</span>++(<span class="dt">int</span>);</code></pre></div>
+<p>4 <em>Requires:</em> <code>cnt &gt; 0</code><br />
+5 <em>Effects:</em> Equivalent to</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">  counted_iterator tmp = *<span class="kw">this</span>;
+  ++current;
+  --cnt;
+  <span class="kw">return</span> tmp;</code></pre></div>
+<p>24.7.6.2.7 <code>counted_iterator::operator--</code> [counted.iter.op.decr]</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">counted_iterator&amp; <span class="kw">operator</span>--();
+  requires BidirectionalIterator&lt;I&gt;()</code></pre></div>
+<p>1 <em>Effects:</em> Equivalent to</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">  --current;
+  ++cnt;</code></pre></div>
+<p>2 <em>Returns:</em> <code>*this</code>.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">counted_iterator <span class="kw">operator</span>--(<span class="dt">int</span>)
+  requires BidirectionalIterator&lt;I&gt;();</code></pre></div>
+<p>3 <em>Effects:</em> Equivalent to</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">  counted_iterator tmp = *<span class="kw">this</span>;
+  --current;
+  ++cnt;
+  <span class="kw">return</span> tmp;</code></pre></div>
+<p>24.7.6.2.8 <code>counted_iterator::operator+</code> [counted.iter.op.+]</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">counted_iterator <span class="kw">operator</span>+(difference_type n) <span class="dt">const</span>
+  requires RandomAccessIterator&lt;I&gt;();</code></pre></div>
+<p>1 <em>Requires:</em> <code>n &lt;= cnt</code></p>
+<p>2 <em>Effects:</em> Equivalent to <code>counted_iterator(current + n, cnt - n)</code>.</p>
+<p>24.7.6.2.9 <code>counted_iterator::operator+=</code> [counted.iter.op.+=]</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">counted_iterator&amp; <span class="kw">operator</span>+=(difference_type n)
+  requires RandomAccessIterator&lt;I&gt;();</code></pre></div>
+<p>1 <em>Requires:</em> <code>n &lt;= cnt</code></p>
+<p>2 <em>Effects:</em></p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">  current += n;
+  cnt -= n;</code></pre></div>
+<p>3 <em>Returns:</em> <code>*this</code>.</p>
+<p>24.7.6.2.10 <code>counted_iterator::operator-</code> [counted.iter.op.-]</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">counted_iterator <span class="kw">operator</span>-(difference_type n) <span class="dt">const</span>
+  requires RandomAccessIterator&lt;I&gt;();</code></pre></div>
+<p>1 <em>Requires:</em> <code>-n &lt;= cnt</code></p>
+<p>2 <em>Effects:</em> Equivalent to <code>counted_iterator(current - n, cnt + n)</code>.</p>
+<p>24.7.6.2.11 <code>counted_iterator::operator-=</code> [counted.iter.op.-=]</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">counted_iterator&amp; <span class="kw">operator</span>-=(difference_type n)
+  requires RandomAccessIterator&lt;I&gt;();</code></pre></div>
+<p>1 <em>Requires:</em> <code>-n &lt;= cnt</code></p>
+<p>2 <em>Effects:</em></p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">  current -= n;
+  cnt += n;</code></pre></div>
+<p>3 <em>Returns:</em> <code>*this</code>.</p>
+<p>24.7.6.2.12 <code>counted_iterator::operator[]</code> [counted.iter.op.index]</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">decltype</span>(<span class="kw">auto</span>) <span class="kw">operator</span>[](difference_type n) <span class="dt">const</span>
+  requires RandomAccessIterator&lt;I&gt;();</code></pre></div>
+<p>1 <em>Requires:</em> <code>n &lt;= cnt</code></p>
+<p>2 <em>Effects:</em> Equivalent to <code>current[n]</code>.</p>
+<p>24.7.6.2.13 <code>counted_iterator</code> comparisons [counted.iter.op.comp]</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> I1, <span class="kw">class</span> I2&gt;
+  requires Common&lt;I1, I2&gt;()
+<span class="dt">bool</span> <span class="kw">operator</span>==(
+  <span class="dt">const</span> counted_iterator&lt;I1&gt;&amp; x, <span class="dt">const</span> counted_iterator&lt;I2&gt;&amp; y);</code></pre></div>
+<p>1 <em>Requires:</em> <code>x</code> and <code>y</code> shall refer to elements of the same sequence (24.7.6).</p>
+<p>2 <em>Effects:</em> Equivalent to <code>x.cnt == y.cnt</code>.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="dt">bool</span> <span class="kw">operator</span>==(
+  <span class="dt">const</span> counted_iterator&lt;<span class="kw">auto</span>&gt;&amp; x, default_sentinel);
+<span class="dt">bool</span> <span class="kw">operator</span>==(
+  default_sentinel, <span class="dt">const</span> counted_iterator&lt;<span class="kw">auto</span>&gt;&amp; x);</code></pre></div>
+<p>3 <em>Effects:</em> Equivalent to <code>x.cnt == 0</code>.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> I1, <span class="kw">class</span> I2&gt;
+  requires Common&lt;I1, I2&gt;()
+<span class="dt">bool</span> <span class="kw">operator</span>!=(
+  <span class="dt">const</span> counted_iterator&lt;I1&gt;&amp; x, <span class="dt">const</span> counted_iterator&lt;I2&gt;&amp; y);
+<span class="dt">bool</span> <span class="kw">operator</span>!=(
+  <span class="dt">const</span> counted_iterator&lt;<span class="kw">auto</span>&gt;&amp; x, default_sentinel);
+<span class="dt">bool</span> <span class="kw">operator</span>!=(
+  default_sentinel, <span class="dt">const</span> counted_iterator&lt;<span class="kw">auto</span>&gt;&amp; x);</code></pre></div>
+<p>4 <em>Requires:</em> For the first overload, <code>x</code> and <code>y</code> shall refer to elements of the same sequence (24.7.6).</p>
+<p>5 <em>Effects:</em> Equivalent to <code>!(x == y)</code>.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> I1, <span class="kw">class</span> I2&gt;
+  requires Common&lt;I1, I2&gt;()
+<span class="dt">bool</span> <span class="kw">operator</span>&lt;(
+  <span class="dt">const</span> counted_iterator&lt;I1&gt;&amp; x, <span class="dt">const</span> counted_iterator&lt;I2&gt;&amp; y);</code></pre></div>
+<p>6 <em>Requires:</em> <code>x</code> and <code>y</code> shall refer to elements of the same sequence (24.7.6).</p>
+<p>7 <em>Effects:</em> Equivalent to <code>y.cnt &lt; x.cnt</code>.</p>
+<p><em>Remark:</em> The argument order in the Effects element is reversed because <code>cnt</code> counts down, not up.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> I1, <span class="kw">class</span> I2&gt;
+  requires Common&lt;I1, I2&gt;()
+<span class="dt">bool</span> <span class="kw">operator</span>&lt;=(
+  <span class="dt">const</span> counted_iterator&lt;I1&gt;&amp; x, <span class="dt">const</span> counted_iterator&lt;I2&gt;&amp; y);</code></pre></div>
+<p>8 <em>Requires:</em> <code>x</code> and <code>y</code> shall refer to elements of the same sequence (24.7.6).</p>
+<p>9 <em>Effects:</em> Equivalent to <code>!(y &lt; x)</code>.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> I1, <span class="kw">class</span> I2&gt;
+  requires Common&lt;I1, I2&gt;()
+<span class="dt">bool</span> <span class="kw">operator</span>&gt;(
+  <span class="dt">const</span> counted_iterator&lt;I1&gt;&amp; x, <span class="dt">const</span> counted_iterator&lt;I2&gt;&amp; y);</code></pre></div>
+<p>10 <em>Requires:</em> <code>x</code> and <code>y</code> shall refer to elements of the same sequence (24.7.6).</p>
+<p>11 <em>Effects:</em> Equivalent to <code>y &lt; x</code>.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> I1, <span class="kw">class</span> I2&gt;
+  requires Common&lt;I1, I2&gt;()
+<span class="dt">bool</span> <span class="kw">operator</span>&gt;=(
+  <span class="dt">const</span> counted_iterator&lt;I1&gt;&amp; x, <span class="dt">const</span> counted_iterator&lt;I2&gt;&amp; y);</code></pre></div>
+<p>12 <em>Requires:</em> <code>x</code> and <code>y</code> shall refer to elements of the same sequence (24.7.6).</p>
+<p>13 <em>Effects:</em> Equivalent to <code>!(x &lt; y)</code>.</p>
+<p>24.7.6.2.14 <code>counted_iterator</code> non-member functions [counted.iter.nonmember]</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> I1, <span class="kw">class</span> I2&gt;
+  requires Common&lt;I1, I2&gt;()
+difference_type_t&lt;I2&gt; <span class="kw">operator</span>-(
+  <span class="dt">const</span> counted_iterator&lt;I1&gt;&amp; x, <span class="dt">const</span> counted_iterator&lt;I2&gt;&amp; y);</code></pre></div>
+<p>1 <em>Requires:</em> <code>x</code> and <code>y</code> shall refer to elements of the same sequence (24.7.6).</p>
+<p>2 <em>Effects:</em> Equivalent to <code>y.cnt - x.cnt</code>.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> I&gt;
+difference_type_t&lt;I&gt; <span class="kw">operator</span>-(
+  <span class="dt">const</span> counted_iterator&lt;I&gt;&amp; x, default_sentinel y);</code></pre></div>
+<p>3 <em>Effects:</em> Equivalent to <code>-x.cnt</code>.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> I&gt;
+difference_type_t&lt;I&gt; <span class="kw">operator</span>-(
+  default_sentinel x, <span class="dt">const</span> counted_iterator&lt;I&gt;&amp; y);</code></pre></div>
+<p>4 <em>Effects:</em> Equivalent to <code>y.cnt</code>.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;RandomAccessIterator I&gt;
+counted_iterator&lt;I&gt;
+  <span class="kw">operator</span>+(difference_type_t&lt;I&gt; n, <span class="dt">const</span> counted_iterator&lt;I&gt;&amp; x);</code></pre></div>
+<p>5 <em>Requires:</em> <code>n &lt;= x.cnt</code>.</p>
+<p>6 <em>Effects:</em> Equivalent to <code>x + n</code>.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;Iterator I&gt;
+counted_iterator&lt;I&gt; make_counted_iterator(I i, difference_type_t&lt;I&gt; n);</code></pre></div>
+<p>7 <em>Requires:</em> <code>n &gt;= 0</code>.</p>
+<p>8 <em>Returns:</em> <code>counted_iterator&lt;I&gt;(i, n)</code>.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;Iterator I&gt;
+<span class="dt">void</span> advance(counted_iterator&lt;I&gt;&amp; i, difference_type_t&lt;I&gt; n);</code></pre></div>
+<p>9 <em>Requires:</em> <code>n &lt;= i.cnt</code>.<br />
+10 <em>Effects:</em></p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">  i = make_counted_iterator(next(i.current, n), i.cnt - n);</code></pre></div>
+</blockquote>
+<p>Replace the content of [unreachable.sentinels] with:</p>
+<blockquote>
+<p>24.7.8 Unreachable sentinel [unreachable.sentinels]<br />
+24.7.8.1 Class <code>unreachable</code> [unreachable.sentinel]<br />
+1 Class <code>unreachable</code> is a sentinel type that can be used with any <code>Iterator</code> to denote an infinite range. Comparing an iterator for equality with an object of type <code>unreachable</code> always returns <code>false</code>.</p>
+<p>[ <em>Example:</em></p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">  <span class="co">// set p to point to a character buffer containing newlines</span>
+  <span class="dt">char</span>* nl = find(p, unreachable(), ’\n’);</code></pre></div>
+<p>Provided a newline character really exists in the buffer, the use of <code>unreachable</code> above potentially makes the call to find more efficient since the loop test against the sentinel does not require a conditional branch.</p>
+<p>—<em>end example</em> ]</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">namespace</span> std { <span class="kw">namespace</span> experimental { <span class="kw">namespace</span> ranges { <span class="kw">inline</span> <span class="kw">namespace</span> v1 {
+<span class="kw">class</span> unreachable { };
+
+<span class="kw">template</span> &lt;Iterator I&gt;
+  <span class="kw">constexpr</span> <span class="dt">bool</span> <span class="kw">operator</span>==(<span class="dt">const</span> I&amp;, unreachable) <span class="kw">noexcept</span>;
+<span class="kw">template</span> &lt;Iterator I&gt;
+  <span class="kw">constexpr</span> <span class="dt">bool</span> <span class="kw">operator</span>==(unreachable, <span class="dt">const</span> I&amp;) <span class="kw">noexcept</span>;
+<span class="kw">template</span> &lt;Iterator I&gt;
+  <span class="kw">constexpr</span> <span class="dt">bool</span> <span class="kw">operator</span>!=(<span class="dt">const</span> I&amp;, unreachable) <span class="kw">noexcept</span>;
+<span class="kw">template</span> &lt;Iterator I&gt;
+  <span class="kw">constexpr</span> <span class="dt">bool</span> <span class="kw">operator</span>!=(unreachable, <span class="dt">const</span> I&amp;) <span class="kw">noexcept</span>;
+}}}}</code></pre></div>
+<p>24.7.8.2 <code>unreachable</code> operations [unreachable.sentinel.ops]</p>
+<p>24.7.8.2.1 <code>operator==</code> [unreachable.sentinel.op==]</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;Iterator I&gt;
+  <span class="kw">constexpr</span> <span class="dt">bool</span> <span class="kw">operator</span>==(<span class="dt">const</span> I&amp;, unreachable) <span class="kw">noexcept</span>;
+<span class="kw">template</span> &lt;Iterator I&gt;
+  <span class="kw">constexpr</span> <span class="dt">bool</span> <span class="kw">operator</span>==(unreachable, <span class="dt">const</span> I&amp;) <span class="kw">noexcept</span>;</code></pre></div>
+<p>1 <em>Returns:</em> <code>false</code>.</p>
+<p>24.7.8.2.2 <code>operator!=</code> [unreachable.sentinel.op!=]</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;Iterator I&gt;
+  <span class="kw">constexpr</span> <span class="dt">bool</span> <span class="kw">operator</span>!=(<span class="dt">const</span> I&amp; x, unreachable y) <span class="kw">noexcept</span>;
+<span class="kw">template</span> &lt;Iterator I&gt;
+  <span class="kw">constexpr</span> <span class="dt">bool</span> <span class="kw">operator</span>!=(unreachable x, <span class="dt">const</span> I&amp; y) <span class="kw">noexcept</span>;</code></pre></div>
+<p>1 <em>Returns:</em> <code>true</code>.</p>
+</blockquote>
 <p>Strip occurrences of the prefix <code>Weak</code> wherever it appears in clause [algorithms].</p>
 <h1 id="implementation-experience"><span class="header-section-number">7</span> Implementation Experience</h1>
 <p>The proposed design changes are implemented in <a href="https://github.com/CaseyCarter/cmcstl2" title="CMCSTL2: Casey Carter&#39;s reference implementation of STL2">CMCSTL2, a full implementation of the Ranges TS with proxy extensions</a><span class="citation">[1]</span>.</p>
@@ -1194,7 +1724,19 @@ difference_type_t&lt;I2&gt; <span class="kw">operator</span>-(
 <h1 id="references" class="unnumbered">References</h1>
 <div id="refs" class="references">
 <div id="ref-cmcstl2">
-<p>[1] CMCSTL2: <em><a href="https://github.com/CaseyCarter/cmcstl2" class="uri">https://github.com/CaseyCarter/cmcstl2</a></em>. Accessed: 2016-05-26.</p>
+<p>[1] CMCSTL2: <em><a href="https://github.com/CaseyCarter/cmcstl2" class="uri">https://github.com/CaseyCarter/cmcstl2</a></em>. Accessed: 2016-10-15.</p>
+</div>
+<div id="ref-n4381">
+<p>[2] Niebler, E. 2015. Suggested Design for Customization Points.</p>
+</div>
+<div id="ref-n4560">
+<p>[3] Niebler, E. and Carter, C. 2015. N4560: Working Draft: C++ Extensions for Ranges.</p>
+</div>
+<div id="ref-p0459">
+<p>[4] Niebler, E. and Carter, C. 2016. P0459R0: C++ Extensions for Ranges, Speculative Combined Proposals.</p>
+</div>
+<div id="ref-p0021">
+<p>[5] Niebler, E. and Carter, C. 2015. Working Draft, C++ Extensions for Ranges.</p>
 </div>
 </div>
 </body>

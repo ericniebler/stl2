@@ -1,6 +1,6 @@
 DOCNO = 0370
 REV = 2
-PD = P
+PD = D
 SOURCE = P$(DOCNO).md
 TARGET = $(PD)$(DOCNO)R$(REV)
 PANDOC = pandoc
