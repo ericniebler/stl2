@@ -1,0 +1,882 @@
+%!TEX root = p1033.tex
+\setcounter{chapter}{22}
+\rSec0[utilities]{General utilities library}
+
+\setcounter{section}{9}
+\rSec1[memory]{Memory}
+\setcounter{subsection}{1}
+\rSec2[memory.syn]{Header \tcode{<\added{ranges/}memory>} synopsis}
+
+{\color{addclr}
+\begin{codeblock}
+// 23.10.x special memory concepts
+template <class I>
+concept @\placeholder{no-throw-input-iterator}@ = @\seebelow@;
+
+template <class S, class I>
+concept @\placeholder{no-throw-sentinel}@ = @\seebelow@;
+
+template <class Rng>
+concept @\placeholder{no-throw-input-range}@ = @\seebelow@;
+
+template <class I>
+concept @\placeholder{no-throw-forward-iterator}@ = @\seebelow@;
+
+template <class Rng>
+concept @\placeholder{no-throw-forward-range}@ = @\seebelow@;
+\end{codeblock}
+} %% \color{addclr}
+
+\begin{codeblock}
+// \ref{specialized.algorithms} specialized algorithms:
+\end{codeblock}
+{\color{remclr}
+\begin{codeblock}
+template <class ForwardIterator>
+  void uninitialized_default_construct(ForwardIterator first, ForwardIterator last);
+template <class ForwardIterator, class Size>
+  ForwardIterator uninitialized_default_construct_n(ForwardIterator first, Size n);
+\end{codeblock}
+} %% \color{remclr}
+{\color{addclr}
+\begin{codeblock}
+template <@\placeholder{no-throw-forward-iterator}@ I, @\placeholder{no-throw-sentinel}@<I> S>
+  requires
+DefaultConstructible<value_type_t<I>>
+  I uninitialized_default_construct(I first, S last);
+
+template <@\placeholder{no-throw-forward-range}@ Rng>
+  requires
+DefaultConstructible<value_type_t<iterator_t<Rng>>>
+  safe_iterator_t<Rng> uninitialized_default_construct(Rng&& rng);
+
+template <@\placeholder{no-throw-forward-iterator}@ I>
+  requires
+DefaultConstructible<value_type_t<I>>
+  I uninitialized_default_construct_n(I first, difference_type_t<I> n);
+\end{codeblock}
+} %% \color{addclr}
+
+{\color{remclr}
+\begin{codeblock}
+template <class ForwardIterator>
+  void uninitialized_value_construct(ForwardIterator first, ForwardIterator last);
+template <class ForwardIterator, class Size>
+  ForwardIterator uninitialized_value_construct_n(ForwardIterator first, Size n);
+\end{codeblock}
+} %% \color{remclr}
+{\color{addclr}
+\begin{codeblock}
+template <@\placeholder{no-throw-forward-iterator}@ I, @\placeholder{no-throw-sentinel}@<I> S>
+  requires
+DefaultConstructible<value_type_t<I>>
+  I uninitialized_value_construct(I first, S last);
+
+template <@\placeholder{no-throw-forward-range}@ Rng>
+  requires
+DefaultConstructible<value_type_t<iterator_t<Rng>>>
+  safe_iterator_t<Rng> uninitialized_value_construct(Rng&& rng);
+
+template <@\placeholder{no-throw-forward-iterator}@ I>
+  requires
+DefaultConstructible<value_type_t<I>>
+  I uninitialized_value_construct_n(I first, difference_type_t<I> n);
+\end{codeblock}
+} %% \color{addclr}
+
+{\color{remclr}
+\begin{codeblock}
+template <class InputIterator, class ForwardIterator>
+  ForwardIterator uninitialized_copy(InputIterator first, InputIterator last,
+                                     ForwardIterator result);
+template <class InputIterator, class Size, class ForwardIterator>
+  ForwardIterator uninitialized_copy_n(InputIterator first, Size n,
+                                       ForwardIterator result);
+\end{codeblock}
+} %% \color{remclr}
+{\color{addclr}
+\begin{codeblock}
+template <InputIterator I, Sentinel<I> S1, @\placeholder{no-throw-forward-iterator}@ O, @\placeholder{no-throw-sentinel}@<O> S2>
+  requires
+Constructible<value_type_t<O>, reference_t<I>>
+  tagged_pair<tag::in(I), tag::out(O)>
+uninitialized_copy(I ifirst, S1 ilast, O ofirst, S2 olast);
+
+template <InputRange IRng, @\placeholder{no-throw-forward-range}@ ORng>
+  requires
+Constructible<value_type_t<iterator_t<ORng>>, reference_t<iterator_t<IRng>>>
+  tagged_pair<tag::in(safe_iterator_t<IRng>), tag::out(safe_iterator_t<ORng>)>
+uninitialized_copy(IRng&& irng, ORng&& orng);
+
+template <InputIterator I, @\placeholder{no-throw-forward-iterator}@ O, @\placeholder{no-throw-sentinel}@<O> S>
+  requires
+Constructible<value_type_t<O>, reference_t<I>>
+  tagged_pair<tag::in(I), tag::out(O)>
+uninitialized_copy_n(I ifirst, difference_type_t<I> n, O ofirst, S olast)
+\end{codeblock}
+} %% \color{addclr}
+
+{\color{remclr}
+\begin{codeblock}
+template <class InputIterator, class ForwardIterator>
+  ForwardIterator uninitialized_move(InputIterator first, InputIterator last,
+                                     ForwardIterator result);
+template <class InputIterator, class Size, class ForwardIterator>
+  pair<InputIterator, ForwardIterator>
+    uninitialized_move_n(InputIterator first, Size n, ForwardIterator result);
+\end{codeblock}
+} %% \color{remclr}
+{\color{addclr}
+\begin{codeblock}
+template <InputIterator I, Sentinel<I> S1, @\placeholder{no-throw-forward-iterator}@ O, @\placeholder{no-throw-sentinel}@<O> S2>
+requires
+  Constructible<value_type_t<O>, rvalue_reference_t<I>>
+tagged_pair<tag::in(I), tag::out(O)>
+  uninitialized_move(I ifirst, S1 ilast, O ofirst, S2 olast);
+
+template <InputRange IRng, @\placeholder{no-throw-forward-range}@ ORng>
+  requires
+Constructible<value_type_t<iterator_t<ORng>>, rvalue_reference_t<iterator_t<IRng>>>
+  tagged_pair<tag::in(safe_iterator_t<IRng>), tag::out(safe_iterator_t<ORng>)>
+uninitialized_move(IRng&& irng, ORng&& orng);
+
+template <InputIterator I, @\placeholder{no-throw-forward-iterator}@ O, @\placeholder{no-throw-sentinel}@<O> S>
+  requires
+Constructible<value_type_t<O>, rvalue_reference_t<I>>
+  tagged_pair<tag::in(I), tag::out(O)>
+uninitialized_move_n(I ifirst, difference_type_t<I> n, O ofirst, S olast);
+\end{codeblock}
+} %% \color{addclr}
+
+{\color{remclr}
+\begin{codeblock}
+template <class ForwardIterator, class T>
+  void uninitialized_fill(ForwardIterator first, ForwardIterator last,
+                          const T& x);
+template <class ForwardIterator, class Size, class T>
+  ForwardIterator uninitialized_fill_n(ForwardIterator first, Size n, const T& x);
+\end{codeblock}
+} %% \color{remclr}
+{\color{addclr}
+\begin{codeblock}
+template <@\placeholder{no-throw-forward-iterator}@ I, @\placeholder{no-throw-sentinel}@<I> S, class T>
+  requires
+Constructible<value_type_t<I>, const T&>
+  I uninitialized_fill(I first, S last, const T& x);
+
+template <@\placeholder{no-throw-forward-range}@ Rng, class T>
+  requires
+Constructible<value_type_t<iterator_t<Rng>>, const T&>
+  safe_iterator_t<Rng> uninitialized_fill(Rng&& rng, const T& x);
+
+template <@\placeholder{no-throw-forward-iterator}@ I, class T>
+  requires
+Constructible<value_type_t<I>, const T&>
+  I uninitialized_fill_n(I first, const difference_type_t<I> n, const T& x);
+\end{codeblock}
+} %% \color{addclr}
+{\color{remclr}
+\begin{codeblock}
+template <class T>
+  void destroy_at(T* location);
+template <class ForwardIterator>
+  void destroy(ForwardIterator first, ForwardIterator last);
+template <class ForwardIterator, class Size>
+  ForwardIterator destroy_n(ForwardIterator first, Size n);
+\end{codeblock}
+} %% \color{remclr}
+{\color{addclr}
+\begin{codeblock}
+template <Destructible T>
+  void destroy_at(T* location) noexcept;
+
+template <@\placeholder{no-throw-input-iterator}@ I, @\placeholder{no-throw-sentinel}@<I> S>
+  requires
+Destructible<value_type_t<I>>
+  I destroy(I first, S last) noexcept;
+
+template <@\placeholder{no-throw-input-range}@ Rng>
+  requires
+Destructible<value_type_t<iterator_t<Rng>>
+  safe_iterator_t<Rng> destroy(Rng&& rng) noexcept;
+
+template <@\placeholder{no-throw-input-iterator}@ I>
+  requires
+Destructible<value_type_t<I>>
+  I destroy_n(I first, difference_type_t<I> n) noexcept;
+\end{codeblock}
+} %% \color{addclr}
+
+\setcounter{subsection}{9}
+\rSec2[specialized.algorithms]{Specialized algorithms}
+{\color{remclr}
+\setcounter{Paras}{0}
+\pnum
+Throughout this sub-clause, the names of template parameters are used to express type requirements.
+\begin{itemize}
+\item If an algorithm's template parameter is named InputIterator, the template argument shall
+satisfy the requirements of an input iterator ~(\ref{input.iterators}).
+
+\item If an algorithm's template parameter is named ForwardIterator, the template argument shall
+satisfy the requirements of a forward iterator ~(\ref{forward.iterators}), and is required to have
+the property that no exceptions are thrown from increment, assignment, comparison, or indirection
+through valid iterators.
+\end{itemize}
+} %% \color{remclr}
+
+{\color{addclr}
+\setcounter{Paras}{0}
+\pnum
+All of the algorithms specified in ~(\ref{specialized.algorithms}) shall only operate on ranges of
+complete objects. Use of these functions on ranges of subobjects is undefined.
+
+\ednote{This paragraph applies to all memory specialisations, including those already defined in the
+International Standard.}
+
+\pnum This section defines the following concepts:
+
+\begin{itemdecl}
+template <class I>
+concept @\placeholder{no-throw-input-iterator}@ = // exposition only
+  InputIterator<I> &&
+  is_lvalue_reference_v<reference_t<I>> &&
+  Same<remove_cv_ref_t<reference_t<I>>, value_type_t<I>>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum No exceptions are thrown from increment, copy, move, assignment, or indirection through valid
+iterators.
+
+\pnum
+\enternote The distinction between \tcode{InputIterator} and
+\tcode{\placeholder{no-throw-input-iterator}} is purely semantic.\exitnote
+\end{itemdescr}
+
+\begin{itemdecl}
+template <class S, class I>
+concept @\placeholder{no-throw-sentinel}@ = // exposition only
+  Sentinel<S, I>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum No exceptions are thrown from comparisons between objects of type \tcode{I} and \tcode{S}.
+
+\pnum
+\enternote The distinction between \tcode{Sentinel} and
+\tcode{\placeholder{no-throw-sentinel}} is purely semantic.\exitnote
+\end{itemdescr}
+
+\begin{itemdecl}
+template <class Rng>
+concept @\placeholder{no-throw-input-range}@ = // exposition only
+  Range<Rng> &&
+  @\placeholder{no-throw-input-iterator}@<iterator_t<Rng>> &&
+  @\placeholder{no-throw-sentinel}@<sentinel_t<Rng>, iterator_t<Rng>>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum No exceptions are thrown from calls to \tcode{begin} and \tcode{end} on an object of type
+\tcode{Rng}.
+
+\pnum
+\enternote The distinction between \tcode{InputRange} and
+\tcode{\placeholder{no-throw-input-range}} is purely semantic.\exitnote
+\end{itemdescr}
+
+\begin{itemdecl}
+template <class I>
+concept @\placeholder{no-throw-forward-iterator}@ = // exposition only
+  @\placeholder{no-throw-input-iterator}@<I> &&
+  @\placeholder{no-throw-sentinel}@<I, I> &&
+  ForwardIterator<I>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\enternote The distinction between \tcode{ForwardIterator} and
+\tcode{\placeholder{no-throw-forward-iterator}} is purely semantic.\exitnote
+\end{itemdescr}
+
+\begin{itemdecl}
+template <class Rng>
+concept @\placeholder{no-throw-forward-range}@ = // exposition only
+  @\placeholder{no-throw-forward-iterator}@<iterator_t<Rng>> &&
+  @\placeholder{no-throw-input-range}@<Rng> &&
+  ForwardRange<Rng>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\enternote The distinction between \tcode{ForwardRange} and
+\tcode{\placeholder{no-throw-forward-range}} is purely semantic.\exitnote
+\end{itemdescr}
+} %% \color{addclr}
+
+Unless otherwise specified, if an exception is thrown in the following algorithms there are no effects.
+\rSec3[uninitialized.construct.default]{\tcode{uninitialized_default_construct}}
+{\color{remclr}
+\begin{codeblock}
+template <class ForwardIterator>
+  void uninitialized_default_construct(ForwardIterator first, ForwardIterator last);
+\end{codeblock}
+} %% \color{remclr}
+
+{\color{addclr}
+\begin{codeblock}
+template <@\placeholder{no-throw-forward-iterator}@ I, @\placeholder{no-throw-sentinel}@<I> S>
+  requires
+DefaultConstructible<value_type_t<I>>
+  I uninitialized_default_construct(I first, S last);
+\end{codeblock}
+} %% \color{addclr}
+
+\setcounter{Paras}{0}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+    for (; first != last; ++first)
+      ::new @\added{(const_cast<void*>}@(static_cast<@\added{const volatile }@void*>(addressof(*first)))@\added{)}@
+        @\changed{typename iterator_traits<ForwardIterator>::value_type}{remove_reference_t<reference_t<I{>}>}@;
+    @\added{return first;}@
+\end{codeblock}
+
+\ednote{\tcode{const_cast<void*>} is necessary to ensure that \tcode{::operator new<void*>} (`True
+Placement New') is called. The decision to cast \tcode{const}-ness away after calling
+\tcode{addressof} is an alternative to preventing users from being unable to pass ranges that are
+non-\tcode{const}.\\
+\\
+When \tcode{addressof(*i)} returns a \tcode{const T*}, this will not convert to \tcode{void*}, and
+so no suitable overload of the True Placement New is found.\\
+\\
+It is noted that \tcode{const}-qualified means `do not modify', and that the \tcode{const_cast}
+ignores this (and is thus lying). However, these algorithms are also claiming that they iterate
+over objects of type \tcode{T}: nary a \tcode{T} is in the range. We present this as `the objects
+in this range should be \tcode{const}', rather than `the memory here is \tcode{const}'.}
+
+{\color{addclr}
+\begin{codeblock}
+template <@\placeholder{no-throw-forward-range}@ Rng>
+  requires
+DefaultConstructible<value_type_t<iterator_t<Rng>>>
+  safe_iterator_t<Rng> uninitialized_default_construct(Rng&& rng);
+\end{codeblock}
+
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+        return uninitialized_default_construct(begin(rng), end(rng));
+\end{codeblock}
+} %% \color{addclr}
+
+{\color{remclr}
+\begin{codeblock}
+template <class ForwardIterator, class Size>
+  ForwardIterator uninitialized_default_construct_n(ForwardIterator first, Size n);
+\end{codeblock}
+
+\setcounter{Paras}{1}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+        for (; n>0; (void)++first, --n)
+          ::new (static_cast<void*>(addressof(*first)))
+            typename iterator_traits<ForwardIterator>::value_type;
+        return first;
+\end{codeblock}
+} %% \color{remclr}
+
+{\color{addclr}
+
+\begin{codeblock}
+template <@\placeholder{no-throw-forward-iterator}@ I>
+  requires
+DefaultConstructible<value_type_t<I>>
+  I uninitialized_default_construct_n(I first, difference_type_t<I> n);
+\end{codeblock}
+
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+    return uninitialized_default_construct(make_counted_iterator(first, n),
+      default_sentinel{}).base();
+\end{codeblock}
+} %% \color{addclr}
+
+\rSec3[uninitialized.construct.value]{\tcode{uninitialized_value_construct}}
+{\color{remclr}
+\begin{codeblock}
+template <class ForwardIterator>
+  void uninitialized_value_construct(ForwardIterator first, ForwardIterator last);
+\end{codeblock}
+} %% \color{remclr}
+{\color{addclr}
+\begin{codeblock}
+template <@\placeholder{no-throw-forward-iterator}@ I, @\placeholder{no-throw-sentinel}@<I> S>
+  requires
+DefaultConstructible<value_type_t<I>>
+  I uninitialized_value_construct(I first, S last);
+\end{codeblock}
+} %% \color{addclr}
+
+\setcounter{Paras}{0}
+\pnum
+\effects Equivalent to:
+
+\begin{codeblock}
+    for (; first != last; ++first)
+      ::new @\added{(const_cast<void*>}@(static_cast<@\added{const volatile }@void*>(addressof(*first)))@\added{)}@
+        @\changed{typename iterator_traits<ForwardIterator>::value_type}{remove_reference_t<reference_t<I{>}>}@();
+    @\added{return first;}@
+\end{codeblock}
+
+{\color{addclr}
+\begin{codeblock}
+template <@\placeholder{no-throw-forward-range}@ Rng>
+requires
+  DefaultConstructible<value_type_t<iterator_t<Rng>>>
+safe_iterator_t<Rng> uninitialized_value_construct(Rng&& rng);
+\end{codeblock}
+
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+    return uninitialized_value_construct(begin(rng), end(rng));
+\end{codeblock}
+} %% \color{addclr}
+
+{\color{remclr}
+\begin{codeblock}
+template <class ForwardIterator, class Size>
+  ForwardIterator uninitialized_value_construct_n(ForwardIterator first, Size n);
+\end{codeblock}
+\setcounter{Paras}{1}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+        for (; n>0; (void)++first, --n)
+          ::new (static_cast<void*>(addressof(*first)))
+            typename iterator_traits<ForwardIterator>::value_type();
+        return first;
+\end{codeblock}
+} %% \color{remclr}
+
+{\color{addclr}
+\begin{codeblock}
+template <@\placeholder{no-throw-forward-iterator}@ I>
+  requires
+DefaultConstructible<value_type_t<I>>
+  I uninitialized_value_construct_n(I first, difference_type_t<I> n);
+\end{codeblock}
+
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+    return uninitialized_value_construct(make_counted_iterator(first, n),
+                                         default_sentinel{}).base();
+\end{codeblock}
+} %% \color{addclr}
+
+\rSec3[uninitialized.copy]{\tcode{uninitialized_copy}}
+{\color{remclr}
+\begin{codeblock}
+template <class InputIterator, class ForwardIterator>
+  ForwardIterator uninitialized_copy(InputIterator first, InputIterator last,
+                                     ForwardIterator result);
+\end{codeblock}
+
+\setcounter{Paras}{0}
+\pnum
+\effects As if by:
+\begin{codeblock}
+    for (; first != last; ++result, (void)++first)
+      ::new (static_cast<void*>(addressof(*result)))
+        typename iterator_traits<ForwardIterator>::value_type;
+\end{codeblock}
+
+\setcounter{Paras}{1}
+\pnum
+\returns \tcode{result}
+} %% \color{remclr}
+
+{\color{addclr}
+\begin{codeblock}
+template <InputIterator I, Sentinel<I> S1, @\placeholder{no-throw-forward-iterator}@ O, @\placeholder{no-throw-sentinel}@<O> S2>
+  requires
+Constructible<value_type_t<O>, reference_t<I>>
+  tagged_pair<tag::in(I), tag::out(O)>
+uninitialized_copy(I ifirst, S1 ilast, O ofirst, S2 olast);
+\end{codeblock}
+
+\setcounter{Paras}{0}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+    for (; ifirst != ilast && ofirst != olast; ++ofirst, (void)++ifirst) {
+      ::new (const_cast<void*>(static_cast<const volatile void*>(addressof(*ofirst))))
+        remove_reference_t<reference_t<O>>(*ifirst);
+    }
+    return {ifirst, ofirst};
+\end{codeblock}
+
+\pnum
+\requires \range{ofirst}{olast} shall not overlap with \range{ifirst}{ilast}.
+
+\ednote{This paragraph also applies to the three-legged \tcode{std::uninitialized_copy}.}
+
+\begin{codeblock}
+template <InputRange IRng, @\placeholder{no-throw-forward-range}@ ORng>
+requires
+  Constructible<value_type_t<iterator_t<ORng>>, reference_t<iterator_t<IRng>>>
+tagged_pair<tag::in(safe_iterator_t<IRng>), tag::out(safe_iterator_t<ORng>O)>
+  uninitialized_copy(IRng&& irng, ORng&& orng);
+\end{codeblock}
+
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+    return uninitialized_copy(begin(irng), end(irng), begin(orng), end(orng));
+\end{codeblock}
+
+\pnum
+\requires \tcode{orng} shall not overlap with \tcode{irng}.
+} %% \color{addclr}
+
+{\color{remclr}
+\begin{codeblock}
+template <class InputIterator, class Size, class ForwardIterator>
+  ForwardIterator uninitialized_copy_n(InputIterator first, Size n,
+                                       ForwardIterator result);
+\end{codeblock}
+
+\setcounter{Paras}{2}
+\pnum
+\effects As if by:
+\begin{codeblock}
+        for ( ; n > 0; ++result, (void) ++first, --n) {
+          ::new (static_cast<void*>(addressof(*result)))
+            typename iterator_traits<ForwardIterator>::value_type(*first);
+        }
+\end{codeblock}
+
+\pnum
+\returns \tcode{result}
+} %% \color{remclr}
+
+{\color{addclr}
+\begin{codeblock}
+template <InputIterator I, @\placeholder{no-throw-forward-iterator}@ O, @\placeholder{no-throw-sentinel}@<O> S>
+  requires
+Constructible<value_type_t<O>, reference_t<I>>
+  tagged_pair<tag::in(I), tag::out(O)>
+uninitialized_copy_n(I ifirst, difference_type_t<I> n, O ofirst, S olast);
+\end{codeblock}
+
+\setcounter{Paras}{4}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+    auto t = uninitialized_copy(make_counted_iterator(ifirst, n),
+                                default_sentinel{}, ofirst, olast).base();
+    return {t.in().base(), t.out()};
+\end{codeblock}
+
+\pnum
+\requires \range{ofirst}{olast} shall not overlap with \range{ifirst}{next(ifirst, n)}.
+
+\ednote{This paragraph also applies to \tcode{std::uninitialized_copy_n}.}
+} %% \color{addclr}
+
+\rSec3[uninitialized.move]{\tcode{uninitialized_move}}
+{\color{remclr}
+\begin{codeblock}
+template <class InputIterator, class ForwardIterator>
+  ForwardIterator uninitialized_move(InputIterator first, InputIterator last,
+                                     ForwardIterator result);
+\end{codeblock}
+
+\setcounter{Paras}{0}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+    for (; first != last; (void)++result, ++first)
+      ::new (static_cast<void*>(addressof(*result)))
+        typename iterator_traits<ForwardIterator>::value_type(iter_move(first));
+    return result;
+\end{codeblock}
+} %% \color{remclr}
+{\color{addclr}
+\begin{codeblock}
+template <InputIterator I, Sentinel<I> S1, @\placeholder{no-throw-forward-iterator}@ O, @\placeholder{no-throw-sentinel}@<O> S2>
+  requires
+Constructible<value_type_t<O>, rvalue_reference_t<I>>
+  tagged_pair<tag::in(I), tag::out(O)>
+uninitialized_move(I ifirst, S1 ilast, O ofirst, S2 olast);
+\end{codeblock}
+
+\setcounter{Paras}{0}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+    for (; ifirst != ilast && ofirst != olast; ++ofirst, (void)++ifirst) {
+      ::new (const_cast<void*>(static_cast<const volatile void*>(addressof(*ofirst))))
+        remove_reference_t<reference_t<O>>(iter_move(ifirst));
+    }
+    return {ifirst, ofirst};
+\end{codeblock}
+} %% color\addclr
+
+\pnum
+\remarks If an exception is thrown, some objects in the range \range{first}{last} are left in a
+valid, but unspecified state.
+
+{\color{addclr}
+\pnum
+\requires \range{ofirst}{olast} shall not overlap with \range{ifirst}{ilast}.
+
+\ednote{This paragraph also applies to the three-legged \tcode{std::uninitialized_move}.}
+
+\begin{codeblock}
+template <InputRange IRng, @\placeholder{no-throw-forward-range}@ ORng>
+  requires
+Constructible<value_type_t<iterator_t<ORng>>, rvalue_reference_t<iterator_t<IRng>>>
+  tagged_pair<tag::in(safe_iterator_t<IRng>), tag::out(safe_iterator_t<ORng>)>
+uninitialized_move(IRng&& irng, ORng&& orng);
+\end{codeblock}
+
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+    return uninitialized_move(begin(irng), end(irng), begin(orng), end(orng));
+\end{codeblock}
+
+\pnum
+\remarks If an exception is thrown, some objects in the range \range{begin(rng)}{end(rng)} are left
+in a valid, but unspecified state.
+
+\pnum
+\requires \tcode{orng} shall not overlap with \tcode{irng}.
+} %% \color{addclr}
+
+{\color{remclr}
+\begin{codeblock}
+template <class InputIterator, class Size, class ForwardIterator>
+  pair<InputIterator, ForwardIterator>
+    uninitialized_move_n(InputIterator first, Size n, ForwardIterator result);
+\end{codeblock}
+
+\setcounter{Paras}{2}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+        for (; n > 0; ++result, (void) ++first, --n)
+          ::new (static_cast<void*>(addressof(*result)))
+            typename iterator_traits<ForwardIterator>::value_type(iter_move(first));
+        return {first,result};
+\end{codeblock}
+} %% \color{remclr}
+
+{\color{addclr}
+\begin{codeblock}
+template <InputIterator I, @\placeholder{no-throw-forward-iterator}@ O, @\placeholder{no-throw-sentinel}@<O> S>
+requires
+  Constructible<value_type_t<O>, rvalue_reference_t<I>>
+tagged_pair<tag::in(I), tag::out(O)>
+  uninitialized_move_n(I ifirst, difference_type_t<I> n, O ofirst, S olast);
+\end{codeblock}
+
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+    auto t = uninitialized_move(make_counted_iterator(ifirst, n),
+                                default_sentinel{}, ofirst, olast).base();
+    return {t.in().base(), t.out()};
+\end{codeblock}
+} %% \color{addclr}
+
+\setcounter{Paras}{3}
+\pnum
+\remarks If an exception is thrown, some objects in the range \range{ifirst}{next(ifirst, n)} are left
+in a valid\added{,} but unspecified state.
+
+{\color{addclr}
+\setcounter{Paras}{5}
+\pnum
+\requires \range{ofirst}{olast} shall not overlap with \range{ifirst}{next(ifirst, n)}.
+
+\ednote{This paragraph also applies to \tcode{std::uninitialized_move_n}.}
+} %% \color{addclr}
+
+\rSec3[uninitialized.fill]{\tcode{uninitialized_fill}}
+{\color{remclr}
+\begin{codeblock}
+template <class ForwardIterator, class T>
+  void uninitialized_fill(ForwardIterator first, ForwardIterator last,
+                          const T& x);
+\end{codeblock}
+} %% \color{remclr}
+
+{\color{addclr}
+\begin{codeblock}
+template <@\placeholder{no-throw-forward-iterator}@ I, @\placeholder{no-throw-sentinel}@<I> S, class T>
+requires
+  Constructible<value_type_t<I>, const T&>
+I uninitialized_fill(I first, S last, const T& x);
+\end{codeblock}
+} %% \color{addclr}
+
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+    for (; first != last; ++first) {
+      ::new @\added{(const_cast<void*>}@(static_cast<@\added{const volatile }@void*>(addressof(*first)))@\added{)}@
+        @\changed{typename iterator_traits<ForwardIterator>::value_type}{remove_reference_t<reference<I{>}>}@(x);
+    }
+    return first;
+\end{codeblock}
+
+{\color{addclr}
+\begin{codeblock}
+template <@\placeholder{no-throw-forward-range}@ Rng, class T>
+requires
+  Constructible<value_type_t<iterator_t<Rng>>, const T&>
+safe_iterator_t<Rng> uninitialized_fill(Rng&& rng, const T& x)
+\end{codeblock}
+
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+    return uninitialized_fill(begin(rng), end(rng), x);
+\end{codeblock}
+} %% \color{addclr}
+
+{\color{remclr}
+\begin{codeblock}
+template <class ForwardIterator, class Size, class T>
+  ForwardIterator uninitialized_fill_n(ForwardIterator first, Size n, const T& x);
+\end{codeblock}
+
+\setcounter{Paras}{1}
+\pnum
+\effects As if by:
+\begin{codeblock}
+        for (; n--; ++first)
+          ::new (static_cast<void*>(addressof(*first)))
+            typename iterator_traits<ForwardIterator>::value_type(x);
+        return first;
+\end{codeblock}
+} %% \color{remclr}
+
+{\color{addclr}
+\begin{codeblock}
+template <@\placeholder{no-throw-forward-iterator}@ I, class T>
+requires
+  Constructible<value_type_t<I>, const T&>
+I uninitialized_fill_n(I first, const difference_type_t<I> n, const T& x);
+\end{codeblock}
+
+\setcounter{Paras}{3}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+    return uninitialized_fill(make_counted_iterator(first, n), default_sentinel{}, x).base();
+\end{codeblock}
+} %% \color{addclr}
+
+\rSec3[specialized.destroy]{\tcode{destroy}}
+{\color{remclr}
+\begin{codeblock}
+template <class T>
+  void destroy_at(T* location);
+\end{codeblock}
+} %% \color{remclr}
+
+{\color{addclr}
+\begin{codeblock}
+template <Destructible T>
+void destroy_at(T* location) noexcept;
+\end{codeblock}
+} %% \color{addclr}
+
+\setcounter{Paras}{0}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+    location->~T();
+\end{codeblock}
+
+{\color{remclr}
+\begin{codeblock}
+template <class ForwardIterator>
+  void destroy(ForwardIterator first, ForwardIterator last);
+\end{codeblock}
+} %% \color{remclr}
+
+{\color{addclr}
+\begin{codeblock}
+template <@\placeholder{no-throw-input-iterator}@ I, @\placeholder{no-throw-sentinel}@<I> S>
+requires
+  Destructible<value_type_t<I>>
+I destroy(I first, S last) noexcept;
+\end{codeblock}
+} %% \color{addclr}
+
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+    for (; first != last; ++first)
+      destroy_at(addressof(*first));
+    @\added{return first;}@
+\end{codeblock}
+
+\ednote{The International Standard requires \tcode{destroy} be a \tcode{ForwardIterator} to ensure
+that the iterator's \tcode{reference} type is a reference type. This has been relaxed in P1033, as
+\tcode{\placeholder{no-throw-input-iterator}} checks that \tcode{reference_t<I>} reference type.\\
+\\
+The choice to weaken the iterator requirement from the International Standard is because the
+algorithm is a single-pass algorithm; thus, semantically, works on input ranges.}
+
+{\color{addclr}
+\begin{codeblock}
+template <@\placeholder{no-throw-input-range}@ Rng>
+requires
+  Destructible<value_type_t<iterator_t<Rng>>>
+safe_iterator_t<Rng> destroy(Rng&& rng) noexcept;
+\end{codeblock}
+
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+    return destroy(begin(rng), end(rng));
+\end{codeblock}
+} %% \color{addclr}
+
+{\color{remclr}
+\begin{codeblock}
+template <class ForwardIterator, class Size>
+  ForwardIterator destroy_n(ForwardIterator first, Size n);
+\end{codeblock}
+
+\setcounter{Paras}{2}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+      for (; n > 0; (void)++first, --n)
+          destroy_at(addressof(*first));
+        return first;
+\end{codeblock}
+} %% \color{remclr}
+
+{\color{addclr}
+\begin{codeblock}
+template <@\placeholder{no-throw-input-iterator}@ I>
+requires
+  Destructible<value_type_t<I>
+I destroy_n(I first, difference_type_t<I> n) noexcept;
+\end{codeblock}
+
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+    return destroy(make_counted_iterator(first, n), default_sentinel{}).base();
+\end{codeblock}
+} %% \color{addclr}
