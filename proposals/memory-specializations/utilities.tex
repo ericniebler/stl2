@@ -10,11 +10,8 @@
 \rSec2[specialized.algorithms]{Specialized algorithms}
 
 \rSec3[uninitialized.construct.default]{uninitialized_default_construct}
-\begin{codeblock}
-namespace std { @\added{namespace experimental \{ namespace ranges \{ inline namespace v\replacedtxt{1}{2} \{}@
-\end{codeblock}
 
-{\color{newclr}
+{\color{addclr}
 \begin{codeblock}
 template <class I, class T>
 concept bool __ReferenceTo() {
@@ -23,13 +20,13 @@ concept bool __ReferenceTo() {
     Same<remove_cv_t<remove_reference_t<reference_t<I>>>, T>();
 }
 \end{codeblock}
-} %% \color{newclr}
+} %% \color{addclr}
 
 \begin{codeblock}
-  template <@\changed{class ForwardIterator}{OutputIterator O, Sentinel<O> S}@>
-    @\added{requires DefaultConstructible<value_type_t<O>{>}() \&\&}@
-             @\replacedtxt{Same<value_type_t<O>\&, reference_t<O>{>}}{__ReferenceTo<O, value_type_t<O>{>}()}@
-    @\changed{void}{O}@ uninitialized_default_construct(@\changed{ForwardIterator}{O}@ first, @\changed{ForwardIterator}{S}@ last);
+  template <@\changed{class ForwardIterator}{ForwardIterator I, Sentinel<I> S}@>
+    @\added{requires DefaultConstructible<value_type_t<I>{>}() \&\&}@
+             @\added{__ReferenceTo<I, value_type_t<I>{>}()}@
+    @\changed{void}{I}@ uninitialized_default_construct(@\changed{ForwardIterator}{I}@ first, @\changed{ForwardIterator}{S}@ last);
 \end{codeblock}
 
 \setcounter{Paras}{0}
@@ -37,49 +34,50 @@ concept bool __ReferenceTo() {
 \effects Equivalent to:
 \begin{codeblock}
         for (; first != last; ++first)
-          ::new(static_cast<void*>(addressof(\newtxt{*}first)))
-            @\changed{typename iterator_traits<ForwardIterator>::value_type}{value_type_t<O>}@;
-        @\added{return \replacedtxt{last}{first};}@
+          ::new @\added{(const_cast<void*>}@(static_cast<@\added{const volatile }@void*>(addressof(*first)))@\added{)}@
+            @\changed{typename iterator_traits<ForwardIterator>::value_type}{value_type_t<I>}@;
+        @\added{return first;}@
 \end{codeblock}
 
 {\color{addclr}
 \begin{codeblock}
-  template <OutputRange Rng>
-    requires DefaultConstructible<value_type_t<iterator_t<Rng>>>\newtxt{()} &&
-             @\replacedtxt{Same<value_type_t<iterator_t<O>>, reference_t<iterator_t<O>>}{__ReferenceTo<iterator_t<Rng>, value_type_t<iterator_t<Rng>{>}{>}()}@
-  @\replacedtxt{O}{safe_iterator_t<Rng>}@ uninitialized_default_construct(Rng&& rng);
+  template <ForwardRange Rng>
+    requires DefaultConstructible<value_type_t<iterator_t<Rng>>>() &&
+             __ReferenceTo<iterator_t<Rng>, value_type_t<iterator_t<Rng>>>()
+  safe_iterator_t<Rng> uninitialized_default_construct(Rng&& rng);
 \end{codeblock}
 
 \pnum
 \effects Equivalent to:
 \begin{codeblock}
-        return last uninitialized_default_construct(begin(rng), end(rng));
+        return uninitialized_default_construct(begin(rng), end(rng));
 \end{codeblock}
 } %% \color{addclr}
 
 \begin{codeblock}
-  template <@\changed{class}{OutputIterator}@ @\changed{OutputIterator}{O}\removed{, class Size}@>
-    @\added{requires DefaultConstructible<value_type_t<O>{>}() \&\&}@
-             @\replacedtxt{Same<value_type_t<O>\&, reference_t<O>{>}}{__ReferenceTo<O, value_type_t<O>{>}()}@
-  @\changed{ForwardIterator}{O}@
-    uninitialized_default_construct_n(@\changed{ForwardIterator}{O}@ first, @\changed{Size}{difference_type_t<O>}@ n);
+  template <@\changed{class OutputIterator}{ForwardIterator I}\removed{, class Size}@>
+    @\added{requires DefaultConstructible<value_type_t<I>{>}() \&\&}@
+             @\added{__ReferenceTo<I, value_type_t<I>{>}()}@
+  @\changed{ForwardIterator}{I}@
+    uninitialized_default_construct_n(@\changed{ForwardIterator}{I}@ first, @\changed{Size}{difference_type_t<I>}@ n);
 \end{codeblock}
 
 \pnum
 \effects Equivalent to:
 \begin{codeblock}
-        for (; n > 0; (void)++first, --n)
-          ::new (static_cast<void*>(addressof(*first)))
-            @\changed{typename iterator_traits<ForwardIterator>::value_type}{value_type_t<O>}@;
-        return first;
+        @\removed{for (; n>0; (void)++first, --n)}@
+          @\removed{::new (static_cast<void*>(addressof(*first)))}@
+            @\removed{typename iterator_traits<ForwardIterator>::value_type}@
+        return @\changed{first}{uninitialized_default_construct(make_counted_iterator(first, n),}@
+                                                               @\added{default_sentinel\{\}).base()}@;
 \end{codeblock}
 
 \rSec3[uninitialized.construct.value]{uninitialized_value_construct}
 \begin{codeblock}
-  template <@\changed{class ForwardIterator}{OutputIterator O, Sentinel<O> S}@>
-    @\added{requires Constructible<value_type_t<O>{>}() \&\&}@
-             @\replacedtxt{Same<value_type_t<O>\&, reference_t<O>{>}}{__ReferenceTo<O, value_type_t<O>{>}()}@
-    @\changed{void}{O}@ uninitialized_value_construct(@\changed{ForwardIterator}{O}@ first, @\changed{ForwardIterator}{S}@ last);
+  template <@\changed{class ForwardIterator}{ForwardIterator I, Sentinel<I> S}@>
+    @\added{requires DefaultConstructible<value_type_t<I>{>}() \&\&}@
+             @\added{__ReferenceTo<I, value_type_t<I>{>}()}@
+    @\changed{void}{I}@ uninitialized_value_construct(@\changed{ForwardIterator}{I}@ first, @\changed{ForwardIterator}{S}@ last);
 \end{codeblock}
 
 
@@ -87,16 +85,16 @@ concept bool __ReferenceTo() {
 \effects Equivalent to:
 \begin{codeblock}
         for (; first != last; ++first)
-          ::new (static_cast<void*>(addressof(*first)))
-            @\changed{typename iterator_traits<ForwardIterator>::value_type}{value_type_t<O>()}@;
+          ::new @\added{(const_cast<void*>}@(static_cast<@\added{const volatile }@void*>(addressof(*first)))@\added{)}@
+            @\changed{typename iterator_traits<ForwardIterator>::value_type}{value_type_t<O>}@();
         @\added{return first;}@
 \end{codeblock}
 {\color{addclr}
 \begin{codeblock}
-  template <OutputRange Rng>
-    requires Constructible<value_type_t<iterator_t<Rng>>> &&
-             @\replacedtxt{Same<value_type_t<iterator_t<O>>, reference_t<iterator_t<O>>}{__ReferenceTo<iterator_t<Rng>, value_type_t<iterator_t<Rng>{>}{>}()}@
-  @\replacedtxt{O}{safe_iterator_t<Rng>}@ uninitialized_value_construct(Rng&& rng);
+  template <ForwardRange Rng>
+    requires DefaultConstructible<value_type_t<iterator_t<Rng>>> &&
+             __ReferenceTo<iterator_t<Rng>, value_type_t<iterator_t<Rng>>>()
+  safe_iterator_t<Rng> uninitialized_value_construct(Rng&& rng);
 \end{codeblock}
 
 \pnum
@@ -107,29 +105,29 @@ concept bool __ReferenceTo() {
 } %% \color{addclr}
 
 \begin{codeblock}
-  template <@\changed{class}{OutputIterator}@ @\changed{OutputIterator}{O}\removed{, class Size}@>
-    @\added{requires Constructible<value_type_t<O>{>}() \&\&}@
-             @\replacedtxt{Same<value_type_t<O>\&, reference_t<O>{>}}{__ReferenceTo<O, value_type_t<O>{>}()}@
-  @\changed{ForwardIterator}{O}@
-    uninitialized_value_construct_n(@\changed{ForwardIterator}{O}@ first, @\changed{Size}{difference_type_t<O>}@ n);
+  template <@\changed{class ForwardIterator}{ForwardIterator I}\removed{, class Size}@>
+    @\added{requires DefaultConstructible<value_type_t<I>{>}() \&\&}@
+            @\added{__ReferenceTo<I, value_type_t<I>{>}()}@
+  @\changed{ForwardIterator}{I}@
+    uninitialized_value_construct_n(@\changed{ForwardIterator}{I}@ first, @\changed{Size}{difference_type_t<I>}@ n);
 \end{codeblock}
 
 \pnum
 \effects Equivalent to:
 \begin{codeblock}
-        for (; n > 0; --n, (void)++first)
-          ::new (static_cast<void*>(addressof(*first)))
-            @\changed{typename iterator_traits<ForwardIterator>::value_type}{value_type_t<O>()}@;
-        @\added{return first;}@
+        @\removed{for (; n > 0; --n, (void)++first)}@
+          @\removed{::new (static_cast<void*>(addressof(*first)))}@
+            @\removed{typename iterator_traits<ForwardIterator>::value_type();}@
+        return @\changed{first}{uninitialized_value_construct(make_counted_iterator(first, n),}@
+                                                             @\added{default_sentinel\{\}).base()}@;
 \end{codeblock}
 
 \rSec3[uninitialized.copy]{uninitialized_copy}
 \begin{codeblock}
-  template <@\changed{class}{InputIterator}@ @\changed{InputIterator}{I}@, @\added{Sentinel<I> S, }@
+  template <@\changed{class InputIterator}{InputIterator I, Sentinel<I> S, }@
             @\changed{class ForwardIterator}{ForwardIterator O}@>
-    @\added{requires }\added{Constructible<value_type_t<O>, reference_t<O>{>}() \&\&}@
-             @\replacedtxt{Same<value_type_t<O>\&, reference_t<O>{>} \&\&}{__ReferenceTo<O, value_type_t<O>{>}()}@
-             @\newtxt{CopyConstructible<value_type_t<O>{>}()}@
+    @\added{requires Constructible<value_type_t<O>, reference_t<I>{>}() \&\&}@
+            @\added{__ReferenceTo<O, value_type_t<O>{>}()}@
   @\changed{ForwardIterator}{tagged_pair<tag::in(I), tag::out(O)>}@
     uninitialized_copy(@\changed{InputIterator}{I}@ first, @\changed{InputIterator}{S}@ last, @\changed{ForwardIterator}{O}@ result);
 \end{codeblock}
@@ -138,10 +136,10 @@ concept bool __ReferenceTo() {
 \pnum
 \effects \changed{As if by}{Equivalent to}:
 \begin{codeblock}
-        for (; first != last; ++first)
-          ::new (static_cast<void*>(addressof(*first)))
+        for (; first != last; ++result, (void)++first)
+          ::new @\added{(const_cast<void*>}@(static_cast<@\added{const volatile }@void*>(addressof(*result)))@\added{)}@
             @\changed{typename iterator_traits<ForwardIterator>::value_type}{value_type_t<O>}@(*first);
-        @\added{return \{last, result + (last - first)\}}@
+        return {last, result};
 \end{codeblock}
 
 {\color{addclr}
@@ -149,11 +147,9 @@ concept bool __ReferenceTo() {
 \requires \tcode{result} shall not be in the range \tcode{[first, last)}.
 
 \begin{codeblock}
-  template <InputRange Rng, class O>
-    requires ForwardIterator<O>() &&
-             Constructible<value_type_t<O>, reference_t<iterator_t<Rng>>>() &&
-             @\replacedtxt{Same<value_type_t<O>\&, reference_t<O>{>} \&\&}{__ReferenceTo<O, value_type_t<O>{>}()}@
-             @\oldtxt{CopyConstructible<value_type_t<O>{>}()}@
+  template <InputRange Rng, ForwardIterator O>
+    requires Constructible<value_type_t<O>, reference_t<iterator_t<Rng>>>() &&
+             __ReferenceTo<O, value_type_t<O>>()
   tagged_pair<tag::in(safe_iterator_t<Rng>), tag::out(O)>
     uninitialized_copy(Rng&& rng, O&& result);
 \end{codeblock}
@@ -161,29 +157,30 @@ concept bool __ReferenceTo() {
 \pnum
 \effects Equivalent to:
 \begin{codeblock}
-        return uninitialized_copy(begin(rng), end(rng), std::forward<O>(result));
+        return uninitialized_copy(begin(rng), end(rng), result);
 \end{codeblock}
 \pnum
-\requires \tcode{result} shall not be in the range \tcode{[first, last)}.
+\requires \tcode{result} shall not be in the range \tcode{[begin(rng), end(rng))}.
 } %% \color{addclr}
 
 \begin{codeblock}
-  template <@\changed{class}{InputIterator}@ @\changed{InputIterator}{I}@, @\changed{class Size, class ForwardIterator}{OutputIterator O}@>
-    @\added{requires }\added{Constructible<value_type_t<O>, reference_t<I>{>}() \&\&}@
-             @\replacedtxt{Same<value_type_t<O>\&, reference_t<O>{>}}{__ReferenceTo<O, value_type_t<O>{>}()}\added{ \&\&}@
-             @\newtxt{CopyConstructible<value_type_t<O>{>}()}@
+  template <@\changed{class InputIterator}{InputIterator I}@,
+            @\changed{class Size, class ForwardIterator}{ForwardIterator O}@>
+    @\added{requires Constructible<value_type_t<O>, reference_t<I>{>}() \&\&}@
+             @\added{__ReferenceTo<O, value_type_t<O>{>}() \&\&}@
   @\changed{ForwardIterator}{tagged_pair<tag::in(I), tag::out(O)>}@
-    uninitialized_copy_n(@\changed{InputIterator}{I\&\&}@ first, @\changed{Size}{difference_type_t<I>}@ n,
-                         @\changed{ForwardIterator}{O\&\&}@ out)
+    uninitialized_copy_n(@\changed{InputIterator}{I}@ first, @\changed{Size}{difference_type_t<I>}@ n,
+                         @\changed{ForwardIterator}{O}@ out)
 \end{codeblock}
 
 \pnum
 \effects \changed{As if by}{Equivalent to:}
 \begin{codeblock}
-        for (; n > 0; ++result, (void) ++first, --n)
-          ::new(static_cast<void*>(addressof(result)))
-            @\changed{typename iterator_traits<ForwardIterator>::value_type}{value_type_t<O>}@(*first);
-        return @\changed{result}{\{first, result\}}@;
+        @\removed{for (; n > 0; ++result, (void) ++first, --n)}@
+          @\removed{::new(static_cast<void*>(addressof(result)))}@
+            @\removed{typename iterator_traits<ForwardIterator>::value_type(*first);}@
+        return @\changed{result}{uninitialized_copy(make_counted_iterator(first, n),}@
+                                                   @\added{default_sentinel\{\}).base()}@;
 \end{codeblock}
 
 {\color{addclr}
@@ -193,13 +190,12 @@ concept bool __ReferenceTo() {
 
 \rSec3[uninitialized.move]{uninitialized_move}
 \begin{codeblock}
-  template <@\changed{class}{InputIterator}@ @\changed{InputIterator}{I}@,
-            @\changed{class}{Sentinel<I>}@ @\changed{ForwardIterator}{S, OutputIterator O}@>
-    @\added{requires Constructible<value_type_t<O>, reference_t<I>{>}() \&\&}@
-             @\replacedtxt{Same<value_type_t<O>\&, reference_t<O>{>} \&\&}{__ReferenceTo<O, value_type_t<O>{>}()}@
-             @\newtxt{MoveConstructible<value_type_t<O>{>}()}@
+  template <@\changed{class InputIterator}{InputIterator I}@,
+            @\changed{class ForwardIterator}{Sentinel<I> S, OutputIterator O}@>
+    @\added{requires Constructible<value_type_t<O>, rvalue_reference_t<I>{>}() \&\&}@
+              @\added{__ReferenceTo<O, value_type_t<O>{>}()}@
   @\changed{InputIterator}{tagged_pair<tag::in(I), tag::out(O)>}@
-    uninitialized_move(@\changed{InputIteratror}{I}@ first, @\changed{InputIterator}{S}@ last, @\changed{ForwardIterator}{O}@ result);
+    uninitialized_move(@\changed{InputIterator}{I}@ first, @\changed{InputIterator}{S}@ last, @\changed{ForwardIterator}{O}@ result);
 \end{codeblock}
 
 \setcounter{Paras}{0}
@@ -207,9 +203,9 @@ concept bool __ReferenceTo() {
 \effects Equivalent to:
 \begin{codeblock}
         for (; first != last; (void)++result, ++first)
-          ::new (static_cast<void*>(addressof(*result)))
+          ::new @\added{const_cast<void*>}@(static_cast<@\added{const volatile }@void*>(addressof(*result)))@\added{)}@
             @\changed{typename iterator_traits<ForwardIterator>::value_type}{value_type_t<O>}@(std::move(*first));
-        return @\changed{last}{\{last, result + (last - first)\}}@;
+        return @\changed{last}{\{last, result\}}@;
 \end{codeblock}
 
 \pnum
@@ -221,17 +217,16 @@ concept bool __ReferenceTo() {
 
 \begin{codeblock}
   template <InputRange Rng, OutputIterator O>
-    requires Constructible<value_type_t<O>, reference_t<iterator_t<Rng>>> &&
-             @\replacedtxt{Same<value_type_t<O>\&, reference_t<O>> \&\&}{__ReferenceTo<O, value_type_t<O>{>}()}@
-             @\newtxt{MoveConstructible<value_type_t<O>{>}()}@
+    requires Constructible<value_type_t<O>, rvalue_reference_t<iterator_t<Rng>>> &&
+             __ReferenceTo<O, value_type_t<O>>()
   tagged_pair<tag::in(safe_iterator_t<Rng>), tag::out(O)>>
-    uninitialized_move(Rng&& rng, O&& result);
+    uninitialized_move(Rng&& rng, O result);
 \end{codeblock}
 
 \pnum
 \effects Equivalent to:
 \begin{codeblock}
-        return uninitialized_move(begin(rng), end(rng), std::forward<O>(result));
+        return uninitialized_move(begin(rng), end(rng), result);
 \end{codeblock}
 
 \pnum
@@ -242,22 +237,22 @@ concept bool __ReferenceTo() {
 } %% \color{addclr}
 
 \begin{codeblock}
-  template <@\changed{class}{InputIterator}@ @\changed{InputIterator}{I}@, @\changed{class Size, class ForwardIterator}{OutputIterator O}@>
-    @\added{requires Constructible<value_type_t<O>, reference_t<I>{>}() \&\&}@
-             @\replacedtxt{Same<value_type_t<O>\&, reference_t<O>{>}}{__ReferenceTo<O, value_type_t<O>{>}()}@
-             @\newtxt{MoveConstructible<value_type_t<O>{>}()}@
+  template <@\changed{class InputIterator}{InputIterator I}@, @\changed{class Size, class ForwardIterator}{ForwardIterator O}@>
+    @\added{requires Constructible<value_type_t<O>, rvalue_reference_t<I>{>}() \&\&}@
+             @\added{__ReferenceTo<O, value_type_t<O>{>}()}@
   @\changed{pair<InputIterator, OutputIterator>}{tagged_pair<tag::in(I), tag::out(O)>}@
-    uninitialized_move_n(@\changed{InputIterator}{I}@&& first, @\changed{Size}{difference_type_t<I>}@ n, @\changed{ForwardIterator}{O}@&& out)
+    uninitialized_move_n(@\changed{InputIterator}{I}@ first, @\changed{Size}{difference_type_t<I>}@ n, @\changed{ForwardIterator}{O}@ out)
 \end{codeblock}
 
 
 \pnum
 \effects Equivalent to:
 \begin{codeblock}
-        for (; n > 0; ++result, (void) ++first, --n)
-          ::new (static_cast<void*>(addressof(*result)))
-            @\changed{typename iterator_traits<ForwardIterator>::value_type}{value_type_t<O>}@(std::move(*first));
-        return {first,result};
+        @\removed{for (; n > 0; ++result, (void) ++first, --n)}@
+          @\removed{::new (static_cast<void*>(addressof(*result)))}@
+            @\removed{typename iterator_traits<ForwardIterator>::value_type(std::move(*first));}@
+        return @\changed{\{first,result\}}{uninitialized_value_construct(make_counted_iterator(first, n),}@
+                                                                       @\added{default_sentinel\{\}).base()}@;
 \end{codeblock}
 
 \pnum
@@ -272,7 +267,7 @@ concept bool __ReferenceTo() {
 \begin{codeblock}
   template <@\changed{class}{CopyConstructible}@ @\changed{ForwardIterator}{T}@, @\changed{class}{OutputIterator<const T\&>}@ @\changed{T}{O},@
             @\added{Sentinel<O> S}@>
-    @\added{requires }\replacedtxt{Same<value_type_t<T>\&, reference_t<T>{>}}{__ReferenceTo<T, value_type_t<T>{>}()}@
+    @\added{requires __ReferenceTo<O, value_type_t<O>{>}()}@
     @\changed{void}{O}@ fill(@\changed{ForwardIterator}{O}@ first, @\changed{ForwardIterator}{S}@ last, const T& x);
 \end{codeblock}
 
@@ -281,16 +276,16 @@ concept bool __ReferenceTo() {
 \effects \changed{As if by}{Equivalent to}:
 \begin{codeblock}
         for (; first != last; ++first)
-           ::new (static_cast<void*>(addressof(*first)))
+           ::new @\added{const_cast<void*>}@(static_cast<@\added{const volatile }@void*>(addressof(*first)))@\added{)}@
               @\changed{typename iterator_traits<ForwardIterator>::value_type}{value_type_t<O>}@(x);
         return last;
 \end{codeblock}
 {\color{addclr}
 \begin{codeblock}
-  template <CopyConstructible T, OutputRange<const T&> Rng>
-    requires @\replacedtxt{Same<value_type_t<T>\&, reference_t<T>{>}}{__ReferenceTo<T, value_type_t<T>{>}()}@
+  template <OutputRange Rng, Constructible T>
+    requires __ReferenceTo<T, value_type_t<I>>()
   safe_iterator_t<Rng>
-    \newtxt{uninitialized_}fill(Rng&& rng, const T& x);
+    uninitialized_fill(Rng&& rng, const T& x);
 \end{codeblock}
 
 \pnum
@@ -301,30 +296,44 @@ concept bool __ReferenceTo() {
 } %% \color{addclr}
 
 \begin{codeblock}
-  template <@\changed{class}{CopyConstructible}@ @\changed{ForwardIterator}{T}@, @\changed{class Size, class}{OutputIterator<const T\&>}@ @\changed{T}{O}@>
-    @\added{requires }\replacedtxt{Same<value_type_t<T>\&, reference_t<T>{>}}{__ReferenceTo<T, value_type_t<T>{>}()}@
-  @\changed{ForwardIterator}{O}@ fill_n(@\changed{ForwardIterator}{O}@ first, @\changed{Size}{difference_type_t<O>}@, const T& x);
+  template <@\changed{class}{Constructible}@ @\changed{ForwardIterator}{T}@, @\changed{class Size, class}{OutputIterator<const T\&>}@ @\changed{T}{O}@>
+    @\added{requires __ReferenceTo<T, value_type_t<T>{>}()}@
+  @\changed{ForwardIterator}{O}@ uninitialized_fill_n(@\changed{ForwardIterator}{O}@ first, @\changed{Size}{difference_type_t<O>}@, const T& x);
 \end{codeblock}
 
 \setcounter{Paras}{0}
 \pnum
 \effects \changed{As if by}{Equivalent to}:
 \begin{codeblock}
-        for (; n > 0; --n, ++first)
-          ::new (static_cast<void*>(addressof(*first)))
-            @\changed{typename iterator_traits<ForwardIterator>::value_type}{value_type_t<O>}@(x);
-        @\added{return first;}@
+        @\removed{for (; n > 0; --n, ++first)}@
+          @\removed{::new (static_cast<void*>(addressof(*first)))}@
+            @\removed{typename iterator_traits<ForwardIterator>::value_type(x);}@
+        @\added{uninitialized_value_construct(make_counted_iterator(first, n),}@
+                                                 @\added{default_sentinel\{\}).base()}@;
 \end{codeblock}
 
 \rSec3[specialized.destroy]{destroy}
 
 \begin{codeblock}
-  template <@\changed{class}{ForwardIterator}@ @\changed{ForwardIterator}{I, Sentinel<I> S}@>
-    @\added{requires Destructible<value_type_t<I>{>}()}@
-  I destroy(@\changed{ForwardIterator}{I}@ first, @\changed{ForwardIterator}{S}@ last) noexcept;
+  template <@\changed{class}{Destructible}@ T>
+    void destroy_at(T* location);
 \end{codeblock}
 
 \setcounter{Paras}{0}
+\pnum
+\effects Equivalent to:
+
+\begin{codeblock}
+        location->~T();
+\end{codeblock}
+
+\begin{codeblock}
+  template <@\changed{class ForwardIterator}{InputIterator I, Sentinel<I> S}@>
+    @\added{requires Destructible<value_type_t<I>{>}() \&\&}@
+             @\added{__ReferenceTo<I, value_type_t<I>{>}()}@
+  I destroy(@\changed{ForwardIterator}{I}@ first, @\changed{ForwardIterator}{S}@ last) noexcept;
+\end{codeblock}
+
 \pnum
 \effects Equivalent to:
 \begin{codeblock}
@@ -335,8 +344,9 @@ concept bool __ReferenceTo() {
 
 {\color{addclr}
 \begin{codeblock}
-  template <ForwardRange Rng>
-    requires Destructible<value_type_t<iterator_t<I>>()
+  template <InputRange Rng>
+    requires Destructible<value_type_t<iterator_t<Rng>>()
+             __ReferenceTo<iterator_t<Rng>, value_type_t<iterator_t<Rng>>>()
   safe_iterator_t<Rng> destroy(Rng&& rng) noexcept;
 \end{codeblock}
 
@@ -348,16 +358,14 @@ concept bool __ReferenceTo() {
 } %% \color{addclr}
 
 \begin{codeblock}
-  template <@\changed{class}{ForwardIterator}@ @\changed{ForwardIterator}{I}\removed{, class Size}@>
-    @\added{requires Destructible<value_type_t<I>{>}()}@
+  template <@\changed{class ForwardIterator}{InputIterator I, class Size}@>
+    @\added{requires Destructible<value_type_t<I>{>}() \&\&}@
+             @\added{__ReferenceTo<I, value_type_t<I>{>}()}@
   @\changed{ForwardIterator}{I}@ destroy_n(@\changed{ForwardIterator}{I}@ first, @\changed{Size}{difference_type_t<I>}@ n) noexcept;
-}@\added{\}\}\}}@
 \end{codeblock}
 
 \pnum
 \effects Equivalent to:
 \begin{codeblock}
-        for (; n > 0; --n, ++first)
-          destroy_at(addressof(*first));
-        return first;
+        @\added{return destroy(make_counted_iterator(first, n), default_sentinel{}).base();}@
 \end{codeblock}
