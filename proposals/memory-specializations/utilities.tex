@@ -53,6 +53,11 @@ concept bool @\xname{InputReference}@() { // \expos
     Same<remove_cv_t<remove_reference_t<reference_t<I>>>, value_type_t<I>>();
 }
 
+template <class T>
+concept boo @\xname{NoThrowForwardIterator}@ { // \expos
+   return ForwardIterator<T>();
+}
+
 // \ref{specialized.algorithms} specialized algorithms:
 template <ForwardIterator I, Sentinel<I> S>
   requires DefaultConstructible<value_type_t<I>>() &&
@@ -143,9 +148,34 @@ template <InputIterator I>
 
 \setcounter{subsection}{9}
 \rSec2[specialized.algorithms]{Specialized algorithms}
-This section assumes the definition of a \tcode{NoThrowForwardIterator} concept, which shall be described in a sibling
-proposal as an addition to \tcode{<experimental/ranges/iterator>}.
+\setcounter{Paras}{0}
+\pnum
+Throughout this sub-clause, the names of template parameters are used to express type requirements.
+{\color{remclr}
+\begin{itemize}
+\item If an algorithm's template parameter is named InputIterator, the template argument shall satisfy the
+requirements of an input iterator ~(\ref{input.iterators}).
 
+\item If an algorithm's template parameter is named ForwardIterator, the template argument shall satisfy the
+requirements of a forward iterator ~(\ref{forward.iterators}), and is required to have the property that no exceptions
+are thrown from increment, assignment, comparison, or indirection through valid iterators.
+\end{itemize}
+} %% \color{remclr}
+
+{\color{addclr}
+\setcounter{subparagraph}{0}
+\begin{itemize}
+\item This section defines an expositional concept, \tcode{\xname{NoThrowForwardIterator}}, which requires all
+conforming types to have the property that no exceptions are thrown from increment, assignment, comparison, or
+indirection through valid iterators.
+
+\enternote
+The distinction between \tcode{ForwardIterator} and \tcode{\xname{NoThrowForwardIterator}} is purely semantic.
+\exitnote
+\end{itemize}
+} %% \color{addclr}
+
+Unless otherwise specified, if an exception is thrown in the following algorithms there are no effects.
 \rSec3[uninitialized.construct.default]{\tcode{uninitialized_default_construct}}
 {\color{remclr}
 \begin{codeblock}
@@ -376,7 +406,7 @@ template <InputIterator I, NoThrowForwardIterator O>
         return {t.in().base(), t.out()};
 \end{codeblock}
 
-\requires \newtxt{\tcode{result} shall not be in the range \range{first}{next(first, n)}.}
+\requires \tcode{result} shall not be in the range \range{first}{next(first, n)}.
 } %% \color{addclr}
 
 \rSec3[uninitialized.move]{\tcode{uninitialized_move}}
@@ -474,7 +504,7 @@ template <InputIterator I, NoThrowForwardIterator O>
 are left in a valid\added{,} but unspecified state.
 
 \pnum
-\newtxt{\requires \tcode{result} shall not be in the range \range{first}{std::next(first, n)}.}
+\requires \tcode{result} shall not be in the range \range{first}{std::next(first, n)}.
 
 \rSec3[uninitialized.fill]{\tcode{uninitialized_fill}}
 {\color{remclr}
