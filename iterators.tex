@@ -1,5 +1,4 @@
 %!TEX root = std.tex
-\setcounter{chapter}{23}
 \rSec0[iterators]{Iterators library}
 
 \rSec1[iterators.general]{General}
@@ -20,6 +19,7 @@ predefined iterators,
 and stream iterators,
 as summarized in Table~\ref{tab:iterators.lib.summary}.
 
+\setcounter{table}{2}
 \begin{libsumtab}{Iterators library summary}{tab:iterators.lib.summary}
 \ref{iterator.requirements} & Requirements        &                           \\ \rowsep
 \ref{iterator.primitives} & Iterator primitives   &   \tcode{<\added{experimental/ranges/}iterator>}      \\
@@ -388,10 +388,6 @@ requirements of any library component that is using it. The operations listed
 in those requirements must work as specified whether the object has been moved
 from or not.\exitnote
 
-\ednote{With the addition of proxy iterator support, ``If \tcode{E} is an xvalue'' no longer
-captures the proper semantics, since a proxy for an rvalue will in all likelihood be an xvalue. This
-must be revisited.}
-
 \pnum
 \enternote
 The only valid use of an \tcode{operator*} is on the left side of the assignment statement.
@@ -432,9 +428,6 @@ are valid, \tcode{i} is said to be \techterm{incrementable}. Then
 \item If \tcode{i} is incrementable, then \tcode{\&++i == \&i}.
 \end{itemize}
 
-\ednote{Copied almost verbatim from the \tcode{InputIterator} description. This wording is removed
-there:}
-
 \pnum
 \enternote For \tcode{WeaklyIncrementable} types, \tcode{a} equals \tcode{b} does not imply that \tcode{++a}
 equals \tcode{++b}. (Equality does not guarantee the substitution property or referential
@@ -474,17 +467,12 @@ if and only if
 \item If \tcode{bool(a == b)} then \tcode{bool((a++, a) == ++b)}.
 \end{itemize}
 
-\ednote{Copied in part from the \tcode{ForwardIterator} description. This wording is removed
-there.}
-
 \pnum
 \enternote The requirement that \tcode{a} equals \tcode{b} implies \tcode{++a} equals \tcode{++b}
 (which is not true for weakly incrementable types) allows the use of multi-pass one-directional
 algorithms with types that satisfy \tcode{Incrementable}.\exitnote
 
 \end{addedblock}
-
-\ednote{Section ``Iterator'' renamed to ``Concept Iterator'' below:}
 
 \rSec2[iterators.iterator]{Concept \tcode{Iterator}}
 
@@ -499,8 +487,6 @@ read~(\ref{iterators.input}) or write~(\ref{iterators.output}) values, or
 to provide a richer set of iterator movements~(\ref{iterators.forward},
 \ref{iterators.bidirectional}, \ref{iterators.random.access}).)
 
-\ednote{Remove para 2 and Table 106.}
-
 \begin{addedblock}
 \indexlibrary{\idxcode{Iterator}}%
 \begin{codeblock}
@@ -508,7 +494,7 @@ to provide a richer set of iterator movements~(\ref{iterators.forward},
   concept bool Iterator() {
     return WeaklyIncrementable<I>() &&
       requires(I i) {
-        { *i } -> auto&&; // pre: i is dereferenceable
+        { *i } -> auto&&; // Requires: i is dereferenceable
       };
   }
 \end{codeblock}
@@ -616,11 +602,7 @@ counted iterators and their sentinels~(\ref{counted.iterator}).\exitnote
 
 \end{addedblock}
 
-\ednote{Section ``Input iterators'' renamed to ``Concept InputIterator'' below:}
-
 \rSec2[iterators.input]{Concept \tcode{InputIterator}}
-
-\ednote{Replace the entire content of the section with:}
 
 \begin{addedblock}
 \pnum
@@ -648,11 +630,7 @@ defines requirements for a type whose referenced values can be read (from the re
 \end{codeblock}
 \end{addedblock}
 
-\ednote{Section ``Output iterators'' renamed to ``Concept OutputIterator'' below:}
-
 \rSec2[iterators.output]{Concept \tcode{OutputIterator}}
-
-\ednote{Remove para 1 and Table 108}
 
 \begin{addedblock}
 \pnum
@@ -760,8 +738,6 @@ a mutable iterator
 allow\removed{s} the use of multi-pass one-directional algorithms with forward iterators.
 \exitnote
 
-\ednote{Remove Table 109}
-
 \pnum
 \removed{If \tcode{a} and \tcode{b} are equal, then either \tcode{a} and \tcode{b}
 are both dereferenceable
@@ -800,8 +776,6 @@ and adds the ability to move an iterator backward as well as forward.
   }
 \end{codeblock}
 \end{addedblock}
-
-\ednote{Remove table 110}
 
 \begin{addedblock}
 \pnum
@@ -866,8 +840,6 @@ notation via subscripting.
   }
 \end{codeblock}
 \end{addedblock}
-
-\ednote{Remove Table 111}
 
 \begin{addedblock}
 \pnum
@@ -1736,8 +1708,7 @@ namespace std {
 Any entities declared or defined in namespace \tcode{std} in header \tcode{<iterator>}
 that are not already defined in namespace \tcode{std::experimental::ranges} in header
 \tcode{<experimental/ranges/iterator>} are imported with
-\grammarterm{using-declaration}{s}~(\cxxref{namespace.udecl}). \ednote{There are no such
-entities, but there may be in the future.}
+\grammarterm{using-declaration}{s}~(\cxxref{namespace.udecl}).
 \end{addedblock}
 
 \rSec1[iterator.primitives]{Iterator primitives}
@@ -2002,12 +1973,6 @@ namespace std {
   template <class T>
     using difference_type_t = typename difference_type<T>::type;
 \end{codeblock}
-
-\ednote{REVIEW: The \tcode{difference_type} of unsigned \tcode{Integral} types
-is not large enough to cover the entire range. The Palo Alto report used
-a separate type trait for \tcode{WeaklyIncrementable}: \tcode{DistanceType}.
-\tcode{difference_type_t} is only used for
-\tcode{RandomAccessIterator}s. Cue discussion about the pros and cons of the two approaches.}
 
 \pnum
 Users may specialize \tcode{difference_type} on user-defined types.
@@ -3345,7 +3310,6 @@ functions making the insert iterators out of a container.
 \rSec3[back.insert.iterator]{Class template \tcode{back_insert_iterator}}
 
 \indexlibrary{\idxcode{back_insert_iterator}}%
-\ednote{REVIEW: Re-specify this in terms of a Container concept? Or Range? Or leave it?}
 \begin{codeblock}
 namespace std { @\added{namespace experimental \{ namespace ranges \{ inline namespace v1 \{}@
   template <class Container>
