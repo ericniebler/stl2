@@ -1,6 +1,5 @@
 %!TEX root = std.tex
 
-\begin{addedblock}
 \rSec0[concepts.lib]{Concepts library}
 
 \rSec1[concepts.lib.general]{General}
@@ -82,9 +81,9 @@ validates the syntax of these implicit expression variants is unspecified.
 template <class T>
 concept bool C() {
   return requires(T a, T b, const T c, const T d) {
-    c == d;       // \#1
-    a = std::move(b);  // \#2
-    a = c;        // \#3
+    c == d;           // \#1
+    a = std::move(b); // \#2
+    a = c;            // \#3
   };
 }
 \end{codeblock}
@@ -189,7 +188,6 @@ concept bool ConvertibleTo() {
 if and only if \tcode{is_convertible<T, U>::value} is \tcode{true}.
 \end{itemdescr}
 
-{\color{newclr}
 \rSec2[concepts.lib.corelang.commonref]{Concept \tcode{CommonReference}}
 
 \pnum
@@ -223,9 +221,9 @@ function whose return type is \tcode{T}, and let \tcode{u} be a function
 whose return type is \tcode{U}. \tcode{CommonReference<T, U>()} is satisfied
 if and only if:
 \begin{itemize}
-\item \tcode{C(t())} equals \tcode{C(t())} if and only if \tcode{t} is an
+\item \tcode{C(t())} equals \tcode{C(t())} if and only if \tcode{t()} is an
   equality preserving expression~(\ref{concepts.lib.general.equality}).
-\item \tcode{C(u())} equals \tcode{C(u())} if and only if \tcode{u} is an
+\item \tcode{C(u())} equals \tcode{C(u())} if and only if \tcode{u()} is an
   equality preserving expression.
 \end{itemize}
 
@@ -233,7 +231,6 @@ if and only if:
 \enternote Users can customize the behavior of \tcode{CommonReference} by specializing the
 \tcode{basic_common_reference} class template~(\cxxref{meta.trans.other}).\exitnote
 \end{itemdescr}
-} % \color{newclr}
 
 \rSec2[concepts.lib.corelang.common]{Concept \tcode{Common}}
 
@@ -247,40 +244,37 @@ it could be a different type. \tcode{C} may not be unique.\exitnote
 \begin{itemdecl}
 template <class T, class U>
 concept bool Common() {
-  return @\newtxt{CommonReference<const T\&, const U\&>() \&\&}@
-    requires(T @\newtxt{(\&}@t@\newtxt{)()}@, U @\newtxt{(\&}@u@\newtxt{)()}@) {
+  return CommonReference<const T&, const U&>() &&
+    requires(T (&t)(), U (&u)()) {
       typename common_type_t<T, U>;
       typename common_type_t<U, T>;
       requires Same<common_type_t<U, T>, common_type_t<T, U>>();
-      common_type_t<T, U>(@\oldtxt{std::forward<T>(t)}\newtxt{t()}@);
-      common_type_t<T, U>(@\oldtxt{std::forward<U>(u)}\newtxt{u()}@);
-      @\newtxt{requires CommonReference<add_lvalue_reference_t<common_type_t<T, U>{>},}@
-                               @\newtxt{common_reference_t<add_lvalue_reference_t<const T>,}@
-                                                  @\newtxt{add_lvalue_reference_t<const U>{>}>();}@
+      common_type_t<T, U>(t());
+      common_type_t<T, U>(u());
+      requires CommonReference<add_lvalue_reference_t<common_type_t<T, U>>,
+                               common_reference_t<add_lvalue_reference_t<const T>,
+                                                  add_lvalue_reference_t<const U>>>();
     };
 }
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-Let \tcode{C} be \tcode{common_type_t<T, U>}. Let \oldtxt{\tcode{t1} and \tcode{t2} be objects
-of type \tcode{T}, and \tcode{u1} and \tcode{u2} be objects of type \tcode{U}}
-\newtxt{\tcode{t} be a function whose return type is \tcode{T}, and let \tcode{u} be a function
-whose return type is \tcode{U}}. \tcode{Common<T, U>()} is satisfied if and only if:
+Let \tcode{C} be \tcode{common_type_t<T, U>}. Let
+\tcode{t} be a function whose return type is \tcode{T}, and let \tcode{u} be a function
+whose return type is \tcode{U}. \tcode{Common<T, U>()} is satisfied if and only if:
 \begin{itemize}
-\item \tcode{C(\oldtxt{t1}\newtxt{t()})} equals \tcode{C(\oldtxt{t2}\newtxt{t()})} if and only if
-  \oldtxt{\tcode{t1} equals \tcode{t2}}\newtxt{\tcode{t} is an equality preserving
-  expression~(\ref{concepts.lib.general.equality})}.
-\item \tcode{C(\oldtxt{u1}\newtxt{u()})} equals \tcode{C(\oldtxt{u2}\newtxt{u()})} if and only if
-  \oldtxt{\tcode{u1} equals \tcode{u2}}\newtxt{\tcode{u} is an equality preserving
-  expression~(\ref{concepts.lib.general.equality})}.
+\item \tcode{C(t())} equals \tcode{C(t())} if and only if
+  \tcode{t()} is an equality preserving
+  expression~(\ref{concepts.lib.general.equality}).
+\item \tcode{C(u())} equals \tcode{C(u())} if and only if
+  \tcode{u()} is an equality preserving
+  expression~(\ref{concepts.lib.general.equality}).
 \end{itemize}
 
 \pnum
-\enternote \oldtxt{Users are free to specialize \tcode{common_type} when at least one parameter is
-a user-defined type. Those specializations are considered by the \tcode{Common} concept.}
-\newtxt{Users can customize the behavior of \tcode{Common} by specializing the \tcode{common_type}
-class template~(\cxxref{meta.trans.other}).}\exitnote
+\enternote Users can customize the behavior of \tcode{Common} by specializing the \tcode{common_type}
+class template~(\cxxref{meta.trans.other}).\exitnote
 
 \end{itemdescr}
 
@@ -336,7 +330,7 @@ for example, \tcode{char}.
 \begin{itemdecl}
 template <class T, class U>
 concept bool Assignable() {
-  return Common@\newtxt{Reference}@<@\newtxt{const }@T@\newtxt{\&}@, @\newtxt{const }@U@\newtxt{\&}@>() && requires(T&& t, U&& u) {
+  return CommonReference<const T&, const U&>() && requires(T&& t, U&& u) {
     { std::forward<T>(t) = std::forward<U>(u) } -> Same<T&>;
   };
 }
@@ -349,14 +343,14 @@ type \tcode{remove_reference_t<U>}. If \tcode{U} is an lvalue reference
 type, let \tcode{v} be an lvalue of type \tcode{R};
 otherwise, let \tcode{v} be an rvalue of type \tcode{R}.
 Let \tcode{uu} be a distinct object of type \tcode{R} such that
-\tcode{uu} \oldtxt{\tcode{==}}\newtxt{is equal to} \tcode{v}.
+\tcode{uu} is equal to \tcode{v}.
 Then \tcode{Assignable<T, U>()} is satisfied if and only if
 
 \begin{itemize}
 \item \tcode{std::addressof(t = v) == std::addressof(t)}.
 \item After evaluating \tcode{t = v}:
 \begin{itemize}
-\item \tcode{t} \oldtxt{\tcode{==}}\newtxt{is equal to} \tcode{uu}.
+\item \tcode{t} is equal to \tcode{uu}.
 \item If \tcode{v} is a non-\tcode{const} rvalue, its resulting
 state is unspecified. \enternote \tcode{v} must still meet the requirements
 of the library component that is using it. The operations listed in those
@@ -381,7 +375,7 @@ template <class T, class U>
 concept bool Swappable() {
   return Swappable<T>() &&
     Swappable<U>() &&
-    Common@\newtxt{Reference}@<@\newtxt{const }@T@\newtxt{\&}@, @\newtxt{const }@U@\newtxt{\&}@>() &&
+    CommonReference<const T&, const U&>() &&
     requires(T&& t, U&& u) {
       ranges::swap(std::forward<T>(t), std::forward<U>(u));
       ranges::swap(std::forward<U>(u), std::forward<T>(t));
@@ -570,11 +564,11 @@ implies that \tcode{==} is reflexive, transitive, and symmetric.\exitnote
 \begin{itemdecl}
 template <class T, class U>
 concept bool EqualityComparable() {
-  return Common@\newtxt{Reference}@<@\newtxt{const }@T@\newtxt{\&}@, @\newtxt{const }@U@\newtxt{\&}@>() &&
+  return CommonReference<const T&, const U&>() &&
     EqualityComparable<T>() &&
     EqualityComparable<U>() &&
     EqualityComparable<
-      @\newtxt{remove_cv_t<remove_reference_t<}@common_@\oldtxt{type}\newtxt{reference}@_t<@\newtxt{const }@T@\newtxt{\&}@, @\newtxt{const }@U@\newtxt{\&}@>@\newtxt{>{}>}@>() &&
+      remove_cv_t<remove_reference_t<common_reference_t<const T&, const U&>>>>() &&
     WeaklyEqualityComparable<T, U>();
 }
 \end{itemdecl}
@@ -582,7 +576,7 @@ concept bool EqualityComparable() {
 \begin{itemdescr}
 \pnum
 Let \tcode{a} be an object of type \tcode{T}, \tcode{b} be an object of type \tcode{U}, and \tcode{C} be
-\tcode{common_\oldtxt{type}\newtxt{reference}_t<\newtxt{const }T\newtxt{\&}, \newtxt{const }U\newtxt{\&}>}.
+\tcode{common_reference_t<const T\&, const U\&>}.
 Then \tcode{EqualityComparable<T, U>()}
 is satisfied if and only if:
 
@@ -627,11 +621,11 @@ Then \tcode{StrictTotallyOrdered<T>()} is satisfied if and only if
 \begin{itemdecl}
 template <class T, class U>
 concept bool StrictTotallyOrdered() {
-  return Common@\newtxt{Reference}@<@\newtxt{const }@T@\newtxt{\&}@, @\newtxt{const }@U@\newtxt{\&}@>() &&
+  return CommonReference<const T&, const U&>() &&
     StrictTotallyOrdered<T>() &&
     StrictTotallyOrdered<U>() &&
     StrictTotallyOrdered<
-      @\newtxt{remove_cv_t<remove_reference_t<}@common_@\oldtxt{type}\newtxt{reference}@_t<@\newtxt{const }@T@\newtxt{\&}@, @\newtxt{const }@U@\newtxt{\&}@>@\newtxt{>{}>}@>() &&
+      remove_cv_t<remove_reference_t<common_reference_t<const T&, const U&>>>>() &&
     EqualityComparable<T, U>() &&
     requires(const T t, const U u) {
       { t < u } -> Boolean;
@@ -650,7 +644,7 @@ concept bool StrictTotallyOrdered() {
 \pnum
 Let \tcode{t} be an object of type T, \tcode{u} be an object
 of type \tcode{U}, and \tcode{C} be
-\tcode{common_\oldtxt{type}\newtxt{reference}_t<\newtxt{const }T\newtxt{\&}, \newtxt{const }U\newtxt{\&}>}.
+\tcode{common_reference_t<const T\&, const U\&>}.
 Then \tcode{StrictTotallyOrdered<T, U>()} is satisfied if and only if
 
 \begin{itemize}
@@ -957,9 +951,9 @@ template <class R, class T, class U>
 concept bool Relation() {
   return Relation<R, T>() &&
     Relation<R, U>() &&
-    Common@\newtxt{Reference}@<@\newtxt{const }@T@\newtxt{\&}@, @\newtxt{const }@U@\newtxt{\&}@>() &&
+    CommonReference<const T&, const U&>() &&
     Relation<R,
-      common_@\oldtxt{type}\newtxt{reference}@_t<@\newtxt{const }@T@\newtxt{\&}@, @\newtxt{const }@U@\newtxt{\&}@>>() &&
+      common_reference_t<const T&, const U&>>() &&
     Predicate<R, T, U>() &&
     Predicate<R, U, T>();
 }
@@ -970,7 +964,7 @@ concept bool Relation() {
 Let \tcode{r} be any object of type \tcode{R}, \tcode{a} be any
 object of type \tcode{T}, \tcode{b} be any
 object of type \tcode{U}, and \tcode{C} be
-\tcode{common_\oldtxt{type}\newtxt{reference}_t<\newtxt{const }T\newtxt{\&}, \newtxt{const }U\newtxt{\&}>}.
+\tcode{common_reference_t<const T\&, const U\&>}.
 Then \tcode{Relation<R, T, U>()} is satisfied if and only if
 
 \begin{itemize}
@@ -999,7 +993,6 @@ concept bool StrictWeakOrder() {
 A \tcode{Relation} satisfies \tcode{StrictWeakOrder} if and only if
 it imposes a \techterm{strict weak ordering} on its arguments.
 
-{\color{black}
 \pnum
 The term
 \techterm{strict}
@@ -1046,6 +1039,4 @@ The induced relation is a strict total ordering.
 \exitnote
 \end{itemize}
 \end{itemize}
-}
 \end{itemdescr}
-\end{addedblock}
