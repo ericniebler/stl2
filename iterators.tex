@@ -3635,7 +3635,6 @@ template <InputIterator I>
 \returns \tcode{move_iterator<I>(i)}.
 \end{itemdescr}
 
-\begin{addedblock}
 \rSec3[move.sentinel]{Class template \tcode{move_sentinel}}
 
 \indexlibrary{\idxcode{move_sentinel}}%
@@ -3696,7 +3695,7 @@ constexpr move_sentinel();
 is a \tcode{constexpr} constructor.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{move_iterator}!constructor}%
+\indexlibrary{\idxcode{move_sentinel}!constructor}%
 \begin{itemdecl}
 explicit move_sentinel(S s);
 \end{itemdecl}
@@ -3864,7 +3863,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   private:
     bool is_sentinel; // \expos
     I iter;           // \expos
-    S sentinel;           // \expos
+    S sentinel;       // \expos
   };
 
   template <Readable I, class S>
@@ -4986,7 +4985,6 @@ template <Iterator I>
 \returns
 \tcode{true}.
 \end{itemdescr}
-\end{addedblock}
 
 \rSec1[iterators.stream]{Stream iterators}
 
@@ -5058,17 +5056,16 @@ equal to a non-end-of-stream iterator.
 Two non-end-of-stream iterators are equal when they are constructed from the same stream.
 
 \begin{codeblock}
-namespace std { @\added{namespace experimental \{ namespace ranges \{ inline namespace v1 \{}@
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
   template <class T, class charT = char, class traits = char_traits<charT>,
       class Distance = ptrdiff_t>
-  class istream_iterator@\removed{:}@
-    @\removed{public iterator<input_iterator_tag, T, Distance, const T*, const T\&>}@ {
+  class istream_iterator {
   public:
-    @\added{typedef input_iterator_tag iterator_category;}@
-    @\added{typedef Distance difference_type;}@
-    @\added{typedef T value_type;}@
-    @\added{typedef const T\& reference;}@
-    @\added{typedef const T* pointer;}@
+    typedef input_iterator_tag iterator_category;
+    typedef Distance difference_type;
+    typedef T value_type;
+    typedef const T& reference;
+    typedef const T* pointer;
     typedef charT char_type;
     typedef traits traits_type;
     typedef basic_istream<charT, traits> istream_type;
@@ -5080,8 +5077,8 @@ namespace std { @\added{namespace experimental \{ namespace ranges \{ inline nam
 
     const T& operator*() const;
     const T* operator->() const;
-    istream_iterator@\removed{<T, charT, traits, Distance>}@& operator++();
-    istream_iterator@\removed{<T, charT, traits, Distance>}@  operator++(int);
+    istream_iterator& operator++();
+    istream_iterator  operator++(int);
   private:
     basic_istream<charT, traits>* in_stream; // \expos
     T value;                                 // \expos
@@ -5090,22 +5087,22 @@ namespace std { @\added{namespace experimental \{ namespace ranges \{ inline nam
   template <class T, class charT, class traits, class Distance>
     bool operator==(const istream_iterator<T, charT, traits, Distance>& x,
             const istream_iterator<T, charT, traits, Distance>& y);
-  @\added{template <class T, class charT, class traits, class Distance>}@
-    @\added{bool operator==(default_sentinel x,}@
-            @\added{const istream_iterator<T, charT, traits, Distance>\& y);}@
-  @\added{template <class T, class charT, class traits, class Distance>}@
-    @\added{bool operator==(const istream_iterator<T, charT, traits, Distance>\& x,}@
-            @\added{default_sentinel y);}@
+  template <class T, class charT, class traits, class Distance>
+    bool operator==(default_sentinel x,
+            const istream_iterator<T, charT, traits, Distance>& y);
+  template <class T, class charT, class traits, class Distance>
+    bool operator==(const istream_iterator<T, charT, traits, Distance>& x,
+            default_sentinel y);
   template <class T, class charT, class traits, class Distance>
     bool operator!=(const istream_iterator<T, charT, traits, Distance>& x,
             const istream_iterator<T, charT, traits, Distance>& y);
-  @\added{template <class T, class charT, class traits, class Distance>}@
-    @\added{bool operator!=(default_sentinel x,}@
-            @\added{const istream_iterator<T, charT, traits, Distance>\& y);}@
-  @\added{template <class T, class charT, class traits, class Distance>}@
-    @\added{bool operator!=(const istream_iterator<T, charT, traits, Distance>\& x,}@
-            @\added{default_sentinel y);}@
-}@\added{\}\}\}\}}@
+  template <class T, class charT, class traits, class Distance>
+    bool operator!=(default_sentinel x,
+            const istream_iterator<T, charT, traits, Distance>& y);
+  template <class T, class charT, class traits, class Distance>
+    bool operator!=(const istream_iterator<T, charT, traits, Distance>& x,
+            default_sentinel y);
+}}}}
 \end{codeblock}
 
 \rSec3[istream.iterator.cons]{\tcode{istream_iterator} constructors and destructor}
@@ -5119,11 +5116,11 @@ namespace std { @\added{namespace experimental \{ namespace ranges \{ inline nam
 \begin{itemdescr}
 \pnum
 \effects
-Constructs the end-of-stream iterator. If \tcode{T} is a literal type, then \changed{this}{these}
-constructor\added{s} shall be\removed{ a} \tcode{constexpr} constructor\added{s}.
+Constructs the end-of-stream iterator. If \tcode{T} is a literal type, then these
+constructors shall be \tcode{constexpr} constructors.
 
 \pnum
-\postcondition \tcode{in_stream == \changed{0}{nullptr}}.
+\postcondition \tcode{in_stream == nullptr}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{istream_iterator}!constructor}%
@@ -5189,18 +5186,18 @@ const T* operator->() const;
 \begin{itemdescr}
 \pnum
 \effects Equivalent to:
-\changed{\tcode{\&(operator*())}}{\tcode{return std::addressof(operator*())}}.
+\tcode{return std::addressof(operator*())}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{operator++}!\idxcode{istream_iterator}}%
 \indexlibrary{\idxcode{istream_iterator}!\idxcode{operator++}}%
 \begin{itemdecl}
-istream_iterator@\removed{<T, charT, traits, Distance>}@& operator++();
+istream_iterator& operator++();
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{in_stream != \changed{0}{nullptr}}.
+\requires \tcode{in_stream != nullptr}.
 
 \pnum
 \effects
@@ -5214,19 +5211,19 @@ istream_iterator@\removed{<T, charT, traits, Distance>}@& operator++();
 \indexlibrary{\idxcode{operator++}!\idxcode{istream_iterator}}%
 \indexlibrary{\idxcode{istream_iterator}!\idxcode{operator++}}%
 \begin{itemdecl}
-istream_iterator@\removed{<T, charT, traits, Distance>}@ operator++(int);
+istream_iterator operator++(int);
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{in_stream != \changed{0}{nullptr}}.
+\requires \tcode{in_stream != nullptr}.
 
 \pnum
 \effects
 \begin{codeblock}
-istream_iterator@\removed{<T, charT, traits, Distance>}@ tmp = *this;
+istream_iterator tmp = *this;
 *in_stream >> value;
-return @\removed{(}@tmp@\removed{)}@;
+return tmp;
 \end{codeblock}
 \end{itemdescr}
 
@@ -5245,7 +5242,6 @@ template <class T, class charT, class traits, class Distance>
 \indexlibrary{\idxcode{istream_iterator}!\idxcode{operator==}}
 \end{itemdescr}
 
-\begin{addedblock}
 \begin{itemdecl}
 template <class T, class charT, class traits, class Distance>
   bool operator==(default_sentinel x,
@@ -5269,7 +5265,6 @@ template <class T, class charT, class traits, class Distance>
 \returns
 \tcode{x.in_stream == nullptr}.%
 \end{itemdescr}
-\end{addedblock}
 
 \indexlibrary{\idxcode{operator"!=}!\idxcode{istream_iterator}}%
 \indexlibrary{\idxcode{istream_iterator}!\idxcode{operator"!=}}%
@@ -5277,12 +5272,12 @@ template <class T, class charT, class traits, class Distance>
 template <class T, class charT, class traits, class Distance>
   bool operator!=(const istream_iterator<T, charT, traits, Distance>& x,
                   const istream_iterator<T, charT, traits, Distance>& y);
-@\added{template <class T, class charT, class traits, class Distance>}@
-  @\added{bool operator!=(default_sentinel x,}@
-                  @\added{const istream_iterator<T, charT, traits, Distance>\& y);}@
-@\added{template <class T, class charT, class traits, class Distance>}@
-  @\added{bool operator!=(const istream_iterator<T, charT, traits, Distance>\& x,}@
-                  @\added{default_sentinel y);}@
+template <class T, class charT, class traits, class Distance>
+  bool operator!=(default_sentinel x,
+                  const istream_iterator<T, charT, traits, Distance>& y);
+template <class T, class charT, class traits, class Distance>
+  bool operator!=(const istream_iterator<T, charT, traits, Distance>& x,
+                  default_sentinel y);
 \end{itemdecl}
 
 \indexlibrary{\idxcode{istream_iterator}!\idxcode{operator"!=}}%
@@ -5320,35 +5315,33 @@ while (first != last)
 is defined as:
 
 \begin{codeblock}
-namespace std { @\added{namespace experimental \{ namespace ranges \{ inline namespace v1 \{}@
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
   template <class T, class charT = char, class traits = char_traits<charT>>
-  class ostream_iterator@\removed{:}@
-    @\removed{public iterator<output_iterator_tag, void, void, void, void>}@ {
+  class ostream_iterator {
   public:
-    @\added{typedef ptrdiff_t difference_type;}@
+    typedef ptrdiff_t difference_type;
     typedef charT char_type;
     typedef traits traits_type;
     typedef basic_ostream<charT, traits> ostream_type;
-    @\added{constexpr ostream_iterator() noexcept;}@
-    ostream_iterator(ostream_type& s) @\added{noexcept}@;
-    ostream_iterator(ostream_type& s, const charT* delimiter) @\added{noexcept}@;
-    ostream_iterator(const ostream_iterator@\removed{<T, charT, traits>}@& x) @\added{noexcept}@;
+    constexpr ostream_iterator() noexcept;
+    ostream_iterator(ostream_type& s) noexcept;
+    ostream_iterator(ostream_type& s, const charT* delimiter) noexcept;
+    ostream_iterator(const ostream_iterator& x) noexcept;
    ~ostream_iterator();
-    ostream_iterator@\removed{<T, charT, traits>}@& operator=(const T& value);
+    ostream_iterator& operator=(const T& value);
 
-    ostream_iterator@\removed{<T, charT, traits>}@& operator*();
-    ostream_iterator@\removed{<T, charT, traits>}@& operator++();
-    ostream_iterator@\removed{<T, charT, traits>\&}@ operator++(int);
+    ostream_iterator& operator*();
+    ostream_iterator& operator++();
+    ostream_iterator operator++(int);
   private:
     basic_ostream<charT, traits>* out_stream;  // \expos
     const charT* delim;                        // \expos
   };
-}@\added{\}\}\}}@
+}}}}
 \end{codeblock}
 
 \rSec3[ostream.iterator.cons.des]{\tcode{ostream_iterator} constructors and destructor}
 
-\begin{addedblock}
 \indexlibrary{\idxcode{ostream_iterator}!constructor}%
 \begin{itemdecl}
 constexpr ostream_iterator() noexcept;
@@ -5357,24 +5350,23 @@ constexpr ostream_iterator() noexcept;
 \begin{itemdescr}
 \pnum
 \effects
-Initializes \tcode{out_stream} and \tcode{delim} with \removed{null}\added{\tcode{nullptr}}.
+Initializes \tcode{out_stream} and \tcode{delim} with \tcode{nullptr}.
 \end{itemdescr}
-\end{addedblock}
 
 \indexlibrary{\idxcode{ostream_iterator}!constructor}%
 \begin{itemdecl}
-ostream_iterator(ostream_type& s) @\added{noexcept}@;
+ostream_iterator(ostream_type& s) noexcept;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
 \effects
-Initializes \tcode{out_stream} with \tcode{\&s} and \tcode{delim} with \removed{null}\added{\tcode{nullptr}}.
+Initializes \tcode{out_stream} with \tcode{\&s} and \tcode{delim} with \tcode{nullptr}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{ostream_iterator}!constructor}%
 \begin{itemdecl}
-ostream_iterator(ostream_type& s, const charT* delimiter) @\added{noexcept}@;
+ostream_iterator(ostream_type& s, const charT* delimiter) noexcept;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -5385,7 +5377,7 @@ Initializes \tcode{out_stream} with \tcode{\&s} and \tcode{delim} with \tcode{de
 
 \indexlibrary{\idxcode{ostream_iterator}!constructor}%
 \begin{itemdecl}
-ostream_iterator(const ostream_iterator& x) @\added{noexcept}@;
+ostream_iterator(const ostream_iterator& x) noexcept;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -5418,9 +5410,9 @@ ostream_iterator& operator=(const T& value);
 \effects Equivalent to:
 \begin{codeblock}
 *out_stream << value;
-if(delim != @\changed{0}{nullptr}@)
+if(delim != nullptr)
   *out_stream << delim;
-return @\removed{(}@*this@\removed{)}@;
+return *this;
 \end{codeblock}
 \end{itemdescr}
 
@@ -5440,7 +5432,7 @@ ostream_iterator& operator*();
 \indexlibrary{\idxcode{ostream_iterator}!\idxcode{operator++}}%
 \begin{itemdecl}
 ostream_iterator& operator++();
-ostream_iterator@\removed{\&}@ operator++(int);
+ostream_iterator operator++(int);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -5473,7 +5465,7 @@ iterator value.
 The default constructor
 \tcode{istreambuf_iterator()}
 and the constructor
-\tcode{istreambuf_iterator(\changed{0}{nullptr})}
+\tcode{istreambuf_iterator(nullptr)}
 both construct an end-of-stream iterator object suitable for use
 as an end-of-range.
 All specializations of \tcode{istreambuf_iterator} shall have a trivial copy
@@ -5492,17 +5484,15 @@ It is impossible to assign a character via an input iterator.
 \indexlibrary{\idxcode{istreambuf_iterator}}%
 
 \begin{codeblock}
-namespace std { @\added{namespace experimental \{ namespace ranges \{ inline namespace v1 \{}@
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
   template <class charT, class traits = char_traits<charT>>
-  class istreambuf_iterator
-     @\removed{: public iterator<input_iterator_tag, charT,}@
-                       @\removed{typename traits::off_type, \unspec, charT>}@ {
+  class istreambuf_iterator {
   public:
-    @\added{typedef input_iterator_tag}@             @\added{iterator_category;}@
-    @\added{typedef charT}@                          @\added{value_type;}@
-    @\added{typedef typename traits::off_type}@      @\added{difference_type;}@
-    @\added{typedef charT}@                          @\added{reference;}@
-    @\added{typedef \unspec}@                   @\added{pointer;}@
+    typedef input_iterator_tag             iterator_category;
+    typedef charT                          value_type;
+    typedef typename traits::off_type      difference_type;
+    typedef charT                          reference;
+    typedef @\unspec@                   pointer;
     typedef charT                          char_type;
     typedef traits                         traits_type;
     typedef typename traits::int_type      int_type;
@@ -5520,7 +5510,7 @@ namespace std { @\added{namespace experimental \{ namespace ranges \{ inline nam
     istreambuf_iterator(const proxy& p) noexcept;
     charT operator*() const;
     pointer operator->() const;
-    istreambuf_iterator@\removed{<charT, traits>}@& operator++();
+    istreambuf_iterator& operator++();
     proxy operator++(int);
     bool equal(const istreambuf_iterator& b) const;
   private:
@@ -5530,30 +5520,30 @@ namespace std { @\added{namespace experimental \{ namespace ranges \{ inline nam
   template <class charT, class traits>
     bool operator==(const istreambuf_iterator<charT, traits>& a,
             const istreambuf_iterator<charT, traits>& b);
-  @\added{template <class charT, class traits>}@
-    @\added{bool operator==(default_sentinel a,}@
-            @\added{const istreambuf_iterator<charT, traits>\& b);}@
-  @\added{template <class charT, class traits>}@
-    @\added{bool operator==(const istreambuf_iterator<charT, traits>\& a,}@
-            @\added{default_sentinel b);}@
+  template <class charT, class traits>
+    bool operator==(default_sentinel a,
+            const istreambuf_iterator<charT, traits>& b);
+  template <class charT, class traits>
+    bool operator==(const istreambuf_iterator<charT, traits>& a,
+            default_sentinel b);
   template <class charT, class traits>
     bool operator!=(const istreambuf_iterator<charT, traits>& a,
             const istreambuf_iterator<charT, traits>& b);
-  @\added{template <class charT, class traits>}@
-    @\added{bool operator!=(default_sentinel a,}@
-            @\added{const istreambuf_iterator<charT, traits>\& b);}@
-  @\added{template <class charT, class traits>}@
-    @\added{bool operator!=(const istreambuf_iterator<charT, traits>\& a,}@
-            @\added{default_sentinel b);}@
-}@\added{\}\}\}}@
+  template <class charT, class traits>
+    bool operator!=(default_sentinel a,
+            const istreambuf_iterator<charT, traits>& b);
+  template <class charT, class traits>
+    bool operator!=(const istreambuf_iterator<charT, traits>& a,
+            default_sentinel b);
+}}}}
 \end{codeblock}
 
 \rSec3[istreambuf.iterator::proxy]{Class template \tcode{istreambuf_iterator::proxy}}
 
 \indexlibrary{\idxcode{proxy}!\idxcode{istreambuf_iterator}}%
 \begin{codeblock}
-namespace std { @\added{namespace experimental \{ namespace ranges \{ inline namespace v1 \{}@
-  template <class charT, class traits = char_traits<charT> >
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+  template <class charT, class traits = char_traits<charT>>
   class istreambuf_iterator<charT, traits>::proxy { // \expos
     charT keep_;
     basic_streambuf<charT, traits>* sbuf_;
@@ -5562,7 +5552,7 @@ namespace std { @\added{namespace experimental \{ namespace ranges \{ inline nam
   public:
     charT operator*() { return keep_; }
   };
-}@\added{\}\}\}}@
+}}}}
 \end{codeblock}
 
 \pnum
@@ -5580,7 +5570,6 @@ It keeps the character pointed to by the previous value
 of the iterator for some possible future access to get the character.
 
 \rSec3[istreambuf.iterator.cons]{\tcode{istreambuf_iterator} constructors}
-
 
 \indexlibrary{\idxcode{istreambuf_iterator}!constructor}%
 \begin{itemdecl}
@@ -5655,13 +5644,13 @@ member
 
 \indexlibrary{\idxcode{operator++}!\idxcode{istreambuf_iterator}}%
 \begin{itemdecl}
-istreambuf_iterator@\removed{<charT, traits>}@&
+istreambuf_iterator&
     istreambuf_iterator<charT, traits>::operator++();
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects \added{Equivalent to }
+\effects Equivalent to
 \tcode{sbuf_->sbumpc()}.
 
 \pnum
@@ -5685,7 +5674,7 @@ proxy istreambuf_iterator<charT, traits>::operator++(int);
 
 \indexlibrary{\idxcode{equal}!\idxcode{istreambuf_iterator}}%
 \begin{itemdecl}
-bool equal(const istreambuf_iterator@\removed{<charT, traits>}@& b) const;
+bool equal(const istreambuf_iterator& b) const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -5709,12 +5698,10 @@ template <class charT, class traits>
 
 \begin{itemdescr}
 \pnum
-\removed{\returns}
-\added{\effects Equivalent to:}
+\effects Equivalent to:
 \tcode{return a.equal(b);}
 \end{itemdescr}
 
-\begin{addedblock}
 \begin{itemdecl}
 template <class charT, class traits>
   bool operator==(default_sentinel a,
@@ -5738,7 +5725,6 @@ template <class charT, class traits>
 \effects Equivalent to:
 \tcode{return a.equal(istreambuf_iterator<charT, traits>\{\});}
 \end{itemdescr}
-\end{addedblock}
 
 \rSec3[istreambuf.iterator::op!=]{\tcode{operator!=}}
 
@@ -5747,57 +5733,48 @@ template <class charT, class traits>
 template <class charT, class traits>
   bool operator!=(const istreambuf_iterator<charT, traits>& a,
                   const istreambuf_iterator<charT, traits>& b);
-@\added{template <class charT, class traits>}@
-  @\added{bool operator!=(default_sentinel a,}@
-                  @\added{const istreambuf_iterator<charT, traits>\& b);}@
-@\added{template <class charT, class traits>}@
-  @\added{bool operator!=(const istreambuf_iterator<charT, traits>\& a,}@
-                  @\added{default_sentinel b);}@
+template <class charT, class traits>
+  bool operator!=(default_sentinel a,
+                  const istreambuf_iterator<charT, traits>& b);
+template <class charT, class traits>
+  bool operator!=(const istreambuf_iterator<charT, traits>& a,
+                  default_sentinel b);
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\removed{
-\returns
-\tcode{!a.equal(b)}.
-}
-\added{
 \effects Equivalent to:
 \tcode{return !(a == b);}
-}
 \end{itemdescr}
 
 \rSec2[ostreambuf.iterator]{Class template \tcode{ostreambuf_iterator}}
 
 \indexlibrary{\idxcode{ostreambuf_iterator}}%
 \begin{codeblock}
-namespace std { @\added{namespace experimental \{ namespace ranges \{ inline namespace v1 \{}@
-  template <class charT, class traits = char_traits<charT> >
-  class ostreambuf_iterator @\removed{:}@
-    @\removed{public iterator<output_iterator_tag, void, void, void, void>}@ {
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+  template <class charT, class traits = char_traits<charT>>
+  class ostreambuf_iterator {
   public:
-    @\removed{typedef output_iterator_tag}@            @\removed{iterator_category;}@
-    @\added{typedef ptrdiff_t}@                      @\added{difference_type;}@
+    typedef ptrdiff_t                      difference_type;
     typedef charT                          char_type;
     typedef traits                         traits_type;
     typedef basic_streambuf<charT, traits> streambuf_type;
     typedef basic_ostream<charT, traits>   ostream_type;
 
-  @\removed{public:}@
-    @\added{constexpr ostreambuf_iterator() noexcept;}@
+    constexpr ostreambuf_iterator() noexcept;
     ostreambuf_iterator(ostream_type& s) noexcept;
     ostreambuf_iterator(streambuf_type* s) noexcept;
     ostreambuf_iterator& operator=(charT c);
 
     ostreambuf_iterator& operator*();
     ostreambuf_iterator& operator++();
-    ostreambuf_iterator@\removed{\&}@ operator++(int);
+    ostreambuf_iterator operator++(int);
     bool failed() const noexcept;
 
   private:
     streambuf_type* sbuf_;                // \expos
   };
-}@\added{\}\}\}}@
+}}}}
 \end{codeblock}
 
 \pnum
@@ -5811,7 +5788,6 @@ It is not possible to get a character value out of the output iterator.
 
 \rSec3[ostreambuf.iter.cons]{\tcode{ostreambuf_iterator} constructors}
 
-\begin{addedblock}
 \indexlibrary{\idxcode{ostreambuf_iterator}!constructor}%
 \begin{itemdecl}
 constexpr ostreambuf_iterator() noexcept;
@@ -5820,9 +5796,8 @@ constexpr ostreambuf_iterator() noexcept;
 \begin{itemdescr}
 \pnum
 \effects
-Initializes \tcode{sbuf_} with \removed{null}\added{\tcode{nullptr}}.
+Initializes \tcode{sbuf_} with \tcode{nullptr}.
 \end{itemdescr}
-\end{addedblock}
 
 \indexlibrary{\idxcode{ostreambuf_iterator}!constructor}%
 \begin{itemdecl}
@@ -5832,8 +5807,7 @@ ostreambuf_iterator(ostream_type& s) noexcept;
 \begin{itemdescr}
 \pnum
 \requires
-\tcode{s.rdbuf()\added{ != nullptr}}
-\removed{shall not null pointer}.
+\tcode{s.rdbuf() != nullptr}.
 \end{itemdescr}
 
 \begin{itemdescr}
@@ -5850,8 +5824,7 @@ ostreambuf_iterator(streambuf_type* s) noexcept;
 \begin{itemdescr}
 \pnum
 \requires
-\tcode{s\added{ != nullptr}}
-\removed{shall not be a null pointer}.
+\tcode{s != nullptr}.
 
 \pnum
 \effects
@@ -5862,15 +5835,13 @@ Initializes \tcode{sbuf_} with \tcode{s}.
 
 \indexlibrary{\idxcode{operator=}!\idxcode{ostreambuf_iterator}}%
 \begin{itemdecl}
-ostreambuf_iterator@\removed{<charT, traits>}@&
+ostreambuf_iterator&
   operator=(charT c);
 \end{itemdecl}
 
 \begin{itemdescr}
-\begin{addedblock}
 \pnum
-\requires \tcode{sbuf_ != \changed{0}{nullptr}}.
-\end{addedblock}
+\requires \tcode{sbuf_ != nullptr}.
 
 \pnum
 \effects
@@ -5889,7 +5860,7 @@ otherwise has no effect.
 
 \indexlibrary{\idxcode{operator*}!\idxcode{ostreambuf_iterator}}%
 \begin{itemdecl}
-ostreambuf_iterator@\removed{<charT, traits>}@& operator*();
+ostreambuf_iterator& operator*();
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -5900,8 +5871,8 @@ ostreambuf_iterator@\removed{<charT, traits>}@& operator*();
 
 \indexlibrary{\idxcode{operator++}!\idxcode{ostreambuf_iterator}}%
 \begin{itemdecl}
-ostreambuf_iterator@\removed{<charT, traits>}@& operator++();
-ostreambuf_iterator@\removed{<charT, traits>\&}@ operator++(int);
+ostreambuf_iterator& operator++();
+ostreambuf_iterator operator++(int);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -5916,10 +5887,8 @@ bool failed() const noexcept;
 \end{itemdecl}
 
 \begin{itemdescr}
-\begin{addedblock}
 \pnum
-\requires \tcode{sbuf_ != \changed{0}{nullptr}}.
-\end{addedblock}
+\requires \tcode{sbuf_ != nullptr}.
 
 \pnum
 \returns
