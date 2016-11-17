@@ -19,7 +19,7 @@ as summarized in Table~\ref{tab:concepts.lib.summary}.
 \ref{concepts.lib.corelang}   & Core language concepts         &   \tcode{<experimental/ranges/concepts>}      \\
 \ref{concepts.lib.compare}    & Comparison concepts            &                      \\
 \ref{concepts.lib.object}     & Object concepts                &                      \\
-\ref{concepts.lib.callables}  & Callable concepts              &                      \\
+\ref{concepts.lib.callable}   & Callable concepts              &                      \\
 \end{libsumtab}
 
 \pnum
@@ -868,25 +868,25 @@ concept bool Regular() {
 similarly to built-in types like \tcode{int} and that are comparable with \tcode{==}.\exitnote
 \end{itemdescr}
 
-\rSec1[concepts.lib.callables]{Callable concepts}
+\rSec1[concepts.lib.callable]{Callable concepts}
 
-\rSec2[concepts.lib.callables.general]{In general}
+\rSec2[concepts.lib.callable.general]{In general}
 
 \pnum
 The concepts in this section describe the requirements on function
 objects~(\ref{function.objects}) and their arguments.
 
-\rSec2[concepts.lib.callables.callable]{Concept \tcode{Callable}}
+\rSec2[concepts.lib.callable.invocable]{Concept \tcode{Invocable}}
 
 \pnum
-The \tcode{Callable} concept specifies a relationship between a callable
+The \tcode{Invocable} concept specifies a relationship between a callable
 type~(\cxxref{func.def}) \tcode{F} and a set of argument types \tcode{Args...} which
 can be evaluated by the library function \tcode{invoke}~(\ref{func.invoke}).
 
-\indexlibrary{\idxcode{Callable}}%
+\indexlibrary{\idxcode{Invocable}}%
 \begin{itemdecl}
 template <class F, class... Args>
-concept bool Callable() {
+concept bool Invocable() {
   return CopyConstructible<F>() &&
     requires(F f, Args&&... args) {
       invoke(f, std::forward<Args>(args)...); // not required to be equality preserving
@@ -899,16 +899,16 @@ concept bool Callable() {
 \enternote Since the \tcode{invoke} function call
 expression is not required to be
 equality-preserving~(\ref{concepts.lib.general.equality}), a function that generates random numbers
-may satisfy \tcode{Callable}.\exitnote
+may satisfy \tcode{Invocable}.\exitnote
 \end{itemdescr}
 
-\rSec2[concepts.lib.callables.regularcallable]{Concept \tcode{RegularCallable}}
+\rSec2[concepts.lib.callable.regularinvocable]{Concept \tcode{RegularInvocable}}
 
-\indexlibrary{\idxcode{RegularCallable}}%
+\indexlibrary{\idxcode{RegularInvocable}}%
 \begin{itemdecl}
 template <class F, class... Args>
-concept bool RegularCallable() {
-  return Callable<F, Args...>();
+concept bool RegularInvocable() {
+  return Invocable<F, Args...>();
 }
 \end{itemdecl}
 
@@ -916,29 +916,29 @@ concept bool RegularCallable() {
 \pnum
 The \tcode{invoke} function call expression shall be
 equality-preserving~(\ref{concepts.lib.general.equality}). \enternote This requirement supersedes the
-annotation in the definition of \tcode{Callable}. \exitnote
+annotation in the definition of \tcode{Invocable}. \exitnote
 
 \pnum
 \enternote A random number generator does not satisfy
-\tcode{RegularCallable}.\exitnote
+\tcode{RegularInvocable}.\exitnote
 
 \pnum
-\enternote The distinction between \tcode{Callable} and
-\tcode{RegularCallable} is purely semantic.\exitnote
+\enternote The distinction between \tcode{Invocable} and
+\tcode{RegularInvocable} is purely semantic.\exitnote
 \end{itemdescr}
 
-\rSec2[concepts.lib.callables.predicate]{Concept \tcode{Predicate}}
+\rSec2[concepts.lib.callable.predicate]{Concept \tcode{Predicate}}
 
 \indexlibrary{\idxcode{Predicate}}%
 \begin{itemdecl}
 template <class F, class... Args>
 concept bool Predicate() {
-  return RegularCallable<F, Args...>() &&
+  return RegularInvocable<F, Args...>() &&
     Boolean<result_of_t<F&(Args...)>>();
 }
 \end{itemdecl}
 
-\rSec2[concepts.lib.callables.relation]{Concept \tcode{Relation}}
+\rSec2[concepts.lib.callable.relation]{Concept \tcode{Relation}}
 
 \indexlibrary{\idxcode{Relation}}%
 \begin{itemdecl}
@@ -973,7 +973,7 @@ Then \tcode{Relation<R, T, U>()} is satisfied if and only if
 \end{itemize}
 \end{itemdescr}
 
-\rSec2[concepts.lib.callables.strictweakorder]{Concept \tcode{StrictWeakOrder}}
+\rSec2[concepts.lib.callable.strictweakorder]{Concept \tcode{StrictWeakOrder}}
 
 \indexlibrary{\idxcode{Relation}}%
 \begin{itemdecl}
