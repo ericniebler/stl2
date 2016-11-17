@@ -819,46 +819,24 @@ is undefined.
 \pnum
 The name \tcode{iter_move} denotes a \techterm{customization point
 object}~(\ref{customization.point.object}). The effect of the expression
-\tcode{ranges::iter_move(E)} for some expression \tcode{E} is equivalent to
-\tcode{iter_move(E)}, with overload resolution~(\cxxref{over.match}) performed
-in a context described below.
+\tcode{ranges::iter_move(E)} for some expression \tcode{E} is equivalent to the
+following:
 
-\pnum
-The context in which the expression \tcode{iter_move(E)} is evaluated
 \begin{itemize}
-\item does not include a declaration of \tcode{ranges::iter_move},
-\item includes the lookup set produced by argument-dependent
-  lookup~(\cxxref{basic.lookup.argdep}), and
-\item includes an \tcode{iter_move} function template equivalent to the
-  following:
-\begin{itemdecl}
-// \expos
-template <@\placeholder{dereferenceable}@ I>
-@\seebelow@ iter_move(I&& r) noexcept(@\seebelow@);
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-The return type is \tcode{Ret} where \tcode{Ret} is
-\tcode{remove_reference_t<reference_t<I>{}>\&\&} if
-\tcode{reference_t<I>} is a reference type;
-\tcode{decay_t<reference_t<I>{}>}, otherwise.
-
-\pnum
-The expression in the \tcode{noexcept} is equivalent to:
-\begin{codeblock}
-noexcept(static_cast<Ret>(*r))
-\end{codeblock}
-
-\pnum
-\effects Equivalent to: \tcode{return static_cast<Ret>(*r);}
-\end{itemdescr}
+\item \tcode{iter_move(E)}, if that expression is well-formed when evaluated in
+a context that does not include \tcode{ranges::iter_move} but does include the
+lookup set produced by argument-dependent lookup~(\cxxref{basic.lookup.argdep}).
+\item Otherwise, if the expression \tcode{*E} is well-formed
+\begin{itemize}
+\item If \tcode{*E} is an lvalue, \tcode{std::move(*E)}
+\item Otherwise, \tcode{*E}
+\end{itemize}
+\item Otherwise, \tcode{ranges::iter_move(E)} is ill-formed.
 \end{itemize}
 
 \pnum
-If, for the \tcode{iter_move} function selected by overload resolution,
-\tcode{iter_move(E)} does not equal \tcode{*E}, the program is ill-formed with
-no diagnostic required.
+If \tcode{ranges::iter_move(E)} does not equal \tcode{*E}, the program is
+ill-formed with no diagnostic required.
 
 \rSec3[iterator.custpoints.iter_swap]{\tcode{iter_swap}}
 
@@ -866,67 +844,31 @@ no diagnostic required.
 The name \tcode{iter_swap} denotes a \techterm{customization point
 object}~(\ref{customization.point.object}). The effect of the expression
 \tcode{ranges::iter_swap(E1, E2)} for some expressions \tcode{E1} and \tcode{E2}
-is equivalent to \tcode{(void)iter_swap(E1, E2)}, with overload
-resolution~(\cxxref{over.match}) performed in a context described below:
-
-\pnum
-The context in which the expression \tcode{(void)iter_swap(E1, E2)} is evaluated
+is equivalent the following:
 
 \begin{itemize}
-\item does not include a declaration of \tcode{ranges::iter_swap},
-\item includes the lookup set produced by argument-dependent
-  lookup~(\cxxref{basic.lookup.argdep}), and
-\item includes \tcode{iter_swap} function template(s) equivalent to the
-  following:
-\begin{itemdecl}
-// \expos
-template <class I1, class I2>
-void iter_swap(I1&&, I2&&) = delete;
-
-// \expos
-template <class I1, class I2,
-  Readable _R1 = remove_reference_t<I1>,
-  Readable _R2 = remove_reference_t<I2>>
-  requires Swappable<reference_t<_R1>, reference_t<_R2>>()
-void iter_swap(I1&& r1, I2&& r2)
-  noexcept(is_nothrow_swappable_with_v<reference_t<_R1>, reference_t<_R2>>);
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\effects Equivalent to \tcode{ranges::swap(*r1, *r2)}.
-\end{itemdescr}
-
-\begin{itemdecl}
-template <class I1, class I2,
-  Readable _R1 = std::remove_reference_t<I1>,
-  Readable _R2 = std::remove_reference_t<I2>>
-  requires !Swappable<reference_t<_R1>, reference_t<_R2>>()
-    && IndirectlyMovableStorable<_R1, _R2>() &&
-       IndirectlyMovableStorable<_R2, _R1>()
-void iter_swap(I1&& r1, I2&& r2)
-  noexcept(is_nothrow_indirectly_movable_v<_R1, _R2> &&
-           is_nothrow_indirectly_movable_v<_R2, _R1>);
-\end{itemdecl}
-\begin{itemdescr}
-\end{itemdescr}
-\pnum
-\effects Exchanges values referred to by two \tcode{Readable} objects.
-
-\pnum
-\enterexample Below is a possible implementation:
+\item \tcode{(void)iter_swap(E1, E2)}, if that expression is well-formed when
+evaluated in a context that does not include \tcode{ranges::iter_swap} but does
+include the lookup set produced by argument-dependent
+lookup~(\cxxref{basic.lookup.argdep}) and the following declaration:
 \begin{codeblock}
-value_type_t<_R1> tmp(iter_move(r1));
-*r1 = iter_move(r2);
-*r2 = std::move(tmp);
+void iter_swap(auto, auto) = delete;
 \end{codeblock}
-\exitexample
+\item Otherwise, if the types of \tcode{E1} and \tcode{E2} both satisfy
+\tcode{Readable}, and if the reference type of \tcode{E1} is swappable
+with~(\ref{concepts.lib.corelang.swappable}) the reference type of \tcode{E2},
+then \tcode{ranges::swap(*E1, *E2)}
+\item Otherwise, if the types \tcode{T1} and \tcode{T2} of \tcode{E1} and
+\tcode{E2} satisfy \tcode{IndirectlyMovableStorable<T1, T2>() \&\&
+IndirectlyMovableStorable<T2, T1>()}, exchanges the values denoted by
+\tcode{E1} and \tcode{E2}.
+\item Otherwise, \tcode{ranges::iter_swap(E1, E2)} is ill-formed.
 \end{itemize}
 
 \pnum
-If the \tcode{iter_swap} function selected by overload resolution does not swap
-the values denoted by the expressions \tcode{E1} and \tcode{E2}, the program is
-ill-formed with no diagnostic required.
+If \tcode{ranges::iter_swap(E1, E2)} does not swap the values denoted by the
+expressions \tcode{E1} and \tcode{E2}, the program is ill-formed with no
+diagnostic required.
 
 \rSec2[iterator.assoc.types]{Iterator associated types}
 
