@@ -1087,9 +1087,8 @@ can be evaluated by the library function \tcode{invoke}~(\ref{func.invoke}).
 \begin{itemdecl}
 template <class F, class... Args>
 concept bool Invocable() {
-  return CopyConstructible<F>() &&
-    requires(F f, Args&&... args) {
-      invoke(f, std::forward<Args>(args)...); // not required to be equality preserving
+  return requires(F&& f, Args&&... args) {
+      invoke(std::forward<F>(f), std::forward<Args>(args)...); // not required to be equality preserving
     };
 }
 \end{itemdecl}
@@ -1134,7 +1133,7 @@ annotation in the definition of \tcode{Invocable}. \exitnote
 template <class F, class... Args>
 concept bool Predicate() {
   return RegularInvocable<F, Args...>() &&
-    Boolean<result_of_t<F&(Args...)>>();
+    Boolean<result_of_t<F&&(Args&&...)>>();
 }
 \end{itemdecl}
 
