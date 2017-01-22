@@ -133,8 +133,8 @@ Change the definition of `InputIterator` ([iterators.input]) as follows:
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>requires {</ins> typename iterator_category_t&lt;I&gt;; <ins>} &amp;&amp;</ins></tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<del>requires</del> DerivedFrom&lt;iterator_category_t&lt;I&gt;, input_iterator_tag&gt;();</tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<del>{ i++ } -> Readable; // not required to be equality preserving</del></tt>
-> <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<del>requires Same<value_type_t<I>, value_type_t<decltype(i++)>>();</del></tt>
-> <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<del>{ *ci } -> const value_type_t<I>&;</del></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<del>requires Same&lt;value_type_t&lt;I&gt;, value_type_t<decltype(i++)>>();</del></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<del>{ *ci } -> const value_type_t&lt;I&gt;&amp;;</del></tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<del>};</del></tt>
 > <tt>}</tt>
 
@@ -145,10 +145,30 @@ Change the definition of `OutputIterator` ([iterators.output]) as follows:
 > <tt>template &lt;class I, class T&gt;</tt>
 > <tt>concept bool OutputIterator() {</tt>
 > <tt>&nbsp;&nbsp;return Iterator&lt;I&gt;() &amp;&amp; Writable&lt;I, T&gt;()<del>;</del> <ins>&amp;&amp;</ins></tt>
-> <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>requires(I i) {</ins></tt>
-> <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>{ i++ } -> Writable&lt;T&gt;; // not required to be equality preserving</ins></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>requires(I i, T&amp;&amp; t) {</ins></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>*i++ = std::forward<T>(t); // not required to be equality preserving</ins></tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>};</ins></tt>
 > <tt>}</tt>
+
+Change the class synopsis of `insert_iterator` ([insert.iterator]) as follows:
+
+> <tt>namespace std { namespace experimental { namespace ranges { inline namespace v1 {</tt>
+> <tt>&nbsp;&nbsp;template &lt;class Container&gt;</tt>
+> <tt>&nbsp;&nbsp;class insert_iterator {</tt>
+> <tt>&nbsp;&nbsp;public:</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;// ... as before</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;insert_iterator<ins>&amp;</ins> operator++(int);</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;// ... as before</tt>
+> <tt>&nbsp;&nbsp;};</tt>
+> <tt>}</tt>
+
+Change [insert.iter.op++] as follows:
+
+> `insert_iterator& operator++();`
+> <tt>insert_iterator<ins>&amp;</ins> operator++(int);</tt>
+> > 1 Returns: `*this.`
+
+<ednote>Thus restoring the signature of `insert_iterator`'s postfix increment operator to the version in the IS.</ednote>
 
 Change the class synopsis of `move_iterator` ([move.iterator]) as follows:
 
@@ -184,19 +204,18 @@ Change [move.iter.op.incr] as follows:
 > > > return tmp;
 > > > ```
 
-
 Change the class synopsis of `common_iterator` ([common.iterator]) as follows:
 
 > <tt>namespace std { namespace experimental { namespace ranges { inline namespace v1 {</tt>
 > <tt>&nbsp;&nbsp;template &lt;Iterator I, Sentinel&lt;I&gt; S&gt;</tt>
-> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires !Same&lt;I, S&gt>()</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires !Same&lt;I, S&gt;()</tt>
 > <tt>&nbsp;&nbsp;class common_iterator {</tt>
 > <tt>&nbsp;&nbsp;public:</tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;// ... as before</tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<del>common_iterator operator++(int);</del></tt>
-> <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>void operator++(int);</ins></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins><i>see below</i> operator++(int);</ins></tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>common_iterator operator++(int)</ins></tt>
-> <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>requires ForwardIterator&lt;I&gt;() || !Readable&lt;I&gt;();</ins></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>requires ForwardIterator&lt;I&gt;();</ins></tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;// ... as before</tt>
 > <tt>&nbsp;&nbsp;};</tt>
 > <tt>}</tt>
@@ -208,12 +227,12 @@ Change [common.iter.op.incr] as follows:
 > > 2 Effects: <ins>Equivalent to</ins> `++iter`.
 > > 3 Returns: `*this.`
 >
-> <tt><ins>void operator++(int);<ins></tt>
+> <tt><ins>decltype(auto) operator++(int);<ins></tt>
 > > <ins>4 Requires: `!is_sentinel`.</ins>
-> > <ins>5 Effects: Equivalent to `++current`.</ins>
+> > <ins>5 Effects: Equivalent to `return iter++`.</ins>
 >
 > <tt>common_iterator operator++(int)<del>;</del></tt>
-> <tt>&nbsp;&nbsp;<ins>requires ForwardIterator&lt;I&gt;() || !Readable&lt;I&gt;();</ins></tt>
+> <tt>&nbsp;&nbsp;<ins>requires ForwardIterator&lt;I&gt;();</ins></tt>
 > > 6 Requires: `!is_sentinel`.
 > > 7 Effects: Equivalent to:
 > >
@@ -223,6 +242,7 @@ Change [common.iter.op.incr] as follows:
 > > > return tmp;
 > > > ```
 
+<ednote>For input and output iterators, we return the result of `iter++` directly. That permits `common_iterator`'s postfix increment operator to work correctly with input and output iterators that return proxies (e.g., `istreambuf_iterator`) or references to `*this` (e.g., `insert_iterator`) from their postfix increment operator.</ednote>
 
 Change the class synopsis of `counted_iterator` ([counted.iterator]) as follows:
 
@@ -232,9 +252,9 @@ Change the class synopsis of `counted_iterator` ([counted.iterator]) as follows:
 > <tt>&nbsp;&nbsp;public:</tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;// ... as before</tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<del>counted_iterator operator++(int);</del></tt>
-> <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>void operator++(int);</ins></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins><i>see below</i> operator++(int);</ins></tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>counted_iterator operator++(int)</ins></tt>
-> <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>requires ForwardIterator&lt;I&gt;() || !Readable&lt;I&gt;();</ins></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>requires ForwardIterator&lt;I&gt;();</ins></tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;// ... as before</tt>
 > <tt>&nbsp;&nbsp;};</tt>
 > <tt>}</tt>
@@ -252,15 +272,15 @@ Change [counted.iter.op.incr] as follows:
 > > 
 > > 3 Returns: `*this.`
 >
-> <tt><ins>void operator++(int);<ins></tt>
+> <tt><ins>decltype(auto) operator++(int);<ins></tt>
 > > <ins>4 Requires: `cnt > 0`.</ins>
 > > <ins>5 Effects: Equivalent to:</ins>
 > >
-> > > <tt><ins>++current;</ins></tt>
-> > > <tt><ins>--cnt</ins></tt>
+> > > <tt><ins>-\-cnt</ins></tt>
+> > > <tt><ins>return current++;</ins></tt>
 >
 > <tt>counted_iterator operator++(int)<del>;</del></tt>
-> <tt>&nbsp;&nbsp;<ins>requires ForwardIterator&lt;I&gt;() || !Readable&lt;I&gt;();</ins></tt>
+> <tt>&nbsp;&nbsp;<ins>requires ForwardIterator&lt;I&gt;();</ins></tt>
 > > 6 Requires: `cnt > 0`.
 > > 7 Effects: Equivalent to:
 > >
@@ -271,4 +291,50 @@ Change [counted.iter.op.incr] as follows:
 > > > return tmp;
 > > > ```
 
+<ednote>For input and output iterators, we return the result of `current++` directly. That permits `counted_iterator`'s postfix increment operator to work correctly with input and output iterators that return proxies (e.g., `istreambuf_iterator`) or references to `*this` (e.g., `insert_iterator`) from their postfix increment operator.</ednote>
+
+No changes to `istream_iterator` or `istreambuf_iterator`.
+
 <ednote>We suggest leaving the postfix increment operators on the `istream(buf)` iterators intact to ease migration to the Ranges TS</ednote>
+
+Change the class synopsis of `ostream_iterator` ([ostream.iterator]) as follows:
+
+> <tt>namespace std { namespace experimental { namespace ranges { inline namespace v1 {</tt>
+> <tt>&nbsp;&nbsp;template &lt;class T, class charT = char, class traits = char_traits&lt;charT&gt;&gt;</tt>
+> <tt>&nbsp;&nbsp;class ostream_iterator {</tt>
+> <tt>&nbsp;&nbsp;public:</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;// ... as before</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;ostream_iterator<ins>&amp;</ins> operator++(int);</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;// ... as before</tt>
+> <tt>&nbsp;&nbsp;};</tt>
+> <tt>}</tt>
+
+Change [ostream.iter.ops] as follows:
+
+> // ... as before
+> `ostream_iterator& operator++();`
+> <tt>ostream_iterator<ins>&amp;</ins> operator++(int);</tt>
+> > 3 Returns: `*this.`
+
+<ednote>Thus restoring the signature of `ostream_iterator`'s postfix increment operator to the version in the IS.<ednote>
+
+Change the class synopsis of `ostreambuf_iterator` ([ostreambuf.iterator]) as follows:
+
+> <tt>namespace std { namespace experimental { namespace ranges { inline namespace v1 {</tt>
+> <tt>&nbsp;&nbsp;template &lt;class charT, class traits = char_traits&lt;charT&gt;&gt;</tt>
+> <tt>&nbsp;&nbsp;class ostreambuf_iterator {</tt>
+> <tt>&nbsp;&nbsp;public:</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;// ... as before</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;ostreambuf_iterator<ins>&amp;</ins> operator++(int);</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;// ... as before</tt>
+> <tt>&nbsp;&nbsp;};</tt>
+> <tt>}</tt>
+
+Change [ostreambuf.iter.ops] as follows:
+
+> // ... as before
+> `ostreambuf_iterator& operator++();`
+> <tt>ostreambuf_iterator<ins>&amp;</ins> operator++(int);</tt>
+> > 5 Returns: `*this.`
+
+<ednote>Thus restoring the signature of `ostreambuf_iterator`'s postfix increment operator to the version in the IS.<ednote>
