@@ -1,4 +1,4 @@
-DOCNO = 0xxx
+DOCNO = 0541
 PD = P
 SOURCE = post_inc.md
 TARGET = $(PD)$(DOCNO)

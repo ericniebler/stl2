@@ -138,7 +138,7 @@ Change the definition of `InputIterator` ([iterators.input]) as follows:
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<del>};</del></tt>
 > <tt>}</tt>
 
-<ednote>Note: the line `{ *ci } -> const value_type_t<I>&;` is deleted here as a drive-by fix of [stl2 issue 307](https://github.com/ericniebler/stl2/issues/307) in which the edits necessary to support proxy iterators (P0022) were applied incompletely.</ednote>
+<ednote>[<i>Editor's note:</i> Note: the line `{ *ci } -> const value_type_t<I>&;` is deleted here as a drive-by fix of [stl2 issue 307](https://github.com/ericniebler/stl2/issues/307) in which the edits necessary to support proxy iterators (P0022) were applied incompletely.]<ednote>
 
 Change the definition of `OutputIterator` ([iterators.output]) as follows:
 
@@ -168,7 +168,7 @@ Change [insert.iter.op++] as follows:
 > <tt>insert_iterator<ins>&amp;</ins> operator++(int);</tt>
 > > 1 Returns: `*this.`
 
-<ednote>Thus restoring the signature of `insert_iterator`'s postfix increment operator to the version in the IS.</ednote>
+<ednote>[<i>Editor's note:</i> Thus restoring the signature of `insert_iterator`'s postfix increment operator to the version in the IS.]<ednote>
 
 Change the class synopsis of `move_iterator` ([move.iterator]) as follows:
 
@@ -242,7 +242,7 @@ Change [common.iter.op.incr] as follows:
 > > > return tmp;
 > > > ```
 
-<ednote>For input and output iterators, we return the result of `iter++` directly. That permits `common_iterator`'s postfix increment operator to work correctly with input and output iterators that return proxies (e.g., `istreambuf_iterator`) or references to `*this` (e.g., `insert_iterator`) from their postfix increment operator.</ednote>
+<ednote>[<i>Editor's note:</i> For input and output iterators, we return the result of `iter++` directly. That permits `common_iterator`'s postfix increment operator to work correctly with input and output iterators that return proxies (e.g., `istreambuf_iterator`) or references to `*this` (e.g., `insert_iterator`) from their postfix increment operator.]<ednote>
 
 Change the class synopsis of `counted_iterator` ([counted.iterator]) as follows:
 
@@ -291,11 +291,11 @@ Change [counted.iter.op.incr] as follows:
 > > > return tmp;
 > > > ```
 
-<ednote>For input and output iterators, we return the result of `current++` directly. That permits `counted_iterator`'s postfix increment operator to work correctly with input and output iterators that return proxies (e.g., `istreambuf_iterator`) or references to `*this` (e.g., `insert_iterator`) from their postfix increment operator.</ednote>
+<ednote>[<i>Editor's note:</i> For input and output iterators, we return the result of `current++` directly. That permits `counted_iterator`'s postfix increment operator to work correctly with input and output iterators that return proxies (e.g., `istreambuf_iterator`) or references to `*this` (e.g., `insert_iterator`) from their postfix increment operator.]<ednote>
 
 No changes to `istream_iterator` or `istreambuf_iterator`.
 
-<ednote>We suggest leaving the postfix increment operators on the `istream(buf)` iterators intact to ease migration to the Ranges TS</ednote>
+<ednote>[<i>Editor's note:</i> We suggest leaving the postfix increment operators on the `istream(buf)` iterators intact to ease migration to the Ranges TS.]<ednote>
 
 Change the class synopsis of `ostream_iterator` ([ostream.iterator]) as follows:
 
@@ -316,7 +316,7 @@ Change [ostream.iter.ops] as follows:
 > <tt>ostream_iterator<ins>&amp;</ins> operator++(int);</tt>
 > > 3 Returns: `*this.`
 
-<ednote>Thus restoring the signature of `ostream_iterator`'s postfix increment operator to the version in the IS.<ednote>
+<ednote>[<i>Editor's note:</i> Thus restoring the signature of `ostream_iterator`'s postfix increment operator to the version in the IS.]</ednote>
 
 Change the class synopsis of `ostreambuf_iterator` ([ostreambuf.iterator]) as follows:
 
@@ -337,4 +337,4 @@ Change [ostreambuf.iter.ops] as follows:
 > <tt>ostreambuf_iterator<ins>&amp;</ins> operator++(int);</tt>
 > > 5 Returns: `*this.`
 
-<ednote>Thus restoring the signature of `ostreambuf_iterator`'s postfix increment operator to the version in the IS.<ednote>
+<ednote>[<i>Editor's note:</i> Thus restoring the signature of `ostreambuf_iterator`'s postfix increment operator to the version in the IS.]</ednote>
