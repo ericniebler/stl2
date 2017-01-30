@@ -35,7 +35,7 @@ Types that are _not_ movable simply cannot be cached. An input iterator over non
 
 The standard specifies the existence of several iterator adaptors (e.g., `move_iterator`), and future iterations of the Ranges TS will propose many more. `move_iterator` is required to work with input iterators. Consider the difficulty of impementing `move_iterator`'s postfix increment operator. Below is the implementation as specified in the current draft standard.
 
-```lang=c++
+```c++
 template <InputIterator I>
 move_iterator<I> move_iterator<I>::operator++(int) {
     auto tmp = *this;
@@ -46,7 +46,7 @@ move_iterator<I> move_iterator<I>::operator++(int) {
 
 This implementation is obviously wrong for input iterators -- it is guaranteed to return an invalid iterator -- and yet this is precisely what the standard specifies today. Correcting the problem is non-trivial. `move_iterator`'s postfix increment operator would need to return a proxy for input iterators only. Below is a rough demonstration, expressed in C++17.
 
-```lang=c++
+```c++
 template <InputIterator I>
 auto move_iterator<I>::operator++(int) {
     using _Cat = iterator_category;
@@ -103,7 +103,7 @@ Although there does appear to be weak consensus to remove `i++` entirely from th
 
 The authors of the Ranges TS strongly prefer keeping the postfix increment operator for input iterators. Consider the following fairly common (anti-)pattern:
 
-```lang=c++
+```c++
 for (auto i = v.begin(); i != v.end(); i++) {
     // ...
 }
