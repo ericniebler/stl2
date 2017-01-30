@@ -169,7 +169,7 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 
 <ednote>[_Editor's note:_ Edit subsection "Concept `DefaultConstructible`" ([concepts.lib.object.defaultconstructible]) as follows:]</ednote>
 
-> > <tt>template &lt;class T, class..\. Args&gt;</tt>
+> > <tt>template &lt;class T&gt;</tt>
 > > <tt>concept bool DefaultConstructible() {</tt>
 > > <tt>&nbsp;&nbsp;return Constructible&lt;T&gt;()<ins>;</ins> <del>&amp;&amp;</del></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<del>requires(const size_t n) {</del></tt>
