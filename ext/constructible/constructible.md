@@ -33,13 +33,49 @@ While implementing a subset of a constrained Standard Library, the authors of th
 
 Although well-intentioned, many of the extra semantic requirements have proved to be problematic in practice. Here, for instance, are seven currently open [stl2](https://github.com/ericniebler/stl2) bugs that need resolution:
 
-- "Why do neither reference types nor array types satisfy `Destructible`?" ([stl2#70](https://github.com/ericniebler/stl2/issues/70)).
-- "Is it intended that `Constructible<int&, long&>()` is true?" ([stl2#301](https://github.com/ericniebler/stl2/issues/301)).
-- "`Movable<int&&>()` is `true` and it should probably be `false`" ([stl2#310](https://github.com/ericniebler/stl2/issues/310)).
-- "Is it intended that an aggregate with a deleted or nonexistent default constructor satisfy `DefaultConstructible`?" ([stl2#300](https://github.com/ericniebler/stl2/issues/300)).
-- "Assignable concept looks wrong" ([stl2#229](https://github.com/ericniebler/stl2/issues/229)).
-- "MoveConstructible<T>() != std::is_move_constructible<T>()"  ([stl2#313](https://github.com/ericniebler/stl2/issues/313)).
-- "Subsumption and object concepts" ([CaseyCarter/stl2#22](https://github.com/CaseyCarter/stl2/issues/22)).
+1. **"Why do neither reference types nor array types satisfy `Destructible`?" ([stl2#70](https://github.com/ericniebler/stl2/issues/70))**
+> This issue, raised independently by Walter Brown, Alisdair Meredth, and others, questions the decision to have `Destructible<T>()` require the valid expression `t.~T()` for some lvalue `t` of type `T`. That has the effect of 
+preventing reference and array types from satisfying `Destructible`.
+>
+> In addition, `Destructible` requires `&t` to have type `T*`. This also prevents reference types from satisfying `Destructible` since you can't form a pointer to a reference.
+>
+> A reasonable interpretation of "destructible" is "can fall out of scope". This is roughly what is tested by the `is_destructible` type trait. By this rubric, references and array types should satisfy `Destructible` as they do for the trait.
+
+2. **"Is it intended that `Constructible<int&, long&>()` is true?" ([stl2#301](https://github.com/ericniebler/stl2/issues/301))**
+> `Constructible<T, Args...>()` tries to test that the type `T` can be constructed on the heap as well as in automatic storage. But requiring the expression `new T{declval<Args>()...}` causes reference types to fail to satisfy the concept since references cannot be dynamically allocated. `Constructible` "solves" this problem by handling references separately; their required expression is merely `T(declval<Args>()...)`. That syntax has the unfortunate effect of being a function-style cast, which in the case of `int&` and `long&`, amounts to a `reinterpret_cast`. 
+> 
+> We could patch this up by using universal initialization syntax, but we opted instead for a more radical simplification: do what `is_constructible` does.
+
+3. **"`Movable<int&&>()` is `true` and it should probably be `false`" ([stl2#310](https://github.com/ericniebler/stl2/issues/310))**
+> A cursory review of the places that use `Movable` in the Ranges TS reveals that they all are expecting types with value semantics. A reference does not exhibit value semantics, so it is surprising for `int&&` to satisfy `Movable`.
+
+4. **"Is it intended that an aggregate with a deleted or nonexistent default constructor satisfy `DefaultConstructible`?" ([stl2#300](https://github.com/ericniebler/stl2/issues/300))**
+> Consider a type such as the following:
+> ```c++
+> struct A{
+>     A(const A&) = default;
+> };
+> ```
+> This type is not is not default constructible; the statement `auto w = W();` is ill-formed. However, since `A` is an aggregate, the statement `auto w = W{};` is well-formed. Since `Constructible` is testing for the latter syntax and not the former, `A` satisfies `DefaultConstructible`. This is in contrast with the result of `std::is_default_constructible<A>::value`, which is `false`.
+
+5. **"Assignable concept looks wrong" ([stl2#229](https://github.com/ericniebler/stl2/issues/229))**
+> There are a few problems with `Assignable`. The given definition of `Assignable<T, U>()` would appear to work with reference types (as one would expect), but the prose description reads, "Let `t` be an lvalue of type `T`..." There are no lvalues of reference type, so the wording is simply wrong. The wording also erroneously uses `==` instead of the magic phrase "is equal to," accidentally requiring the types to satisfy (some part of) `EqualityComparable`.
+> 
+> Also, LEWG requested at the Issaquah 2016 meeting that this concept be changed such that it is only satisfied when `T` is a non-const lvalue reference type.
+
+6. **"MoveConstructible<T>() != std::is_move_constructible<T>()"  ([stl2#313](https://github.com/ericniebler/stl2/issues/313))**
+> The definition of `MoveConstructible` applies `remove_cv_t` to its argument before testing it, as shown below:
+> ```c++
+> template <class T>
+> concept bool MoveConstructible() {
+>  return Constructible<T, remove_cv_t<T>&&>() &&
+>    ConvertibleTo<remove_cv_t<T>&&, T>();
+> }
+> ```
+> This somewhat surprisingly causes `const some_move_only_type` to satisfy `MoveConstructible`, when it probably shouldn't. `std::is_move_constructible<const some_move_only_type>::value` is `false`, for instance.
+
+7. **"Subsumption and object concepts" ([CaseyCarter/stl2#22](https://github.com/CaseyCarter/stl2/issues/22))**
+> This issue relates to the fact that there is _almost_ a perfect sequence of subsumption relationships from `Destructible`, through `Constructible`, and all the way to `Regular`. The "almost" is the problem. Given a set of overloads constrained with these concepts, there will be ambiguity due to the fact that _in some cases_ `Constructible` does not subsume `Destructible` (e.g., for references).
 
 We were also motivated by the very real user confusion about why concepts with names similar to associated type traits gives different answers for different types and type categories.
 
