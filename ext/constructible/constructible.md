@@ -44,7 +44,7 @@ preventing reference and array types from satisfying `Destructible`.
 2. **"Is it intended that `Constructible<int&, long&>()` is true?" ([stl2#301](https://github.com/ericniebler/stl2/issues/301))**
 > `Constructible<T, Args...>()` tries to test that the type `T` can be constructed on the heap as well as in automatic storage. But requiring the expression `new T{declval<Args>()...}` causes reference types to fail to satisfy the concept since references cannot be dynamically allocated. `Constructible` "solves" this problem by handling references separately; their required expression is merely `T(declval<Args>()...)`. That syntax has the unfortunate effect of being a function-style cast, which in the case of `int&` and `long&`, amounts to a `reinterpret_cast`.
 >
-> We could patch this up by using universal initialization syntax, but we opted instead for a more radical simplification: do what `is_constructible` does.
+> We could patch this up by using universal initialization syntax, but that comes with its own problems. Instead, we opted instead for a more radical simplification: just do what `is_constructible` does.
 
 3. **"`Movable<int&&>()` is `true` and it should probably be `false`" ([stl2#310](https://github.com/ericniebler/stl2/issues/310))**
 > A cursory review of the places that use `Movable` in the Ranges TS reveals that they all are expecting types with value semantics. A reference does not exhibit value semantics, so it is surprising for `int&&` to satisfy `Movable`.
@@ -61,7 +61,7 @@ preventing reference and array types from satisfying `Destructible`.
 5. **"Assignable concept looks wrong" ([stl2#229](https://github.com/ericniebler/stl2/issues/229))**
 > There are a few problems with `Assignable`. The given definition, `Assignable<T, U>()` would appear to work with reference types (as one would expect), but the prose description reads, "Let `t` be an lvalue of type `T`..." There are no lvalues of reference type, so the wording is simply wrong. The wording also erroneously uses `==` instead of the magic phrase "is equal to," accidentally requiring the types to satisfy (some part of) `EqualityComparable`.
 >
-> Also, LEWG requested at the Issaquah 2016 meeting that this concept be changed such that it is only satisfied when `T` is a non-const lvalue reference type.
+> Also, LWG requested at the Issaquah 2016 meeting that this concept be changed such that it is only satisfied when `T` is an lvalue reference type.
 
 6. **"MoveConstructible<T>() != std::is_move_constructible<T>()"  ([stl2#313](https://github.com/ericniebler/stl2/issues/313))**
 > The definition of `MoveConstructible` applies `remove_cv_t` to its argument before testing it, as shown below:
@@ -117,7 +117,7 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 > > <tt>concept bool Assignable() {</tt>
 > > <tt>&nbsp;&nbsp;<del>return CommonReference&lt;const T&amp;, const U&amp;&gt;() &amp;&amp; requires(T&amp;&amp; t, U&amp;&amp; u) {</del></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<del>{ std::forward&lt;T&gt;(t) = std::forward&lt;U&gt;(u) } -&gt; Same&lt;T&amp;&gt;;</del></tt>
-> > <tt>&nbsp;&nbsp;<ins>return Same&lt;T, decay_t&lt;T&gt;&amp;&gt;() &amp;&amp;</ins></tt>
+> > <tt>&nbsp;&nbsp;<ins>return is_lvalue_reference&lt;T&gt;::value &amp;&amp; // see below</ins></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>CommonReference&lt;T, const U&amp;&gt;() &amp;&amp;</ins></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>requires(T t, U&amp;&amp; u) {</ins></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>{ t = std::forward&lt;U&gt;(u) } -&gt; Same&lt;T&gt;;</ins></tt>
@@ -135,6 +135,8 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 > > > (1.2.2) -- If <del>`v`</del><ins>`u`</ins> is a non-`const` <del>rvalue, its</del><ins>xvalue, the</ins> resulting state <ins>of the object to which it refers</ins> is unspecified. [ _Note:_ <del>`v`</del><ins>the object</ins> must still meet the requirements of the library component that is using it. The operations listed in those requirements must work as specified. -- end note ]
 > > >
 > > > (1.2.3) -- Otherwise, <del>`v`</del><ins>if `u` is a glvalue, the object to which it refers</ins> is not modified.
+>
+> <ins>2 There is no subsumption relationship between `Assignable<T, U>()` and `is_lvalue_reference<T>::value`.
 
 <ednote>[_Editor's note:_ Prior to this change, `Assignable` is trying to work with proxy reference types and failing. It perfectly forwards its arguments, but requires the return type of assignment to be `T&` (which is not true for some proxy types). Also, the allowable moved-from state of the rhs expression (`u`) is described in terms of its value category. But if the rhs is a proxy reference (e.g., `reference_wrapper<int>`) then the value category of the proxy bears no relation to the value category of the referent.</ednote>
 
@@ -152,10 +154,10 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<del>{ &amp;ct } -&gt; Same&lt;const T\*&gt;; // not required to be equality preserving</del></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<del>delete p;</del></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<del>delete[] p;</del></tt>
-> > <tt>&nbsp;&nbsp;<ins>return is_nothrow_destructible&lt;T&gt;::value &amp;&amp;</ins></tt>
-> > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>requires (T&amp; t, const T&amp; ct) {</ins></tt>
-> > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>{ &t } -&gt; Same&lt;add_pointer_t&lt;T&gt;&gt;; // not required to be equality preserving</ins></tt>
-> > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>{ &ct } -&gt; Same&lt;add_pointer_t&lt;const T&gt;&gt;; // not required to be equality preserving</ins></tt>
+> > <tt>&nbsp;&nbsp;<ins>return is_nothrow_destructible&lt;T&gt;::value &amp;&amp; // see below</ins></tt>
+> > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>requires(T&amp; t, const remove_reference_t&lt;T&gt;&amp; ct) {</ins></tt>
+> > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>{ &t } -&gt; Same&lt;remove_reference_t&lt;T&gt;\*&gt;; // not required to be equality preserving</ins></tt>
+> > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>{ &ct } -&gt; Same&lt;const remove_reference_t&lt;T&gt;\*&gt;; // not required to be equality preserving</ins></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;};</tt>
 > > <tt>}</tt>
 >
@@ -168,6 +170,8 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 > > (3.<del>2</del><ins>1</ins>) -- `&t == std::addressof(t)`.
 > >
 > > (3.<del>3</del><ins>2</ins>) -- The expression `&t` is non-modifying.
+>
+> &#8203;<ins>4 There is no subsumption relationship between `Destructible<T>()` and `is_nothrow_destructible<T>::value`.
 
 <ednote>[_Editor's note:_ In the minutes of Ranges TS wording review at Kona on 2015-08-14, the following is recorded:</ednote>
 
@@ -196,10 +200,10 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 > > <tt>concept bool Constructible() {</tt>
 > > <tt>&nbsp;&nbsp;<del>return __ConstructibleObject&lt;T, Args.\..&gt; ||</del></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<del>__BindableReference&lt;T, Args.\..&gt;;</del></tt>
-> > <tt>&nbsp;&nbsp;<ins>return Destructible&lt;T&gt;() && is_constructible&lt;T, Args.\..&gt;::value;</ins></tt>
+> > <tt>&nbsp;&nbsp;<ins>return Destructible&lt;T&gt;() && is_constructible&lt;T, Args.\..&gt;::value; // see below</ins></tt>
 > > <tt>}</tt>
 >
-> <ins>2 For types `T` and `Args...` to satisfy `Constructible`, the variable definition `T t(declval<Args>()...);` need not be equality preserving.<ins>
+> &#8203;<ins>2 There is no subsumption relationship between `Constructible<T, Args...>()` and `is_constructible<T, Args...>::value`.
 
 <ednote>[_Editor's note:_ `Constructible` now always subsumes `Destructible`, fixing [CaseyCarter/stl2#22](https://github.com/CaseyCarter/stl2/issues/22) which regards overload ambiguities introduced by the lack of such a simple subsumption relationship. `Constructible` follows `Destructible` by dropping the requirement for dynamic [array] allocation.]</ednote>
 
@@ -275,5 +279,7 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;Assignable&lt;T&amp;, T&gt;() &amp;&amp;</tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;Swappable&lt;T&amp;&gt;();</tt>
 > > <tt>}</tt>
+>
+> &#8203;<ins>1 There is no subsumption relationship between `Movable<T>()` and `is_object<T>::value`.
 
 <ednote>[_Editor's note:_ `Movable` is the base concept of the `Regular` hierarchy. These concepts are concerned with value semantics. As such, it makes no sense for `Movable<int&&>()` to return `true` ([stl2#310](https://github.com/ericniebler/stl2/issues/310)). We add the requirement that `T` is an object type to resolve the issue. Since `Movable` is subsumed by `Copyable`, `Semiregular`, and `Regular`, these concepts will only ever by satisfied by object types.]</ednote>
