@@ -44,7 +44,7 @@ preventing reference and array types from satisfying `Destructible`.
 2. **"Is it intended that `Constructible<int&, long&>()` is true?" ([stl2#301](https://github.com/ericniebler/stl2/issues/301))**
 > `Constructible<T, Args...>()` tries to test that the type `T` can be constructed on the heap as well as in automatic storage. But requiring the expression `new T{declval<Args>()...}` causes reference types to fail to satisfy the concept since references cannot be dynamically allocated. `Constructible` "solves" this problem by handling references separately; their required expression is merely `T(declval<Args>()...)`. That syntax has the unfortunate effect of being a function-style cast, which in the case of `int&` and `long&`, amounts to a `reinterpret_cast`.
 >
-> We could patch this up by using universal initialization syntax, but that comes with its own problems. Instead, we opted instead for a more radical simplification: just do what `is_constructible` does.
+> We could patch this up by using universal initialization syntax, but that comes with its own problems. Instead, we opted for a more radical simplification: just do what `is_constructible` does.
 
 3. **"`Movable<int&&>()` is `true` and it should probably be `false`" ([stl2#310](https://github.com/ericniebler/stl2/issues/310))**
 > A cursory review of the places that use `Movable` in the Ranges TS reveals that they all are expecting types with value semantics. A reference does not exhibit value semantics, so it is surprising for `int&&` to satisfy `Movable`.
