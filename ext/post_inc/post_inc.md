@@ -9,10 +9,10 @@ The requirement for InputIterators to provide a post-increment operator that ret
 
 Note that nothing would prevent a given input iterator from supporting the syntax `*i++` or prevent non-generic code from making use of that syntax. The only change would be that generic code that operates on input iterators would need to change statements like `fn(*i++)` to `fn(*i); ++i`. This is likely to be more efficient, as is discussed below.
 
-In Issaquah, the problem was discussed and a straw poll taken. The wording of the poll was as follows:  
+In Issaquah, the problem was discussed and a straw poll taken. The wording of the poll was as follows:
 
 > Do we want to loosen the requirement on `InputIterator` post-increment to permit `void` return?
-> 
+>
 > | SF | F | N | A | SA |
 > |----|---|---|---|----|
 > | 13 | 6 | 1 | 0 | 1  |
@@ -91,10 +91,10 @@ With the Ranges TS, we have a chance to try out this change without fully commit
 
 ### Remove postfix increment entirely
 
-Durring the Issaqquah 2016 meeting when this issue was discussed in LEWG, several in the room expressed support for the notion of simply removing postfix increment for input iterators entirely. (This is in contrast with requiring postfix increment but permitting it to return, say, `void`.) The following straw poll was taken on that question:
+During the Issaquah 2016 meeting when this issue was discussed in LEWG, several in the room expressed support for the notion of simply removing postfix increment for input iterators entirely. (This is in contrast with requiring postfix increment but permitting it to return, say, `void`.) The following straw poll was taken on that question:
 
 > Do we want to remove the requirement for InputIterator post-increment entirely (for the Ranges TS)?
-> 
+>
 > | SF | F | N | A | SA |
 > |----|---|---|---|----|
 > |  7 | 6 | 7 | 2 | 0  |
@@ -269,7 +269,7 @@ Change [counted.iter.op.incr] as follows:
 > > > ++current;
 > > > --cnt
 > > > ```
-> > 
+> >
 > > 3 Returns: `*this.`
 >
 > <tt><ins>decltype(auto) operator++(int);<ins></tt>
