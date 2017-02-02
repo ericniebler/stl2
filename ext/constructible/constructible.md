@@ -5,7 +5,7 @@ title: Assorted Object Concept Fixes
 
 # Synopsis
 
-This paper suggests reformulations of the following fundamental object concepts to resolve a number of outstanding issues, and to bring them in line with (what experience has show to be) user expectations:
+This paper suggests reformulations of the following fundamental object concepts to resolve a number of outstanding issues, and to bring them in line with (what experience has shown to be) user expectations:
 
 - `Destructible`
 - `Constructible`
@@ -16,11 +16,11 @@ This paper suggests reformulations of the following fundamental object concepts 
 
 The suggested changes make them behave more like what their associated type traits do.
 
-In addition, we suggest a change to `Movable` that correctly positions it as the base of the `Regular` concept heirarchy, which concerns itself with types with value semantics.
+In addition, we suggest a change to `Movable` that correctly positions it as the base of the `Regular` concept hierarchy, which concerns itself with types with value semantics.
 
 # Problem description
 
-The Palo Alto report (N3351), on which the design of the Ranges TS is based, suggested the object concepts `Semiregular` and `Regular` for constraining standard library components. In an appendix it conceeds that many generic components could more usefully be constrained with decompositions of these very coarse concepts: `Movable` and `Copyable`.
+The Palo Alto report (N3351), on which the design of the Ranges TS is based, suggested the object concepts `Semiregular` and `Regular` for constraining standard library components. In an appendix it concedes that many generic components could more usefully be constrained with decompositions of these very coarse concepts: `Movable` and `Copyable`.
 
 While implementing a subset of a constrained Standard Library, the authors of the Ranges TS found that even more fine-grained "object" concepts were often useful: `MoveConstructible`,  `CopyConstructible`, `Assignable`, and others. These concepts are needed to avoid over-constraining low-level library utilities like `pair`, `tuple`, `variant` and more. Rather than aping the similarly named type-traits, the authors of the Ranges TS tried to preserve the intent of the Palo Alto report by giving them semantic weight. It did this in various ways, including:
 
@@ -34,7 +34,7 @@ While implementing a subset of a constrained Standard Library, the authors of th
 Although well-intentioned, many of the extra semantic requirements have proved to be problematic in practice. Here, for instance, are seven currently open [stl2](https://github.com/ericniebler/stl2) bugs that need resolution:
 
 1. **"Why do neither reference types nor array types satisfy `Destructible`?" ([stl2#70](https://github.com/ericniebler/stl2/issues/70))**
-> This issue, raised independently by Walter Brown, Alisdair Meredth, and others, questions the decision to have `Destructible<T>()` require the valid expression `t.~T()` for some lvalue `t` of type `T`. That has the effect of 
+> This issue, raised independently by Walter Brown, Alisdair Meredith, and others, questions the decision to have `Destructible<T>()` require the valid expression `t.~T()` for some lvalue `t` of type `T`. That has the effect of 
 preventing reference and array types from satisfying `Destructible`.
 >
 > In addition, `Destructible` requires `&t` to have type `T*`. This also prevents reference types from satisfying `Destructible` since you can't form a pointer to a reference.
@@ -59,7 +59,7 @@ preventing reference and array types from satisfying `Destructible`.
 > This type is not is not default constructible; the statement `auto w = W();` is ill-formed. However, since `A` is an aggregate, the statement `auto w = W{};` is well-formed. Since `Constructible` is testing for the latter syntax and not the former, `A` satisfies `DefaultConstructible`. This is in contrast with the result of `std::is_default_constructible<A>::value`, which is `false`.
 
 5. **"Assignable concept looks wrong" ([stl2#229](https://github.com/ericniebler/stl2/issues/229))**
-> There are a few problems with `Assignable`. The given definition of `Assignable<T, U>()` would appear to work with reference types (as one would expect), but the prose description reads, "Let `t` be an lvalue of type `T`..." There are no lvalues of reference type, so the wording is simply wrong. The wording also erroneously uses `==` instead of the magic phrase "is equal to," accidentally requiring the types to satisfy (some part of) `EqualityComparable`.
+> There are a few problems with `Assignable`. The given definition, `Assignable<T, U>()` would appear to work with reference types (as one would expect), but the prose description reads, "Let `t` be an lvalue of type `T`..." There are no lvalues of reference type, so the wording is simply wrong. The wording also erroneously uses `==` instead of the magic phrase "is equal to," accidentally requiring the types to satisfy (some part of) `EqualityComparable`.
 > 
 > Also, LEWG requested at the Issaquah 2016 meeting that this concept be changed such that it is only satisfied when `T` is a non-const lvalue reference type.
 
@@ -85,7 +85,7 @@ It remains our intention to resist the temptation to constrain the library with 
 
 At the high level, the solution this paper suggests is to break the object concepts into two logical groups: the lower-level concepts that follow the lead of their similarly-named type traits with regard to "odd" types (references, arrays, _cv_ `void`), and the higher-level concepts that deal only with value semantic types.
 
-The lower-level concepts are those that have corresponding type traits, and behave largely like them:
+The lower-level concepts are those that have corresponding type traits, and behave largely like them. They can no longer properly be thought of as "object" concepts, so they rightly belong with the core language concepts.
 
 - `Destructible`
 - `Constructible`
@@ -136,13 +136,13 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 > > > 
 > > > (1.2.3) -- Otherwise, <del>`v`</del><ins>if `u` is a glvalue, the object to which it refers</ins> is not modified.
 
-<ednote>[_Note:_ Prior to this change, `Assignable` is trying to work with proxy reference types and failing. It perfectly forwards its arguments, but requires the return type of assignment to be `T&` (which is not true for some proxy types). Also, the allowable moved-from state of the rhs expression (`u`) is described in terms of its value category. But if the rhs is a proxy reference (e.g., `reference_wrapper<int>`) then the value category of the proxy bears no relation to the value category of the referent.</ednote>
+<ednote>[_Editor's note:_ Prior to this change, `Assignable` is trying to work with proxy reference types and failing. It perfectly forwards its arguments, but requires the return type of assignment to be `T&` (which is not true for some proxy types). Also, the allowable moved-from state of the rhs expression (`u`) is described in terms of its value category. But if the rhs is a proxy reference (e.g., `reference_wrapper<int>`) then the value category of the proxy bears no relation to the value category of the referent.</ednote>
 
-<ednote>The issue was discussed in the Issaquah 2016 meeting. The guidance given there was to narrowly focus this concept on "traditional" assignability only -- assignments to non-`const` lvalues from non-proxy expressions -- and solve the proxy problem at a later date. That is the direction taken here. --_end note_]</ednote>
+<ednote>The issue was discussed in the Issaquah 2016 meeting. The guidance given there was to narrowly focus this concept on "traditional" assignability only -- assignments to non-`const` lvalues from non-proxy expressions -- and solve the proxy problem at a later date. That is the direction taken here.]</ednote>
 
-<ednote>[_Editor's note:_ Edit subsection "Concept `Destructible`" ([concepts.lib.object.destructible]) as follows:]</ednote>
+<ednote>[_Editor's note:_ Move subsection "Concept `Destructible`" ([concepts.lib.object.destructible]) to subsection "Core language concepts" ([concepts.lib.corelang]) after [concepts.lib.corelang.swappable], change its stable id to [concepts.lib.corelang.destructible] and edit it as follows:]</ednote>
 
-> 1 The `Destructible` concept is the base of the hierarchy of object concepts. It specifies properties that all such object types have in common.
+> 1 <del>The `Destructible` concept is the base of the hierarchy of object concepts. It specifies properties that all such object types have in common.</del><ins>The `Destructible` concept specifies properties of all types instances of which can be destroyed at the end of their lifetime, or reference types.</ins>
 > 
 > > <tt>template &lt;class T&gt;</tt>
 > > <tt>concept bool Destructible() {</tt>
@@ -169,13 +169,13 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 > > 
 > > (3.<del>3</del><ins>2</ins>) -- The expression `&t` is non-modifying.
 
-<ednote>[_Note:_ In the minutes of Ranges TS wording review at Kona on 2015-08-14, the following is recorded:</ednote>
+<ednote>[_Editor's note:_ In the minutes of Ranges TS wording review at Kona on 2015-08-14, the following is recorded:</ednote>
 
 <blockquote><ednote>In 19.4.1 Alisdair asks whether reference types are Destructible. Eric pointed to <a href="https://github.com/ericniebler/stl2/issues/70">issue 70</a>, regarding reference types and array types. Alisdair concerned that Destructible sounds like something that goes out of scope, maybe this concept is really describing Deletable.</ednote></blockquote>
 
-<ednote>We took this as guidance to make `Destructible` behave more like the type traits with regard to "strange" types like references and arrays. We also dropped the requirement for dynamic [array] deallocation. We keep the requirement for a sane address-of operation since we recall previously receiving guidance from the committee to do so (although the notes don't seem to reflect this). We additionally require that destructors are marked `noexcept` since `noexcept` clauses throughout the standard and the Ranges TS tacitly assume it, and because sane implementations require it. --_end note_]</ednote>
+<ednote>We took this as guidance to make `Destructible` behave more like the type traits with regard to "strange" types like references and arrays. We also dropped the requirement for dynamic [array] deallocation. We keep the requirement for a sane address-of operation since we recall previously receiving guidance from the committee to do so (although the notes don't seem to reflect this). We additionally require that destructors are marked `noexcept` since `noexcept` clauses throughout the standard and the Ranges TS tacitly assume it, and because sane implementations require it.]</ednote>
 
-<ednote>[_Editor's note:_ Edit subsection "Concept `Constructible`" ([concepts.lib.object.constructible]) as follows:]</ednote>
+<ednote>[_Editor's note:_ Move subsection "Concept `Constructible`" ([concepts.lib.object.constructible]) to subsection "Core language concepts" ([concepts.lib.corelang]) after [concepts.lib.corelang.destructible], change its stable id to [concepts.lib.corelang.constructible] and edit it as follows:]</ednote>
 
 > 1 The `Constructible` concept is used to constrain the <del>type of a variable to be either an object type constructible from</del><ins>initialization of a variable of a type with</ins> a given set of argument types<del>, or a reference type that can be bound to those arguments</del>.
 > 
@@ -201,9 +201,9 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 >
 > <ins>2 For types `T` and `Args...` to satisfy `Constructible`, the variable definition `T t(declval<Args>()...);` need not be equality preserving.<ins>
 
-<ednote>[_Note:_ `Constructible` now always subsumes `Destructible`, fixing [CaseyCarter/stl2#22](https://github.com/CaseyCarter/stl2/issues/22) which regards overload ambiguities introduced by the lack of such a simple subsumption relationship. `Constructible` follows `Destructible` by dropping the requirement for dynamic [array] allocation. --_end note_]</ednote>
+<ednote>[_Editor's note:_ `Constructible` now always subsumes `Destructible`, fixing [CaseyCarter/stl2#22](https://github.com/CaseyCarter/stl2/issues/22) which regards overload ambiguities introduced by the lack of such a simple subsumption relationship. `Constructible` follows `Destructible` by dropping the requirement for dynamic [array] allocation.]</ednote>
 
-<ednote>[_Editor's note:_ Edit subsection "Concept `DefaultConstructible`" ([concepts.lib.object.defaultconstructible]) as follows:]</ednote>
+<ednote>[_Editor's note:_ Move subsection "Concept `DefaultConstructible`" ([concepts.lib.object.defaultconstructible]) to subsection "Core language concepts" ([concepts.lib.corelang]) after [concepts.lib.corelang.constructible], change its stable id to [concepts.lib.corelang.defaultconstructible] and edit it as follows:]</ednote>
 
 > > <tt>template &lt;class T&gt;</tt>
 > > <tt>concept bool DefaultConstructible() {</tt>
@@ -215,9 +215,9 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 > 
 > &#8203;<del>1 [ _Note:_ The array allocation expression `new T[n]{}` implicitly requires that `T` has a non-explicit default constructor. --_end note_ ]
 
-<ednote>[_Note:_ `DefaultConstructible<T>()` could trivially be replaced with `Constructible<T>()`. We are ambivalant about whether to remove `DefaultConstructible` or not, although we note that keeping it gives us the opportunity to augment this concept to require non-`explicit` default constructibility. Such a requirement is trivial to add, should the committee decide to. --_end note_]</ednote>
+<ednote>[_Editor's note:_ `DefaultConstructible<T>()` could trivially be replaced with `Constructible<T>()`. We are ambivalant about whether to remove `DefaultConstructible` or not, although we note that keeping it gives us the opportunity to augment this concept to require non-`explicit` default constructibility. Such a requirement is trivial to add, should the committee decide to.]</ednote>
 
-<ednote>[_Editor's note:_ Edit subsection "Concept `MoveConstructible`" ([concepts.lib.object.moveconstructible]) as follows:]</ednote>
+<ednote>[_Editor's note:_ Move subsection "Concept `MoveConstructible`" ([concepts.lib.object.moveconstructible]) to subsection "Core language concepts" ([concepts.lib.corelang]) after [concepts.lib.corelang.defaultconstructible], change its stable id to [concepts.lib.corelang.moveconstructible] and edit it as follows:]</ednote>
 
 > > <tt>template &lt;class T&gt;</tt>
 > > <tt>concept bool MoveConstructible() {</tt>
@@ -235,11 +235,11 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 > > 
 > > &#8203;<ins>(1.</ins>2<ins>) If `T` is not `const`,</ins> `rv`'s resulting state is unspecified<ins>; otherwise, it is unchanged</ins>. [ _Note:_ `rv` must still meet the requirements of the library component that is using it. The operations listed in those requirements must work as specified whether `rv` has been moved from or not. --_end note_ ]
 
-<ednote>[_Note:_ We no longer strip top-level `const` from the parameter to harmonize `MoveConstructible` with `is_move_constructible`. And as with `is_move_constructible`, `MoveConstructible<int&&>()` is `true`. See [LWG#2146](https://cplusplus.github.io/LWG/lwg-active.html#2146).</ednote>
+<ednote>[_Editor's note:_ We no longer strip top-level `const` from the parameter to harmonize `MoveConstructible` with `is_move_constructible`. And as with `is_move_constructible`, `MoveConstructible<int&&>()` is `true`. See [LWG#2146](https://cplusplus.github.io/LWG/lwg-active.html#2146).</ednote>
 
-<ednote>The description of `MoveConstructible` adds semantic requirements when `T` is an object type. It says nothing about non-object types because no additional semantic requirements are necessary. --_end note_]</ednote>
+<ednote>The description of `MoveConstructible` adds semantic requirements when `T` is an object type. It says nothing about non-object types because no additional semantic requirements are necessary.]</ednote>
 
-<ednote>[_Editor's note:_ Edit subsection "Concept `CopyConstructible`" ([concepts.lib.object.copyconstructible]) as follows:]</ednote>
+<ednote>[_Editor's note:_ Move subsection "Concept `CopyConstructible`" ([concepts.lib.object.copyconstructible]) to subsection "Core language concepts" ([concepts.lib.corelang]) after [concepts.lib.corelang.moveconstructible], change its stable id to [concepts.lib.corelang.copyconstructible] and edit it as follows:]</ednote>
 
 > > <tt>template &lt;class T&gt;</tt>
 > > <tt>concept bool CopyConstructible() {</tt>
@@ -261,11 +261,11 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 > > > 
 > > > (<ins>1.</ins>1.2) -- `T{v}` <del>or `*new T{v}`</del> is equal to `v`.
 
-<ednote>[_Note:_ As with `MoveConstructible`, we no longer strip top-level _cv_-qualifiers to bring `CopyConstructible` into harmony with `is_copy_constructible`.</ednote>
+<ednote>[_Editor's note:_ As with `MoveConstructible`, we no longer strip top-level _cv_-qualifiers to bring `CopyConstructible` into harmony with `is_copy_constructible`.</ednote>
 
 <ednote>Since `Constructible` no longer directly tests that `T(args...)` is a valid expression, it doesn't implicitly require the _cv_-qualified expression variants as described in subsection "Equality Preservation" ([concepts.lib.general.equality]/6). As a result, we needed to _explicitly_ add the additional requirements for `Constructible<T, T&>()` and `Constructible<T, const T&&>()`.</ednote>
 
-<ednote>Like `MoveConstructible`, `CopyConstructible` adds no additional semantic requirements for non-object types. --_end note_]</ednote>
+<ednote>Like `MoveConstructible`, `CopyConstructible` adds no additional semantic requirements for non-object types.]</ednote>
 
 <ednote>[_Editor's note:_ Edit subsection "Concept `Movable`" ([concepts.lib.object.movable]) as follows:]</ednote>
 
@@ -276,4 +276,4 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;Swappable&lt;T&amp;&gt;();</tt>
 > > <tt>}</tt>
 
-<ednote>[_Note:_ `Movable` is the base concept of the `Regular` heirarchy. These concepts are concerned with value semantics. As such, it makes no sense for `Movable<int&&>()` to return `true` ([stl2#310](https://github.com/ericniebler/stl2/issues/310)). We add the requirement that `T` is an object type to resolve the issue. Since `Movable` is subsumed by `Copyable`, `Semiregular`, and `Regular`, these concepts will only ever by satisfied by object types. --_end note_]</ednote>
+<ednote>[_Editor's note:_ `Movable` is the base concept of the `Regular` hierarchy. These concepts are concerned with value semantics. As such, it makes no sense for `Movable<int&&>()` to return `true` ([stl2#310](https://github.com/ericniebler/stl2/issues/310)). We add the requirement that `T` is an object type to resolve the issue. Since `Movable` is subsumed by `Copyable`, `Semiregular`, and `Regular`, these concepts will only ever by satisfied by object types.]</ednote>
