@@ -34,7 +34,7 @@ While implementing a subset of a constrained Standard Library, the authors of th
 Although well-intentioned, many of the extra semantic requirements have proved to be problematic in practice. Here, for instance, are seven currently open [stl2](https://github.com/ericniebler/stl2) bugs that need resolution:
 
 1. **"Why do neither reference types nor array types satisfy `Destructible`?" ([stl2#70](https://github.com/ericniebler/stl2/issues/70))**
-> This issue, raised independently by Walter Brown, Alisdair Meredith, and others, questions the decision to have `Destructible<T>()` require the valid expression `t.~T()` for some lvalue `t` of type `T`. That has the effect of 
+> This issue, raised independently by Walter Brown, Alisdair Meredith, and others, questions the decision to have `Destructible<T>()` require the valid expression `t.~T()` for some lvalue `t` of type `T`. That has the effect of
 preventing reference and array types from satisfying `Destructible`.
 >
 > In addition, `Destructible` requires `&t` to have type `T*`. This also prevents reference types from satisfying `Destructible` since you can't form a pointer to a reference.
@@ -42,8 +42,8 @@ preventing reference and array types from satisfying `Destructible`.
 > A reasonable interpretation of "destructible" is "can fall out of scope". This is roughly what is tested by the `is_destructible` type trait. By this rubric, references and array types should satisfy `Destructible` as they do for the trait.
 
 2. **"Is it intended that `Constructible<int&, long&>()` is true?" ([stl2#301](https://github.com/ericniebler/stl2/issues/301))**
-> `Constructible<T, Args...>()` tries to test that the type `T` can be constructed on the heap as well as in automatic storage. But requiring the expression `new T{declval<Args>()...}` causes reference types to fail to satisfy the concept since references cannot be dynamically allocated. `Constructible` "solves" this problem by handling references separately; their required expression is merely `T(declval<Args>()...)`. That syntax has the unfortunate effect of being a function-style cast, which in the case of `int&` and `long&`, amounts to a `reinterpret_cast`. 
-> 
+> `Constructible<T, Args...>()` tries to test that the type `T` can be constructed on the heap as well as in automatic storage. But requiring the expression `new T{declval<Args>()...}` causes reference types to fail to satisfy the concept since references cannot be dynamically allocated. `Constructible` "solves" this problem by handling references separately; their required expression is merely `T(declval<Args>()...)`. That syntax has the unfortunate effect of being a function-style cast, which in the case of `int&` and `long&`, amounts to a `reinterpret_cast`.
+>
 > We could patch this up by using universal initialization syntax, but we opted instead for a more radical simplification: do what `is_constructible` does.
 
 3. **"`Movable<int&&>()` is `true` and it should probably be `false`" ([stl2#310](https://github.com/ericniebler/stl2/issues/310))**
@@ -56,11 +56,11 @@ preventing reference and array types from satisfying `Destructible`.
 >     A(const A&) = default;
 > };
 > ```
-> This type is not is not default constructible; the statement `auto w = W();` is ill-formed. However, since `A` is an aggregate, the statement `auto w = W{};` is well-formed. Since `Constructible` is testing for the latter syntax and not the former, `A` satisfies `DefaultConstructible`. This is in contrast with the result of `std::is_default_constructible<A>::value`, which is `false`.
+> This type is not default constructible; the statement `auto a = A();` is ill-formed. However, since `A` is an aggregate, the statement `auto a = A{};` is well-formed. Since `Constructible` is testing for the latter syntax and not the former, `A` satisfies `DefaultConstructible`. This is in contrast with the result of `std::is_default_constructible<A>::value`, which is `false`.
 
 5. **"Assignable concept looks wrong" ([stl2#229](https://github.com/ericniebler/stl2/issues/229))**
 > There are a few problems with `Assignable`. The given definition, `Assignable<T, U>()` would appear to work with reference types (as one would expect), but the prose description reads, "Let `t` be an lvalue of type `T`..." There are no lvalues of reference type, so the wording is simply wrong. The wording also erroneously uses `==` instead of the magic phrase "is equal to," accidentally requiring the types to satisfy (some part of) `EqualityComparable`.
-> 
+>
 > Also, LEWG requested at the Issaquah 2016 meeting that this concept be changed such that it is only satisfied when `T` is a non-const lvalue reference type.
 
 6. **"MoveConstructible<T>() != std::is_move_constructible<T>()"  ([stl2#313](https://github.com/ericniebler/stl2/issues/313))**
@@ -125,15 +125,15 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 > > <tt>}</tt>
 >
 > 1 <del>Let `t` be an lvalue of type `T`, and `R` be the type `remove_reference_t<U>`. If `U` is an lvalue reference type, let `v` be an lvalue of type `R`; otherwise, let `v` be an rvalue of type `R`. Let `uu` be a distinct object of type `R` such that `uu` is equal to `v`.</del><ins>Let `t` be an lvalue which refers to an object `o` such that `decltype((t))` is `T`, and `u` an expression such that `decltype((u))` is `U`. Let `u2` be a distinct object that is equal to `u`.</ins> Then `Assignable<T, U>()` is satisfied if and only if
-> 
+>
 > > (1.1) -- <tt>std::addressof(t = <del>v</del><ins>u</ins>) == std::addressof(<del>t</del><ins>o</ins>)</tt>.
-> > 
+> >
 > > (1.2) -- After evaluating <tt>t = <del>v</del><ins>u</ins></tt>:
-> > 
+> >
 > > > (1.2.1) -- `t` is equal to <tt><del>uu</del><ins>u2</ins></tt>.
-> > > 
+> > >
 > > > (1.2.2) -- If <del>`v`</del><ins>`u`</ins> is a non-`const` <del>rvalue, its</del><ins>xvalue, the</ins> resulting state <ins>of the object to which it refers</ins> is unspecified. [ _Note:_ <del>`v`</del><ins>the object</ins> must still meet the requirements of the library component that is using it. The operations listed in those requirements must work as specified. -- end note ]
-> > > 
+> > >
 > > > (1.2.3) -- Otherwise, <del>`v`</del><ins>if `u` is a glvalue, the object to which it refers</ins> is not modified.
 
 <ednote>[_Editor's note:_ Prior to this change, `Assignable` is trying to work with proxy reference types and failing. It perfectly forwards its arguments, but requires the return type of assignment to be `T&` (which is not true for some proxy types). Also, the allowable moved-from state of the rhs expression (`u`) is described in terms of its value category. But if the rhs is a proxy reference (e.g., `reference_wrapper<int>`) then the value category of the proxy bears no relation to the value category of the referent.</ednote>
@@ -143,7 +143,7 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 <ednote>[_Editor's note:_ Move subsection "Concept `Destructible`" ([concepts.lib.object.destructible]) to subsection "Core language concepts" ([concepts.lib.corelang]) after [concepts.lib.corelang.swappable], change its stable id to [concepts.lib.corelang.destructible] and edit it as follows:]</ednote>
 
 > 1 <del>The `Destructible` concept is the base of the hierarchy of object concepts. It specifies properties that all such object types have in common.</del><ins>The `Destructible` concept specifies properties of all types instances of which can be destroyed at the end of their lifetime, or reference types.</ins>
-> 
+>
 > > <tt>template &lt;class T&gt;</tt>
 > > <tt>concept bool Destructible() {</tt>
 > > <tt>&nbsp;&nbsp;<del>return requires(T t, const T ct, T* p) {</del></tt>
@@ -158,15 +158,15 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>{ &ct } -&gt; Same&lt;add_pointer_t&lt;const T&gt;&gt;; // not required to be equality preserving</ins></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;};</tt>
 > > <tt>}</tt>
-> 
+>
 > 2 The expression requirement `&ct` does not require implicit expression variants.
-> 
+>
 > 3 Given a (possibly `const`) lvalue `t` of type <tt><ins>remove_reference_t&lt;</ins>T<ins>&gt;</ins></tt><del> and pointer `p` of type `T*`</del>,  `Destructible<T>()` is satisfied if and only if
-> 
+>
 > > &#8203;<del>(3.1) -- After evaluating the expression `t.~T()`, `delete p`, or `delete[] p`, all resources owned by the denoted object(s) are reclaimed.</del>
-> > 
+> >
 > > (3.<del>2</del><ins>1</ins>) -- `&t == std::addressof(t)`.
-> > 
+> >
 > > (3.<del>3</del><ins>2</ins>) -- The expression `&t` is non-modifying.
 
 <ednote>[_Editor's note:_ In the minutes of Ranges TS wording review at Kona on 2015-08-14, the following is recorded:</ednote>
@@ -178,7 +178,7 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 <ednote>[_Editor's note:_ Move subsection "Concept `Constructible`" ([concepts.lib.object.constructible]) to subsection "Core language concepts" ([concepts.lib.corelang]) after [concepts.lib.corelang.destructible], change its stable id to [concepts.lib.corelang.constructible] and edit it as follows:]</ednote>
 
 > 1 The `Constructible` concept is used to constrain the <del>type of a variable to be either an object type constructible from</del><ins>initialization of a variable of a type with</ins> a given set of argument types<del>, or a reference type that can be bound to those arguments</del>.
-> 
+>
 > > <tt><del>template &lt;class T, class.\.. Args&gt;</del></tt>
 > > <tt><del>concept bool __ConstructibleObject = // exposition only</del></tt>
 > > <tt>&nbsp;&nbsp;<del>Destructible&lt;T&gt;() &amp;&amp; requires(Args&amp;&amp;.\.. args) {</del></tt>
@@ -212,7 +212,7 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<del>new T[n]{}; // not required to be equality preserving</del></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<del>};</del></tt>
 > > <tt>}</tt>
-> 
+>
 > &#8203;<del>1 [ _Note:_ The array allocation expression `new T[n]{}` implicitly requires that `T` has a non-explicit default constructor. --_end note_ ]
 
 <ednote>[_Editor's note:_ `DefaultConstructible<T>()` could trivially be replaced with `Constructible<T>()`. We are ambivalant about whether to remove `DefaultConstructible` or not, although we note that keeping it gives us the opportunity to augment this concept to require non-`explicit` default constructibility. Such a requirement is trivial to add, should the committee decide to.]</ednote>
@@ -224,15 +224,15 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 > > <tt>&nbsp;&nbsp;return Constructible&lt;T, <del>remove_cv_t&lt;</del>T<del>&gt;</del>&amp;&amp;&gt;() &amp;&amp;</tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;ConvertibleTo&lt;<del>remove_cv_t&lt;</del>T<del>&gt;</del>&amp;&amp;, T&gt;();</tt>
 > > <tt>}</tt>
-> 
+>
 > 1 <ins>If `T` is an object type, then</ins>
 >
 > > &#8203;<ins>(1.1)</ins> Let `rv` be an rvalue of type <del>`remove_cv_t<`</del>`T`<del>`>`</del>. Then `MoveConstructible<T>()` is satisfied if and only if
 > >
 > > > (<ins>1.</ins>1.1) -- After the definition `T u = rv;`, `u` is equal to the value of `rv` before the construction.
-> > > 
+> > >
 > > > (<ins>1.</ins>1.2) -- `T{rv}` <del>or `*new T{rv}`</del> is equal to the value of `rv` before the construction.
-> > 
+> >
 > > &#8203;<ins>(1.</ins>2<ins>) If `T` is not `const`,</ins> `rv`'s resulting state is unspecified<ins>; otherwise, it is unchanged</ins>. [ _Note:_ `rv` must still meet the requirements of the library component that is using it. The operations listed in those requirements must work as specified whether `rv` has been moved from or not. --_end note_ ]
 
 <ednote>[_Editor's note:_ We no longer strip top-level `const` from the parameter to harmonize `MoveConstructible` with `is_move_constructible`. And as with `is_move_constructible`, `MoveConstructible<int&&>()` is `true`. See [LWG#2146](https://cplusplus.github.io/LWG/lwg-active.html#2146).</ednote>
@@ -252,13 +252,13 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>Constructible&lt;T, const T&amp;&gt;() &amp;&amp; ConvertibleTo&lt;const T&amp;, T&gt;() &amp;&amp;</ins></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>Constructible&lt;T, const T&amp;&amp;&gt;() &amp;&amp; ConvertibleTo&lt;const T&amp;&amp;, T&gt;();</ins></tt>
 > > <tt>}</tt>
-> 
+>
 > 1 <ins>If `T` is an object type, then</ins>
 >
 > > &#8203;<ins>(1.1)</ins> Let `v` be an lvalue of type (possibly `const`) <del>`remove_cv_t<`</del>`T`<del>`>`</del> or an rvalue of type `const` <del>`remove_cv_t<`</del>`T`<del>`>`</del>. Then `CopyConstructible<T>()` is satisfied if and only if
-> > 
+> >
 > > > (<ins>1.</ins>1.1) -- After the definition `T u = v;`, `v` is equal to `u`.
-> > > 
+> > >
 > > > (<ins>1.</ins>1.2) -- `T{v}` <del>or `*new T{v}`</del> is equal to `v`.
 
 <ednote>[_Editor's note:_ As with `MoveConstructible`, we no longer strip top-level _cv_-qualifiers to bring `CopyConstructible` into harmony with `is_copy_constructible`.</ednote>
