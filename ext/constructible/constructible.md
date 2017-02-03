@@ -1,6 +1,6 @@
 ---
-pagetitle: Assorted Object Concept Fixes
-title: Assorted Object Concept Fixes
+pagetitle: "Ranges TS: Assorted Object Concept Fixes"
+title: "Ranges TS: Assorted Object Concept Fixes"
 ...
 
 # Synopsis
@@ -20,7 +20,7 @@ In addition, we suggest a change to `Movable` that correctly positions it as the
 
 # Problem description
 
-The Palo Alto report (N3351), on which the design of the Ranges TS is based, suggested the object concepts `Semiregular` and `Regular` for constraining standard library components. In an appendix it concedes that many generic components could more usefully be constrained with decompositions of these very coarse concepts: `Movable` and `Copyable`.
+The [Palo Alto report](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3351.pdf), on which the design of the Ranges TS is based, suggested the object concepts `Semiregular` and `Regular` for constraining standard library components. In an appendix it concedes that many generic components could more usefully be constrained with decompositions of these very coarse concepts: `Movable` and `Copyable`.
 
 While implementing a subset of a constrained Standard Library, the authors of the Ranges TS found that even more fine-grained "object" concepts were often useful: `MoveConstructible`,  `CopyConstructible`, `Assignable`, and others. These concepts are needed to avoid over-constraining low-level library utilities like `pair`, `tuple`, `variant` and more. Rather than aping the similarly named type-traits, the authors of the Ranges TS tried to preserve the intent of the Palo Alto report by giving them semantic weight. It did this in various ways, including:
 
@@ -283,3 +283,7 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 > &#8203;<ins>1 There is no subsumption relationship between `Movable<T>()` and `is_object<T>::value`.
 
 <ednote>[_Editor's note:_ `Movable` is the base concept of the `Regular` hierarchy. These concepts are concerned with value semantics. As such, it makes no sense for `Movable<int&&>()` to return `true` ([stl2#310](https://github.com/ericniebler/stl2/issues/310)). We add the requirement that `T` is an object type to resolve the issue. Since `Movable` is subsumed by `Copyable`, `Semiregular`, and `Regular`, these concepts will only ever by satisfied by object types.]</ednote>
+
+# Acknowledgements
+
+I would like to thank Casey Carter and Andrew Sutton for their review feedback.
