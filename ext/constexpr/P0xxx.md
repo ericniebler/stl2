@@ -1,0 +1,453 @@
+---
+pagetitle: Constexpr for <experimental/ranges/iterator>
+title: Constexpr for <experimental/ranges/iterator>
+...
+
+# Synopsis
+
+This paper proposes changes to the specification of components declared in the Ranges TS header `<experimental/ranges/iterator>` to enable them to be used in a constexpr context. These changes resolve Ranges TS issue 256 "Add constexpr to advance, distance, next and prev" (https://github.com/ericniebler/stl2/issues/256).
+
+# Background
+
+During review of P0370R2 "Ranges TS Design Updates Omnibus" at Issaquah, LWG directed that functions declared in the header `<experimental/ranges/iterator>` should be `constexpr` if they are so in the C++ WP header `<iterator>`. It was suggested that the new iterator adaptors added in the Ranges TS, `counted_iterator` and `common_iterator`, should also be "as `constexpr` as possible" in the spirit of e.g. `reverse_iterator` and `move_iterator`. This paper proposes changes to the specification of:
+
+- the iterator operations `advance`, `next`, `prev`, and `distance`
+- the iterator adaptors `reverse_iterator`, `move_iterator`, `counted_iterator`, and `common_iterator`
+- the sentinel adaptor `move_sentinel`
+- the `dangling` wrapper class template
+- class template `tagged`
+
+to enable those components to be used in the implementation of `constexpr` algorithms.
+
+## Design issues: `common_iterator`
+
+The design intent of `common_iterator<I, S>`, for some iterator type `I` and sentinel type `S`, is that it be implementable in terms of a C++17 `std::variant<I, S>`. Unfortunately the limitations of `constexpr` in C++17 make it impossible to implement the assignment operators of `std::variant` so as to be generally usable in a `constexpr` context. Consequently, `common_iterator`'s assignment operators cannot in general be usable in `constexpr` context.
+
+Similarly, if either `I` or `S` has a nontrivial destructor, `common_iterator<I, S>` must also have a nontrivial destructor, disqualifying it from being a literal type.
+
+Since an iterator that cannot be assigned is of extremely limited utility, we do not propose to apply `constexpr` to all member functions of `common_iterator` at this time; we propose only that the constructors of `common_iterator` be `constexpr`.
+
+# Proposed Resolution
+
+Change the synopsis of class templated `tagged` in [taggedtup.tagged]/2 to read as follows:
+
+> <tt>template &lt;class Base, TagSpecifier..\. Tags></tt>
+> <tt>&nbsp;&nbsp;requires sizeof..\.(Tags) &lt;= tuple_size&lt;Base>::value</tt>
+> <tt>struct tagged :</tt>
+> <tt>&nbsp;&nbsp;Base, <i>TAGGET</i>(tagged&lt;Base, Tags..\.>, <i>T<sub>i</sub></i>, <i>i</i>)..\. { // <i>see below</i></tt>
+> <tt>&nbsp;&nbsp;using Base::Base;</tt>
+> <tt>&nbsp;&nbsp;tagged() = default;</tt>
+> <tt>&nbsp;&nbsp;tagged(tagged&amp;&amp;) = default;</tt>
+> <tt>&nbsp;&nbsp;tagged(const tagged&amp;) = default;</tt>
+> <tt>&nbsp;&nbsp;tagged&amp; operator=(tagged&amp;&amp;) = default;</tt>
+> <tt>&nbsp;&nbsp;tagged&amp; operator=(const tagged&amp;) = default;</tt>
+> <tt>&nbsp;&nbsp;template &lt;class Other></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires Constructible&lt;Base, Other>()</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>tagged(tagged&lt;Other, Tags..\.>&amp;&amp; that) noexcept(<i>see below</i>);</tt>
+> <tt>&nbsp;&nbsp;template &lt;class Other></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires Constructible<Base, const Other&amp;>()</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>tagged(const tagged&lt;Other, Tags..\.>&amp; that);</tt>
+> <tt>&nbsp;&nbsp;template &lt;class Other></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires Assignable&lt;Base&amp;, Other>()</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>tagged&amp; operator=(tagged&lt;Other, Tags..\.>&amp;&amp; that) noexcept(<i>see below</i>);</tt>
+> <tt>&nbsp;&nbsp;template &lt;class Other></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires Assignable&lt;Base&amp;, const Other&amp;>()</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>tagged&amp; operator=(const tagged&lt;Other, Tags..\.>&amp; that);</tt>
+> <tt>&nbsp;&nbsp;template &lt;class U></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires Assignable&lt;Base&amp;, U>() &amp;&amp; !Same&lt;decay_t&lt;U>, tagged>()</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>tagged&amp; operator=(U&amp;&amp; u) noexcept(<i>see below</i>);</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>void swap(tagged&amp; that) noexcept(<i>see below</i>)</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires Swappable&lt;Base&amp;>();</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>friend void swap(tagged&amp;, tagged&amp;) noexcept(<i>see below</i>)</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires Swappable&lt;Base&amp;>();</tt>
+> <tt>};</tt>
+
+Update the specifications of the functions in [taggedtup.tagged] to agree with the synopsis.
+
+Change the synopsis of the header `<experimental/ranges/iterator>` in [iterator.synopsis] as follows:
+
+> <tt>// 6.6.5, iterator operations:</tt>
+> <tt>template &lt;Iterator I></tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>void advance(I&amp; i, difference_type_t&lt;I> n);</tt>
+> <tt>template &lt;Iterator I, Sentinel&lt;I> S></tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>void advance(I&amp; i, S bound);</tt>
+> <tt>template &lt;Iterator I, Sentinel&lt;I> S></tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>difference_type_t&lt;I> advance(I&amp; i, difference_type_t&lt;I> n, S bound);</tt>
+> <tt>template &lt;Iterator I, Sentinel&lt;I> S></tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>difference_type_t&lt;I> distance(I first, S last);</tt>
+> <tt>template &lt;Iterator I></tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>I next(I x, difference_type_t&lt;I> n = 1);</tt>
+> <tt>template &lt;Iterator I, Sentinel&lt;I> S></tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>I next(I x, S bound);</tt>
+> <tt>template &lt;Iterator I, Sentinel&lt;I> S></tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>I next(I x, difference_type_t&lt;I> n, S bound);</tt>
+> <tt>template &lt;BidirectionalIterator I></tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>I prev(I x, difference_type_t&lt;I> n = 1);</tt>
+> <tt>template &lt;BidirectionalIterator I></tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>I prev(I x, difference_type_t&lt;I> n, I bound);</tt>
+>
+> [...]
+>
+> <tt>// 6.7, predefined iterators and sentinels:</tt>
+>
+> <tt>// 6.7.1, reverse iterators:</tt>
+> <tt>template &lt;BidirectionalIterator I> class reverse_iterator;</tt>
+>
+> <tt>template &lt;class I1, class I2></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires EqualityComparable&lt;I1, I2>()</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>bool operator==(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const reverse_iterator&lt;I1>&amp; x,</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const reverse_iterator&lt;I2>&amp; y);</tt>
+> <tt>template &lt;class I1, class I2></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires EqualityComparable&lt;I1, I2>()</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>bool operator!=(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const reverse_iterator&lt;I1>&amp; x,</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const reverse_iterator&lt;I2>&amp; y);</tt>
+> <tt>template &lt;class I1, class I2></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires StrictTotallyOrdered&lt;I1, I2>()</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>bool operator&lt;(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const reverse_iterator&lt;I1>&amp; x,</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const reverse_iterator&lt;I2>&amp; y);</tt>
+> <tt>template &lt;class I1, class I2></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires StrictTotallyOrdered&lt;I1, I2>()</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>bool operator>(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const reverse_iterator&lt;I1>&amp; x,</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const reverse_iterator&lt;I2>&amp; y);</tt>
+> <tt>template &lt;class I1, class I2></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires StrictTotallyOrdered&lt;I1, I2>()</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>bool operator>=(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const reverse_iterator&lt;I1>&amp; x,</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const reverse_iterator&lt;I2>&amp; y);</tt>
+> <tt>template &lt;class I1, class I2></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires StrictTotallyOrdered&lt;I1, I2>()</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>bool operator&lt;=(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const reverse_iterator&lt;I1>&amp; x,</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const reverse_iterator&lt;I2>&amp; y);</tt>
+>
+> <tt>template &lt;class I1, class I2></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires SizedSentinel&lt;I1, I2>()</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>difference_type_t&lt;I2> operator-(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const reverse_iterator&lt;I1>&amp; x,</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const reverse_iterator&lt;I2>&amp; y);</tt>
+> <tt>template &lt;RandomAccessIterator I></tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>reverse_iterator&lt;I> operator+(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;difference_type_t&lt;I> n,</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const reverse_iterator&lt;I>&amp; x);</tt>
+>
+> <tt>template &lt;BidirectionalIterator I></tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>reverse_iterator&lt;I> make_reverse_iterator(I i);</tt>
+>
+> [...]
+>
+> <tt>// 6.7.3, move iterators and sentinels:</tt>
+> <tt>template &lt;InputIterator I> class move_iterator;</tt>
+>
+> <tt>template &lt;class I1, class I2></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires EqualityComparable&lt;I1, I2>()</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>bool operator==(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const move_iterator&lt;I1>&amp; x, const move_iterator&lt;I2>&amp; y);</tt>
+> <tt>template &lt;class I1, class I2></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires EqualityComparable&lt;I1, I2>()</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>bool operator!=(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const move_iterator&lt;I1>&amp; x, const move_iterator&lt;I2>&amp; y);</tt>
+> <tt>template &lt;class I1, class I2></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires StrictTotallyOrdered&lt;I1, I2>()</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>bool operator&lt;(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const move_iterator&lt;I1>&amp; x, const move_iterator&lt;I2>&amp; y);</tt>
+> <tt>template &lt;class I1, class I2></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires StrictTotallyOrdered&lt;I1, I2>()</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>bool operator&lt;=(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const move_iterator&lt;I1>&amp; x, const move_iterator&lt;I2>&amp; y);</tt>
+> <tt>template &lt;class I1, class I2></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires StrictTotallyOrdered&lt;I1, I2>()</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>bool operator>(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const move_iterator&lt;I1>&amp; x, const move_iterator&lt;I2>&amp; y);</tt>
+> <tt>template &lt;class I1, class I2></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires StrictTotallyOrdered&lt;I1, I2>()</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>bool operator>=(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const move_iterator&lt;I1>&amp; x, const move_iterator&lt;I2>&amp; y);</tt>
+>
+> <tt>template &lt;class I1, class I2></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires SizedSentinel&lt;I1, I2>()</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>difference_type_t&lt;I2> operator-(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const move_iterator&lt;I1>&amp; x,</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const move_iterator&lt;I2>&amp; y);</tt>
+> <tt>template &lt;RandomAccessIterator I></tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>move_iterator&lt;I> operator+(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;difference_type_t&lt;I> n,</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const move_iterator&lt;I>&amp; x);</tt>
+> <tt>template &lt;InputIterator I></tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>move_iterator&lt;I> make_move_iterator(I i);</tt>
+>
+> <tt>template &lt;Semiregular S> class move_sentinel;</tt>
+>
+> <tt>template &lt;class I, Sentinel&lt;I> S></tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>bool operator==(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const move_iterator&lt;I>&amp; i,</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const move_sentinel&lt;S>&amp; s);</tt>
+> <tt>template &lt;class I, Sentinel&lt;I> S></tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>bool operator==(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const move_sentinel&lt;S>&amp; s,</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const move_iterator&lt;I>&amp; i);</tt>
+> <tt>template &lt;class I, Sentinel&lt;I> S></tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>bool operator!=(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const move_iterator&lt;I>&amp; i,</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const move_sentinel&lt;S>&amp; s);</tt>
+> <tt>template &lt;class I, Sentinel&lt;I> S></tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>bool operator!=(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const move_sentinel&lt;S>&amp; s,</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const move_iterator&lt;I>&amp; i);</tt>
+>
+> <tt>template &lt;class I, SizedSentinel&lt;I> S></tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>difference_type_t&lt;I> operator-(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const move_sentinel&lt;S>&amp; s, const move_iterator&lt;I>&amp; i);</tt>
+> <tt>template &lt;class I, SizedSentinel&lt;I> S></tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>difference_type_t&lt;I> operator-(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const move_iterator&lt;I>&amp; i, const move_sentinel&lt;S>&amp; s);</tt>
+>
+> <tt>template &lt;Semiregular S></tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>move_sentinel&lt;S> make_move_sentinel(S s);</tt>
+>
+> [...]
+>
+> <tt>// 6.7.6, counted iterators:</tt>
+> <tt>template &lt;Iterator I> class counted_iterator;</tt>
+>
+> <tt>template &lt;class I1, class I2></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires Common&lt;I1, I2>()</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>bool operator==(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const counted_iterator&lt;I1>&amp; x, const counted_iterator&lt;I2>&amp; y);</tt>
+> <tt><ins>constexpr </ins>bool operator==(</tt>
+> <tt>&nbsp;&nbsp;const counted_iterator&lt;auto>&amp; x, default_sentinel);</tt>
+> <tt><ins>constexpr </ins>bool operator==(</tt>
+> <tt>&nbsp;&nbsp;default_sentinel, const counted_iterator&lt;auto>&amp; x);</tt>
+> <tt>template &lt;class I1, class I2></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires Common&lt;I1, I2>()</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>bool operator!=(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const counted_iterator&lt;I1>&amp; x, const counted_iterator&lt;I2>&amp; y);</tt>
+> <tt><ins>constexpr </ins>bool operator!=(</tt>
+> <tt>&nbsp;&nbsp;const counted_iterator&lt;auto>&amp; x, default_sentinel y);</tt>
+> <tt><ins>constexpr </ins>bool operator!=(</tt>
+> <tt>&nbsp;&nbsp;default_sentinel x, const counted_iterator&lt;auto>&amp; y);</tt>
+> <tt>template &lt;class I1, class I2></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires Common&lt;I1, I2>()</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>bool operator&lt;(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const counted_iterator&lt;I1>&amp; x, const counted_iterator&lt;I2>&amp; y);</tt>
+> <tt>template &lt;class I1, class I2></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires Common&lt;I1, I2>()</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>bool operator&lt;=(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const counted_iterator&lt;I1>&amp; x, const counted_iterator&lt;I2>&amp; y);</tt>
+> <tt>template &lt;class I1, class I2></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires Common&lt;I1, I2>()</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>bool operator>(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const counted_iterator&lt;I1>&amp; x, const counted_iterator&lt;I2>&amp; y);</tt>
+> <tt>template &lt;class I1, class I2></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires Common&lt;I1, I2>()</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>bool operator>=(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const counted_iterator&lt;I1>&amp; x, const counted_iterator&lt;I2>&amp; y);</tt>
+> <tt>template &lt;class I1, class I2></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires Common&lt;I1, I2>()</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>difference_type_t&lt;I2> operator-(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const counted_iterator&lt;I1>&amp; x, const counted_iterator&lt;I2>&amp; y);</tt>
+> <tt>template &lt;class I></tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>difference_type_t&lt;I> operator-(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;const counted_iterator&lt;I>&amp; x, default_sentinel y);</tt>
+> <tt>template &lt;class I></tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>difference_type_t&lt;I> operator-(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;default_sentinel x, const counted_iterator&lt;I>&amp; y);</tt>
+>
+> <tt>template &lt;RandomAccessIterator I></tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>counted_iterator&lt;I> operator+(</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;difference_type_t&lt;I> n, const counted_iterator&lt;I>&amp; x);</tt>
+> <tt>template &lt;Iterator I></tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>counted_iterator&lt;I> make_counted_iterator(I i, difference_type_t&lt;I> n);</tt>
+> <tt>template &lt;Iterator I></tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>void advance(counted_iterator&lt;I>&amp; i, difference_type_t&lt;I> n);</tt>
+>
+> [...]
+>
+> <tt>// 6.11, range primitives:</tt>
+> <tt>namespace {</tt>
+> <tt>&nbsp;&nbsp;constexpr <i>unspecified</i> size = <i>unspecified</i>;</tt>
+> <tt>&nbsp;&nbsp;constexpr <i>unspecified</i> empty = <i>unspecified</i>;</tt>
+> <tt>&nbsp;&nbsp;constexpr <i>unspecified</i> data = <i>unspecified</i>;</tt>
+> <tt>&nbsp;&nbsp;constexpr <i>unspecified</i> cdata = <i>unspecified</i>;</tt>
+> <tt>}</tt>
+> <tt>template &lt;Range R></tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>difference_type_t&lt;iterator_t&lt;R>> distance(R&amp;&amp; r);</tt>
+> <tt>template &lt;SizedRange R></tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>difference_type_t&lt;iterator_t&lt;R>> distance(R&amp;&amp; r);</tt>
+
+Update the specifications of the functions in [iterator.operations], [reverse.iterator], [iterators.move], [move.sentinel], [iterators.counted], and [range.primitives] to agree with the synopsis.
+
+In [reverse.iterator], change the synopsis of class template `reverse_iterator` as follows:
+
+> <tt>template &lt;BidirectionalIterator I></tt>
+> <tt>class reverse_iterator {</tt>
+> <tt>public:</tt>
+> <tt>&nbsp;&nbsp;using iterator_type = I;</tt>
+> <tt>&nbsp;&nbsp;using difference_type = difference_type_t&lt;I>;</tt>
+> <tt>&nbsp;&nbsp;using value_type = value_type_t&lt;I>;</tt>
+> <tt>&nbsp;&nbsp;using iterator_category = iterator_category_t&lt;I>;</tt>
+> <tt>&nbsp;&nbsp;using reference = reference_t&lt;I>;</tt>
+> <tt>&nbsp;&nbsp;using pointer = I;</tt>
+>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>reverse_iterator();</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>explicit reverse_iterator(I x);</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>reverse_iterator(const reverse_iterator&lt;ConvertibleTo&lt;I>>&amp; i);</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>reverse_iterator&amp; operator=(const reverse_iterator&lt;ConvertibleTo&lt;I>>&amp; i);</tt>
+>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>I base() const;</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>reference operator\*() const;</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>pointer operator->() const;</tt>
+>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>reverse_iterator&amp; operator++();</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>reverse_iterator  operator++(int);</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>reverse_iterator&amp; operator-\-();</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>reverse_iterator  operator-\-(int);</tt>
+>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>reverse_iterator  operator+ (difference_type n) const</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires RandomAccessIterator&lt;I>();</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>reverse_iterator&amp; operator+=(difference_type n)</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires RandomAccessIterator&lt;I>();</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>reverse_iterator  operator- (difference_type n) const</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires RandomAccessIterator&lt;I>();</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>reverse_iterator&amp; operator-=(difference_type n)</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires RandomAccessIterator&lt;I>();</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>reference operator[](difference_type n) const</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires RandomAccessIterator&lt;I>();</tt>
+> <tt>private:</tt>
+> <tt>&nbsp;&nbsp;I current; // exposition only</tt>
+> <tt>};</tt>
+
+Update the specifications of the member functions in [reverse.iterator] to agree with the class template synopsis.
+
+In [move.iterator], change the synopsis of class template `move_iterator` as follows:
+
+> <tt>template &lt;InputIterator I></tt>
+> <tt>class move_iterator {</tt>
+> <tt>public:</tt>
+> <tt>&nbsp;&nbsp;using iterator_type = I;</tt>
+> <tt>&nbsp;&nbsp;using difference_type = difference_type_t&lt;I>;</tt>
+> <tt>&nbsp;&nbsp;using value_type = value_type_t&lt;I>;</tt>
+> <tt>&nbsp;&nbsp;using iterator_category = input_iterator_tag;</tt>
+> <tt>&nbsp;&nbsp;using reference = <i>see below</i>;</tt>
+>
+> <tt>&nbsp;&nbsp;move_iterator();</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>explicit move_iterator(I i);</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>move_iterator(const move_iterator&lt;ConvertibleTo&lt;I>>&amp; i);</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>move_iterator&amp; operator=(const move_iterator&lt;ConvertibleTo&lt;I>>&amp; i);</tt>
+>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>I base() const;</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>reference operator\*() const;</tt>
+>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>move_iterator&amp; operator++();</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>move_iterator operator++(int);</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>move_iterator&amp; operator--()</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires BidirectionalIterator&lt;I>();</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>move_iterator operator--(int)</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires BidirectionalIterator&lt;I>();</tt>
+>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>move_iterator operator+(difference_type n) const</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires RandomAccessIterator&lt;I>();</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>move_iterator&amp; operator+=(difference_type n)</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires RandomAccessIterator&lt;I>();</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>move_iterator operator-(difference_type n) const</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires RandomAccessIterator&lt;I>();</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>move_iterator&amp; operator-=(difference_type n)</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires RandomAccessIterator&lt;I>();</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>reference operator[](difference_type n) const</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires RandomAccessIterator&lt;I>();</tt>
+>
+> <tt>private:</tt>
+> <tt>&nbsp;&nbsp;I current; // exposition only</tt>
+> <tt>};</tt>
+
+Update the specifications of the member functions in [move.iterator] to agree with the class template synopsis.
+
+In [common.iterator], change the synopsis of class template `common_iterator` as follows:
+
+> <tt>template &lt;Iterator I, Sentinel&lt;I> S></tt>
+> <tt>&nbsp;&nbsp;requires !Same&lt;I, S>()</tt>
+> <tt>class common_iterator {</tt>
+> <tt>public:</tt>
+> <tt>&nbsp;&nbsp;using difference_type = difference_type_t&lt;I>;</tt>
+>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>common_iterator();</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>common_iterator(I i);</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>common_iterator(S s);</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>common_iterator(const common_iterator&lt;ConvertibleTo&lt;I>, ConvertibleTo&lt;S>>&amp; u);</tt>
+> <tt>&nbsp;&nbsp;common_iterator&amp; operator=(const common_iterator&lt;ConvertibleTo&lt;I>, ConvertibleTo&lt;S>>&amp; u);</tt>
+>
+> <tt>&nbsp;&nbsp;~common_iterator();</tt>
+>
+> <tt>&nbsp;&nbsp;<i>see below</i> operator\*();</tt>
+> <tt>&nbsp;&nbsp;<i>see below</i> operator\*() const;</tt>
+> <tt>&nbsp;&nbsp;<i>see below</i> operator->() const requires Readable&lt;I>();</tt>
+>
+> <tt>&nbsp;&nbsp;common_iterator&amp; operator++();</tt>
+> <tt>&nbsp;&nbsp;common_iterator operator++(int);</tt>
+>
+> <tt>private:</tt>
+> <tt>&nbsp;&nbsp;bool is_sentinel; // exposition only</tt>
+> <tt>&nbsp;&nbsp;I iter;           // exposition only</tt>
+> <tt>&nbsp;&nbsp;S sentinel;       // exposition only</tt>
+> <tt>};</tt>
+
+Update the specifications of the member functions in [common.iterator] to agree with the class template synopsis.
+
+In [counted.iterator], change the synopsis of class template `counted_iterator` as follows:
+
+> <tt>template &lt;Iterator I></tt>
+> <tt>class counted_iterator {</tt>
+> <tt>public:</tt>
+> <tt>&nbsp;&nbsp;using iterator_type = I;</tt>
+> <tt>&nbsp;&nbsp;using difference_type = difference_type_t&lt;I>;</tt>
+>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>counted_iterator();</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>counted_iterator(I x, difference_type_t&lt;I> n);</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>counted_iterator(const counted_iterator&lt;ConvertibleTo&lt;I>>&amp; i);</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>counted_iterator&amp; operator=(const counted_iterator&lt;ConvertibleTo&lt;I>>&amp; i);</tt>
+>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>I base() const;</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>difference_type_t&lt;I> count() const;</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins><i>see below</i> operator\*();</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins><i>see below</i> operator\*() const;</tt>
+>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>counted_iterator&amp; operator++();</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>counted_iterator operator++(int);</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>counted_iterator&amp; operator-\-()</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires BidirectionalIterator&lt;I>();</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>counted_iterator operator-\-(int)</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires BidirectionalIterator&lt;I>();</tt>
+>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>counted_iterator operator+ (difference_type n) const</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires RandomAccessIterator&lt;I>();</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>counted_iterator&amp; operator+=(difference_type n)</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires RandomAccessIterator&lt;I>();</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>counted_iterator operator- (difference_type n) const</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires RandomAccessIterator&lt;I>();</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>counted_iterator&amp; operator-=(difference_type n)</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires RandomAccessIterator&lt;I>();</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins><i>see below</i> operator[](difference_type n) const</tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires RandomAccessIterator&lt;I>();</tt>
+> <tt>private:</tt>
+> <tt>&nbsp;&nbsp;I current; // exposition only</tt>
+> <tt>&nbsp;&nbsp;difference_type_t&lt;I> cnt; // exposition only</tt>
+> <tt>};</tt>
+
+Update the specifications of the member functions in [counted.iterator] to agree with the class template synopsis.
+
+In [dangling.wrap], change the synopsis of class template `dangling` as follows:
+
+> <tt>template &lt;CopyConstructible T></tt>
+> <tt>class dangling {</tt>
+> <tt>public:</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>dangling() requires DefaultConstructible&lt;T>();</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>dangling(T t);</tt>
+> <tt>&nbsp;&nbsp;<ins>constexpr </ins>T get_unsafe() const;</tt>
+> <tt>private:</tt>
+> <tt>&nbsp;&nbsp;T value; // exposition only</tt>
+> <tt>};</tt>
+
+Update the specifications of the member functions in [dangling.wrap.ops] to agree with the class template synopsis.
