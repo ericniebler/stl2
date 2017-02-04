@@ -9,13 +9,16 @@ This paper proposes changes to the specification of components declared in the R
 
 # Background
 
-During review of P0370R2 "Ranges TS Design Updates Omnibus" at Issaquah, LWG directed that functions declared in the header `<experimental/ranges/iterator>` should be `constexpr` if they are so in the C++ WP header `<iterator>`. It was suggested that the new iterator adaptors added in the Ranges TS, `counted_iterator` and `common_iterator`, should also be "as `constexpr` as possible" in the spirit of e.g. `reverse_iterator` and `move_iterator`. This paper proposes changes to the specification of:
+During review of P0370R2 "Ranges TS Design Updates Omnibus" at Issaquah, LWG directed that functions declared in the header `<experimental/ranges/iterator>` should be `constexpr` if they are so in the C++ WP header `<iterator>`. It was suggested that the new iterator adaptors added in the Ranges TS, `counted_iterator` and `common_iterator`, should also be "as `constexpr` as possible" in the spirit of e.g. `reverse_iterator` and `move_iterator`. We've enlarged the scope slightly to include some utilities (`tagged`, `dangling`, and `exchange`) to enable the use of the iterator tools to implement constexpr algorithms.
+
+This paper proposes changes to the specification of:
 
 - the iterator operations `advance`, `next`, `prev`, and `distance`
 - the iterator adaptors `reverse_iterator`, `move_iterator`, `counted_iterator`, and `common_iterator`
 - the sentinel adaptor `move_sentinel`
 - the `dangling` wrapper class template
 - class template `tagged`
+- function template `exchange`
 
 to enable those components to be used in the implementation of `constexpr` algorithms.
 
@@ -29,7 +32,38 @@ Since an iterator that cannot be assigned is of extremely limited utility, we do
 
 # Proposed Resolution
 
-Change the synopsis of class templated `tagged` in [taggedtup.tagged]/2 to read as follows:
+Change the synopsis of header `<experimental/ranges/utility>` in [utility]/2 as follows:
+
+> <tt>// 5.2.1, swap:</tt>
+> <tt>namespace {</tt>
+> <tt>&nbsp;&nbsp;constexpr <i>unspecified</i> swap = <i>unspecified</i>;</tt>
+> <tt>}</tt>
+>
+> <tt>// 5.2.2, exchange:</tt>
+> <tt>template &lt;MoveConstructible T, class U=T></tt>
+> <tt>&nbsp;&nbsp;requires Assignable&lt;T&amp;, U>()</tt>
+> <tt><ins>constexpr </ins>T exchange(T&amp; obj, U&amp;&amp; new_val)<ins> noexcept(<i>see below</i>)</ins>;</tt>
+>
+> <tt>// 5.5.2, struct with named accessors</tt>
+> <tt>template &lt;class T></tt>
+> <tt>concept bool TagSpecifier() {</tt>
+> <tt>&nbsp;&nbsp;return <i>see below</i>;</tt>
+> <tt>}</tt>
+
+Change the declaration of `exchange` in [utility.exchange] to agree, and add a new paragraph after paragraph 1:
+
+> 1 *Effects:* Equivalent to:
+>
+> <tt>&nbsp;&nbsp;T old_val = std::move(obj);</tt>
+> <tt>&nbsp;&nbsp;obj = std::forward&lt;U>(new_val);</tt>
+> <tt>&nbsp;&nbsp;return old_val;</tt>
+>
+> <ins>2 *Remarks:* The expression in the `noexcept` is equivalent to:</ins>
+>
+> <tt>&nbsp;&nbsp;<ins>is_nothrow_move_constructible&lt;T>::value &amp;&amp;</ins></tt>
+> <tt>&nbsp;&nbsp;<ins>is_nothrow_assignable&lt;T&, U>::value</ins></tt>
+
+Change the synopsis of class templated `tagged` in [taggedtup.tagged]/2 as follows:
 
 > <tt>template &lt;class Base, TagSpecifier..\. Tags></tt>
 > <tt>&nbsp;&nbsp;requires sizeof..\.(Tags) &lt;= tuple_size&lt;Base>::value</tt>
