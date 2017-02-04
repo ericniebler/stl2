@@ -1,6 +1,6 @@
 ---
-pagetitle: Constexpr for <experimental/ranges/iterator>
-title: Constexpr for <experimental/ranges/iterator>
+pagetitle: Constexpr for &lt;experimental/ranges/iterator>
+title: Constexpr for &lt;experimental/ranges/iterator>
 ...
 
 # Synopsis
@@ -30,6 +30,10 @@ Similarly, if either `I` or `S` has a nontrivial destructor, `common_iterator<I,
 
 Since an iterator that cannot be assigned is of extremely limited utility, we do not propose to apply `constexpr` to all member functions of `common_iterator` at this time; we propose only that the constructors of `common_iterator` be `constexpr`.
 
+## Implementation Experience
+
+All of the suggested changes have been implemented in CMCSTL2 (https://github.com/caseycarter/cmcstl2) as a sanity check.
+
 # Proposed Resolution
 
 Change the synopsis of header `<experimental/ranges/utility>` in [utility]/2 as follows:
@@ -52,6 +56,10 @@ Change the synopsis of header `<experimental/ranges/utility>` in [utility]/2 as 
 
 Change the declaration of `exchange` in [utility.exchange] to agree, and add a new paragraph after paragraph 1:
 
+> <tt>template &lt;MoveConstructible T, class U=T></tt>
+> <tt>&nbsp;&nbsp;requires Assignable&lt;T&amp;, U>()</tt>
+> <tt><ins>constexpr </ins>T exchange(T&amp; obj, U&amp;&amp; new_val)<ins> noexcept(<i>see below</i>)</ins>;</tt>
+>
 > 1 *Effects:* Equivalent to:
 >
 > <tt>&nbsp;&nbsp;T old_val = std::move(obj);</tt>
