@@ -1,8 +1,8 @@
 DOCNO = 0579
-REV = 0
+REV = 1
 PD = D
 SOURCE = P$(DOCNO).md
-TARGET = $(PD)$(DOCNO)$(REV)
+TARGET = $(PD)$(DOCNO)R$(REV)
 
 PANDOC = pandoc
 
@@ -22,4 +22,4 @@ view: $(TARGET).html
 	gnome-www-browser $(TARGET).html
 
 cooked.txt: raw.txt
-	sed -f cook < $< > $@ || rm -f $@
+	sed -rf cook < $< > $@ || rm -f $@
