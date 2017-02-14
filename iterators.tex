@@ -29,1063 +29,242 @@ as summarized in Table~\ref{tab:iterators.lib.summary}.
 \ref{ranges}                & Ranges                         &                           \\
 \end{libsumtab}
 
-\rSec1[iterator.requirements]{Iterator requirements}
-
-\rSec2[iterator.requirements.general]{In general}
-
-\pnum
-\indextext{requirements!iterator}%
-Iterators are a generalization of pointers that allow a \Cpp program to work with different data structures
-(for example, containers and ranges) in a uniform manner.
-To be able to construct template algorithms that work correctly and
-efficiently on different types of data structures, the library formalizes not just the interfaces but also the
-semantics and complexity assumptions of iterators.
-All input iterators
-\tcode{i}
-support the expression
-\tcode{*i},
-resulting in a value of some object type
-\tcode{T},
-called the
-\term{value type}
-of the iterator.
-All output iterators support the expression
-\tcode{*i = o}
-where
-\tcode{o}
-is a value of some type that is in the set of types that are
-\term{writable}
-to the particular iterator type of
-\tcode{i}.
-For every iterator type
-\tcode{X}
-there is a corresponding signed integer type called the
-\term{difference type}
-of the iterator.
-
-\pnum
-Since iterators are an abstraction of pointers, their semantics are
-a generalization of most of the semantics of pointers in \Cpp.
-This ensures that every
-function template
-that takes iterators
-works as well with regular pointers.
-This International Standard defines
-five categories of iterators, according to the operations
-defined on them:
-\techterm{input iterators},
-\techterm{output iterators},
-\techterm{forward iterators},
-\techterm{bidirectional iterators}
-and
-\techterm{random access iterators},
-as shown in Table~\ref{tab:iterators.relations}.
-
-\begin{floattable}{Relations among iterator categories}{tab:iterators.relations}
-{llll}
-\topline
-\textbf{Random Access}          &   $\rightarrow$ \textbf{Bidirectional}    &
-$\rightarrow$ \textbf{Forward}  &   $\rightarrow$ \textbf{Input}            \\
-                        &   &   &   $\rightarrow$ \textbf{Output}           \\
-\end{floattable}
-
-\pnum
-The five categories of iterators correspond to the iterator concepts
-\tcode{InputIterator},
-\tcode{OutputIterator},
-\tcode{Forward\-Iterator},
-\tcode{Bidirectional\-Iterator}, and
-\tcode{RandomAccess\-Iterator}, respectively. The generic term \techterm{iterator} refers to
-any type that satisfies \tcode{Iterator}.
-
-\pnum
-Forward iterators satisfy all the requirements of input
-iterators and can be used whenever an input iterator is specified;
-Bidirectional iterators also satisfy all the requirements of
-forward iterators and can be used whenever a forward iterator is specified;
-Random access iterators also satisfy all the requirements of bidirectional
-iterators and can be used whenever a bidirectional iterator is specified.
-
-\pnum
-Iterators that further satisfy the requirements of output iterators are
-called \defn{mutable iterator}{s}. Nonmutable iterators are referred to
-as \defn{constant iterator}{s}.
-
-\pnum
-Just as a regular pointer to an array guarantees that there is a pointer value pointing past the last element
-of the array, so for any iterator type there is an iterator value that points past the last element of a
-corresponding sequence.
-These values are called
-\term{past-the-end}
-values.
-Values of an iterator
-\tcode{i}
-for which the expression
-\tcode{*i}
-is defined are called
-\term{dereferenceable}.
-The library never assumes that past-the-end values are dereferenceable.
-Iterators can also have singular values that are not associated with any
-sequence.
-\enterexample
-After the declaration of an uninitialized pointer
-\tcode{x}
-(as with
-\tcode{int* x;}),
-\tcode{x}
-must always be assumed to have a singular value of a pointer.
-\exitexample
-Results of most expressions are undefined for singular values;
-the only exceptions are destroying an iterator that holds a singular value,
-the assignment of a non-singular value to
-an iterator that holds a singular value, and using a value-initialized iterator
-as the source of a copy or move operation. \enternote This guarantee is not
-offered for default initialization, although the distinction only matters for types
-with trivial default constructors such as pointers or aggregates holding pointers.
-\exitnote
-In these cases the singular
-value is overwritten the same way as any other value.
-Dereferenceable
-values are always non-singular.
-
-\pnum
-Most of the library's algorithmic templates that operate on data structures have
-interfaces that use ranges. A range is an iterator and a \term{sentinel} that designate
-the beginning and end of the computation. An iterator and a sentinel denoting a range
-are comparable. A sentinel denotes an element when it compares equal to an iterator
-\tcode{i}, and \tcode{i} points to that element. The types of a sentinel and an
-iterator that denote a range must satisfy \tcode{Sentinel}~(\ref{iterators.sentinel}).
-
-\pnum
-A sentinel
-\tcode{s}
-is called
-\term{reachable}
-from an iterator
-\tcode{i}
-if and only if there is a finite sequence of applications of
-the expression
-\tcode{++i}
-that makes
-\tcode{i == s}.
-If
-\tcode{s}
-is reachable from
-\tcode{i},
-they denote a range.
-
-\pnum
-A range \range{i}{s}
-is empty if \tcode{i == s};
-otherwise, \range{i}{s}
-refers to the elements in the data structure starting with the element
-pointed to by
-\tcode{i}
-and up to but not including the element pointed to by
-the first iterator \tcode{j} such that \tcode{j == s}.
-
-\pnum
-A range \range{i}{s}
-is valid if and only if
-\tcode{s}
-is reachable from
-\tcode{i}.
-The result of the application of functions in the library to invalid ranges is
-undefined.
-
-\pnum
-All the categories of iterators require only those functions that are realizable for a given category in
-constant time (amortized).
-
-\pnum
-Destruction of an iterator may invalidate pointers and references
-previously obtained from that iterator.
-
-\pnum
-An
-\techterm{invalid}
-iterator is an iterator that may be singular.\footnote{This definition applies to pointers, since pointers are iterators.
-The effect of dereferencing an iterator that has been invalidated
-is undefined.
-}
-
-\rSec2[iterators.readable]{Concept \tcode{Readable}}
-
-\pnum
-The \tcode{Readable} concept is satisfied by types that are readable by
-applying \tcode{operator*} including pointers, smart pointers, and iterators.
-
-\indexlibrary{\idxcode{Readable}}%
-\begin{codeblock}
-  template <class I>
-  concept bool Readable() {
-    return Movable<I>() && DefaultConstructible<I>() &&
-      requires(const I& i) {
-        typename value_type_t<I>;
-        typename reference_t<I>;
-        typename rvalue_reference_t<I>;
-        { *i } -> Same<reference_t<I>>;
-        { ranges::iter_move(i) } -> Same<rvalue_reference_t<I>>;
-      } &&
-      CommonReference<reference_t<I>, value_type_t<I>&>() &&
-      CommonReference<reference_t<I>, rvalue_reference_t<I>>() &&
-      CommonReference<rvalue_reference_t<I>, const value_type_t<I>&>() &&
-      Same<
-        common_reference_t<reference_t<I>, value_type_t<I>>,
-        value_type_t<I>>() &&
-      Same<
-        common_reference_t<rvalue_reference_t<I>, value_type_t<I>>,
-        value_type_t<I>>();
-  }
-\end{codeblock}
-
-\pnum
-A \tcode{Readable} type has an associated value type that can be accessed with the
-\tcode{value_type_t} alias template.
-
-\indexlibrary{\idxcode{value_type_t}}%
-\begin{codeblock}
-  template <class> struct value_type { };
-
-  template <class T>
-  struct value_type<T*>
-    : enable_if<is_object<T>::value, remove_cv_t<T>> { };
-
-  template <class I>
-    requires is_array<I>::value
-  struct value_type<I> : value_type<decay_t<I>> { };
-
-  template <class I>
-  struct value_type<I const> : value_type<decay_t<I>> { };
-
-  template <class T>
-    requires requires { typename T::value_type; }
-  struct value_type<T>
-    : enable_if<is_object<typename T::value_type>::value, typename T::value_type> { };
-
-  template <class T>
-    requires requires { typename T::element_type; }
-  struct value_type<T>
-    : enable_if<is_object<typename T::element_type>::value, typename T::element_type> { };
-
-  template <class T>
-    using value_type_t = typename value_type<T>::type;
-\end{codeblock}
-
-\pnum
-If a type \tcode{I} has an associated value type, then \tcode{value_type<I>::type} shall name the
-value type. Otherwise, there shall be no nested type \tcode{type}.
-
-\pnum
-The \tcode{value_type} class template may be specialized on user-defined types.
-
-\pnum
-When instantiated with a type \tcode{I}
-such that \tcode{I::value_type} is valid and denotes a type,
-\tcode{value_type<I>::type} names that type, unless it is not an object type~(\cxxref{basic.types}) in which case
-\tcode{value_type<I>} shall have no nested type \tcode{type}. \enternote Some legacy output
-iterators define a nested type named \tcode{value_type} that is an alias for \tcode{void}. These
-types are not \tcode{Readable} and have no associated value types.\exitnote
-
-\pnum
-When instantiated with a type \tcode{I}
-such that \tcode{I::element_type} is valid and denotes a type,
-\tcode{value_type<I>::type} names that type, unless it is not an object type~(\cxxref{basic.types}) in which case
-\tcode{value_type<I>} shall have no nested type \tcode{type}. \enternote Smart pointers like
-\tcode{shared_ptr<int>} are \tcode{Readable} and have an associated value type. But a smart pointer
-like \tcode{shared_ptr<void>} is not \tcode{Readable} and has no associated value type.\exitnote
-
-\rSec2[iterators.writable]{Concept \tcode{Writable}}
-
-\pnum
-The \tcode{Writable} concept specifies the requirements for writing a value into an iterator's
-referenced object.
-
-\indexlibrary{\idxcode{Writable}}%
-\begin{codeblock}
-  template <class Out, class T>
-  concept bool Writable() {
-    return Semiregular<Out>() &&
-      requires(Out o, T&& t) {
-        *o = std::forward<T>(t); // not required to be equality preserving
-      };
-  }
-\end{codeblock}
-
-\pnum
-Let \tcode{E} be an an expression such that \tcode{decltype((E))} is \tcode{T}, and let \tcode{o}
-be a dereferenceable object of type \tcode{Out}. Then \tcode{Writable<Out, T>()} is satisfied if and only if
-
-\begin{itemize}
-\item If \tcode{Readable<Out>() \&\& Same<value_type_t<Out>, decay_t<T>{>}()} is satisfied,
-then \tcode{*o} after the assignment is equal
-to the value of \tcode{E} before the assignment.
-\end{itemize}
-
-\pnum
-After evaluating the assignment expression, \tcode{o} is not required to be dereferenceable.
-
-\pnum
-If \tcode{E} is an xvalue~(\cxxref{basic.lval}), the resulting
-state of the object it denotes is unspecified. \enternote The object must still meet the
-requirements of any library component that is using it. The operations listed
-in those requirements must work as specified whether the object has been moved
-from or not.\exitnote
-
-\pnum
-\enternote
-The only valid use of an \tcode{operator*} is on the left side of the assignment statement.
-\textit{Assignment through the same value of the writable type happens only once.}
-\exitnote
-
-\rSec2[iterators.weaklyincrementable]{Concept \tcode{WeaklyIncrementable}}
-
-\pnum
-The \tcode{WeaklyIncrementable} concept specifies the requirements on
-types that can be incremented with the pre- and post-increment operators.
-The increment operations are not required to be equality-preserving,
-nor is the type required to be \tcode{EqualityComparable}.
-
-\indexlibrary{\idxcode{WeaklyIncrementable}}%
-\begin{codeblock}
-  template <class I>
-  concept bool WeaklyIncrementable() {
-    return Semiregular<I>() &&
-      requires(I i) {
-        typename difference_type_t<I>;
-        requires SignedIntegral<difference_type_t<I>>();
-        { ++i } -> Same<I&>; // not required to be equality preserving
-        i++; // not required to be equality preserving
-      };
-  }
-\end{codeblock}
-
-\pnum
-Let \tcode{i} be an object of type \tcode{I}. When both pre- and post-increment
-are valid, \tcode{i} is said to be \techterm{incrementable}. Then
-\tcode{WeaklyIncrementable<I>()} is satisfied if and only if
-
-\begin{itemize}
-\item \tcode{++i} is valid if and only if \tcode{i++} is valid.
-\item If \tcode{i} is incrementable, then both \tcode{++i}
-  and \tcode{i++} advance \tcode{i} to the next element.
-\item If \tcode{i} is incrementable, then \tcode{\&++i == \&i}.
-\end{itemize}
-
-\pnum
-\enternote For \tcode{WeaklyIncrementable} types, \tcode{a} equals \tcode{b} does not imply that \tcode{++a}
-equals \tcode{++b}. (Equality does not guarantee the substitution property or referential
-transparency.) Algorithms on weakly incrementable types should never attempt to pass
-through the same incrementable value twice. They should be single pass algorithms. These algorithms
-can be used with istreams as the source of the input data through the \tcode{istream_iterator} class
-template.\exitnote
-
-\rSec2[iterators.incrementable]{Concept \tcode{Incrementable}}
-
-\pnum
-The \tcode{Incrementable} concept specifies requirements on types that can be incremented with the pre-
-and post-increment operators. The increment operations are required to be equality-preserving,
-and the type is required to be \tcode{EqualityComparable}. \enternote This requirement
-supersedes the annotations on the increment expressions in the definition of
-\tcode{WeaklyIncrementable}. \exitnote
-
-\indexlibrary{\idxcode{Incrementable}}%
-\begin{codeblock}
-  template <class I>
-  concept bool Incrementable() {
-    return Regular<I>() &&
-      WeaklyIncrementable<I>() &&
-      requires(I i) {
-        { i++ } -> Same<I>;
-      };
-  }
-\end{codeblock}
-
-\pnum
-Let \tcode{a} and \tcode{b} be incrementable objects of type \tcode{I}.
-Then \tcode{Incrementable<I>()} is satisfied
-if and only if
-
-\begin{itemize}
-\item If \tcode{bool(a == b)} then \tcode{bool(a++ == b)}.
-\item If \tcode{bool(a == b)} then \tcode{bool((a++, a) == ++b)}.
-\end{itemize}
-
-\pnum
-\enternote The requirement that \tcode{a} equals \tcode{b} implies \tcode{++a} equals \tcode{++b}
-(which is not true for weakly incrementable types) allows the use of multi-pass one-directional
-algorithms with types that satisfy \tcode{Incrementable}.\exitnote
-
-\rSec2[iterators.iterator]{Concept \tcode{Iterator}}
-
-\pnum
-The \tcode{Iterator} concept forms
-the basis of the iterator concept taxonomy; every iterator satisfies the
-\tcode{Iterator} requirements. This
-concept specifies operations for dereferencing and incrementing
-an iterator. Most algorithms will require additional operations
-to compare iterators with sentinels~(\ref{iterators.sentinel}), to
-read~(\ref{iterators.input}) or write~(\ref{iterators.output}) values, or
-to provide a richer set of iterator movements~(\ref{iterators.forward},
-\ref{iterators.bidirectional}, \ref{iterators.random.access}).)
-
-\indexlibrary{\idxcode{Iterator}}%
-\begin{codeblock}
-  template <class I>
-  concept bool Iterator() {
-    return WeaklyIncrementable<I>() &&
-      requires(I i) {
-        { *i } -> auto&&; // Requires: i is dereferenceable
-      };
-  }
-\end{codeblock}
-
-\pnum
-\enternote The requirement that the result of dereferencing the iterator is deducible from
-\tcode{auto\&\&} means that it cannot be \tcode{void}.\exitnote
-
-\rSec2[iterators.sentinel]{Concept \tcode{Sentinel}}
-\pnum
-The \tcode{Sentinel} concept
-specifies the relationship
-between an \tcode{Iterator} type and a \tcode{Semiregular} type whose values
-denote a range.
-
-\indexlibrary{\idxcode{Sentinel}}%
-\begin{itemdecl}
-  template <class S, class I>
-  concept bool Sentinel() {
-    return Semiregular<S>() &&
-      Iterator<I>() &&
-      WeaklyEqualityComparable<S, I>();
-  }
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-Let \tcode{s} and \tcode{i} be values of type \tcode{S} and
-\tcode{I} such that \range{i}{s} denotes a range. Types
-\tcode{S} and \tcode{I} satisfy \tcode{Sentinel<S, I>()}
-if and only if:
-
-\begin{itemize}
-\item \tcode{i == s} is well-defined.
-
-\item If \tcode{bool(i != s)} then \tcode{i} is dereferenceable and
-      \range{++i}{s} denotes a range.
-\end{itemize}
-\end{itemdescr}
-
-\pnum
-The domain of \tcode{==} can change over time.
-Given an iterator \tcode{i} and sentinel \tcode{s} such that \range{i}{s}
-denotes a range and \tcode{i != s}, \range{i}{s} is not required to continue to
-denote a range after incrementing any iterator equal to \tcode{i}. Consequently,
-\tcode{i == s} is no longer required to be well-defined.
-
-\rSec2[iterators.sizedsentinel]{Concept \tcode{SizedSentinel}}
-\pnum
-The \tcode{SizedSentinel} concept specifies
-requirements on an \tcode{Iterator} and a \tcode{Sentinel}
-that allow the use of the \tcode{-} operator to compute the distance
-between them in constant time.
-
-\indexlibrary{\idxcode{SizedSentinel}}%
-
-\begin{itemdecl}
-  template <class S, class I>
-  constexpr bool disable_sized_sentinel = false;
-
-  template <class S, class I>
-  concept bool SizedSentinel() {
-    return Sentinel<S, I>() &&
-      !disable_sized_sentinel<remove_cv_t<S>, remove_cv_t<I>> &&
-      requires(const I& i, const S& s) {
-        { s - i } -> Same<difference_type_t<I>>;
-        { i - s } -> Same<difference_type_t<I>>;
-      };
-  }
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-Let \tcode{i} be an iterator of type \tcode{I}, and \tcode{s}
-a sentinel of type \tcode{S} such that \range{i}{s} denotes a range.
-Let $N$ be the smallest number of applications of \tcode{++i}
-necessary to make \tcode{bool(i == s)} be \tcode{true}.
-\tcode{SizedSentinel<S, I>()} is satisfied if and only if:
-
-\begin{itemize}
-\item If $N$ is representable by \tcode{difference_type_t<I>},
-      then \tcode{s - i} is well-defined and equals $N$.
-
-\item If $-N$ is representable by \tcode{difference_type_t<I>},
-      then \tcode{i - s} is well-defined and equals $-N$.
-\end{itemize}
-\end{itemdescr}
-
-\pnum
-\enternote \tcode{disable_sized_sentinel} provides a mechanism to
-enable use of sentinels and iterators with the library that meet the
-syntactic requirements but do not in fact satisfy \tcode{SizedSentinel}.
-A program that instantiates a library template that requires
-\tcode{SizedSentinel} with an iterator type \tcode{I} and sentinel type
-\tcode{S} that meet the syntactic requirements of \tcode{SizedSentinel<S, I>()}
-but do not satisfy \tcode{SizedSentinel} is ill-formed with no diagnostic required
-unless \tcode{disable_sized_sentinel<S, I>} evaluates to
-\tcode{true}~(\ref{structure.requirements}). \exitnote
-
-\pnum
-\enternote The \tcode{SizedSentinel}
-concept is satisfied by pairs of
-\tcode{RandomAccessIterator}s~(\ref{iterators.random.access}) and by
-counted iterators and their sentinels~(\ref{counted.iterator}).\exitnote
-
-\rSec2[iterators.input]{Concept \tcode{InputIterator}}
-
-\pnum
-The \tcode{InputIterator} concept is a refinement of
-\tcode{Iterator}~(\ref{iterators.iterator}). It
-defines requirements for a type whose referenced values can be read (from the requirement for
-\tcode{Readable}~(\ref{iterators.readable})) and which can be both pre- and post-incremented.
-\enternote Unlike in ISO/IEC 14882, input iterators are not required to satisfy
-\tcode{EqualityComparable}~(\ref{concepts.lib.compare.equalitycomparable}).\exitnote
-
-\indexlibrary{\idxcode{InputIterator}}%
-\begin{codeblock}
-  template <class I>
-  concept bool InputIterator() {
-    return Iterator<I>() &&
-      Readable<I>() &&
-      requires(I i, const I ci) {
-        typename iterator_category_t<I>;
-        requires DerivedFrom<iterator_category_t<I>, input_iterator_tag>();
-        { i++ } -> Readable; // not required to be equality preserving
-        requires Same<value_type_t<I>, value_type_t<decltype(i++)>>();
-        { *ci } -> const value_type_t<I>&;
-      };
-  }
-\end{codeblock}
-
-\rSec2[iterators.output]{Concept \tcode{OutputIterator}}
-
-\pnum
-The \tcode{OutputIterator} concept is a refinement of
-\tcode{Iterator}~(\ref{iterators.iterator}). It defines requirements for a type that
-can be used to write values (from the requirement for
-\tcode{Writable}~(\ref{iterators.writable})) and which can be both pre- and post-incremented.
-However, output iterators are not required to
-satisfy \tcode{EqualityComparable}.
-
-\indexlibrary{\idxcode{OutputIterator}}%
-\begin{codeblock}
-  template <class I, class T>
-  concept bool OutputIterator() {
-    return Iterator<I>() && Writable<I, T>();
-  }
-\end{codeblock}
-
-\pnum
-\enternote
-Algorithms on output iterators should never attempt to pass through the same iterator twice.
-They should be
-\term{single pass}
-algorithms.
-Algorithms that take output iterators can be used with ostreams as the destination
-for placing data through the
-\tcode{ostream_iterator}
-class as well as with insert iterators and insert pointers.
-\exitnote
-
-\rSec2[iterators.forward]{Concept \tcode{ForwardIterator}}
-
-\pnum
-The \tcode{ForwardIterator} concept refines \tcode{InputIterator}~(\ref{iterators.input}),
-adding equality comparison and the multi-pass guarantee, specified below.
-
-\indexlibrary{\idxcode{ForwardIterator}}%
-\begin{codeblock}
-  template <class I>
-  concept bool ForwardIterator() {
-    return InputIterator<I>() &&
-      DerivedFrom<iterator_category_t<I>, forward_iterator_tag>() &&
-      Incrementable<I>()&&
-      Sentinel<I, I>();
-  }
-\end{codeblock}
-
-\pnum
-The domain of \tcode{==} for forward iterators is that of iterators over the same
-underlying sequence. However, value-initialized iterators of the same type
-may be compared and shall compare equal to other value-initialized iterators of the same type.
-\enternote Value-initialized iterators behave as if they refer past the end of
-the same empty sequence. \exitnote
-
-\pnum
-Two dereferenceable iterators \tcode{a} and \tcode{b} of type \tcode{X} offer the
-\defn{multi-pass guarantee} if:
-
-\begin{itemize}
-\item \tcode{a == b} implies \tcode{++a == ++b} and
-\item The expression
-\tcode{([](X x)\{++x;\}(a), *a)} is equivalent to the expression \tcode{*a}.
-\end{itemize}
-
-\pnum
-\enternote
-The requirement that
-\tcode{a == b}
-implies
-\tcode{++a == ++b}
-(which is not true for weaker iterators)
-and the removal of the restrictions on the number of assignments through
-a mutable iterator
-(which applies to output iterators)
-allow the use of multi-pass one-directional algorithms with forward iterators.
-\exitnote
-
-\rSec2[iterators.bidirectional]{Concept \tcode{BidirectionalIterator}}
-
-\pnum
-The \tcode{BidirectionalIterator} concept refines \tcode{ForwardIterator}~(\ref{iterators.forward}),
-and adds the ability to move an iterator backward as well as forward.
-
-\indexlibrary{\idxcode{BidirectionalIterator}}%
-\begin{codeblock}
-  template <class I>
-  concept bool BidirectionalIterator() {
-    return ForwardIterator<I>() &&
-      DerivedFrom<iterator_category_t<I>, bidirectional_iterator_tag>() &&
-      requires(I i) {
-        { @\dcr@i } -> Same<I&>;
-        { i@\dcr@ } -> Same<I>;
-      };
-  }
-\end{codeblock}
-
-\pnum
-A bidirectional iterator \tcode{r} is decrementable if and only if there exists some \tcode{s} such that
-\tcode{++s == r}. The expressions \tcode{\dcr{}r} and \tcode{r\dcr{}} are only valid if \tcode{r} is
-decrementable.
-
-\pnum
-Let \tcode{a} and \tcode{b} be decrementable objects of type \tcode{I}. Then
-\tcode{BidirectionalIterator<I>()} is satisfied if and only if:
-
-\begin{itemize}
-\item \tcode{\&\dcr{}a == \&a}.
-\item If \tcode{bool(a == b)}, then \tcode{bool(a\dcr{} == b)}.
-\item If \tcode{bool(a == b)}, then \tcode{bool((a\dcr{}, a) == \dcr{}b)}.
-\item If \tcode{a} is incrementable and \tcode{bool(a == b)}, then
-      \tcode{bool(\dcr{}(++a) == b)}.
-\item If \tcode{bool(a == b)}, then \tcode{bool(++(\dcr{}a) == b)}.
-\end{itemize}
-
-\rSec2[iterators.random.access]{Concept \tcode{RandomAccessIterator}}
-
-\pnum
-The \tcode{RandomAccessIterator} concept refines \tcode{BidirectionalIterator}~(\ref{iterators.bidirectional})
-and adds support for constant-time advancement with \tcode{+=}, \tcode{+},  \tcode{-=}, and \tcode{-}, and the
-computation of distance in constant time with \tcode{-}. Random access iterators also support array
-notation via subscripting.
-
-\indexlibrary{\idxcode{RandomAccessIterator}}%
-\begin{codeblock}
-  template <class I>
-  concept bool RandomAccessIterator() {
-    return BidirectionalIterator<I>() &&
-      DerivedFrom<iterator_category_t<I>, random_access_iterator_tag>() &&
-      StrictTotallyOrdered<I>() &&
-      SizedSentinel<I, I>() &&
-      requires(I i, const I j, const difference_type_t<I> n) {
-        { i += n } -> Same<I&>;
-        { j + n } -> Same<I>;
-        { n + j } -> Same<I>;
-        { i -= n } -> Same<I&>;
-        { j - n } -> Same<I>;
-        { j[n] } -> Same<reference_t<I>>;
-      };
-  }
-\end{codeblock}
-
-\pnum
-Let \tcode{a} and \tcode{b} be valid iterators of type \tcode{I} such that \tcode{b} is reachable
-from \tcode{a}. Let \tcode{n} be the smallest value of type
-\tcode{difference_type_t<I>} such that after
-\tcode{n} applications of \tcode{++a}, then \tcode{bool(a == b)}. Then
-\tcode{RandomAccessIterator<I>()} is satisfied if and only if:
-
-\begin{itemize}
-\item \tcode{(a += n)} is equal to \tcode{b}.
-\item \tcode{\&(a += n)} is equal to \tcode{\&a}.
-\item \tcode{(a + n)} is equal to \tcode{(a += n)}.
-\item For any two positive integers \tcode{x} and \tcode{y}, if \tcode{a + (x + y)} is valid, then
-\tcode{a + (x + y)} is equal to \tcode{(a + x) + y}.
-\item \tcode{a + 0} is equal to \tcode{a}.
-\item If \tcode{(a + (n - 1))} is valid, then \tcode{a + n} is equal to \tcode{++(a + (n - 1))}.
-\item \tcode{(b += -n)} is equal to \tcode{a}.
-\item \tcode{(b -= n)} is equal to \tcode{a}.
-\item \tcode{\&(b -= n)} is equal to \tcode{\&b}.
-\item \tcode{(b - n)} is equal to \tcode{(b -= n)}.
-\item If \tcode{b} is dereferenceable, then \tcode{a[n]} is valid and is equal to \tcode{*b}.
-\end{itemize}
-
-\rSec1[indirectcallable]{Indirect callable requirements}
-
-\rSec2[indirectcallable.general]{In general}
-
-\pnum
-There are several concepts that group requirements of algorithms that take callable
-objects~(\cxxref{func.require}) as arguments.
-
-\rSec2[indirectcallable.indirectinvocable]{Indirect callables}
-
-\pnum
-The indirect callable concepts are used to constrain those algorithms that accept
-callable objects~(\cxxref{func.def}) as arguments.
-
-\indexlibrary{\idxcode{indirect_result_of}}%
-\indexlibrary{\idxcode{IndirectInvocable}}%
-\indexlibrary{\idxcode{IndirectRegularInvocable}}%
-\indexlibrary{\idxcode{IndirectPredicate}}%
-\indexlibrary{\idxcode{IndirectRelation}}%
-\indexlibrary{\idxcode{IndirectStrictWeakOrder}}%
-\begin{codeblock}
-  template <class F>
-  concept bool IndirectInvocable() {
-    return Invocable<F>();
-  }
-  template <class F, class I>
-  concept bool IndirectInvocable() {
-    return Readable<I>() &&
-      Invocable<F, value_type_t<I>>() &&
-      Invocable<F, reference_t<I>>() &&
-      Invocable<F, iter_common_reference_t<I>>();
-  }
-  template <class F, class I1, class I2>
-  concept bool IndirectInvocable() {
-    return Readable<I1>() && Readable<I2>() &&
-      Invocable<F, value_type_t<I1>, value_type_t<I2>>() &&
-      Invocable<F, value_type_t<I1>, reference_t<I2>>() &&
-      Invocable<F, reference_t<I1>, value_type_t<I2>>() &&
-      Invocable<F, reference_t<I1>, reference_t<I2>>() &&
-      Invocable<F, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
-  }
-
-  template <class F>
-  concept bool IndirectRegularInvocable() {
-    return RegularInvocable<F>();
-  }
-  template <class F, class I>
-  concept bool IndirectRegularInvocable() {
-    return Readable<I>() &&
-      RegularInvocable<F, value_type_t<I>>() &&
-      RegularInvocable<F, reference_t<I>>() &&
-      RegularInvocable<F, iter_common_reference_t<I>>();
-  }
-  template <class F, class I1, class I2>
-  concept bool IndirectRegularInvocable() {
-    return Readable<I1>() && Readable<I2>() &&
-      RegularInvocable<F, value_type_t<I1>, value_type_t<I2>>() &&
-      RegularInvocable<F, value_type_t<I1>, reference_t<I2>>() &&
-      RegularInvocable<F, reference_t<I1>, value_type_t<I2>>() &&
-      RegularInvocable<F, reference_t<I1>, reference_t<I2>>() &&
-      RegularInvocable<F, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
-  }
-
-  template <class F, class I>
-  concept bool IndirectPredicate() {
-    return Readable<I>() &&
-      Predicate<F, value_type_t<I>>() &&
-      Predicate<F, reference_t<I>>() &&
-      Predicate<F, iter_common_reference_t<I>>();
-  }
-  template <class F, class I1, class I2>
-  concept bool IndirectPredicate() {
-    return Readable<I1>() && Readable<I2>() &&
-      Predicate<F, value_type_t<I1>, value_type_t<I2>>() &&
-      Predicate<F, value_type_t<I1>, reference_t<I2>>() &&
-      Predicate<F, reference_t<I1>, value_type_t<I2>>() &&
-      Predicate<F, reference_t<I1>, reference_t<I2>>() &&
-      Predicate<F, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
-  }
-
-  template <class F, class I1, class I2 = I1>
-  concept bool IndirectRelation() {
-    return Readable<I1>() && Readable<I2>() &&
-      Relation<F, value_type_t<I1>, value_type_t<I2>>() &&
-      Relation<F, value_type_t<I1>, reference_t<I2>>() &&
-      Relation<F, reference_t<I1>, value_type_t<I2>>() &&
-      Relation<F, reference_t<I1>, reference_t<I2>>() &&
-      Relation<F, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
-  }
-
-  template <class F, class I1, class I2 = I1>
-  concept bool IndirectStrictWeakOrder() {
-    return Readable<I1>() && Readable<I2>() &&
-      StrictWeakOrder<F, value_type_t<I1>, value_type_t<I2>>() &&
-      StrictWeakOrder<F, value_type_t<I1>, reference_t<I2>>() &&
-      StrictWeakOrder<F, reference_t<I1>, value_type_t<I2>>() &&
-      StrictWeakOrder<F, reference_t<I1>, reference_t<I2>>() &&
-      StrictWeakOrder<F, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
-  }
-
-  template <class> struct indirect_result_of { };
-
-  template <class F, class... Is>
-    requires IndirectInvocable<F, Is...>()
-  struct indirect_result_of<F(Is...)> :
-    result_of<F(reference_t<Is>...)> { };
-
-  template <class F>
-  using indirect_result_of_t
-    = typename indirect_result_of<F>::type;
-\end{codeblock}
-
-\rSec2[projected]{Class template \tcode{projected}}
-
-\pnum
-The \tcode{projected} class template is intended for use when specifying the constraints of
-algorithms that accept callable objects and projections. It bundles a \tcode{Readable} type
-\tcode{I} and a function \tcode{Proj} into a new \tcode{Readable} type whose
-\tcode{reference} type is the result of applying \tcode{Proj} to the
-\tcode{reference_t} of \tcode{I}.
-
-\indexlibrary{\idxcode{projected}}%
-\begin{codeblock}
-  template <Readable I, IndirectRegularInvocable<I> Proj>
-  struct projected {
-    using value_type = decay_t<indirect_result_of_t<Proj&(I)>>;
-    indirect_result_of_t<Proj&(I)> operator*() const;
-  };
-
-  template <WeaklyIncrementable I, class Proj>
-  struct difference_type<projected<I, Proj>> {
-    using type = difference_type_t<I>;
-  };
-\end{codeblock}
-
-\pnum
-\enternote \tcode{projected} is only used to ease constraints specification. Its
-member function need not be defined.\exitnote
-
-\rSec1[commonalgoreq]{Common algorithm requirements}
-
-\rSec2[commonalgoreq.general]{In general}
-
-\pnum
-There are several additional iterator concepts that are commonly applied to families of algorithms.
-These group together iterator requirements of algorithm families. There are three relational
-concepts that specify how element values are transferred between \tcode{Readable} and \tcode{Writable} types:
-\tcode{Indirectly\-Movable}, \tcode{Indirectly\-Copyable}, and \tcode{Indirectly\-Swappable}. There are three relational concepts
-for rearrangements: \tcode{Permutable}, \tcode{Mergeable}, and \tcode{Sortable}.
-There is one relational concept for comparing values from different sequences: \tcode{IndirectlyComparable}.
-
-\pnum
-\enternote The \tcode{equal_to<>} and \tcode{less<>}~(\ref{comparisons}) function types used in the
-concepts below impose additional constraints on their arguments beyond those that appear explicitly in the
-concepts' bodies. \tcode{equal_to<>} requires its arguments satisfy \tcode{EqualityComparable}~(\ref{concepts.lib.compare.equalitycomparable}),
-and \tcode{less<>} requires its arguments satisfy \tcode{StrictTotallyOrdered}~(\ref{concepts.lib.compare.stricttotallyordered}).\exitnote
-
-\rSec2[commonalgoreq.indirectlymovable]{Concept \tcode{IndirectlyMovable}}
-
-\pnum
-The \tcode{IndirectlyMovable} concept specifies the relationship between a \tcode{Readable}
-type and a \tcode{Writable} type between which values may be moved.
-
-\indexlibrary{\idxcode{IndirectlyMovable}}%
-\begin{codeblock}
-  template <class In, class Out>
-  concept bool IndirectlyMovable() {
-    return Readable<In>() &&
-      Writable<Out, rvalue_reference_t<In>>();
-  }
-\end{codeblock}
-
-\pnum
-The \tcode{IndirectlyMovableStorable} concept augments \tcode{IndirectlyMovable} with additional
-requirements enabling the transfer to be performed through an intermediate object of the
-\tcode{Readable} type's value type.
-
-\indexlibrary{\idxcode{IndirectlyMovableStorable}}%
-\begin{codeblock}
-  template <class In, class Out>
-  concept bool IndirectlyMovableStorable() {
-    return IndirectlyMovable<In, Out>() &&
-      Writable<Out, value_type_t<In>>() &&
-      Movable<value_type_t<In>>() &&
-      Constructible<value_type_t<In>, rvalue_reference_t<In>>() &&
-      Assignable<value_type_t<In>&, rvalue_reference_t<In>>();
-  }
-\end{codeblock}
-
-\rSec2[commonalgoreq.indirectlycopyable]{Concept \tcode{IndirectlyCopyable}}
-
-\pnum
-The \tcode{IndirectlyCopyable} concept specifies the relationship between a \tcode{Readable}
-type and a \tcode{Writable} type between which values may be copied.
-
-\indexlibrary{\idxcode{IndirectlyCopyable}}%
-\begin{codeblock}
-  template <class In, class Out>
-  concept bool IndirectlyCopyable() {
-    return Readable<In>() &&
-      Writable<Out, reference_t<In>>();
-  }
-\end{codeblock}
-
-\pnum
-The \tcode{IndirectlyCopyableStorable} concept augments \tcode{IndirectlyCopyable} with additional
-requirements enabling the transfer to be performed through an intermediate object of the
-\tcode{Readable} type's value type. It also requires the capability to make copies of values.
-
-\indexlibrary{\idxcode{IndirectlyCopyableStorable}}%
-\begin{codeblock}
-  template <class In, class Out>
-  concept bool IndirectlyCopyableStorable() {
-    return IndirectlyCopyable<In, Out>() &&
-      Writable<Out, const value_type_t<In>&>() &&
-      Copyable<value_type_t<In>>() &&
-      Constructible<value_type_t<In>, reference_t<In>>() &&
-      Assignable<value_type_t<In>&, reference_t<In>>();
-  }
-\end{codeblock}
-
-\rSec2[commonalgoreq.indirectlyswappable]{Concept \tcode{IndirectlySwappable}}
-
-\pnum
-The \tcode{IndirectlySwappable} concept specifies a swappable relationship between the
-values referenced by two \tcode{Readable} types.
-
-\indexlibrary{\idxcode{IndirectlySwappable}}%
-\begin{codeblock}
-  template <class I1, class I2 = I1>
-  concept bool IndirectlySwappable() {
-    return Readable<I1>() && Readable<I2>() &&
-      requires(const I1 i1, const I2 i2) {
-        ranges::iter_swap(i1, i2);
-        ranges::iter_swap(i2, i1);
-        ranges::iter_swap(i1, i1);
-        ranges::iter_swap(i2, i2);
-      };
-  }
-\end{codeblock}
-
-\pnum
-Given an object \tcode{i1} of type \tcode{I1} and an object \tcode{i2} of
-type \tcode{I2}, \tcode{IndirectlySwappable<I1, I2>()} is satisfied if after
-\tcode{ranges::iter_swap(i1, i2)}, the value of \tcode{*i1} is equal to the
-value of \tcode{*i2} before the call, and \textit{vice versa}.
-
-\rSec2[commonalgoreq.indirectlycomparable]{Concept \tcode{IndirectlyComparable}}
-
-\pnum
-The \tcode{IndirectlyComparable} concept specifies the common requirements of algorithms that
-compare values from two different sequences.
-
-\indexlibrary{\idxcode{IndirectlyComparable}}%
-\begin{codeblock}
-  template <class I1, class I2, class R = equal_to<>, class P1 = identity,
-    class P2 = identity>
-  concept bool IndirectlyComparable() {
-    return IndirectRelation<R, projected<I1, P1>, projected<I2, P2>>();
-  }
-\end{codeblock}
-
-\rSec2[commonalgoreq.permutable]{Concept \tcode{Permutable}}
-
-\pnum
-The \tcode{Permutable} concept specifies the common requirements of algorithms that reorder
-elements in place by moving or swapping them.
-
-\indexlibrary{\idxcode{Permutable}}%
-\begin{codeblock}
-  template <class I>
-  concept bool Permutable() {
-    return ForwardIterator<I>() &&
-      IndirectlyMovableStorable<I, I>() &&
-      IndirectlySwappable<I, I>();
-  }
-\end{codeblock}
-
-\rSec2[commonalgoreq.mergeable]{Concept \tcode{Mergeable}}
-
-\pnum
-The \tcode{Mergeable} concept specifies the requirements of
-algorithms that merge sorted sequences into an output sequence by copying elements.
-
-\indexlibrary{\idxcode{Mergeable}}%
-\begin{codeblock}
-  template <class I1, class I2, class Out,
-      class R = less<>, class P1 = identity, class P2 = identity>
-  concept bool Mergeable() {
-    return InputIterator<I1>() &&
-      InputIterator<I2>() &&
-      WeaklyIncrementable<Out>() &&
-      IndirectlyCopyable<I1, Out>() &&
-      IndirectlyCopyable<I2, Out>() &&
-      IndirectStrictWeakOrder<R, projected<I1, P1>, projected<I2, P2>>();
-  }
-\end{codeblock}
-
-\rSec2[commonalgoreq.sortable]{Concept \tcode{Sortable}}
-
-\pnum
-The \tcode{Sortable} concept specifies the common requirements of algorithms that permute
-sequences into ordered sequences (e.g., \tcode{sort}).
-
-\indexlibrary{\idxcode{Sortable}}%
-\begin{codeblock}
-  template <class I, class R = less<>, class P = identity>
-  concept bool Sortable() {
-    return Permutable<I>() &&
-      IndirectStrictWeakOrder<R, projected<I, P>>();
-  }
-\end{codeblock}
-
 \rSec1[iterator.synopsis]{Header \tcode{<experimental/ranges/iterator>} synopsis}
 
 \indexlibrary{\idxhdr{experimental/ranges/iterator}}%
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
-  // \ref{iterator.primitives}, primitives:
-  // \expos
-  template <class T> concept bool _Dereferenceable
+  template <class T> concept bool @\placeholder{dereferenceable}@ // \expos
     = requires(T& t) { {*t} -> auto&&; };
 
-  // \ref{iterator.utils}, utilities:
+  // \ref{iterator.requirements}, iterator requirements:
+  // \ref{iterator.custpoints}, customization points:
   namespace {
-    // \ref{iterator.utils.iter_move}, iter_move:
+    // \ref{iterator.custpoints.iter_move}, iter_move:
     constexpr @\unspec@ iter_move = @\unspec@;
 
-    // \ref{iterator.utils.iter_swap}, iter_swap:
+    // \ref{iterator.custpoints.iter_swap}, iter_swap:
     constexpr @\unspec@ iter_swap = @\unspec@;
   }
 
-  // \ref{iterator.traits}, traits:
+  // \ref{iterator.assoc.types}, associated types:
+  // \ref{iterator.assoc.types.difference_type}, difference_type:
   template <class> struct difference_type;
-  template <class> struct value_type;
-  template <class> struct iterator_category;
-
   template <class T> using difference_type_t
     = typename difference_type<T>::type;
 
+  // \ref{iterator.assoc.types.value_type}, value_type:
+  template <class> struct value_type;
   template <class T> using value_type_t
     = typename value_type<T>::type;
 
+  // \ref{iterator.assoc.types.iterator_category}, iterator_category:
+  template <class> struct iterator_category;
   template <class T> using iterator_category_t
     = typename iterator_category<T>::type;
 
-  template <_Dereferenceable T> using reference_t
+  template <@\placeholder{dereferenceable}@ T> using reference_t
     = decltype(*declval<T&>());
 
-  template <_Dereferenceable T>
+  template <@\placeholder{dereferenceable}@ T>
       requires @\seebelow@ using rvalue_reference_t
     = decltype(ranges::iter_move(declval<T&>()));
 
-  template <Readable T> using iter_common_reference_t
-    = common_reference_t<reference_t<T>, value_type_t<T>&>;
+  // \ref{iterators.readable}, Readable:
+  template <class I>
+  concept bool Readable() {
+    return @\seebelow@;
+  }
 
+  // \ref{iterators.writable}, Writable:
+  template <class I>
+  concept bool Writable() {
+    return @\seebelow@;
+  }
+
+  // \ref{iterators.weaklyincrementable}, WeaklyIncrementable:
+  template <class I>
+  concept bool WeaklyIncrementable() {
+    return @\seebelow@;
+  }
+
+  // \ref{iterators.incrementable}, Incrementable:
+  template <class I>
+  concept bool Incrementable() {
+    return @\seebelow@;
+  }
+
+  // \ref{iterators.iterator}, Iterator:
+  template <class I>
+  concept bool Iterator() {
+    return @\seebelow@;
+  }
+
+  // \ref{iterators.sentinel}, Sentinel:
+  template <class S, class I>
+  concept bool Sentinel() {
+    return @\seebelow@;
+  }
+
+  // \ref{iterators.sizedsentinel}, SizedSentinel:
+  template <class S, class I>
+    constexpr bool disable_sized_sentinel = false;
+
+  template <class S, class I>
+  concept bool SizedSentinel() {
+    return @\seebelow@;
+  }
+
+  // \ref{iterators.input}, InputIterator:
+  template <class I>
+  concept bool InputIterator() {
+    return @\seebelow@;
+  }
+
+  // \ref{iterators.output}, OutputIterator:
+  template <class I>
+  concept bool OutputIterator() {
+    return @\seebelow@;
+  }
+
+  // \ref{iterators.forward}, ForwardIterator:
+  template <class I>
+  concept bool ForwardIterator() {
+    return @\seebelow@;
+  }
+
+  // \ref{iterators.bidirectional}, BidirectionalIterator:
+  template <class I>
+  concept bool BidirectionalIterator() {
+    return @\seebelow@;
+  }
+
+  // \ref{iterators.random.access}, RandomAccessIterator:
+  template <class I>
+  concept bool BidirectionalIterator() {
+    return @\seebelow@;
+  }
+
+  // \ref{indirectcallable}, indirect callable requirements:
+  // \ref{indirectcallable.indirectinvocable}, indirect callables:
+  template <class F>
+  concept bool IndirectInvocable() {
+    return @\seebelow@;
+  }
+  template <class F, class I>
+  concept bool IndirectInvocable() {
+    return @\seebelow@;
+  }
+  template <class F, class I1, class I2>
+  concept bool IndirectInvocable() {
+    return @\seebelow@;
+  }
+
+  template <class F>
+  concept bool IndirectRegularInvocable() {
+    return @\seebelow@;
+  }
+  template <class F, class I>
+  concept bool IndirectRegularInvocable() {
+    return @\seebelow@;
+  }
+  template <class F, class I1, class I2>
+  concept bool IndirectRegularInvocable() {
+    return @\seebelow@;
+  }
+
+  template <class F, class I>
+  concept bool IndirectPredicate() {
+    return @\seebelow@;
+  }
+  template <class F, class I1, class I2>
+  concept bool IndirectPredicate() {
+    return @\seebelow@;
+  }
+
+  template <class F, class I1, class I2 = I1>
+  concept bool IndirectRelation() {
+    return @\seebelow@;
+  }
+
+  template <class F, class I1, class I2 = I1>
+  concept bool IndirectStrictWeakOrder() {
+    return @\seebelow@;
+  }
+
+  template <class> struct indirect_result_of;
+
+  template <class F, class... Is>
+    requires IndirectInvocable<F, Is...>()
+  struct indirect_result_of<F(Is...)>;
+
+  template <class F>
+  using indirect_result_of_t
+    = typename indirect_result_of<F>::type;
+
+  // \ref{projected}, projected:
+  template <Readable I, IndirectRegularInvocable<I> Proj>
+  struct projected;
+
+  template <WeaklyIncrementable I, class Proj>
+  struct difference_type<projected<I, Proj>>;
+
+  // \ref{commonalgoreq}, common algorithm requirements:
+  // \ref{commonalgoreq.indirectlymovable} IndirectlyMovable:
+  template <class In, class Out>
+  concept bool IndirectlyMovable() {
+    return @\seebelow@;
+  }
+
+  template <class In, class Out>
+  concept bool IndirectlyMovableStorable() {
+    return @\seebelow@;
+  }
+
+  // \ref{commonalgoreq.indirectlycopyable} IndirectlyCopyable:
+  template <class In, class Out>
+  concept bool IndirectlyCopyable() {
+    return @\seebelow@;
+  }
+
+  template <class In, class Out>
+  concept bool IndirectlyCopyableStorable() {
+    return @\seebelow@;
+  }
+
+  // \ref{commonalgoreq.indirectlyswappable} IndirectlySwappable:
+  template <class I1, class I2 = I1>
+  concept bool IndirectlySwappable() {
+    return @\seebelow@;
+  }
+
+  // \ref{commonalgoreq.indirectlycomparable} IndirectlyComparable:
+  template <class I1, class I2, class R = equal_to<>, class P1 = identity,
+      class P2 = identity>
+  concept bool IndirectlyComparable() {
+    return @\seebelow@;
+  }
+
+  // \ref{commonalgoreq.permutable} Permutable:
+  template <class I>
+  concept bool Permutable() {
+    return @\seebelow@;    
+  }
+
+  // \ref{commonalgoreq.mergeable} Mergeable:
+  template <class I1, class I2, class Out,
+      class R = less<>, class P1 = identity, class P2 = identity>
+  concept bool Mergeable() {
+    return @\seebelow@;    
+  }
+
+  template <class I, class R = less<>, class P = identity>
+  concept bool Sortable() {
+    return @\seebelow@;    
+  }
+
+  // \ref{iterator.primitives}, primitives:
+  // \ref{iterator.traits}, traits:
   template <class I1, class I2> struct is_indirectly_movable;
   template <class I1, class I2 = I1> struct is_indirectly_swappable;
   template <class I1, class I2> struct is_nothrow_indirectly_movable;
@@ -1101,6 +280,9 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     = is_nothrow_indirectly_swappable<I1, I2>::value;
 
   template <class Iterator> using iterator_traits = @\seebelow@;
+
+  template <Readable T> using iter_common_reference_t
+    = common_reference_t<reference_t<T>, value_type_t<T>&>;
 
   // \ref{std.iterator.tags}, iterator tags:
   struct output_iterator_tag { };
@@ -1450,15 +632,189 @@ that are not already defined in namespace \tcode{std::experimental::ranges} in h
 \tcode{<experimental/ranges/iterator>} are imported with
 \grammarterm{using-declaration}{s}~(\cxxref{namespace.udecl}).
 
-\rSec1[iterator.primitives]{Iterator primitives}
+\rSec1[iterator.requirements]{Iterator requirements}
+
+\rSec2[iterator.requirements.general]{In general}
 
 \pnum
-To simplify the task of defining iterators, the library provides
-several classes and functions:
+\indextext{requirements!iterator}%
+Iterators are a generalization of pointers that allow a \Cpp program to work with different data structures
+(for example, containers and ranges) in a uniform manner.
+To be able to construct template algorithms that work correctly and
+efficiently on different types of data structures, the library formalizes not just the interfaces but also the
+semantics and complexity assumptions of iterators.
+All input iterators
+\tcode{i}
+support the expression
+\tcode{*i},
+resulting in a value of some object type
+\tcode{T},
+called the
+\term{value type}
+of the iterator.
+All output iterators support the expression
+\tcode{*i = o}
+where
+\tcode{o}
+is a value of some type that is in the set of types that are
+\term{writable}
+to the particular iterator type of
+\tcode{i}.
+For every iterator type
+\tcode{X}
+there is a corresponding signed integer type called the
+\term{difference type}
+of the iterator.
 
-\rSec2[iterator.utils]{Iterator utilities}
+\pnum
+Since iterators are an abstraction of pointers, their semantics are
+a generalization of most of the semantics of pointers in \Cpp.
+This ensures that every
+function template
+that takes iterators
+works as well with regular pointers.
+This International Standard defines
+five categories of iterators, according to the operations
+defined on them:
+\techterm{input iterators},
+\techterm{output iterators},
+\techterm{forward iterators},
+\techterm{bidirectional iterators}
+and
+\techterm{random access iterators},
+as shown in Table~\ref{tab:iterators.relations}.
 
-\rSec3[iterator.utils.iter_move]{\tcode{iter_move}}
+\begin{floattable}{Relations among iterator categories}{tab:iterators.relations}
+{llll}
+\topline
+\textbf{Random Access}          &   $\rightarrow$ \textbf{Bidirectional}    &
+$\rightarrow$ \textbf{Forward}  &   $\rightarrow$ \textbf{Input}            \\
+                        &   &   &   $\rightarrow$ \textbf{Output}           \\
+\end{floattable}
+
+\pnum
+The five categories of iterators correspond to the iterator concepts
+\tcode{InputIterator},
+\tcode{OutputIterator},
+\tcode{Forward\-Iterator},
+\tcode{Bidirectional\-Iterator}, and
+\tcode{RandomAccess\-Iterator}, respectively. The generic term \techterm{iterator} refers to
+any type that satisfies \tcode{Iterator}.
+
+\pnum
+Forward iterators satisfy all the requirements of input
+iterators and can be used whenever an input iterator is specified;
+Bidirectional iterators also satisfy all the requirements of
+forward iterators and can be used whenever a forward iterator is specified;
+Random access iterators also satisfy all the requirements of bidirectional
+iterators and can be used whenever a bidirectional iterator is specified.
+
+\pnum
+Iterators that further satisfy the requirements of output iterators are
+called \defn{mutable iterator}{s}. Nonmutable iterators are referred to
+as \defn{constant iterator}{s}.
+
+\pnum
+Just as a regular pointer to an array guarantees that there is a pointer value pointing past the last element
+of the array, so for any iterator type there is an iterator value that points past the last element of a
+corresponding sequence.
+These values are called
+\term{past-the-end}
+values.
+Values of an iterator
+\tcode{i}
+for which the expression
+\tcode{*i}
+is defined are called
+\term{dereferenceable}.
+The library never assumes that past-the-end values are dereferenceable.
+Iterators can also have singular values that are not associated with any
+sequence.
+\enterexample
+After the declaration of an uninitialized pointer
+\tcode{x}
+(as with
+\tcode{int* x;}),
+\tcode{x}
+must always be assumed to have a singular value of a pointer.
+\exitexample
+Results of most expressions are undefined for singular values;
+the only exceptions are destroying an iterator that holds a singular value,
+the assignment of a non-singular value to
+an iterator that holds a singular value, and using a value-initialized iterator
+as the source of a copy or move operation. \enternote This guarantee is not
+offered for default initialization, although the distinction only matters for types
+with trivial default constructors such as pointers or aggregates holding pointers.
+\exitnote
+In these cases the singular
+value is overwritten the same way as any other value.
+Dereferenceable
+values are always non-singular.
+
+\pnum
+Most of the library's algorithmic templates that operate on data structures have
+interfaces that use ranges. A range is an iterator and a \term{sentinel} that designate
+the beginning and end of the computation. An iterator and a sentinel denoting a range
+are comparable. A sentinel denotes an element when it compares equal to an iterator
+\tcode{i}, and \tcode{i} points to that element. The types of a sentinel and an
+iterator that denote a range must satisfy \tcode{Sentinel}~(\ref{iterators.sentinel}).
+
+\pnum
+A sentinel
+\tcode{s}
+is called
+\term{reachable}
+from an iterator
+\tcode{i}
+if and only if there is a finite sequence of applications of
+the expression
+\tcode{++i}
+that makes
+\tcode{i == s}.
+If
+\tcode{s}
+is reachable from
+\tcode{i},
+they denote a range.
+
+\pnum
+A range \range{i}{s}
+is empty if \tcode{i == s};
+otherwise, \range{i}{s}
+refers to the elements in the data structure starting with the element
+pointed to by
+\tcode{i}
+and up to but not including the element pointed to by
+the first iterator \tcode{j} such that \tcode{j == s}.
+
+\pnum
+A range \range{i}{s}
+is valid if and only if
+\tcode{s}
+is reachable from
+\tcode{i}.
+The result of the application of functions in the library to invalid ranges is
+undefined.
+
+\pnum
+All the categories of iterators require only those functions that are realizable for a given category in
+constant time (amortized).
+
+\pnum
+Destruction of an iterator may invalidate pointers and references
+previously obtained from that iterator.
+
+\pnum
+An
+\techterm{invalid}
+iterator is an iterator that may be singular.\footnote{This definition applies to pointers, since pointers are iterators.
+The effect of dereferencing an iterator that has been invalidated
+is undefined.
+}
+
+\rSec2[iterator.custpoints]{Customization points}
+
+\rSec3[iterator.custpoints.iter_move]{\tcode{iter_move}}
 
 \pnum
 The name \tcode{iter_move} denotes a \techterm{customization point
@@ -1477,7 +833,7 @@ The context in which the expression \tcode{iter_move(E)} is evaluated
   following:
 \begin{itemdecl}
 // \expos
-template <_Dereferenceable I>
+template <@\placeholder{dereferenceable}@ I>
 @\seebelow@ iter_move(I&& r) noexcept(@\seebelow@);
 \end{itemdecl}
 
@@ -1504,7 +860,7 @@ If, for the \tcode{iter_move} function selected by overload resolution,
 \tcode{iter_move(E)} does not equal \tcode{*E}, the program is ill-formed with
 no diagnostic required.
 
-\rSec3[iterator.utils.iter_swap]{\tcode{iter_swap}}
+\rSec3[iterator.custpoints.iter_swap]{\tcode{iter_swap}}
 
 \pnum
 The name \tcode{iter_swap} denotes a \techterm{customization point
@@ -1572,7 +928,7 @@ If the \tcode{iter_swap} function selected by overload resolution does not swap
 the values denoted by the expressions \tcode{E1} and \tcode{E2}, the program is
 ill-formed with no diagnostic required.
 
-\rSec2[iterator.traits]{Iterator traits}
+\rSec2[iterator.assoc.types]{Iterator associated types}
 
 \pnum
 To implement algorithms only in terms of iterators, it is often necessary to
@@ -1593,6 +949,8 @@ iterator_category_t<II>
 \end{codeblock}
 
 be defined as the iterator's difference type, value type and iterator category, respectively.
+
+\rSec3[iterator.assoc.types.difference_type]{\tcode{difference_type}}
 
 \pnum
 \indexlibrary{\idxcode{difference_type_t}}%
@@ -1626,12 +984,72 @@ be defined as the iterator's difference type, value type and iterator category, 
     : make_signed< decltype(declval<T>() - declval<T>()) > {
   };
 
-  template <class T>
-    using difference_type_t = typename difference_type<T>::type;
+  template <class T> using difference_type_t
+    = typename difference_type<T>::type;
 \end{codeblock}
 
 \pnum
 Users may specialize \tcode{difference_type} on user-defined types.
+
+\rSec3[iterator.assoc.types.value_type]{\tcode{value_type}}
+
+\pnum
+A \tcode{Readable} type has an associated value type that can be accessed with the
+\tcode{value_type_t} alias template.
+
+\indexlibrary{\idxcode{value_type}}%
+\begin{codeblock}
+  template <class> struct value_type { };
+
+  template <class T>
+  struct value_type<T*>
+    : enable_if<is_object<T>::value, remove_cv_t<T>> { };
+
+  template <class I>
+    requires is_array<I>::value
+  struct value_type<I> : value_type<decay_t<I>> { };
+
+  template <class I>
+  struct value_type<I const> : value_type<decay_t<I>> { };
+
+  template <class T>
+    requires requires { typename T::value_type; }
+  struct value_type<T>
+    : enable_if<is_object<typename T::value_type>::value, typename T::value_type> { };
+
+  template <class T>
+    requires requires { typename T::element_type; }
+  struct value_type<T>
+    : enable_if<is_object<typename T::element_type>::value, typename T::element_type> { };
+
+  template <class T> using value_type_t
+    = typename value_type<T>::type;
+\end{codeblock}
+
+\pnum
+If a type \tcode{I} has an associated value type, then \tcode{value_type<I>::type} shall name the
+value type. Otherwise, there shall be no nested type \tcode{type}.
+
+\pnum
+The \tcode{value_type} class template may be specialized on user-defined types.
+
+\pnum
+When instantiated with a type \tcode{I}
+such that \tcode{I::value_type} is valid and denotes a type,
+\tcode{value_type<I>::type} names that type, unless it is not an object type~(\cxxref{basic.types}) in which case
+\tcode{value_type<I>} shall have no nested type \tcode{type}. \enternote Some legacy output
+iterators define a nested type named \tcode{value_type} that is an alias for \tcode{void}. These
+types are not \tcode{Readable} and have no associated value types.\exitnote
+
+\pnum
+When instantiated with a type \tcode{I}
+such that \tcode{I::element_type} is valid and denotes a type,
+\tcode{value_type<I>::type} names that type, unless it is not an object type~(\cxxref{basic.types}) in which case
+\tcode{value_type<I>} shall have no nested type \tcode{type}. \enternote Smart pointers like
+\tcode{shared_ptr<int>} are \tcode{Readable} and have an associated value type. But a smart pointer
+like \tcode{shared_ptr<void>} is not \tcode{Readable} and has no associated value type.\exitnote
+
+\rSec3[iterator.assoc.types.iterator_category]{\tcode{iterator_category}}
 
 \pnum
 \indexlibrary{\idxcode{iterator_category_t}}%
@@ -1655,8 +1073,8 @@ is implemented as if:
     using type = @\seebelow@;
   };
 
-  template <class T>
-    using iterator_category_t = typename iterator_category<T>::type;
+  template <class T> using iterator_category_t
+    = typename iterator_category<T>::type;
 \end{codeblock}
 
 \pnum
@@ -1685,7 +1103,7 @@ type \tcode{iterator_category<T>::type} is computed as follows:
 \tcode{rvalue_reference_t<T>} is implemented as if:
 
 \begin{itemdecl}
-  template <_Dereferenceable T>
+  template <@\placeholder{dereferenceable}@ T>
       requires @\seebelow{ }@using rvalue_reference_t
     = decltype(ranges::iter_move(declval<T&>()));
 \end{itemdecl}
@@ -1697,6 +1115,785 @@ The expression in the \tcode{requires} clause is equivalent to:
 requires(T& t) { { ranges::iter_move(t) } -> auto&&; }
 \end{codeblock}
 \end{itemdescr}
+
+\rSec2[iterators.readable]{Concept \tcode{Readable}}
+
+\pnum
+The \tcode{Readable} concept is satisfied by types that are readable by
+applying \tcode{operator*} including pointers, smart pointers, and iterators.
+
+\indexlibrary{\idxcode{Readable}}%
+\begin{codeblock}
+  template <class I>
+  concept bool Readable() {
+    return Movable<I>() && DefaultConstructible<I>() &&
+      requires(const I& i) {
+        typename value_type_t<I>;
+        typename reference_t<I>;
+        typename rvalue_reference_t<I>;
+        { *i } -> Same<reference_t<I>>;
+        { ranges::iter_move(i) } -> Same<rvalue_reference_t<I>>;
+      } &&
+      CommonReference<reference_t<I>, value_type_t<I>&>() &&
+      CommonReference<reference_t<I>, rvalue_reference_t<I>>() &&
+      CommonReference<rvalue_reference_t<I>, const value_type_t<I>&>() &&
+      Same<
+        common_reference_t<reference_t<I>, value_type_t<I>>,
+        value_type_t<I>>() &&
+      Same<
+        common_reference_t<rvalue_reference_t<I>, value_type_t<I>>,
+        value_type_t<I>>();
+  }
+\end{codeblock}
+
+\rSec2[iterators.writable]{Concept \tcode{Writable}}
+
+\pnum
+The \tcode{Writable} concept specifies the requirements for writing a value into an iterator's
+referenced object.
+
+\indexlibrary{\idxcode{Writable}}%
+\begin{codeblock}
+  template <class Out, class T>
+  concept bool Writable() {
+    return Semiregular<Out>() &&
+      requires(Out o, T&& t) {
+        *o = std::forward<T>(t); // not required to be equality preserving
+      };
+  }
+\end{codeblock}
+
+\pnum
+Let \tcode{E} be an an expression such that \tcode{decltype((E))} is \tcode{T}, and let \tcode{o}
+be a dereferenceable object of type \tcode{Out}. Then \tcode{Writable<Out, T>()} is satisfied if and only if
+
+\begin{itemize}
+\item If \tcode{Readable<Out>() \&\& Same<value_type_t<Out>, decay_t<T>{>}()} is satisfied,
+then \tcode{*o} after the assignment is equal
+to the value of \tcode{E} before the assignment.
+\end{itemize}
+
+\pnum
+After evaluating the assignment expression, \tcode{o} is not required to be dereferenceable.
+
+\pnum
+If \tcode{E} is an xvalue~(\cxxref{basic.lval}), the resulting
+state of the object it denotes is unspecified. \enternote The object must still meet the
+requirements of any library component that is using it. The operations listed
+in those requirements must work as specified whether the object has been moved
+from or not.\exitnote
+
+\pnum
+\enternote
+The only valid use of an \tcode{operator*} is on the left side of the assignment statement.
+\textit{Assignment through the same value of the writable type happens only once.}
+\exitnote
+
+\rSec2[iterators.weaklyincrementable]{Concept \tcode{WeaklyIncrementable}}
+
+\pnum
+The \tcode{WeaklyIncrementable} concept specifies the requirements on
+types that can be incremented with the pre- and post-increment operators.
+The increment operations are not required to be equality-preserving,
+nor is the type required to be \tcode{EqualityComparable}.
+
+\indexlibrary{\idxcode{WeaklyIncrementable}}%
+\begin{codeblock}
+  template <class I>
+  concept bool WeaklyIncrementable() {
+    return Semiregular<I>() &&
+      requires(I i) {
+        typename difference_type_t<I>;
+        requires SignedIntegral<difference_type_t<I>>();
+        { ++i } -> Same<I&>; // not required to be equality preserving
+        i++; // not required to be equality preserving
+      };
+  }
+\end{codeblock}
+
+\pnum
+Let \tcode{i} be an object of type \tcode{I}. When both pre- and post-increment
+are valid, \tcode{i} is said to be \techterm{incrementable}. Then
+\tcode{WeaklyIncrementable<I>()} is satisfied if and only if
+
+\begin{itemize}
+\item \tcode{++i} is valid if and only if \tcode{i++} is valid.
+\item If \tcode{i} is incrementable, then both \tcode{++i}
+  and \tcode{i++} advance \tcode{i} to the next element.
+\item If \tcode{i} is incrementable, then \tcode{\&++i == \&i}.
+\end{itemize}
+
+\pnum
+\enternote For \tcode{WeaklyIncrementable} types, \tcode{a} equals \tcode{b} does not imply that \tcode{++a}
+equals \tcode{++b}. (Equality does not guarantee the substitution property or referential
+transparency.) Algorithms on weakly incrementable types should never attempt to pass
+through the same incrementable value twice. They should be single pass algorithms. These algorithms
+can be used with istreams as the source of the input data through the \tcode{istream_iterator} class
+template.\exitnote
+
+\rSec2[iterators.incrementable]{Concept \tcode{Incrementable}}
+
+\pnum
+The \tcode{Incrementable} concept specifies requirements on types that can be incremented with the pre-
+and post-increment operators. The increment operations are required to be equality-preserving,
+and the type is required to be \tcode{EqualityComparable}. \enternote This requirement
+supersedes the annotations on the increment expressions in the definition of
+\tcode{WeaklyIncrementable}. \exitnote
+
+\indexlibrary{\idxcode{Incrementable}}%
+\begin{codeblock}
+  template <class I>
+  concept bool Incrementable() {
+    return Regular<I>() &&
+      WeaklyIncrementable<I>() &&
+      requires(I i) {
+        { i++ } -> Same<I>;
+      };
+  }
+\end{codeblock}
+
+\pnum
+Let \tcode{a} and \tcode{b} be incrementable objects of type \tcode{I}.
+Then \tcode{Incrementable<I>()} is satisfied
+if and only if
+
+\begin{itemize}
+\item If \tcode{bool(a == b)} then \tcode{bool(a++ == b)}.
+\item If \tcode{bool(a == b)} then \tcode{bool((a++, a) == ++b)}.
+\end{itemize}
+
+\pnum
+\enternote The requirement that \tcode{a} equals \tcode{b} implies \tcode{++a} equals \tcode{++b}
+(which is not true for weakly incrementable types) allows the use of multi-pass one-directional
+algorithms with types that satisfy \tcode{Incrementable}.\exitnote
+
+\rSec2[iterators.iterator]{Concept \tcode{Iterator}}
+
+\pnum
+The \tcode{Iterator} concept forms
+the basis of the iterator concept taxonomy; every iterator satisfies the
+\tcode{Iterator} requirements. This
+concept specifies operations for dereferencing and incrementing
+an iterator. Most algorithms will require additional operations
+to compare iterators with sentinels~(\ref{iterators.sentinel}), to
+read~(\ref{iterators.input}) or write~(\ref{iterators.output}) values, or
+to provide a richer set of iterator movements~(\ref{iterators.forward},
+\ref{iterators.bidirectional}, \ref{iterators.random.access}).)
+
+\indexlibrary{\idxcode{Iterator}}%
+\begin{codeblock}
+  template <class I>
+  concept bool Iterator() {
+    return WeaklyIncrementable<I>() &&
+      requires(I i) {
+        { *i } -> auto&&; // Requires: i is dereferenceable
+      };
+  }
+\end{codeblock}
+
+\pnum
+\enternote The requirement that the result of dereferencing the iterator is deducible from
+\tcode{auto\&\&} means that it cannot be \tcode{void}.\exitnote
+
+\rSec2[iterators.sentinel]{Concept \tcode{Sentinel}}
+\pnum
+The \tcode{Sentinel} concept
+specifies the relationship
+between an \tcode{Iterator} type and a \tcode{Semiregular} type whose values
+denote a range.
+
+\indexlibrary{\idxcode{Sentinel}}%
+\begin{itemdecl}
+  template <class S, class I>
+  concept bool Sentinel() {
+    return Semiregular<S>() &&
+      Iterator<I>() &&
+      WeaklyEqualityComparable<S, I>();
+  }
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+Let \tcode{s} and \tcode{i} be values of type \tcode{S} and
+\tcode{I} such that \range{i}{s} denotes a range. Types
+\tcode{S} and \tcode{I} satisfy \tcode{Sentinel<S, I>()}
+if and only if:
+
+\begin{itemize}
+\item \tcode{i == s} is well-defined.
+
+\item If \tcode{bool(i != s)} then \tcode{i} is dereferenceable and
+      \range{++i}{s} denotes a range.
+\end{itemize}
+\end{itemdescr}
+
+\pnum
+The domain of \tcode{==} can change over time.
+Given an iterator \tcode{i} and sentinel \tcode{s} such that \range{i}{s}
+denotes a range and \tcode{i != s}, \range{i}{s} is not required to continue to
+denote a range after incrementing any iterator equal to \tcode{i}. Consequently,
+\tcode{i == s} is no longer required to be well-defined.
+
+\rSec2[iterators.sizedsentinel]{Concept \tcode{SizedSentinel}}
+\pnum
+The \tcode{SizedSentinel} concept specifies
+requirements on an \tcode{Iterator} and a \tcode{Sentinel}
+that allow the use of the \tcode{-} operator to compute the distance
+between them in constant time.
+
+\indexlibrary{\idxcode{SizedSentinel}}%
+
+\begin{itemdecl}
+  template <class S, class I>
+  concept bool SizedSentinel() {
+    return Sentinel<S, I>() &&
+      !disable_sized_sentinel<remove_cv_t<S>, remove_cv_t<I>> &&
+      requires(const I& i, const S& s) {
+        { s - i } -> Same<difference_type_t<I>>;
+        { i - s } -> Same<difference_type_t<I>>;
+      };
+  }
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+Let \tcode{i} be an iterator of type \tcode{I}, and \tcode{s}
+a sentinel of type \tcode{S} such that \range{i}{s} denotes a range.
+Let $N$ be the smallest number of applications of \tcode{++i}
+necessary to make \tcode{bool(i == s)} be \tcode{true}.
+\tcode{SizedSentinel<S, I>()} is satisfied if and only if:
+
+\begin{itemize}
+\item If $N$ is representable by \tcode{difference_type_t<I>},
+      then \tcode{s - i} is well-defined and equals $N$.
+
+\item If $-N$ is representable by \tcode{difference_type_t<I>},
+      then \tcode{i - s} is well-defined and equals $-N$.
+\end{itemize}
+\end{itemdescr}
+
+\pnum
+\enternote \tcode{disable_sized_sentinel} provides a mechanism to
+enable use of sentinels and iterators with the library that meet the
+syntactic requirements but do not in fact satisfy \tcode{SizedSentinel}.
+A program that instantiates a library template that requires
+\tcode{SizedSentinel} with an iterator type \tcode{I} and sentinel type
+\tcode{S} that meet the syntactic requirements of \tcode{SizedSentinel<S, I>()}
+but do not satisfy \tcode{SizedSentinel} is ill-formed with no diagnostic required
+unless \tcode{disable_sized_sentinel<S, I>} evaluates to
+\tcode{true}~(\ref{structure.requirements}). \exitnote
+
+\pnum
+\enternote The \tcode{SizedSentinel}
+concept is satisfied by pairs of
+\tcode{RandomAccessIterator}s~(\ref{iterators.random.access}) and by
+counted iterators and their sentinels~(\ref{counted.iterator}).\exitnote
+
+\rSec2[iterators.input]{Concept \tcode{InputIterator}}
+
+\pnum
+The \tcode{InputIterator} concept is a refinement of
+\tcode{Iterator}~(\ref{iterators.iterator}). It
+defines requirements for a type whose referenced values can be read (from the requirement for
+\tcode{Readable}~(\ref{iterators.readable})) and which can be both pre- and post-incremented.
+\enternote Unlike in ISO/IEC 14882, input iterators are not required to satisfy
+\tcode{EqualityComparable}~(\ref{concepts.lib.compare.equalitycomparable}).\exitnote
+
+\indexlibrary{\idxcode{InputIterator}}%
+\begin{codeblock}
+  template <class I>
+  concept bool InputIterator() {
+    return Iterator<I>() &&
+      Readable<I>() &&
+      requires(I i, const I ci) {
+        typename iterator_category_t<I>;
+        requires DerivedFrom<iterator_category_t<I>, input_iterator_tag>();
+        { i++ } -> Readable; // not required to be equality preserving
+        requires Same<value_type_t<I>, value_type_t<decltype(i++)>>();
+        { *ci } -> const value_type_t<I>&;
+      };
+  }
+\end{codeblock}
+
+\rSec2[iterators.output]{Concept \tcode{OutputIterator}}
+
+\pnum
+The \tcode{OutputIterator} concept is a refinement of
+\tcode{Iterator}~(\ref{iterators.iterator}). It defines requirements for a type that
+can be used to write values (from the requirement for
+\tcode{Writable}~(\ref{iterators.writable})) and which can be both pre- and post-incremented.
+However, output iterators are not required to
+satisfy \tcode{EqualityComparable}.
+
+\indexlibrary{\idxcode{OutputIterator}}%
+\begin{codeblock}
+  template <class I, class T>
+  concept bool OutputIterator() {
+    return Iterator<I>() && Writable<I, T>();
+  }
+\end{codeblock}
+
+\pnum
+\enternote
+Algorithms on output iterators should never attempt to pass through the same iterator twice.
+They should be
+\term{single pass}
+algorithms.
+Algorithms that take output iterators can be used with ostreams as the destination
+for placing data through the
+\tcode{ostream_iterator}
+class as well as with insert iterators and insert pointers.
+\exitnote
+
+\rSec2[iterators.forward]{Concept \tcode{ForwardIterator}}
+
+\pnum
+The \tcode{ForwardIterator} concept refines \tcode{InputIterator}~(\ref{iterators.input}),
+adding equality comparison and the multi-pass guarantee, specified below.
+
+\indexlibrary{\idxcode{ForwardIterator}}%
+\begin{codeblock}
+  template <class I>
+  concept bool ForwardIterator() {
+    return InputIterator<I>() &&
+      DerivedFrom<iterator_category_t<I>, forward_iterator_tag>() &&
+      Incrementable<I>()&&
+      Sentinel<I, I>();
+  }
+\end{codeblock}
+
+\pnum
+The domain of \tcode{==} for forward iterators is that of iterators over the same
+underlying sequence. However, value-initialized iterators of the same type
+may be compared and shall compare equal to other value-initialized iterators of the same type.
+\enternote Value-initialized iterators behave as if they refer past the end of
+the same empty sequence. \exitnote
+
+\pnum
+Two dereferenceable iterators \tcode{a} and \tcode{b} of type \tcode{X} offer the
+\defn{multi-pass guarantee} if:
+
+\begin{itemize}
+\item \tcode{a == b} implies \tcode{++a == ++b} and
+\item The expression
+\tcode{([](X x)\{++x;\}(a), *a)} is equivalent to the expression \tcode{*a}.
+\end{itemize}
+
+\pnum
+\enternote
+The requirement that
+\tcode{a == b}
+implies
+\tcode{++a == ++b}
+(which is not true for weaker iterators)
+and the removal of the restrictions on the number of assignments through
+a mutable iterator
+(which applies to output iterators)
+allow the use of multi-pass one-directional algorithms with forward iterators.
+\exitnote
+
+\rSec2[iterators.bidirectional]{Concept \tcode{BidirectionalIterator}}
+
+\pnum
+The \tcode{BidirectionalIterator} concept refines \tcode{ForwardIterator}~(\ref{iterators.forward}),
+and adds the ability to move an iterator backward as well as forward.
+
+\indexlibrary{\idxcode{BidirectionalIterator}}%
+\begin{codeblock}
+  template <class I>
+  concept bool BidirectionalIterator() {
+    return ForwardIterator<I>() &&
+      DerivedFrom<iterator_category_t<I>, bidirectional_iterator_tag>() &&
+      requires(I i) {
+        { @\dcr@i } -> Same<I&>;
+        { i@\dcr@ } -> Same<I>;
+      };
+  }
+\end{codeblock}
+
+\pnum
+A bidirectional iterator \tcode{r} is decrementable if and only if there exists some \tcode{s} such that
+\tcode{++s == r}. The expressions \tcode{\dcr{}r} and \tcode{r\dcr{}} are only valid if \tcode{r} is
+decrementable.
+
+\pnum
+Let \tcode{a} and \tcode{b} be decrementable objects of type \tcode{I}. Then
+\tcode{BidirectionalIterator<I>()} is satisfied if and only if:
+
+\begin{itemize}
+\item \tcode{\&\dcr{}a == \&a}.
+\item If \tcode{bool(a == b)}, then \tcode{bool(a\dcr{} == b)}.
+\item If \tcode{bool(a == b)}, then \tcode{bool((a\dcr{}, a) == \dcr{}b)}.
+\item If \tcode{a} is incrementable and \tcode{bool(a == b)}, then
+      \tcode{bool(\dcr{}(++a) == b)}.
+\item If \tcode{bool(a == b)}, then \tcode{bool(++(\dcr{}a) == b)}.
+\end{itemize}
+
+\rSec2[iterators.random.access]{Concept \tcode{RandomAccessIterator}}
+
+\pnum
+The \tcode{RandomAccessIterator} concept refines \tcode{BidirectionalIterator}~(\ref{iterators.bidirectional})
+and adds support for constant-time advancement with \tcode{+=}, \tcode{+},  \tcode{-=}, and \tcode{-}, and the
+computation of distance in constant time with \tcode{-}. Random access iterators also support array
+notation via subscripting.
+
+\indexlibrary{\idxcode{RandomAccessIterator}}%
+\begin{codeblock}
+  template <class I>
+  concept bool RandomAccessIterator() {
+    return BidirectionalIterator<I>() &&
+      DerivedFrom<iterator_category_t<I>, random_access_iterator_tag>() &&
+      StrictTotallyOrdered<I>() &&
+      SizedSentinel<I, I>() &&
+      requires(I i, const I j, const difference_type_t<I> n) {
+        { i += n } -> Same<I&>;
+        { j + n } -> Same<I>;
+        { n + j } -> Same<I>;
+        { i -= n } -> Same<I&>;
+        { j - n } -> Same<I>;
+        { j[n] } -> Same<reference_t<I>>;
+      };
+  }
+\end{codeblock}
+
+\pnum
+Let \tcode{a} and \tcode{b} be valid iterators of type \tcode{I} such that \tcode{b} is reachable
+from \tcode{a}. Let \tcode{n} be the smallest value of type
+\tcode{difference_type_t<I>} such that after
+\tcode{n} applications of \tcode{++a}, then \tcode{bool(a == b)}. Then
+\tcode{RandomAccessIterator<I>()} is satisfied if and only if:
+
+\begin{itemize}
+\item \tcode{(a += n)} is equal to \tcode{b}.
+\item \tcode{\&(a += n)} is equal to \tcode{\&a}.
+\item \tcode{(a + n)} is equal to \tcode{(a += n)}.
+\item For any two positive integers \tcode{x} and \tcode{y}, if \tcode{a + (x + y)} is valid, then
+\tcode{a + (x + y)} is equal to \tcode{(a + x) + y}.
+\item \tcode{a + 0} is equal to \tcode{a}.
+\item If \tcode{(a + (n - 1))} is valid, then \tcode{a + n} is equal to \tcode{++(a + (n - 1))}.
+\item \tcode{(b += -n)} is equal to \tcode{a}.
+\item \tcode{(b -= n)} is equal to \tcode{a}.
+\item \tcode{\&(b -= n)} is equal to \tcode{\&b}.
+\item \tcode{(b - n)} is equal to \tcode{(b -= n)}.
+\item If \tcode{b} is dereferenceable, then \tcode{a[n]} is valid and is equal to \tcode{*b}.
+\end{itemize}
+
+\rSec1[indirectcallable]{Indirect callable requirements}
+
+\rSec2[indirectcallable.general]{In general}
+
+\pnum
+There are several concepts that group requirements of algorithms that take callable
+objects~(\cxxref{func.require}) as arguments.
+
+\rSec2[indirectcallable.indirectinvocable]{Indirect callables}
+
+\pnum
+The indirect callable concepts are used to constrain those algorithms that accept
+callable objects~(\cxxref{func.def}) as arguments.
+
+\indexlibrary{\idxcode{indirect_result_of}}%
+\indexlibrary{\idxcode{IndirectInvocable}}%
+\indexlibrary{\idxcode{IndirectRegularInvocable}}%
+\indexlibrary{\idxcode{IndirectPredicate}}%
+\indexlibrary{\idxcode{IndirectRelation}}%
+\indexlibrary{\idxcode{IndirectStrictWeakOrder}}%
+\begin{codeblock}
+  template <class F>
+  concept bool IndirectInvocable() {
+    return Invocable<F>();
+  }
+  template <class F, class I>
+  concept bool IndirectInvocable() {
+    return Readable<I>() &&
+      Invocable<F, value_type_t<I>>() &&
+      Invocable<F, reference_t<I>>() &&
+      Invocable<F, iter_common_reference_t<I>>();
+  }
+  template <class F, class I1, class I2>
+  concept bool IndirectInvocable() {
+    return Readable<I1>() && Readable<I2>() &&
+      Invocable<F, value_type_t<I1>, value_type_t<I2>>() &&
+      Invocable<F, value_type_t<I1>, reference_t<I2>>() &&
+      Invocable<F, reference_t<I1>, value_type_t<I2>>() &&
+      Invocable<F, reference_t<I1>, reference_t<I2>>() &&
+      Invocable<F, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
+  }
+
+  template <class F>
+  concept bool IndirectRegularInvocable() {
+    return RegularInvocable<F>();
+  }
+  template <class F, class I>
+  concept bool IndirectRegularInvocable() {
+    return Readable<I>() &&
+      RegularInvocable<F, value_type_t<I>>() &&
+      RegularInvocable<F, reference_t<I>>() &&
+      RegularInvocable<F, iter_common_reference_t<I>>();
+  }
+  template <class F, class I1, class I2>
+  concept bool IndirectRegularInvocable() {
+    return Readable<I1>() && Readable<I2>() &&
+      RegularInvocable<F, value_type_t<I1>, value_type_t<I2>>() &&
+      RegularInvocable<F, value_type_t<I1>, reference_t<I2>>() &&
+      RegularInvocable<F, reference_t<I1>, value_type_t<I2>>() &&
+      RegularInvocable<F, reference_t<I1>, reference_t<I2>>() &&
+      RegularInvocable<F, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
+  }
+
+  template <class F, class I>
+  concept bool IndirectPredicate() {
+    return Readable<I>() &&
+      Predicate<F, value_type_t<I>>() &&
+      Predicate<F, reference_t<I>>() &&
+      Predicate<F, iter_common_reference_t<I>>();
+  }
+  template <class F, class I1, class I2>
+  concept bool IndirectPredicate() {
+    return Readable<I1>() && Readable<I2>() &&
+      Predicate<F, value_type_t<I1>, value_type_t<I2>>() &&
+      Predicate<F, value_type_t<I1>, reference_t<I2>>() &&
+      Predicate<F, reference_t<I1>, value_type_t<I2>>() &&
+      Predicate<F, reference_t<I1>, reference_t<I2>>() &&
+      Predicate<F, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
+  }
+
+  template <class F, class I1, class I2 = I1>
+  concept bool IndirectRelation() {
+    return Readable<I1>() && Readable<I2>() &&
+      Relation<F, value_type_t<I1>, value_type_t<I2>>() &&
+      Relation<F, value_type_t<I1>, reference_t<I2>>() &&
+      Relation<F, reference_t<I1>, value_type_t<I2>>() &&
+      Relation<F, reference_t<I1>, reference_t<I2>>() &&
+      Relation<F, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
+  }
+
+  template <class F, class I1, class I2 = I1>
+  concept bool IndirectStrictWeakOrder() {
+    return Readable<I1>() && Readable<I2>() &&
+      StrictWeakOrder<F, value_type_t<I1>, value_type_t<I2>>() &&
+      StrictWeakOrder<F, value_type_t<I1>, reference_t<I2>>() &&
+      StrictWeakOrder<F, reference_t<I1>, value_type_t<I2>>() &&
+      StrictWeakOrder<F, reference_t<I1>, reference_t<I2>>() &&
+      StrictWeakOrder<F, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
+  }
+
+  template <class> struct indirect_result_of { };
+
+  template <class F, class... Is>
+    requires IndirectInvocable<F, Is...>()
+  struct indirect_result_of<F(Is...)> :
+    result_of<F(reference_t<Is>...)> { };
+\end{codeblock}
+
+\rSec2[projected]{Class template \tcode{projected}}
+
+\pnum
+The \tcode{projected} class template is intended for use when specifying the constraints of
+algorithms that accept callable objects and projections. It bundles a \tcode{Readable} type
+\tcode{I} and a function \tcode{Proj} into a new \tcode{Readable} type whose
+\tcode{reference} type is the result of applying \tcode{Proj} to the
+\tcode{reference_t} of \tcode{I}.
+
+\indexlibrary{\idxcode{projected}}%
+\begin{codeblock}
+  template <Readable I, IndirectRegularInvocable<I> Proj>
+  struct projected {
+    using value_type = decay_t<indirect_result_of_t<Proj&(I)>>;
+    indirect_result_of_t<Proj&(I)> operator*() const;
+  };
+
+  template <WeaklyIncrementable I, class Proj>
+  struct difference_type<projected<I, Proj>> {
+    using type = difference_type_t<I>;
+  };
+\end{codeblock}
+
+\pnum
+\enternote \tcode{projected} is only used to ease constraints specification. Its
+member function need not be defined.\exitnote
+
+\rSec1[commonalgoreq]{Common algorithm requirements}
+
+\rSec2[commonalgoreq.general]{In general}
+
+\pnum
+There are several additional iterator concepts that are commonly applied to families of algorithms.
+These group together iterator requirements of algorithm families. There are three relational
+concepts that specify how element values are transferred between \tcode{Readable} and \tcode{Writable} types:
+\tcode{Indirectly\-Movable}, \tcode{Indirectly\-Copyable}, and \tcode{Indirectly\-Swappable}. There are three relational concepts
+for rearrangements: \tcode{Permutable}, \tcode{Mergeable}, and \tcode{Sortable}.
+There is one relational concept for comparing values from different sequences: \tcode{IndirectlyComparable}.
+
+\pnum
+\enternote The \tcode{equal_to<>} and \tcode{less<>}~(\ref{comparisons}) function types used in the
+concepts below impose additional constraints on their arguments beyond those that appear explicitly in the
+concepts' bodies. \tcode{equal_to<>} requires its arguments satisfy \tcode{EqualityComparable}~(\ref{concepts.lib.compare.equalitycomparable}),
+and \tcode{less<>} requires its arguments satisfy \tcode{StrictTotallyOrdered}~(\ref{concepts.lib.compare.stricttotallyordered}).\exitnote
+
+\rSec2[commonalgoreq.indirectlymovable]{Concept \tcode{IndirectlyMovable}}
+
+\pnum
+The \tcode{IndirectlyMovable} concept specifies the relationship between a \tcode{Readable}
+type and a \tcode{Writable} type between which values may be moved.
+
+\indexlibrary{\idxcode{IndirectlyMovable}}%
+\begin{codeblock}
+  template <class In, class Out>
+  concept bool IndirectlyMovable() {
+    return Readable<In>() &&
+      Writable<Out, rvalue_reference_t<In>>();
+  }
+\end{codeblock}
+
+\pnum
+The \tcode{IndirectlyMovableStorable} concept augments \tcode{IndirectlyMovable} with additional
+requirements enabling the transfer to be performed through an intermediate object of the
+\tcode{Readable} type's value type.
+
+\indexlibrary{\idxcode{IndirectlyMovableStorable}}%
+\begin{codeblock}
+  template <class In, class Out>
+  concept bool IndirectlyMovableStorable() {
+    return IndirectlyMovable<In, Out>() &&
+      Writable<Out, value_type_t<In>>() &&
+      Movable<value_type_t<In>>() &&
+      Constructible<value_type_t<In>, rvalue_reference_t<In>>() &&
+      Assignable<value_type_t<In>&, rvalue_reference_t<In>>();
+  }
+\end{codeblock}
+
+\rSec2[commonalgoreq.indirectlycopyable]{Concept \tcode{IndirectlyCopyable}}
+
+\pnum
+The \tcode{IndirectlyCopyable} concept specifies the relationship between a \tcode{Readable}
+type and a \tcode{Writable} type between which values may be copied.
+
+\indexlibrary{\idxcode{IndirectlyCopyable}}%
+\begin{codeblock}
+  template <class In, class Out>
+  concept bool IndirectlyCopyable() {
+    return Readable<In>() &&
+      Writable<Out, reference_t<In>>();
+  }
+\end{codeblock}
+
+\pnum
+The \tcode{IndirectlyCopyableStorable} concept augments \tcode{IndirectlyCopyable} with additional
+requirements enabling the transfer to be performed through an intermediate object of the
+\tcode{Readable} type's value type. It also requires the capability to make copies of values.
+
+\indexlibrary{\idxcode{IndirectlyCopyableStorable}}%
+\begin{codeblock}
+  template <class In, class Out>
+  concept bool IndirectlyCopyableStorable() {
+    return IndirectlyCopyable<In, Out>() &&
+      Writable<Out, const value_type_t<In>&>() &&
+      Copyable<value_type_t<In>>() &&
+      Constructible<value_type_t<In>, reference_t<In>>() &&
+      Assignable<value_type_t<In>&, reference_t<In>>();
+  }
+\end{codeblock}
+
+\rSec2[commonalgoreq.indirectlyswappable]{Concept \tcode{IndirectlySwappable}}
+
+\pnum
+The \tcode{IndirectlySwappable} concept specifies a swappable relationship between the
+values referenced by two \tcode{Readable} types.
+
+\indexlibrary{\idxcode{IndirectlySwappable}}%
+\begin{codeblock}
+  template <class I1, class I2 = I1>
+  concept bool IndirectlySwappable() {
+    return Readable<I1>() && Readable<I2>() &&
+      requires(const I1 i1, const I2 i2) {
+        ranges::iter_swap(i1, i2);
+        ranges::iter_swap(i2, i1);
+        ranges::iter_swap(i1, i1);
+        ranges::iter_swap(i2, i2);
+      };
+  }
+\end{codeblock}
+
+\pnum
+Given an object \tcode{i1} of type \tcode{I1} and an object \tcode{i2} of
+type \tcode{I2}, \tcode{IndirectlySwappable<I1, I2>()} is satisfied if after
+\tcode{ranges::iter_swap(i1, i2)}, the value of \tcode{*i1} is equal to the
+value of \tcode{*i2} before the call, and \textit{vice versa}.
+
+\rSec2[commonalgoreq.indirectlycomparable]{Concept \tcode{IndirectlyComparable}}
+
+\pnum
+The \tcode{IndirectlyComparable} concept specifies the common requirements of algorithms that
+compare values from two different sequences.
+
+\indexlibrary{\idxcode{IndirectlyComparable}}%
+\begin{codeblock}
+  template <class I1, class I2, class R = equal_to<>, class P1 = identity,
+    class P2 = identity>
+  concept bool IndirectlyComparable() {
+    return IndirectRelation<R, projected<I1, P1>, projected<I2, P2>>();
+  }
+\end{codeblock}
+
+\rSec2[commonalgoreq.permutable]{Concept \tcode{Permutable}}
+
+\pnum
+The \tcode{Permutable} concept specifies the common requirements of algorithms that reorder
+elements in place by moving or swapping them.
+
+\indexlibrary{\idxcode{Permutable}}%
+\begin{codeblock}
+  template <class I>
+  concept bool Permutable() {
+    return ForwardIterator<I>() &&
+      IndirectlyMovableStorable<I, I>() &&
+      IndirectlySwappable<I, I>();
+  }
+\end{codeblock}
+
+\rSec2[commonalgoreq.mergeable]{Concept \tcode{Mergeable}}
+
+\pnum
+The \tcode{Mergeable} concept specifies the requirements of
+algorithms that merge sorted sequences into an output sequence by copying elements.
+
+\indexlibrary{\idxcode{Mergeable}}%
+\begin{codeblock}
+  template <class I1, class I2, class Out,
+      class R = less<>, class P1 = identity, class P2 = identity>
+  concept bool Mergeable() {
+    return InputIterator<I1>() &&
+      InputIterator<I2>() &&
+      WeaklyIncrementable<Out>() &&
+      IndirectlyCopyable<I1, Out>() &&
+      IndirectlyCopyable<I2, Out>() &&
+      IndirectStrictWeakOrder<R, projected<I1, P1>, projected<I2, P2>>();
+  }
+\end{codeblock}
+
+\rSec2[commonalgoreq.sortable]{Concept \tcode{Sortable}}
+
+\pnum
+The \tcode{Sortable} concept specifies the common requirements of algorithms that permute
+sequences into ordered sequences (e.g., \tcode{sort}).
+
+\indexlibrary{\idxcode{Sortable}}%
+\begin{codeblock}
+  template <class I, class R = less<>, class P = identity>
+  concept bool Sortable() {
+    return Permutable<I>() &&
+      IndirectStrictWeakOrder<R, projected<I, P>>();
+  }
+\end{codeblock}
+
+\rSec1[iterator.primitives]{Iterator primitives}
+
+\pnum
+To simplify the task of defining iterators, the library provides
+several classes and functions:
+
+\rSec2[iterator.traits]{Iterator traits}
 
 \pnum
 The class templates \tcode{is_indirectly_movable},
