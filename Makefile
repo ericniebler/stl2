@@ -13,7 +13,7 @@
 
 FIGURES = $(patsubst %.dot,%.pdf,$(wildcard *.dot))
 
-TSPDF = pdflatex -jobname=$(TARGET) $(TARGET).tex | grep -v "^Overfull"
+TSPDF = pdflatex -jobname=$(TARGET) $(TARGET).tex | grep -av "^Overfull"
 
 TARGET = ranges
 
