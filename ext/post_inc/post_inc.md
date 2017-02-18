@@ -133,7 +133,7 @@ Change the definition of `InputIterator` ([iterators.input]) as follows:
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>requires {</ins> typename iterator_category_t&lt;I&gt;; <ins>} &amp;&amp;</ins></tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<del>requires</del> DerivedFrom&lt;iterator_category_t&lt;I&gt;, input_iterator_tag&gt;();</tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<del>{ i++ } -> Readable; // not required to be equality preserving</del></tt>
-> <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<del>requires Same&lt;value_type_t&lt;I&gt;, value_type_t<decltype(i++)>>();</del></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<del>requires Same&lt;value_type_t&lt;I&gt;, value_type_t&lt;decltype(i++)&gt;&gt;();</del></tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<del>{ *ci } -> const value_type_t&lt;I&gt;&amp;;</del></tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<del>};</del></tt>
 > <tt>}</tt>
