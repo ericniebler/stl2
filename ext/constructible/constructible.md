@@ -118,9 +118,11 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 > > <tt>&nbsp;&nbsp;<del>return CommonReference&lt;const T&amp;, const U&amp;&gt;() &amp;&amp; requires(T&amp;&amp; t, U&amp;&amp; u) {</del></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<del>{ std::forward&lt;T&gt;(t) = std::forward&lt;U&gt;(u) } -&gt; Same&lt;T&amp;&gt;;</del></tt>
 > > <tt>&nbsp;&nbsp;<ins>return is_lvalue_reference&lt;T&gt;::value &amp;&amp; // see below</ins></tt>
-> > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>CommonReference&lt;T, const U&amp;&gt;() &amp;&amp;</ins></tt>
+> > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>CommonReference&lt;</ins></tt>
+> > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>const remove_reference_t&lt;T&gt;&amp;,</ins></tt>
+> > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>const remove_reference_t&lt;U&gt;&amp;&gt;() &amp;&amp;</ins></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>requires(T t, U&amp;&amp; u) {</ins></tt>
-> > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>{ t = std::forward&lt;U&gt;(u) } -&gt; Same&lt;T&gt;;</ins></tt>
+> > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>{ t = std::forward&lt;U&gt;(u) } -&gt; Same&lt;T&gt;&amp;&amp;;</ins></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;};</tt>
 > > <tt>}</tt>
 >
@@ -156,8 +158,8 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<del>delete[] p;</del></tt>
 > > <tt>&nbsp;&nbsp;<ins>return is_nothrow_destructible&lt;T&gt;::value &amp;&amp; // see below</ins></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>requires(T&amp; t, const remove_reference_t&lt;T&gt;&amp; ct) {</ins></tt>
-> > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>{ &t } -&gt; Same&lt;remove_reference_t&lt;T&gt;\*&gt;; // not required to be equality preserving</ins></tt>
-> > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>{ &ct } -&gt; Same&lt;const remove_reference_t&lt;T&gt;\*&gt;; // not required to be equality preserving</ins></tt>
+> > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>{ &t } -&gt; Same&lt;remove_reference_t&lt;T&gt;\*&gt;&amp;&amp;; // not required to be equality preserving</ins></tt>
+> > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>{ &ct } -&gt; Same&lt;const remove_reference_t&lt;T&gt;\*&gt;&amp;&amp;; // not required to be equality preserving</ins></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;};</tt>
 > > <tt>}</tt>
 >
