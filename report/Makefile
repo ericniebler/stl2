@@ -1,6 +1,6 @@
-DOCNO = 4621
+DOCNO = 4652
 PD = D
-SOURCE = N$(DOCNO).md
+SOURCE = report.md
 TARGET = $(PD)$(DOCNO)
 
 PANDOC = pandoc
