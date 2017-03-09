@@ -229,7 +229,7 @@ Change [common.iter.op.incr] as follows:
 >
 > <tt><ins>decltype(auto) operator++(int);<ins></tt>
 > > <ins>4 Requires: `!is_sentinel`.</ins>
-> > <ins>5 Effects: Equivalent to `return iter++`.</ins>
+> > <ins>5 Effects: Equivalent to: `return iter++;`</ins>
 >
 > <tt>common_iterator operator++(int)<del>;</del></tt>
 > <tt>&nbsp;&nbsp;<ins>requires ForwardIterator&lt;I&gt;();</ins></tt>

@@ -195,7 +195,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   template <class> struct indirect_result_of;
 
   template <class F, class... Is>
-    requires IndirectInvocable<F, Is...>()
+    requires IndirectInvocable<decay_t<F>, Is...>()
   struct indirect_result_of<F(Is...)>;
 
   template <class F>
@@ -760,6 +760,16 @@ are comparable. A sentinel denotes an element when it compares equal to an itera
 iterator that denote a range must satisfy \tcode{Sentinel}~(\ref{iterators.sentinel}).
 
 \pnum
+A range \range{i}{s}
+is empty if \tcode{i == s};
+otherwise, \range{i}{s}
+refers to the elements in the data structure starting with the element
+pointed to by
+\tcode{i}
+and up to but not including the element pointed to by
+the first iterator \tcode{j} such that \tcode{j == s}.
+
+\pnum
 A sentinel
 \tcode{s}
 is called
@@ -776,16 +786,6 @@ If
 is reachable from
 \tcode{i},
 they denote a range.
-
-\pnum
-A range \range{i}{s}
-is empty if \tcode{i == s};
-otherwise, \range{i}{s}
-refers to the elements in the data structure starting with the element
-pointed to by
-\tcode{i}
-and up to but not including the element pointed to by
-the first iterator \tcode{j} such that \tcode{j == s}.
 
 \pnum
 A range \range{i}{s}
@@ -819,46 +819,24 @@ is undefined.
 \pnum
 The name \tcode{iter_move} denotes a \techterm{customization point
 object}~(\ref{customization.point.object}). The effect of the expression
-\tcode{ranges::iter_move(E)} for some expression \tcode{E} is equivalent to
-\tcode{iter_move(E)}, with overload resolution~(\cxxref{over.match}) performed
-in a context described below.
+\tcode{ranges::iter_move(E)} for some expression \tcode{E} is equivalent to the
+following:
 
-\pnum
-The context in which the expression \tcode{iter_move(E)} is evaluated
 \begin{itemize}
-\item does not include a declaration of \tcode{ranges::iter_move},
-\item includes the lookup set produced by argument-dependent
-  lookup~(\cxxref{basic.lookup.argdep}), and
-\item includes an \tcode{iter_move} function template equivalent to the
-  following:
-\begin{itemdecl}
-// \expos
-template <@\placeholder{dereferenceable}@ I>
-@\seebelow@ iter_move(I&& r) noexcept(@\seebelow@);
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-The return type is \tcode{Ret} where \tcode{Ret} is
-\tcode{remove_reference_t<reference_t<I>{}>\&\&} if
-\tcode{reference_t<I>} is a reference type;
-\tcode{decay_t<reference_t<I>{}>}, otherwise.
-
-\pnum
-The expression in the \tcode{noexcept} is equivalent to:
-\begin{codeblock}
-noexcept(static_cast<Ret>(*r))
-\end{codeblock}
-
-\pnum
-\effects Equivalent to: \tcode{return static_cast<Ret>(*r);}
-\end{itemdescr}
+\item \tcode{iter_move(E)}, if that expression is well-formed when evaluated in
+a context that does not include \tcode{ranges::iter_move} but does include the
+lookup set produced by argument-dependent lookup~(\cxxref{basic.lookup.argdep}).
+\item Otherwise, if the expression \tcode{*E} is well-formed
+\begin{itemize}
+\item If \tcode{*E} is an lvalue, \tcode{std::move(*E)}
+\item Otherwise, \tcode{*E}
+\end{itemize}
+\item Otherwise, \tcode{ranges::iter_move(E)} is ill-formed.
 \end{itemize}
 
 \pnum
-If, for the \tcode{iter_move} function selected by overload resolution,
-\tcode{iter_move(E)} does not equal \tcode{*E}, the program is ill-formed with
-no diagnostic required.
+If \tcode{ranges::iter_move(E)} does not equal \tcode{*E}, the program is
+ill-formed with no diagnostic required.
 
 \rSec3[iterator.custpoints.iter_swap]{\tcode{iter_swap}}
 
@@ -866,67 +844,31 @@ no diagnostic required.
 The name \tcode{iter_swap} denotes a \techterm{customization point
 object}~(\ref{customization.point.object}). The effect of the expression
 \tcode{ranges::iter_swap(E1, E2)} for some expressions \tcode{E1} and \tcode{E2}
-is equivalent to \tcode{(void)iter_swap(E1, E2)}, with overload
-resolution~(\cxxref{over.match}) performed in a context described below:
-
-\pnum
-The context in which the expression \tcode{(void)iter_swap(E1, E2)} is evaluated
+is equivalent to the following:
 
 \begin{itemize}
-\item does not include a declaration of \tcode{ranges::iter_swap},
-\item includes the lookup set produced by argument-dependent
-  lookup~(\cxxref{basic.lookup.argdep}), and
-\item includes \tcode{iter_swap} function template(s) equivalent to the
-  following:
-\begin{itemdecl}
-// \expos
-template <class I1, class I2>
-void iter_swap(I1&&, I2&&) = delete;
-
-// \expos
-template <class I1, class I2,
-  Readable _R1 = remove_reference_t<I1>,
-  Readable _R2 = remove_reference_t<I2>>
-  requires Swappable<reference_t<_R1>, reference_t<_R2>>()
-void iter_swap(I1&& r1, I2&& r2)
-  noexcept(is_nothrow_swappable_with_v<reference_t<_R1>, reference_t<_R2>>);
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\effects Equivalent to \tcode{ranges::swap(*r1, *r2)}.
-\end{itemdescr}
-
-\begin{itemdecl}
-template <class I1, class I2,
-  Readable _R1 = std::remove_reference_t<I1>,
-  Readable _R2 = std::remove_reference_t<I2>>
-  requires !Swappable<reference_t<_R1>, reference_t<_R2>>()
-    && IndirectlyMovableStorable<_R1, _R2>() &&
-       IndirectlyMovableStorable<_R2, _R1>()
-void iter_swap(I1&& r1, I2&& r2)
-  noexcept(is_nothrow_indirectly_movable_v<_R1, _R2> &&
-           is_nothrow_indirectly_movable_v<_R2, _R1>);
-\end{itemdecl}
-\begin{itemdescr}
-\end{itemdescr}
-\pnum
-\effects Exchanges values referred to by two \tcode{Readable} objects.
-
-\pnum
-\enterexample Below is a possible implementation:
+\item \tcode{(void)iter_swap(E1, E2)}, if that expression is well-formed when
+evaluated in a context that does not include \tcode{ranges::iter_swap} but does
+include the lookup set produced by argument-dependent
+lookup~(\cxxref{basic.lookup.argdep}) and the following declaration:
 \begin{codeblock}
-value_type_t<_R1> tmp(iter_move(r1));
-*r1 = iter_move(r2);
-*r2 = std::move(tmp);
+void iter_swap(auto, auto) = delete;
 \end{codeblock}
-\exitexample
+\item Otherwise, if the types of \tcode{E1} and \tcode{E2} both satisfy
+\tcode{Readable}, and if the reference type of \tcode{E1} is swappable
+with~(\ref{concepts.lib.corelang.swappable}) the reference type of \tcode{E2},
+then \tcode{ranges::swap(*E1, *E2)}
+\item Otherwise, if the types \tcode{T1} and \tcode{T2} of \tcode{E1} and
+\tcode{E2} satisfy \tcode{IndirectlyMovableStorable<T1, T2>() \&\&
+IndirectlyMovableStorable<T2, T1>()}, exchanges the values denoted by
+\tcode{E1} and \tcode{E2}.
+\item Otherwise, \tcode{ranges::iter_swap(E1, E2)} is ill-formed.
 \end{itemize}
 
 \pnum
-If the \tcode{iter_swap} function selected by overload resolution does not swap
-the values denoted by the expressions \tcode{E1} and \tcode{E2}, the program is
-ill-formed with no diagnostic required.
+If \tcode{ranges::iter_swap(E1, E2)} does not swap the values denoted by the
+expressions \tcode{E1} and \tcode{E2}, the program is ill-formed with no
+diagnostic required.
 
 \rSec2[iterator.assoc.types]{Iterator associated types}
 
@@ -963,10 +905,6 @@ be defined as the iterator's difference type, value type and iterator category, 
   template <class T>
   struct difference_type<T*>
     : enable_if<is_object<T>::value, ptrdiff_t> { };
-
-  template <class I>
-    requires is_array<I>::value
-  struct difference_type<I> : difference_type<decay_t<I>> { };
 
   template <class I>
   struct difference_type<I const> : difference_type<decay_t<I>> { };
@@ -1136,13 +1074,7 @@ applying \tcode{operator*} including pointers, smart pointers, and iterators.
       } &&
       CommonReference<reference_t<I>, value_type_t<I>&>() &&
       CommonReference<reference_t<I>, rvalue_reference_t<I>>() &&
-      CommonReference<rvalue_reference_t<I>, const value_type_t<I>&>() &&
-      Same<
-        common_reference_t<reference_t<I>, value_type_t<I>>,
-        value_type_t<I>>() &&
-      Same<
-        common_reference_t<rvalue_reference_t<I>, value_type_t<I>>,
-        value_type_t<I>>();
+      CommonReference<rvalue_reference_t<I>, const value_type_t<I>&>();
   }
 \end{codeblock}
 
@@ -1156,7 +1088,7 @@ referenced object.
 \begin{codeblock}
   template <class Out, class T>
   concept bool Writable() {
-    return Semiregular<Out>() &&
+    return Movable<Out>() && DefaultConstructible<Out>() &&
       requires(Out o, T&& t) {
         *o = std::forward<T>(t); // not required to be equality preserving
       };
@@ -1523,7 +1455,8 @@ Let \tcode{a} and \tcode{b} be decrementable objects of type \tcode{I}. Then
 \begin{itemize}
 \item \tcode{\&\dcr{}a == \&a}.
 \item If \tcode{bool(a == b)}, then \tcode{bool(a\dcr{} == b)}.
-\item If \tcode{bool(a == b)}, then \tcode{bool((a\dcr{}, a) == \dcr{}b)}.
+\item If \tcode{bool(a == b)}, then after evaluating both \tcode{a\dcr} and \tcode{\dcr{}b},
+\tcode{bool(a == b)} still holds.
 \item If \tcode{a} is incrementable and \tcode{bool(a == b)}, then
       \tcode{bool(\dcr{}(++a) == b)}.
 \item If \tcode{bool(a == b)}, then \tcode{bool(++(\dcr{}a) == b)}.
@@ -1592,7 +1525,6 @@ objects~(\cxxref{func.require}) as arguments.
 The indirect callable concepts are used to constrain those algorithms that accept
 callable objects~(\cxxref{func.def}) as arguments.
 
-\indexlibrary{\idxcode{indirect_result_of}}%
 \indexlibrary{\idxcode{IndirectInvocable}}%
 \indexlibrary{\idxcode{IndirectRegularInvocable}}%
 \indexlibrary{\idxcode{IndirectPredicate}}%
@@ -1601,89 +1533,92 @@ callable objects~(\cxxref{func.def}) as arguments.
 \begin{codeblock}
   template <class F>
   concept bool IndirectInvocable() {
-    return Invocable<F>();
+    return CopyConstructible<F>() &&
+      Invocable<F&>();
   }
   template <class F, class I>
   concept bool IndirectInvocable() {
     return Readable<I>() &&
-      Invocable<F, value_type_t<I>>() &&
-      Invocable<F, reference_t<I>>() &&
-      Invocable<F, iter_common_reference_t<I>>();
+      CopyConstructible<F>() &&
+      Invocable<F&, value_type_t<I>&>() &&
+      Invocable<F&, reference_t<I>>() &&
+      Invocable<F&, iter_common_reference_t<I>>();
   }
   template <class F, class I1, class I2>
   concept bool IndirectInvocable() {
     return Readable<I1>() && Readable<I2>() &&
-      Invocable<F, value_type_t<I1>, value_type_t<I2>>() &&
-      Invocable<F, value_type_t<I1>, reference_t<I2>>() &&
-      Invocable<F, reference_t<I1>, value_type_t<I2>>() &&
-      Invocable<F, reference_t<I1>, reference_t<I2>>() &&
-      Invocable<F, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
+      CopyConstructible<F>() &&
+      Invocable<F&, value_type_t<I1>&, value_type_t<I2>&>() &&
+      Invocable<F&, value_type_t<I1>&, reference_t<I2>>() &&
+      Invocable<F&, reference_t<I1>, value_type_t<I2>&>() &&
+      Invocable<F&, reference_t<I1>, reference_t<I2>>() &&
+      Invocable<F&, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
   }
 
   template <class F>
   concept bool IndirectRegularInvocable() {
-    return RegularInvocable<F>();
+    return CopyConstructible<F>() &&
+      RegularInvocable<F&>();
   }
   template <class F, class I>
   concept bool IndirectRegularInvocable() {
     return Readable<I>() &&
-      RegularInvocable<F, value_type_t<I>>() &&
-      RegularInvocable<F, reference_t<I>>() &&
-      RegularInvocable<F, iter_common_reference_t<I>>();
+      CopyConstructible<F>() &&
+      RegularInvocable<F&, value_type_t<I>&>() &&
+      RegularInvocable<F&, reference_t<I>>() &&
+      RegularInvocable<F&, iter_common_reference_t<I>>();
   }
   template <class F, class I1, class I2>
   concept bool IndirectRegularInvocable() {
     return Readable<I1>() && Readable<I2>() &&
-      RegularInvocable<F, value_type_t<I1>, value_type_t<I2>>() &&
-      RegularInvocable<F, value_type_t<I1>, reference_t<I2>>() &&
-      RegularInvocable<F, reference_t<I1>, value_type_t<I2>>() &&
-      RegularInvocable<F, reference_t<I1>, reference_t<I2>>() &&
-      RegularInvocable<F, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
+      CopyConstructible<F>() &&
+      RegularInvocable<F&, value_type_t<I1>&, value_type_t<I2>&>() &&
+      RegularInvocable<F&, value_type_t<I1>&, reference_t<I2>>() &&
+      RegularInvocable<F&, reference_t<I1>, value_type_t<I2>&>() &&
+      RegularInvocable<F&, reference_t<I1>, reference_t<I2>>() &&
+      RegularInvocable<F&, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
   }
 
   template <class F, class I>
   concept bool IndirectPredicate() {
     return Readable<I>() &&
-      Predicate<F, value_type_t<I>>() &&
-      Predicate<F, reference_t<I>>() &&
-      Predicate<F, iter_common_reference_t<I>>();
+      CopyConstructible<F>() &&
+      Predicate<F&, value_type_t<I>&>() &&
+      Predicate<F&, reference_t<I>>() &&
+      Predicate<F&, iter_common_reference_t<I>>();
   }
   template <class F, class I1, class I2>
   concept bool IndirectPredicate() {
     return Readable<I1>() && Readable<I2>() &&
-      Predicate<F, value_type_t<I1>, value_type_t<I2>>() &&
-      Predicate<F, value_type_t<I1>, reference_t<I2>>() &&
-      Predicate<F, reference_t<I1>, value_type_t<I2>>() &&
-      Predicate<F, reference_t<I1>, reference_t<I2>>() &&
-      Predicate<F, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
+      CopyConstructible<F>() &&
+      Predicate<F&, value_type_t<I1>&, value_type_t<I2>&>() &&
+      Predicate<F&, value_type_t<I1>&, reference_t<I2>>() &&
+      Predicate<F&, reference_t<I1>, value_type_t<I2>&>() &&
+      Predicate<F&, reference_t<I1>, reference_t<I2>>() &&
+      Predicate<F&, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
   }
 
   template <class F, class I1, class I2 = I1>
   concept bool IndirectRelation() {
     return Readable<I1>() && Readable<I2>() &&
-      Relation<F, value_type_t<I1>, value_type_t<I2>>() &&
-      Relation<F, value_type_t<I1>, reference_t<I2>>() &&
-      Relation<F, reference_t<I1>, value_type_t<I2>>() &&
-      Relation<F, reference_t<I1>, reference_t<I2>>() &&
-      Relation<F, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
+      CopyConstructible<F>() &&
+      Relation<F&, value_type_t<I1>&, value_type_t<I2>&>() &&
+      Relation<F&, value_type_t<I1>&, reference_t<I2>>() &&
+      Relation<F&, reference_t<I1>, value_type_t<I2>&>() &&
+      Relation<F&, reference_t<I1>, reference_t<I2>>() &&
+      Relation<F&, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
   }
 
   template <class F, class I1, class I2 = I1>
   concept bool IndirectStrictWeakOrder() {
     return Readable<I1>() && Readable<I2>() &&
-      StrictWeakOrder<F, value_type_t<I1>, value_type_t<I2>>() &&
-      StrictWeakOrder<F, value_type_t<I1>, reference_t<I2>>() &&
-      StrictWeakOrder<F, reference_t<I1>, value_type_t<I2>>() &&
-      StrictWeakOrder<F, reference_t<I1>, reference_t<I2>>() &&
-      StrictWeakOrder<F, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
+      CopyConstructible<F>() &&
+      StrictWeakOrder<F&, value_type_t<I1>&, value_type_t<I2>&>() &&
+      StrictWeakOrder<F&, value_type_t<I1>&, reference_t<I2>>() &&
+      StrictWeakOrder<F&, reference_t<I1>, value_type_t<I2>&>() &&
+      StrictWeakOrder<F&, reference_t<I1>, reference_t<I2>>() &&
+      StrictWeakOrder<F&, iter_common_reference_t<I1>, iter_common_reference_t<I2>>();
   }
-
-  template <class> struct indirect_result_of { };
-
-  template <class F, class... Is>
-    requires IndirectInvocable<F, Is...>()
-  struct indirect_result_of<F(Is...)> :
-    result_of<F(reference_t<Is>...)> { };
 \end{codeblock}
 
 \rSec2[projected]{Class template \tcode{projected}}
@@ -1699,7 +1634,7 @@ algorithms that accept callable objects and projections. It bundles a \tcode{Rea
 \begin{codeblock}
   template <Readable I, IndirectRegularInvocable<I> Proj>
   struct projected {
-    using value_type = decay_t<indirect_result_of_t<Proj&(I)>>;
+    using value_type = remove_cv_t<remove_reference_t<indirect_result_of_t<Proj&(I)>>>;
     indirect_result_of_t<Proj&(I)> operator*() const;
   };
 
@@ -1806,11 +1741,11 @@ values referenced by two \tcode{Readable} types.
   template <class I1, class I2 = I1>
   concept bool IndirectlySwappable() {
     return Readable<I1>() && Readable<I2>() &&
-      requires(const I1 i1, const I2 i2) {
-        ranges::iter_swap(i1, i2);
-        ranges::iter_swap(i2, i1);
-        ranges::iter_swap(i1, i1);
-        ranges::iter_swap(i2, i2);
+      requires(I1&& i1, I2&& i2) {
+        ranges::iter_swap(std::forward<I1>(i1), std::forward<I2>(i2));
+        ranges::iter_swap(std::forward<I2>(i2), std::forward<I1>(i1));
+        ranges::iter_swap(std::forward<I1>(i1), std::forward<I1>(i1));
+        ranges::iter_swap(std::forward<I2>(i2), std::forward<I2>(i2));
       };
   }
 \end{codeblock}
@@ -3365,7 +3300,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     using difference_type   = difference_type_t<I>;
     using value_type        = value_type_t<I>;
     using iterator_category = input_iterator_tag;
-    using reference         = @\seebelow@;
+    using reference         = rvalue_reference_t<I>;
 
     move_iterator();
     explicit move_iterator(I i);
@@ -3436,12 +3371,6 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     move_iterator<I> make_move_iterator(I i);
 }}}}
 \end{codeblock}
-
-\pnum
-Let \tcode{\textit{R}} be \tcode{reference_t<I>}. If \tcode{is_reference<\textit{R}>::value}
-is \tcode{true}, the template specialization \tcode{move_iterator<I>} shall define the nested
-type named \tcode{reference} as a synonym for \tcode{remove_reference_t<\textit{R}>\&\&}, otherwise
-as a synonym for \tcode{\textit{R}}.
 
 \pnum
 \enternote \tcode{move_iterator} does not provide an \tcode{operator->} because the class member access
@@ -3527,7 +3456,7 @@ reference operator*() const;
 \begin{itemdescr}
 \pnum
 \effects Equivalent to:
-\tcode{return static_cast<reference>(*current);}
+\tcode{return iter_move(current);}
 \end{itemdescr}
 
 \rSec4[move.iter.op.incr]{\tcode{move_iterator::operator++}}
@@ -3672,7 +3601,7 @@ reference operator[](difference_type n) const
 \begin{itemdescr}
 \pnum
 \effects Equivalent to:
-\tcode{return static_cast<reference>(current[n]);}
+\tcode{return iter_move(current + n);}
 \end{itemdescr}
 
 \rSec4[move.iter.op.comp]{\tcode{move_iterator} comparisons}
