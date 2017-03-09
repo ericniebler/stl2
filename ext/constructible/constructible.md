@@ -138,7 +138,7 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 > > >
 > > > (1.2.3) -- Otherwise, <del>`v`</del><ins>if `u` is a glvalue, the object to which it refers</ins> is not modified.
 >
-> <ins>2 There is no subsumption relationship between `Assignable<T, U>()` and `is_lvalue_reference<T>::value`.
+> <ins>2 There need not be any subsumption relationship between `Assignable<T, U>()` and `is_lvalue_reference<T>::value`.
 
 <ednote>[_Editor's note:_ Prior to this change, `Assignable` is trying to work with proxy reference types and failing. It perfectly forwards its arguments, but requires the return type of assignment to be `T&` (which is not true for some proxy types). Also, the allowable moved-from state of the rhs expression (`u`) is described in terms of its value category. But if the rhs is a proxy reference (e.g., `reference_wrapper<int>`) then the value category of the proxy bears no relation to the value category of the referent.</ednote>
 
@@ -173,7 +173,7 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 > >
 > > (3.<del>3</del><ins>2</ins>) -- The expression `&t` is non-modifying.
 >
-> &#8203;<ins>4 There is no subsumption relationship between `Destructible<T>()` and `is_nothrow_destructible<T>::value`.
+> &#8203;<ins>4 There need not be any subsumption relationship between `Destructible<T>()` and `is_nothrow_destructible<T>::value`.
 
 <ednote>[_Editor's note:_ In the minutes of Ranges TS wording review at Kona on 2015-08-14, the following is recorded:</ednote>
 
@@ -205,7 +205,7 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 > > <tt>&nbsp;&nbsp;<ins>return Destructible&lt;T&gt;() && is_constructible&lt;T, Args.\..&gt;::value; // see below</ins></tt>
 > > <tt>}</tt>
 >
-> &#8203;<ins>2 There is no subsumption relationship between `Constructible<T, Args...>()` and `is_constructible<T, Args...>::value`.
+> &#8203;<ins>2 There need not be any subsumption relationship between `Constructible<T, Args...>()` and `is_constructible<T, Args...>::value`.
 
 <ednote>[_Editor's note:_ `Constructible` now always subsumes `Destructible`, fixing [CaseyCarter/stl2#22](https://github.com/CaseyCarter/stl2/issues/22) which regards overload ambiguities introduced by the lack of such a simple subsumption relationship. `Constructible` follows `Destructible` by dropping the requirement for dynamic [array] allocation.]</ednote>
 
@@ -282,7 +282,7 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;Swappable&lt;T&amp;&gt;();</tt>
 > > <tt>}</tt>
 >
-> &#8203;<ins>1 There is no subsumption relationship between `Movable<T>()` and `is_object<T>::value`.
+> &#8203;<ins>1 There need not be any subsumption relationship between `Movable<T>()` and `is_object<T>::value`.
 
 <ednote>[_Editor's note:_ `Movable` is the base concept of the `Regular` hierarchy. These concepts are concerned with value semantics. As such, it makes no sense for `Movable<int&&>()` to return `true` ([stl2#310](https://github.com/ericniebler/stl2/issues/310)). We add the requirement that `T` is an object type to resolve the issue. Since `Movable` is subsumed by `Copyable`, `Semiregular`, and `Regular`, these concepts will only ever by satisfied by object types.]</ednote>
 
