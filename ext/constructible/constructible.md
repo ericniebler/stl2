@@ -233,11 +233,11 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 >
 > 1 <ins>If `T` is an object type, then</ins>
 >
-> > &#8203;<ins>(1.1)</ins> Let `rv` be an rvalue of type <del>`remove_cv_t<`</del>`T`<del>`>`</del>. Then `MoveConstructible<T>()` is satisfied if and only if
+> > &#8203;<ins>(1.1)</ins> Let `rv` be an rvalue of type <del>`remove_cv_t<`</del>`T`<del>`>`</del><ins> and `u2` a distinct object of type `T` equal to `rv`</ins>. Then `MoveConstructible<T>()` is satisfied if and only if
 > >
-> > > (<ins>1.</ins>1.1) -- After the definition `T u = rv;`, `u` is equal to the value of `rv` before the construction.
+> > > (<ins>1.</ins>1.1) -- After the definition `T u = rv;`, `u` is equal to <ins>`u2`</ins><del>the value of `rv` before the construction</del>.
 > > >
-> > > (<ins>1.</ins>1.2) -- `T{rv}` <del>or `*new T{rv}`</del> is equal to the value of `rv` before the construction.
+> > > (<ins>1.</ins>1.2) -- `T{rv}` <del>or `*new T{rv}`</del> is equal to <ins>`u2`</ins><del>the value of `rv` before the construction</del>.
 > >
 > > &#8203;<ins>(1.</ins>2<ins>) If `T` is not `const`,</ins> `rv`'s resulting state is unspecified<ins>; otherwise, it is unchanged</ins>. [ _Note:_ `rv` must still meet the requirements of the library component that is using it. The operations listed in those requirements must work as specified whether `rv` has been moved from or not. --_end note_ ]
 
