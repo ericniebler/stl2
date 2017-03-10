@@ -232,7 +232,7 @@ concept <span class="dt">bool</span> MoveConstructible() {
 <p><ednote>The issue was discussed in the Issaquah 2016 meeting. The guidance given there was to narrowly focus this concept on “traditional” assignability only – assignments to non-<code>const</code> lvalues from non-proxy expressions – and solve the proxy problem at a later date. That is the direction taken here.]</ednote></p>
 <p><ednote>[<em>Editor’s note:</em> Move subsection “Concept <code>Destructible</code>” ([concepts.lib.object.destructible]) to subsection “Core language concepts” ([concepts.lib.corelang]) after [concepts.lib.corelang.swappable], change its stable id to [concepts.lib.corelang.destructible] and edit it as follows:]</ednote></p>
 <blockquote>
-<p>1 <del>The <code>Destructible</code> concept is the base of the hierarchy of object concepts. It specifies properties that all such object types have in common.</del><ins>The <code>Destructible</code> concept specifies properties of all types instances of which can be destroyed at the end of their lifetime, or reference types.</ins></p>
+<p>1 <del>The <code>Destructible</code> concept is the base of the hierarchy of object concepts. It specifies properties that all such object types have in common.</del><ins>The <code>Destructible</code> concept specifies properties of all types, instances of which can be destroyed at the end of their lifetime, or reference types.</ins></p>
 <blockquote>
 <p><tt>template &lt;class T&gt;</tt><br />
 <tt>concept bool Destructible() {</tt><br />
@@ -311,14 +311,11 @@ concept <span class="dt">bool</span> MoveConstructible() {
 <tt>    ConvertibleTo&lt;<del>remove_cv_t&lt;</del>T<del>&gt;</del>&amp;&amp;, T&gt;();</tt><br />
 <tt>}</tt></p>
 </blockquote>
-<p>1 <ins>If <code>T</code> is an object type, then</ins></p>
+<p>1 <ins>If <code>T</code> is an object type, then</ins> let <code>rv</code> be an rvalue of type <del><code>remove_cv_t&lt;</code></del><code>T</code><del><code>&gt;</code></del><ins> and <code>u2</code> a distinct object of type <code>T</code> equal to <code>rv</code></ins>. <del>Then</del> <code>MoveConstructible&lt;T&gt;()</code> is satisfied if and only if</p>
 <blockquote>
-<p>​<ins>(1.1)</ins> Let <code>rv</code> be an rvalue of type <del><code>remove_cv_t&lt;</code></del><code>T</code><del><code>&gt;</code></del><ins> and <code>u2</code> a distinct object of type <code>T</code> equal to <code>rv</code></ins>. Then <code>MoveConstructible&lt;T&gt;()</code> is satisfied if and only if</p>
-<blockquote>
-<p>(<ins>1.</ins>1.1) – After the definition <code>T u = rv;</code>, <code>u</code> is equal to <ins><code>u2</code></ins><del>the value of <code>rv</code> before the construction</del>.</p>
-<p>(<ins>1.</ins>1.2) – <code>T{rv}</code> <del>or <code>*new T{rv}</code></del> is equal to <ins><code>u2</code></ins><del>the value of <code>rv</code> before the construction</del>.</p>
-</blockquote>
-<p>​<ins>(1.</ins>2<ins>) If <code>T</code> is not <code>const</code>,</ins> <code>rv</code>’s resulting state is unspecified<ins>; otherwise, it is unchanged</ins>. [ <em>Note:</em> <code>rv</code> must still meet the requirements of the library component that is using it. The operations listed in those requirements must work as specified whether <code>rv</code> has been moved from or not. –<em>end note</em> ]</p>
+<p>(1.1) – After the definition <code>T u = rv;</code>, <code>u</code> is equal to <ins><code>u2</code></ins><del>the value of <code>rv</code> before the construction</del>.</p>
+<p>(1.2) – <code>T{rv}</code> <del>or <code>*new T{rv}</code></del> is equal to <ins><code>u2</code></ins><del>the value of <code>rv</code> before the construction</del>.</p>
+<p>​<ins>(1.3</ins><del>2</del><ins>) If <code>T</code> is not <code>const</code>,</ins> <code>rv</code>’s resulting state is valid but unspecified ([lib.types.movedfrom])<ins>; otherwise, it is unchanged</ins>.</p>
 </blockquote>
 </blockquote>
 <p><ednote>[<em>Editor’s note:</em> We no longer strip top-level <code>const</code> from the parameter to harmonize <code>MoveConstructible</code> with <code>is_move_constructible</code>. And as with <code>is_move_constructible</code>, <code>MoveConstructible&lt;int&amp;&amp;&gt;()</code> is <code>true</code>. See <a href="https://cplusplus.github.io/LWG/lwg-active.html#2146">LWG#2146</a>.</ednote></p>
@@ -338,13 +335,10 @@ concept <span class="dt">bool</span> MoveConstructible() {
 <tt>    <ins>Constructible&lt;T, const T&amp;&amp;&gt;() &amp;&amp; ConvertibleTo&lt;const T&amp;&amp;, T&gt;();</ins></tt><br />
 <tt>}</tt></p>
 </blockquote>
-<p>1 <ins>If <code>T</code> is an object type, then</ins></p>
+<p>1 <ins>If <code>T</code> is an object type, then</ins> let <code>v</code> be an lvalue of type (possibly <code>const</code>) <del><code>remove_cv_t&lt;</code></del><code>T</code><del><code>&gt;</code></del> or an rvalue of type <code>const</code> <del><code>remove_cv_t&lt;</code></del><code>T</code><del><code>&gt;</code></del>. <del>Then</del> <code>CopyConstructible&lt;T&gt;()</code> is satisfied if and only if</p>
 <blockquote>
-<p>​<ins>(1.1)</ins> Let <code>v</code> be an lvalue of type (possibly <code>const</code>) <del><code>remove_cv_t&lt;</code></del><code>T</code><del><code>&gt;</code></del> or an rvalue of type <code>const</code> <del><code>remove_cv_t&lt;</code></del><code>T</code><del><code>&gt;</code></del>. Then <code>CopyConstructible&lt;T&gt;()</code> is satisfied if and only if</p>
-<blockquote>
-<p>(<ins>1.</ins>1.1) – After the definition <code>T u = v;</code>, <code>v</code> is equal to <code>u</code>.</p>
-<p>(<ins>1.</ins>1.2) – <code>T{v}</code> <del>or <code>*new T{v}</code></del> is equal to <code>v</code>.</p>
-</blockquote>
+<p>(1.1) – After the definition <code>T u = v;</code>, <code>u</code> is equal to <code>v</code>.</p>
+<p>(1.2) – <code>T{v}</code> <del>or <code>*new T{v}</code></del> is equal to <code>v</code>.</p>
 </blockquote>
 </blockquote>
 <p><ednote>[<em>Editor’s note:</em> As with <code>MoveConstructible</code>, we no longer strip top-level <em>cv</em>-qualifiers to bring <code>CopyConstructible</code> into harmony with <code>is_copy_constructible</code>.</ednote></p>

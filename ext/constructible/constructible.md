@@ -229,15 +229,13 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;ConvertibleTo&lt;<del>remove_cv_t&lt;</del>T<del>&gt;</del>&amp;&amp;, T&gt;();</tt>
 > > <tt>}</tt>
 >
-> 1 <ins>If `T` is an object type, then</ins>
+> 1 <ins>If `T` is an object type, then</ins> let `rv` be an rvalue of type <del>`remove_cv_t<`</del>`T`<del>`>`</del><ins> and `u2` a distinct object of type `T` equal to `rv`</ins>. <del>Then</del> `MoveConstructible<T>()` is satisfied if and only if
 >
-> > &#8203;<ins>(1.1)</ins> Let `rv` be an rvalue of type <del>`remove_cv_t<`</del>`T`<del>`>`</del><ins> and `u2` a distinct object of type `T` equal to `rv`</ins>. Then `MoveConstructible<T>()` is satisfied if and only if
+> > (1.1) -- After the definition `T u = rv;`, `u` is equal to <ins>`u2`</ins><del>the value of `rv` before the construction</del>.
 > >
-> > > (<ins>1.</ins>1.1) -- After the definition `T u = rv;`, `u` is equal to <ins>`u2`</ins><del>the value of `rv` before the construction</del>.
-> > >
-> > > (<ins>1.</ins>1.2) -- `T{rv}` <del>or `*new T{rv}`</del> is equal to <ins>`u2`</ins><del>the value of `rv` before the construction</del>.
+> > (1.2) -- `T{rv}` <del>or `*new T{rv}`</del> is equal to <ins>`u2`</ins><del>the value of `rv` before the construction</del>.
 > >
-> > &#8203;<ins>(1.</ins>2<ins>) If `T` is not `const`,</ins> `rv`'s resulting state is unspecified<ins>; otherwise, it is unchanged</ins>. [ _Note:_ `rv` must still meet the requirements of the library component that is using it. The operations listed in those requirements must work as specified whether `rv` has been moved from or not. --_end note_ ]
+> > &#8203;<ins>(1.3</ins><del>2</del><ins>) If `T` is not `const`,</ins> `rv`'s resulting state is valid but unspecified ([lib.types.movedfrom])<ins>; otherwise, it is unchanged</ins>.
 
 <ednote>[_Editor's note:_ We no longer strip top-level `const` from the parameter to harmonize `MoveConstructible` with `is_move_constructible`. And as with `is_move_constructible`, `MoveConstructible<int&&>()` is `true`. See [LWG#2146](https://cplusplus.github.io/LWG/lwg-active.html#2146).</ednote>
 
@@ -257,13 +255,11 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>Constructible&lt;T, const T&amp;&amp;&gt;() &amp;&amp; ConvertibleTo&lt;const T&amp;&amp;, T&gt;();</ins></tt>
 > > <tt>}</tt>
 >
-> 1 <ins>If `T` is an object type, then</ins>
+> 1 <ins>If `T` is an object type, then</ins> let `v` be an lvalue of type (possibly `const`) <del>`remove_cv_t<`</del>`T`<del>`>`</del> or an rvalue of type `const` <del>`remove_cv_t<`</del>`T`<del>`>`</del>. <del>Then</del> `CopyConstructible<T>()` is satisfied if and only if
 >
-> > &#8203;<ins>(1.1)</ins> Let `v` be an lvalue of type (possibly `const`) <del>`remove_cv_t<`</del>`T`<del>`>`</del> or an rvalue of type `const` <del>`remove_cv_t<`</del>`T`<del>`>`</del>. Then `CopyConstructible<T>()` is satisfied if and only if
+> > (1.1) -- After the definition `T u = v;`, `u` is equal to `v`.
 > >
-> > > (<ins>1.</ins>1.1) -- After the definition `T u = v;`, `v` is equal to `u`.
-> > >
-> > > (<ins>1.</ins>1.2) -- `T{v}` <del>or `*new T{v}`</del> is equal to `v`.
+> > (1.2) -- `T{v}` <del>or `*new T{v}`</del> is equal to `v`.
 
 <ednote>[_Editor's note:_ As with `MoveConstructible`, we no longer strip top-level _cv_-qualifiers to bring `CopyConstructible` into harmony with `is_copy_constructible`.</ednote>
 
