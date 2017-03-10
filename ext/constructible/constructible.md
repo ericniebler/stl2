@@ -128,15 +128,13 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 >
 > 1 <del>Let `t` be an lvalue of type `T`, and `R` be the type `remove_reference_t<U>`. If `U` is an lvalue reference type, let `v` be an lvalue of type `R`; otherwise, let `v` be an rvalue of type `R`. Let `uu` be a distinct object of type `R` such that `uu` is equal to `v`.</del><ins>Let `t` be an lvalue which refers to an object `o` such that `decltype((t))` is `T`, and `u` an expression such that `decltype((u))` is `U`. Let `u2` be a distinct object that is equal to `u`.</ins> Then `Assignable<T, U>()` is satisfied if and only if
 >
-> > (1.1) -- <tt>std::addressof(t = <del>v</del><ins>u</ins>) == std::addressof(<del>t</del><ins>o</ins>)</tt>.
+> > (1.1) -- <tt>addressof(t = <del>v</del><ins>u</ins>) == addressof(<del>t</del><ins>o</ins>)</tt>.
 > >
-> > (1.2) -- After evaluating <tt>t = <del>v</del><ins>u</ins></tt>:
+> > (1.2) -- After evaluating <tt>t = <del>v</del><ins>u</ins></tt>, <tt>t</tt> is equal to <tt><del>uu</del><ins>u2</ins></tt> and:
 > >
-> > > (1.2.1) -- `t` is equal to <tt><del>uu</del><ins>u2</ins></tt>.
+> > > (1.2.1) -- If <del>`v`</del><ins>`u`</ins> is a non-`const` <del>rvalue, its</del><ins>xvalue, the</ins> resulting state <ins>of the object to which it refers</ins> is valid but unspecified ([lib.types.movedfrom]).
 > > >
-> > > (1.2.2) -- If <del>`v`</del><ins>`u`</ins> is a non-`const` <del>rvalue, its</del><ins>xvalue, the</ins> resulting state <ins>of the object to which it refers</ins> is unspecified. [ _Note:_ <del>`v`</del><ins>the object</ins> must still meet the requirements of the library component that is using it. The operations listed in those requirements must work as specified. -- end note ]
-> > >
-> > > (1.2.3) -- Otherwise, <del>`v`</del><ins>if `u` is a glvalue, the object to which it refers</ins> is not modified.
+> > > (1.2.2) -- Otherwise, <del>`v`</del><ins>if `u` is a glvalue, the object to which it refers</ins> is not modified.
 >
 > <ins>2 There need not be any subsumption relationship between `Assignable<T, U>()` and `is_lvalue_reference<T>::value`.
 
@@ -169,7 +167,7 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 >
 > > &#8203;<del>(3.1) -- After evaluating the expression `t.~T()`, `delete p`, or `delete[] p`, all resources owned by the denoted object(s) are reclaimed.</del>
 > >
-> > (3.<del>2</del><ins>1</ins>) -- `&t == std::addressof(t)`.
+> > (3.<del>2</del><ins>1</ins>) -- `&t == addressof(t)`.
 > >
 > > (3.<del>3</del><ins>2</ins>) -- The expression `&t` is non-modifying.
 >
