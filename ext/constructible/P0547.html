@@ -1,0 +1,372 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title>Ranges TS: Assorted Object Concept Fixes</title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+  </style>
+  <style type="text/css">
+  ins {
+    color:#009a9a; text-decoration:underline;
+  }
+  
+  del {
+    color:red; text-decoration:line-through;
+  }
+  
+  ednote {
+    color:blue;
+  }
+  
+  table {
+    border-collapse: collapse;
+  }
+  
+  table, th, td {
+    border: 1px solid black;
+  }
+  </style>
+</head>
+<body>
+<table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="607">
+  <tr>
+    <td width="172" align="left" valign="top">Document number:</td>
+    <td width="435">
+      P0547
+    </td>
+  </tr>
+  <tr>
+    <td width="172" align="left" valign="top">Date:</td>
+    <td width="435">2017-02-02</td>
+  </tr>
+  <tr>
+    <td width="172" align="left" valign="top">Project:</td>
+    <td width="435">C++ Extensions for Ranges</td>
+  </tr>
+  <tr>
+    <td width="172" align="left" valign="top">Reply-to:</td>
+    <td width="435">
+      Eric Niebler &lt;<a href="mailto:eniebler@boost.org">eniebler@boost.org</a>&gt;
+    </td>
+  </tr>
+  <tr>
+    <td width="172" align="left" valign="top">Audience:</td>
+    <td width="435">
+      Library Working Group
+    </td>
+  </tr>
+</table>
+<div id="header">
+<h1 class="title">Ranges TS: Assorted Object Concept Fixes</h1>
+</div>
+<div id="TOC">
+<ul>
+<li><a href="#synopsis"><span class="toc-section-number">1</span> Synopsis</a></li>
+<li><a href="#problem-description"><span class="toc-section-number">2</span> Problem description</a></li>
+<li><a href="#solution-description"><span class="toc-section-number">3</span> Solution description</a></li>
+<li><a href="#proposed-resolution"><span class="toc-section-number">4</span> Proposed Resolution</a></li>
+<li><a href="#acknowledgements"><span class="toc-section-number">5</span> Acknowledgements</a></li>
+</ul>
+</div>
+<h1 id="synopsis"><span class="header-section-number">1</span> Synopsis</h1>
+<p>This paper suggests reformulations of the following fundamental object concepts to resolve a number of outstanding issues, and to bring them in line with (what experience has shown to be) user expectations:</p>
+<ul>
+<li><code>Destructible</code></li>
+<li><code>Constructible</code></li>
+<li><code>DefaultConstructible</code></li>
+<li><code>MoveConstructible</code></li>
+<li><code>CopyConstructible</code></li>
+<li><code>Assignable</code></li>
+</ul>
+<p>The suggested changes make them behave more like what their associated type traits do.</p>
+<p>In addition, we suggest a change to <code>Movable</code> that correctly positions it as the base of the <code>Regular</code> concept hierarchy, which concerns itself with types with value semantics.</p>
+<h1 id="problem-description"><span class="header-section-number">2</span> Problem description</h1>
+<p>The <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3351.pdf">Palo Alto report</a>, on which the design of the Ranges TS is based, suggested the object concepts <code>Semiregular</code> and <code>Regular</code> for constraining standard library components. In an appendix it concedes that many generic components could more usefully be constrained with decompositions of these very coarse concepts: <code>Movable</code> and <code>Copyable</code>.</p>
+<p>While implementing a subset of a constrained Standard Library, the authors of the Ranges TS found that even more fine-grained “object” concepts were often useful: <code>MoveConstructible</code>, <code>CopyConstructible</code>, <code>Assignable</code>, and others. These concepts are needed to avoid over-constraining low-level library utilities like <code>pair</code>, <code>tuple</code>, <code>variant</code> and more. Rather than aping the similarly named type-traits, the authors of the Ranges TS tried to preserve the intent of the Palo Alto report by giving them semantic weight. It did this in various ways, including:</p>
+<ul>
+<li>Requiring that destructible objects can have their address taken.</li>
+<li>Requiring that destructible objects can have their destructor called explicitly.</li>
+<li>Requiring that constructible objects are destructible.</li>
+<li>Testing that objects could be allocated and deallocated in dynamic as well as automatic storage.</li>
+<li>Testing for array allocation and deallocation.</li>
+<li>Testing that default constructors are not <code>explicit</code>.</li>
+</ul>
+<p>Although well-intentioned, many of the extra semantic requirements have proved to be problematic in practice. Here, for instance, are seven currently open <a href="https://github.com/ericniebler/stl2">stl2</a> bugs that need resolution:</p>
+<ol>
+<li><p><strong>“Why do neither reference types nor array types satisfy <code>Destructible</code>?” (<a href="https://github.com/ericniebler/stl2/issues/70">stl2#70</a>)</strong></p>
+<blockquote>
+<p>This issue, raised independently by Walter Brown, Alisdair Meredith, and others, questions the decision to have <code>Destructible&lt;T&gt;()</code> require the valid expression <code>t.~T()</code> for some lvalue <code>t</code> of type <code>T</code>. That has the effect of<br />
+preventing reference and array types from satisfying <code>Destructible</code>.</p>
+<p>In addition, <code>Destructible</code> requires <code>&amp;t</code> to have type <code>T*</code>. This also prevents reference types from satisfying <code>Destructible</code> since you can’t form a pointer to a reference.</p>
+<p>A reasonable interpretation of “destructible” is “can fall out of scope”. This is roughly what is tested by the <code>is_destructible</code> type trait. By this rubric, references and array types should satisfy <code>Destructible</code> as they do for the trait.</p>
+</blockquote></li>
+<li><p><strong>“Is it intended that <code>Constructible&lt;int&amp;, long&amp;&gt;()</code> is true?” (<a href="https://github.com/ericniebler/stl2/issues/301">stl2#301</a>)</strong></p>
+<blockquote>
+<p><code>Constructible&lt;T, Args...&gt;()</code> tries to test that the type <code>T</code> can be constructed on the heap as well as in automatic storage. But requiring the expression <code>new T{declval&lt;Args&gt;()...}</code> causes reference types to fail to satisfy the concept since references cannot be dynamically allocated. <code>Constructible</code> “solves” this problem by handling references separately; their required expression is merely <code>T(declval&lt;Args&gt;()...)</code>. That syntax has the unfortunate effect of being a function-style cast, which in the case of <code>int&amp;</code> and <code>long&amp;</code>, amounts to a <code>reinterpret_cast</code>.</p>
+<p>We could patch this up by using universal initialization syntax, but that comes with its own problems. Instead, we opted for a more radical simplification: just do what <code>is_constructible</code> does.</p>
+</blockquote></li>
+<li><p><strong>“<code>Movable&lt;int&amp;&amp;&gt;()</code> is <code>true</code> and it should probably be <code>false</code>” (<a href="https://github.com/ericniebler/stl2/issues/310">stl2#310</a>)</strong></p>
+<blockquote>
+<p>A cursory review of the places that use <code>Movable</code> in the Ranges TS reveals that they all are expecting types with value semantics. A reference does not exhibit value semantics, so it is surprising for <code>int&amp;&amp;</code> to satisfy <code>Movable</code>.</p>
+</blockquote></li>
+<li><p><strong>“Is it intended that an aggregate with a deleted or nonexistent default constructor satisfy <code>DefaultConstructible</code>?” (<a href="https://github.com/ericniebler/stl2/issues/300">stl2#300</a>)</strong></p>
+<blockquote>
+<p>Consider a type such as the following:</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">struct</span> A{
+    A(<span class="dt">const</span> A&amp;) = <span class="kw">default</span>;
+};</code></pre></div>
+<p>This type is not default constructible; the statement <code>auto a = A();</code> is ill-formed. However, since <code>A</code> is an aggregate, the statement <code>auto a = A{};</code> is well-formed. Since <code>Constructible</code> is testing for the latter syntax and not the former, <code>A</code> satisfies <code>DefaultConstructible</code>. This is in contrast with the result of <code>std::is_default_constructible&lt;A&gt;::value</code>, which is <code>false</code>.</p>
+</blockquote></li>
+<li><p><strong>“Assignable concept looks wrong” (<a href="https://github.com/ericniebler/stl2/issues/229">stl2#229</a>)</strong></p>
+<blockquote>
+<p>There are a few problems with <code>Assignable</code>. The given definition, <code>Assignable&lt;T, U&gt;()</code> would appear to work with reference types (as one would expect), but the prose description reads, “Let <code>t</code> be an lvalue of type <code>T</code>…” There are no lvalues of reference type, so the wording is simply wrong. The wording also erroneously uses <code>==</code> instead of the magic phrase “is equal to,” accidentally requiring the types to satisfy (some part of) <code>EqualityComparable</code>.</p>
+<p>Also, LWG requested at the Issaquah 2016 meeting that this concept be changed such that it is only satisfied when <code>T</code> is an lvalue reference type.</p>
+</blockquote></li>
+<li><p><strong>“MoveConstructible<T>() != std::is_move_constructible<T>()” (<a href="https://github.com/ericniebler/stl2/issues/313">stl2#313</a>)</strong></p>
+<blockquote>
+<p>The definition of <code>MoveConstructible</code> applies <code>remove_cv_t</code> to its argument before testing it, as shown below:</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> T&gt;
+concept <span class="dt">bool</span> MoveConstructible() {
+ <span class="kw">return</span> Constructible&lt;T, remove_cv_t&lt;T&gt;&amp;&amp;&gt;() &amp;&amp;
+   ConvertibleTo&lt;remove_cv_t&lt;T&gt;&amp;&amp;, T&gt;();
+}</code></pre></div>
+<p>This somewhat surprisingly causes <code>const some_move_only_type</code> to satisfy <code>MoveConstructible</code>, when it probably shouldn’t. <code>std::is_move_constructible&lt;const some_move_only_type&gt;::value</code> is <code>false</code>, for instance.</p>
+</blockquote></li>
+<li><p><strong>“Subsumption and object concepts” (<a href="https://github.com/CaseyCarter/stl2/issues/22">CaseyCarter/stl2#22</a>)</strong></p>
+<blockquote>
+<p>This issue relates to the fact that there is <em>almost</em> a perfect sequence of subsumption relationships from <code>Destructible</code>, through <code>Constructible</code>, and all the way to <code>Regular</code>. The “almost” is the problem. Given a set of overloads constrained with these concepts, there will be ambiguity due to the fact that <em>in some cases</em> <code>Constructible</code> does not subsume <code>Destructible</code> (e.g., for references).</p>
+</blockquote></li>
+</ol>
+<p>We were also motivated by the very real user confusion about why concepts with names similar to associated type traits gives different answers for different types and type categories.</p>
+<p>It remains our intention to resist the temptation to constrain the library with semantically meaningless, purely syntactic concepts.</p>
+<h1 id="solution-description"><span class="header-section-number">3</span> Solution description</h1>
+<p>At the high level, the solution this paper suggests is to break the object concepts into two logical groups: the lower-level concepts that follow the lead of their similarly-named type traits with regard to “odd” types (references, arrays, <em>cv</em> <code>void</code>), and the higher-level concepts that deal only with value semantic types.</p>
+<p>The lower-level concepts are those that have corresponding type traits, and behave largely like them. They can no longer properly be thought of as “object” concepts, so they rightly belong with the core language concepts.</p>
+<ul>
+<li><code>Destructible</code></li>
+<li><code>Constructible</code></li>
+<li><code>DefaultConstructible</code></li>
+<li><code>MoveConstructible</code></li>
+<li><code>CopyConstructible</code></li>
+<li><code>Assignable</code></li>
+</ul>
+<p>These concepts are great for constraining the special members of low-level generic facilities like <code>std::tuple</code> and <code>std::optional</code>, but they are too fiddly for constraining anything but the most trivial generic algorithms. Unlike the type traits, these concepts require additional syntax and semantics for the sake of the generic programmer’s sanity, although the requirements are light.</p>
+<p>The higher-level concepts are those that the Palo Alto report describes, and are satisfied by object types only:</p>
+<ul>
+<li><code>Movable</code></li>
+<li><code>Copyable</code></li>
+<li><code>Semiregular</code></li>
+<li><code>Regular</code></li>
+</ul>
+<p>These are the concepts that largely constrain the algorithms in the STL.</p>
+<p>The changes suggested in this paper bear on <a href="https://cplusplus.github.io/LWG/lwg-active.html#2146">LWG#2146</a>, “Are reference types Copy/Move-Constructible/Assignable or Destructible?” There seems to be some discomfort with the current behavior of the type traits with regard to reference types. Should that issue be resolved such that reference types are deemed to <em>not</em> be copy/move-constructible/assignable or destructible, the concepts should follow suit. Until such time, the authors feel that hewing to the behavior of the traits is the best way to avoid confusion.</p>
+<p>In the “Proposed Resolution” that follows, there are editorial notes that highlight specific changes and describe their intent and impact.</p>
+<h1 id="proposed-resolution"><span class="header-section-number">4</span> Proposed Resolution</h1>
+<p><ednote>[<em>Editor’s note:</em> Edit subsection “Concept <code>Assignable</code>” ([concepts.lib.corelang.assignable]) as follows:]</ednote></p>
+<blockquote>
+<blockquote>
+<p><tt>template &lt;class T, class U&gt;</tt><br />
+<tt>concept bool Assignable() {</tt><br />
+<tt>  <del>return CommonReference&lt;const T&amp;, const U&amp;&gt;() &amp;&amp; requires(T&amp;&amp; t, U&amp;&amp; u) {</del></tt><br />
+<tt>    <del>{ std::forward&lt;T&gt;(t) = std::forward&lt;U&gt;(u) } -&gt; Same&lt;T&amp;&gt;;</del></tt><br />
+<tt>  <ins>return is_lvalue_reference&lt;T&gt;::value &amp;&amp; // see below</ins></tt><br />
+<tt>    <ins>CommonReference&lt;</ins></tt><br />
+<tt>      <ins>const remove_reference_t&lt;T&gt;&amp;,</ins></tt><br />
+<tt>      <ins>const remove_reference_t&lt;U&gt;&amp;&gt;() &amp;&amp;</ins></tt><br />
+<tt>    <ins>requires(T t, U&amp;&amp; u) {</ins></tt><br />
+<tt>      <ins>{ t = std::forward&lt;U&gt;(u) } -&gt; Same&lt;T&gt;&amp;&amp;;</ins></tt><br />
+<tt>    };</tt><br />
+<tt>}</tt></p>
+</blockquote>
+<p>1 <del>Let <code>t</code> be an lvalue of type <code>T</code>, and <code>R</code> be the type <code>remove_reference_t&lt;U&gt;</code>. If <code>U</code> is an lvalue reference type, let <code>v</code> be an lvalue of type <code>R</code>; otherwise, let <code>v</code> be an rvalue of type <code>R</code>. Let <code>uu</code> be a distinct object of type <code>R</code> such that <code>uu</code> is equal to <code>v</code>.</del><ins>Let <code>t</code> be an lvalue which refers to an object <code>o</code> such that <code>decltype((t))</code> is <code>T</code>, and <code>u</code> an expression such that <code>decltype((u))</code> is <code>U</code>. Let <code>u2</code> be a distinct object that is equal to <code>u</code>.</ins> Then <code>Assignable&lt;T, U&gt;()</code> is satisfied if and only if</p>
+<blockquote>
+<p>(1.1) – <tt>addressof(t = <del>v</del><ins>u</ins>) == addressof(<del>t</del><ins>o</ins>)</tt>.</p>
+<p>(1.2) – After evaluating <tt>t = <del>v</del><ins>u</ins></tt>, <tt>t</tt> is equal to <tt><del>uu</del><ins>u2</ins></tt> and:</p>
+<blockquote>
+<p>(1.2.1) – If <del><code>v</code></del><ins><code>u</code></ins> is a non-<code>const</code> <del>rvalue, its</del><ins>xvalue, the</ins> resulting state <ins>of the object to which it refers</ins> is valid but unspecified ([lib.types.movedfrom]).</p>
+<p>(1.2.2) – Otherwise, <del><code>v</code></del><ins>if <code>u</code> is a glvalue, the object to which it refers</ins> is not modified.</p>
+</blockquote>
+</blockquote>
+<ins>
+<p>2 There need not be any subsumption relationship between <code>Assignable&lt;T, U&gt;()</code> and <code>is_lvalue_reference&lt;T&gt;::value</code>.</p>
+</blockquote>
+<p><ednote>[<em>Editor’s note:</em> Prior to this change, <code>Assignable</code> is trying to work with proxy reference types and failing. It perfectly forwards its arguments, but requires the return type of assignment to be <code>T&amp;</code> (which is not true for some proxy types). Also, the allowable moved-from state of the rhs expression (<code>u</code>) is described in terms of its value category. But if the rhs is a proxy reference (e.g., <code>reference_wrapper&lt;int&gt;</code>) then the value category of the proxy bears no relation to the value category of the referent.</ednote></p>
+<p><ednote>The issue was discussed in the Issaquah 2016 meeting. The guidance given there was to narrowly focus this concept on “traditional” assignability only – assignments to non-<code>const</code> lvalues from non-proxy expressions – and solve the proxy problem at a later date. That is the direction taken here.]</ednote></p>
+<p><ednote>[<em>Editor’s note:</em> Move subsection “Concept <code>Destructible</code>” ([concepts.lib.object.destructible]) to subsection “Core language concepts” ([concepts.lib.corelang]) after [concepts.lib.corelang.swappable], change its stable id to [concepts.lib.corelang.destructible] and edit it as follows:]</ednote></p>
+<blockquote>
+<p>1 <del>The <code>Destructible</code> concept is the base of the hierarchy of object concepts. It specifies properties that all such object types have in common.</del><ins>The <code>Destructible</code> concept specifies properties of all types instances of which can be destroyed at the end of their lifetime, or reference types.</ins></p>
+<blockquote>
+<p><tt>template &lt;class T&gt;</tt><br />
+<tt>concept bool Destructible() {</tt><br />
+<tt>  <del>return requires(T t, const T ct, T* p) {</del></tt><br />
+<tt>    <del>{ t.~T() } noexcept;</del></tt><br />
+<tt>    <del>{ &amp;t } -&gt; Same&lt;T*&gt;; // not required to be equality preserving</del></tt><br />
+<tt>    <del>{ &amp;ct } -&gt; Same&lt;const T*&gt;; // not required to be equality preserving</del></tt><br />
+<tt>    <del>delete p;</del></tt><br />
+<tt>    <del>delete[] p;</del></tt><br />
+<tt>  <ins>return is_nothrow_destructible&lt;T&gt;::value &amp;&amp; // see below</ins></tt><br />
+<tt>    <ins>requires(T&amp; t, const remove_reference_t&lt;T&gt;&amp; ct) {</ins></tt><br />
+<tt>      <ins>{ &amp;t } -&gt; Same&lt;remove_reference_t&lt;T&gt;*&gt;&amp;&amp;; // not required to be equality preserving</ins></tt><br />
+<tt>      <ins>{ &amp;ct } -&gt; Same&lt;const remove_reference_t&lt;T&gt;*&gt;&amp;&amp;; // not required to be equality preserving</ins></tt><br />
+<tt>    };</tt><br />
+<tt>}</tt></p>
+</blockquote>
+<p>2 The expression requirement <code>&amp;ct</code> does not require implicit expression variants.</p>
+<p>3 Given a (possibly <code>const</code>) lvalue <code>t</code> of type <tt><ins>remove_reference_t&lt;</ins>T<ins>&gt;</ins></tt><del> and pointer <code>p</code> of type <code>T*</code></del>, <code>Destructible&lt;T&gt;()</code> is satisfied if and only if</p>
+<blockquote>
+<p>​<del>(3.1) – After evaluating the expression <code>t.~T()</code>, <code>delete p</code>, or <code>delete[] p</code>, all resources owned by the denoted object(s) are reclaimed.</del></p>
+<p>(3.<del>2</del><ins>1</ins>) – <code>&amp;t == addressof(t)</code>.</p>
+<p>(3.<del>3</del><ins>2</ins>) – The expression <code>&amp;t</code> is non-modifying.</p>
+</blockquote>
+<p>​<ins>4 There need not be any subsumption relationship between <code>Destructible&lt;T&gt;()</code> and <code>is_nothrow_destructible&lt;T&gt;::value</code>.</p>
+</blockquote>
+<p><ednote>[<em>Editor’s note:</em> In the minutes of Ranges TS wording review at Kona on 2015-08-14, the following is recorded:</ednote></p>
+<blockquote><ednote>In 19.4.1 Alisdair asks whether reference types are Destructible. Eric pointed to <a href="https://github.com/ericniebler/stl2/issues/70">issue 70</a>, regarding reference types and array types. Alisdair concerned that Destructible sounds like something that goes out of scope, maybe this concept is really describing Deletable.</ednote></blockquote>
+<p><ednote>We took this as guidance to make <code>Destructible</code> behave more like the type traits with regard to “strange” types like references and arrays. We also dropped the requirement for dynamic [array] deallocation. We keep the requirement for a sane address-of operation since we recall previously receiving guidance from the committee to do so (although the notes don’t seem to reflect this). We additionally require that destructors are marked <code>noexcept</code> since <code>noexcept</code> clauses throughout the standard and the Ranges TS tacitly assume it, and because sane implementations require it.]</ednote></p>
+<p><ednote>[<em>Editor’s note:</em> Move subsection “Concept <code>Constructible</code>” ([concepts.lib.object.constructible]) to subsection “Core language concepts” ([concepts.lib.corelang]) after [concepts.lib.corelang.destructible], change its stable id to [concepts.lib.corelang.constructible] and edit it as follows:]</ednote></p>
+<blockquote>
+<p>1 The <code>Constructible</code> concept is used to constrain the <del>type of a variable to be either an object type constructible from</del><ins>initialization of a variable of a type with</ins> a given set of argument types<del>, or a reference type that can be bound to those arguments</del>.</p>
+<blockquote>
+<p><tt><del>template &lt;class T, class... Args&gt;</del></tt><br />
+<tt><del>concept bool __ConstructibleObject = // exposition only</del></tt><br />
+<tt>  <del>Destructible&lt;T&gt;() &amp;&amp; requires(Args&amp;&amp;... args) {</del></tt><br />
+<tt>    <del>T{std::forward&lt;Args&gt;(args)...}; // not required to be equality preserving</del></tt><br />
+<tt>    <del>new T{std::forward&lt;Args&gt;(args)...}; // not required to be equality preserving</del></tt><br />
+<tt>  <del>};</del></tt><br />
+<tt></tt><br />
+<tt><del>template &lt;class T, class... Args&gt;</del></tt><br />
+<tt><del>concept bool __BindableReference = // exposition only</del></tt><br />
+<tt>  <del>is_reference&lt;T&gt;::value &amp;&amp; requires(Args&amp;&amp;... args) {</del></tt><br />
+<tt>    <del>T(std::forward&lt;Args&gt;(args)...);</del></tt><br />
+<tt>  <del>};</del></tt><br />
+<tt></tt><br />
+<tt>template &lt;class T, class... Args&gt;</tt><br />
+<tt>concept bool Constructible() {</tt><br />
+<tt>  <del>return __ConstructibleObject&lt;T, Args...&gt; ||</del></tt><br />
+<tt>    <del>__BindableReference&lt;T, Args...&gt;;</del></tt><br />
+<tt>  <ins>return Destructible&lt;T&gt;() &amp;&amp; is_constructible&lt;T, Args...&gt;::value; // see below</ins></tt><br />
+<tt>}</tt></p>
+</blockquote>
+<p>​<ins>2 There need not be any subsumption relationship between <code>Constructible&lt;T, Args...&gt;()</code> and <code>is_constructible&lt;T, Args...&gt;::value</code>.</p>
+</blockquote>
+<p><ednote>[<em>Editor’s note:</em> <code>Constructible</code> now always subsumes <code>Destructible</code>, fixing <a href="https://github.com/CaseyCarter/stl2/issues/22">CaseyCarter/stl2#22</a> which regards overload ambiguities introduced by the lack of such a simple subsumption relationship. <code>Constructible</code> follows <code>Destructible</code> by dropping the requirement for dynamic [array] allocation.]</ednote></p>
+<p><ednote>[<em>Editor’s note:</em> Move subsection “Concept <code>DefaultConstructible</code>” ([concepts.lib.object.defaultconstructible]) to subsection “Core language concepts” ([concepts.lib.corelang]) after [concepts.lib.corelang.constructible], change its stable id to [concepts.lib.corelang.defaultconstructible] and edit it as follows:]</ednote></p>
+<blockquote>
+<blockquote>
+<p><tt>template &lt;class T&gt;</tt><br />
+<tt>concept bool DefaultConstructible() {</tt><br />
+<tt>  return Constructible&lt;T&gt;()<ins>;</ins> <del>&amp;&amp;</del></tt><br />
+<tt>    <del>requires(const size_t n) {</del></tt><br />
+<tt>      <del>new T[n]{}; // not required to be equality preserving</del></tt><br />
+<tt>    <del>};</del></tt><br />
+<tt>}</tt></p>
+</blockquote>
+<p>​<del>1 [ <em>Note:</em> The array allocation expression <code>new T[n]{}</code> implicitly requires that <code>T</code> has a non-explicit default constructor. –<em>end note</em> ]</p>
+</blockquote>
+<p><ednote>[<em>Editor’s note:</em> <code>DefaultConstructible&lt;T&gt;()</code> could trivially be replaced with <code>Constructible&lt;T&gt;()</code>. We are ambivalant about whether to remove <code>DefaultConstructible</code> or not, although we note that keeping it gives us the opportunity to augment this concept to require non-<code>explicit</code> default constructibility. Such a requirement is trivial to add, should the committee decide to.]</ednote></p>
+<p><ednote>[<em>Editor’s note:</em> Move subsection “Concept <code>MoveConstructible</code>” ([concepts.lib.object.moveconstructible]) to subsection “Core language concepts” ([concepts.lib.corelang]) after [concepts.lib.corelang.defaultconstructible], change its stable id to [concepts.lib.corelang.moveconstructible] and edit it as follows:]</ednote></p>
+<blockquote>
+<blockquote>
+<p><tt>template &lt;class T&gt;</tt><br />
+<tt>concept bool MoveConstructible() {</tt><br />
+<tt>  return Constructible&lt;T, <del>remove_cv_t&lt;</del>T<del>&gt;</del>&amp;&amp;&gt;() &amp;&amp;</tt><br />
+<tt>    ConvertibleTo&lt;<del>remove_cv_t&lt;</del>T<del>&gt;</del>&amp;&amp;, T&gt;();</tt><br />
+<tt>}</tt></p>
+</blockquote>
+<p>1 <ins>If <code>T</code> is an object type, then</ins></p>
+<blockquote>
+<p>​<ins>(1.1)</ins> Let <code>rv</code> be an rvalue of type <del><code>remove_cv_t&lt;</code></del><code>T</code><del><code>&gt;</code></del><ins> and <code>u2</code> a distinct object of type <code>T</code> equal to <code>rv</code></ins>. Then <code>MoveConstructible&lt;T&gt;()</code> is satisfied if and only if</p>
+<blockquote>
+<p>(<ins>1.</ins>1.1) – After the definition <code>T u = rv;</code>, <code>u</code> is equal to <ins><code>u2</code></ins><del>the value of <code>rv</code> before the construction</del>.</p>
+<p>(<ins>1.</ins>1.2) – <code>T{rv}</code> <del>or <code>*new T{rv}</code></del> is equal to <ins><code>u2</code></ins><del>the value of <code>rv</code> before the construction</del>.</p>
+</blockquote>
+<p>​<ins>(1.</ins>2<ins>) If <code>T</code> is not <code>const</code>,</ins> <code>rv</code>’s resulting state is unspecified<ins>; otherwise, it is unchanged</ins>. [ <em>Note:</em> <code>rv</code> must still meet the requirements of the library component that is using it. The operations listed in those requirements must work as specified whether <code>rv</code> has been moved from or not. –<em>end note</em> ]</p>
+</blockquote>
+</blockquote>
+<p><ednote>[<em>Editor’s note:</em> We no longer strip top-level <code>const</code> from the parameter to harmonize <code>MoveConstructible</code> with <code>is_move_constructible</code>. And as with <code>is_move_constructible</code>, <code>MoveConstructible&lt;int&amp;&amp;&gt;()</code> is <code>true</code>. See <a href="https://cplusplus.github.io/LWG/lwg-active.html#2146">LWG#2146</a>.</ednote></p>
+<p><ednote>The description of <code>MoveConstructible</code> adds semantic requirements when <code>T</code> is an object type. It says nothing about non-object types because no additional semantic requirements are necessary.]</ednote></p>
+<p><ednote>[<em>Editor’s note:</em> Move subsection “Concept <code>CopyConstructible</code>” ([concepts.lib.object.copyconstructible]) to subsection “Core language concepts” ([concepts.lib.corelang]) after [concepts.lib.corelang.moveconstructible], change its stable id to [concepts.lib.corelang.copyconstructible] and edit it as follows:]</ednote></p>
+<blockquote>
+<blockquote>
+<p><tt>template &lt;class T&gt;</tt><br />
+<tt>concept bool CopyConstructible() {</tt><br />
+<tt>  return MoveConstructible&lt;T&gt;() &amp;&amp;</tt><br />
+<tt>    <del>Constructible&lt;T, const remove_cv_t&lt;T&gt;&amp;&gt;() &amp;&amp;</del></tt><br />
+<tt>    <del>ConvertibleTo&lt;remove_cv_t&lt;T&gt;&amp;, T&gt;() &amp;&amp;</del></tt><br />
+<tt>    <del>ConvertibleTo&lt;const remove_cv_t&lt;T&gt;&amp;, T&gt;() &amp;&amp;</del></tt><br />
+<tt>    <del>ConvertibleTo&lt;const remove_cv_t&lt;T&gt;&amp;&amp;, T&gt;();</del></tt><br />
+<tt>    <ins>Constructible&lt;T, T&amp;&gt;() &amp;&amp; ConvertibleTo&lt;T&amp;, T&gt;() &amp;&amp;</ins></tt><br />
+<tt>    <ins>Constructible&lt;T, const T&amp;&gt;() &amp;&amp; ConvertibleTo&lt;const T&amp;, T&gt;() &amp;&amp;</ins></tt><br />
+<tt>    <ins>Constructible&lt;T, const T&amp;&amp;&gt;() &amp;&amp; ConvertibleTo&lt;const T&amp;&amp;, T&gt;();</ins></tt><br />
+<tt>}</tt></p>
+</blockquote>
+<p>1 <ins>If <code>T</code> is an object type, then</ins></p>
+<blockquote>
+<p>​<ins>(1.1)</ins> Let <code>v</code> be an lvalue of type (possibly <code>const</code>) <del><code>remove_cv_t&lt;</code></del><code>T</code><del><code>&gt;</code></del> or an rvalue of type <code>const</code> <del><code>remove_cv_t&lt;</code></del><code>T</code><del><code>&gt;</code></del>. Then <code>CopyConstructible&lt;T&gt;()</code> is satisfied if and only if</p>
+<blockquote>
+<p>(<ins>1.</ins>1.1) – After the definition <code>T u = v;</code>, <code>v</code> is equal to <code>u</code>.</p>
+<p>(<ins>1.</ins>1.2) – <code>T{v}</code> <del>or <code>*new T{v}</code></del> is equal to <code>v</code>.</p>
+</blockquote>
+</blockquote>
+</blockquote>
+<p><ednote>[<em>Editor’s note:</em> As with <code>MoveConstructible</code>, we no longer strip top-level <em>cv</em>-qualifiers to bring <code>CopyConstructible</code> into harmony with <code>is_copy_constructible</code>.</ednote></p>
+<p><ednote>Since <code>Constructible</code> no longer directly tests that <code>T(args...)</code> is a valid expression, it doesn’t implicitly require the <em>cv</em>-qualified expression variants as described in subsection “Equality Preservation” ([concepts.lib.general.equality]/6). As a result, we needed to <em>explicitly</em> add the additional requirements for <code>Constructible&lt;T, T&amp;&gt;()</code> and <code>Constructible&lt;T, const T&amp;&amp;&gt;()</code>.</ednote></p>
+<p><ednote>Like <code>MoveConstructible</code>, <code>CopyConstructible</code> adds no additional semantic requirements for non-object types.]</ednote></p>
+<p><ednote>[<em>Editor’s note:</em> Edit subsection “Concept <code>Movable</code>” ([concepts.lib.object.movable]) as follows:]</ednote></p>
+<blockquote>
+<blockquote>
+<p><tt>template &lt;class T&gt;</tt><br />
+<tt>concept bool Movable() {</tt><br />
+<tt>  return <ins>is_object&lt;T&gt;::value &amp;&amp;</ins> MoveConstructible&lt;T&gt;() &amp;&amp;</tt><br />
+<tt>    Assignable&lt;T&amp;, T&gt;() &amp;&amp;</tt><br />
+<tt>    Swappable&lt;T&amp;&gt;();</tt><br />
+<tt>}</tt></p>
+</blockquote>
+<p>​<ins>1 There need not be any subsumption relationship between <code>Movable&lt;T&gt;()</code> and <code>is_object&lt;T&gt;::value</code>.</p>
+</blockquote>
+<p><ednote>[<em>Editor’s note:</em> <code>Movable</code> is the base concept of the <code>Regular</code> hierarchy. These concepts are concerned with value semantics. As such, it makes no sense for <code>Movable&lt;int&amp;&amp;&gt;()</code> to return <code>true</code> (<a href="https://github.com/ericniebler/stl2/issues/310">stl2#310</a>). We add the requirement that <code>T</code> is an object type to resolve the issue. Since <code>Movable</code> is subsumed by <code>Copyable</code>, <code>Semiregular</code>, and <code>Regular</code>, these concepts will only ever by satisfied by object types.]</ednote></p>
+<h1 id="acknowledgements"><span class="header-section-number">5</span> Acknowledgements</h1>
+<p>I would like to thank Casey Carter and Andrew Sutton for their review feedback.</p>
+<div id="refs" class="references">
+
+</div>
+</body>
+</html>
