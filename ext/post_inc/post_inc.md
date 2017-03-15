@@ -213,7 +213,7 @@ Change the class synopsis of `common_iterator` ([common.iterator]) as follows:
 > <tt>&nbsp;&nbsp;public:</tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;// ... as before</tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<del>common_iterator operator++(int);</del></tt>
-> <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins><i>see below</i> operator++(int);</ins></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>decltype(auto) operator++(int);</ins></tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>common_iterator operator++(int)</ins></tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>requires ForwardIterator&lt;I&gt;();</ins></tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;// ... as before</tt>
@@ -252,7 +252,7 @@ Change the class synopsis of `counted_iterator` ([counted.iterator]) as follows:
 > <tt>&nbsp;&nbsp;public:</tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;// ... as before</tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<del>counted_iterator operator++(int);</del></tt>
-> <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins><i>see below</i> operator++(int);</ins></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>decltype(auto) operator++(int);</ins></tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>counted_iterator operator++(int)</ins></tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>requires ForwardIterator&lt;I&gt;();</ins></tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;// ... as before</tt>
@@ -267,7 +267,7 @@ Change [counted.iter.op.incr] as follows:
 > >
 > > > ```
 > > > ++current;
-> > > --cnt
+> > > --cnt;
 > > > ```
 > >
 > > 3 Returns: `*this.`
@@ -276,18 +276,18 @@ Change [counted.iter.op.incr] as follows:
 > > <ins>4 Requires: `cnt > 0`.</ins>
 > > <ins>5 Effects: Equivalent to:</ins>
 > >
-> > > <tt><ins>-\-cnt</ins></tt>
+> > > <tt><ins>-\-cnt;</ins></tt>
 > > > <tt><ins>return current++;</ins></tt>
 >
 > <tt>counted_iterator operator++(int)<del>;</del></tt>
 > <tt>&nbsp;&nbsp;<ins>requires ForwardIterator&lt;I&gt;();</ins></tt>
-> > 6 Requires: `cnt > 0`.
+> > <del>6 Requires: `cnt > 0`.</del>
 > > 7 Effects: Equivalent to:
 > >
 > > > ```
 > > > counted_iterator tmp = *this;
-> > > ++current;
-> > > --cnt;
+> > > <ins>++*this;</ins><del>++current;</del>
+> > > <del>--cnt;</del>
 > > > return tmp;
 > > > ```
 
