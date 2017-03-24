@@ -7,13 +7,13 @@ MAIN=signed
 
 SOURCE=$(MAIN).bib\
        config.tex\
-       cxx.tex\
-       layout.tex\
-       macros.tex\
+       ../../cxx.tex\
+       ../../layout.tex\
+       ../../macros.tex\
        $(MAIN).tex\
        proposal.tex\
-       styles.tex\
-       tables.tex\
+       ../../styles.tex\
+       ../../tables.tex\
 
 all: $(SOURCE)
 	$(LATEX) $(MAIN).tex

@@ -16,7 +16,7 @@ The Standard Library requires that containers return \tcode{size_type} for many 
 including \tcode{size}, \tcode{max_size}, and \tcode{capacity}. Similarly, \tcode{operator[]},
 \tcode{at}, \tcode{assign}, \tcode{reserve}, and \tcode{resize} all require a \tcode{size_type}
 parameter. \tcode{size_type} is required to be an unsigned integer, as per
-\ref{container.requirements.general}.
+\cxxref{container.requirements.general}.
 
 CppCoreGuidelines\cite{stroustrup15} \S ES.101, \S ES.102 recommend that programmers reserve
 unsigned types for bit manipulation and signed types for arithmeitc. \S ES.102 states that ``most
@@ -49,13 +49,12 @@ This proposal suggests:
          currently require \tcode{size_type}.
    \item Similarly for function parameters.
    \item Deprecate all functions that either return or use \tcode{size_type} in the current Standard
-         Library. As desirable as erasing these functions is, the author acknowledges that there may
-         be significant bodies of code that jump through hoops to accommodate for this.
+         Library, and plan for the \tcode{size_type} overloads to be removed by C++23.
 \end{itemize}
 
 \section*{Discussion}
 The following subsections detail numerous arguments against the change that the author has heard or
-read in the past twelve months.
+read in the past twelve months, or anticipates during the proposal's discussion.
 
 \subsubsection*{Unsigned types assert that an integer is non-negative.}
 Consider this code:
@@ -67,15 +66,15 @@ vector<T, A>::reserve(unsigned int i);
 int main()
 {
    auto v = vector<int>{};
-   v.reserve(-1); // logic error: allocates $2^{32} - 1$
+   v.reserve(-1); // logic error: allocates $2^{\tcode{sizeof(int)}} - 1$
 }
 \end{codeblock}
 
-Due to an implicit narrowing conversion, the sign is lost, and we allocate $2^{32} - 1$ times as
-many objects.
+Due to an implicit narrowing conversion, the sign is lost, and we allocate $2^{\tcode{sizeof(int)}}
+- 1$ times as many objects.
 
 No formal assertion is made to stop this, in part because it is impossible for us to detect if we're
-allocating -1 bytes of memory or $2^{2^{sizeof(int)}} - 1$ bytes of memory without extra
+allocating -1 bytes of memory or $2^{2^\tcode{{sizeof(int)}}} - 1$ bytes of memory without extra
 information.
 
 \subsubsection*{Let's add that information}
@@ -89,7 +88,8 @@ v.reserve(-1, intentionally_big::no);
 This looks error prone and is strongly recommended against.
 
 \subsubsection*{We're not going to run out of memory any time soon. Let's just leave it be.}
-See Y2K bug. We don't want to be responsible for Y2K++.
+See \href{https://en.wikipedia.org/wiki/Year_2000_problem}{Y2K bug}. We don't want to be responsible
+for Y2K\Rplus\Rplus.
 
 \subsubsection*{This is an issue to do with implicit narrowing conversion. We should outlaw that and
 leave the Standard Library as it is.}
@@ -97,16 +97,15 @@ leave the Standard Library as it is.}
 Consider this code:
 
 \begin{codeblock}
-// insert better example here when possible
-for (auto i = 0; i < v.size(); ++i) {
+// insert better, less-contrived example here when possible
+for (auto i = 0; i < v.size(); ++i)
    cout << (i - v.size()) << " positions to go\n";
-}
 \end{codeblock}
 
 Under the current model, which expression should be explicitly cast? We'll also need to do it twice,
 and guarantee that we are casting the correct way each time. We've also lost some information: if
-\tcode{v.size() >=} $2^{2^{sizeof(int)}}$, then converting the size will yield a negative and
-meaningless number for our computation. Similarly, if we evaluate
+\tcode{v.size() >=} $2^{2^{\tcode{sizeof(int)}}}$, then converting the size will yield a negative
+and meaningless number for our computation. Similarly, if we evaluate
 \tcode{static_cast<unsigned int>(i)}, we risk losing information in \tcode{i}. We will also then
 need to perform a conversion to an \tcode{int} over the whole subtraction to output the information
 we are truly after.
@@ -126,7 +125,7 @@ this is to provide them with a toolset that isn't dangerous.
 
 \subsubsection*{But this is \Cpp. People that aren't serious about the low-level stuff should go
 back to Language X.}
-Recall the original evolution rules for designing \Cpp, taken from \cite{stroustrup94}:
+Recall the original evolution rules for designing \Cpp, quoted from \cite{stroustrup94}:
 \begin{itemize}
    \item \Cpp's evolution must be driven by real problems
    \item Don't get involved in a sterile quest for perfection
@@ -139,8 +138,8 @@ Recall the original evolution rules for designing \Cpp, taken from \cite{stroust
 \end{itemize}
 
 This proposal is driven by a real problem, and has a reasonably obvious implementation. \Cpp is not
-a low-level language for the wizards, and programmers should be able to write clear, readable code
-that doesn't involve jumping through hoops to do simple arithmetic with Standard containers.
+a low-level language for wizards, and programmers should be able to write clear, readable code that
+doesn't involve jumping through hoops to perform simple arithmetic involving Standard containers.
 
 \subsubsection*{It really comes down to how you use it. Just because someone owns a
 \tcode{deadly_tool} doesn't mean that they go around killing people.}
@@ -151,14 +150,16 @@ in arithmetic.
 
 \subsubsection*{But I really need to reserve those extra objects! What can I do?}
 You can write your own non-\tcode{Container}-compliant data structure. If you desparately need
-$2^{2^{sizeof(std::size\_t)}}$ objects, you might very soon need $2^{2^{sizeof(std::size\_t) + 1}}$
-objects, which you can't get on a $2^{sizeof(std::size\_t)}$-bit CPU anyway (by conventional
-means)\cite{niebler16}.
+$2^{2^{\tcode{sizeof(std::size\_t)}}}$ objects, you might very soon need
+$2^{2^{\tcode{sizeof(std::size\_t) + 1}}}$ objects, which you can't get on a
+$2^{\tcode{sizeof(std::size\_t)}}$-bit CPU anyway (by conventional means)\cite{niebler16}.
 
 \section*{Acknowledgements}
 This document was inspired by \cite{niebler16}, and the author would like to thank Eric Niebler,
 Casey Carter, Sascha Atrops, GitHub user dhaumann, and GitHub user poelmanc for their participation
 in the discussion online.
+
+Special thanks to Eric and Casey for their guidance (and patience) along the way.
 
 Andrei Alexandrescu, Chandler Carruth, Stephan T. Lavavej, Scott Meyers, Bjarne Stroustrup, and Herb
 Sutter all provide further motivation for replacing unsigned types with their signed counterparts in
@@ -167,6 +168,5 @@ Sutter all provide further motivation for replacing unsigned types with their si
 Both Margret Steele and Arien Judge have provided talking points in the discussion section of the
 proposal.
 
-The \LaTeX source for this document was taken from an older revision of the Ragnes TS.
+The \LaTeX  source for this document was taken from a revision of the Ragnes TS.
 
-\bibliography{signed}
