@@ -1,0 +1,172 @@
+%!TEX root = std.tex
+
+\maketitle
+
+\section*{Abstract}
+This document proposes to replace all unsigned integer types with signed integers within the
+confines of the Standard Library containers, particularly for their inclusion in STL2, and any
+associated Technical Specifications. The proposal discusses both sides of the argument, but firmly
+favours the replacement.
+
+\section*{Motivation}
+Only \tcode{vector} is mentioned for brevity. This motivation should be generalised to all container
+requirements, and should open a discussion point for other areas of the Standard Library.
+
+The Standard Library requires that containers return \tcode{size_type} for many operations,
+including \tcode{size}, \tcode{max_size}, and \tcode{capacity}. Similarly, \tcode{operator[]},
+\tcode{at}, \tcode{assign}, \tcode{reserve}, and \tcode{resize} all require a \tcode{size_type}
+parameter. \tcode{size_type} is required to be an unsigned integer, as per
+\cxxref{container.requirements.general}.
+
+CppCoreGuidelines\cite{stroustrup15} \S ES.101, \S ES.102 recommend that programmers reserve
+unsigned types for bit manipulation and signed types for arithmeitc. \S ES.102 states that ``most
+arithmetic is assumed to be signed; \tcode{x-y} yields a negative number when \tcode{y>x} except in
+the rare cases where you really want modulo arithmetic. Unsigned arithmetic can yield surprising
+results if you are not expecting it. This is even more true for mixed signed and unsigned
+arithmetic.'' Further arguments for preferring signed types have been made by Stroustrup, Meyers,
+Sutter, Carruth, and Lavavej at a panel in 2013\cite{panel}.
+
+\cite{stroustrup15}\S ES.100 advises that signed and unsigned integers are not mixed in operations
+to avoid incorrect results. A programmer following \S ES.101 and
+\S ES.102 reaches a contradiction, since they are encouraged to use signed integers for arithmetic
+operations, but must now mix signed and unsigned integers for the following code:
+
+\begin{codeblock}
+auto v = vector<int>{};
+for (auto i = 0; i < v.size(); ++i)
+   cout << i << ": " << v[i] << '\n';
+\end{codeblock}
+
+Here, we have a comparison between a signed integer and an unsigned integer. Although the comparison
+is well-formed (albeit ill-advised), the increment operation is undefined when
+\tcode{i == numeric_limits<int>::max()}. Such an evaluation is highly undesirable.
+
+\section*{Proposal}
+This proposal suggests:
+
+\begin{itemize}
+   \item All container concepts shall require \tcode{difference_type} return types where they
+         currently require \tcode{size_type}.
+   \item Similarly for function parameters.
+   \item Deprecate all functions that either return or use \tcode{size_type} in the current Standard
+         Library, and plan for the \tcode{size_type} overloads to be removed by C++23.
+\end{itemize}
+
+\section*{Discussion}
+The following subsections detail numerous arguments against the change that the author has heard or
+read in the past twelve months, or anticipates during the proposal's discussion.
+
+\subsubsection*{Unsigned types assert that an integer is non-negative.}
+Consider this code:
+
+\begin{codeblock}
+template <typename T, typename A>
+vector<T, A>::reserve(unsigned int i);
+
+int main()
+{
+   auto v = vector<int>{};
+   v.reserve(-1); // logic error: allocates $2^{\tcode{sizeof(int)}} - 1$
+}
+\end{codeblock}
+
+Due to an implicit narrowing conversion, the sign is lost, and we allocate $2^{\tcode{sizeof(int)}}
+- 1$ times as many objects.
+
+No formal assertion is made to stop this, in part because it is impossible for us to detect if we're
+allocating -1 bytes of memory or $2^{2^\tcode{{sizeof(int)}}} - 1$ bytes of memory without extra
+information.
+
+\subsubsection*{Let's add that information}
+Sure, we could introduce
+
+\begin{codeblock}
+enum class intentionally_big { yes, no };
+v.reserve(-1, intentionally_big::no);
+\end{codeblock}
+
+This looks error prone and is strongly recommended against.
+
+\subsubsection*{We're not going to run out of memory any time soon. Let's just leave it be.}
+See \href{https://en.wikipedia.org/wiki/Year_2000_problem}{Y2K bug}. We don't want to be responsible
+for Y2K\Rplus\Rplus.
+
+\subsubsection*{This is an issue to do with implicit narrowing conversion. We should outlaw that and
+leave the Standard Library as it is.}
+
+Consider this code:
+
+\begin{codeblock}
+// insert better, less-contrived example here when possible
+for (auto i = 0; i < v.size(); ++i)
+   cout << (i - v.size()) << " positions to go\n";
+\end{codeblock}
+
+Under the current model, which expression should be explicitly cast? We'll also need to do it twice,
+and guarantee that we are casting the correct way each time. We've also lost some information: if
+\tcode{v.size() >=} $2^{2^{\tcode{sizeof(int)}}}$, then converting the size will yield a negative
+and meaningless number for our computation. Similarly, if we evaluate
+\tcode{static_cast<unsigned int>(i)}, we risk losing information in \tcode{i}. We will also then
+need to perform a conversion to an \tcode{int} over the whole subtraction to output the information
+we are truly after.
+
+Preventing non-promoting implicit conversions doesn't fix the issue here, and has the potential to
+create issues for readability and design.
+
+\subsubsection*{This is a contract design error that the user should handle.}
+No, it isn't. We are calling a function. It is the callee's responsibility to make sure that its
+input is correct, not the caller, who may not know. If a bug is identified in a library function, it
+is the responsibility of the author to fix the bug; the user is only responsible for identifying and
+reporting the bug.
+
+\subsubsection*{People should write better code}
+Absolutely correct! We should be encouraging people to write better code, and one way that we can do
+this is to provide them with a toolset that isn't dangerous.
+
+\subsubsection*{But this is \Cpp. People that aren't serious about the low-level stuff should go
+back to Language X.}
+Recall the original evolution rules for designing \Cpp, quoted from \cite{stroustrup94}:
+\begin{itemize}
+   \item \Cpp's evolution must be driven by real problems
+   \item Don't get involved in a sterile quest for perfection
+   \item \Cpp must be useful \textit{now}
+   \item Every feature must have a reasonably obvious implementation
+   \item Always provide a transition path
+   \item \Cpp is a language, not a complete system
+   \item Provide comprehensive support for each supported style
+   \item Don't try to force people
+\end{itemize}
+
+This proposal is driven by a real problem, and has a reasonably obvious implementation. \Cpp is not
+a low-level language for wizards, and programmers should be able to write clear, readable code that
+doesn't involve jumping through hoops to perform simple arithmetic involving Standard containers.
+
+\subsubsection*{It really comes down to how you use it. Just because someone owns a
+\tcode{deadly_tool} doesn't mean that they go around killing people.}
+This is a strawman argument. Common decency and laws prevent exactly this, and in our case, the
+International Standard is the Law. This proposal offers a way to restrict the misuse of types, by
+preventing the most commonly used concept, \tcode{SignedInteger}, with a type that has no business
+in arithmetic.
+
+\subsubsection*{But I really need to reserve those extra objects! What can I do?}
+You can write your own non-\tcode{Container}-compliant data structure. If you desparately need
+$2^{2^{\tcode{sizeof(std::size\_t)}}}$ objects, you might very soon need
+$2^{2^{\tcode{sizeof(std::size\_t) + 1}}}$ objects, which you can't get on a
+$2^{\tcode{sizeof(std::size\_t)}}$-bit CPU anyway (by conventional means)\cite{niebler16}.
+
+\section*{Acknowledgements}
+This document was inspired by \cite{niebler16}, and the author would like to thank Eric Niebler,
+Casey Carter, Sascha Atrops, GitHub user dhaumann, and GitHub user poelmanc for their participation
+in the discussion online.
+
+Special thanks to Eric and Casey for their guidance (and patience) along the way.
+
+Andrei Alexandrescu, Chandler Carruth, Stephan T. Lavavej, Scott Meyers, Bjarne Stroustrup, and Herb
+Sutter all provide further motivation for replacing unsigned types with their signed counterparts in
+\cite{panel}.
+
+Both Margret Steele and Arien Judge have provided talking points in the discussion section of the
+proposal.
+
+The \LaTeX  source for this document was taken from a revision of the Ragnes TS.
+
