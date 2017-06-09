@@ -18,14 +18,16 @@ would in fact probably be better off without them.
 The reasons for dropping function-style concepts from the Ranges TS then are:
 
 1. To eliminate syntactic noise.
-2. To avoid depending on a feature that may get dropped.
-3. To avoid being a reason to keep a little-loved feature.
+2. To eliminate user confusion that comes at a concept's point-of-use, where sometimes parens are
+needed (in `requires` clauses) and sometimes not (when the concept is used as a placeholder).
+3. To avoid depending on a feature that may get dropped.
+4. To avoid becoming a reason to keep a little-loved feature.
 
-The reasons for keeping function-style concepts in the Ranges TS are:
+There is really only one reason for keeping function-style concepts in the Ranges TS:
 
-1. Love them or hate them, function-style concepts are a part of the Concepts TS as-published.
-2. In several places, the Ranges TS defines concepts with similar semantic meaning but different
-numbers of arguments; function-style concepts neatly captures this intent.
+1. In several places, the Ranges TS defines concepts with similar semantic meaning but different
+numbers of parameters; function-style concepts neatly captures this intent by allowing these
+concepts to share a name.
 
 # Proposed Solution
 
@@ -38,7 +40,7 @@ to handle:
 
 ## Non-overloaded concepts
 
-In the case of concepts that are not overloaded, changing to a variable concepts is purely a
+In the case of concepts that are not overloaded, changing to variable concepts is purely a
 syntactic rewrite. For example, the following function-style concept:
 
 ```c++
@@ -61,7 +63,7 @@ concept bool Movable =
 ```
 
 Obviously, all uses of this concept would also need to be changed to drop the trailing empty parens
-("`()`").
+("`()`"), if any.
 
 ## Cross-type concepts
 
@@ -70,11 +72,11 @@ semantically identical to `Concept<A, A>()` (e.g., `EqualityComparable`). In the
 rewrite into a variable form will not result in valid code, since variable concepts cannot be
 overloaded. In these cases, we must find a different spelling for the unary and binary forms.
 
-The suggestion is to use the sufffix `With` for the binary form. So, `EqualityComparable<int>` would
+The suggestion is to use the suffix `With` for the binary form. So, `EqualityComparable<int>` would
 be roughly equivalent to `EqualityComparableWith<int, int>`. This follows the precedent set by the
 type traits `is_swappable` and `is_swappable_with`.
 
-The concepts in the Ranges TS that this applies to are:
+The concepts in the Ranges TS to which this applies are:
 
 - `EqualityComparable`
 - `Swappable`
@@ -85,8 +87,8 @@ This pattern also appears in the relation concepts:
 - `Relation`
 - `StrictWeakOrder`
 
-However, the single-argument forms `Relation<R, T>()` and `StrictWeakOder<R, T>()` forms are used
-nowhere in the Ranges TS and can simply be dropped with no impact.
+However, the forms `Relation<R, T>()` and `StrictWeakOrder<R, T>()` are used nowhere in the Ranges
+TS and can simply be dropped with no impact.
 
 ## Variable-argument concepts
 
@@ -115,8 +117,9 @@ template, where the function object it constrains is unary. So, we suggest dropp
 binary forms of this concept and renaming `IndirectRegularInvocable` to
 `IndirectRegularUnaryInvocable`.
 
-We observe that `IndirectPredicate` is only ever used to constrain unary or binary predicates, so
-we suggest breaking that concepts into `IndirectUnaryPredicate` and `IndirectBinaryPredicate`.
+We observe that `IndirectPredicate` is only ever used to constrain unary predicates (once we fix
+[ericniebler/stl2#411](https://github.com/ericniebler/stl2/issues/411)), so we suggest dropping the binary form and renaming `IndirectPredicate`
+to `IndirectUnaryPredicate`.
 
 # Discussion
 
@@ -132,16 +135,12 @@ The following solutions have been considered and dismissed.
 ### Leave Function-Style Intact
 
 There is nothing wrong *per se* with leaving the concepts as function-style. The Ranges TS
-is based on the Concepts TS as published, which supports the syntax.
+is based on the Concepts TS as published, which supports the syntax. Giving up function-style
+concepts forces us to come up with unique names for semantically similar things, including the
+admittedly awful `IndirectUnaryInvocable` and friends.
 
-This option comes with a few lasting costs. At every use of every concept defined in the Ranges TS,
-the user will have to append a semantically meaningless set of empty parenthesis, a small cost,
-surely, but one that adds up over time to a significant amount of syntactic noise.
-
-Additionally, should the committee ever decide to drop function-style concepts, the Ranges TS would
-be left behind. Compiler implementors would need to carry forward support for a language feature
-that (possibly) never made it into the International Standard until such time as the Ranges TS as
-published could be phased out. This situation is best avoided.
+This option comes with a few lasting costs, already discussed above. We feel the costs of sticking
+with function-style concepts outweigh the benefits of being able to "overload" concept names.
 
 # Implementation Experience
 
@@ -150,6 +149,12 @@ Ranges TS's reference implementation at https://github.com/CaseyCarter/cmcstl2. 
 straightforward and unsurprising.
 
 # Proposed Design
+
+<ednote>[ *Editorial note:* In places where a purely mechanical transformation is sufficient, rather
+than show all the diffs (which would be overwhelming and tend to obsure the more meaningful edits),
+we describe the transformation, give an example, and instruct the editor to make the mechanical
+change everywhere applicable. In other cases, where concepts change name or need to be respecified,
+the changes are shown explicitly with diff marks. ]</ednote>
 
 In all places in the document where concept checks are applied with a trailing set of empty parens
 ("`()`"), remove the parens.
@@ -224,7 +229,7 @@ concept bool Swappable<del>() {</del><ins> =</ins><br/>
 <br/>
 template &lt;class T, class U&gt;<br/>
 concept bool Swappable<ins>With =</ins><del>() {</del><br/>
-&nbsp;&nbsp;return Swappable&lt;T&gt;<del>()</del> &amp;&amp;<br/>
+&nbsp;&nbsp;<del>return</del> Swappable&lt;T&gt;<del>()</del> &amp;&amp;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;Swappable&lt;U&gt;<del>()</del> &amp;&amp;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;CommonReference&lt;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const remove_reference_t&lt;T&gt;&amp;,<br/>
@@ -236,8 +241,80 @@ concept bool Swappable<ins>With =</ins><del>() {</del><br/>
 <del>}</del>
 </tt></blockquote>
 
-In [concepts.lib.corelang.swappable]/p2, change the two occurrances of `Swappable<T, U>()` to
+In [concepts.lib.corelang.swappable]/p2, change the two occurrences of `Swappable<T, U>()` to
 `SwappableWith<T, U>`.
+
+Change section "Concept `EqualityComparable`" ([concepts.lib.compare.equalitycomparable])/p3-4 as
+follows:
+
+<blockquote>
+3 [ <i>Note:</i> The requirement that the expression <tt>a == b</tt> is equality preserving implies that</br>
+<tt>==</tt> is reflexive, transitive, and symmetric. <i>-- end note</i> ]</br>
+</br>
+<blockquote><tt>
+template &lt;class T, class U&gt;</br>
+concept bool EqualityComparable<ins>With</ins><del>() {</del><ins> =</ins></br>
+&nbsp;&nbsp;<del>return</del></br>
+&nbsp;&nbsp;&nbsp;&nbsp;EqualityComparable&lt;T&gt;<del>()</del> &amp;&amp;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;EqualityComparable&lt;U&gt;<del>()</del> &amp;&amp;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;CommonReference&lt;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const remove_reference_t&lt;T&gt;&amp;,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const remove_reference_t&lt;U&gt;&amp;><del>()</del> &amp;&amp;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;EqualityComparable&lt;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;common_reference_t&lt;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const remove_reference_t&lt;T&gt;&amp;,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const remove_reference_t&lt;U&gt;&amp;&gt;&gt;<del>()</del> &amp;&amp;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;WeaklyEqualityComparable&lt;T, U&gt;<del>()</del>;</br>
+<del>}</del></br>
+</tt></blockquote>
+</br>
+4 Let <tt>a</tt> be a <tt>const</tt> lvalue of type <tt>remove_reference_t&lt;T&gt;</tt>, <tt>b</tt> be a <tt>const</tt> lvalue of type</br>
+<tt>remove_reference_t&lt;U&gt;</tt>, and <tt>C</tt> be <tt>common_reference_t&lt;const remove_reference_t&lt;T&gt;&amp;,</br>
+const remove_reference_t&lt;U&gt;&amp;&gt;</tt>. Then <tt>EqualityComparable<ins>With</ins>&lt;T, U&gt;<del>()</del></tt> is satisfied if</br>
+and only if:</br>
+</br>
+(4.1) -- <tt>bool(t == u) == bool(C(t) == C(u))</tt>.</br>
+</blockquote>
+
+<ednote>[<i>Note:</i>This includes the resolution of [ericniebler/stl2#155](
+  https://github.com/ericniebler/stl2/issues/155). ] </ednote>
+
+In section "Concept `StrictTotallyOrdered`" ([concepts.lib.corelang.stricttotallyordered]), change the name of the binary
+form of `StrictTotallyOrdered` to `StrictTotallyOrderedWith` as follows:
+
+<ednote>[ <i>Editorial note:</i> This includes the resolution of [ericniebler/stl2#155 "Comparison
+concepts and reference types"](https://github.com/ericniebler/stl2/issues/155). ]</ednote>
+
+<blockquote><tt>
+template &lt;class T&gt;<br/>
+concept bool StrictTotallyOrdered<ins>With</ins><del>() {</del><ins> =</ins><br/>
+&nbsp;&nbsp;<del>return</del><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;StrictTotallyOrdered&lt;T&gt;<del>()</del> &amp;&amp;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;StrictTotallyOrdered&lt;U&gt;<del>()</del> &amp;&amp;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;CommonReference&lt;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const remove_reference_t&lt;T&gt;&amp;,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const remove_reference_t&lt;U&gt;&amp;&gt;<del>()</del> &amp;&amp;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;StrictTotallyOrdered&lt;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;common_reference_t&lt;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const remove_reference_t&lt;T&gt;&amp;,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const remove_reference_t&lt;U&gt;&amp;&gt;&gt;<del>()</del> &amp;&amp;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;EqualityComparable<ins>With</ins>&lt;T, U&gt;<del>()</del> &amp;&amp;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;requires(const remove_reference_t&lt;T&gt;&amp; t,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const remove_reference_t&lt;U&gt;&amp; u) {</br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ t &lt; u } -&gt; Boolean&amp;&amp;;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ t &gt; u } -&gt; Boolean&amp;&amp;;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ t &lt;= u } -&gt; Boolean&amp;&amp;;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ t &gt;= u } -&gt; Boolean&amp;&amp;;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ u &lt; t } -&gt; Boolean&amp;&amp;;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ u &gt; t } -&gt; Boolean&amp;&amp;;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ u &lt;= t } -&gt; Boolean&amp;&amp;;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ u &gt;= t } -&gt; Boolean&amp;&amp;;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;};</br>
+<del>}</del>
+</tt></blockquote>
+
+In [concepts.lib.corelang.stricttotallyordered]/p2, change the occurrence of
+`StrictTotallyOrdered<T, U>()` to `StrictTotallyOrderedWith<T, U>`.
 
 Change section "Concept `Relation`" ([concepts.lib.callable.relation]) as follows:
 
@@ -351,10 +428,10 @@ template &lt;class F, class I&gt;</br>
 concept bool Indirect<ins>Unary</ins>Predicate<del>() {</del><ins> =</ins></br>
 &nbsp;&nbsp;<del>return</del> <i>see below</i> ;</br>
 <del>}</del></br>
-template &lt;class F, class I1, class I2&gt;</br>
-concept bool Indirect<ins>Binary</ins>Predicate<del>() {</del><ins> =</ins></br>
-&nbsp;&nbsp;<del>return</del> <i>see below</i> ;</br>
-<del>}</del></br>
+<del>template &lt;class F, class I1, class I2&gt;</br>
+concept bool IndirectPredicate() {</br>
+&nbsp;&nbsp;return <i>see below</i> ;</br>
+}</del></br>
 </br>
 [...]</br>
 </br>
@@ -505,19 +582,19 @@ concept bool Indirect<ins>Unary</ins>Predicate<del>() {</del><ins> =</ins></br>
 &nbsp;&nbsp;&nbsp;&nbsp;Predicate&lt;F&amp;, reference_t&lt;I&gt;&gt;<del>()</del> &amp;&amp;</br>
 &nbsp;&nbsp;&nbsp;&nbsp;Predicate&lt;F&amp;, iter_common_reference_t&lt;I&gt;&gt;<del>()</del>;</br>
 <del>}</del></br>
-template &lt;class F, class I1, class I2&gt;</br>
-concept bool Indirect<ins>Binary</ins>Predicate<del>() {</del><ins> =</ins></br>
-&nbsp;&nbsp;<del>return</del> Readable&lt;I1&gt;<del>()</del> &amp;&amp; Readable&lt;I2&gt;<del>()</del> &amp;&amp;</br>
-&nbsp;&nbsp;&nbsp;&nbsp;CopyConstructible&lt;F&gt;<del>()</del> &amp;&amp;</br>
-&nbsp;&nbsp;&nbsp;&nbsp;Predicate&lt;F&amp;, value_type_t&lt;I1&gt;&amp;, value_type_t&lt;I2&gt;&amp;&gt;<del>()</del> &amp;&amp;</br>
-&nbsp;&nbsp;&nbsp;&nbsp;Predicate&lt;F&amp;, value_type_t&lt;I1&gt;&amp;, reference_t&lt;I2&gt;&gt;<del>()</del> &amp;&amp;</br>
-&nbsp;&nbsp;&nbsp;&nbsp;Predicate&lt;F&amp;, reference_t&lt;I1&gt;, value_type_t&lt;I2&gt;&amp;&gt;<del>()</del> &amp;&amp;</br>
-&nbsp;&nbsp;&nbsp;&nbsp;Predicate&lt;F&amp;, reference_t&lt;I1&gt;, reference_t&lt;I2&gt;&gt;<del>()</del> &amp;&amp;</br>
-&nbsp;&nbsp;&nbsp;&nbsp;Predicate&lt;F&amp;, iter_common_reference_t&lt;I1&gt;, iter_common_reference_t&lt;I2&gt;&gt;<del>()</del>;</br>
-<del>}</del></br>
+<del>template &lt;class F, class I1, class I2&gt;</br>
+concept bool IndirectPredicate() {</br>
+&nbsp;&nbsp;return Readable&lt;I1&gt;() &amp;&amp; Readable&lt;I2&gt;() &amp;&amp;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;CopyConstructible&lt;F&gt;() &amp;&amp;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Predicate&lt;F&amp;, value_type_t&lt;I1&gt;&amp;, value_type_t&lt;I2&gt;&amp;&gt;() &amp;&amp;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Predicate&lt;F&amp;, value_type_t&lt;I1&gt;&amp;, reference_t&lt;I2&gt;&gt;() &amp;&amp;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Predicate&lt;F&amp;, reference_t&lt;I1&gt;, value_type_t&lt;I2&gt;&amp;&gt;() &amp;&amp;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Predicate&lt;F&amp;, reference_t&lt;I1&gt;, reference_t&lt;I2&gt;&gt;() &amp;&amp;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Predicate&lt;F&amp;, iter_common_reference_t&lt;I1&gt;, iter_common_reference_t&lt;I2&gt;&gt;();</br>
+}</del></br>
 </tt></blockquote>
 
-In section "Class template `projected`" ([projected]), change the occurance of
+In section "Class template `projected`" ([projected]), change the occurrence of
 `IndirectRegularInvocable` to `IndirectRegularUnaryInvocable`.
 
 In [commonalgoreq.general]/p2, change the note to read:
@@ -551,6 +628,208 @@ to variable-style concept definitions.
 
 ## Section "Algorithms library" [algorithms]
 
+In "Header `<experimental/ranges/algorithm>` synopsis" ([algorithms.general]/p2), make the following
+changes:
+
+<blockquote><tt>
+template &lt;InputIterator I, Sentinel&lt;I&gt; S, class Proj = identity,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Indirect<ins>Unary</ins>Predicate&lt;projected&lt;I, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;bool all_of(I first, S last, Pred pred, Proj proj = Proj{});</br>
+template &lt;InputRange Rng, class Proj = identity,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Indirect<ins>Unary</ins>Predicate&lt;projected&lt;iterator_t&lt;Rng&gt;, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;bool all_of(Rng&amp;&amp; rng, Pred pred, Proj proj = Proj{});</br>
+</br>
+template &lt;InputIterator I, Sentinel&lt;I&gt; S, class Proj = identity,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Indirect<ins>Unary</ins>Predicate&lt;projected&lt;I, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;bool any_of(I first, S last, Pred pred, Proj proj = Proj{});</br>
+template &lt;InputRange Rng, class Proj = identity,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Indirect<ins>Unary</ins>Predicate&lt;projected&lt;iterator_t&lt;Rng&gt;, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;bool any_of(Rng&amp;&amp; rng, Pred pred, Proj proj = Proj{});</br>
+</br>
+template &lt;InputIterator I, Sentinel&lt;I&gt; S, class Proj = identity,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Indirect<ins>Unary</ins>Predicate&lt;projected&lt;I, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;bool none_of(I first, S last, Pred pred, Proj proj = Proj{});</br>
+template &lt;InputRange Rng, class Proj = identity,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Indirect<ins>Unary</ins>Predicate&lt;projected&lt;iterator_t&lt;Rng&gt;, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;bool none_of(Rng&amp;&amp; rng, Pred pred, Proj proj = Proj{});</br>
+</br>
+template &lt;InputIterator I, Sentinel&lt;I&gt; S, class Proj = identity,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Indirect<ins>Unary</ins>Invocable&lt;projected&lt;I, Proj&gt;&gt; Fun&gt;</br>
+&nbsp;&nbsp;tagged_pair&lt;tag::in(I), tag::fun(Fun)&gt;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;for_each(I first, S last, Fun f, Proj proj = Proj{});</br>
+template &lt;InputRange Rng, class Proj = identity,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Indirect<ins>Unary</ins>Invocable&lt;projected&lt;iterator_t&lt;Rng&gt;, Proj&gt;&gt; Fun&gt;</br>
+&nbsp;&nbsp;tagged_pair&lt;tag::in(safe_iterator_t&lt;Rng&gt;), tag::fun(Fun)&gt;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;for_each(Rng&amp;&amp; rng, Fun f, Proj proj = Proj{});</br>
+</br>
+[...]</br>
+</br>
+template &lt;InputIterator I, Sentinel&lt;I&gt; S, class Proj = identity,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Indirect<ins>Unary</ins>Predicate&lt;projected&lt;I, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;I find_if(I first, S last, Pred pred, Proj proj = Proj{});</br>
+template &lt;InputRange Rng, class Proj = identity,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Indirect<ins>Unary</ins>Predicate&lt;projected&lt;iterator_t&lt;Rng&gt;, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;safe_iterator_t&lt;Rng&gt;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;find_if(Rng&amp;&amp; rng, Pred pred, Proj proj = Proj{});</br>
+</br>
+template &lt;InputIterator I, Sentinel&lt;I&gt; S, class Proj = identity,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Indirect<ins>Unary</ins>Predicate&lt;projected&lt;I, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;I find_if_not(I first, S last, Pred pred, Proj proj = Proj{});</br>
+template &lt;InputRange Rng, class Proj = identity,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Indirect<ins>Unary</ins>Predicate&lt;projected&lt;iterator_t&lt;Rng&gt;, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;safe_iterator_t&lt;Rng&gt;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;find_if_not(Rng&amp;&amp; rng, Pred pred, Proj proj = Proj{});</br>
+</br>
+[...]</br>
+</br>
+template &lt;InputIterator I, Sentinel&lt;I&gt; S, class Proj = identity,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Indirect<ins>Unary</ins>Predicate&lt;projected&lt;I, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;difference_type_t&lt;I&gt;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;count_if(I first, S last, Pred pred, Proj proj = Proj{});</br>
+template &lt;InputRange Rng, class Proj = identity,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Indirect<ins>Unary</ins>Predicate&lt;projected&lt;iterator_t&lt;Rng&gt;, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;difference_type_t&lt;iterator_t&lt;Rng&gt;&gt;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;count_if(Rng&amp;&amp; rng, Pred pred, Proj proj = Proj{});</br>
+</br>
+[...]</br>
+</br>
+template &lt;InputIterator I, Sentinel&lt;I&gt; S, WeaklyIncrementable O, class Proj = identity,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Indirect<ins>Unary</ins>Predicate&lt;projected&lt;I, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;requires IndirectlyCopyable&lt;I, O&gt;<del>()</del></br>
+&nbsp;&nbsp;tagged_pair&lt;tag::in(I), tag::out(O)&gt;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;copy_if(I first, S last, O result, Pred pred, Proj proj = Proj{});</br>
+template &lt;InputRange Rng, WeaklyIncrementable O, class Proj = identity,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Indirect<ins>Unary</ins>Predicate&lt;projected&lt;iterator_t&lt;Rng&gt;, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;requires IndirectlyCopyable&lt;iterator_t&lt;Rng&gt;, O&gt;<del>()</del></br>
+&nbsp;&nbsp;tagged_pair&lt;tag::in(safe_iterator_t&lt;Rng&gt;), tag::out(O)&gt;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;copy_if(Rng&amp;&amp; rng, O result, Pred pred, Proj proj = Proj{});</br>
+</br>
+[...]</br>
+</br>
+template &lt;ForwardIterator I, Sentinel&lt;I&gt; S, class T, class Proj = identity,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Indirect<ins>Unary</ins>Predicate&lt;projected&lt;I, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;requires Writable&lt;I, const T&amp;&gt;<del>()</del></br>
+&nbsp;&nbsp;I</br>
+&nbsp;&nbsp;&nbsp;&nbsp;replace_if(I first, S last, Pred pred, const T&amp; new_value, Proj proj = Proj{});</br>
+template &lt;ForwardRange Rng, class T, class Proj = identity,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Indirect<ins>Unary</ins>Predicate&lt;projected&lt;iterator_t&lt;Rng&gt;, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;requires Writable&lt;iterator_t&lt;Rng&gt;, const T&amp;&gt;<del>()</del></br>
+&nbsp;&nbsp;safe_iterator_t&lt;Rng&gt;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;replace_if(Rng&amp;&amp; rng, Pred pred, const T&amp; new_value, Proj proj = Proj{});</br>
+</br>
+[...]</br>
+</br>
+template &lt;InputIterator I, Sentinel&lt;I&gt; S, class T, OutputIterator&lt;const T&amp;&gt; O,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;class Proj = identity, Indirect<ins>Unary</ins>Predicate&lt;projected&lt;I, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;requires IndirectlyCopyable&lt;I, O&gt;<del>()</del></br>
+&nbsp;&nbsp;tagged_pair&lt;tag::in(I), tag::out(O)&gt;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;replace_copy_if(I first, S last, O result, Pred pred, const T&amp; new_value,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Proj proj = Proj{});</br>
+template &lt;InputRange Rng, class T, OutputIterator&lt;const T&amp;&gt; O, class Proj = identity,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Indirect<ins>Unary</ins>Predicate&lt;projected&lt;iterator_t&lt;Rng&gt;, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;requires IndirectlyCopyable&lt;iterator_t&lt;Rng&gt;, O&gt;<del>()</del></br>
+&nbsp;&nbsp;tagged_pair&lt;tag::in(safe_iterator_t&lt;Rng&gt;), tag::out(O)&gt;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;replace_copy_if(Rng&amp;&amp; rng, O result, Pred pred, const T&amp; new_value,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Proj proj = Proj{});</br>
+</br>
+[...]</br>
+</br>
+template &lt;ForwardIterator I, Sentinel&lt;I&gt; S, class Proj = identity,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Indirect<ins>Unary</ins>Predicate&lt;projected&lt;I, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;requires Permutable&lt;I&gt;<del>()</del></br>
+&nbsp;&nbsp;I remove_if(I first, S last, Pred pred, Proj proj = Proj{});</br>
+template &lt;ForwardRange Rng, class Proj = identity,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Indirect<ins>Unary</ins>Predicate&lt;projected&lt;iterator_t&lt;Rng&gt;, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;requires Permutable&lt;iterator_t&lt;Rng&gt;&gt;<del>()</del></br>
+&nbsp;&nbsp;safe_iterator_t&lt;Rng&gt;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;remove_if(Rng&amp;&amp; rng, Pred pred, Proj proj = Proj{});</br>
+</br>
+[...]</br>
+</br>
+template &lt;InputIterator I, Sentinel&lt;I&gt; S, WeaklyIncrementable O,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;class Proj = identity, Indirect<ins>Unary</ins>Predicate&lt;projected&lt;I, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;requires IndirectlyCopyable&lt;I, O&gt;<del>()</del></br>
+&nbsp;&nbsp;tagged_pair&lt;tag::in(I), tag::out(O)&gt;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;remove_copy_if(I first, S last, O result, Pred pred, Proj proj = Proj{});</br>
+template &lt;InputRange Rng, WeaklyIncrementable O, class Proj = identity,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Indirect<ins>Unary</ins>Predicate&lt;projected&lt;iterator_t&lt;Rng&gt;, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;requires IndirectlyCopyable&lt;iterator_t&lt;Rng&gt;, O&gt;<del>()</del></br>
+&nbsp;&nbsp;tagged_pair&lt;tag::in(safe_iterator_t&lt;Rng&gt;), tag::out(O)&gt;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;remove_copy_if(Rng&amp;&amp; rng, O result, Pred pred, Proj proj = Proj{});</br>
+</br>
+[...]</br>
+</br>
+template &lt;InputIterator I, Sentinel&lt;I&gt; S, class Proj = identity,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Indirect<ins>Unary</ins>Predicate&lt;projected&lt;I, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;bool is_partitioned(I first, S last, Pred pred, Proj proj = Proj{});</br>
+template &lt;InputRange Rng, class Proj = identity,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Indirect<ins>Unary</ins>Predicate&lt;projected&lt;iterator_t&lt;Rng&gt;, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;bool</br>
+&nbsp;&nbsp;is_partitioned(Rng&amp;&amp; rng, Pred pred, Proj proj = Proj{});</br>
+</br>
+template &lt;ForwardIterator I, Sentinel&lt;I&gt; S, class Proj = identity,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Indirect<ins>Unary</ins>Predicate&lt;projected&lt;I, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;requires Permutable&lt;I&gt;<del>()</del></br>
+&nbsp;&nbsp;I partition(I first, S last, Pred pred, Proj proj = Proj{});</br>
+template &lt;ForwardRange Rng, class Proj = identity,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Indirect<ins>Unary</ins>Predicate&lt;projected&lt;iterator_t&lt;Rng&gt;, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;requires Permutable&lt;iterator_t&lt;Rng&gt;&gt;<del>()</del></br>
+&nbsp;&nbsp;safe_iterator_t&lt;Rng&gt;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;partition(Rng&amp;&amp; rng, Pred pred, Proj proj = Proj{});</br>
+</br>
+template &lt;BidirectionalIterator I, Sentinel&lt;I&gt; S, class Proj = identity,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Indirect<ins>Unary</ins>Predicate&lt;projected&lt;I, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;requires Permutable&lt;I&gt;<del>()</del></br>
+&nbsp;&nbsp;I stable_partition(I first, S last, Pred pred, Proj proj = Proj{});</br>
+template &lt;BidirectionalRange Rng, class Proj = identity,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Indirect<ins>Unary</ins>Predicate&lt;projected&lt;iterator_t&lt;Rng&gt;, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;requires Permutable&lt;iterator_t&lt;Rng&gt;&gt;<del>()</del></br>
+&nbsp;&nbsp;safe_iterator_t&lt;Rng&gt;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;stable_partition(Rng&amp;&amp; rng, Pred pred, Proj proj = Proj{});</br>
+</br>
+template &lt;InputIterator I, Sentinel&lt;I&gt; S, WeaklyIncrementable O1, WeaklyIncrementable O2,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;class Proj = identity, Indirect<ins>Unary</ins>Predicate&lt;projected&lt;I, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;requires IndirectlyCopyable&lt;I, O1&gt;<del>()</del> &amp;&amp; IndirectlyCopyable&lt;I, O2&gt;<del>()</del></br>
+&nbsp;&nbsp;tagged_tuple&lt;tag::in(I), tag::out1(O1), tag::out2(O2)&gt;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;partition_copy(I first, S last, O1 out_true, O2 out_false, Pred pred,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Proj proj = Proj{});</br>
+template &lt;InputRange Rng, WeaklyIncrementable O1, WeaklyIncrementable O2,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;class Proj = identity,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Indirect<ins>Unary</ins>Predicate&lt;projected&lt;iterator_t&lt;Rng&gt;, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;requires IndirectlyCopyable&lt;iterator_t&lt;Rng&gt;, O1&gt;<del>()</del> &amp;&amp;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;IndirectlyCopyable&lt;iterator_t&lt;Rng&gt;, O2&gt;<del>()</del></br>
+&nbsp;&nbsp;tagged_tuple&lt;tag::in(safe_iterator_t&lt;Rng&gt;), tag::out1(O1), tag::out2(O2)&gt;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;partition_copy(Rng&amp;&amp; rng, O1 out_true, O2 out_false, Pred pred, Proj proj = Proj{});</br>
+</br>
+template &lt;ForwardIterator I, Sentinel&lt;I&gt; S, class Proj = identity,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Indirect<ins>Unary</ins>Predicate&lt;projected&lt;I, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;I partition_point(I first, S last, Pred pred, Proj proj = Proj{});</br>
+template &lt;ForwardRange Rng, class Proj = identity,</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Indirect<ins>Unary</ins>Predicate&lt;projected&lt;iterator_t&lt;Rng&gt;, Proj&gt;&gt; Pred&gt;</br>
+&nbsp;&nbsp;safe_iterator_t&lt;Rng&gt;</br>
+&nbsp;&nbsp;partition_point(Rng&amp;&amp; rng, Pred pred, Proj proj = Proj{});</br>
+</tt></blockquote>
+
+In section "All of" ([alg.all_of]), change the signature of the `all_of` algorithm to match those
+shown in `<experimental/ranges/algorithm>` synopsis ([algorithms.general]/p2) above.
+
+Likewise, do the same for the following algorithms:
+- `any_of` in section "Any of" ([alg.any_of])
+- `none_of` in section "None of" ([alg.none_of])
+- `for_each` in section "For each" ([alg.for_each])
+- `find_if` in section "Find" ([alg.find])
+- `find_if_not` in section "Find" ([alg.find])
+- `count_if` in section "Count" ([alg.count])
+- `copy_if` in section "Copy" ([alg.copy])
+- `replace_if` in section "Replace" ([alg.replace])
+- `replace_copy_if` in section "Replace" ([alg.replace])
+- `remove_if` in section "Remove" ([alg.remove])
+- `remove_copy_if` in section "Remove" ([alg.remove])
+- `is_partitioned` in section "Partitions" ([alg.partitions])
+- `partition` in section "Partitions" ([alg.partitions])
+- `stable_partition` in section "Partitions" ([alg.partitions])
+- `partition_copy` in section "Partitions" ([alg.partitions])
+- `partition_point` in section "Partitions" ([alg.partitions])
 
 # Acknowledgements
 
