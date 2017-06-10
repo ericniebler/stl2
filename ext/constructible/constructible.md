@@ -282,19 +282,19 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 
 <ednote>[_Editor's note:_ Edit subsection "Concept `Readable`" ([iterators.readable]) as follows (also includes the fix for [stl2#330](https://github.com/ericniebler/stl2/issues/330) and [stl2#399](https://github.com/ericniebler/stl2/issues/399)):]</ednote>
 
-> > <tt>template &lt;class I&gt;</tt>
+> > <tt>template &lt;class I<ins>n</ins>&gt;</tt>
 > > <tt>concept bool Readable() {</tt>
 > > <tt>&nbsp;&nbsp;<del>return Movable&lt;I&gt;() &amp; DefaultConstructible&lt;I&gt;() &amp;&amp;</del></tt>
 > > <tt>&nbsp;&nbsp;<ins>return </ins>requires<del>(const I&amp; i)</del> {</tt>
-> > <tt>&nbsp;&nbsp;&nbsp;&nbsp;typename value_type_t&lt;I&gt;;</tt>
-> > <tt>&nbsp;&nbsp;&nbsp;&nbsp;typename reference_t&lt;I&gt;;</tt>
-> > <tt>&nbsp;&nbsp;&nbsp;&nbsp;typename rvalue_reference_t&lt;I&gt;;</tt>
+> > <tt>&nbsp;&nbsp;&nbsp;&nbsp;typename value_type_t&lt;I<ins>n</ins>&gt;;</tt>
+> > <tt>&nbsp;&nbsp;&nbsp;&nbsp;typename reference_t&lt;I<ins>n</ins>&gt;;</tt>
+> > <tt>&nbsp;&nbsp;&nbsp;&nbsp;typename rvalue_reference_t&lt;I<ins>n</ins>&gt;;</tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<del>{ \*i } -&gt; Same&lt;reference_t&lt;I&gt;&gt;;</del></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<del>{ ranges::iter_move(i) } -&gt; Same&lt;rvalue_reference_t&lt;I&gt;&gt;;</del></tt>
 > > <tt>&nbsp;&nbsp;} &amp;&amp;</tt>
-> > <tt>&nbsp;&nbsp;CommonReference&lt;reference_t&lt;I&gt;<ins>&amp;&amp;</ins>, value_type_t&lt;I&gt;&amp;&gt;() &amp;&amp;</tt>
-> > <tt>&nbsp;&nbsp;CommonReference&lt;reference_t&lt;I&gt;<ins>&amp;&amp;</ins>, rvalue_reference_t&lt;I&gt;<ins>&amp;&amp;</ins>&gt;() &amp;&amp;</tt>
-> > <tt>&nbsp;&nbsp;CommonReference&lt;rvalue_reference_t&lt;I&gt;<ins>&amp;&amp;</ins>, const value_type_t&lt;I&gt;&amp;&gt;();</tt>
+> > <tt>&nbsp;&nbsp;CommonReference&lt;reference_t&lt;I<ins>n</ins>&gt;<ins>&amp;&amp;</ins>, value_type_t&lt;I<ins>n</ins>&gt;&amp;&gt;() &amp;&amp;</tt>
+> > <tt>&nbsp;&nbsp;CommonReference&lt;reference_t&lt;I<ins>n</ins>&gt;<ins>&amp;&amp;</ins>, rvalue_reference_t&lt;I<ins>n</ins>&gt;<ins>&amp;&amp;</ins>&gt;() &amp;&amp;</tt>
+> > <tt>&nbsp;&nbsp;CommonReference&lt;rvalue_reference_t&lt;I<ins>n</ins>&gt;<ins>&amp;&amp;</ins>, const value_type_t&lt;I<ins>n</ins>&gt;&amp;&gt;();</tt>
 > > <tt>}</tt>
 
 <ednote>[_Editor's note:_ Edit subsection "Concept `Writable`" ([iterators.writable]) as follows (also includes the fixes for [stl2#381](https://github.com/ericniebler/stl2/issues/381) and [stl2#387](https://github.com/ericniebler/stl2/issues/387)):]</ednote>
@@ -304,7 +304,7 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 > > <tt>&nbsp;&nbsp;return <del>Movable&lt;Out&gt;() &amp; DefaultConstructible&lt;Out&gt;() &amp;&amp;</del></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;requires(Out<ins>&amp;&amp;</ins> o, T&& t) {</tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\*o = std::forward&lt;T&gt;(t); // not required to be equality preserving</tt>
-> > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>\*std::forward<Out>(o) = std::forward&lt;T&gt;(t); // not required to be equality preserving</ins></tt>
+> > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>\*std::forward&lt;Out&gt;(o) = std::forward&lt;T&gt;(t); // not required to be equality preserving</ins></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>const_cast&lt;const reference_t&lt;Out&gt;&amp;&amp;&gt;(\*o) =</ins></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>std::forward&lt;T&gt;(t); // not required to be equality preserving</ins></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>const_cast&lt;const reference_t&lt;Out&gt;&amp;&amp;&gt;(\*std::forward&lt;Out&gt;(o)) =</ins></tt>
