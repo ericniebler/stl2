@@ -547,14 +547,11 @@ Let \tcode{uu} be a distinct object of type \tcode{R} such that
 Then \tcode{Assignable<T, U>()} is satisfied if and only if
 
 \begin{itemize}
-\item \tcode{std::addressof(t = v) == std::addressof(t)}.
-\item After evaluating \tcode{t = v}:
+\item \tcode{addressof(t = v) == addressof(t)}.
+\item After evaluating \tcode{t = v}, \tcode{t} is equal to \tcode{uu} and:
 \begin{itemize}
-\item \tcode{t} is equal to \tcode{uu}.
 \item If \tcode{v} is a non-\tcode{const} rvalue, its resulting
-state is unspecified. \enternote \tcode{v} must still meet the requirements
-of the library component that is using it. The operations listed in those
-requirements must work as specified. \exitnote
+state is valid but unspecified~(\cxxref{lib.types.movedfrom}).
 \item Otherwise, \tcode{v} is not modified.
 \end{itemize}
 \end{itemize}
@@ -592,10 +589,10 @@ denote an expression of type \tcode{U}.
 \pnum
 An object \tcode{t} is \defn{swappable with} an object \tcode{u} if and only if
 \tcode{Swappable<T, U>()} is satisfied. \tcode{Swappable<T, U>()} is satisfied if
-and only if given distinct objects \tcode{tt} equal to \tcode{t}
-and \tcode{uu} equal to \tcode{u}, after evaluating either
-\tcode{ranges::swap(t, u)} or \tcode{ranges::swap(u, t)}, \tcode{tt} is equal to
-\tcode{u} and \tcode{uu} is equal to \tcode{t}.
+and only if given distinct objects \tcode{t2} equal to \tcode{t}
+and \tcode{u2} equal to \tcode{u}, after evaluating either
+\tcode{ranges::swap(t, u)} or \tcode{ranges::swap(u, t)}, \tcode{t2} is equal to
+\tcode{u} and \tcode{u2} is equal to \tcode{t}.
 
 \pnum
 An rvalue or lvalue \tcode{t} is \defn{swappable} if and only if \tcode{t} is
@@ -726,7 +723,7 @@ concept bool WeaklyEqualityComparable() {
 
 \begin{itemdescr}
 \pnum
-Let \tcode{t} and \tcode{u} be objects of types \tcode{T} and \tcode{U}.
+Let \tcode{t} and \tcode{u} be objects of types \tcode{T} and \tcode{U} respectively.
 \tcode{WeaklyEqualityComparable<T, U>()} is satisfied if and only if:
 \begin{itemize}
 \item \tcode{t == u}, \tcode{u == t}, \tcode{t != u}, and \tcode{u != t}
@@ -775,13 +772,13 @@ concept bool EqualityComparable() {
 
 \begin{itemdescr}
 \pnum
-Let \tcode{a} be an object of type \tcode{T}, \tcode{b} be an object of type \tcode{U}, and \tcode{C} be
+Let \tcode{t} be an object of type \tcode{T}, \tcode{u} be an object of type \tcode{U}, and \tcode{C} be
 \tcode{common_reference_t<const T\&, const U\&>}.
 Then \tcode{EqualityComparable<T, U>()}
 is satisfied if and only if:
 
 \begin{itemize}
-\item \tcode{bool(a == b) == bool(C(a) == C(b))}.
+\item \tcode{bool(t == u) == bool(C(t) == C(u))}.
 \end{itemize}
 \end{itemdescr}
 
@@ -807,7 +804,7 @@ Let \tcode{a}, \tcode{b}, and \tcode{c} be objects of type \tcode{T}.
 Then \tcode{StrictTotallyOrdered<T>()} is satisfied if and only if
 
 \begin{itemize}
-\item Exactly one of \tcode{bool(a < b)}, \tcode{bool(b < a)}, or
+\item Exactly one of \tcode{bool(a < b)}, \tcode{bool(a > b)}, or
       \tcode{bool(a == b)} is \tcode{true}.
 \item If \tcode{bool(a < b)} and \tcode{bool(b < c)}, then
       \tcode{bool(a < c)}.
@@ -898,9 +895,14 @@ Given a (possibly \tcode{const}) lvalue \tcode{t} of type \tcode{T} and pointer
 \item After evaluating the expression \tcode{t.$\sim$T()},
 \tcode{delete p}, or \tcode{delete[] p}, all resources owned by
 the denoted object(s) are reclaimed.
-\item \tcode{\&t == std::addressof(t)}.
+\item \tcode{\&t == addressof(t)}.
 \item The expression \tcode{\&t} is non-modifying.
 \end{itemize}
+
+\pnum
+\enternote Unlike the \tcode{Destructible} library concept in the \Cpp
+Standard~(\cxxref{utility.arg.requirements}), this concept forbids destructors
+that are \tcode{noexcept(false)}, even if non-throwing. \exitnote
 \end{itemdescr}
 
 \rSec2[concepts.lib.object.constructible]{Concept \tcode{Constructible}}
@@ -962,21 +964,18 @@ concept bool MoveConstructible() {
 
 \begin{itemdescr}
 \pnum
-Let \tcode{rv} be an rvalue of type \tcode{remove_cv_t<T>}.
+Let \tcode{U} be the type \tcode{remove_cv_t<T>},
+\tcode{rv} be an rvalue of type \tcode{U},
+and \tcode{u2} be a distinct object of type \tcode{T} equal to \tcode{rv}.
 Then \tcode{MoveConstructible<T>()} is satisfied if and only if
 
 \begin{itemize}
-\item After the definition \tcode{T u = rv;}, \tcode{u} is equal to the value of
-\tcode{rv} before the construction.
-\item \tcode{T\{rv\}} or \tcode{*new T\{rv\}} is equal
-to the value of \tcode{rv} before the construction.
+\item After the definition \tcode{T u = rv;}, \tcode{u} is equal to \tcode{u2}.
+\item \tcode{T\{rv\}} or \tcode{*new T\{rv\}} is equal to \tcode{u2}.
 \end{itemize}
 
 \pnum
-\tcode{rv}'s resulting state is unspecified. \enternote \tcode{rv} must still meet the
-requirements of the library component that is using it. The operations listed
-in those requirements must work as specified whether \tcode{rv} has been moved
-from or not.\exitnote
+\tcode{rv}'s resulting state is valid but unspecified~(\cxxref{lib.types.movedfrom}).
 
 \end{itemdescr}
 
@@ -1001,8 +1000,8 @@ Let \tcode{v} be an lvalue of type (possibly \tcode{const})
 Then \tcode{CopyConstructible<T>()} is satisfied if and only if
 
 \begin{itemize}
-\item After the definition \tcode{T u = v;}, \tcode{v} is equal
-to \tcode{u}.
+\item After the definition \tcode{T u = v;}, \tcode{u} is equal
+to \tcode{v}.
 \item \tcode{T\{v\}} or \tcode{*new T\{v\}} is equal
 to \tcode{v}.
 \end{itemize}
@@ -1160,15 +1159,15 @@ concept bool Relation() {
 
 \begin{itemdescr}
 \pnum
-Let \tcode{r} be any object of type \tcode{R}, \tcode{a} be any
-object of type \tcode{T}, \tcode{b} be any
+Let \tcode{r} be any object of type \tcode{R}, \tcode{t} be any
+object of type \tcode{T}, \tcode{u} be any
 object of type \tcode{U}, and \tcode{C} be
 \tcode{common_reference_t<const T\&, const U\&>}.
 Then \tcode{Relation<R, T, U>()} is satisfied if and only if
 
 \begin{itemize}
-\item \tcode{bool(r(a, b)) == bool(r(C(a), C(b))).}
-\item \tcode{bool(r(b, a)) == bool(r(C(b), C(a))).}
+\item \tcode{bool(r(t, u)) == bool(r(C(t), C(u))).}
+\item \tcode{bool(r(u, t)) == bool(r(C(u), C(t))).}
 \end{itemize}
 \end{itemdescr}
 

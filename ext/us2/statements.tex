@@ -1,0 +1,142 @@
+%!TEX root = std.tex
+
+\rSec0[intro]{Description of Instructions}
+
+[stmt.ranged] in the Ranges TS is written as a set of editorial instructions
+relative to C++14 that update the wording for the range-based for loop.
+This paper proposes alterations to those editorial instructions in the form of
+--- you guessed it --- even more editorial instructions. In an attempt to provide
+clarity of presentation, this paper uses \emph{five} distinct formatting styles
+to represent text with different properties:
+\begin{itemize}
+\item Text that is the same in \Cpp 14 and in the Ranges TS is presented in a
+plain style without adornment.
+
+\item {\color{remclr} Text which the TS strikes from \Cpp 14 is red in color.}
+
+\item \added{Text which the TS adds to \Cpp 14 is cyan in color.}
+
+\item \oldtxt{Text which \emph{this} paper proposes to strike from the \emph{TS} is
+purple and struck-through.}
+
+\item \newtxt{Text which this paper proposes to add to the TS is gold and
+underlined.}
+\end{itemize}
+
+\setcounter{chapter}{5}
+\setcounter{section}{1}
+
+\rSec2[stmt.ranged]{The range-based \tcode{for} statement}
+
+\ednote{Modify [stmt.ranged] to use a formulation similar to the C++17 FDIS:}
+
+\begin{quote}
+\pnum
+\oldoldtxt{For a}\newnewtxt{The} range-based \tcode{for} statement \oldoldtxt{of the form}
+
+\begin{ncbnf}
+\terminal{for (} for-range-declaration \terminal{:} \oldoldtxt{expression}\newnewtxt{for-range-initializer} \terminal{)} statement
+\end{ncbnf}
+%
+\begin{removedblock}
+\oldoldtxt{let \grammarterm{range-init} be equivalent to the expression surrounded by parentheses}
+
+\begin{bnf}
+\oldoldtxt{\terminal{(} expression \terminal{)}}
+\end{bnf}
+%
+\oldoldtxt{and for a range-based for statement of the form}
+
+\begin{bnf}
+\oldoldtxt{\terminal{for} \terminal{(} for-range-declaration \terminal{:} braced-init-list \terminal{)} statement}
+\end{bnf}
+%
+\oldoldtxt{let \grammarterm{range-init} be equivalent to the \grammarterm{braced-init-list}.}
+\end{removedblock}
+%
+\oldoldtxt{In each case, a range-based for statement} is equivalent to
+
+\begin{removedblock}
+\begin{ncbnftab}
+\terminal{\{}\br
+\>\terminal{auto \&\&__range =} range-init \terminal{;}\br
+\>\terminal{for ( auto __begin =} begin-expr \terminal{,}\br
+\>\terminal{{ }{ }{ }{ }{ }{ }{ }{ }{ }{ }{ }__end =} end-expr \terminal{;}\br
+\>\>\terminal{ __begin != __end;}\br
+\>\>\terminal{ ++__begin ) \{}\br
+\>\>for-range-declaration \terminal{= *__begin;}\br
+\>\>statement\br
+\>\terminal{\}}\br
+\terminal{\}}
+\end{ncbnftab}
+\end{removedblock}
+
+\begin{addedblock}
+\begin{ncbnftab}
+\terminal{\{}\br
+\>\terminal{auto \&\&__range =} \oldoldtxt{range-init}\newnewtxt{for-range-initializer} \terminal{;}\br
+\>\terminal{auto __begin =} begin-expr \terminal{;}\br
+\>\terminal{auto __end =} end-expr \terminal{;}\br
+\>\terminal{for ( ; __begin != __end; ++__begin ) \{}\br
+\>\>for-range-declaration \terminal{= *__begin;}\br
+\>\>statement\br
+\>\terminal{\}}\br
+\terminal{\}}
+\end{ncbnftab}
+\end{addedblock}
+
+where
+
+\begin{itemize}
+\item
+\newnewtxt{if the \grammarterm{for-range-initializer} is an \grammarterm{expression},
+it is regarded as if it were surrounded by parentheses (so that a comma operator
+cannot be reinterpreted as delimiting two \grammarterm{init-declarator}{s});}
+
+\item
+\tcode{__range}, \tcode{__begin}, and \tcode{__end} are variables defined for
+exposition only; and \oldoldtxt{\tcode{_RangeT} is the type of the
+\grammarterm{}{expression}, and \placeholder{begin-expr} and \placeholder{end-expr}
+are determined as follows:}
+
+\item
+\newnewtxt{\placeholder{begin-expr} and \placeholder{end-expr} are determined as follows:}
+
+\begin{itemize}
+\item if \oldoldtxt{\tcode{_RangeT}}\newnewtxt{the \grammarterm{for-range-initializer}} is an \newnewtxt{an expression of}
+array type \newnewtxt{\tcode{R}}, \placeholder{begin-expr} and \placeholder{end-expr} are
+\tcode{__range} and \tcode{__range + __bound}, respectively, where \tcode{__bound} is
+the array bound. If \tcode{\oldoldtxt{_RangeT}\newnewtxt{R}} is an array of unknown \oldoldtxt{size}\newnewtxt{bound} or an array of
+incomplete type, the program is ill-formed;
+
+\item if \oldoldtxt{\tcode{_RangeT}}\newnewtxt{the \grammarterm{for-range-initializer}} is \oldoldtxt{a}\newnewtxt{an expression of}
+class type \newnewtxt{\tcode{C}}, the \grammarterm{unqualified-id}{s}
+\tcode{begin} and \tcode{end} are looked up in the scope of \oldoldtxt{class \tcode{\mbox{_RangeT}}}\newnewtxt{\tcode{C}}
+as if by class member access lookup~(\stdcxxref{basic.lookup.classref}), and if either
+(or both) finds at least one declaration, \placeholder{begin-expr} and
+\placeholder{end-expr} are \tcode{__range.begin()} and \tcode{__range.end()},
+respectively;
+
+\item otherwise, \placeholder{begin-expr} and \placeholder{end-expr} are \tcode{begin(__range)}
+and \tcode{end(__range)}, respectively, where \tcode{begin} and \tcode{end} are looked
+up in the associated namespaces~(\stdcxxref{basic.lookup.argdep}).
+\enternote Ordinary unqualified lookup~(\stdcxxref{basic.lookup.unqual}) is not
+performed. \exitnote
+\end{itemize}
+\end{itemize}
+
+\enterexample
+\begin{codeblock}
+int array[5] = { 1, 2, 3, 4, 5 };
+for (int& x : array)
+  x *= 2;
+\end{codeblock}
+\exitexample%
+\indextext{statement!iteration|)}
+
+\pnum
+In the \grammarterm{decl-specifier-seq} of a \grammarterm{for-range-declaration},
+each \grammarterm{decl-specifier} shall be either a \grammarterm{type-specifier}
+or \tcode{constexpr}. The \grammarterm{decl-specifier-seq} shall not define a
+class or enumeration.
+\end{quote}

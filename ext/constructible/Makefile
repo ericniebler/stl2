@@ -1,4 +1,4 @@
-DOCNO = 0547
+DOCNO = 0547R1
 PD = P
 SOURCE = constructible.md
 TARGET = $(PD)$(DOCNO)
@@ -6,10 +6,10 @@ TARGET = $(PD)$(DOCNO)
 PANDOC = pandoc
 
 $(TARGET).html: $(SOURCE) header.html pandoc-template.html
-	$(PANDOC) -f markdown_github+yaml_metadata_block+citations -t html -o $@ --filter pandoc-citeproc --csl=acm-sig-proceedings.csl --number-sections --toc -s -S --template=pandoc-template --include-before-body=header.html --include-in-header=pandoc.css $<
+	$(PANDOC) -f markdown_github+yaml_metadata_block -t html -o $@ --number-sections --toc -s -S --template=pandoc-template --include-before-body=header.html --include-in-header=pandoc.css $<
 
 $(TARGET).pdf: $(SOURCE)
-	$(PANDOC) -f markdown_github+yaml_metadata_block+citations -t latex -o $@ --filter pandoc-citeproc --csl=acm-sig-proceedings.csl --number-sections --toc -s -S $<
+	$(PANDOC) -f markdown_github+yaml_metadata_block -t latex -o $@ --number-sections --toc -s -S $<
 
 header.html: header.html.in Makefile
 	sed 's/%%DOCNO%%/$(TARGET)/g' < $< > $@
