@@ -71,13 +71,13 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     = decltype(ranges::iter_move(declval<T&>()));
 
   // \ref{iterators.readable}, Readable:
-  template <class I>
+  template <class In>
   concept bool Readable() {
     return @\seebelow@;
   }
 
   // \ref{iterators.writable}, Writable:
-  template <class I>
+  template <class Out, class T>
   concept bool Writable() {
     return @\seebelow@;
   }
@@ -616,12 +616,12 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 
 namespace std {
   // \ref{iterator.stdtraits}, iterator traits:
-  template <experimental::ranges::Iterator I>
-    struct iterator_traits;
-  template <experimental::ranges::InputIterator I>
-    struct iterator_traits;
-  template <experimental::ranges::InputIterator I>
-      requires experimental::ranges::Sentinel<I, I>()
+  template <experimental::ranges::Iterator Out>
+    struct iterator_traits<Out>;
+  template <experimental::ranges::InputIterator In>
+    struct iterator_traits<In>;
+  template <experimental::ranges::InputIterator In>
+      requires experimental::ranges::Sentinel<In, In>()
     struct iterator_traits;
 }
 \end{codeblock}
@@ -760,6 +760,16 @@ are comparable. A sentinel denotes an element when it compares equal to an itera
 iterator that denote a range must satisfy \tcode{Sentinel}~(\ref{iterators.sentinel}).
 
 \pnum
+A range \range{i}{s}
+is empty if \tcode{i == s};
+otherwise, \range{i}{s}
+refers to the elements in the data structure starting with the element
+pointed to by
+\tcode{i}
+and up to but not including the element pointed to by
+the first iterator \tcode{j} such that \tcode{j == s}.
+
+\pnum
 A sentinel
 \tcode{s}
 is called
@@ -776,16 +786,6 @@ If
 is reachable from
 \tcode{i},
 they denote a range.
-
-\pnum
-A range \range{i}{s}
-is empty if \tcode{i == s};
-otherwise, \range{i}{s}
-refers to the elements in the data structure starting with the element
-pointed to by
-\tcode{i}
-and up to but not including the element pointed to by
-the first iterator \tcode{j} such that \tcode{j == s}.
 
 \pnum
 A range \range{i}{s}
@@ -1062,19 +1062,19 @@ applying \tcode{operator*} including pointers, smart pointers, and iterators.
 
 \indexlibrary{\idxcode{Readable}}%
 \begin{codeblock}
-  template <class I>
+  template <class In>
   concept bool Readable() {
-    return Movable<I>() && DefaultConstructible<I>() &&
-      requires(const I& i) {
-        typename value_type_t<I>;
-        typename reference_t<I>;
-        typename rvalue_reference_t<I>;
-        { *i } -> Same<reference_t<I>>;
-        { ranges::iter_move(i) } -> Same<rvalue_reference_t<I>>;
+    return Movable<In>() && DefaultConstructible<In>() &&
+      requires(const In& i) {
+        typename value_type_t<In>;
+        typename reference_t<In>;
+        typename rvalue_reference_t<In>;
+        { *i } -> Same<reference_t<In>>;
+        { ranges::iter_move(i) } -> Same<rvalue_reference_t<In>>;
       } &&
-      CommonReference<reference_t<I>, value_type_t<I>&>() &&
-      CommonReference<reference_t<I>, rvalue_reference_t<I>>() &&
-      CommonReference<rvalue_reference_t<I>, const value_type_t<I>&>();
+      CommonReference<reference_t<In>, value_type_t<In>&>() &&
+      CommonReference<reference_t<In>, rvalue_reference_t<In>>() &&
+      CommonReference<rvalue_reference_t<In>, const value_type_t<In>&>();
   }
 \end{codeblock}
 
@@ -1110,10 +1110,7 @@ After evaluating the assignment expression, \tcode{o} is not required to be dere
 
 \pnum
 If \tcode{E} is an xvalue~(\cxxref{basic.lval}), the resulting
-state of the object it denotes is unspecified. \enternote The object must still meet the
-requirements of any library component that is using it. The operations listed
-in those requirements must work as specified whether the object has been moved
-from or not.\exitnote
+state of the object it denotes is valid but unspecified~(\cxxref{lib.types.movedfrom}).
 
 \pnum
 \enternote
@@ -1152,7 +1149,7 @@ are valid, \tcode{i} is said to be \techterm{incrementable}. Then
 \item \tcode{++i} is valid if and only if \tcode{i++} is valid.
 \item If \tcode{i} is incrementable, then both \tcode{++i}
   and \tcode{i++} advance \tcode{i} to the next element.
-\item If \tcode{i} is incrementable, then \tcode{\&++i == \&i}.
+\item If \tcode{i} is incrementable, then \tcode{\&++i} is equal to \tcode{\&i}.
 \end{itemize}
 
 \pnum
@@ -1455,7 +1452,8 @@ Let \tcode{a} and \tcode{b} be decrementable objects of type \tcode{I}. Then
 \begin{itemize}
 \item \tcode{\&\dcr{}a == \&a}.
 \item If \tcode{bool(a == b)}, then \tcode{bool(a\dcr{} == b)}.
-\item If \tcode{bool(a == b)}, then \tcode{bool((a\dcr{}, a) == \dcr{}b)}.
+\item If \tcode{bool(a == b)}, then after evaluating both \tcode{a\dcr} and \tcode{\dcr{}b},
+\tcode{bool(a == b)} still holds.
 \item If \tcode{a} is incrementable and \tcode{bool(a == b)}, then
       \tcode{bool(\dcr{}(++a) == b)}.
 \item If \tcode{bool(a == b)}, then \tcode{bool(++(\dcr{}a) == b)}.
@@ -1632,7 +1630,7 @@ callable objects~(\cxxref{func.def}) as arguments.
 
 \pnum
 The \tcode{projected} class template is intended for use when specifying the constraints of
-algorithms that accept callable objects and projections. It bundles a \tcode{Readable} type
+algorithms that accept callable objects and projections~(\ref{defns.projection}). It bundles a \tcode{Readable} type
 \tcode{I} and a function \tcode{Proj} into a new \tcode{Readable} type whose
 \tcode{reference} type is the result of applying \tcode{Proj} to the
 \tcode{reference_t} of \tcode{I}.
@@ -1856,7 +1854,7 @@ struct is_nothrow_indirectly_movable : false_type { };
 template <class In, class Out>
   requires IndirectlyMovable<In, Out>()
 struct is_nothrow_indirectly_movable<In, Out> :
-  std::integral_constant<bool,
+  integral_constant<bool,
     is_nothrow_constructible<value_type_t<In>, rvalue_reference_t<In>>::value &&
     is_nothrow_assignable<value_type_t<In> &, rvalue_reference_t<In>>::value &&
     is_nothrow_assignable<reference_t<Out>, rvalue_reference_t<In>>::value &&
@@ -1876,7 +1874,7 @@ struct is_nothrow_indirectly_swappable : false_type { };
 template <class I1, class I2>
   requires IndirectlySwappable<I1, I2>()
 struct is_nothrow_indirectly_swappable<I1, I2> :
-  std::integral_constant<bool,
+  integral_constant<bool,
     noexcept(ranges::iter_swap(declval<I1&>(), declval<I2&>())) &&
     noexcept(ranges::iter_swap(declval<I2&>(), declval<I1&>())) &&
     noexcept(ranges::iter_swap(declval<I1&>(), declval<I1&>())) &&
@@ -2114,7 +2112,7 @@ into the bidirectional iterator category by specializing the
 
 \begin{codeblock}
 template <class T> struct difference_type<BinaryTreeIterator<T>> {
-  using type = std::ptrdiff_t;
+  using type = ptrdiff_t;
 };
 template <class T> struct value_type<BinaryTreeIterator<T>> {
   using type = T;
@@ -2910,7 +2908,7 @@ explicit back_insert_iterator(Container& x);
 \effects
 Initializes
 \tcode{container}
-with \tcode{std::addressof(x)}.
+with \tcode{addressof(x)}.
 \end{itemdescr}
 
 \rSec4[back.insert.iter.op=]{\tcode{back_insert_iterator::operator=}}
@@ -3045,7 +3043,7 @@ explicit front_insert_iterator(Container& x);
 \effects
 Initializes
 \tcode{container}
-with \tcode{std::addressof(x)}.
+with \tcode{addressof(x)}.
 \end{itemdescr}
 
 \rSec4[front.insert.iter.op=]{\tcode{front_insert_iterator::operator=}}
@@ -3185,7 +3183,7 @@ insert_iterator(Container& x, iterator_t<Container> i);
 \effects
 Initializes
 \tcode{container}
-with \tcode{std::addressof(x)} and
+with \tcode{addressof(x)} and
 \tcode{iter}
 with \tcode{i}.
 \end{itemdescr}
@@ -3378,12 +3376,6 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     move_iterator<I> make_move_iterator(I i);
 }}}}
 \end{codeblock}
-
-\pnum
-Let \tcode{\textit{R}} be \tcode{reference_t<I>}. If \tcode{is_reference<\textit{R}>::value}
-is \tcode{true}, the template specialization \tcode{move_iterator<I>} shall define the nested
-type named \tcode{reference} as a synonym for \tcode{remove_reference_t<\textit{R}>\&\&}, otherwise
-as a synonym for \tcode{\textit{R}}.
 
 \pnum
 \enternote \tcode{move_iterator} does not provide an \tcode{operator->} because the class member access
@@ -5329,7 +5321,7 @@ const T* operator->() const;
 \begin{itemdescr}
 \pnum
 \effects Equivalent to:
-\tcode{return std::addressof(operator*())}.
+\tcode{return addressof(operator*())}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{operator++}!\idxcode{istream_iterator}}%
@@ -6292,7 +6284,7 @@ implies reference semantics. \exitnote
 
 \pnum
 The \tcode{BoundedRange} concept specifies requirements
-of an \tcode{Range} type for which \tcode{begin} and \tcode{end} return objects of
+of a \tcode{Range} type for which \tcode{begin} and \tcode{end} return objects of
 the same type. \enternote The standard containers~(\cxxref{containers})
 satisfy \tcode{BoundedRange}.\exitnote
 
