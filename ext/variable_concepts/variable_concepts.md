@@ -213,28 +213,47 @@ concept bool StrictWeakOrder() {<br/>
 Make the corresponding edits in sections 7.3 [concepts.lib.corelang] through section 7.6
 [Callable concepts], except as follows.
 
+In the section "Concept `Movable` ([concepts.lib.object.movable]), change the definition of
+`Movable` as follows (includes changes from [P0547R1](http://wg21.link/P0547R1) and
+[ericniebler/stl2#174 "Swappable concept and P0185 swappable traits"](
+https://github.com/ericniebler/stl2/issues/174)):
+
+<blockquote><tt>
+template &lt;class T&gt;</br>
+concept bool Movable<del>() {</del><ins> =</ins></br>
+&nbsp;&nbsp;<del>return</del> std::is_object&lt;T&gt;::value &amp;&amp; // <i>see below</i></br>
+&nbsp;&nbsp;&nbsp;&nbsp;MoveConstructible&lt;T&gt; &amp;&amp;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Assignable&lt;T&amp;, T&gt; &amp;&amp;</br>
+&nbsp;&nbsp;&nbsp;&nbsp;Swappable&lt;T<del>&amp;</del>&gt;;</br>
+<del>}</del><br/>
+</tt></blockquote>
+
 In section "Concept `Swappable`" ([concepts.lib.corelang.swappable]), change the name of the binary
 form of `Swappable` to `SwappableWith` as follows:
 
-<ednote>[ <i>Editorial note:</i> This includes the resolution of [ericniebler/stl2#155 "Comparison
-concepts and reference types"](https://github.com/ericniebler/stl2/issues/155). ]</ednote>
+<ednote>[ <i>Editorial note:</i> This includes the resolutions of [ericniebler/stl2#155 "Comparison
+concepts and reference types"](https://github.com/ericniebler/stl2/issues/155) and
+[ericniebler/stl2#174 "Swappable concept and P0185 swappable traits"](
+https://github.com/ericniebler/stl2/issues/174). ]</ednote>
 
 <blockquote><tt>
 template &lt;class T&gt;<br/>
 concept bool Swappable<del>() {</del><ins> =</ins><br/>
-&nbsp;&nbsp;<del>return</del> requires(T&amp;&amp; a, T&amp;&amp; b) {<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;ranges::swap(std::forward&lt;T&gt;(a), std::forward&lt;T&gt;(b));<br/>
+&nbsp;&nbsp;<del>return</del> requires(T&amp;<del>&amp;</del> a, T&amp;<del>&amp;</del> b) {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;ranges::swap(<del>std::forward&lt;T&gt;(</del>a<del>)</del>, <del>std::forward&lt;T&gt;(</del>b<del>)</del>);<br/>
 &nbsp;&nbsp;};<br/>
 <del>}</del><br/>
 <br/>
 template &lt;class T, class U&gt;<br/>
 concept bool Swappable<ins>With =</ins><del>() {</del><br/>
-&nbsp;&nbsp;<del>return</del> Swappable&lt;T&gt;<del>()</del> &amp;&amp;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;Swappable&lt;U&gt;<del>()</del> &amp;&amp;<br/>
+&nbsp;&nbsp;<del>return Swappable&lt;T&gt;() &amp;&amp;</del><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<del>Swappable&lt;U&gt;() &amp;&amp;</del><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;CommonReference&lt;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const remove_reference_t&lt;T&gt;&amp;,<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const remove_reference_t&lt;U&gt;&amp;&gt;<del>()</del> &amp;&amp;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;requires(T&amp;&amp; t, U&amp;&amp; u) {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>ranges::swap(std::forward&lt;T&gt;(t), std::forward&lt;T&gt;(t));</ins><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>ranges::swap(std::forward&lt;U&gt;(u), std::forward&lt;U&gt;(u));</ins><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ranges::swap(std::forward&lt;T&gt;(t), std::forward&lt;U&gt;(u));<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ranges::swap(std::forward&lt;U&gt;(u), std::forward&lt;T&gt;(t));<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;};<br/>
@@ -362,7 +381,9 @@ concept bool StrictWeakOrder<del>() {</del><ins> =</ins><br/>
 
 ## Section "General utilities library" ([utilities])
 
-Change section "Header `<experimental/ranges/utility>` synopsis" ([utility]/p2) as follows:
+Change section "Header `<experimental/ranges/utility>` synopsis" ([utility]/p2) as follows
+(includes the resolution of [ericniebler/stl2#174 "Swappable concept and P0185 swappable traits"](
+https://github.com/ericniebler/stl2/issues/174)):
 
 <blockquote><tt>
 // 8.5.2, struct with named accessors<br/>
@@ -374,11 +395,25 @@ concept bool TagSpecifier<del>() {</del><ins> =</ins><br/>
 template &lt;class F&gt;<br/>
 concept bool TaggedType<del>() {</del><ins> =</ins><br/>
 &nbsp;&nbsp;<del>return</del> <i>see below</i> ;<br/>
-<del>}</del>
+<del>}</del><br/>
+<br/>
+template &lt;class Base, TagSpecifier... Tags&gt;<br/>
+&nbsp;&nbsp;requires sizeof...(Tags) &lt;= tuple_size&lt;Base&gt;::value<br/>
+struct tagged : <br/>
+&nbsp;&nbsp;[...]<br/>
+&nbsp;&nbsp;tagged&amp; operator=(U&amp;&amp; u) noexcept(<i>see below</i>);<br/>
+&nbsp;&nbsp;void swap(tagged&amp; that) noexcept(<i>see below</i>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;requires Swappable&lt;Base<del>&amp;</del>&gt;;<br/>
+&nbsp;&nbsp;friend void swap(tagged&amp;, tagged&amp;) noexcept(<i>see below</i>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;requires Swappable&lt;Base<del>&amp;</del>&gt;;<br/>
+};<br/>
 </tt></blockquote>
 
 Make the accompanying edit to the definitions of `TagSpecifier` and `TaggedType` in section
-"Class template `tagged`" [taggedtup.tagged]/p2.
+"Class template `tagged`" [taggedtup.tagged]/p2, and to the detailed specifications of
+`tagged::swap` and the non-member `swap(tagged&, tagged&)` overload in
+[taggedtup.tagged]/p20 and p23
+
 
 In the declarations of `equal_to<void>::operator()` and `not_equal_to<void>::operator()` in section
 "Comparisons" [comparisons]/p8-9, change `EqualityComparable<T, U>()` to
