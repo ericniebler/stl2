@@ -820,6 +820,10 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     tagged(const tagged&) = default;
     tagged &operator=(tagged&&) = default;
     tagged &operator=(const tagged&) = default;
+    tagged(Base&&) noexcept(see below)
+      requires MoveConstructible<Base>();
+    tagged(const Base&) noexcept(see below)
+      requires CopyConstructible<Base>();
     template <class Other>
       requires Constructible<Base, Other>()
     tagged(tagged<Other, Tags...> &&that) noexcept(@\seebelow@);
@@ -881,6 +885,41 @@ type with return type \tcode{T} which satisfies \tcode{TagSpecifier<T>()}. Let
 \tcode{\textit{TAGELEM}(F)} name the argument type of the \tcode{TaggedType} \tcode{F}.
 
 \indexlibrary{\idxcode{tagged}!\idxcode{tagged}}
+
+\begin{itemdecl}
+tagged(Base &&that) noexcept(see below )
+  requires MoveConstructible<Base>();
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\remarks The expression in the \tcode{noexcept} is equivalent to:
+
+\begin{codeblock}
+is_nothrow_move_constructible<Base>::value
+\end{codeblock}
+
+\pnum
+\effects Initializes \tcode{Base} with \tcode{std::move(that)}.
+\end{itemdescr}
+
+\begin{itemdecl}
+tagged(const Base &that) noexcept(see below )
+  requires CopyConstructible<Base>();
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\remarks The expression in the \tcode{noexcept} is equivalent to:
+
+\begin{codeblock}
+is_nothrow_copy_constructible<Base>::value
+\end{codeblock}
+
+\pnum
+\effects Initializes \tcode{Base} with \tcode{that}.
+\end{itemdescr}
+
 \begin{itemdecl}
 template <class Other>
   requires Constructible<Base, Other>()
