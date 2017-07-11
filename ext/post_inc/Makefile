@@ -1,5 +1,5 @@
-DOCNO = 0541
-PD = P
+DOCNO = 0541R2
+PD = D
 SOURCE = post_inc.md
 TARGET = $(PD)$(DOCNO)
 
