@@ -18,6 +18,20 @@ The suggested changes make them behave more like what their associated type trai
 
 In addition, we suggest a change to `Movable` that correctly positions it as the base of the `Regular` concept hierarchy, which concerns itself with types with value semantics.
 
+# Revision History
+## R1
+* [Per LWG Kona direction, removed the requirement that `Destructible` types do not overload `operator&`](https://github.com/ericniebler/stl2/commit/e426f096407c24063af8da3e9235c9d1b297df14).
+* [Add `Readable` and `Writable` changes (Issue #330, #381, #387, #399)](https://github.com/ericniebler/stl2/commit/565c767f61767a4b4a90706821a6dcf0dcf1db06).
+* [Reorganize bullet points in Move/CopyConstructible](https://github.com/ericniebler/stl2/commit/283b722356801056e5e95891e9ed09a12526f611).
+* [Add missing comma in the new description of `Destructible`](https://github.com/ericniebler/stl2/commit/c6efdfe2d635e31610466faea8e02dfd3da53e3c).
+* [Rebase `Assignable` changes onto the post-P0370 wording](https://github.com/ericniebler/stl2/commit/d72a3b2232c8aa339e044db11bec685e02b32c7c).
+* [Address #293 in `MoveConstructible`](https://github.com/ericniebler/stl2/commit/15ff17eb92f28ea920f9d04627af82e3d243bc75).
+* [s/there is no subsumption relationship/there need not be any subsumption relationship/g](https://github.com/ericniebler/stl2/commit/e8881723b91c277ccd1a76637d2709c540466403).
+
+## R2
+* Add this revision history
+* Concept definitions in the style of "Concept<T>() is satisfied if and only if:" should use "only if."
+
 # Problem description
 
 The [Palo Alto report](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3351.pdf), on which the design of the Ranges TS is based, suggested the object concepts `Semiregular` and `Regular` for constraining standard library components. In an appendix it concedes that many generic components could more usefully be constrained with decompositions of these very coarse concepts: `Movable` and `Copyable`.
@@ -117,16 +131,16 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 > > <tt>concept bool Assignable() {</tt>
 > > <tt>&nbsp;&nbsp;<del>return CommonReference&lt;const T&amp;, const U&amp;&gt;() &amp;&amp; requires(T&amp;&amp; t, U&amp;&amp; u) {</del></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<del>{ std::forward&lt;T&gt;(t) = std::forward&lt;U&gt;(u) } -&gt; Same&lt;T&amp;&gt;;</del></tt>
+> > <tt>&nbsp;&nbsp;<del>};</del></tt>
 > > <tt>&nbsp;&nbsp;<ins>return is_lvalue_reference&lt;T&gt;::value &amp;&amp; // see below</ins></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>CommonReference&lt;</ins></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>const remove_reference_t&lt;T&gt;&amp;,</ins></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>const remove_reference_t&lt;U&gt;&amp;&gt;() &amp;&amp;</ins></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>requires(T t, U&amp;&amp; u) {</ins></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>{ t = std::forward&lt;U&gt;(u) } -&gt; Same&lt;T&gt;&amp;&amp;;</ins></tt>
-> > <tt>&nbsp;&nbsp;&nbsp;&nbsp;};</tt>
 > > <tt>}</tt>
 >
-> 1 <del>Let `t` be an lvalue of type `T`, and `R` be the type `remove_reference_t<U>`. If `U` is an lvalue reference type, let `v` be an lvalue of type `R`; otherwise, let `v` be an rvalue of type `R`. Let `uu` be a distinct object of type `R` such that `uu` is equal to `v`.</del><ins>Let `t` be an lvalue which refers to an object `o` such that `decltype((t))` is `T`, and `u` an expression such that `decltype((u))` is `U`. Let `u2` be a distinct object that is equal to `u`.</ins> Then `Assignable<T, U>()` is satisfied if and only if
+> 1 <del>Let `t` be an lvalue of type `T`, and `R` be the type `remove_reference_t<U>`. If `U` is an lvalue reference type, let `v` be an lvalue of type `R`; otherwise, let `v` be an rvalue of type `R`. Let `uu` be a distinct object of type `R` such that `uu` is equal to `v`.</del><ins>Let `t` be an lvalue which refers to an object `o` such that `decltype((t))` is `T`, and `u` an expression such that `decltype((u))` is `U`. Let `u2` be a distinct object that is equal to `u`.</ins> Then `Assignable<T, U>()` is satisfied only if
 >
 > > (1.1) -- <tt>addressof(t = <del>v</del><ins>u</ins>) == addressof(<del>t</del><ins>o</ins>)</tt>.
 > >
@@ -149,18 +163,18 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 > > <tt>template &lt;class T&gt;</tt>
 > > <tt>concept bool Destructible() {</tt>
 > > <tt>&nbsp;&nbsp;<del>return requires(T t, const T ct, T* p) {</del></tt>
-> > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<del>{ t.~T() } noexcept;</del></tt>
+> > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<del>{ t.~T() } noexcept;</del></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<del>{ &amp;t } -&gt; Same&lt;T\*&gt;; // not required to be equality preserving</del></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<del>{ &amp;ct } -&gt; Same&lt;const T\*&gt;; // not required to be equality preserving</del></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<del>delete p;</del></tt>
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<del>delete[] p;</del></tt>
+> > <tt>&nbsp;&nbsp;<del>};</del></tt>
 > > <tt>&nbsp;&nbsp;<ins>return is_nothrow_destructible&lt;T&gt;::value; // see below</ins></tt>
-> > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<del>};</del></tt>
 > > <tt>}</tt>
 >
 > &#8203;<del>2 The expression requirement `&ct` does not require implicit expression variants.</del>
 >
-> &#8203;<del>3 Given a (possibly `const`) lvalue `t` of type <tt>T</tt> and pointer `p` of type `T*`,  `Destructible<T>()` is satisfied if and only if</del>
+> &#8203;<del>3 Given a (possibly `const`) lvalue `t` of type <tt>T</tt> and pointer `p` of type `T*`,  `Destructible<T>()` is satisfied only if</del>
 >
 > > &#8203;<del>(3.1) -- After evaluating the expression `t.~T()`, `delete p`, or `delete[] p`, all resources owned by the denoted object(s) are reclaimed.</del>
 > >
@@ -226,13 +240,13 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;ConvertibleTo&lt;<del>remove_cv_t&lt;</del>T<del>&gt;&amp;&amp;</del>, T&gt;();</tt>
 > > <tt>}</tt>
 >
-> 1 <ins>If `T` is an object type, then</ins> let `rv` be an rvalue of type <del>`remove_cv_t<`</del>`T`<del>`>`</del><ins> and `u2` a distinct object of type `T` equal to `rv`</ins>. <del>Then</del> `MoveConstructible<T>()` is satisfied if and only if
+> 1 <ins>If `T` is an object type, then</ins> let `rv` be an rvalue of type <del>`remove_cv_t<`</del>`T`<del>`>`</del><ins> and `u2` a distinct object of type `T` equal to `rv`</ins>. <del>Then</del> `MoveConstructible<T>()` is satisfied only if
 >
 > > (1.1) -- After the definition `T u = rv;`, `u` is equal to <ins>`u2`</ins><del>the value of `rv` before the construction</del>.
 > >
 > > (1.2) -- `T{rv}` <del>or `*new T{rv}`</del> is equal to <ins>`u2`</ins><del>the value of `rv` before the construction</del>.
 > >
-> > &#8203;<ins>(1.3</ins><del>2</del><ins>) If `T` is not `const`,</ins> `rv`'s resulting state is valid but unspecified ([lib.types.movedfrom])<ins>; otherwise, it is unchanged</ins>.
+> > &#8203;<ins>(1.3</ins><del>2</del><ins>) -- If `T` is not `const`,</ins> `rv`'s resulting state is valid but unspecified ([lib.types.movedfrom])<ins>; otherwise, it is unchanged</ins>.
 
 <ednote>[_Editor's note:_ We no longer strip top-level `const` from the parameter to harmonize `MoveConstructible` with `is_move_constructible`. And as with `is_move_constructible`, `MoveConstructible<int&&>()` is `true`. See [LWG#2146](https://cplusplus.github.io/LWG/lwg-active.html#2146).</ednote>
 
@@ -252,7 +266,7 @@ In the "Proposed Resolution" that follows, there are editorial notes that highli
 > > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>Constructible&lt;T, const T&gt;() &amp;&amp; ConvertibleTo&lt;const T, T&gt;();</ins></tt>
 > > <tt>}</tt>
 >
-> 1 <ins>If `T` is an object type, then</ins> let `v` be an lvalue of type (possibly `const`) <del>`remove_cv_t<`</del>`T`<del>`>`</del> or an rvalue of type `const` <del>`remove_cv_t<`</del>`T`<del>`>`</del>. <del>Then</del> `CopyConstructible<T>()` is satisfied if and only if
+> 1 <ins>If `T` is an object type, then</ins> let `v` be an lvalue of type (possibly `const`) <del>`remove_cv_t<`</del>`T`<del>`>`</del> or an rvalue of type `const` <del>`remove_cv_t<`</del>`T`<del>`>`</del>. <del>Then</del> `CopyConstructible<T>()` is satisfied only if
 >
 > > (1.1) -- After the definition `T u = v;`, `u` is equal to `v`.
 > >

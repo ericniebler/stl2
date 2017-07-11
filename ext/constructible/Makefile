@@ -1,5 +1,5 @@
-DOCNO = 0547R1
-PD = P
+DOCNO = 0547R2
+PD = D
 SOURCE = constructible.md
 TARGET = $(PD)$(DOCNO)
 
