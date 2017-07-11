@@ -29,6 +29,10 @@ There is really only one reason for keeping function-style concepts in the Range
 numbers of parameters; function-style concepts neatly captures this intent by allowing these
 concepts to share a name.
 
+# Revision History
+## R1
+* Restore the `()` that were inadvertently ommitted from the `Swappable` constraints on the members of class `tagged`, and then strike them.
+
 # Proposed Solution
 
 We propose respecifying the Ranges TS in terms of variable-style concepts. There are three cases
@@ -403,9 +407,9 @@ struct tagged : <br/>
 &nbsp;&nbsp;[...]<br/>
 &nbsp;&nbsp;tagged&amp; operator=(U&amp;&amp; u) noexcept(<i>see below</i>);<br/>
 &nbsp;&nbsp;void swap(tagged&amp; that) noexcept(<i>see below</i>)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;requires Swappable&lt;Base<del>&amp;</del>&gt;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;requires Swappable&lt;Base<del>&amp;</del>&gt;<del>()</del>;<br/>
 &nbsp;&nbsp;friend void swap(tagged&amp;, tagged&amp;) noexcept(<i>see below</i>)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;requires Swappable&lt;Base<del>&amp;</del>&gt;;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;requires Swappable&lt;Base<del>&amp;</del>&gt;<del>()</del>;<br/>
 };<br/>
 </tt></blockquote>
 
@@ -639,7 +643,7 @@ In [commonalgoreq.general]/p2, change the note to read:
 
 In section "Class template `reverse_iterator`" ([reverse.iterator]), in the synopsis and in definitions
 of the relational operators ([reverse.iter.op==] through [reverse.iter.op<=]), change
-`EqualityComparable<I1, I2>()` to `EqualityComparableWith<I1, I2>`, and change 
+`EqualityComparable<I1, I2>()` to `EqualityComparableWith<I1, I2>`, and change
 `StrictTotallyOrdered<I1, I2>()` to `StrictTotallyOrderedWith<I1, I2>` as shown above in the
 `<experimental/ranges/iterator>` synopsis ([iterator.synopsis]).
 

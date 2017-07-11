@@ -1,5 +1,5 @@
-DOCNO = 0651
-PD = P
+DOCNO = 0651R2
+PD = D
 SOURCE = variable_concepts.md
 TARGET = $(PD)$(DOCNO)
 
