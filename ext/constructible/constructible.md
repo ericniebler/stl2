@@ -30,7 +30,7 @@ In addition, we suggest a change to `Movable` that correctly positions it as the
 
 ## R2
 * Add this revision history
-* Concept definitions in the style of "Concept<T>() is satisfied if and only if:" should use "only if."
+* Concept definitions in the style of "`Concept<T>()` is satisfied if and only if:" should use "only if."
 
 # Problem description
 
