@@ -1361,6 +1361,13 @@ satisfy \tcode{EqualityComparable}.
 \end{codeblock}
 
 \pnum
+Let \tcode{E} be an expression such that \tcode{decltype((E))} is \tcode{T}, and let \tcode{i} be a dereferenceable object of type \tcode{I}. Then \tcode{OutputIterator<I, T>()} is satisfied only if \tcode{*i++ = E;} has effects equivalent to:
+\begin{codeblock}
+  *i = E;
+  ++i;
+\end{codeblock}
+
+\pnum
 \enternote
 Algorithms on output iterators should never attempt to pass through the same iterator twice.
 They should be
@@ -4246,7 +4253,7 @@ decltype(auto) operator++(int);
 \requires \tcode{!is_sentinel}.
 
 \pnum
-\effects Equivalent to \tcode{return iter++;}
+\effects Equivalent to: \tcode{return iter++;}
 \end{itemdescr}
 
 \begin{itemdecl}
@@ -4626,13 +4633,14 @@ decltype(auto) operator++(int);
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{cnt > 0}
+\requires \tcode{cnt > 0}.
 
 \pnum
 \effects Equivalent to:
 \begin{codeblock}
-@\dcr@cnt;
-return current++;
+--cnt;
+try { return current++; }
+catch(...) { ++cnt; throw; }
 \end{codeblock}
 \end{itemdescr}
 
@@ -4649,8 +4657,7 @@ counted_iterator operator++(int)
 \effects Equivalent to:
 \begin{codeblock}
 counted_iterator tmp = *this;
-++current;
-@\dcr@cnt;
+++*this;
 return tmp;
 \end{codeblock}
 \end{itemdescr}
@@ -4688,8 +4695,7 @@ return tmp;
 \effects Equivalent to:
 \begin{codeblock}
 counted_iterator tmp = *this;
---current;
-++cnt;
+--*this;
 return tmp;
 \end{codeblock}
 \end{itemdescr}
