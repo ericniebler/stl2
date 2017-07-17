@@ -1334,13 +1334,8 @@ defines requirements for a type whose referenced values can be read (from the re
   concept bool InputIterator() {
     return Iterator<I>() &&
       Readable<I>() &&
-      requires(I i, const I ci) {
-        typename iterator_category_t<I>;
-        requires DerivedFrom<iterator_category_t<I>, input_iterator_tag>();
-        { i++ } -> Readable; // not required to be equality preserving
-        requires Same<value_type_t<I>, value_type_t<decltype(i++)>>();
-        { *ci } -> const value_type_t<I>&;
-      };
+      requires { typename iterator_category_t<I>; } &&
+      DerivedFrom<iterator_category_t<I>, input_iterator_tag>();
   }
 \end{codeblock}
 
@@ -1358,8 +1353,18 @@ satisfy \tcode{EqualityComparable}.
 \begin{codeblock}
   template <class I, class T>
   concept bool OutputIterator() {
-    return Iterator<I>() && Writable<I, T>();
+    return Iterator<I>() && Writable<I, T>() &&
+    requires(I i, T&& t) {
+      *i++ = std::forward(t); // not required to be equality preserving
+    };
   }
+\end{codeblock}
+
+\pnum
+Let \tcode{E} be an expression such that \tcode{decltype((E))} is \tcode{T}, and let \tcode{i} be a dereferenceable object of type \tcode{I}. Then \tcode{OutputIterator<I, T>()} is satisfied only if \tcode{*i++ = E;} has effects equivalent to:
+\begin{codeblock}
+  *i = E;
+  ++i;
 \end{codeblock}
 
 \pnum
@@ -3141,7 +3146,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 
     insert_iterator& operator*();
     insert_iterator& operator++();
-    insert_iterator operator++(int);
+    insert_iterator& operator++(int);
 
   private:
     Container* container;       // \expos
@@ -3246,7 +3251,7 @@ insert_iterator& operator*();
 \indexlibrary{\idxcode{operator++}!\idxcode{insert_iterator}}%
 \begin{itemdecl}
 insert_iterator& operator++();
-insert_iterator operator++(int);
+insert_iterator& operator++(int);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3316,7 +3321,9 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     reference operator*() const;
 
     move_iterator& operator++();
-    move_iterator operator++(int);
+    void operator++(int);
+    move_iterator operator++(int)
+      requires ForwardIterator<I>();
     move_iterator& operator--()
       requires BidirectionalIterator<I>();
     move_iterator operator--(int)
@@ -3483,7 +3490,17 @@ move_iterator& operator++();
 \indexlibrary{\idxcode{operator++}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator++}}%
 \begin{itemdecl}
-move_iterator operator++(int);
+void operator++(int);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to \tcode{++current}.
+\end{itemdescr}
+
+\begin{itemdecl}
+move_iterator operator++(int)
+  requires ForwardIterator<I>();
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3991,7 +4008,9 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     @\seebelow@ operator->() const requires Readable<I>();
 
     common_iterator& operator++();
-    common_iterator operator++(int);
+    decltype(auto) operator++(int);
+    common_iterator operator++(int)
+      requires ForwardIterator<I>();
 
   private:
     bool is_sentinel; // \expos
@@ -4217,7 +4236,7 @@ common_iterator& operator++();
 \requires \tcode{!is_sentinel}
 
 \pnum
-\effects \tcode{++iter}.
+\effects Equivalent to \tcode{++iter}.
 
 \pnum
 \returns \tcode{*this}.
@@ -4226,7 +4245,20 @@ common_iterator& operator++();
 \indexlibrary{\idxcode{operator++}!\idxcode{common_iterator}}%
 \indexlibrary{\idxcode{common_iterator}!\idxcode{operator++}}%
 \begin{itemdecl}
-common_iterator operator++(int);
+decltype(auto) operator++(int);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{!is_sentinel}.
+
+\pnum
+\effects Equivalent to: \tcode{return iter++;}
+\end{itemdescr}
+
+\begin{itemdecl}
+common_iterator operator++(int)
+  requires ForwardIterator<I>();
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4382,7 +4414,9 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     @\seebelow@ operator*() const;
 
     counted_iterator& operator++();
-    counted_iterator operator++(int);
+    decltype(auto) operator++(int);
+    counted_iterator operator++(int)
+      requires ForwardIterator<I>();
     counted_iterator& operator--()
       requires BidirectionalIterator<I>();
     counted_iterator operator--(int)
@@ -4594,7 +4628,25 @@ counted_iterator& operator++();
 \indexlibrary{\idxcode{operator++}!\idxcode{counted_iterator}}%
 \indexlibrary{\idxcode{counted_iterator}!\idxcode{operator++}}%
 \begin{itemdecl}
-counted_iterator operator++(int);
+decltype(auto) operator++(int);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{cnt > 0}.
+
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+--cnt;
+try { return current++; }
+catch(...) { ++cnt; throw; }
+\end{codeblock}
+\end{itemdescr}
+
+\begin{itemdecl}
+counted_iterator operator++(int)
+  requires ForwardIterator<I>();
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4605,8 +4657,7 @@ counted_iterator operator++(int);
 \effects Equivalent to:
 \begin{codeblock}
 counted_iterator tmp = *this;
-++current;
-@\dcr@cnt;
+++*this;
 return tmp;
 \end{codeblock}
 \end{itemdescr}
@@ -4644,8 +4695,7 @@ return tmp;
 \effects Equivalent to:
 \begin{codeblock}
 counted_iterator tmp = *this;
---current;
-++cnt;
+--*this;
 return tmp;
 \end{codeblock}
 \end{itemdescr}
@@ -5467,7 +5517,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 
     ostream_iterator& operator*();
     ostream_iterator& operator++();
-    ostream_iterator operator++(int);
+    ostream_iterator& operator++(int);
   private:
     basic_ostream<charT, traits>* out_stream;  // \expos
     const charT* delim;                        // \expos
@@ -5567,7 +5617,7 @@ ostream_iterator& operator*();
 \indexlibrary{\idxcode{ostream_iterator}!\idxcode{operator++}}%
 \begin{itemdecl}
 ostream_iterator& operator++();
-ostream_iterator operator++(int);
+ostream_iterator& operator++(int);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -5903,7 +5953,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 
     ostreambuf_iterator& operator*();
     ostreambuf_iterator& operator++();
-    ostreambuf_iterator operator++(int);
+    ostreambuf_iterator& operator++(int);
     bool failed() const noexcept;
 
   private:
@@ -6007,7 +6057,7 @@ ostreambuf_iterator& operator*();
 \indexlibrary{\idxcode{operator++}!\idxcode{ostreambuf_iterator}}%
 \begin{itemdecl}
 ostreambuf_iterator& operator++();
-ostreambuf_iterator operator++(int);
+ostreambuf_iterator& operator++(int);
 \end{itemdecl}
 
 \begin{itemdescr}
