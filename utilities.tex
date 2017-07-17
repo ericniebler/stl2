@@ -40,19 +40,15 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 
   // \ref{utility.exchange}, exchange:
   template <MoveConstructible T, class U=T>
-    requires Assignable<T&, U>()
+    requires Assignable<T&, U>
   T exchange(T& obj, U&& new_val);
 
   // \ref{taggedtup.tagged}, struct with named accessors
   template <class T>
-  concept bool TagSpecifier() {
-    return @\seebelow@;
-  }
+  concept bool TagSpecifier = @\seebelow@;
 
   template <class F>
-  concept bool TaggedType() {
-    return @\seebelow@;
-  }
+  concept bool TaggedType = @\seebelow@;
 
   template <class Base, TagSpecifier... Tags>
     requires sizeof...(Tags) <= tuple_size<Base>::value
@@ -123,8 +119,8 @@ and \tcode{E2} is equivalent to:
 \item
   Otherwise, if \tcode{E1} and \tcode{E2} are lvalues of the
   same type \tcode{T} which meets the syntactic requirements of
-  \tcode{MoveConstructible<T>()} and
-  \tcode{Assignable<T\&, T>()}, exchanges the referenced values.
+  \tcode{MoveConstructible<T>} and
+  \tcode{Assignable<T\&, T>}, exchanges the referenced values.
   \tcode{ranges::swap(E1, E2)} is a constant expression if
   the constructor selected by overload resolution for
   \tcode{T\{std::move(E1)\}} is a constexpr constructor and
@@ -149,7 +145,7 @@ and \tcode{E2} and has type \tcode{void}.
 
 \begin{itemdecl}
 template <MoveConstructible T, class U=T>
-  requires Assignable<T&, U>()
+  requires Assignable<T&, U>
 T exchange(T& obj, U&& new_val);
 \end{itemdecl}
 
@@ -178,27 +174,27 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 
   // \ref{comparisons}, comparisons:
   template <class T = void>
-    requires EqualityComparable<T>() || Same<T, void>()
+    requires EqualityComparable<T> || Same<T, void>
   struct equal_to;
 
   template <class T = void>
-    requires EqualityComparable<T>() || Same<T, void>()
+    requires EqualityComparable<T> || Same<T, void>
   struct not_equal_to;
 
   template <class T = void>
-    requires StrictTotallyOrdered<T>() || Same<T, void>()
+    requires StrictTotallyOrdered<T> || Same<T, void>
   struct greater;
 
   template <class T = void>
-    requires StrictTotallyOrdered<T>() || Same<T, void>()
+    requires StrictTotallyOrdered<T> || Same<T, void>
   struct less;
 
   template <class T = void>
-    requires StrictTotallyOrdered<T>() || Same<T, void>()
+    requires StrictTotallyOrdered<T> || Same<T, void>
   struct greater_equal;
 
   template <class T = void>
-    requires StrictTotallyOrdered<T>() || Same<T, void>()
+    requires StrictTotallyOrdered<T> || Same<T, void>
   struct less_equal;
 
   template <> struct equal_to<void>;
@@ -258,7 +254,7 @@ operators in the language~(\cxxref{expr.rel}, \cxxref{expr.eq}).
 \indexlibrary{\idxcode{equal_to}}%
 \begin{itemdecl}
 template <class T = void>
-  requires EqualityComparable<T>() || Same<T, void>()
+  requires EqualityComparable<T> || Same<T, void>
 struct equal_to {
   constexpr bool operator()(const T& x, const T& y) const;
 };
@@ -272,7 +268,7 @@ struct equal_to {
 \indexlibrary{\idxcode{not_equal_to}}%
 \begin{itemdecl}
 template <class T = void>
-  requires EqualityComparable<T>() || Same<T, void>()
+  requires EqualityComparable<T> || Same<T, void>
 struct not_equal_to {
   constexpr bool operator()(const T& x, const T& y) const;
 };
@@ -286,7 +282,7 @@ struct not_equal_to {
 \indexlibrary{\idxcode{greater}}%
 \begin{itemdecl}
 template <class T = void>
-  requires StrictTotallyOrdered<T>() || Same<T, void>()
+  requires StrictTotallyOrdered<T> || Same<T, void>
 struct greater {
   constexpr bool operator()(const T& x, const T& y) const;
 };
@@ -300,7 +296,7 @@ struct greater {
 \indexlibrary{\idxcode{less}}%
 \begin{itemdecl}
 template <class T = void>
-  requires StrictTotallyOrdered<T>() || Same<T, void>()
+  requires StrictTotallyOrdered<T> || Same<T, void>
 struct less {
   constexpr bool operator()(const T& x, const T& y) const;
 };
@@ -314,7 +310,7 @@ struct less {
 \indexlibrary{\idxcode{greater_equal}}%
 \begin{itemdecl}
 template <class T = void>
-  requires StrictTotallyOrdered<T>() || Same<T, void>()
+  requires StrictTotallyOrdered<T> || Same<T, void>
 struct greater_equal {
   constexpr bool operator()(const T& x, const T& y) const;
 };
@@ -328,7 +324,7 @@ struct greater_equal {
 \indexlibrary{\idxcode{less_equal}}%
 \begin{itemdecl}
 template <class T = void>
-  requires StrictTotallyOrdered<T>() || Same<T, void>()
+  requires StrictTotallyOrdered<T> || Same<T, void>
 struct less_equal {
   constexpr bool operator()(const T& x, const T& y) const;
 };
@@ -343,7 +339,7 @@ struct less_equal {
 \begin{itemdecl}
 template <> struct equal_to<void> {
   template <class T, class U>
-    requires EqualityComparable<T, U>()
+    requires EqualityComparableWith<T, U>
   constexpr auto operator()(T&& t, U&& u) const
     -> decltype(std::forward<T>(t) == std::forward<U>(u));
 
@@ -360,7 +356,7 @@ template <> struct equal_to<void> {
 \begin{itemdecl}
 template <> struct not_equal_to<void> {
   template <class T, class U>
-    requires EqualityComparable<T, U>()
+    requires EqualityComparableWith<T, U>
   constexpr auto operator()(T&& t, U&& u) const
     -> decltype(std::forward<T>(t) != std::forward<U>(u));
 
@@ -377,7 +373,7 @@ template <> struct not_equal_to<void> {
 \begin{itemdecl}
 template <> struct greater<void> {
   template <class T, class U>
-    requires StrictTotallyOrdered<T, U>()
+    requires StrictTotallyOrderedWith<T, U>
   constexpr auto operator()(T&& t, U&& u) const
     -> decltype(std::forward<T>(t) > std::forward<U>(u));
 
@@ -394,7 +390,7 @@ template <> struct greater<void> {
 \begin{itemdecl}
 template <> struct less<void> {
   template <class T, class U>
-    requires StrictTotallyOrdered<T, U>()
+    requires StrictTotallyOrderedWith<T, U>
   constexpr auto operator()(T&& t, U&& u) const
     -> decltype(std::forward<T>(t) < std::forward<U>(u));
 
@@ -411,7 +407,7 @@ template <> struct less<void> {
 \begin{itemdecl}
 template <> struct greater_equal<void> {
   template <class T, class U>
-    requires StrictTotallyOrdered<T, U>()
+    requires StrictTotallyOrderedWith<T, U>
   constexpr auto operator()(T&& t, U&& u) const
     -> decltype(std::forward<T>(t) >= std::forward<U>(u));
 
@@ -428,7 +424,7 @@ template <> struct greater_equal<void> {
 \begin{itemdecl}
 template <> struct less_equal<void> {
   template <class T, class U>
-    requires StrictTotallyOrdered<T, U>()
+    requires StrictTotallyOrderedWith<T, U>
   constexpr auto operator()(T&& t, U&& u) const
     -> decltype(std::forward<T>(t) <= std::forward<U>(u));
 
@@ -819,14 +815,10 @@ is zero-based.
 
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
   template <class T>
-  concept bool TagSpecifier() {
-    return @\impdef@;
-  }
-
+  concept bool TagSpecifier = @\impdef@;
+  
   template <class F>
-  concept bool TaggedType() {
-    return @\impdef@;
-  }
+  concept bool TaggedType = @\impdef@;
 
   template <class Base, TagSpecifier... Tags>
     requires sizeof...(Tags) <= tuple_size<Base>::value
@@ -839,28 +831,28 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     tagged &operator=(tagged&&) = default;
     tagged &operator=(const tagged&) = default;
     tagged(Base&&) noexcept(@\seebelow@)
-      requires MoveConstructible<Base>();
+      requires MoveConstructible<Base>;
     tagged(const Base&) noexcept(@\seebelow@)
-      requires CopyConstructible<Base>();
+      requires CopyConstructible<Base>;
     template <class Other>
-      requires Constructible<Base, Other>()
+      requires Constructible<Base, Other>
     tagged(tagged<Other, Tags...> &&that) noexcept(@\seebelow@);
     template <class Other>
-      requires Constructible<Base, const Other&>()
+      requires Constructible<Base, const Other&>
     tagged(const tagged<Other, Tags...> &that);
     template <class Other>
-      requires Assignable<Base&, Other>()
+      requires Assignable<Base&, Other>
     tagged& operator=(tagged<Other, Tags...>&& that) noexcept(@\seebelow@);
     template <class Other>
-      requires Assignable<Base&, const Other&>()
+      requires Assignable<Base&, const Other&>
     tagged& operator=(const tagged<Other, Tags...>& that);
     template <class U>
-      requires Assignable<Base&, U>() && !Same<decay_t<U>, tagged>()
+      requires Assignable<Base&, U> && !Same<decay_t<U>, tagged>
     tagged& operator=(U&& u) noexcept(@\seebelow@);
     void swap(tagged& that) noexcept(@\seebelow@)
-      requires Swappable<Base&>();
+      requires Swappable<Base>;
     friend void swap(tagged&, tagged&) noexcept(@\seebelow@)
-      requires Swappable<Base&>();
+      requires Swappable<Base>;
   };
 }}}}
 \end{codeblock}
@@ -886,7 +878,7 @@ struct @\xname{\textit{TAGGED_GETTER}}@ {
 \pnum
 A \techterm{tag specifier} is a type that facilitates a mapping from a tuple-like type and an
 element index into a \textit{tagged getter} that gives named access to the element at that index.
-\tcode{TagSpecifier<T>()} is satisfied if and only if \tcode{T} is a tag specifier. The tag specifiers in the
+\tcode{TagSpecifier<T>} is satisfied if and only if \tcode{T} is a tag specifier. The tag specifiers in the
 \tcode{Tags} parameter pack shall be unique. \enternote The mapping mechanism from tag specifier to
 tagged getter is unspecified.\exitnote
 
@@ -897,8 +889,8 @@ access to the $N$-th element of the tuple-like type \tcode{D}.
 pointer to any base other than \tcode{Base}.
 
 \pnum
-\tcode{TaggedType<F>()} is satisfied if and only if \tcode{F} is a unary function
-type with return type \tcode{T} which satisfies \tcode{TagSpecifier<T>()}. Let
+\tcode{TaggedType<F>} is satisfied if and only if \tcode{F} is a unary function
+type with return type \tcode{T} which satisfies \tcode{TagSpecifier<T>}. Let
 \tcode{\textit{TAGSPEC}(F)} name the tag specifier of the \tcode{TaggedType} \tcode{F}, and let
 \tcode{\textit{TAGELEM}(F)} name the argument type of the \tcode{TaggedType} \tcode{F}.
 
@@ -906,7 +898,7 @@ type with return type \tcode{T} which satisfies \tcode{TagSpecifier<T>()}. Let
 
 \begin{itemdecl}
 tagged(Base&& that) noexcept(@\seebelow@)
-  requires MoveConstructible<Base>();
+  requires MoveConstructible<Base>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -923,7 +915,7 @@ is_nothrow_move_constructible<Base>::value
 
 \begin{itemdecl}
 tagged(const Base& that) noexcept(@\seebelow@)
-  requires CopyConstructible<Base>();
+  requires CopyConstructible<Base>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -940,7 +932,7 @@ is_nothrow_copy_constructible<Base>::value
 
 \begin{itemdecl}
 template <class Other>
-  requires Constructible<Base, Other>()
+  requires Constructible<Base, Other>
 tagged(tagged<Other, Tags...> &&that) noexcept(@\seebelow@);
 \end{itemdecl}
 
@@ -959,7 +951,7 @@ is_nothrow_constructible<Base, Other>::value
 \indexlibrary{\idxcode{tagged}!\idxcode{tagged}}
 \begin{itemdecl}
 template <class Other>
-  requires Constructible<Base, const Other&>()
+  requires Constructible<Base, const Other&>
 tagged(const tagged<Other, Tags...>& that);
 \end{itemdecl}
 
@@ -972,7 +964,7 @@ tagged(const tagged<Other, Tags...>& that);
 \indexlibrary{\idxcode{tagged}!\idxcode{operator=}}
 \begin{itemdecl}
 template <class Other>
-  requires Assignable<Base&, Other>()
+  requires Assignable<Base&, Other>
 tagged& operator=(tagged<Other, Tags...>&& that) noexcept(@\seebelow@);
 \end{itemdecl}
 
@@ -995,7 +987,7 @@ is_nothrow_assignable<Base&, Other>::value
 \indexlibrary{\idxcode{tagged}!\idxcode{operator=}}
 \begin{itemdecl}
 template <class Other>
-  requires Assignable<Base&, const Other&>()
+  requires Assignable<Base&, const Other&>
 tagged& operator=(const tagged<Other, Tags...>& that);
 \end{itemdecl}
 
@@ -1011,7 +1003,7 @@ tagged& operator=(const tagged<Other, Tags...>& that);
 \indexlibrary{\idxcode{tagged}!\idxcode{operator=}}
 \begin{itemdecl}
 template <class U>
-  requires Assignable<Base&, U>() && !Same<decay_t<U>, tagged>()
+  requires Assignable<Base&, U> && !Same<decay_t<U>, tagged>
 tagged& operator=(U&& u) noexcept(@\seebelow@);
 \end{itemdecl}
 
@@ -1034,7 +1026,7 @@ is_nothrow_assignable<Base&, U>::value
 \indexlibrary{\idxcode{tagged}!\idxcode{swap}}
 \begin{itemdecl}
 void swap(tagged& rhs) noexcept(@\seebelow@)
-  requires Swappable<Base&>();
+  requires Swappable<Base>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -1056,7 +1048,7 @@ noexcept(swap(declval<Base&>(), declval<Base&>()))
 \indexlibrary{\idxcode{swap}!\tcode{tagged}}%
 \begin{itemdecl}
 friend void swap(tagged& lhs, tagged& rhs) noexcept(@\seebelow@)
-  requires Swappable<Base&>();
+  requires Swappable<Base>;
 \end{itemdecl}
 
 \begin{itemdescr}
