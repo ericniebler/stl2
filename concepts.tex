@@ -300,14 +300,48 @@ concept bool DerivedFrom = @\seebelow@;
 \indexlibrary{\idxcode{ConvertibleTo}}%
 \begin{itemdecl}
 template <class T, class U>
-concept bool ConvertibleTo = @\seebelow@;
+concept bool ConvertibleTo =
+  is_convertible<From, To>::value &&
+  requires(From (&f)()) {
+    static_cast<To>(f());
+  };
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\tcode{ConvertibleTo<T, U>} is satisfied
-if and only if \tcode{is_convertible<T, U>::value} is \tcode{true}.
+Let \tcode{test} be the invented function:
+\begin{codeblock}
+To test(From (&f)()) {
+  return f();
+}
+\end{codeblock}
+and let \tcode{f} be a function with no arguments and return type \tcode{From}
+such that \tcode{f()} is equality preserving. Then
+\tcode{ConvertibleTo<From, To>} is satisfied only if:
+
+\begin{itemize}
+\item
+\tcode{To} is not an object or reference-to-object type, or
+\tcode{static_cast<To>(f())} is equal to \tcode{test(f)}.
+
+\item
+\tcode{From} is not a reference-to-object type, or
+
+\begin{itemize}
+\item
+If \tcode{From} is an rvalue reference to a non const-qualified type, the resulting state of the object referenced by \tcode{f()} after either above expression is valid but unspecified~(\cxxref{lib.types.movedfrom}).
+
+\item
+Otherwise, the object referred to by \tcode{f()} is not modified by either above expression.
+\end{itemize}
+
+\end{itemize}
+
+\pnum
+There need not be any subsumption relationship between \tcode{ConvertibleTo<From, To>}
+and \tcode{is_convertible<From, To>::value}.
 \end{itemdescr}
+
 
 \rSec2[concepts.lib.corelang.commonref]{Concept \tcode{CommonReference}}
 
