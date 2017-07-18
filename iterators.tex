@@ -1034,7 +1034,7 @@ nor is the type required to be \tcode{EqualityComparable}.
     requires(I i) {
       typename difference_type_t<I>;
       requires SignedIntegral<difference_type_t<I>>;
-      { ++i } -> Same<I&>; // not required to be equality preserving
+      { ++i } -> Same<I>&; // not required to be equality preserving
       i++; // not required to be equality preserving
     };
 \end{codeblock}
@@ -1075,7 +1075,7 @@ supersedes the annotations on the increment expressions in the definition of
     Regular<I> &&
     WeaklyIncrementable<I> &&
     requires(I i) {
-      { i++ } -> Same<I>;
+      { i++ } -> Same<I>&&;
     };
 \end{codeblock}
 
@@ -1172,8 +1172,8 @@ between them in constant time.
     Sentinel<S, I> &&
     !disable_sized_sentinel<remove_cv_t<S>, remove_cv_t<I>> &&
     requires(const I& i, const S& s) {
-      { s - i } -> Same<difference_type_t<I>>;
-      { i - s } -> Same<difference_type_t<I>>;
+      { s - i } -> Same<difference_type_t<I>>&&;
+      { i - s } -> Same<difference_type_t<I>>&&;
     };
 \end{itemdecl}
 
@@ -1331,8 +1331,8 @@ and adds the ability to move an iterator backward as well as forward.
     ForwardIterator<I> &&
     DerivedFrom<iterator_category_t<I>, bidirectional_iterator_tag> &&
     requires(I i) {
-      { @\dcr@i } -> Same<I&>;
-      { i@\dcr@ } -> Same<I>;
+      { --i } -> Same<I>&;
+      { i-- } -> Same<I>&&;
     };
 \end{codeblock}
 
@@ -1372,12 +1372,13 @@ notation via subscripting.
     StrictTotallyOrdered<I> &&
     SizedSentinel<I, I> &&
     requires(I i, const I j, const difference_type_t<I> n) {
-      { i += n } -> Same<I&>;
-      { j + n } -> Same<I>;
-      { n + j } -> Same<I>;
-      { i -= n } -> Same<I&>;
-      { j - n } -> Same<I>;
-      { j[n] } -> Same<reference_t<I>>;
+      { i += n } -> Same<I>&;
+      { j + n }  -> Same<I>&&;
+      { n + j }  -> Same<I>&&;
+      { i -= n } -> Same<I>&;
+      { j - n }  -> Same<I>&&;
+      j[n];
+      requires Same<decltype(j[n]), reference_t<I>>;
     };
 \end{codeblock}
 
