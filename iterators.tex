@@ -2189,6 +2189,13 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
       requires RandomAccessIterator<I>;
     reference operator[](difference_type n) const
       requires RandomAccessIterator<I>;
+
+    friend constexpr rvalue_reference_t<I> iter_move(const reverse_iterator& i)
+      noexcept(@\seebelow@);
+    template <IndirectlySwappable<I> I2>
+      friend constexpr void iter_swap(const reverse_iterator& x, const reverse_iterator<I2>& y)
+        noexcept(@\seebelow@);
+
   private:
     I current; // \expos
   };
@@ -2625,6 +2632,46 @@ template <RandomAccessIterator I>
 \pnum
 \effects Equivalent to:
 \tcode{return reverse_iterator<I>(x.current - n);}
+\end{itemdescr}
+
+\rSec4[reverse.iter.iter_move]{\tcode{iter_move}}
+\indexlibrary{\idxcode{reverse_iterator}!\idxcode{iter_move}}%
+\indexlibrary{\idxcode{iter_move}!\idxcode{reverse_iterator}}%
+\begin{itemdecl}
+friend constexpr rvalue_reference_t<I> iter_move(const reverse_iterator& i)
+   noexcept(@\seebelow@);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to: \tcode{return ranges::iter_move(prev(i.current));}
+
+\pnum
+\remarks The expression in \tcode{noexcept} is equivalent to:
+\begin{codeblock}
+   noexcept(ranges::iter_move(declval<I&>())) && noexcept(--declval<I&>()) &&
+     is_nothrow_copy_constructible<I>::value
+\end{codeblock}
+\end{itemdescr}
+
+\rSec4[reverse.iter.iter_swap]{\tcode{iter_swap}}
+\indexlibrary{\idxcode{reverse_iterator}!\idxcode{iter_swap}}%
+\indexlibrary{\idxcode{iter_swap}!\idxcode{reverse_iterator}}%
+\begin{itemdecl}
+template <IndirectlySwappable<I> I2>
+  friend constexpr void iter_swap(const reverse_iterator& x, const reverse_iterator<I2>& y)
+    noexcept(@\seebelow@);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to \tcode{ranges::iter_swap(prev(x.current), prev(y.current))}.
+
+\pnum
+\remarks The expression in \tcode{noexcept} is equivalent to:
+\begin{codeblock}
+  noexcept(ranges::iter_swap(declval<I>(), declval<I>())) && noexcept(--declval<I&>())
+\end{codeblock}
 \end{itemdescr}
 
 \rSec4[reverse.iter.make]{Non-member function \tcode{make_reverse_iterator()}}
@@ -3176,6 +3223,12 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     reference operator[](difference_type n) const
       requires RandomAccessIterator<I>;
 
+    friend constexpr rvalue_reference_t<I> iter_move(const move_iterator& i)
+      noexcept(@\seebelow@);
+    template <IndirectlySwappable<I> I2>
+      friend constexpr void iter_swap(const move_iterator& x, const move_iterator<I2>& y)
+        noexcept(@\seebelow@);
+
   private:
     I current; // \expos
   };
@@ -3588,6 +3641,43 @@ template <RandomAccessIterator I>
 \tcode{return x + n;}
 \end{itemdescr}
 
+\indexlibrary{\idxcode{iter_move}!\idxcode{move_iterator}}%
+\indexlibrary{\idxcode{move_iterator}!\idxcode{iter_move}}%
+\begin{itemdecl}
+friend constexpr rvalue_reference_t<I> iter_move(const move_iterator& i)
+  noexcept(@\seebelow@);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to: \tcode{return ranges::iter_move(i.current);}
+
+\pnum
+\remarks The expression in \tcode{noexcept} is equivalent to:
+\begin{codeblock}
+noexcept(ranges::iter_move(i.current))
+\end{codeblock}
+\end{itemdescr}
+
+\indexlibrary{\idxcode{iter_swap}!\idxcode{move_iterator}}%
+\indexlibrary{\idxcode{move_iterator}!\idxcode{iter_swap}}%
+\begin{itemdecl}
+template <IndirectlySwappable<I> I2>
+  friend constexpr void iter_swap(const move_iterator& x, const move_iterator<I2>& y)
+    noexcept(@\seebelow@);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to: \tcode{ranges::iter_swap(x.current, y.current)}.
+
+\pnum
+\remarks The expression in \tcode{noexcept} is equivalent to:
+\begin{codeblock}
+noexcept(ranges::iter_swap(x.current, y.current))
+\end{codeblock}
+\end{itemdescr}
+
 \indexlibrary{\idxcode{make_move_iterator}}%
 \begin{itemdecl}
 template <InputIterator I>
@@ -3847,6 +3937,13 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     decltype(auto) operator++(int);
     common_iterator operator++(int)
       requires ForwardIterator<I>;
+
+    friend rvalue_reference_t<I> iter_move(const common_iterator& i)
+      noexcept(@\seebelow@)
+        requires InputIterator<I>;
+    template <IndirectlySwappable<I> I2, class S2>
+      friend void iter_swap(const common_iterator& x, const common_iterator<I2, S2>& y)
+        noexcept(@\seebelow@);
 
   private:
     bool is_sentinel; // \expos
@@ -4185,6 +4282,55 @@ difference_type_t<I2> operator-(
 \end{codeblock}
 \end{itemdescr}
 
+\rSec4[common.iter.op.iter_move]{\tcode{iter_move}}
+
+\indexlibrary{\idxcode{iter_move}!\idxcode{common_iterator}}%
+\indexlibrary{\idxcode{common_iterator}!\idxcode{iter_move}}%
+\begin{itemdecl}
+friend rvalue_reference_t<I> iter_move(const common_iterator& i)
+  noexcept(@\seebelow@)
+    requires InputIterator<I>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{!i.is_sentinel}.
+
+\pnum
+\effects Equivalent to: \tcode{return ranges::iter_move(i.iter);}
+
+\pnum
+\remarks The expression in \tcode{noexcept} is equivalent to:
+\begin{codeblock}
+\end{codeblock}
+noexcept(ranges::iter_move(i.iter))
+\end{itemdescr}
+
+\rSec4[common.iter.op.iter_swap]{\tcode{iter_swap}}
+
+\indexlibrary{\idxcode{iter_swap}!\idxcode{common_iterator}}%
+\indexlibrary{\idxcode{common_iterator}!\idxcode{iter_swap}}%
+\begin{itemdecl}
+template <IndirectlySwappable<I> I2>
+  friend void iter_swap(const common_iterator& x, const common_iterator<I2>& y)
+    noexcept(@\seebelow@);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{!x.is_sentinel \&\& !y.is_sentinel}.
+
+\pnum
+\effects Equivalent to \tcode{ranges::iter_swap(x.iter, y.iter)}.
+
+\pnum
+\remarks The expression in \tcode{noexcept} is equivalent to:
+\begin{codeblock}
+noexcept(ranges::iter_swap(x.iter, y.iter))
+\end{codeblock}
+\end{itemdescr}
+
+
 \rSec2[default.sentinels]{Default sentinels}
 
 \rSec3[default.sent]{Class \tcode{default_sentinel}}
@@ -4268,6 +4414,14 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
       requires RandomAccessIterator<I>;
     @\seebelow@ operator[](difference_type n) const
       requires RandomAccessIterator<I>;
+
+    friend constexpr rvalue_reference_t<I> iter_move(const counted_iterator& i)
+      noexcept(@\seebelow@)
+        requires InputIterator<I>;
+    template <IndirectlySwappable<I> I2>
+      friend constexpr void iter_swap(const counted_iterator& x, const counted_iterator<I2>& y)
+        noexcept(@\seebelow@);
+
   private:
     I current; // \expos
     difference_type_t<I> cnt; // \expos
@@ -4836,6 +4990,44 @@ template <RandomAccessIterator I>
 \pnum
 \effects Equivalent to:
 \tcode{return x + n;}
+\end{itemdescr}
+
+\indexlibrary{\idxcode{iter_move}!\idxcode{counted_iterator}}%
+\indexlibrary{\idxcode{counted_iterator}!\idxcode{iter_move}}%
+\begin{itemdecl}
+friend constexpr rvalue_reference_t<I> iter_move(const counted_iterator& i)
+  noexcept(@\seebelow@)
+    requires InputIterator<I>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to: \tcode{return ranges::iter_move(i.current);}
+
+\pnum
+\remarks The expression in \tcode{noexcept} is equivalent to:
+\begin{codeblock}
+noexcept(ranges::iter_move(i.current))
+\end{codeblock}
+\end{itemdescr}
+
+\indexlibrary{\idxcode{iter_swap}!\idxcode{counted_iterator}}%
+\indexlibrary{\idxcode{counted_iterator}!\idxcode{iter_swap}}%
+\begin{itemdecl}
+template <IndirectlySwappable<I> I2>
+  friend constexpr void iter_swap(const counted_iterator& x, const counted_iterator<I2>& y)
+    noexcept(@\seebelow@);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to \tcode{ranges::iter_swap(x.current, y.current)}.
+
+\pnum
+\remarks The expression in \tcode{noexcept} is equivalent to:
+\begin{codeblock}
+noexcept(ranges::iter_swap(x.current, y.current))
+\end{codeblock}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{make_counted_iterator}}%
