@@ -480,30 +480,39 @@ for example, \tcode{char}.
 \begin{itemdecl}
 template <class T, class U>
 concept bool Assignable =
-  CommonReference<const T&, const U&> && requires(T&& t, U&& u) {
-    { std::forward<T>(t) = std::forward<U>(u) } -> Same<T&>;
+  is_lvalue_reference<T>::value && // \seebelow
+  CommonReference<
+    const remove_reference_t<T>&,
+    const remove_reference_t<U>&> &&
+  requires(T t, U&& u) {
+    { t = std::forward<U>(u) } -> Same<T>&&;
   };
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-Let \tcode{t} be an lvalue of type \tcode{T}, and \tcode{R} be the
-type \tcode{remove_reference_t<U>}. If \tcode{U} is an lvalue reference
-type, let \tcode{v} be an lvalue of type \tcode{R};
-otherwise, let \tcode{v} be an rvalue of type \tcode{R}.
-Let \tcode{uu} be a distinct object of type \tcode{R} such that
-\tcode{uu} is equal to \tcode{v}.
-\tcode{Assignable<T, U>} is satisfied only if
+Let \tcode{t} be an lvalue which refers to an object \tcode{o} such that
+\tcode{decltype((t))} is \tcode{T}, and \tcode{u} an expression such that
+\tcode{decltype((u))} is \tcode{U}. Let \tcode{u2} be a distinct object that is
+equal to \tcode{u}. \tcode{Assignable<T, U>} is satisfied only if
 
 \begin{itemize}
-\item \tcode{addressof(t = v) == addressof(t)}.
-\item After evaluating \tcode{t = v}, \tcode{t} is equal to \tcode{uu} and:
+\item \tcode{addressof(t = u) == addressof(o)}.
+
+\item After evaluating \tcode{t = u}, \tcode{t} is equal to \tcode{u2} and:
+
 \begin{itemize}
-\item If \tcode{v} is a non-\tcode{const} rvalue, its resulting
-state is valid but unspecified~(\cxxref{lib.types.movedfrom}).
-\item Otherwise, \tcode{v} is not modified.
+\item If \tcode{u} is a non-\tcode{const} xvalue, the resulting state of the
+object to which it refers is valid but unspecified~(\cxxref{lib.types.movedfrom}).
+
+\item Otherwise, if \tcode{u} is a glvalue, the object to which it refers is not
+modified.
 \end{itemize}
 \end{itemize}
+
+\pnum
+There need not be any subsumption relationship between \tcode{Assignable<T, U>}
+and \tcode{is_lvalue_reference<T>::value}.
 \end{itemdescr}
 
 \rSec2[concepts.lib.corelang.swappable]{Concept \tcode{Swappable}}
@@ -818,38 +827,19 @@ value-oriented programming style on which the library is based.
 \rSec2[concepts.lib.object.destructible]{Concept \tcode{Destructible}}
 
 \pnum
-The \tcode{Destructible} concept is the base of the hierarchy of object concepts.
-It specifies properties that all such object types have in common.
+The \tcode{Destructible} concept specifies properties of all types, instances of
+which can be destroyed at the end of their lifetime, or reference types.
 
 \indexlibrary{\idxcode{Destructible}}%
 \begin{itemdecl}
 template <class T>
-concept bool Destructible =
-  requires(T t, const T ct, T* p) {
-    { t.@$\sim$@T() } noexcept;
-    { &t } -> Same<T*>; // not required to be equality preserving
-    { &ct } -> Same<const T*>; // not required to be equality preserving
-    delete p;
-    delete[] p;
-  };
+concept bool Destructible = is_nothrow_destructible<T>::value; // \seebelow
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-The expression requirement \tcode{\&ct} does not require implicit expression
-variations~(\ref{concepts.lib.general.equality}).
-
-\pnum
-Given a (possibly \tcode{const}) lvalue \tcode{t} of type \tcode{T} and pointer
-\tcode{p} of type \tcode{T*}, \tcode{Destructible<T>} is satisfied only if
-
-\begin{itemize}
-\item After evaluating the expression \tcode{t.$\sim$T()},
-\tcode{delete p}, or \tcode{delete[] p}, all resources owned by
-the denoted object(s) are reclaimed.
-\item \tcode{\&t == addressof(t)}.
-\item The expression \tcode{\&t} is non-modifying.
-\end{itemize}
+There need not be any subsumption relationship between \tcode{Destructible<T>}
+and \tcode{is_nothrow_destructible<T>::value}.
 
 \pnum
 \enternote Unlike the \tcode{Destructible} library concept in the \Cpp
@@ -860,46 +850,29 @@ that are \tcode{noexcept(false)}, even if non-throwing. \exitnote
 \rSec2[concepts.lib.object.constructible]{Concept \tcode{Constructible}}
 
 \pnum
-The \tcode{Constructible} concept is used to constrain the type of a
-variable to be either an object type constructible from a given set of argument
-types, or a reference type that can be bound to those arguments.
+The \tcode{Constructible} concept constrains the initialization of a variable of
+a type with a given set of argument types.
 
 \indexlibrary{\idxcode{Constructible}}%
 \begin{itemdecl}
 template <class T, class... Args>
-concept bool @\xname{ConstructibleObject}@ = // \expos
-  Destructible<T> && requires(Args&&... args) {
-    T{std::forward<Args>(args)...}; // not required to be equality preserving
-    new T{std::forward<Args>(args)...}; // not required to be equality preserving
-  };
-
-template <class T, class... Args>
-concept bool @\xname{BindableReference}@ = // \expos
-  is_reference<T>::value && requires(Args&&... args) {
-    T(std::forward<Args>(args)...);
-  };
-
-template <class T, class... Args>
 concept bool Constructible =
-  @\xname{ConstructibleObject}@<T, Args...> ||
-  @\xname{BindableReference}@<T, Args...>;
+  Destructible<T> && is_constructible<T, Args...>::value; // \seebelow
 \end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+There need not be any subsumption relationship between \tcode{Constructible<T, Args...>}
+and \tcode{is_constructible<T, Args...>::value}.
+\end{itemdescr}
 
 \rSec2[concepts.lib.object.defaultconstructible]{Concept \tcode{DefaultConstructible}}
 
 \indexlibrary{\idxcode{DefaultConstructible}}%
 \begin{itemdecl}
 template <class T>
-concept bool DefaultConstructible =
-  Constructible<T> &&
-  requires(const size_t n) {
-    new T[n]{}; // not required to be equality preserving
-  };
+concept bool DefaultConstructible = Constructible<T>;
 \end{itemdecl}
-
-\pnum
-\enternote The array allocation expression \tcode{new T[n]\{\}} implicitly
-requires that \tcode{T} has a non-explicit default constructor. \exitnote
 
 \rSec2[concepts.lib.object.moveconstructible]{Concept \tcode{MoveConstructible}}
 
@@ -907,25 +880,23 @@ requires that \tcode{T} has a non-explicit default constructor. \exitnote
 \begin{itemdecl}
 template <class T>
 concept bool MoveConstructible =
-  Constructible<T, remove_cv_t<T>&&> &&
-  ConvertibleTo<remove_cv_t<T>&&, T>;
+  Constructible<T, T> && ConvertibleTo<T, T>;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-Let \tcode{U} be the type \tcode{remove_cv_t<T>},
-\tcode{rv} be an rvalue of type \tcode{U},
-and \tcode{u2} be a distinct object of type \tcode{T} equal to \tcode{rv}.
+If \tcode{T} is an object type, then let \tcode{rv} be an rvalue of type \tcode{T}
+and \tcode{u2} a distinct object of type \tcode{T} equal to \tcode{rv}.
 \tcode{MoveConstructible<T>} is satisfied only if
 
 \begin{itemize}
 \item After the definition \tcode{T u = rv;}, \tcode{u} is equal to \tcode{u2}.
-\item \tcode{T\{rv\}} or \tcode{*new T\{rv\}} is equal to \tcode{u2}.
+
+\item \tcode{T\{rv\}} is equal to \tcode{u2}.
+
+\item If \tcode{T} is not \tcode{const}, \tcode{rv}'s resulting state is valid
+but unspecified~(\cxxref{lib.types.movedfrom}); otherwise, it is unchanged.
 \end{itemize}
-
-\pnum
-\tcode{rv}'s resulting state is valid but unspecified~(\cxxref{lib.types.movedfrom}).
-
 \end{itemdescr}
 
 \rSec2[concepts.lib.object.copyconstructible]{Concept \tcode{CopyConstructible}}
@@ -935,23 +906,21 @@ and \tcode{u2} be a distinct object of type \tcode{T} equal to \tcode{rv}.
 template <class T>
 concept bool CopyConstructible =
   MoveConstructible<T> &&
-  Constructible<T, const remove_cv_t<T>&> &&
-  ConvertibleTo<remove_cv_t<T>&, T> &&
-  ConvertibleTo<const remove_cv_t<T>&, T> &&
-  ConvertibleTo<const remove_cv_t<T>&&, T>;
+  Constructible<T, T&> && ConvertibleTo<T&, T> &&
+  Constructible<T, const T&> && ConvertibleTo<const T&, T> &&
+  Constructible<T, const T> && ConvertibleTo<const T, T>;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-Let \tcode{v} be an lvalue of type (possibly \tcode{const})
-\tcode{remove_cv_t<T>} or an rvalue of type \tcode{const remove_cv_t<T>}.
+If \tcode{T} is an object type, then let \tcode{v} be an lvalue of type (possibly
+\tcode{const}) \tcode{T} or an rvalue of type \tcode{const T}.
 \tcode{CopyConstructible<T>} is satisfied only if
 
 \begin{itemize}
-\item After the definition \tcode{T u = v;}, \tcode{u} is equal
-to \tcode{v}.
-\item \tcode{T\{v\}} or \tcode{*new T\{v\}} is equal
-to \tcode{v}.
+\item After the definition \tcode{T u = v;}, \tcode{u} is equal to \tcode{v}.
+
+\item \tcode{T\{v\}} is equal to \tcode{v}.
 \end{itemize}
 
 \end{itemdescr}
@@ -962,10 +931,17 @@ to \tcode{v}.
 \begin{itemdecl}
 template <class T>
 concept bool Movable =
+  is_object<T>::value &&
   MoveConstructible<T> &&
   Assignable<T&, T> &&
   Swappable<T>;
 \end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+There need not be any subsumption relationship between \tcode{Movable<T>} and
+\tcode{is_object<T>::value}.
+\end{itemdescr}
 
 \rSec2[concepts.lib.object.copyable]{Concept \tcode{Copyable}}
 
