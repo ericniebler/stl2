@@ -965,17 +965,14 @@ applying \tcode{operator*} including pointers, smart pointers, and iterators.
 \begin{codeblock}
   template <class In>
   concept bool Readable =
-    Movable<In> && DefaultConstructible<In> &&
-    requires(const In& i) {
+    requires {
       typename value_type_t<In>;
       typename reference_t<In>;
       typename rvalue_reference_t<In>;
-      { *i } -> Same<reference_t<In>>;
-      { ranges::iter_move(i) } -> Same<rvalue_reference_t<In>>;
     } &&
-    CommonReference<reference_t<In>, value_type_t<In>&> &&
-    CommonReference<reference_t<In>, rvalue_reference_t<In>> &&
-    CommonReference<rvalue_reference_t<In>, const value_type_t<In>&>;
+    CommonReference<reference_t<In>&&, value_type_t<In>&> &&
+    CommonReference<reference_t<In>&&, rvalue_reference_t<In>&&> &&
+    CommonReference<rvalue_reference_t<In>&&, const value_type_t<In>&>;
 \end{codeblock}
 
 \rSec2[iterators.writable]{Concept \tcode{Writable}}
@@ -988,9 +985,13 @@ referenced object.
 \begin{codeblock}
   template <class Out, class T>
   concept bool Writable =
-    Movable<Out> && DefaultConstructible<Out> &&
-    requires(Out o, T&& t) {
+    requires(Out&& o, T&& t) {
       *o = std::forward<T>(t); // not required to be equality preserving
+      *std::forward<Out>(o) = std::forward<T>(t); // not required to be equality preserving
+      const_cast<const reference_t<Out>&&>(*o) =
+        std::forward<T>(t); // not required to be equality preserving
+      const_cast<const reference_t<Out>&&>(*std::forward<Out>(o)) =
+        std::forward<T>(t); // not required to be equality preserving
     };
 \end{codeblock}
 
@@ -1000,12 +1001,12 @@ be a dereferenceable object of type \tcode{Out}. \tcode{Writable<Out, T>} is sat
 
 \begin{itemize}
 \item If \tcode{Readable<Out> \&\& Same<value_type_t<Out>, decay_t<T>{>}} is satisfied,
-then \tcode{*o} after the assignment is equal
+then \tcode{*o} after any above assignment is equal
 to the value of \tcode{E} before the assignment.
 \end{itemize}
 
 \pnum
-After evaluating the assignment expression, \tcode{o} is not required to be dereferenceable.
+After evaluating any above assignment expression, \tcode{o} is not required to be dereferenceable.
 
 \pnum
 If \tcode{E} is an xvalue~(\cxxref{basic.lval}), the resulting
