@@ -286,13 +286,21 @@ only if \tcode{T} and \tcode{U} denote the same type.
 \indexlibrary{\idxcode{DerivedFrom}}%
 \begin{itemdecl}
 template <class T, class U>
-concept bool DerivedFrom = @\seebelow@;
+concept bool DerivedFrom =
+  is_base_of<U, T>::value &&
+  is_convertible<remove_cv_t<T>*, remove_cv_t<U>*>::value; // \seebelow
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\tcode{DerivedFrom<T, U>} is satisfied if and only if
-\tcode{is_base_of<U, T>::value} is \tcode{true}.
+There need not be any subsumption relationship between \tcode{DerivedFrom<T, U>}
+and either \tcode{is_base_of<U, T>::value} or
+\tcode{is_convertible<remove_cv_t<T>*, remove_cv_t<U>*>::value}.
+
+\pnum
+\enternote \tcode{DerivedFrom<T, U>} is satisfied if and only if \tcode{T} is
+publicly and unambiguously derived from \tcode{U}, or \tcode{T} and \tcode{U}
+are the same class type ignoring \cv-qualifiers. \exitnote
 \end{itemdescr}
 
 \rSec2[concepts.lib.corelang.convertibleto]{Concept \tcode{ConvertibleTo}}
