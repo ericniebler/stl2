@@ -316,7 +316,7 @@ To test(From (&f)()) {
 }
 \end{codeblock}
 and let \tcode{f} be a function with no arguments and return type \tcode{From}
-such that \tcode{f()} is equality preserving. Then
+such that \tcode{f()} is equality preserving.
 \tcode{ConvertibleTo<From, To>} is satisfied only if:
 
 \begin{itemize}
@@ -485,7 +485,7 @@ type, let \tcode{v} be an lvalue of type \tcode{R};
 otherwise, let \tcode{v} be an rvalue of type \tcode{R}.
 Let \tcode{uu} be a distinct object of type \tcode{R} such that
 \tcode{uu} is equal to \tcode{v}.
-Then \tcode{Assignable<T, U>} is satisfied only if
+\tcode{Assignable<T, U>} is satisfied only if
 
 \begin{itemize}
 \item \tcode{addressof(t = v) == addressof(t)}.
@@ -510,7 +510,9 @@ concept bool Swappable =
 
 template <class T, class U>
 concept bool SwappableWith =
-  CommonReference<const T&, const U&> &&
+  CommonReference<
+    const remove_reference_t<T>&,
+    const remove_reference_t<U>&>() &&
   requires(T&& t, U&& u) {
     ranges::swap(std::forward<T>(t), std::forward<T>(t));
     ranges::swap(std::forward<U>(u), std::forward<U>(u));
@@ -599,33 +601,31 @@ The \tcode{Boolean} concept specifies the requirements on a type that is usable 
 \begin{itemdecl}
 template <class B>
 concept bool Boolean =
-  MoveConstructible<B> && // (see \ref{concepts.lib.object.moveconstructible})
-  requires(const B b1, const B b2, const bool a) {
-    bool(b1);
-    { b1 } -> bool;
-    bool(!b1);
-    { !b1 } -> bool;
-    { b1 && b2 } -> Same<bool>;
-    { b1 && a } -> Same<bool>;
-    { a && b1 } -> Same<bool>;
-    { b1 || b2 } -> Same<bool>;
-    { b1 || a } -> Same<bool>;
-    { a || b1 } -> Same<bool>;
-    { b1 == b2 } -> bool;
-    { b1 != b2 } -> bool;
-    { b1 == a } -> bool;
-    { a == b1 } -> bool;
-    { b1 != a } -> bool;
-    { a != b1 } -> bool;
+  Movable<decay_t<B>> && // (see \ref{concepts.lib.object.movable})
+  requires(const remove_reference_t<B>& b1,
+           const remove_reference_t<B>& b2, const bool a) {
+    { b1 }       -> ConvertibleTo<bool>&&;
+    { !b1 }      -> ConvertibleTo<bool>&&;
+    { b1 && a }  -> Same<bool>&&;
+    { b1 || a }  -> Same<bool>&&;
+    { b1 && b2 } -> Same<bool>&&;
+    { a && b2  } -> Same<bool>&&;
+    { b1 || b2 } -> Same<bool>&&;
+    { a || b2  } -> Same<bool>&&;
+    { b1 == b2 } -> ConvertibleTo<bool>&&;
+    { b1 == a  } -> ConvertibleTo<bool>&&;
+    { a == b2  } -> ConvertibleTo<bool>&&;
+    { b1 != b2 } -> ConvertibleTo<bool>&&;
+    { b1 != a  } -> ConvertibleTo<bool>&&;
+    { a != b2  } -> ConvertibleTo<bool>&&;
   };
 \end{itemdecl}
 
 \pnum
-Given values \tcode{b1} and \tcode{b2} of type \tcode{B}, then
-\tcode{Boolean<B>} is satisfied only if
+Given \tcode{const} lvalues \tcode{b1} and \tcode{b2} of type
+\tcode{remove_reference_t<B>}, then \tcode{Boolean<B>} is satisfied only if
 
 \begin{itemize}
-\item \tcode{bool(b1) == [](bool x) \{ return x; \}(b1)}.
 \item \tcode{bool(b1) == !bool(!b1)}.
 \item \tcode{(b1 \&\& b2)}, \tcode{(b1 \&\& bool(b2))}, and
       \tcode{(bool(b1) \&\& b2)} are all equal to
@@ -650,18 +650,20 @@ not \tcode{Boolean} types.\exitexample
 \begin{itemdecl}
 template <class T, class U>
 concept bool WeaklyEqualityComparableWith =
-  requires(const T& t, const U& u) {
-    { t == u } -> Boolean;
-    { u == t } -> Boolean;
-    { t != u } -> Boolean;
-    { u != t } -> Boolean;
+  requires(const remove_reference_t<T>& t,
+           const remove_reference_t<U>& u) {
+    { t == u } -> Boolean&&;
+    { t != u } -> Boolean&&;
+    { u == t } -> Boolean&&;
+    { u != t } -> Boolean&&;
   };
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-Let \tcode{t} and \tcode{u} be objects of types \tcode{T} and \tcode{U} respectively.
-\tcode{WeaklyEqualityComparableWith<T, U>} is satisfied only if:
+Let \tcode{t} and \tcode{u} be \tcode{const} lvalues of types
+\tcode{remove_reference_t<T>} and \tcode{remove_reference_t<U>} respectively.
+\tcode{Weakly\-Equality\-Comparable\-With<T, U>} is satisfied only if:
 \begin{itemize}
 \item \tcode{t == u}, \tcode{u == t}, \tcode{t != u}, and \tcode{u != t}
       have the same domain.
@@ -695,19 +697,24 @@ implies that \tcode{==} is reflexive, transitive, and symmetric.\exitnote
 \begin{itemdecl}
 template <class T, class U>
 concept bool EqualityComparableWith =
-  CommonReference<const T&, const U&> &&
   EqualityComparable<T> &&
   EqualityComparable<U> &&
+  CommonReference<
+    const remove_reference_t<T>&,
+    const remove_reference_t<U>&> &&
   EqualityComparable<
-    remove_cv_t<remove_reference_t<common_reference_t<const T&, const U&>>>> &&
+    common_reference_t<
+      const remove_reference_t<T>&,
+      const remove_reference_t<U>&>> &&
   WeaklyEqualityComparableWith<T, U>;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-Let \tcode{t} be an object of type \tcode{T}, \tcode{u} be an object of type \tcode{U}, and \tcode{C} be
-\tcode{common_reference_t<const T\&, const U\&>}.
-Then \tcode{EqualityComparableWith<T, U>} is satisfied only if:
+Let \tcode{t} be a \tcode{const} lvalue of type \tcode{remove_reference_t<T>}, \tcode{u} be a
+\tcode{const} lvalue of type \tcode{remove_reference_t<U>}, and \tcode{C} be
+\tcode{common_reference_t<const remove_reference_t<T>\&, const remove_reference_t<U>\&>}.
+\tcode{EqualityComparableWith<T, U>} is satisfied only if:
 
 \begin{itemize}
 \item \tcode{bool(t == u) == bool(C(t) == C(u))}.
@@ -721,18 +728,19 @@ Then \tcode{EqualityComparableWith<T, U>} is satisfied only if:
 template <class T>
 concept bool StrictTotallyOrdered =
   EqualityComparable<T> &&
-  requires(const T a, const T b) {
-    { a < b } -> Boolean;
-    { a > b } -> Boolean;
-    { a <= b } -> Boolean;
-    { a >= b } -> Boolean;
+  requires(const remove_reference_t<T>& a,
+           const remove_reference_t<T>& b) {
+    { a < b }  -> Boolean&&;
+    { a > b }  -> Boolean&&;
+    { a <= b } -> Boolean&&;
+    { a >= b } -> Boolean&&;
   };
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-Let \tcode{a}, \tcode{b}, and \tcode{c} be objects of type \tcode{T}.
-Then \tcode{StrictTotallyOrdered<T>} is satisfied only if
+Let \tcode{a}, \tcode{b}, and \tcode{c} be \tcode{const} lvalues of type \tcode{remove_reference_t<T>}.
+\tcode{StrictTotallyOrdered<T>} is satisfied only if
 
 \begin{itemize}
 \item Exactly one of \tcode{bool(a < b)}, \tcode{bool(a > b)}, or
@@ -749,30 +757,36 @@ Then \tcode{StrictTotallyOrdered<T>} is satisfied only if
 \begin{itemdecl}
 template <class T, class U>
 concept bool StrictTotallyOrderedWith =
-  CommonReference<const T&, const U&> &&
   StrictTotallyOrdered<T> &&
   StrictTotallyOrdered<U> &&
+  CommonReference<
+    const remove_reference_t<T>&,
+    const remove_reference_t<U>&> &&
   StrictTotallyOrdered<
-    remove_cv_t<remove_reference_t<common_reference_t<const T&, const U&>>>> &&
+    common_reference_t<
+      const remove_reference_t<T>&,
+      const remove_reference_t<U>&>> &&
   EqualityComparableWith<T, U> &&
-  requires(const T t, const U u) {
-    { t < u } -> Boolean;
-    { t > u } -> Boolean;
-    { t <= u } -> Boolean;
-    { t >= u } -> Boolean;
-    { u < t } -> Boolean;
-    { u > t } -> Boolean;
-    { u <= t } -> Boolean;
-    { u >= t } -> Boolean;
+  requires(const remove_reference_t<T>& t,
+           const remove_reference_t<U>& u) {
+    { t < u }  -> Boolean&&;
+    { t > u }  -> Boolean&&;
+    { t <= u } -> Boolean&&;
+    { t >= u } -> Boolean&&;
+    { u < t }  -> Boolean&&;
+    { u > t }  -> Boolean&&;
+    { u <= t } -> Boolean&&;
+    { u >= t } -> Boolean&&;
   };
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-Let \tcode{t} be an object of type T, \tcode{u} be an object
-of type \tcode{U}, and \tcode{C} be
-\tcode{common_reference_t<const T\&, const U\&>}.
-Then \tcode{StrictTotallyOrderedWith<T, U>} is satisfied only if
+Let \tcode{t} be a \tcode{const} lvalue of type \tcode{remove_reference_t<T>},
+\tcode{u} be a \tcode{const} lvalue of type \tcode{remove_reference_t<U>},
+and \tcode{C} be \tcode{common_reference_t<const remove_reference_t<T>\&,
+const remove_reference_t<U>\&>}.
+\tcode{StrictTotallyOrderedWith<T, U>} is satisfied only if
 
 \begin{itemize}
 \item \tcode{bool(t < u) == bool(C(t) < C(u)).}
@@ -894,7 +908,7 @@ concept bool MoveConstructible =
 Let \tcode{U} be the type \tcode{remove_cv_t<T>},
 \tcode{rv} be an rvalue of type \tcode{U},
 and \tcode{u2} be a distinct object of type \tcode{T} equal to \tcode{rv}.
-Then \tcode{MoveConstructible<T>} is satisfied only if
+\tcode{MoveConstructible<T>} is satisfied only if
 
 \begin{itemize}
 \item After the definition \tcode{T u = rv;}, \tcode{u} is equal to \tcode{u2}.
@@ -923,7 +937,7 @@ concept bool CopyConstructible =
 \pnum
 Let \tcode{v} be an lvalue of type (possibly \tcode{const})
 \tcode{remove_cv_t<T>} or an rvalue of type \tcode{const remove_cv_t<T>}.
-Then \tcode{CopyConstructible<T>} is satisfied only if
+\tcode{CopyConstructible<T>} is satisfied only if
 
 \begin{itemize}
 \item After the definition \tcode{T u = v;}, \tcode{u} is equal
@@ -1064,21 +1078,28 @@ template <class R, class T, class U>
 concept bool Relation =
   Predicate<R, T, T> &&
   Predicate<R, U, U> &&
-  CommonReference<const T&, const U&> &&
+  CommonReference<
+    const remove_reference_t<T>&,
+    const remove_reference_t<U>&> &&
   Predicate<R,
-    common_reference_t<const T&, const U&>,
-    common_reference_t<const T&, const U&>> &&
+    common_reference_t<
+      const remove_reference_t<T>&,
+      const remove_reference_t<U>&>,
+    common_reference_t<
+      const remove_reference_t<T>&,
+      const remove_reference_t<U>&>> &&
   Predicate<R, T, U> &&
   Predicate<R, U, T>;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-Let \tcode{r} be any object of type \tcode{R}, \tcode{t} be any
-object of type \tcode{T}, \tcode{u} be any
-object of type \tcode{U}, and \tcode{C} be
-\tcode{common_reference_t<const T\&, const U\&>}.
-Then \tcode{Relation<R, T, U>} is satisfied only if
+Let \tcode{r} be an expression such that \tcode{decltype((r))} is \tcode{R},
+\tcode{t} be an expression such that \tcode{decltype((t))} is \tcode{T},
+\tcode{u} be an expression such that \tcode{decltype((u))} is \tcode{U},
+and \tcode{C} be \tcode{common_reference_t<const remove_reference_t<T>\&,
+const remove_reference_t<U>\&>}.
+\tcode{Relation<R, T, U>} is satisfied only if
 
 \begin{itemize}
 \item \tcode{bool(r(t, u)) == bool(r(C(t), C(u))).}
