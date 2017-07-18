@@ -11,6 +11,7 @@ iterators, like in C++17.}
 
 \begin{quote}
 \pnum
+\begin{removedblock}
 For a range-based for statement of the form
 
 \begin{bnf}
@@ -32,7 +33,6 @@ and for a range-based for statement of the form
 let \grammarterm{range-init} be equivalent to the \grammarterm{braced-init-list}.
 %
 In each case, a range-based for statement is equivalent to
-\begin{removedblock}
 \begin{codeblock}
 {
   auto && __range = range-init;
@@ -46,10 +46,18 @@ In each case, a range-based for statement is equivalent to
 }
 \end{codeblock}
 \end{removedblock}
+
 \begin{addedblock}
+The range-based for statement
+
+\begin{bnf}
+\terminal{for} \terminal{(} for-range-declaration \terminal{:} for-range-initializer \terminal{)} statement
+\end{bnf}
+%
+is equivalent to
 \begin{codeblock}
 {
-  auto && __range = @\grammarterm{range-init}@;
+  auto && __range = @\grammarterm{for-range-initializer}@;
   auto __begin = @\grammarterm{begin-expr}@;
   auto __end = @\grammarterm{end-expr}@;
   for ( ; __begin != __end; ++__begin ) {
@@ -60,29 +68,47 @@ In each case, a range-based for statement is equivalent to
 \end{codeblock}
 \end{addedblock}
 %
-where \tcode{__range}, \tcode{__begin}, and \tcode{__end} are variables defined for
-exposition only, and \tcode{_RangeT} is the type of the
+where
+\begin{itemize}
+\item
+\added{if the \grammarterm{for-range-initializer} is an \grammarterm{expression}, it is
+regarded as if it were surrounded by parentheses (so that a comma operator cannot
+be reinterpreted as delimiting two \grammarterm{init-declarators});}
+
+\item
+\tcode{__range}, \tcode{__begin}, and \tcode{__end} are variables defined for
+exposition only; and \removed{\tcode{_RangeT} is the type of the
 \grammarterm{}{expression}, and \textit{begin-expr} and \textit{end-expr} are
-determined as follows:
+determined as follows:}
+
+\item
+\added{\grammarterm{begin-expr} and \grammarterm{end-expr} are determined as follows:}
 
 \begin{itemize}
-\item if \tcode{_RangeT} is an array type, \textit{begin-expr} and \textit{end-expr} are
+\item
+if \changed{\tcode{_RangeT}}{the \grammarterm{for-range-initializer}} is an
+\added{expression of} array type \added{\tcode{R}}, \textit{begin-expr} and \textit{end-expr} are
 \tcode{__range} and \tcode{__range + __bound}, respectively, where \tcode{__bound} is
-the array bound. If \tcode{_RangeT} is an array of unknown size or an array of
-incomplete type, the program is ill-formed;
+the array bound. If \changed{\tcode{_RangeT}}{\tcode{R}} is an array of unknown
+\changed{size}{bound} or an array of incomplete type, the program is ill-formed;
 
-\item if \tcode{_RangeT} is a class type, the \grammarterm{unqualified-id}{s}
-\tcode{begin} and \tcode{end} are looked up in the scope of class \tcode{\mbox{_RangeT}}
-as if by class member access lookup~(\stdcxxref{basic.lookup.classref}), and if either
+\item
+if \changed{\tcode{_RangeT}}{the \grammarterm{for-range-initializer}} is
+\changed{a}{an expression of} class type \added{\tcode{C}}, the
+\grammarterm{unqualified-id}{s} \tcode{begin} and \tcode{end} are looked up in
+the scope of \changed{class \tcode{\mbox{_RangeT}}}{\tcode{C}} as if by class
+member access lookup~(\stdcxxref{basic.lookup.classref}), and if either
 (or both) finds at least one declaration, \grammarterm{begin-expr} and
 \grammarterm{end-expr} are \tcode{__range.begin()} and \tcode{__range.end()},
 respectively;
 
-\item otherwise, \textit{begin-expr} and \textit{end-expr} are \tcode{begin(__range)}
+\item
+otherwise, \textit{begin-expr} and \textit{end-expr} are \tcode{begin(__range)}
 and \tcode{end(__range)}, respectively, where \tcode{begin} and \tcode{end} are looked
 up in the associated namespaces~(\stdcxxref{basic.lookup.argdep}).
 \enternote Ordinary unqualified lookup~(\stdcxxref{basic.lookup.unqual}) is not
 performed. \exitnote
+\end{itemize}
 \end{itemize}
 
 \enterexample
