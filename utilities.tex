@@ -470,25 +470,6 @@ follows. Note: this change is intended to be made in \tcode{namespace std}.}
 \begin{codeblock}
 namespace std {
   [@...@]
-  // 20.10.4.3, type properties:
-  [@...@]
-  template <class T> struct is_move_assignable;
-
-  @\added{template <class T, class U> struct is_swappable_with;}@
-  @\added{template <class T> struct is_swappable;}@
-
-  template <class T> struct is_destructible;
-  [@...@]
-  template <class T> struct is_nothrow_move_assignable;
-
-  @\added{template <class T, class U> struct is_nothrow_swappable_with;}@
-  @\added{template <class T> struct is_nothrow_swappable;}@
-
-  template <class T> struct is_nothrow_destructible;
-  [@...@]
-
-  // 20.10.7.6, other transformations:
-  [@...@]
   template <class... T> struct common_type;
   @\added{template <class T, class U, template <class> class TQual, template <class> class UQual>}@
     @\added{struct basic_common_reference \{ \};}@
@@ -502,99 +483,8 @@ namespace std {
   template <class T>
     using underlying_type_t = typename underlying_type<T>::type;
   [@...@]
-
-  // 20.15.4.3, type properties
-  [@...@]
-  @\added{template <class T, class U> constexpr bool is_swappable_with_v}@
-    @\added{= is_swappable_with<T, U>::value;}@
-  @\added{template <class T> constexpr bool is_swappable_v}@
-    @\added{= is_swappable<T>::value;}@
-  [@...@]
-  @\added{template <class T, class U> constexpr bool is_nothrow_swappable_with_v}@
-    @\added{= is_nothrow_swappable_with<T, U>::value;}@
-  @\added{template <class T> constexpr bool is_nothrow_swappable_v}@
-    @\added{= is_nothrow_swappable<T>::value;}@
-  [@...@]
 }
 \end{codeblock}
-
-\rSec2[meta.unary.prop]{Type properties}
-
-\ednote{Change [meta.unary.prop], Table 49 -- ``Type property predicates'' in
-ISO/IEC 14882:2014 as indicated. The following is taken from the current
-Working Draft of C++17.}
-
-\setcounter{scratch}{\value{table}}
-\setcounter{table}{48}
-\begin{libreqtab3b}{Type property predicates}{tab:type-traits.properties}
-\\ \topline
-\lhdr{Template} &   \chdr{Condition}    &   \rhdr{Preconditions}    \\ \capsep
-\endfirsthead
-\continuedcaption\\
-\topline
-\lhdr{Template} &   \chdr{Condition}    &   \rhdr{Preconditions}    \\ \capsep
-\endhead
-
-...  & & \\ \rowsep
-
-\indexlibrary{\idxcode{is_swappable_with}}%
-\added{\tcode{template <class T, class U>}}\br
-  \added{\tcode{struct is_swappable_with;}} &
-  \added{The expressions \tcode{swap(declval<T>(),}}\brk\added{\tcode{ declval<U>())}
-  and \tcode{swap(}}\brk\added{\tcode{declval<U>(),}}\brk\added{\tcode{ declval<T>())}
-  are each well-formed when treated as an unevaluated operand (Clause~\cxxref{expr})
-  in an overload-resolution context for swappable
-  values~(\ref{concepts.lib.corelang.swappable}).
-  Access checking is performed as if in a context unrelated to \tcode{T} and \tcode{U}.
-  Only the validity of the immediate context of the \tcode{swap} expressions is
-  considered.}
-  \enternote
-  \added{The compilation of the expressions can result in side effects such as the
-  instantiation of class template specializations and function template specializations,
-  the generation of implicitly-defined functions, and so on. Such side effects are not
-  in the ``immediate context'' and can result in the program being ill-formed.}
-  \exitnote &
-  \added{\tcode{T} and \tcode{U} shall be complete types,
-  (possibly cv-qualified) \tcode{void}, or
-  arrays of unknown bound.}  \\ \rowsep
-
-\indexlibrary{\idxcode{is_swappable}}%
-\added{\tcode{template <class T>}}\br
-  \added{\tcode{struct is_swappable;}} &
-  \added{For a referenceable type \tcode{T},
-  the same result as \tcode{is_\brk\-swappable_\brk\-with_\brk\-v<}}\brk\added{\tcode{T\&,\brk T\&>},
-  otherwise \tcode{false}.} &
-  \added{\tcode{T} shall be a complete type,
-  (possibly cv-qualified) \tcode{void}, or
-  an array of unknown bound.} \\ \rowsep
-
-... & & \\ \rowsep
-
-\indexlibrary{\idxcode{is_nothrow_swappable_with}}%
-\tcode{\added{template <class T, class U>}}\br
-  \added{\tcode{struct is_nothrow_swappable_with;}} &
-  \added{\tcode{is_swappable_with_v<T, }}\brk\added{\tcode{U>} is \tcode{true} and
-  each \tcode{swap} expression of the definition of
-  \tcode{is_swappable_with<T, U>} is known not to throw
-  any exceptions~(\cxxref{expr.unary.noexcept}).} &
-  \added{\tcode{T} and \tcode{U} shall be complete types,
-  (possibly cv-qualified) \tcode{void}, or
-  arrays of unknown bound.} \\ \rowsep
-
-\indexlibrary{\idxcode{is_nothrow_swappable}}%
-\tcode{\added{template <class T>}}\br
-  \added{\tcode{struct is_nothrow_swappable;}} &
-  \added{For a referenceable type \tcode{T},
-  the same result as \tcode{is_nothrow_swappable_}}\brk\added{\tcode{with_v<T\&, T\&>},
-  otherwise \tcode{false}.} &
-  \added{\tcode{T} shall be a complete type,
-  (possibly cv-qualified) \tcode{void}, or
-  an array of unknown bound.} \\ \rowsep
-
-... & & \\ \rowsep
-
-\end{libreqtab3b}
-\setcounter{table}{\value{scratch}}
 
 \rSec2[meta.trans.other]{Other transformations}
 
@@ -789,6 +679,111 @@ user-defined type. Such a specialization need not have a member named
 \tcode{type}.
 } %\color{addclr}
 
+\rSec1[meta.type.synop.rng]{Header \tcode{<experimental/ranges/type_traits>} synopsis}
+\begin{codeblock}
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+  // \ref{meta.unary.prop.rng}, type properties:
+  template <class T, class U> struct is_swappable_with;
+  template <class T> struct is_swappable;
+
+  template <class T, class U> struct is_nothrow_swappable_with;
+  template <class T> struct is_nothrow_swappable;
+
+  template <class T, class U> constexpr bool is_swappable_with_v
+    = is_swappable_with<T, U>::value;
+  template <class T> constexpr bool is_swappable_v
+    = is_swappable<T>::value;
+
+  template <class T, class U> constexpr bool is_nothrow_swappable_with_v
+    = is_nothrow_swappable_with<T, U>::value;
+  template <class T> constexpr bool is_nothrow_swappable_v
+    = is_nothrow_swappable<T>::value;
+}}}}
+\end{codeblock}
+
+\rSec2[meta.unary.prop.rng]{Additional type properties}
+
+\pnum
+These templates provide access to some of the more important properties of types.
+
+\pnum
+It is unspecified whether the library defines any full or partial specializations
+of any of these templates.
+
+\pnum
+For all of the class templates \tcode{X} declared in this subclause, instantiating
+that template with a template argument that is a class template specialization may
+result in the implicit instantiation of the template argument if and only if the
+semantics of \tcode{X} require that the argument must be a complete type.
+
+\pnum
+For the purpose of defining the templates in this subclause, a function call
+expression \tcode{declval<T>()} for any type \tcode{T} is considered to be a
+trivial~(\cxxref{basic.types}, \cxxref{special}) function call that is not an
+odr-use~(\cxxref{basic.def.odr}) of \tcode{declval} in the context of the
+corresponding definition notwithstanding the restrictions of~(\cxxref{declval}).
+
+\begin{libreqtab3b}{Additional type property predicates}{tab:type-traits.properties}
+\\ \topline
+\lhdr{Template} &   \chdr{Condition}    &   \rhdr{Precondition}    \\ \capsep
+\endfirsthead
+\continuedcaption\\
+\topline
+\lhdr{Template} &   \chdr{Condition}    &   \rhdr{Precondition}    \\ \capsep
+\endhead
+
+\indexlibrary{\idxcode{is_swappable_with}}%
+\tcode{template <class T, class U>}\br
+  \tcode{struct is_swappable_with;} &
+  The expressions \tcode{ranges::swap(}\brk{}\tcode{declval<T>(),}\brk\tcode{ declval<U>())}
+  and \tcode{ranges::swap(}\brk\tcode{declval<U>(),}\brk\tcode{ declval<T>())}
+  are each well-formed when treated as an unevaluated operand (Clause~\cxxref{expr}).
+  Access checking is performed as if in a context unrelated to \tcode{T} and \tcode{U}.
+  Only the validity of the immediate context of the \tcode{swap} expressions is
+  considered.
+  \enternote
+  The compilation of the expressions can result in side effects such as the
+  instantiation of class template specializations and function template specializations,
+  the generation of implicitly-defined functions, and so on. Such side effects are not
+  in the ``immediate context'' and can result in the program being ill-formed.
+  \exitnote &
+  \tcode{T} and \tcode{U} shall be complete types,
+  (possibly \cv-qualified) \tcode{void}, or
+  arrays of unknown bound.  \\ \rowsep
+
+\indexlibrary{\idxcode{is_swappable}}%
+\tcode{template <class T>}\br
+  \tcode{struct is_swappable;} &
+  For a referenceable type \tcode{T},
+  the same result as \tcode{is_\brk\-swappable_\brk\-with_\brk\-v<}\brk\tcode{T\&,\brk T\&>},
+  otherwise \tcode{false}. &
+  \tcode{T} shall be a complete type,
+  (possibly \cv-qualified) \tcode{void}, or
+  an array of unknown bound. \\ \rowsep
+
+\indexlibrary{\idxcode{is_nothrow_swappable_with}}%
+\tcode{template <class T, class U>}\br
+  \tcode{struct is_nothrow_swappable_with;} &
+  \tcode{is_swappable_with_v<T, }\brk\tcode{U>} is \tcode{true} and
+  each \tcode{swap} expression of the definition of
+  \tcode{is_swappable_with<T, U>} is known not to throw
+  any exceptions~(\cxxref{expr.unary.noexcept}). &
+  \tcode{T} and \tcode{U} shall be complete types,
+  (possibly \cv-qualified) \tcode{void}, or
+  arrays of unknown bound. \\ \rowsep
+
+\indexlibrary{\idxcode{is_nothrow_swappable}}%
+\tcode{template <class T>}\br
+  \tcode{struct is_nothrow_swappable;} &
+  For a referenceable type \tcode{T},
+  the same result as \tcode{is_nothrow_swappable_}\brk\tcode{with_v<T\&, T\&>},
+  otherwise \tcode{false}. &
+  \tcode{T} shall be a complete type,
+  (possibly \cv-qualified) \tcode{void}, or
+  an array of unknown bound. \\ \rowsep
+
+\end{libreqtab3b}
+
 \rSec1[taggedtup]{Tagged tuple-like types}
 
 \rSec2[taggedtup.general]{In general}
@@ -816,7 +811,7 @@ is zero-based.
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
   template <class T>
   concept bool TagSpecifier = @\impdef@;
-  
+
   template <class F>
   concept bool TaggedType = @\impdef@;
 
