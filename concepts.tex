@@ -501,7 +501,7 @@ concept bool Assignable =
 
 \begin{itemdescr}
 \pnum
-Let \tcode{t} be an lvalue which refers to an object \tcode{o} such that
+Let \tcode{t} be an lvalue that refers to an object \tcode{o} such that
 \tcode{decltype((t))} is \tcode{T}, and \tcode{u} an expression such that
 \tcode{decltype((u))} is \tcode{U}. Let \tcode{u2} be a distinct object that is
 equal to \tcode{u}. \tcode{Assignable<T, U>} is satisfied only if
@@ -509,9 +509,11 @@ equal to \tcode{u}. \tcode{Assignable<T, U>} is satisfied only if
 \begin{itemize}
 \item \tcode{addressof(t = u) == addressof(o)}.
 
-\item After evaluating \tcode{t = u}, \tcode{t} is equal to \tcode{u2} and:
+\item After evaluating \tcode{t = u}:
 
 \begin{itemize}
+\item \tcode{t} is equal to \tcode{u2}, unless \tcode{u} is a non-const xvalue that refers to \tcode{o}.
+
 \item If \tcode{u} is a non-\tcode{const} xvalue, the resulting state of the
 object to which it refers is valid but unspecified~(\cxxref{lib.types.movedfrom}).
 
@@ -523,6 +525,12 @@ modified.
 \pnum
 There need not be any subsumption relationship between \tcode{Assignable<T, U>}
 and \tcode{is_lvalue_reference<T>::value}.
+
+\pnum
+\enternote Assignment need not be a total function~(\ref{structure.requirements});
+in particular, if assignment to an object \tcode{x} can result in a modification
+of some other object \tcode{y}, then \tcode{x = y} is likely not in the domain
+of \tcode{=}. \exitnote
 \end{itemdescr}
 
 \rSec2[concepts.lib.corelang.swappable]{Concept \tcode{Swappable}}
