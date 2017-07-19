@@ -218,24 +218,12 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   struct random_access_iterator_tag : bidirectional_iterator_tag { };
 
   // \ref{iterator.operations}, iterator operations:
-  template <Iterator I>
-    constexpr void advance(I& i, difference_type_t<I> n);
-  template <Iterator I, Sentinel<I> S>
-    constexpr void advance(I& i, S bound);
-  template <Iterator I, Sentinel<I> S>
-    constexpr difference_type_t<I> advance(I& i, difference_type_t<I> n, S bound);
-  template <Iterator I, Sentinel<I> S>
-    constexpr difference_type_t<I> distance(I first, S last);
-  template <Iterator I>
-    constexpr I next(I x, difference_type_t<I> n = 1);
-  template <Iterator I, Sentinel<I> S>
-    constexpr I next(I x, S bound);
-  template <Iterator I, Sentinel<I> S>
-    constexpr I next(I x, difference_type_t<I> n, S bound);
-  template <BidirectionalIterator I>
-    constexpr I prev(I x, difference_type_t<I> n = 1);
-  template <BidirectionalIterator I>
-    constexpr I prev(I x, difference_type_t<I> n, I bound);
+  namespace {
+    constexpr @\unspec@ advance = @\unspec@;
+    constexpr @\unspec@ distance = @\unspec@;
+    constexpr @\unspec@ next = @\unspec@;
+    constexpr @\unspec@ prev = @\unspec@;
+  }
 
   // \ref{iterators.predef}, predefined iterators and sentinels:
 
@@ -445,9 +433,6 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
       operator+(difference_type_t<I> n, const counted_iterator<I>& x);
   template <Iterator I>
     constexpr counted_iterator<I> make_counted_iterator(I i, difference_type_t<I> n);
-
-  template <Iterator I>
-    constexpr void advance(counted_iterator<I>& i, difference_type_t<I> n);
 
   // \ref{unreachable.sentinels}, unreachable sentinels:
   class unreachable;
@@ -1984,24 +1969,29 @@ template <class T> struct iterator_category<BinaryTreeIterator<T>> {
 Since only types that satisfy
 \tcode{RandomAccessIterator} provide the \tcode{+} operator, and
 types that satisfy \tcode{SizedSentinel} provide the \tcode{-}
-operator, the library provides four function templates
+operator, the library provides customization point objects~(\ref{customization.point.object})
 \tcode{advance}, \tcode{distance}, \tcode{next}, and \tcode{prev}.
 These
-function templates
+customization point objects
 use
 \tcode{+}
 and
 \tcode{-}
-for random access iterators and ranges that satisfy \tcode{SizedSentinel}, respectively (and are, therefore, constant
+for random access iterators and ranges that satisfy \tcode{SizedSentinel} (and are, therefore, constant
 time for them); for output, input, forward and bidirectional iterators they use
 \tcode{++}
 to provide linear time
 implementations.
 
 \indexlibrary{\idxcode{advance}}%
+\pnum
+The name \tcode{advance} denotes a
+customization point object~(\ref{customization.point.object}).
+It has the following function call operators:
+
 \begin{itemdecl}
 template <Iterator I>
-  constexpr void advance(I& i, difference_type_t<I> n);
+  constexpr void operator()(I& i, difference_type_t<I> n) const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2023,7 +2013,7 @@ by
 
 \begin{itemdecl}
 template <Iterator I, Sentinel<I> S>
-  constexpr void advance(I& i, S bound);
+  constexpr void operator()(I& i, S bound) const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2048,7 +2038,7 @@ shall denote a range.
 
 \begin{itemdecl}
 template <Iterator I, Sentinel<I> S>
-  constexpr difference_type_t<I> advance(I& i, difference_type_t<I> n, S bound);
+  constexpr difference_type_t<I> operator()(I& i, difference_type_t<I> n, S bound) const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2081,9 +2071,13 @@ shall be satisfied.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{distance}}%
+\pnum
+The name \tcode{distance} denotes a customization point object.
+It has the following function call operators:
+
 \begin{itemdecl}
 template <Iterator I, Sentinel<I> S>
-  constexpr difference_type_t<I> distance(I first, S last);
+  constexpr difference_type_t<I> operator()(I first, S last) const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2101,10 +2095,57 @@ to
 \tcode{last}.
 \end{itemdescr}
 
+\begin{itemdecl}
+template <Range R>
+  constexpr difference_type_t<iterator_t<R>> operator()(R&& r) const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\effects
+Equivalent to:
+\tcode{return distance(ranges::begin(r), ranges::end(r));}~(\ref{range.access})
+
+\remarks
+Instantiations of this member function template may be ill-formed if the
+declarations in \tcode{<experimental/ranges/range>} are not in scope at the
+point of instantiation~(\cxxref{temp.point}).
+\end{itemdescr}
+
+
+\begin{itemdecl}
+template <SizedRange R>
+  constexpr difference_type_t<iterator_t<R>> operator()(R&& r) const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+Equivalent to: \tcode{return ranges::size(r);}~(\ref{range.primitives.size})
+
+\pnum
+\remarks
+Instantiations of this member function template may be ill-formed if the
+declarations in \tcode{<experimental/ranges/range>} are not in scope at the
+point of instantiation~(\cxxref{temp.point}).
+\end{itemdescr}
+
 \indexlibrary{\idxcode{next}}%
+\pnum
+The name \tcode{next} denotes a customization point object. It has the following function call operators:
+
 \begin{itemdecl}
 template <Iterator I>
-  constexpr I next(I x, difference_type_t<I> n = 1);
+  constexpr I operator()(I x) const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to: \tcode{++x; return x;}
+\end{itemdescr}
+
+\begin{itemdecl}
+template <Iterator I>
+  constexpr I operator()(I x, difference_type_t<I> n) const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2114,7 +2155,7 @@ template <Iterator I>
 
 \begin{itemdecl}
 template <Iterator I, Sentinel<I> S>
-  constexpr I next(I x, S bound);
+  constexpr I operator()(I x, S bound) const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2124,7 +2165,7 @@ template <Iterator I, Sentinel<I> S>
 
 \begin{itemdecl}
 template <Iterator I, Sentinel<I> S>
-  constexpr I next(I x, difference_type_t<I> n, S bound);
+  constexpr I operator()(I x, difference_type_t<I> n, S bound) const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2133,9 +2174,22 @@ template <Iterator I, Sentinel<I> S>
 \end{itemdescr}
 
 \indexlibrary{\idxcode{prev}}%
+\pnum
+The name \tcode{prev} denotes a customization point object. It has the following function call operators:
+
 \begin{itemdecl}
 template <BidirectionalIterator I>
-  constexpr I prev(I x, difference_type_t<I> n = 1);
+  constexpr I operator()(I x) const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to: \tcode{-{-}x; return x;}
+\end{itemdescr}
+
+\begin{itemdecl}
+template <BidirectionalIterator I>
+  constexpr I operator()(I x, difference_type_t<I> n) const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2145,7 +2199,7 @@ template <BidirectionalIterator I>
 
 \begin{itemdecl}
 template <BidirectionalIterator I>
-  constexpr I prev(I x, difference_type_t<I> n, I bound);
+  constexpr I operator()(I x, difference_type_t<I> n, I bound) const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4468,9 +4522,6 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 
   template <Iterator I>
     constexpr counted_iterator<I> make_counted_iterator(I i, difference_type_t<I> n);
-
-  template <Iterator I>
-    constexpr void advance(counted_iterator<I>& i, difference_type_t<I> n);
 }}}}
 \end{codeblock}
 
@@ -5023,23 +5074,6 @@ template <Iterator I>
 
 \pnum
 \returns \tcode{counted_iterator<I>(i, n)}.
-\end{itemdescr}
-
-\indexlibrary{\idxcode{advance}}%
-\begin{itemdecl}
-template <Iterator I>
-  constexpr void advance(counted_iterator<I>& i, difference_type_t<I> n);
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires \tcode{n <= i.cnt}.
-
-\pnum
-\effects
-\begin{codeblock}
-i = make_counted_iterator(next(i.current, n), i.cnt - n);
-\end{codeblock}
 \end{itemdescr}
 
 \rSec2[dangling.wrappers]{Dangling wrapper}
