@@ -41,7 +41,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   // \ref{utility.exchange}, exchange:
   template <MoveConstructible T, class U=T>
     requires Assignable<T&, U>
-  T exchange(T& obj, U&& new_val);
+  constexpr T exchange(T& obj, U&& new_val) noexcept(@\seebelow@);
 
   // \ref{taggedtup.tagged}, struct with named accessors
   template <class T>
@@ -132,7 +132,7 @@ and \tcode{E2} and has type \tcode{void}.
 \begin{itemdecl}
 template <MoveConstructible T, class U=T>
   requires Assignable<T&, U>
-T exchange(T& obj, U&& new_val);
+constexpr T exchange(T& obj, U&& new_val) noexcept(@\seebelow@);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -144,6 +144,13 @@ Equivalent to:
 T old_val = std::move(obj);
 obj = std::forward<U>(new_val);
 return old_val;
+\end{codeblock}
+
+\remarks
+The expression in \tcode{noexcept} is equivalent to:
+\begin{codeblock}
+is_nothrow_move_constructible<T>::value &&
+is_nothrow_assignable<T&, U>::value
 \end{codeblock}
 \end{itemdescr}
 
@@ -791,22 +798,22 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
       requires CopyConstructible<Base>;
     template <class Other>
       requires Constructible<Base, Other>
-    tagged(tagged<Other, Tags...> &&that) noexcept(@\seebelow@);
+    constexpr tagged(tagged<Other, Tags...> &&that) noexcept(@\seebelow@);
     template <class Other>
       requires Constructible<Base, const Other&>
-    tagged(const tagged<Other, Tags...> &that);
+    constexpr tagged(const tagged<Other, Tags...> &that);
     template <class Other>
       requires Assignable<Base&, Other>
-    tagged& operator=(tagged<Other, Tags...>&& that) noexcept(@\seebelow@);
+    constexpr tagged& operator=(tagged<Other, Tags...>&& that) noexcept(@\seebelow@);
     template <class Other>
       requires Assignable<Base&, const Other&>
-    tagged& operator=(const tagged<Other, Tags...>& that);
+    constexpr tagged& operator=(const tagged<Other, Tags...>& that);
     template <class U>
       requires Assignable<Base&, U> && !Same<decay_t<U>, tagged>
-    tagged& operator=(U&& u) noexcept(@\seebelow@);
-    void swap(tagged& that) noexcept(@\seebelow@)
+    constexpr tagged& operator=(U&& u) noexcept(@\seebelow@);
+    constexpr void swap(tagged& that) noexcept(@\seebelow@)
       requires Swappable<Base>;
-    friend void swap(tagged&, tagged&) noexcept(@\seebelow@)
+    friend constexpr void swap(tagged&, tagged&) noexcept(@\seebelow@)
       requires Swappable<Base>;
   };
 }}}}
@@ -888,7 +895,7 @@ is_nothrow_copy_constructible<Base>::value
 \begin{itemdecl}
 template <class Other>
   requires Constructible<Base, Other>
-tagged(tagged<Other, Tags...> &&that) noexcept(@\seebelow@);
+constexpr tagged(tagged<Other, Tags...> &&that) noexcept(@\seebelow@);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -907,7 +914,7 @@ is_nothrow_constructible<Base, Other>::value
 \begin{itemdecl}
 template <class Other>
   requires Constructible<Base, const Other&>
-tagged(const tagged<Other, Tags...>& that);
+constexpr tagged(const tagged<Other, Tags...>& that);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -920,7 +927,7 @@ tagged(const tagged<Other, Tags...>& that);
 \begin{itemdecl}
 template <class Other>
   requires Assignable<Base&, Other>
-tagged& operator=(tagged<Other, Tags...>&& that) noexcept(@\seebelow@);
+constexpr tagged& operator=(tagged<Other, Tags...>&& that) noexcept(@\seebelow@);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -943,7 +950,7 @@ is_nothrow_assignable<Base&, Other>::value
 \begin{itemdecl}
 template <class Other>
   requires Assignable<Base&, const Other&>
-tagged& operator=(const tagged<Other, Tags...>& that);
+constexpr tagged& operator=(const tagged<Other, Tags...>& that);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -959,7 +966,7 @@ tagged& operator=(const tagged<Other, Tags...>& that);
 \begin{itemdecl}
 template <class U>
   requires Assignable<Base&, U> && !Same<decay_t<U>, tagged>
-tagged& operator=(U&& u) noexcept(@\seebelow@);
+constexpr tagged& operator=(U&& u) noexcept(@\seebelow@);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -980,7 +987,7 @@ is_nothrow_assignable<Base&, U>::value
 \indexlibrary{\idxcode{swap}!\idxcode{tagged}}
 \indexlibrary{\idxcode{tagged}!\idxcode{swap}}
 \begin{itemdecl}
-void swap(tagged& rhs) noexcept(@\seebelow@)
+constexpr void swap(tagged& rhs) noexcept(@\seebelow@)
   requires Swappable<Base>;
 \end{itemdecl}
 
@@ -1002,7 +1009,7 @@ noexcept(swap(declval<Base&>(), declval<Base&>()))
 
 \indexlibrary{\idxcode{swap}!\tcode{tagged}}%
 \begin{itemdecl}
-friend void swap(tagged& lhs, tagged& rhs) noexcept(@\seebelow@)
+friend constexpr void swap(tagged& lhs, tagged& rhs) noexcept(@\seebelow@)
   requires Swappable<Base>;
 \end{itemdecl}
 
