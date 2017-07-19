@@ -546,7 +546,7 @@ concept bool Range =
 
 \pnum
 Given an lvalue \tcode{t} of type \tcode{remove_reference_t<T>}, \tcode{Range<T>} is satisfied
-if and only if
+only if
 
 \begin{itemize}
 \item \range{begin(t)}{end(t)} denotes a range.
@@ -582,17 +582,19 @@ template <class T>
 concept bool SizedRange =
   Range<T> &&
   !disable_sized_range<remove_cv_t<remove_reference_t<T>>> &&
-  requires(const remove_reference_t<T>& t) {
+  requires(T& t) {
     { ranges::size(t) } -> ConvertibleTo<difference_type_t<iterator_t<T>>>;
   };
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-Given an lvalue \tcode{t} of type \tcode{remove_reference_t<T>}, \tcode{SizedRange<T>} is satisfied if and only if:
+Given an lvalue \tcode{t} of type \tcode{remove_reference_t<T>}, \tcode{SizedRange<T>} is satisfied only if:
 
 \begin{itemize}
-\item \tcode{size(t)} returns the number of elements in \tcode{t}.
+\item \tcode{ranges::size(t)} is O(1), does not modify \tcode{t}, and is equal
+to \tcode{ranges::distance(t)}.
+
 \item If \tcode{iterator_t<T>} satisfies \tcode{ForwardIterator},
 \tcode{size(t)} is well-defined regardless of the evaluation of
 \tcode{begin(t)}. \enternote \tcode{size(t)} is otherwise not required be
