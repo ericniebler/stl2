@@ -480,15 +480,18 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 
   template <InputIterator I, Sentinel<I> S, WeaklyIncrementable O,
       class Proj = identity, IndirectRelation<projected<I, Proj>> R = equal_to<>>
-    requires IndirectlyCopyable<I, O> && (ForwardIterator<I> ||
-      ForwardIterator<O> || IndirectlyCopyableStorable<I, O>)
+    requires IndirectlyCopyable<I, O> &&
+      (ForwardIterator<I> ||
+       (InputIterator<O> && Same<value_type_t<I>, value_type_t<O>>) ||
+       IndirectlyCopyableStorable<I, O>)
     tagged_pair<tag::in(I), tag::out(O)>
       unique_copy(I first, S last, O result, R comp = R{}, Proj proj = Proj{});
 
   template <InputRange Rng, WeaklyIncrementable O, class Proj = identity,
       IndirectRelation<projected<iterator_t<Rng>, Proj>> R = equal_to<>>
     requires IndirectlyCopyable<iterator_t<Rng>, O> &&
-      (ForwardIterator<iterator_t<Rng>> || ForwardIterator<O> ||
+      (ForwardIterator<iterator_t<Rng>> ||
+       (InputIterator<O> && Same<value_type_t<iterator_t<Rng>>, value_type_t<O>>) ||
        IndirectlyCopyableStorable<iterator_t<Rng>, O>)
     tagged_pair<tag::in(safe_iterator_t<Rng>), tag::out(O)>
       unique_copy(Rng&& rng, O result, R comp = R{}, Proj proj = Proj{});
@@ -2462,15 +2465,18 @@ applications of the projection.
 \begin{itemdecl}
 template <InputIterator I, Sentinel<I> S, WeaklyIncrementable O,
     class Proj = identity, IndirectRelation<projected<I, Proj>> R = equal_to<>>
-  requires IndirectlyCopyable<I, O> && (ForwardIterator<I> ||
-    ForwardIterator<O> || IndirectlyCopyableStorable<I, O>)
+  requires IndirectlyCopyable<I, O> &&
+    (ForwardIterator<I> ||
+     (InputIterator<O> && Same<value_type_t<I>, value_type_t<O>>) ||
+     IndirectlyCopyableStorable<I, O>)
   tagged_pair<tag::in(I), tag::out(O)>
     unique_copy(I first, S last, O result, R comp = R{}, Proj proj = Proj{});
 
 template <InputRange Rng, WeaklyIncrementable O, class Proj = identity,
     IndirectRelation<projected<iterator_t<Rng>, Proj>> R = equal_to<>>
   requires IndirectlyCopyable<iterator_t<Rng>, O> &&
-    (ForwardIterator<iterator_t<Rng>> || ForwardIterator<O> ||
+    (ForwardIterator<iterator_t<Rng>> ||
+     (InputIterator<O> && Same<value_type_t<iterator_t<Rng>>, value_type_t<O>>) ||
      IndirectlyCopyableStorable<iterator_t<Rng>, O>)
   tagged_pair<tag::in(safe_iterator_t<Rng>), tag::out(O)>
     unique_copy(Rng&& rng, O result, R comp = R{}, Proj proj = Proj{});
