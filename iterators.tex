@@ -722,19 +722,22 @@ is undefined.
 
 \pnum
 The name \tcode{iter_move} denotes a \techterm{customization point
-object}~(\ref{customization.point.object}). The effect of the expression
-\tcode{ranges::iter_move(E)} for some expression \tcode{E} is equivalent to the
+object}~(\ref{customization.point.object}). The expression
+\tcode{ranges::iter_move(E)} for some subexpression \tcode{E} is expression-equivalent to the
 following:
 
 \begin{itemize}
-\item \tcode{iter_move(E)}, if that expression is well-formed when evaluated in
+\item \tcode{static_cast<decltype(iter_move(E))>(iter_move(E))}, if that expression is well-formed when evaluated in
 a context that does not include \tcode{ranges::iter_move} but does include the
 lookup set produced by argument-dependent lookup~(\cxxref{basic.lookup.argdep}).
-\item Otherwise, if the expression \tcode{*E} is well-formed
+
+\item Otherwise, if the expression \tcode{*E} is well-formed:
 \begin{itemize}
-\item If \tcode{*E} is an lvalue, \tcode{std::move(*E)}
-\item Otherwise, \tcode{*E}
+\item if \tcode{*E} is an lvalue, \tcode{std::move(*E)};
+
+\item otherwise, \tcode{static_cast<decltype(*E)>(*E)}.
 \end{itemize}
+
 \item Otherwise, \tcode{ranges::iter_move(E)} is ill-formed.
 \end{itemize}
 
@@ -746,9 +749,9 @@ ill-formed with no diagnostic required.
 
 \pnum
 The name \tcode{iter_swap} denotes a \techterm{customization point
-object}~(\ref{customization.point.object}). The effect of the expression
-\tcode{ranges::iter_swap(E1, E2)} for some expressions \tcode{E1} and \tcode{E2}
-is equivalent to the following:
+object}~(\ref{customization.point.object}). The expression
+\tcode{ranges::iter_swap(E1, E2)} for some subexpressions \tcode{E1} and \tcode{E2}
+is expression-equivalent to the following:
 
 \begin{itemize}
 \item \tcode{(void)iter_swap(E1, E2)}, if that expression is well-formed when
@@ -758,14 +761,17 @@ lookup~(\cxxref{basic.lookup.argdep}) and the following declaration:
 \begin{codeblock}
 void iter_swap(auto, auto) = delete;
 \end{codeblock}
+
 \item Otherwise, if the types of \tcode{E1} and \tcode{E2} both satisfy
 \tcode{Readable}, and if the reference type of \tcode{E1} is swappable
 with~(\ref{concepts.lib.corelang.swappable}) the reference type of \tcode{E2},
 then \tcode{ranges::swap(*E1, *E2)}
+
 \item Otherwise, if the types \tcode{T1} and \tcode{T2} of \tcode{E1} and
 \tcode{E2} satisfy \tcode{IndirectlyMovableStorable<T1, T2> \&\&
-IndirectlyMovableStorable<T2, T1>}, exchanges the values denoted by
-\tcode{E1} and \tcode{E2}.
+IndirectlyMovableStorable<T2, T1>}, \tcode{(void)(*E1 = iter_exchange_move(E2, E1))},
+except that \tcode{E1} is evaluated only once.
+
 \item Otherwise, \tcode{ranges::iter_swap(E1, E2)} is ill-formed.
 \end{itemize}
 
@@ -773,6 +779,40 @@ IndirectlyMovableStorable<T2, T1>}, exchanges the values denoted by
 If \tcode{ranges::iter_swap(E1, E2)} does not swap the values denoted by the
 expressions \tcode{E1} and \tcode{E2}, the program is ill-formed with no
 diagnostic required.
+
+\pnum
+\tcode{iter_exchange_move} is an exposition-only function specified as:
+\begin{itemdecl}
+template <class X, class Y>
+  constexpr value_type_t<remove_reference_t<X>> iter_exchange_move(X&& x, Y&& y)
+    noexcept(@\seebelow@);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+value_type_t<remove_reference_t<X>> old_value(iter_move(x));
+*x = iter_move(y);
+return old_value;
+\end{codeblock}
+
+\pnum
+\remarks The expression in the \tcode{noexcept} is equivalent to:
+\begin{codeblock}
+NE(remove_reference_t<X>, remove_reference_t<Y>) &&
+NE(remove_reference_t<Y>, remove_reference_t<X>)
+\end{codeblock}
+Where \tcode{NE(T1, T2)} is the expression:
+\begin{codeblock}
+is_nothrow_constructible<value_type_t<T1>, rvalue_reference_t<T1>>::value &&
+is_nothrow_assignable<value_type_t<T1>&, rvalue_reference_t<T1>>::value &&
+is_nothrow_assignable<reference_t<T1>, rvalue_reference_t<T2>>::value &&
+is_nothrow_assignable<reference_t<T1>, value_type_t<T2>>::value> &&
+is_nothrow_move_constructible<value_type_t<T1>>::value &&
+noexcept(ranges::iter_move(declval<T1&>()))
+\end{codeblock}
+\end{itemdescr}
 
 \rSec2[iterator.assoc.types]{Iterator associated types}
 
