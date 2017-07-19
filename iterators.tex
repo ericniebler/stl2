@@ -191,20 +191,6 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 
   // \ref{iterator.primitives}, primitives:
   // \ref{iterator.traits}, traits:
-  template <class I1, class I2> struct is_indirectly_movable;
-  template <class I1, class I2 = I1> struct is_indirectly_swappable;
-  template <class I1, class I2> struct is_nothrow_indirectly_movable;
-  template <class I1, class I2 = I1> struct is_nothrow_indirectly_swappable;
-
-  template <class I1, class I2> constexpr bool is_indirectly_movable_v
-    = is_indirectly_movable<I1, I2>::value;
-  template <class I1, class I2> constexpr bool is_indirectly_swappable_v
-    = is_indirectly_swappable<I1, I2>::value;
-  template <class I1, class I2> constexpr bool is_nothrow_indirectly_movable_v
-    = is_nothrow_indirectly_movable<I1, I2>::value;
-  template <class I1, class I2> constexpr bool is_nothrow_indirectly_swappable_v
-    = is_nothrow_indirectly_swappable<I1, I2>::value;
-
   template <class Iterator> using iterator_traits = @\seebelow@;
 
   template <Readable T> using iter_common_reference_t
@@ -1718,54 +1704,6 @@ To simplify the task of defining iterators, the library provides
 several classes and functions:
 
 \rSec2[iterator.traits]{Iterator traits}
-
-\pnum
-The class templates \tcode{is_indirectly_movable},
-\tcode{is_nothrow_indirectly_movable}, \tcode{is_indirectly_swappable},
-and \tcode{is_nothrow_indirectly_swappable} shall be defined as follows:
-
-\begin{codeblock}
-template <class In, class Out>
-struct is_indirectly_movable : false_type { };
-
-template <class In, class Out>
-  requires IndirectlyMovable<In, Out>
-struct is_indirectly_movable<In, Out> : true_type { };
-
-template <class In, class Out>
-struct is_nothrow_indirectly_movable : false_type { };
-
-template <class In, class Out>
-  requires IndirectlyMovable<In, Out>
-struct is_nothrow_indirectly_movable<In, Out> :
-  integral_constant<bool,
-    noexcept(ranges::iter_move(declval<In&>())) &&
-    is_nothrow_constructible<value_type_t<In>, rvalue_reference_t<In>>::value &&
-    is_nothrow_assignable<value_type_t<In> &, rvalue_reference_t<In>>::value &&
-    is_nothrow_assignable<reference_t<Out>, rvalue_reference_t<In>>::value &&
-    is_nothrow_assignable<reference_t<Out>, value_type_t<In>>::value>
-{ };
-
-template <class I1, class I2 = I1>
-struct is_indirectly_swappable : false_type { };
-
-template <class I1, class I2>
-  requires IndirectlySwappable<I1, I2>
-struct is_indirectly_swappable<I1, I2> : true_type { };
-
-template <class I1, class I2 = I1>
-struct is_nothrow_indirectly_swappable : false_type { };
-
-template <class I1, class I2>
-  requires IndirectlySwappable<I1, I2>
-struct is_nothrow_indirectly_swappable<I1, I2> :
-  integral_constant<bool,
-    noexcept(ranges::iter_swap(declval<I1&>(), declval<I2&>())) &&
-    noexcept(ranges::iter_swap(declval<I2&>(), declval<I1&>())) &&
-    noexcept(ranges::iter_swap(declval<I1&>(), declval<I1&>())) &&
-    noexcept(ranges::iter_swap(declval<I2&>(), declval<I2&>()))>
-{ };
-\end{codeblock}
 
 \pnum
 For the sake of backwards compatibility, this document specifies the existence of an \tcode{iterator_traits}
