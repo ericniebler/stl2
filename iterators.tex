@@ -811,7 +811,7 @@ be defined as the iterator's difference type, value type and iterator category, 
     : enable_if<is_object<T>::value, ptrdiff_t> { };
 
   template <class I>
-  struct difference_type<I const> : difference_type<decay_t<I>> { };
+  struct difference_type<const I> : difference_type<decay_t<I>> { };
 
   template <class T>
     requires requires { typename T::difference_type; }
@@ -852,7 +852,7 @@ A \tcode{Readable} type has an associated value type that can be accessed with t
   struct value_type<I> : value_type<decay_t<I>> { };
 
   template <class I>
-  struct value_type<I const> : value_type<decay_t<I>> { };
+  struct value_type<const I> : value_type<decay_t<I>> { };
 
   template <class T>
     requires requires { typename T::value_type; }
@@ -3937,9 +3937,11 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     constexpr common_iterator(const common_iterator<ConvertibleTo<I>, ConvertibleTo<S>>& u);
     common_iterator& operator=(const common_iterator<ConvertibleTo<I>, ConvertibleTo<S>>& u);
 
-    @\seebelow@ operator*();
-    @\seebelow@ operator*() const;
-    @\seebelow@ operator->() const requires Readable<I>;
+    decltype(auto) operator*();
+    decltype(auto) operator*() const
+      requires @\placeholder{dereferenceable}@<const I>;
+    decltype(auto) operator->() const
+      requires @\seebelow@;
 
     common_iterator& operator++();
     decltype(auto) operator++(int);
@@ -4068,7 +4070,8 @@ common_iterator& operator=(const common_iterator<ConvertibleTo<I>, ConvertibleTo
 \indexlibrary{\idxcode{common_iterator}!\idxcode{operator*}}%
 \begin{itemdecl}
 decltype(auto) operator*();
-decltype(auto) operator*() const;
+decltype(auto) operator*() const
+  requires @\placeholder{dereferenceable}@<const I>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4084,7 +4087,8 @@ decltype(auto) operator*() const;
 \indexlibrary{\idxcode{operator->}!\idxcode{common_iterator}}%
 \indexlibrary{\idxcode{common_iterator}!\idxcode{operator->}}%
 \begin{itemdecl}
-decltype(auto) operator->() const requires Readable<I>;
+decltype(auto) operator->() const
+  requires @\seebelow@;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4119,6 +4123,15 @@ public:
 };
 \end{codeblock}
 \end{itemize}
+
+\pnum
+The expression in the requires clause is equivalent to:
+\begin{codeblock}
+Readable<const I> &&
+  (requires(const I& i) { i.operator->(); } ||
+   is_reference<reference_t<I>>::value ||
+   Constructible<value_type_t<I>, reference_t<I>>)
+\end{codeblock}
 \end{itemdescr}
 
 
@@ -4358,8 +4371,9 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 
     constexpr I base() const;
     constexpr difference_type_t<I> count() const;
-    constexpr @\seebelow@ operator*();
-    constexpr @\seebelow@ operator*() const;
+    constexpr decltype(auto) operator*();
+    constexpr decltype(auto) operator*() const
+      requires @\placeholder{dereferenceable}@<const I>;
 
     constexpr counted_iterator& operator++();
     decltype(auto) operator++(int);
@@ -4378,7 +4392,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
       requires RandomAccessIterator<I>;
     constexpr counted_iterator& operator-=(difference_type n)
       requires RandomAccessIterator<I>;
-    constexpr @\seebelow@ operator[](difference_type n) const
+    constexpr decltype(auto) operator[](difference_type n) const
       requires RandomAccessIterator<I>;
 
     friend constexpr rvalue_reference_t<I> iter_move(const counted_iterator& i)
@@ -4549,7 +4563,8 @@ constexpr difference_type_t<I> count() const;
 \indexlibrary{\idxcode{counted_iterator}!\idxcode{operator*}}%
 \begin{itemdecl}
 constexpr decltype(auto) operator*();
-constexpr decltype(auto) operator*() const;
+constexpr decltype(auto) operator*() const
+  requires @\placeholder{dereferenceable}@<const I>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -5248,8 +5263,8 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     typedef charT char_type;
     typedef traits traits_type;
     typedef basic_istream<charT, traits> istream_type;
-    @\seebelow@ istream_iterator();
-    @\seebelow@ istream_iterator(default_sentinel);
+    constexpr istream_iterator();
+    constexpr istream_iterator(default_sentinel);
     istream_iterator(istream_type& s);
     istream_iterator(const istream_iterator& x) = default;
     ~istream_iterator() = default;
@@ -5288,8 +5303,8 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 
 \indexlibrary{\idxcode{istream_iterator}!constructor}%
 \begin{itemdecl}
-@\seebelow@ istream_iterator();
-@\seebelow@ istream_iterator(default_sentinel);
+constexpr istream_iterator();
+constexpr istream_iterator(default_sentinel);
 \end{itemdecl}
 
 \begin{itemdescr}
