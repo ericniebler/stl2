@@ -802,7 +802,7 @@ be defined as the iterator's difference type, value type and iterator category, 
     : enable_if<is_object<T>::value, ptrdiff_t> { };
 
   template <class I>
-  struct difference_type<I const> : difference_type<decay_t<I>> { };
+  struct difference_type<const I> : difference_type<decay_t<I>> { };
 
   template <class T>
     requires requires { typename T::difference_type; }
@@ -843,7 +843,7 @@ A \tcode{Readable} type has an associated value type that can be accessed with t
   struct value_type<I> : value_type<decay_t<I>> { };
 
   template <class I>
-  struct value_type<I const> : value_type<decay_t<I>> { };
+  struct value_type<const I> : value_type<decay_t<I>> { };
 
   template <class T>
     requires requires { typename T::value_type; }
@@ -3929,8 +3929,10 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     common_iterator& operator=(const common_iterator<ConvertibleTo<I>, ConvertibleTo<S>>& u);
 
     @\seebelow@ operator*();
-    @\seebelow@ operator*() const;
-    @\seebelow@ operator->() const requires Readable<I>;
+    @\seebelow@ operator*() const
+      requires @\placeholder{dereferenceable}@<const I>;
+    @\seebelow@ operator->() const
+      requires @\seebelow@;
 
     common_iterator& operator++();
     decltype(auto) operator++(int);
@@ -4059,7 +4061,8 @@ common_iterator& operator=(const common_iterator<ConvertibleTo<I>, ConvertibleTo
 \indexlibrary{\idxcode{common_iterator}!\idxcode{operator*}}%
 \begin{itemdecl}
 decltype(auto) operator*();
-decltype(auto) operator*() const;
+decltype(auto) operator*() const
+  requires @\placeholder{dereferenceable}@<const I>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4075,7 +4078,8 @@ decltype(auto) operator*() const;
 \indexlibrary{\idxcode{operator->}!\idxcode{common_iterator}}%
 \indexlibrary{\idxcode{common_iterator}!\idxcode{operator->}}%
 \begin{itemdecl}
-decltype(auto) operator->() const requires Readable<I>;
+decltype(auto) operator->() const
+  requires @\seebelow@;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4110,6 +4114,15 @@ public:
 };
 \end{codeblock}
 \end{itemize}
+
+\pnum
+The expression in the requires clause is equivalent to:
+\begin{codeblock}
+Readable<const I> &&
+  (requires(const I& i) { i.operator->(); } ||
+   is_reference<reference_t<I>>::value ||
+   Constructible<value_type_t<I>, reference_t<I>>)
+\end{codeblock}
 \end{itemdescr}
 
 
@@ -4350,7 +4363,8 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     constexpr I base() const;
     constexpr difference_type_t<I> count() const;
     constexpr @\seebelow@ operator*();
-    constexpr @\seebelow@ operator*() const;
+    constexpr @\seebelow@ operator*() const
+      requires @\placeholder{dereferenceable}@<const I>;
 
     constexpr counted_iterator& operator++();
     decltype(auto) operator++(int);
@@ -4540,7 +4554,8 @@ constexpr difference_type_t<I> count() const;
 \indexlibrary{\idxcode{counted_iterator}!\idxcode{operator*}}%
 \begin{itemdecl}
 constexpr decltype(auto) operator*();
-constexpr decltype(auto) operator*() const;
+constexpr decltype(auto) operator*() const
+  requires @\placeholder{dereferenceable}@<const I>;
 \end{itemdecl}
 
 \begin{itemdescr}
