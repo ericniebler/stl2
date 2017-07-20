@@ -151,7 +151,7 @@ Change the definition of `OutputIterator` ([iterators.output]) as follows:
 > <tt>concept bool OutputIterator() {</tt>
 > <tt>&nbsp;&nbsp;return Iterator&lt;I&gt;() &amp;&amp; Writable&lt;I, T&gt;()<del>;</del> <ins>&amp;&amp;</ins></tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>requires(I i, T&amp;&amp; t) {</ins></tt>
-> <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>*i++ = std::forward<T>(t); // not required to be equality preserving</ins></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>*i++ = std::forward&lt;T&gt;(t); // not required to be equality preserving</ins></tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>};</ins></tt>
 > <tt>}</tt>
 
