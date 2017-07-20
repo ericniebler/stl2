@@ -1,5 +1,5 @@
 DOCNO = 4686
-PD = D
+PD = N
 SOURCE = report.md
 TARGET = $(PD)$(DOCNO)
 
