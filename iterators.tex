@@ -191,6 +191,20 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 
   // \ref{iterator.primitives}, primitives:
   // \ref{iterator.traits}, traits:
+  template <class I1, class I2> struct is_indirectly_movable;
+  template <class I1, class I2 = I1> struct is_indirectly_swappable;
+  template <class I1, class I2> struct is_nothrow_indirectly_movable;
+  template <class I1, class I2 = I1> struct is_nothrow_indirectly_swappable;
+
+  template <class I1, class I2> constexpr bool is_indirectly_movable_v
+    = is_indirectly_movable<I1, I2>::value;
+  template <class I1, class I2> constexpr bool is_indirectly_swappable_v
+    = is_indirectly_swappable<I1, I2>::value;
+  template <class I1, class I2> constexpr bool is_nothrow_indirectly_movable_v
+    = is_nothrow_indirectly_movable<I1, I2>::value;
+  template <class I1, class I2> constexpr bool is_nothrow_indirectly_swappable_v
+    = is_nothrow_indirectly_swappable<I1, I2>::value;
+
   template <class Iterator> using iterator_traits = @\seebelow@;
 
   template <Readable T> using iter_common_reference_t
@@ -560,8 +574,8 @@ $\rightarrow$ \textbf{Forward}  &   $\rightarrow$ \textbf{Input}            \\
 
 \pnum
 The five categories of iterators correspond to the iterator concepts
-\tcode{Input\-Iterator},
-\tcode{Output\-Iterator},
+\tcode{InputIterator},
+\tcode{OutputIterator},
 \tcode{Forward\-Iterator},
 \tcode{Bidirectional\-Iterator}, and
 \tcode{RandomAccess\-Iterator}, respectively. The generic term \techterm{iterator} refers to
@@ -900,7 +914,7 @@ types are not \tcode{Readable} and have no associated value types.\exitnote
 \pnum
 When instantiated with a type \tcode{I}
 such that \tcode{I::element_type} is valid and denotes a type,
-\tcode{value_type<I>::\brk{}type} names the type \tcode{remove_cv_t<I::element_type>}, unless it is
+\tcode{value_type<I>::type} names the type \tcode{remove_cv_t<I::element_type>}, unless it is
 not an object type~(\cxxref{basic.types}) in which case
 \tcode{value_type<I>} shall have no nested type \tcode{type}. \enternote Smart pointers like
 \tcode{shared_ptr<int>} are \tcode{Readable} and have an associated value type. But a smart pointer
@@ -943,7 +957,7 @@ If
 type \tcode{iterator_category<T>::type} is computed as follows:
 \begin{itemize}
 \item If \tcode{T::iterator_category} is the same as or derives from \tcode{std::random_access_iterator_tag},
-      \tcode{iter\-ator_category<T>::type} is \tcode{ranges::random_access_iterator_tag}.
+      \tcode{iterator_category<T>::type} is \tcode{ranges::random_access_iterator_tag}.
 \item Otherwise, if \tcode{T::iterator_category} is the same as or derives from \tcode{std::bidirectional_iterator_tag},
       \tcode{iterator_category<T>::type} is \tcode{ranges::bidirectional_iterator_tag}.
 \item Otherwise, if \tcode{T::iterator_category} is the same as or derives from \tcode{std::forward_iterator_tag},
@@ -1130,8 +1144,7 @@ to provide a richer set of iterator movements~(\ref{iterators.forward},
   concept bool Iterator =
     requires(I i) {
       { *i } -> auto&&; // Requires: i is dereferenceable
-    } &&
-    WeaklyIncrementable<I>;
+    } && WeaklyIncrementable<I>;
 \end{codeblock}
 
 \pnum
@@ -1263,10 +1276,9 @@ satisfy \tcode{EqualityComparable}.
 \begin{codeblock}
   template <class I, class T>
   concept bool OutputIterator =
-    Iterator<I> &&
-    Writable<I, T> &&
+    Iterator<I> && Writable<I, T> &&
     requires(I i, T&& t) {
-      *i++ = std::forward<T>(t); // not required to be equality preserving
+      *i++ = std::forward(t); // not required to be equality preserving
     };
 \end{codeblock}
 
@@ -1410,7 +1422,7 @@ Let \tcode{a} and \tcode{b} be valid iterators of type \tcode{I} such that \tcod
 from \tcode{a}. Let \tcode{n} be the smallest value of type
 \tcode{difference_type_t<I>} such that after
 \tcode{n} applications of \tcode{++a}, then \tcode{bool(a == b)}.
-\tcode{RandomAccessIterator<\brk{}I>} is satisfied only if:
+\tcode{RandomAccessIterator<I>} is satisfied only if:
 
 \begin{itemize}
 \item \tcode{(a += n)} is equal to \tcode{b}.
@@ -1541,8 +1553,8 @@ member function need not be defined.\exitnote
 There are several additional iterator concepts that are commonly applied to families of algorithms.
 These group together iterator requirements of algorithm families. There are three relational
 concepts that specify how element values are transferred between \tcode{Readable} and \tcode{Writable} types:
-\tcode{Indirectly\-Movable}, \tcode{Indir\-ect\-ly\-Copy\-able}, and \tcode{Indirectly\-Swappable}. There are three relational concepts
-for rearrangements: \tcode{Permut\-able}, \tcode{Mergeable}, and \tcode{Sortable}.
+\tcode{Indirectly\-Movable}, \tcode{Indirectly\-Copyable}, and \tcode{Indirectly\-Swappable}. There are three relational concepts
+for rearrangements: \tcode{Permutable}, \tcode{Mergeable}, and \tcode{Sortable}.
 There is one relational concept for comparing values from different sequences: \tcode{IndirectlyComparable}.
 
 \pnum
@@ -1707,6 +1719,54 @@ several classes and functions:
 \rSec2[iterator.traits]{Iterator traits}
 
 \pnum
+The class templates \tcode{is_indirectly_movable},
+\tcode{is_nothrow_indirectly_movable}, \tcode{is_indirectly_swappable},
+and \tcode{is_nothrow_indirectly_swappable} shall be defined as follows:
+
+\begin{codeblock}
+template <class In, class Out>
+struct is_indirectly_movable : false_type { };
+
+template <class In, class Out>
+  requires IndirectlyMovable<In, Out>
+struct is_indirectly_movable<In, Out> : true_type { };
+
+template <class In, class Out>
+struct is_nothrow_indirectly_movable : false_type { };
+
+template <class In, class Out>
+  requires IndirectlyMovable<In, Out>
+struct is_nothrow_indirectly_movable<In, Out> :
+  integral_constant<bool,
+    noexcept(ranges::iter_move(declval<In&>())) &&
+    is_nothrow_constructible<value_type_t<In>, rvalue_reference_t<In>>::value &&
+    is_nothrow_assignable<value_type_t<In> &, rvalue_reference_t<In>>::value &&
+    is_nothrow_assignable<reference_t<Out>, rvalue_reference_t<In>>::value &&
+    is_nothrow_assignable<reference_t<Out>, value_type_t<In>>::value>
+{ };
+
+template <class I1, class I2 = I1>
+struct is_indirectly_swappable : false_type { };
+
+template <class I1, class I2>
+  requires IndirectlySwappable<I1, I2>
+struct is_indirectly_swappable<I1, I2> : true_type { };
+
+template <class I1, class I2 = I1>
+struct is_nothrow_indirectly_swappable : false_type { };
+
+template <class I1, class I2>
+  requires IndirectlySwappable<I1, I2>
+struct is_nothrow_indirectly_swappable<I1, I2> :
+  integral_constant<bool,
+    noexcept(ranges::iter_swap(declval<I1&>(), declval<I2&>())) &&
+    noexcept(ranges::iter_swap(declval<I2&>(), declval<I1&>())) &&
+    noexcept(ranges::iter_swap(declval<I1&>(), declval<I1&>())) &&
+    noexcept(ranges::iter_swap(declval<I2&>(), declval<I2&>()))>
+{ };
+\end{codeblock}
+
+\pnum
 For the sake of backwards compatibility, this document specifies the existence of an \tcode{iterator_traits}
 alias that collects an iterator's associated types. It is defined as if:
 
@@ -1809,7 +1869,7 @@ The nested type \tcode{pointer} is computed as follows:
 \begin{itemize}
 \item If
       \tcode{Out::pointer} is valid and denotes a type, then
-      \tcode{std::iterator_traits<Out>::pointer} is \tcode{Out::\brk{}pointer}.
+      \tcode{std::iterator_traits<Out>::pointer} is \tcode{Out::pointer}.
 \item Otherwise, \tcode{std::iterator_traits<Out>::pointer} is \tcode{void}.
 \end{itemize}
 
@@ -1844,9 +1904,9 @@ The nested type \tcode{pointer} is computed as follows:
 \begin{itemize}
 \item If
       \tcode{In::pointer} is valid and denotes a type, then
-      \tcode{std::iterator_traits<In>::pointer} is \tcode{In::\brk{}pointer}.
+      \tcode{std::iterator_traits<In>::pointer} is \tcode{In::pointer}.
 \item Otherwise, \tcode{std::iterator_traits<In>::pointer} is
-      \tcode{experimental::ranges::\brk{}iterator_\-traits<\brk{}In\brk{}>::\brk{}pointer}.
+      \tcode{experimental::ranges::\brk{}iterator_traits<In>::\brk{}pointer}.
 \end{itemize}
 
 \pnum
@@ -1952,9 +2012,9 @@ template <class T> struct iterator_category<BinaryTreeIterator<T>> {
 \pnum
 Since only types that satisfy
 \tcode{RandomAccessIterator} provide the \tcode{+} operator, and
-types that satisfy \tcode{Sized\-Sent\-inel} provide the \tcode{-}
+types that satisfy \tcode{SizedSentinel} provide the \tcode{-}
 operator, the library provides customization point objects~(\ref{customization.point.object})
-\tcode{advance}, \tcode{dist\-ance}, \tcode{next}, and \tcode{prev}.
+\tcode{advance}, \tcode{distance}, \tcode{next}, and \tcode{prev}.
 These
 customization point objects
 use
@@ -3815,7 +3875,7 @@ constexpr move_sentinel();
 \begin{itemdescr}
 \pnum
 \effects Constructs a \tcode{move_sentinel}, value-initializing
-\tcode{last}. If \tcode{is_\-trivially_\-default_\-constr\-uct\-ible<\brk{}S>::value} is \tcode{true}, then this constructor
+\tcode{last}. If \tcode{is_trivially_default_constructible<S>::value} is \tcode{true}, then this constructor
 is a \tcode{constexpr} constructor.
 \end{itemdescr}
 
@@ -5803,9 +5863,9 @@ istreambuf_iterator(basic_streambuf<charT, traits>* s) noexcept;
 \pnum
 \effects
 Constructs an
-\tcode{istreambuf_iterator}
+\tcode{istreambuf_iterator<>}
 that uses the
-\tcode{basic_streambuf}
+\tcode{basic_streambuf<>}
 object
 \tcode{*(s.rdbuf())},
 or
@@ -5826,9 +5886,9 @@ istreambuf_iterator(const proxy& p) noexcept;
 \pnum
 \effects
 Constructs a
-\tcode{istreambuf_iterator}
+\tcode{istreambuf_iterator<>}
 that uses the
-\tcode{basic_streambuf}
+\tcode{basic_streambuf<>}
 object pointed to by the
 \tcode{proxy}
 object's constructor argument \tcode{p}.
