@@ -172,6 +172,26 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   template <class T, class U>
   concept bool SwappableWith = @\seebelow@;
 
+  // \ref{concepts.lib.corelang.destructible}, Destructible:
+  template <class T>
+  concept bool Destructible = @\seebelow@;
+
+  // \ref{concepts.lib.corelang.constructible}, Constructible:
+  template <class T, class... Args>
+  concept bool Constructible = @\seebelow@;
+
+  // \ref{concepts.lib.corelang.defaultconstructible}, DefaultConstructible:
+  template <class T>
+  concept bool DefaultConstructible = @\seebelow@;
+
+  // \ref{concepts.lib.corelang.moveconstructible}, MoveConstructible:
+  template <class T>
+  concept bool MoveConstructible = @\seebelow@;
+
+  // \ref{concepts.lib.corelang.copyconstructible}, CopyConstructible:
+  template <class T>
+  concept bool CopyConstructible = @\seebelow@;
+
   // \ref{concepts.lib.compare}, comparison concepts:
   // \ref{concepts.lib.compare.boolean}, Boolean:
   template <class B>
@@ -195,26 +215,6 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   concept bool StrictTotallyOrderedWith = @\seebelow@;
 
   // \ref{concepts.lib.object}, object concepts:
-  // \ref{concepts.lib.object.destructible}, Destructible:
-  template <class T>
-  concept bool Destructible = @\seebelow@;
-
-  // \ref{concepts.lib.object.constructible}, Constructible:
-  template <class T, class... Args>
-  concept bool Constructible = @\seebelow@;
-
-  // \ref{concepts.lib.object.defaultconstructible}, DefaultConstructible:
-  template <class T>
-  concept bool DefaultConstructible = @\seebelow@;
-
-  // \ref{concepts.lib.object.moveconstructible}, MoveConstructible:
-  template <class T>
-  concept bool MoveConstructible = @\seebelow@;
-
-  // \ref{concepts.lib.object.copyconstructible}, CopyConstructible:
-  template <class T>
-  concept bool CopyConstructible = @\seebelow@;
-
   // \ref{concepts.lib.object.movable}, Movable:
   template <class T>
   concept bool Movable = @\seebelow@;
@@ -619,6 +619,107 @@ int main() {
 \exitexample
 \end{itemdescr}
 
+\rSec2[concepts.lib.corelang.destructible]{Concept \tcode{Destructible}}
+
+\pnum
+The \tcode{Destructible} concept specifies properties of all types, instances of
+which can be destroyed at the end of their lifetime, or reference types.
+
+\indexlibrary{\idxcode{Destructible}}%
+\begin{itemdecl}
+template <class T>
+concept bool Destructible = is_nothrow_destructible<T>::value; // \seebelow
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+There need not be any subsumption relationship between \tcode{Destructible<T>}
+and \tcode{is_\-no\-throw_\-destruct\-ible<T>::value}.
+
+\pnum
+\enternote Unlike the \tcode{Destructible} library concept in the \Cpp
+Standard~(\cxxref{utility.arg.requirements}), this concept forbids destructors
+that are \tcode{noexcept(false)}, even if non-throwing. \exitnote
+\end{itemdescr}
+
+\rSec2[concepts.lib.corelang.constructible]{Concept \tcode{Constructible}}
+
+\pnum
+The \tcode{Constructible} concept constrains the initialization of a variable of
+a type with a given set of argument types.
+
+\indexlibrary{\idxcode{Constructible}}%
+\begin{itemdecl}
+template <class T, class... Args>
+concept bool Constructible =
+  Destructible<T> && is_constructible<T, Args...>::value; // \seebelow
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+There need not be any subsumption relationship between \tcode{Constructible<T, Args...>}
+and \tcode{is_constructible<T, Args...>::value}.
+\end{itemdescr}
+
+\rSec2[concepts.lib.corelang.defaultconstructible]{Concept \tcode{DefaultConstructible}}
+
+\indexlibrary{\idxcode{DefaultConstructible}}%
+\begin{itemdecl}
+template <class T>
+concept bool DefaultConstructible = Constructible<T>;
+\end{itemdecl}
+
+\rSec2[concepts.lib.corelang.moveconstructible]{Concept \tcode{MoveConstructible}}
+
+\indexlibrary{\idxcode{MoveConstructible}}%
+\begin{itemdecl}
+template <class T>
+concept bool MoveConstructible =
+  Constructible<T, T> && ConvertibleTo<T, T>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+If \tcode{T} is an object type, then let \tcode{rv} be an rvalue of type \tcode{T}
+and \tcode{u2} a distinct object of type \tcode{T} equal to \tcode{rv}.
+\tcode{MoveConstructible<T>} is satisfied only if
+
+\begin{itemize}
+\item After the definition \tcode{T u = rv;}, \tcode{u} is equal to \tcode{u2}.
+
+\item \tcode{T\{rv\}} is equal to \tcode{u2}.
+
+\item If \tcode{T} is not \tcode{const}, \tcode{rv}'s resulting state is valid
+but unspecified~(\cxxref{lib.types.movedfrom}); otherwise, it is unchanged.
+\end{itemize}
+\end{itemdescr}
+
+\rSec2[concepts.lib.corelang.copyconstructible]{Concept \tcode{CopyConstructible}}
+
+\indexlibrary{\idxcode{CopyConstructible}}%
+\begin{itemdecl}
+template <class T>
+concept bool CopyConstructible =
+  MoveConstructible<T> &&
+  Constructible<T, T&> && ConvertibleTo<T&, T> &&
+  Constructible<T, const T&> && ConvertibleTo<const T&, T> &&
+  Constructible<T, const T> && ConvertibleTo<const T, T>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+If \tcode{T} is an object type, then let \tcode{v} be an lvalue of type (possibly
+\tcode{const}) \tcode{T} or an rvalue of type \tcode{const T}.
+\tcode{CopyConstructible<T>} is satisfied only if
+
+\begin{itemize}
+\item After the definition \tcode{T u = v;}, \tcode{u} is equal to \tcode{v}.
+
+\item \tcode{T\{v\}} is equal to \tcode{v}.
+\end{itemize}
+
+\end{itemdescr}
+
 \rSec1[concepts.lib.compare]{Comparison concepts}
 
 \rSec2[concepts.lib.compare.general]{In general}
@@ -841,107 +942,6 @@ const remove_reference_t<U>\&>}.
 This section describes concepts that specify the basis of the
 value-oriented programming style on which the library is based.
 %% object types (See the rationale in Appendix~\ref{decomposition}).}
-
-\rSec2[concepts.lib.object.destructible]{Concept \tcode{Destructible}}
-
-\pnum
-The \tcode{Destructible} concept specifies properties of all types, instances of
-which can be destroyed at the end of their lifetime, or reference types.
-
-\indexlibrary{\idxcode{Destructible}}%
-\begin{itemdecl}
-template <class T>
-concept bool Destructible = is_nothrow_destructible<T>::value; // \seebelow
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-There need not be any subsumption relationship between \tcode{Destructible<T>}
-and \tcode{is_\-no\-throw_\-destruct\-ible<T>::value}.
-
-\pnum
-\enternote Unlike the \tcode{Destructible} library concept in the \Cpp
-Standard~(\cxxref{utility.arg.requirements}), this concept forbids destructors
-that are \tcode{noexcept(false)}, even if non-throwing. \exitnote
-\end{itemdescr}
-
-\rSec2[concepts.lib.object.constructible]{Concept \tcode{Constructible}}
-
-\pnum
-The \tcode{Constructible} concept constrains the initialization of a variable of
-a type with a given set of argument types.
-
-\indexlibrary{\idxcode{Constructible}}%
-\begin{itemdecl}
-template <class T, class... Args>
-concept bool Constructible =
-  Destructible<T> && is_constructible<T, Args...>::value; // \seebelow
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-There need not be any subsumption relationship between \tcode{Constructible<T, Args...>}
-and \tcode{is_constructible<T, Args...>::value}.
-\end{itemdescr}
-
-\rSec2[concepts.lib.object.defaultconstructible]{Concept \tcode{DefaultConstructible}}
-
-\indexlibrary{\idxcode{DefaultConstructible}}%
-\begin{itemdecl}
-template <class T>
-concept bool DefaultConstructible = Constructible<T>;
-\end{itemdecl}
-
-\rSec2[concepts.lib.object.moveconstructible]{Concept \tcode{MoveConstructible}}
-
-\indexlibrary{\idxcode{MoveConstructible}}%
-\begin{itemdecl}
-template <class T>
-concept bool MoveConstructible =
-  Constructible<T, T> && ConvertibleTo<T, T>;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-If \tcode{T} is an object type, then let \tcode{rv} be an rvalue of type \tcode{T}
-and \tcode{u2} a distinct object of type \tcode{T} equal to \tcode{rv}.
-\tcode{MoveConstructible<T>} is satisfied only if
-
-\begin{itemize}
-\item After the definition \tcode{T u = rv;}, \tcode{u} is equal to \tcode{u2}.
-
-\item \tcode{T\{rv\}} is equal to \tcode{u2}.
-
-\item If \tcode{T} is not \tcode{const}, \tcode{rv}'s resulting state is valid
-but unspecified~(\cxxref{lib.types.movedfrom}); otherwise, it is unchanged.
-\end{itemize}
-\end{itemdescr}
-
-\rSec2[concepts.lib.object.copyconstructible]{Concept \tcode{CopyConstructible}}
-
-\indexlibrary{\idxcode{CopyConstructible}}%
-\begin{itemdecl}
-template <class T>
-concept bool CopyConstructible =
-  MoveConstructible<T> &&
-  Constructible<T, T&> && ConvertibleTo<T&, T> &&
-  Constructible<T, const T&> && ConvertibleTo<const T&, T> &&
-  Constructible<T, const T> && ConvertibleTo<const T, T>;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-If \tcode{T} is an object type, then let \tcode{v} be an lvalue of type (possibly
-\tcode{const}) \tcode{T} or an rvalue of type \tcode{const T}.
-\tcode{CopyConstructible<T>} is satisfied only if
-
-\begin{itemize}
-\item After the definition \tcode{T u = v;}, \tcode{u} is equal to \tcode{v}.
-
-\item \tcode{T\{v\}} is equal to \tcode{v}.
-\end{itemize}
-
-\end{itemdescr}
 
 \rSec2[concepts.lib.object.movable]{Concept \tcode{Movable}}
 
