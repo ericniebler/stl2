@@ -44,9 +44,9 @@ public:
   constexpr decltype(auto) back() const requires BidirectionalRange<D const>;
 
   template <RandomAccessRange R = D>
-  constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>>);
+  constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>> n);
   template <RandomAccessRange R = D const>
-  constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>>) const;
+  constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>> n) const;
 
   template <RandomAccessRange R = D>
     requires SizedRange<R>
@@ -58,6 +58,111 @@ public:
   // TODO implicit conversion to something that looks like a container
 };
 \end{codeblock}
+
+\rSec3[ranges.view_interface.accessors]{\tcode{view_interface} accessors}
+
+\indexlibrary{\idxcode{empty}!\idxcode{view_interface}}%
+\begin{itemdecl}
+constexpr bool empty() const requires ForwardRange<D const>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns Equivalent to \tcode{ranges::begin(derived()) == ranges::end(derived())}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator bool}!\idxcode{view_interface}}%
+\begin{itemdecl}
+constexpr explicit operator bool() const requires ForwardRange<D const>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns Equivalent to \tcode{!empty()}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator!}!\idxcode{view_interface}}%
+\begin{itemdecl}
+constexpr bool operator!() const requires ForwardRange<D const>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns Equivalent to \tcode{empty()}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{size}!\idxcode{view_interface}}%
+\begin{itemdecl}
+constexpr auto size() const requires ForwardRange<D const> &&
+  SizedSentinel<sentinel_t<D const>, iterator_t<D const>>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns Equivalent to \tcode{ranges::end(derived()) - ranges::begin(derived())}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{front}!\idxcode{view_interface}}%
+\begin{itemdecl}
+constexpr decltype(auto) front() requires ForwardRange<D>;
+constexpr decltype(auto) front() const requires ForwardRange<D const>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{!empty()}.
+
+\pnum
+\returns Equivalent to \tcode{*ranges::begin(derived())}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{back}!\idxcode{view_interface}}%
+\begin{itemdecl}
+constexpr decltype(auto) back() requires ForwardRange<D>;
+constexpr decltype(auto) back() const requires ForwardRange<D const>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{!empty()}.
+
+\pnum
+\returns Equivalent to \tcode{*prev(ranges::end(derived()))}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator[]}!\idxcode{view_interface}}%
+\begin{itemdecl}
+template <RandomAccessRange R = D>
+constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>> n);
+template <RandomAccessRange R = D const>
+constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>> n) const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{n >= 0 \&\& n < size()}.
+
+\pnum
+\returns Equivalent to \tcode{ranges::begin(derived())[n]}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{at}!\idxcode{view_interface}}%
+\begin{itemdecl}
+template <RandomAccessRange R = D>
+constexpr decltype(auto) at(difference_type_t<iterator_t<R>> n);
+template <RandomAccessRange R = D const>
+constexpr decltype(auto) at(difference_type_t<iterator_t<R>> n) const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns Equivalent to \tcode{ranges::begin(derived())[n]}.
+
+\pnum
+\throws \tcode{std::out_of_range} if \tcode{n < 0 || n >= size()}.
+\end{itemdescr}
+
+
 
 \rSec2[ranges.iterator.ranges]{Iterator ranges}
 
@@ -97,6 +202,85 @@ public:
 };
 \end{codeblock}
 
+\rSec4[ranges.iterator_range.ctors]{\tcode{iterator_range} constructors}
+
+\indexlibrary{\idxcode{iterator_range}!\idxcode{iterator_range}}%
+\begin{itemdecl}
+constexpr iterator_range(I i, S s);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Initializes \tcode{tagged_pair<tag::begin(I), tag::end(S)>} with
+\tcode{i} and \tcode{s}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{iterator_range}!\idxcode{iterator_range}}%
+\begin{itemdecl}
+template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
+  constexpr iterator_range(iterator_range<X, Y> r);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Initializes \tcode{tagged_pair<tag::begin(I), tag::end(S)>} with
+\tcode{r.begin()} and \tcode{r.end()}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{iterator_range}!\idxcode{iterator_range}}%
+\begin{itemdecl}
+template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
+  constexpr iterator_range(pair<X, Y> r);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Initializes \tcode{tagged_pair<tag::begin(I), tag::end(S)>} with
+\tcode{r.first} and \tcode{r.second}.
+\end{itemdescr}
+
+\rSec4[ranges.iterator_range.ops]{\tcode{iterator_range} operators}
+
+\indexlibrary{\idxcode{operator=}!\idxcode{iterator_range}}%
+\begin{itemdecl}
+template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
+  constexpr iterator_range& operator=(iterator_range<X, Y> r);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+this->first = r.begin();
+this->second = r.end();
+return *this;
+\end{codeblock}
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator pair}!\idxcode{iterator_range}}%
+\begin{itemdecl}
+template <Constructible<const I&> X, Constructible<const S&> Y>
+  constexpr operator pair<X, Y>() const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns Equivalent to \tcode{\{this->first, this->second\}}.
+\end{itemdescr}
+
+\rSec4[ranges.iterator_range.accessors]{\tcode{iterator_range} accessors}
+
+\indexlibrary{\idxcode{empty}!\idxcode{iterator_range}}%
+\begin{itemdecl}
+constexpr bool empty() const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns Equivalent to \tcode{this->first == this->second}.
+\end{itemdescr}
+
+
 \rSec3[ranges.sized_iterator_range]{\tcode{sized_iterator_range}}
 
 \indexlibrary{\idxcode{sized_iterator_range}}%
@@ -125,18 +309,158 @@ public:
   template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
     constexpr sized_iterator_range& operator=(sized_iterator_range<X, Y> r);
 
-  constexpr I begin() const;
-  constexpr S end() const;
-  constexpr difference_type_t<I> size() const;
-
   template <Constructible<const I&> X, Constructible<const S&> Y>
     constexpr operator pair<X, Y>() const;
   template <Constructible<const I&> X, Constructible<const S&> Y>
     constexpr operator iterator_range<X, Y>() const;
 
   constexpr operator iterator_range<I, S> const &() const & noexcept;
+
+  constexpr I begin() const;
+  constexpr S end() const;
+  constexpr difference_type_t<I> size() const noexcept;
 };
 \end{codeblock}
+
+\rSec4[ranges.sized_iterator_range.ctors]{\tcode{sized_iterator_range} constructors}
+
+\indexlibrary{\idxcode{sized_iterator_range}!\idxcode{sized_iterator_range}}%
+\begin{itemdecl}
+constexpr sized_iterator_range(I i, S s, difference_type_t<I> n);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{distance(i, s) == n}.
+
+\pnum
+\effects Initializes \tcode{rng_} with \tcode{i} and \tcode{s}, and initializes
+\tcode{size_} with \tcode{n}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{sized_iterator_range}!\idxcode{sized_iterator_range}}%
+\begin{itemdecl}
+template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
+  constexpr sized_iterator_range(pair<X, Y> r, difference_type_t<I> n);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{distance(r.first, r.second) == n}.
+
+\pnum
+\effects Initializes \tcode{rng_} with \tcode{r.first} and \tcode{r.second}, and
+initializes \tcode{size_} with \tcode{n}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{sized_iterator_range}!\idxcode{sized_iterator_range}}%
+\begin{itemdecl}
+template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
+  constexpr sized_iterator_range(iterator_range<X, Y> r, difference_type_t<I> n);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{distance(r.begin(), r.end()) == n}.
+
+\pnum
+\effects Initializes \tcode{rng_} with \tcode{r.begin()} and \tcode{r.end()}, and
+initializes \tcode{size_} with \tcode{n}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{sized_iterator_range}!\idxcode{sized_iterator_range}}%
+\begin{itemdecl}
+template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
+  constexpr sized_iterator_range(sized_iterator_range<X, Y> r);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Initializes \tcode{rng_} with \tcode{r.begin()} and \tcode{r.end()}, and
+initializes \tcode{size_} with \tcode{r.size()}.
+\end{itemdescr}
+
+\rSec4[ranges.sized_iterator_range.ops]{\tcode{sized_iterator_range} operators}
+
+\indexlibrary{\idxcode{operator=}!\idxcode{sized_iterator_range}}%
+\begin{itemdecl}
+template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
+  constexpr sized_iterator_range& operator=(sized_iterator_range<X, Y> r);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+rng_.first = r.begin();
+rng_.second = r.end();
+size_ = r.size();
+\end{codeblock}
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator pair}!\idxcode{sized_iterator_range}}%
+\begin{itemdecl}
+template <Constructible<const I&> X, Constructible<const S&> Y>
+  constexpr operator pair<X, Y>() const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns Equivalent to \tcode{\{rng_.first, rng_.second\}}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator iterator_range}!\idxcode{sized_iterator_range}}%
+\begin{itemdecl}
+template <Constructible<const I&> X, Constructible<const S&> Y>
+  constexpr operator iterator_range<X, Y>() const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns Equivalent to \tcode{\{rng_.first, rng_.second\}}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator iterator_range}!\idxcode{sized_iterator_range}}%
+\begin{itemdecl}
+constexpr operator iterator_range<I, S> const &() const & noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns Equivalent to \tcode{rng_}.
+\end{itemdescr}
+
+\rSec4[ranges.sized_iterator_range.accessors]{\tcode{sized_iterator_range} accessors}
+
+\indexlibrary{\idxcode{begin}!\idxcode{sized_iterator_range}}%
+\begin{itemdecl}
+constexpr I begin() const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns Equivalent to \tcode{rng_.first}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{end}!\idxcode{sized_iterator_range}}%
+\begin{itemdecl}
+constexpr S end() const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns Equivalent to \tcode{rng_.second}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{size}!\idxcode{sized_iterator_range}}%
+\begin{itemdecl}
+constexpr difference_type_t<I> size() const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns Equivalent to \tcode{size_}.
+\end{itemdescr}
 
 
 \rSec1[ranges.adaptors]{Range adaptors}
