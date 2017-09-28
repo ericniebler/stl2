@@ -1,0 +1,187 @@
+%!TEX root = Dxxxx.tex
+
+\setcounter{chapter}{9}
+\rSec0[ranges]{Ranges library}
+
+\ednote{After Ranges TS subclause 10.6 [ranges.requirements], insert a new subclause
+10.7, ``Range utilities'' with stable name [ranges.utilities]}
+
+\setcounter{section}{6}
+\rSec1[ranges.utilities]{Range utilities}
+
+\pnum
+The components in this section are 
+
+\rSec2[ranges.view_interface]{View interface}
+
+\pnum
+The \tcode{view_interface} is a helper for defining \tcode{View}-like types that offer a
+container-like interface. It is parameterized with the type that inherits from it.
+
+\indexlibrary{\idxcode{view_interface}}%
+\begin{codeblock}
+template <class D>
+class view_interface {
+private:
+  constexpr D& derived() noexcept { // \expos
+    return static_cast<D&>(*this);
+  }
+  constexpr const D& derived() const noexcept { // \expos
+    return static_cast<D const&>(*this);
+  }
+public:
+  constexpr bool empty() const requires ForwardRange<D const>;
+  constexpr explicit operator bool() const requires ForwardRange<D const>;
+  constexpr bool operator!() const requires ForwardRange<D const>;
+
+  constexpr auto size() const requires ForwardRange<D const> &&
+    SizedSentinel<sentinel_t<D const>, iterator_t<D const>>;
+
+  constexpr decltype(auto) front() requires ForwardRange<D>;
+  constexpr decltype(auto) front() const requires ForwardRange<D const>;
+
+  constexpr decltype(auto) back() requires BidirectionalRange<D>;
+  constexpr decltype(auto) back() const requires BidirectionalRange<D const>;
+
+  template <RandomAccessRange R = D>
+  constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>>);
+  template <RandomAccessRange R = D const>
+  constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>>) const;
+
+  template <RandomAccessRange R = D>
+    requires SizedRange<R>
+  constexpr decltype(auto) at(difference_type_t<iterator_t<R>>);
+  template <RandomAccessRange R = D const>
+    requires SizedRange<R>
+  constexpr decltype(auto) at(difference_type_t<iterator_t<R>>) const;
+
+  // TODO implicit conversion to something that looks like a container
+};
+\end{codeblock}
+
+\rSec2[ranges.iterator.ranges]{Iterator ranges}
+
+\pnum
+The \tcode{iterator_range} and \tcode{sized_iterator_range} classes bundle together an
+iterator and a sentinel into a single object that satisfies the \tcode{View} concept.
+\tcode{sized_iterator_range} additionally stores the range's size and satisfies the
+\tcode{SizedRange} concept.
+
+\rSec3[ranges.iterator_range]{\tcode{iterator_range}}
+
+\indexlibrary{\idxcode{iterator_range}}%
+\begin{codeblock}
+template <Iterator I, Sentinel<I> S = I>
+class iterator_range
+  : tagged_pair<tag::begin(I), tag::end(S)>,
+    view_interface<iterator_range<I, S>> {
+public:
+  using iterator = I;
+  using sentinel = S;
+
+  iterator_range() = default;
+  constexpr iterator_range(I i, S s);
+
+  template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
+    constexpr iterator_range(iterator_range<X, Y> r);
+  template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
+    constexpr iterator_range(pair<X, Y> r);
+
+  template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
+    constexpr iterator_range& operator=(iterator_range<X, Y> r);
+
+  template <Constructible<const I&> X, Constructible<const S&> Y>
+    constexpr operator pair<X, Y>() const;
+
+  constexpr bool empty() const;
+};
+\end{codeblock}
+
+\rSec3[ranges.sized_iterator_range]{\tcode{sized_iterator_range}}
+
+\indexlibrary{\idxcode{sized_iterator_range}}%
+\begin{codeblock}
+template <Iterator I, Sentinel<I> S = I>
+class sized_iterator_range
+  : view_interface<sized_iterator_range<I, S>> {
+private:
+  template <class X, class Y> friend class sized_iterator_range;
+  iterator_range<I, S> rng_; // \expos
+  difference_type_t<I> size_; // \expos
+public:
+  using iterator = I;
+  using sentinel = S;
+
+  sized_iterator_range() = default;
+  constexpr sized_iterator_range(I i, S s, difference_type_t<I> n);
+
+  template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
+    constexpr sized_iterator_range(pair<X, Y> r, difference_type_t<I> n);
+  template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
+    constexpr sized_iterator_range(iterator_range<X, Y> r, difference_type_t<I> n);
+  template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
+    constexpr sized_iterator_range(sized_iterator_range<X, Y> r);
+
+  template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
+    constexpr sized_iterator_range& operator=(sized_iterator_range<X, Y> r);
+
+  constexpr I begin() const;
+  constexpr S end() const;
+  constexpr difference_type_t<I> size() const;
+
+  template <Constructible<const I&> X, Constructible<const S&> Y>
+    constexpr operator pair<X, Y>() const;
+  template <Constructible<const I&> X, Constructible<const S&> Y>
+    constexpr operator iterator_range<X, Y>() const;
+
+  constexpr operator iterator_range<I, S> const &() const & noexcept;
+};
+\end{codeblock}
+
+
+\rSec1[ranges.adaptors]{Range adaptors}
+
+\pnum
+This section defines \techterm{range adaptors}, which are utilities that transform a \tcode{Range}
+into a \tcode{View} with custom behaviors. These adaptors can be chained to create pipelines of
+range transformations that evaluate lazily as the resulting view is iterated.
+
+\pnum
+Range adaptors are declared in namespace \tcode{std::experimental::ranges::v1::view}.
+
+\pnum
+The bitwise or operator is overloaded for the purpose of creating adaptor chain pipelines. The
+adaptors also support function call syntax with equivalent semantics.
+
+\pnum
+A range adaptor is a customization point object~(\cxxref{??}) that accepts a \tcode{Range} as its
+first argument. If the adaptor accepts only one argument, then the following alternate syntaxes
+are semantically equivalent:
+
+\begin{codeblock}
+@\textit{adaptor}@(rng)
+rng | @\textit{adaptor}@
+\end{codeblock}
+
+If the adaptor accepts more than one argument, then the following alternate syntaxes are
+semantically equivalent:
+
+\begin{codeblock}
+@\textit{adaptor}@(rng, args...)
+rng | @\textit{adaptor}@(args...)
+\end{codeblock}
+
+\pnum
+The first argument to a range adaptor shall be either an lvalue \tcode{Range} or a \tcode{View}.
+
+\pnum
+\enterexample
+\begin{codeblock}
+std::vector<int> ints{0,1,2,3,4,5};
+auto even = [](int i){ return 0 == i % 2; };
+auto square = [](int i) { return i * i; };
+for (int i : ints | view::filter(even) | view::transform(square)) {
+  cout << i << ' '; // prints: 0 4 16
+}
+\end{codeblock}
+\exitexample

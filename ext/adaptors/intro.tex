@@ -10,54 +10,25 @@ This is a witty quote.
 \rSec1[intro.scope]{Scope}
 
 \pnum
-This Technical Specification describes extensions to the C++
-Programming Language \ref{intro.refs} that
-permit operations on ranges of data. These extensions include
-changes and additions to the existing library facilities as well
-as the extension of some core language facilities. In particular,
-changes and extensions to the Standard Library include:
+This document provides extensions to the Ranges TS~\cite{ranges-ts} to
+support the creation of pipelines of range transformations. In particular,
+changes and extensions to the Ranges TS include:
 
 \begin{itemize}
-\item The reformulation of the foundational and iterator concept requirements
-using the syntax of the Concepts TS \ref{intro.refs}.
-\item The respecification of the Standard Library algorithms in terms of the new
-concepts.
-\item The loosening of the algorithm constraints to permit the use of
-\techterm{sentinels} to denote the end of a range and corresponding changes to algorithm
-return types where necessary.
-\item The addition of new concepts describing \techterm{range} and \techterm{view}
-abstractions; that is, objects with a begin iterator and an end sentinel.
-\item The addition of new overloads of the Standard Library algorithms that take iterable
-objects.
-\item Support of \techterm{callable objects} (as opposed to \techterm{function objects})
-passed as arguments to the algorithms.
-\item The addition of optional \techterm{projection} arguments to the algorithms to
-permit on-the-fly data transformations.
-\item Changes to existing iterator primitives and new primitives in support of the
-addition of sentinels to the library.
-\item Changes to the existing iterator adaptors and stream iterators to make them model
-the new iterator concepts.
-\item New iterator adaptors (\tcode{counted_iterator} and \tcode{common_iterator}) and
-sentinels (\tcode{unreachable}).
+\item An \tcode{iterator_range} type that stores an iterator/sentinel pair and
+satisfies the requirements of the \tcode{View} concept.
+\item A \tcode{sized_iterator_range} type that stores an iterator/sentinel pair
+and a size, and satisfies the requirements of both the \tcode{View} and
+\tcode{SizedRange} concepts.
+\item A \tcode{view::all} range adaptor that turns a \tcode{Range} into a
+\tcode{View} while respecting memory safety.
+\item A \tcode{view::filter} range adaptor that accepts a \tcode{Range} and a
+\tcode{Predicate} and returns a \tcode{View} of the underlying range that skips
+those elements that fail to satisfy the predicate.
+\item A \tcode{view::transform} range adaptor that accepts a \tcode{Range} and a
+unary \tcode{RegularInvocable} and produces a view that applies the invocable to
+each element of the underlying range.
 \end{itemize}
-
-\pnum
-Changes to the core language include:
-
-\begin{itemize}
-\item the extension of the range-based \tcode{for} statement to support
-the new iterator range requirements~(\ref{iterator.range}).
-\end{itemize}
-
-\pnum
-The scope of this paper does not yet extend to the other parts of the Standard Library
-that need to change because of the addition of concepts to the language (e.g., the numeric
-algorithms), nor does it add range support to all the places that could benefit from it (e.g.,
-the containers).
-
-\pnum
-This paper does not specify any new range views, actions, or facade or adaptor
-utilities. See the Future Work appendix~(\ref{future}).
 
 \rSec1[intro.refs]{References}
 
@@ -69,13 +40,11 @@ of the referenced document (including any amendments) applies.
 
 \begin{itemize}
 \item ISO/IEC 14882:2014, \doccite{Programming Languages - \Cpp}
-\item JTC1/SC22/WG21 N4377, \doccite{Technical Specification - \Cpp Extensions for Concepts}
-\item JTC1/SC22/WG21 N4128, \doccite{Ranges for the Standard Library, Revision 1}
-\item JTC1/SC22/WG21 N3351, \doccite{A Concept Design for the STL}
+\item JTC1/SC22/WG21 N4685, \doccite{Technical Specification - \Cpp Extensions for Ranges}
 \end{itemize}
 
-ISO/IEC 14882:2014 is herein called the \defn{\Cpp Standard}, N3351 is called the
-\defn{``The Palo Alto''} report, and N4377 is called the \defn{Concepts TS}.
+ISO/IEC 14882:2014 is herein called the \defn{C\Rplus\Rplus\xspace Standard} and N4685 is called
+the \defn{Ranges TS}.
 
 \rSec1[intro.compliance]{Implementation compliance}
 
@@ -89,79 +58,11 @@ Conformance is defined in terms of the behavior of programs.
 \rSec1[intro.namespaces]{Namespaces, headers, and modifications to standard classes}
 
 \pnum
-Since the extensions described in this technical specification are experimental and not
-part of the C++ standard library, they should not be declared directly within namespace
-\tcode{std}. Unless otherwise specified, all components described in this document either:
-
-\begin{itemize}
-\item modify an existing interface in the C++ Standard Library in-place,
-\item \oldtxt{are declared in a namespace whose name appends \tcode{::experimental::ranges_v1} to
-a namespace defined in the C++ Standard Library, such as \tcode{std} or \tcode{std::chrono},
-or}
-\item \oldtxt{are declared in a subnamespace of a namespace described in the previous bullet, whose
-name is not the same as an existing subnamespace of namespace \tcode{std}.}
-\item \newtxt{are declared in namespace \tcode{std::experimental::ranges::v1}.}
-\end{itemize}
-
-{\color{oldclr}
-\enterexample \oldtxt{This TS does not define \tcode{std::experimental::ranges_v1::chrono} because
-the C++ Standard Library defines \tcode{std::chrono}. This paper does not define
-\tcode{std::pmr::experimental::ranges_v1} because the C++ Standard Library does not define
-\tcode{std::pmr}.}\exitexample
-}
-
-\ednote{The following text is new to this document. It is taken from the
-Library Fundamentals 2 TS and edited to reflect the fact that much of this document
-is suggesting parallel constrained facilities that are specified as diffs against
-the existing unconstrained facilities in namespace \tcode{std}.}
-
-\pnum
-The International Standard, ISO/IEC 14882, together with N4377 (the Concepts TS),
-provide important context and specification for this paper. This document is written
-as a set of changes against ISO/IEC 14882. In places, this document suggests
-changes to be made to components in namespace \tcode{std} in-place. In
-other places, entire chapters and sections are copied verbatim and modified so as to
-define similar but different components in namespace \tcode{std::experimental::ranges\oldtxt{_v1}\newtxt{::v1}}.
-In those cases, effort was made to keep chapter and section numbers the same as in
-ISO/IEC 14882 for the sake of easy cross-referencing with the understanding that
-section numbers will change in the final draft.
-
-\pnum
-Instructions to modify or add paragraphs are written as explicit instructions.
-Modifications made to existing text from the International Standard use
-\added{underlining} to represent added text and \removed{strikethrough} to
-represent deleted text. Text in \newtxt{underline} is used to denote text that
-was added since the last time the wording in question was reviewed, and
-\oldtxt{strikethrough} denotes text removed.
-
-\pnum
-This paper assumes that the contents of the \tcode{std::experimental::ranges\oldtxt{_v1}\newtxt{::v1}}
-namespace will become a new constrained version of the C++ Standard Library
-that will be delivered alongside the existing unconstrained version. The versioning
-mechanism to make this possible is yet to be determined.
+Since the extensions described in this document are experimental additions to the Ranges TS,
+everything defined herein is declared within namespace \tcode{std::experimental::ranges::v1}.
 
 \pnum
 Unless otherwise specified, references to other entities described in this
-document are assumed to be qualified with \tcode{std::experimental::ranges\oldtxt{_v1}::}, and
+document are assumed to be qualified with \tcode{std::experimental::ranges::}, and
 references to entities described in the International Standard are assumed to be
 qualified with \tcode{std::}.
-
-\pnum
-New headers are provided in the \tcode{<experimental/ranges\oldtxt{_v1}/>} directory. Where
-the new header has the same name as an existing header
-(e.g., \tcode{<experimental/ranges\oldtxt{_v1}/algorithm>}), the new header shall include the
-existing header as if by
-
-\begin{codeblock}
-#include <algorithm>
-\end{codeblock}
-
-\begin{floattable}{Ranges TS library headers}{tab:intro.headers}
-{ll}
-\topline
-\tcode{<experimental/ranges\oldtxt{_v1}/algorithm>}  & \tcode{<experimental/ranges\oldtxt{_v1}/random>}   \\
-\tcode{<experimental/ranges\oldtxt{_v1}/concepts>}   & \tcode{<experimental/ranges\oldtxt{_v1}/tuple>}    \\
-\tcode{<experimental/ranges\oldtxt{_v1}/functional>} & \tcode{<experimental/ranges\oldtxt{_v1}/utility>}  \\
-\tcode{<experimental/ranges\oldtxt{_v1}/iterator>}   &                                           \\
-\bottomline
-\end{floattable}
