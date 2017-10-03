@@ -3,6 +3,43 @@
 \setcounter{chapter}{9}
 \rSec0[ranges]{Ranges library}
 
+\ednote{To the section ``Header \tcode{<experimental/ranges/range>} synopsis''
+10.3 [range.synopsis], add the following:}
+
+\begin{codeblock}
+// \ref{ranges.view_interface}:
+template <class D>
+class view_interface;
+
+// \ref{ranges.iterator_range}:
+template <Iterator I, Sentinel<I> S = I>
+class iterator_range;
+
+// \ref{ranges.sized_iterator_range}:
+template <Iterator I, Sentinel<I> S = I>
+class sized_iterator_range;
+
+// \ref{ranges.adaptors.all}:
+namespace view { inline constexpr @\unspec@ all = @\unspec@; }
+
+template <Range R>
+using all_view = decay_t<decltype(view::all(declval<R>()))>;
+
+// \ref{ranges.adaptors.filter}:
+template <InputRange R, IndirectUnaryPredicate<iterator_t<R>> Pred>
+  requires View<R>
+class filter_view;
+
+namespace view { inline constexpr @\unspec@ filter = @\unspec@; }
+
+// \ref{ranges.adaptors.transform}:
+template <InputRange R, CopyConstructible F>
+  requires View<R> && Invocable<F&, reference_t<iterator_t<R>>>
+class transform_view;
+
+namespace view { inline constexpr @\unspec@ transform = @\unspec@; }
+\end{codeblock}
+
 \ednote{After Ranges TS subclause 10.6 [ranges.requirements], insert a new subclause
 10.7, ``Range utilities'' with stable name [ranges.utilities]}
 
@@ -10,7 +47,8 @@
 \rSec1[ranges.utilities]{Range utilities}
 
 \pnum
-The components in this section are 
+The components in this section are general utilities for representing and manipulating
+ranges.
 
 \rSec2[ranges.view_interface]{View interface}
 
@@ -44,16 +82,16 @@ public:
   constexpr decltype(auto) back() const requires BidirectionalRange<D const>;
 
   template <RandomAccessRange R = D>
-  constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>> n);
+    constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>> n);
   template <RandomAccessRange R = D const>
-  constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>> n) const;
+    constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>> n) const;
 
   template <RandomAccessRange R = D>
-    requires SizedRange<R>
-  constexpr decltype(auto) at(difference_type_t<iterator_t<R>>);
+      requires SizedRange<R>
+    constexpr decltype(auto) at(difference_type_t<iterator_t<R>>);
   template <RandomAccessRange R = D const>
-    requires SizedRange<R>
-  constexpr decltype(auto) at(difference_type_t<iterator_t<R>>) const;
+      requires SizedRange<R>
+    constexpr decltype(auto) at(difference_type_t<iterator_t<R>>) const;
 
   // TODO implicit conversion to something that looks like a container
 };
@@ -133,9 +171,9 @@ constexpr decltype(auto) back() const requires ForwardRange<D const>;
 \indexlibrary{\idxcode{operator[]}!\idxcode{view_interface}}%
 \begin{itemdecl}
 template <RandomAccessRange R = D>
-constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>> n);
+  constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>> n);
 template <RandomAccessRange R = D const>
-constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>> n) const;
+  constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>> n) const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -149,9 +187,11 @@ constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>> n) const;
 \indexlibrary{\idxcode{at}!\idxcode{view_interface}}%
 \begin{itemdecl}
 template <RandomAccessRange R = D>
-constexpr decltype(auto) at(difference_type_t<iterator_t<R>> n);
+    requires SizedRange<R>
+  constexpr decltype(auto) at(difference_type_t<iterator_t<R>> n);
 template <RandomAccessRange R = D const>
-constexpr decltype(auto) at(difference_type_t<iterator_t<R>> n) const;
+    requires SizedRange<R>
+  constexpr decltype(auto) at(difference_type_t<iterator_t<R>> n) const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -161,8 +201,6 @@ constexpr decltype(auto) at(difference_type_t<iterator_t<R>> n) const;
 \pnum
 \throws \tcode{std::out_of_range} if \tcode{n < 0 || n >= size()}.
 \end{itemdescr}
-
-
 
 \rSec2[ranges.iterator.ranges]{Iterator ranges}
 
@@ -289,7 +327,6 @@ template <Iterator I, Sentinel<I> S = I>
 class sized_iterator_range
   : view_interface<sized_iterator_range<I, S>> {
 private:
-  template <class X, class Y> friend class sized_iterator_range;
   iterator_range<I, S> rng_; // \expos
   difference_type_t<I> size_; // \expos
 public:
@@ -395,6 +432,7 @@ template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
 rng_.first = r.begin();
 rng_.second = r.end();
 size_ = r.size();
+return *this;
 \end{codeblock}
 \end{itemdescr}
 
@@ -462,7 +500,6 @@ constexpr difference_type_t<I> size() const noexcept;
 \returns Equivalent to \tcode{size_}.
 \end{itemdescr}
 
-
 \rSec1[ranges.adaptors]{Range adaptors}
 
 \pnum
@@ -478,9 +515,23 @@ The bitwise or operator is overloaded for the purpose of creating adaptor chain 
 adaptors also support function call syntax with equivalent semantics.
 
 \pnum
-A range adaptor is a customization point object~(\cxxref{??}) that accepts a \tcode{Range} as its
-first argument. If the adaptor accepts only one argument, then the following alternate syntaxes
-are semantically equivalent:
+\enterexample
+\begin{codeblock}
+std::vector<int> ints{0,1,2,3,4,5};
+auto even = [](int i){ return 0 == i % 2; };
+auto square = [](int i) { return i * i; };
+for (int i : ints | view::filter(even) | view::transform(square)) {
+  cout << i << ' '; // prints: 0 4 16
+}
+\end{codeblock}
+\exitexample
+
+\rSec2[ranges.adaptor.object]{Range adaptor objects}
+
+\pnum
+A \techterm{range adaptor object} is a customization point object~(\cxxref{??}) that accepts a
+\tcode{Range} as its first argument and that returns a \tcode{View}. If the adaptor accepts only one
+argument, then the following alternate syntaxes are semantically equivalent:
 
 \begin{codeblock}
 @\textit{adaptor}@(rng)
@@ -498,14 +549,465 @@ rng | @\textit{adaptor}@(args...)
 \pnum
 The first argument to a range adaptor shall be either an lvalue \tcode{Range} or a \tcode{View}.
 
+\rSec2[ranges.adaptors.all]{\tcode{view::all}}
+
+\pnum
+The purpose of \tcode{view::all} is to return a \tcode{View} that includes all
+elements of the \tcode{Range} passed in.
+
+\pnum
+The name \tcode{view::any} denotes a range adaptor
+object~(\ref{ranges.adaptor.object}). Given an expression \tcode{E} and a type \tcode{T}
+such that \tcode{decltype((E))} is \tcode{T}, then the expression \tcode{view::all(E)}
+for some subexpression \tcode{E} is expression-equivalent to:
+
+\begin{itemize}
+\item \tcode{\textit{DECAY_COPY}(E)} if the type of \tcode{E} satisfies concepts
+  \tcode{View}.
+\item \tcode{sized_iterator_range<iterator_t<T>, sentinel_t<T>{>}\{ranges::begin(E), ranges::end(E), ranges::size(E)\}}
+  if \tcode{E} is an lvalue and has a type that satisfies concept \tcode{SizedRange}.
+\item \tcode{iterator_range<iterator_t<T>, sentinel_t<T>{>}\{ranges::begin(E), ranges::end(E)\}}
+  if \tcode{E} is an lvalue and has a type that satisfies concept \tcode{Range}.
+\item Otherwise, \tcode{view::all(E)} is ill-formed.
+\end{itemize}
+
+\rSec2[ranges.adaptors.filter_view]{Class template \tcode{filter_view}}
+
+\pnum
+The purpose of \tcode{view::filter} is to present a view of an underlying
+sequence without the elements that fail to satisfy a predicate.
+
 \pnum
 \enterexample
 \begin{codeblock}
-std::vector<int> ints{0,1,2,3,4,5};
-auto even = [](int i){ return 0 == i % 2; };
-auto square = [](int i) { return i * i; };
-for (int i : ints | view::filter(even) | view::transform(square)) {
-  cout << i << ' '; // prints: 0 4 16
-}
+vector<int> is{ 0, 1, 2, 3, 4, 5, 6 };
+filter_view evens{is, [](int i) { return 0 == i % 2; }};
+for (int i : evens)
+  cout << i << ' '; // prints: 0 2 4 6
 \end{codeblock}
 \exitexample
+
+\begin{codeblock}
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+  template <InputRange R, IndirectUnaryPredicate<iterator_t<R>> Pred>
+    requires View<R>
+  class filter_view {
+  private:
+    R base_; // \expos
+    optional<Pred> pred_; // \expos
+  public:
+    filter_view() = default;
+    constexpr filter_view(R base, Pred pred);
+
+    R base() const;
+
+    class iterator;
+    class sentinel;
+
+    constexpr iterator begin();
+    constexpr sentinel end();
+    constexpr iterator end() requires BoundedRange<R>;
+  };
+
+  template <class R, class Pred>
+  constexpr filter_view<all_view<R>, Pred> filter_view(R&& r, Pred pred) {
+    return {view::all(std::forward<R>(r)), pred};
+  }
+}}}}
+\end{codeblock}
+
+\rSec3[ranges.adaptors.filter_view.ops]{\tcode{filter_view} operations}
+\rSec4[ranges.adaptors.filter_view.ctor]{\tcode{filter_view} constructors}
+
+\indexlibrary{\idxcode{filter_view::filter_view}}%
+\begin{itemdecl}
+constexpr filter_view(R base, Pred pred);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Initializes \tcode{base_} with \tcode{std::move(base)} and initializes
+\tcode{pred_} with \tcode{std::move(pred)}.
+\end{itemdescr}
+
+\rSec4[ranges.adaptors.filter_view.conv]{\tcode{filter_view} conversion}
+
+\indexlibrary{\idxcode{filter_view::base}}%
+\begin{itemdecl}
+constexpr R base() const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{base_}.
+\end{itemdescr}
+
+\rSec4[ranges.adaptors.filter_view.begin]{\tcode{filter_view} range begin}
+
+\indexlibrary{\idxcode{filter_view::begin}}%
+\begin{itemdecl}
+constexpr iterator begin();
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+return {*this, ranges::find_if(ranges::begin(base_), ranges::end(base_), *pred_)};
+\end{codeblock}
+
+\pnum
+\remarks In order to provide the amortized constant time complexity required by
+the \tcode{Range} concept, this function caches the result within the
+\tcode{filter_view} for use on subsequent calls.
+\end{itemdescr}
+
+\rSec4[ranges.adaptors.filter_view.end]{\tcode{filter_view} range end}
+
+\indexlibrary{\idxcode{filter_view::end}}%
+\begin{itemdecl}
+constexpr sentinel end();
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{sentinel\{*this\}}.
+\end{itemdescr}
+
+\begin{itemdecl}
+constexpr iterator end() requires BoundedRange<R>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{iterator\{*this, ranges::end(base_)\}}.
+\end{itemdescr}
+
+\rSec3[ranges.adaptors.filter_view.iterator]{Class template \tcode{filter_view::iterator}}
+
+\indexlibrary{\idxcode{filter_view::iterator}}%
+\begin{codeblock}
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+  template <class R, class Pred>
+  class filter_view<R, Pred>::iterator {
+  private:
+    iterator_t<R> current_; // \expos
+    filter_view* parent_; // \expos
+  public:
+    using iterator_category = @\seebelow@;
+    using value_type = value_type_t<iterator_t<R>>;
+    using difference_type = difference_type_t<iterator_t<R>>;
+
+    iterator() = default;
+    constexpr iterator(filter_view& parent, iterator_t<R> current);
+
+    constexpr iterator_t<R> base() const;
+    constexpr reference_t<R> operator*() const;
+
+    constexpr iterator& operator++();
+    constexpr void operator++(int);
+    constexpr iterator operator++(int) requires ForwardRange<R>;
+    constexpr iterator& operator--() requires BidirectionalRange<R>;
+    constexpr iterator operator--(int) requires BidirectionalRange<R>;
+
+    friend constexpr bool operator==(const iterator& x, const iterator& y)
+      requires EqualityComparable<iterator_t<R>>;
+    friend constexpr bool operator!=(const iterator& x, const iterator& y)
+      requires EqualityComparable<iterator_t<R>>;
+
+    friend constexpr rvalue_reference_t<iterator_t<R>> iter_move(const iterator& i)
+      noexcept(@\seebelow@);
+    friend constexpr void iter_swap(const iterator& x, const iterator& y)
+      noexcept(@\seebelow@);
+  };
+}}}}
+\end{codeblock}
+
+\pnum
+The type \tcode{filter_view<R>::iterator::iterator_category} is defined as follows:
+\begin{itemize}
+\item If \tcode{R} satisfies \tcode{ForwardRange<R>}, then \tcode{iterator_category}
+is an alias for \tcode{ranges::forward_iterator_tag}.
+\item Otherwise, \tcode{iterator_category} is an alias for
+\tcode{ranges::input_iterator_tag}.
+\end{itemize}
+
+\rSec4[ranges.adaptors.filter_view.iterator]{\tcode{filter_view::iterator} operations}
+\rSec5[ranges.adaptors.filter_view.iterator.ctor]{\tcode{filter_view::iterator} constructors}
+
+\indexlibrary{\idxcode{filter_view::iterator::iterator}}%
+\begin{itemdecl}
+constexpr iterator(filter_view& parent, iterator_t<R> current);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Initializes \tcode{current_} with \tcode{current} and \tcode{parent_}
+with \tcode{\&parent}.
+\end{itemdescr}
+
+\rSec5[ranges.adaptors.filter_view.iterator.conv]{\tcode{filter_view::iterator} conversion}
+
+\indexlibrary{\idxcode{filter_view::iterator::base}}%
+\begin{itemdecl}
+constexpr iterator_t<R> base() const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{current_}.
+\end{itemdescr}
+
+\rSec5[ranges.adaptors.filter_view.iterator.op.star]{\tcode{filter_view::iterator::operator*}}
+
+\indexlibrary{\idxcode{filter_view::iterator::operator*}}%
+\begin{itemdecl}
+constexpr reference_t<R> operator*() const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{*current_}.
+\end{itemdescr}
+
+\rSec5[ranges.adaptors.filter_view.iterator.op.inc]{\tcode{filter_view::iterator::operator++}}
+
+\indexlibrary{\idxcode{filter_view::iterator::operator++}}%
+\begin{itemdecl}
+constexpr iterator& operator++();
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+current_ = find_if(current, ranges::end(parent_->base_), *parent_->pred_);
+return *this;
+\end{codeblock}
+\end{itemdescr}
+
+\indexlibrary{\idxcode{filter_view::iterator::operator++}}%
+\begin{itemdecl}
+constexpr void operator++(int);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to \tcode{(void)++*this}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{filter_view::iterator::operator++}}%
+\begin{itemdecl}
+constexpr iterator operator++(int) requires ForwardRange<R>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+auto tmp = *this;
+++*this;
+return tmp;
+\end{codeblock}
+\end{itemdescr}
+
+\rSec5[ranges.adaptors.filter_view.iterator.op.dec]{\tcode{filter_view::iterator::operator--}}
+
+\indexlibrary{\idxcode{filter_view::iterator::operator--}}%
+\begin{itemdecl}
+constexpr iterator& operator--() requires BidirectionalRange<R>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+do
+  --current_;
+while(invoke(*parent_->pred_, *current_));
+return *this;
+\end{codeblock}
+\end{itemdescr}
+
+\indexlibrary{\idxcode{filter_view::iterator::operator--}}%
+\begin{itemdecl}
+constexpr iterator operator--(int) requires BidirectionalRange<R>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+auto tmp = *this;
+--*this;
+return tmp;
+\end{codeblock}
+\end{itemdescr}
+
+\rSec5[ranges.adaptors.filter_view.iterator.op.comp]{\tcode{filter_view::iterator} comparisons}
+
+\indexlibrary{\idxcode{filter_view::iterator::operator==}}%
+\begin{itemdecl}
+friend constexpr bool operator==(const iterator& x, const iterator& y)
+  requires EqualityComparable<iterator_t<R>>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{x.current_ == y.current_}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{filter_view::iterator::operator!=}}%
+\begin{itemdecl}
+friend constexpr bool operator!=(const iterator& x, const iterator& y)
+  requires EqualityComparable<iterator_t<R>>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{!(x == y)}.
+\end{itemdescr}
+
+\rSec4[ranges.adaptors.filter_view.iterator.nonmember]{\tcode{filter_view::iterator} non-member functions}
+
+\indexlibrary{\idxcode{filter_view::iterator::iter_move}}%
+\begin{itemdecl}
+friend constexpr rvalue_reference_t<iterator_t<R>> iter_move(const iterator& i)
+  noexcept(@\seebelow@);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{ranges::iter_move(i.current_)}.
+
+\pnum
+\remarks The expression in \tcode{noexcept} is equivalent to:
+\begin{codeblock}
+noexcept(ranges::iter_move(i.current_))
+\end{codeblock}
+\end{itemdescr}
+
+\indexlibrary{\idxcode{filter_view::iterator::iter_swap}}%
+\begin{itemdecl}
+friend constexpr void iter_swap(const iterator& x, const iterator& y)
+  noexcept(@\seebelow@);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to \tcode{ranges::iter_swap(x.current_, y.current_)}.
+
+\pnum
+\remarks The expression in \tcode{noexcept} is equivalent to:
+\begin{codeblock}
+noexcept(ranges::iter_swap(x.current_, y.current_))
+\end{codeblock}
+\end{itemdescr}
+
+\rSec3[ranges.adaptors.filter_view.sentinel]{Class template \tcode{filter_view::sentinel}}
+
+\indexlibrary{\idxcode{filter_view::sentinel}}%
+\begin{codeblock}
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+  template <class R, class Pred>
+  class sentinel {
+  private:
+    sentinel_t<R> end_; // \expos
+  public:
+    sentinel() = default;
+    explicit constexpr sentinel(filter_view& parent);
+
+    constexpr sentinel_t<R> base() const;
+
+    friend constexpr bool operator==(const iterator& x, const sentinel& y);
+    friend constexpr bool operator==(const sentinel& x, const iterator& y);
+    friend constexpr bool operator!=(const iterator& x, const sentinel& y);
+    friend constexpr bool operator!=(const sentinel& x, const iterator& y);
+  };
+\end{codeblock}
+
+\rSec4[ranges.adaptors.filter_view.sentinel.ctor]{\tcode{filter_view::sentinel} constructors}
+
+\indexlibrary{\idxcode{filter_view::sentinel::sentinel}}%
+\begin{itemdecl}
+explicit constexpr sentinel(filter_view& parent);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Initializes \tcode{end_} with \tcode{range::end(parent)}.
+\end{itemdescr}
+
+\rSec4[ranges.adaptors.filter_view.sentinel.conv]{\tcode{filter_view::sentinel} conversion}
+
+\indexlibrary{\idxcode{filter_view::sentinel::base}}%
+\begin{itemdecl}
+constexpr sentinel_t<R> base() const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{end_}.
+\end{itemdescr}
+
+\rSec4[ranges.adaptors.filter_view.sentinel.comp]{\tcode{filter_view::sentinel} comparison}
+
+\indexlibrary{\idxcode{filter_view::sentinel::operator==}}%
+\begin{itemdecl}
+friend constexpr bool operator==(const iterator& x, const sentinel& y);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{x.current_ == y.end_}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{filter_view::sentinel::operator==}}%
+\begin{itemdecl}
+friend constexpr bool operator==(const sentinel& x, const iterator& y);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{y == x}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{filter_view::sentinel::operator!=}}%
+\begin{itemdecl}
+friend constexpr bool operator!=(const iterator& x, const sentinel& y);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{!(x == y)}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{filter_view::sentinel::operator!=}}%
+\begin{itemdecl}
+friend constexpr bool operator!=(const sentinel& x, const iterator& y);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{!(y == x)}.
+\end{itemdescr}
+
+
+\rSec2[ranges.adaptors.filter]{\tcode{view::filter}}
+
+\pnum
+The name \tcode{view::filter} denotes a range adaptor
+object~(\ref{ranges.adaptor.object}). Let \tcode{E} and \tcode{P} be expressions such
+that types \tcode{T} and \tcode{U} are \tcode{decltype((E))} and \tcode{decltype((P))}
+respectively. Then the expression \tcode{view::filter(E, P)} is expression-equivalent to:
+
+\begin{itemize}
+\item \tcode{filter_view\{E, P\}} if
+\tcode{InputRange<T> \&\& IndirectUnaryPredicate<decay_t<U>, iterator_t<T>{>}}
+is satisfied.
+\item Otherwise, \tcode{view::filter(E, P)} is ill-formed.
+\end{itemize}
+
+\rSec2[ranges.adaptors.transform]{\tcode{view::transform}}
+
+TODO
