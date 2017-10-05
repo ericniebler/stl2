@@ -23,6 +23,7 @@ class sized_iterator_range;
 namespace view { inline constexpr @\unspec@ all = @\unspec@; }
 
 template <Range R>
+    requires std::is_lvalue_reference_v<Rng> || View<decay_t<Rng>>
 using all_view = decay_t<decltype(view::all(declval<R>()))>;
 
 // \ref{ranges.adaptors.filter}:
@@ -58,43 +59,64 @@ container-like interface. It is parameterized with the type that inherits from i
 
 \indexlibrary{\idxcode{view_interface}}%
 \begin{codeblock}
-template <class D>
-class view_interface : view_base {
-private:
-  constexpr D& derived() noexcept { // \expos
-    return static_cast<D&>(*this);
-  }
-  constexpr const D& derived() const noexcept { // \expos
-    return static_cast<D const&>(*this);
-  }
-public:
-  constexpr bool empty() const requires ForwardRange<D const>;
-  constexpr explicit operator bool() const requires ForwardRange<D const>;
-  constexpr bool operator!() const requires ForwardRange<D const>;
+namespace std { namespace experimental { namespace ranges { inline namespace v1
+{
+  // \expos
+  template <Range Rng>
+  struct @\textit{range-common-iterator-impl}@ {
+    using type = common_iterator<iterator_t<Rng>, sentinel_t<Rng>>;
+  };
+  template <BoundedRange Rng>
+  struct @\textit{range-common-iterator-impl}@<Rng> {
+    using type = iterator_t<Rng>;
+  };
+  template <Range Rng>
+    using @\textit{range-common-iterator}@ =
+      typename @\textit{range-common-iterator-impl}@<Rng>::type;
 
-  constexpr auto size() const requires ForwardRange<D const> &&
-    SizedSentinel<sentinel_t<D const>, iterator_t<D const>>;
-
-  constexpr decltype(auto) front() requires ForwardRange<D>;
-  constexpr decltype(auto) front() const requires ForwardRange<D const>;
-
-  constexpr decltype(auto) back() requires BidirectionalRange<D>;
-  constexpr decltype(auto) back() const requires BidirectionalRange<D const>;
-
-  template <RandomAccessRange R = D>
-    constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>> n);
-  template <RandomAccessRange R = D const>
-    constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>> n) const;
-
-  template <RandomAccessRange R = D>
-      requires SizedRange<R>
-    constexpr decltype(auto) at(difference_type_t<iterator_t<R>>);
-  template <RandomAccessRange R = D const>
-      requires SizedRange<R>
-    constexpr decltype(auto) at(difference_type_t<iterator_t<R>>) const;
-
-  // TODO implicit conversion to something that looks like a container
-};
+  template <class D>
+  class view_interface : view_base {
+  private:
+    constexpr D& derived() noexcept { // \expos
+      return static_cast<D&>(*this);
+    }
+    constexpr const D& derived() const noexcept { // \expos
+      return static_cast<D const&>(*this);
+    }
+  public:
+    constexpr bool empty() const requires ForwardRange<D const>;
+    constexpr explicit operator bool() const requires ForwardRange<D const>;
+    constexpr bool operator!() const requires ForwardRange<D const>;
+  
+    template <ForwardRange R = D const>
+    constexpr auto size() const
+      requires SizedSentinel<sentinel_t<R>, iterator_t<R>>;
+  
+    constexpr decltype(auto) front() requires ForwardRange<D>;
+    constexpr decltype(auto) front() const requires ForwardRange<D const>;
+  
+    constexpr decltype(auto) back() requires BidirectionalRange<D>;
+    constexpr decltype(auto) back() const requires BidirectionalRange<D const>;
+  
+    template <RandomAccessRange R = D>
+      constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>> n);
+    template <RandomAccessRange R = D const>
+      constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>> n) const;
+  
+    template <RandomAccessRange R = D>
+        requires SizedRange<R>
+      constexpr decltype(auto) at(difference_type_t<iterator_t<R>> n);
+    template <RandomAccessRange R = D const>
+        requires SizedRange<R>
+      constexpr decltype(auto) at(difference_type_t<iterator_t<R>> n) const;
+  
+    template <ForwardRange C, InputRange R = D const>
+        requires !View<C> && MoveConstructible<C> &&
+          ConvertibleTo<value_type_t<iterator_t<R>>, value_type_t<iterator_t<C>>> &&
+          Constructible<C, @\textit{range-common-iterator}@<R>, @\textit{range-common-iterator}@<R>>
+      operator C () const;
+  };
+}}}}
 \end{codeblock}
 
 \rSec3[ranges.view_interface.accessors]{\tcode{view_interface} accessors}
@@ -131,8 +153,9 @@ constexpr bool operator!() const requires ForwardRange<D const>;
 
 \indexlibrary{\idxcode{size}!\idxcode{view_interface}}%
 \begin{itemdecl}
-constexpr auto size() const requires ForwardRange<D const> &&
-  SizedSentinel<sentinel_t<D const>, iterator_t<D const>>;
+template <ForwardRange R = D const>
+constexpr auto size() const
+  requires SizedSentinel<sentinel_t<R>, iterator_t<R>>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -156,8 +179,8 @@ constexpr decltype(auto) front() const requires ForwardRange<D const>;
 
 \indexlibrary{\idxcode{back}!\idxcode{view_interface}}%
 \begin{itemdecl}
-constexpr decltype(auto) back() requires ForwardRange<D>;
-constexpr decltype(auto) back() const requires ForwardRange<D const>;
+constexpr decltype(auto) back() requires BidirectionalRange<D>;
+constexpr decltype(auto) back() const requires BidirectionalRange<D const>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -178,7 +201,7 @@ template <RandomAccessRange R = D const>
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{n >= 0 \&\& n < size()}.
+\requires \tcode{ranges::begin(derived()) + n} is well-formed.
 
 \pnum
 \returns Equivalent to \tcode{ranges::begin(derived())[n]}.
@@ -199,7 +222,25 @@ template <RandomAccessRange R = D const>
 \returns Equivalent to \tcode{ranges::begin(derived())[n]}.
 
 \pnum
-\throws \tcode{std::out_of_range} if \tcode{n < 0 || n >= size()}.
+\throws \tcode{std::out_of_range} if \tcode{n < 0 || n >= ranges::size(derived())}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{at}!\idxcode{view_interface}}%
+\begin{itemdecl}
+template <ForwardRange C, InputRange R = D const>
+    requires !View<C> && MoveConstructible<C> &&
+        ConvertibleTo<value_type_t<iterator_t<R>>, value_type_t<iterator_t<C>>> &&
+        Constructible<C, @\textit{range-common-iterator}@<R>, @\textit{range-common-iterator}@<R>>
+  operator C () const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+using I = @\textit{range-common-iterator}@<R>;
+return C{I{ranges::begin(derived())}, I{ranges::end(derived())}};
+\end{codeblock}
 \end{itemdescr}
 
 \rSec2[ranges.iterator.ranges]{Iterator ranges}
@@ -549,6 +590,44 @@ rng | @\textit{adaptor}@(args...)
 \pnum
 The first argument to a range adaptor shall be either an lvalue \tcode{Range} or a \tcode{View}.
 
+\rSec2[ranges.adaptor.semiregular_wrapper]{Semiregular wrapper}
+
+\pnum
+Many of the types in this section are specified in terms of an exposition-only helper
+called \tcode{\textit{semiregular}<T>}. This type behaves exactly like \tcode{optional<T>}
+with the following exceptions:
+
+\begin{itemize}
+\item \tcode{\textit{semiregular}<T>} constrains its argument with \tcode{CopyConstructible<T>}.
+\item If \tcode{T} satisfies \tcode{DefaultConstructble}, the default constructor of
+\tcode{\textit{semiregular}<T>} is equivalent to:
+\begin{codeblock}
+constexpr @\textit{semiregular}@()
+    noexcept(is_nothrow_default_constructible<T>::value)
+  : @\textit{semiregular}@{in_place} {}
+\end{codeblock}
+\item If the syntactic requirements of \tcode{Assignable<T\&, const T\&>} are not satisfied, the
+copy assignment operator is equivalent to:
+\begin{codeblock}
+constexpr @\textit{semiregular}@& operator=(const @\textit{semiregular}@& that)
+    noexcept(is_nothrow_copy_constructible<T>::value) {
+  if (that) emplace(*that)
+  else reset();
+  return *this;
+}
+\end{codeblock}
+\item If the syntactic requirements of \tcode{Assignable<T\&, T>} are not satisfied, the
+move assignment operator is equivalent to:
+\begin{codeblock}
+constexpr @\textit{semiregular}@& operator=(@\textit{semiregular}@&& that)
+    noexcept(is_nothrow_move_constructible<T>::value) {
+  if (that) emplace(std::move(*that))
+  else reset();
+  return *this;
+}
+\end{codeblock}
+\end{itemize}
+
 \rSec2[ranges.adaptors.all]{\tcode{view::all}}
 
 \pnum
@@ -594,10 +673,13 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   class filter_view : view_interface<filter_view<R, Pred>> {
   private:
     R base_; // \expos
-    optional<Pred> pred_; // \expos
+    @\textit{semiregular}@<Pred> pred_; // \expos
   public:
     filter_view() = default;
     constexpr filter_view(R base, Pred pred);
+    template <InputRange O>
+        requires Constructible<R, all_view<O>>
+      constexpr filter_view(O&& o, Pred pred);
 
     R base() const;
 
@@ -610,16 +692,14 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   };
 
   template <class R, class Pred>
-    constexpr filter_view<all_view<R>, Pred> filter_view(R&& r, Pred pred) {
-      return {view::all(std::forward<R>(r)), pred};
-    }
+  filter_view(R&&, Pred) -> filter_view<all_view<R>, Pred>;
 }}}}
 \end{codeblock}
 
 \rSec3[ranges.adaptors.filter_view.ops]{\tcode{filter_view} operations}
 \rSec4[ranges.adaptors.filter_view.ctor]{\tcode{filter_view} constructors}
 
-\indexlibrary{\idxcode{filter_view::filter_view}}%
+\indexlibrary{\idxcode{filter_view}!\idxcode{filter_view}}%
 \begin{itemdecl}
 constexpr filter_view(R base, Pred pred);
 \end{itemdecl}
@@ -630,9 +710,22 @@ constexpr filter_view(R base, Pred pred);
 \tcode{pred_} with \tcode{std::move(pred)}.
 \end{itemdescr}
 
+\indexlibrary{\idxcode{filter_view}!\idxcode{filter_view}}%
+\begin{itemdecl}
+template <InputRange O>
+    requires Constructible<R, all_view<O>>
+  constexpr filter_view(O&& o, Pred pred);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Initializes \tcode{base_} with \tcode{view::all(std::forward<O>(o))}
+and initializes \tcode{pred_} with \tcode{std::move(pred)}.
+\end{itemdescr}
+
 \rSec4[ranges.adaptors.filter_view.conv]{\tcode{filter_view} conversion}
 
-\indexlibrary{\idxcode{filter_view::base}}%
+\indexlibrary{\idxcode{base}!\idxcode{filter_view}}%
 \begin{itemdecl}
 constexpr R base() const;
 \end{itemdecl}
@@ -644,7 +737,7 @@ constexpr R base() const;
 
 \rSec4[ranges.adaptors.filter_view.begin]{\tcode{filter_view} range begin}
 
-\indexlibrary{\idxcode{filter_view::begin}}%
+\indexlibrary{\idxcode{begin}!\idxcode{filter_view}}%
 \begin{itemdecl}
 constexpr iterator begin();
 \end{itemdecl}
@@ -653,7 +746,7 @@ constexpr iterator begin();
 \pnum
 \effects Equivalent to:
 \begin{codeblock}
-return {*this, ranges::find_if(ranges::begin(base_), ranges::end(base_), *pred_)};
+return {*this, ranges::find_if(base_, ref(*pred_))};
 \end{codeblock}
 
 \pnum
@@ -664,7 +757,7 @@ the \tcode{Range} concept, this function caches the result within the
 
 \rSec4[ranges.adaptors.filter_view.end]{\tcode{filter_view} range end}
 
-\indexlibrary{\idxcode{filter_view::end}}%
+\indexlibrary{\idxcode{end}!\idxcode{filter_view}}%
 \begin{itemdecl}
 constexpr sentinel end();
 \end{itemdecl}
@@ -685,7 +778,7 @@ constexpr iterator end() requires BoundedRange<R>;
 
 \rSec3[ranges.adaptors.filter_view.iterator]{Class template \tcode{filter_view::iterator}}
 
-\indexlibrary{\idxcode{filter_view::iterator}}%
+\indexlibrary{\idxcode{iterator}!\idxcode{filter_view}}%
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
   template <class R, class Pred>
@@ -727,6 +820,8 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 \pnum
 The type \tcode{filter_view<R>::iterator::iterator_category} is defined as follows:
 \begin{itemize}
+\item If \tcode{R} satisfies \tcode{BidirectionalRange<R>}, then \tcode{iterator_category}
+is an alias for \tcode{ranges::bidirectional_iterator_tag}.
 \item If \tcode{R} satisfies \tcode{ForwardRange<R>}, then \tcode{iterator_category}
 is an alias for \tcode{ranges::forward_iterator_tag}.
 \item Otherwise, \tcode{iterator_category} is an alias for
@@ -736,7 +831,7 @@ is an alias for \tcode{ranges::forward_iterator_tag}.
 \rSec4[ranges.adaptors.filter_view.iterator]{\tcode{filter_view::iterator} operations}
 \rSec5[ranges.adaptors.filter_view.iterator.ctor]{\tcode{filter_view::iterator} constructors}
 
-\indexlibrary{\idxcode{filter_view::iterator::iterator}}%
+\indexlibrary{\idxcode{iterator}!\idxcode{filter_view::iterator}}%
 \begin{itemdecl}
 constexpr iterator(filter_view& parent, iterator_t<R> current);
 \end{itemdecl}
@@ -749,7 +844,7 @@ with \tcode{\&parent}.
 
 \rSec5[ranges.adaptors.filter_view.iterator.conv]{\tcode{filter_view::iterator} conversion}
 
-\indexlibrary{\idxcode{filter_view::iterator::base}}%
+\indexlibrary{\idxcode{base}!\idxcode{filter_view::iterator}}%
 \begin{itemdecl}
 constexpr iterator_t<R> base() const;
 \end{itemdecl}
@@ -761,7 +856,7 @@ constexpr iterator_t<R> base() const;
 
 \rSec5[ranges.adaptors.filter_view.iterator.op.star]{\tcode{filter_view::iterator::operator*}}
 
-\indexlibrary{\idxcode{filter_view::iterator::operator*}}%
+\indexlibrary{\idxcode{operator*}!\idxcode{filter_view::iterator}}%
 \begin{itemdecl}
 constexpr reference_t<iterator_t<R>> operator*() const;
 \end{itemdecl}
@@ -773,7 +868,7 @@ constexpr reference_t<iterator_t<R>> operator*() const;
 
 \rSec5[ranges.adaptors.filter_view.iterator.op.inc]{\tcode{filter_view::iterator::operator++}}
 
-\indexlibrary{\idxcode{filter_view::iterator::operator++}}%
+\indexlibrary{\idxcode{operator++}!\idxcode{filter_view::iterator}}%
 \begin{itemdecl}
 constexpr iterator& operator++();
 \end{itemdecl}
@@ -782,12 +877,12 @@ constexpr iterator& operator++();
 \pnum
 \effects Equivalent to:
 \begin{codeblock}
-current_ = find_if(current, ranges::end(parent_->base_), *parent_->pred_);
+current_ = find_if(++current_, ranges::end(parent_->base_), ref(*parent_->pred_));
 return *this;
 \end{codeblock}
 \end{itemdescr}
 
-\indexlibrary{\idxcode{filter_view::iterator::operator++}}%
+\indexlibrary{\idxcode{operator++}!\idxcode{filter_view::iterator}}%
 \begin{itemdecl}
 constexpr void operator++(int);
 \end{itemdecl}
@@ -797,7 +892,7 @@ constexpr void operator++(int);
 \effects Equivalent to \tcode{(void)++*this}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{filter_view::iterator::operator++}}%
+\indexlibrary{\idxcode{operator++}!\idxcode{filter_view::iterator}}%
 \begin{itemdecl}
 constexpr iterator operator++(int) requires ForwardRange<R>;
 \end{itemdecl}
@@ -812,9 +907,9 @@ return tmp;
 \end{codeblock}
 \end{itemdescr}
 
-\rSec5[ranges.adaptors.filter_view.iterator.op.dec]{\tcode{filter_view::iterator::operator--}}
+\rSec5[ranges.adaptors.filter_view.iterator.op.dec]{\tcode{filter_view::iterator::operator\dcr}}
 
-\indexlibrary{\idxcode{filter_view::iterator::operator--}}%
+\indexlibrary{\idxcode{operator\dcr}!\idxcode{filter_view::iterator}}%
 \begin{itemdecl}
 constexpr iterator& operator--() requires BidirectionalRange<R>;
 \end{itemdecl}
@@ -830,7 +925,7 @@ return *this;
 \end{codeblock}
 \end{itemdescr}
 
-\indexlibrary{\idxcode{filter_view::iterator::operator--}}%
+\indexlibrary{\idxcode{operator\dcr}!\idxcode{filter_view::iterator}}%
 \begin{itemdecl}
 constexpr iterator operator--(int) requires BidirectionalRange<R>;
 \end{itemdecl}
@@ -847,7 +942,7 @@ return tmp;
 
 \rSec5[ranges.adaptors.filter_view.iterator.op.comp]{\tcode{filter_view::iterator} comparisons}
 
-\indexlibrary{\idxcode{filter_view::iterator::operator==}}%
+\indexlibrary{\idxcode{operator==}!\idxcode{filter_view::iterator}}%
 \begin{itemdecl}
 friend constexpr bool operator==(const iterator& x, const iterator& y)
   requires EqualityComparable<iterator_t<R>>;
@@ -858,7 +953,7 @@ friend constexpr bool operator==(const iterator& x, const iterator& y)
 \returns \tcode{x.current_ == y.current_}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{filter_view::iterator::operator!=}}%
+\indexlibrary{\idxcode{operator!=}!\idxcode{filter_view::iterator}}%
 \begin{itemdecl}
 friend constexpr bool operator!=(const iterator& x, const iterator& y)
   requires EqualityComparable<iterator_t<R>>;
@@ -871,7 +966,7 @@ friend constexpr bool operator!=(const iterator& x, const iterator& y)
 
 \rSec4[ranges.adaptors.filter_view.iterator.nonmember]{\tcode{filter_view::iterator} non-member functions}
 
-\indexlibrary{\idxcode{filter_view::iterator::iter_move}}%
+\indexlibrary{\idxcode{iter_move}!\idxcode{filter_view::iterator}}%
 \begin{itemdecl}
 friend constexpr rvalue_reference_t<iterator_t<R>> iter_move(const iterator& i)
   noexcept(@\seebelow@);
@@ -888,7 +983,7 @@ noexcept(ranges::iter_move(i.current_))
 \end{codeblock}
 \end{itemdescr}
 
-\indexlibrary{\idxcode{filter_view::iterator::iter_swap}}%
+\indexlibrary{\idxcode{iter_swap}!\idxcode{filter_view::iterator}}%
 \begin{itemdecl}
 friend constexpr void iter_swap(const iterator& x, const iterator& y)
   noexcept(@\seebelow@);
@@ -907,11 +1002,11 @@ noexcept(ranges::iter_swap(x.current_, y.current_))
 
 \rSec3[ranges.adaptors.filter_view.sentinel]{Class template \tcode{filter_view::sentinel}}
 
-\indexlibrary{\idxcode{filter_view::sentinel}}%
+\indexlibrary{\idxcode{sentinel}!\idxcode{filter_view}}%
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
   template <class R, class Pred>
-  class sentinel {
+  class filter_view<R, Pred>::sentinel {
   private:
     sentinel_t<R> end_; // \expos
   public:
@@ -925,11 +1020,12 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     friend constexpr bool operator!=(const iterator& x, const sentinel& y);
     friend constexpr bool operator!=(const sentinel& x, const iterator& y);
   };
+}}}}
 \end{codeblock}
 
 \rSec4[ranges.adaptors.filter_view.sentinel.ctor]{\tcode{filter_view::sentinel} constructors}
 
-\indexlibrary{\idxcode{filter_view::sentinel::sentinel}}%
+\indexlibrary{\idxcode{sentinel}!\idxcode{filter_view::sentinel}}%
 \begin{itemdecl}
 explicit constexpr sentinel(filter_view& parent);
 \end{itemdecl}
@@ -941,7 +1037,7 @@ explicit constexpr sentinel(filter_view& parent);
 
 \rSec4[ranges.adaptors.filter_view.sentinel.conv]{\tcode{filter_view::sentinel} conversion}
 
-\indexlibrary{\idxcode{filter_view::sentinel::base}}%
+\indexlibrary{\idxcode{base}!\idxcode{filter_view::sentinel}}%
 \begin{itemdecl}
 constexpr sentinel_t<R> base() const;
 \end{itemdecl}
@@ -953,7 +1049,7 @@ constexpr sentinel_t<R> base() const;
 
 \rSec4[ranges.adaptors.filter_view.sentinel.comp]{\tcode{filter_view::sentinel} comparison}
 
-\indexlibrary{\idxcode{filter_view::sentinel::operator==}}%
+\indexlibrary{\idxcode{operator==}!\idxcode{filter_view::sentinel}}%
 \begin{itemdecl}
 friend constexpr bool operator==(const iterator& x, const sentinel& y);
 \end{itemdecl}
@@ -963,7 +1059,7 @@ friend constexpr bool operator==(const iterator& x, const sentinel& y);
 \returns \tcode{x.current_ == y.end_}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{filter_view::sentinel::operator==}}%
+\indexlibrary{\idxcode{operator==}!\idxcode{filter_view::sentinel}}%
 \begin{itemdecl}
 friend constexpr bool operator==(const sentinel& x, const iterator& y);
 \end{itemdecl}
@@ -973,7 +1069,7 @@ friend constexpr bool operator==(const sentinel& x, const iterator& y);
 \returns \tcode{y == x}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{filter_view::sentinel::operator!=}}%
+\indexlibrary{\idxcode{operator!=}!\idxcode{filter_view::sentinel}}%
 \begin{itemdecl}
 friend constexpr bool operator!=(const iterator& x, const sentinel& y);
 \end{itemdecl}
@@ -983,7 +1079,7 @@ friend constexpr bool operator!=(const iterator& x, const sentinel& y);
 \returns \tcode{!(x == y)}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{filter_view::sentinel::operator!=}}%
+\indexlibrary{\idxcode{operator!=}!\idxcode{filter_view::sentinel}}%
 \begin{itemdecl}
 friend constexpr bool operator!=(const sentinel& x, const iterator& y);
 \end{itemdecl}
@@ -1032,7 +1128,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   class transform_view : view_interface<transform_view<R, F>> {
   private:
     R base_; // \expos
-    optional<F> fun_; // \expos
+    @\textit{semiregular}@<F> fun_; // \expos
     template <bool Const>
       struct @\xname{iterator}@; // \expos
     template <bool Const>
@@ -1040,6 +1136,9 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   public:
     transform_view() = default;
     constexpr transform_view(R base, F fun);
+    template <InputRange O>
+      requires Constructible<R, all_view<O>>
+    constexpr transform_view(O&& o, F fun);
 
     using iterator = @\xname{iterator}@<false>;
     using const_iterator = @\xname{iterator}@<true>;
@@ -1065,16 +1164,14 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   };
 
   template <class R, class F>
-    constexpr transform_view<all_view<R>, F> transform_view(R&& r, F fun) {
-      return {view::all(std::forward<R>(r)), fun};
-    }
+  transform_view(R&& r, F fun) -> transform_view<all_view<R>, F>;
 }}}}
 \end{codeblock}
 
 \rSec3[ranges.adaptors.transform_view.ops]{\tcode{transform_view} operations}
 \rSec4[ranges.adaptors.transform_view.ctor]{\tcode{transform_view} constructors}
 
-\indexlibrary{\idxcode{transform_view::transform_view}}%
+\indexlibrary{\idxcode{transform_view}!\idxcode{transform_view}}%
 \begin{itemdecl}
 constexpr transform_view(R base, F fun);
 \end{itemdecl}
@@ -1085,9 +1182,22 @@ constexpr transform_view(R base, F fun);
 \tcode{fun_} with \tcode{std::move(fun)}.
 \end{itemdescr}
 
+\indexlibrary{\idxcode{transform_view}!\idxcode{transform_view}}%
+\begin{itemdecl}
+template <InputRange O>
+  requires Constructible<R, all_view<O>>
+constexpr transform_view(O&& o, F fun);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Initializes \tcode{base_} with \tcode{view::all(std::forward<O>(o))}
+and initializes \tcode{fun_} with \tcode{std::move(fun)}.
+\end{itemdescr}
+
 \rSec4[ranges.adaptors.transform_view.conv]{\tcode{transform_view} conversion}
 
-\indexlibrary{\idxcode{transform_view::base}}%
+\indexlibrary{\idxcode{base}!\idxcode{transform_view}}%
 \begin{itemdecl}
 constexpr R base() const;
 \end{itemdecl}
@@ -1099,7 +1209,7 @@ constexpr R base() const;
 
 \rSec4[ranges.adaptors.transform_view.begin]{\tcode{transform_view} range begin}
 
-\indexlibrary{\idxcode{transform_view::begin}}%
+\indexlibrary{\idxcode{begin}!\idxcode{transform_view}}%
 \begin{itemdecl}
 constexpr iterator begin();
 constexpr const_iterator begin() const
@@ -1116,7 +1226,7 @@ return {*this, ranges::begin(base_)};
 
 \rSec4[ranges.adaptors.transform_view.end]{\tcode{transform_view} range end}
 
-\indexlibrary{\idxcode{transform_view::end}}%
+\indexlibrary{\idxcode{end}!\idxcode{transform_view}}%
 \begin{itemdecl}
 constexpr sentinel end();
 constexpr const_sentinel end() const
@@ -1130,7 +1240,7 @@ constexpr const_sentinel end() const
 respectively.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{transform_view::end}}%
+\indexlibrary{\idxcode{end}!\idxcode{transform_view}}%
 \begin{itemdecl}
 constexpr iterator end() requires BoundedRange<R>;
 constexpr const_iterator end() const
@@ -1148,7 +1258,7 @@ return {*this, ranges::end(base_)};
 
 \rSec4[ranges.adaptors.transform_view.size]{\tcode{transform_view} range size}
 
-\indexlibrary{\idxcode{transform_view::size}}%
+\indexlibrary{\idxcode{size}!\idxcode{transform_view}}%
 \begin{itemdecl}
 constexpr auto size() requires SizedView<R>;
 constexpr auto size() const requires SizedView<const R>;
@@ -1236,7 +1346,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 \rSec4[ranges.adaptors.transform_view.iterator.op]{\tcode{transform_view::\xname{iterator} operations}}
 \rSec5[ranges.adaptors.transform_view.iterator.op.ctor]{\tcode{transform_view::\xname{iterator} constructors}}
 
-\indexlibrary{\idxcode{transform_view::\xname{iterator}::\xname{iterator}}}
+\indexlibrary{\idxcode{\xname{iterator}}!\idxcode{transform_view::\xname{iterator}}}
 \begin{itemdecl}
 constexpr @\xname{iterator}@(Parent& parent, iterator_t<Base> current);
 \end{itemdecl}
@@ -1247,7 +1357,7 @@ constexpr @\xname{iterator}@(Parent& parent, iterator_t<Base> current);
 initializes \tcode{parent_} with \tcode{\&parent}. 
 \end{itemdescr}
 
-\indexlibrary{\idxcode{transform_view::\xname{iterator}::\xname{iterator}}}
+\indexlibrary{\idxcode{\xname{iterator}}!\idxcode{transform_view::\xname{iterator}}}%
 \begin{itemdecl}
 constexpr @\xname{iterator}@(@\xname{iterator}@<!Const> i)
   requires Const && View<R> && ConvertibleTo<iterator_t<R>, iterator_t<const R>>;
@@ -1261,7 +1371,7 @@ with \tcode{i.current_}.
 
 \rSec5[ranges.adaptors.transform_view.iterator.op.conv]{\tcode{transform_view::\xname{iterator} conversion}}
 
-\indexlibrary{\idxcode{transform_view::\xname{iterator}::base}}
+\indexlibrary{\idxcode{base}!\idxcode{transform_view::\xname{iterator}}}
 \begin{itemdecl}
 constexpr iterator_t<Base> base() const;
 \end{itemdecl}
@@ -1273,7 +1383,7 @@ constexpr iterator_t<Base> base() const;
 
 \rSec5[ranges.adaptors.transform_view.iterator.op.star]{\tcode{transform_view::\xname{iterator}::operator*}}
 
-\indexlibrary{\idxcode{transform_view::\xname{iterator}::operator*}}
+\indexlibrary{\idxcode{operator*}!\idxcode{transform_view::\xname{iterator}}}
 \begin{itemdecl}
 constexpr decltype(auto) operator*() const;
 \end{itemdecl}
@@ -1285,7 +1395,7 @@ constexpr decltype(auto) operator*() const;
 
 \rSec5[ranges.adaptors.transform_view.iterator.op.inc]{\tcode{transform_view::\xname{iterator}::operator++}}
 
-\indexlibrary{\idxcode{transform_view::\xname{iterator}::operator++}}
+\indexlibrary{\idxcode{operator++}!\idxcode{transform_view::\xname{iterator}}}
 \begin{itemdecl}
 constexpr @\xname{iterator}@& operator++();
 \end{itemdecl}
@@ -1299,7 +1409,7 @@ return *this;
 \end{codeblock}
 \end{itemdescr}
 
-\indexlibrary{\idxcode{transform_view::\xname{iterator}::operator++}}
+\indexlibrary{\idxcode{operator++}!\idxcode{transform_view::\xname{iterator}}}
 \begin{itemdecl}
 constexpr void operator++(int);
 \end{itemdecl}
@@ -1312,7 +1422,7 @@ constexpr void operator++(int);
 \end{codeblock}
 \end{itemdescr}
 
-\indexlibrary{\idxcode{transform_view::\xname{iterator}::operator++}}
+\indexlibrary{\idxcode{operator++}!\idxcode{transform_view::\xname{iterator}}}
 \begin{itemdecl}
 constexpr @\xname{iterator}@ operator++(int) requires ForwardRange<Base>;
 \end{itemdecl}
@@ -1327,9 +1437,9 @@ return tmp;
 \end{codeblock}
 \end{itemdescr}
 
-\rSec5[ranges.adaptors.transform_view.iterator.op.dec]{\tcode{transform_view::\xname{iterator}::operator--}}
+\rSec5[ranges.adaptors.transform_view.iterator.op.dec]{\tcode{transform_view::\xname{iterator}::operator\dcr}}
 
-\indexlibrary{\idxcode{transform_view::\xname{iterator}::operator--}}
+\indexlibrary{\idxcode{operator\dcr}!\idxcode{transform_view::\xname{iterator}}}
 \begin{itemdecl}
 constexpr @\xname{iterator}@& operator--() requires BidirectionalRange<Base>;
 \end{itemdecl}
@@ -1343,7 +1453,7 @@ return *this;
 \end{codeblock}
 \end{itemdescr}
 
-\indexlibrary{\idxcode{transform_view::\xname{iterator}::operator--}}
+\indexlibrary{\idxcode{operator\dcr}!\idxcode{transform_view::\xname{iterator}}}
 \begin{itemdecl}
 constexpr @\xname{iterator}@ operator--(int) requires BidirectionalRange<Base>;
 \end{itemdecl}
@@ -1360,7 +1470,7 @@ return tmp;
 
 \rSec5[ranges.adaptors.transform_view.iterator.op.adv]{\tcode{transform_view::\xname{iterator}} advance}
 
-\indexlibrary{\idxcode{transform_view::\xname{iterator}::operator+=}}
+\indexlibrary{\idxcode{operator+=}!\idxcode{transform_view::\xname{iterator}}}
 \begin{itemdecl}
 constexpr @\xname{iterator}@& operator+=(difference_type n)
   requires RandomAccessRange<Base>;
@@ -1375,7 +1485,7 @@ return *this;
 \end{codeblock}
 \end{itemdescr}
 
-\indexlibrary{\idxcode{transform_view::\xname{iterator}::operator-=}}
+\indexlibrary{\idxcode{operator-=}!\idxcode{transform_view::\xname{iterator}}}%
 \begin{itemdecl}
 constexpr @\xname{iterator}@& operator-=(difference_type n)
   requires RandomAccessRange<Base>;
@@ -1392,7 +1502,7 @@ return *this;
 
 \rSec5[ranges.adaptors.transform_view.iterator.op.idx]{\tcode{transform_view::\xname{iterator}} index}
 
-\indexlibrary{\idxcode{transform_view::\xname{iterator}::operator[]}}
+\indexlibrary{\idxcode{operator[]}!\idxcode{transform_view::\xname{iterator}}}
 \begin{itemdecl}
 constexpr decltype(auto) operator[](difference_type n) const
   requires RandomAccessRange<Base>;
@@ -1408,7 +1518,7 @@ return invoke(*parent_->fun_, current_[n]);
 
 \rSec4[ranges.adaptors.transform_view.iterator.comp]{\tcode{transform_view::\xname{iterator}} comparisons}
 
-\indexlibrary{\idxcode{transform_view::\xname{iterator}::operator==}}
+\indexlibrary{\idxcode{operator==}!\idxcode{transform_view::\xname{iterator}}}
 \begin{itemdecl}
 friend constexpr bool operator==(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
   requires EqualityComparable<iterator_t<Base>>;
@@ -1419,7 +1529,7 @@ friend constexpr bool operator==(const @\xname{iterator}@& x, const @\xname{iter
 \returns \tcode{x.current_ == y.current_}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{transform_view::\xname{iterator}::operator!=}}
+\indexlibrary{\idxcode{operator!=}!\idxcode{transform_view::\xname{iterator}}}%
 \begin{itemdecl}
 friend constexpr bool operator!=(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
   requires EqualityComparable<iterator_t<Base>>;
@@ -1430,7 +1540,7 @@ friend constexpr bool operator!=(const @\xname{iterator}@& x, const @\xname{iter
 \returns \tcode{!(x == y)}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{transform_view::\xname{iterator}::operator<}}
+\indexlibrary{\idxcode{operator<}!\idxcode{transform_view::\xname{iterator}}}%
 \begin{itemdecl}
 friend constexpr bool operator<(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
   requires RandomAccessRange<Base>;
@@ -1441,7 +1551,7 @@ friend constexpr bool operator<(const @\xname{iterator}@& x, const @\xname{itera
 \returns \tcode{x.current_ < y.current_}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{transform_view::\xname{iterator}::operator>}}
+\indexlibrary{\idxcode{operator>}!\idxcode{transform_view::\xname{iterator}}}%
 \begin{itemdecl}
 friend constexpr bool operator>(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
   requires RandomAccessRange<Base>;
@@ -1452,7 +1562,7 @@ friend constexpr bool operator>(const @\xname{iterator}@& x, const @\xname{itera
 \returns \tcode{y < x}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{transform_view::\xname{iterator}::operator<=}}
+\indexlibrary{\idxcode{operator<=}!\idxcode{transform_view::\xname{iterator}}}%
 \begin{itemdecl}
 friend constexpr bool operator<=(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
   requires RandomAccessRange<Base>;
@@ -1463,7 +1573,7 @@ friend constexpr bool operator<=(const @\xname{iterator}@& x, const @\xname{iter
 \returns \tcode{!(y < x)}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{transform_view::\xname{iterator}::operator>=}}
+\indexlibrary{\idxcode{operator>=}!\idxcode{transform_view::\xname{iterator}}}%
 \begin{itemdecl}
 friend constexpr bool operator>=(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
   requires RandomAccessRange<Base>;
@@ -1476,7 +1586,7 @@ friend constexpr bool operator>=(const @\xname{iterator}@& x, const @\xname{iter
 
 \rSec4[ranges.adaptors.transform_view.iterator.nonmember]{\tcode{transform_view::\xname{iterator}} non-member functions}
 
-\indexlibrary{\idxcode{transform_view::\xname{iterator}::operator+}}
+\indexlibrary{\idxcode{operator+}!\idxcode{transform_view::\xname{iterator}}}
 \begin{itemdecl}
 friend constexpr @\xname{iterator}@ operator+(@\xname{iterator}@ i, difference_type n)
   requires RandomAccessRange<Base>;
@@ -1489,7 +1599,7 @@ friend constexpr @\xname{iterator}@ operator+(difference_type n, @\xname{iterato
 \returns \tcode{\xname{iterator}\{*i.parent_, i.current_ + n\}}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{transform_view::\xname{iterator}::operator-}}
+\indexlibrary{\idxcode{operator-}!\idxcode{transform_view::\xname{iterator}}}%
 \begin{itemdecl}
 friend constexpr @\xname{iterator}@ operator-(@\xname{iterator}@ i, difference_type n)
   requires RandomAccessRange<Base>;
@@ -1500,7 +1610,7 @@ friend constexpr @\xname{iterator}@ operator-(@\xname{iterator}@ i, difference_t
 \returns \tcode{\xname{iterator}\{*i.parent_, i.current_ - n\}}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{transform_view::\xname{iterator}::operator-}}
+\indexlibrary{\idxcode{operator-}!\idxcode{transform_view::\xname{iterator}}}%
 \begin{itemdecl}
 friend constexpr difference_type operator-(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
   requires RandomAccessRange<Base>;
@@ -1511,7 +1621,7 @@ friend constexpr difference_type operator-(const @\xname{iterator}@& x, const @\
 \returns \tcode{x.current_ - y.current_}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{transform_view::\xname{iterator}::iter_move}}
+\indexlibrary{\idxcode{iter_move}!\idxcode{transform_view::\xname{iterator}}}
 \begin{itemdecl}
 friend constexpr decltype(auto) iter_move(const @\xname{iterator}@& i)
   noexcept(@\seebelow@);
@@ -1533,7 +1643,7 @@ noexcept(invoke(*i.parent_->fun_, *i.current_))
 \end{codeblock}
 \end{itemdescr}
 
-\indexlibrary{\idxcode{transform_view::\xname{iterator}::iter_swap}}
+\indexlibrary{\idxcode{iter_swap}!\idxcode{transform_view::\xname{iterator}}}
 \begin{itemdecl}
 friend constexpr void iter_swap(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
   noexcept(@\seebelow@);
@@ -1590,7 +1700,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 
 \rSec3[ranges.adaptors.transform_view.sentinel.ctor]{\tcode{transform_view::\xname{sentinel} constructors}}
 
-\indexlibrary{\idxcode{transform_view::\xname{sentinel}::\xname{sentinel}}}
+\indexlibrary{\idxcode{\xname{sentinel}}!\idxcode{transform_view::\xname{sentinel}}}
 \begin{itemdecl}
 explicit constexpr @\xname{sentinel}@(sentinel_t<Base> end);
 \end{itemdecl}
@@ -1600,7 +1710,7 @@ explicit constexpr @\xname{sentinel}@(sentinel_t<Base> end);
 \effects Initializes \tcode{end_} with \tcode{end}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{transform_view::\xname{sentinel}::\xname{sentinel}}}
+\indexlibrary{\idxcode{\xname{sentinel}}!\idxcode{transform_view::\xname{sentinel}}}
 \begin{itemdecl}
 constexpr @\xname{sentinel}@(@\xname{sentinel}@<!Const> i)
   requires Const && View<R> && ConvertibleTo<sentinel_t<R>, sentinel_t<const R>>;
@@ -1613,7 +1723,7 @@ constexpr @\xname{sentinel}@(@\xname{sentinel}@<!Const> i)
 
 \rSec3[ranges.adaptors.transform_view.sentinel.conv]{\tcode{transform_view::\xname{sentinel} conversion}}
 
-\indexlibrary{\idxcode{transform_view::\xname{sentinel}::base}}
+\indexlibrary{\idxcode{base}!\idxcode{transform_view::\xname{sentinel}}}
 \begin{itemdecl}
 constexpr sentinel_t<Base> base() const;
 \end{itemdecl}
@@ -1625,7 +1735,7 @@ constexpr sentinel_t<Base> base() const;
 
 \rSec3[ranges.adaptors.transform_view.sentinel.comp]{\tcode{transform_view::\xname{sentinel} comparison}}
 
-\indexlibrary{\idxcode{transform_view::\xname{sentinel}::operator==}}
+\indexlibrary{\idxcode{operator==}!\idxcode{transform_view::\xname{sentinel}}}
 \begin{itemdecl}
 friend constexpr bool operator==(const @\xname{iterator}@<Const>& x, const @\xname{sentinel}@& y);
 \end{itemdecl}
@@ -1635,7 +1745,7 @@ friend constexpr bool operator==(const @\xname{iterator}@<Const>& x, const @\xna
 \returns \tcode{x.current_ == y.end_}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{transform_view::\xname{sentinel}::operator==}}
+\indexlibrary{\idxcode{operator==}!\idxcode{transform_view::\xname{sentinel}}}
 \begin{itemdecl}
 friend constexpr bool operator==(const @\xname{sentinel}@& x, const @\xname{iterator}@<Const>& y);
 \end{itemdecl}
@@ -1645,7 +1755,7 @@ friend constexpr bool operator==(const @\xname{sentinel}@& x, const @\xname{iter
 \returns \tcode{y == x}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{transform_view::\xname{sentinel}::operator!=}}
+\indexlibrary{\idxcode{operator!=}!\idxcode{transform_view::\xname{sentinel}}}%
 \begin{itemdecl}
 friend constexpr bool operator!=(const @\xname{iterator}@<Const>& x, const @\xname{sentinel}@& y);
 \end{itemdecl}
@@ -1655,7 +1765,7 @@ friend constexpr bool operator!=(const @\xname{iterator}@<Const>& x, const @\xna
 \returns \tcode{!(x == y)}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{transform_view::\xname{sentinel}::operator!=}}
+\indexlibrary{\idxcode{operator!=}!\idxcode{transform_view::\xname{sentinel}}}%
 \begin{itemdecl}
 friend constexpr bool operator!=(const @\xname{sentinel}@& x, const @\xname{iterator}@<Const>& y);
 \end{itemdecl}
@@ -1667,7 +1777,7 @@ friend constexpr bool operator!=(const @\xname{sentinel}@& x, const @\xname{iter
 
 \rSec3[ranges.adaptors.transform_view.sentinel.nonmember]{\tcode{transform_view::\xname{sentinel} non-member functions}}
 
-\indexlibrary{\idxcode{transform_view::\xname{sentinel}::operator!=}}
+\indexlibrary{\idxcode{operator!=}!\idxcode{transform_view::\xname{sentinel}}}%
 \begin{itemdecl}
 friend constexpr difference_type_t<iterator_t<Base>>
   operator-(const @\xname{iterator}@<Const>& x, const @\xname{sentinel}@& y)
@@ -1679,7 +1789,7 @@ friend constexpr difference_type_t<iterator_t<Base>>
 \returns \tcode{x.current_ - y.end_}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{transform_view::\xname{sentinel}::operator!=}}
+\indexlibrary{\idxcode{operator!=}!\idxcode{transform_view::\xname{sentinel}}}%
 \begin{itemdecl}
 friend constexpr difference_type_t<iterator_t<Base>>
   operator-(const @\xname{sentinel}@& y, const @\xname{iterator}@<Const>& x)
