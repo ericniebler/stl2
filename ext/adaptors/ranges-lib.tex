@@ -81,36 +81,38 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1
       return static_cast<D&>(*this);
     }
     constexpr const D& derived() const noexcept { // \expos
-      return static_cast<D const&>(*this);
+      return static_cast<const D&>(*this);
     }
   public:
-    constexpr bool empty() const requires ForwardRange<D const>;
-    constexpr explicit operator bool() const requires ForwardRange<D const>;
-    constexpr bool operator!() const requires ForwardRange<D const>;
+    constexpr bool empty() const requires ForwardRange<const D>;
+    constexpr explicit operator bool() const requires ForwardRange<const D>;
+    constexpr bool operator!() const requires ForwardRange<const D>;
   
-    template <ForwardRange R = D const>
+    template <ForwardRange R = const D>
     constexpr auto size() const
       requires SizedSentinel<sentinel_t<R>, iterator_t<R>>;
   
     constexpr decltype(auto) front() requires ForwardRange<D>;
-    constexpr decltype(auto) front() const requires ForwardRange<D const>;
+    constexpr decltype(auto) front() const requires ForwardRange<const D>;
   
-    constexpr decltype(auto) back() requires BidirectionalRange<D>;
-    constexpr decltype(auto) back() const requires BidirectionalRange<D const>;
+    constexpr decltype(auto) back()
+      requires BidirectionalRange<D> && BoundedRange<D>;
+    constexpr decltype(auto) back() const
+      requires BidirectionalRange<const D> && BoundedRange<const D>;
   
     template <RandomAccessRange R = D>
       constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>> n);
-    template <RandomAccessRange R = D const>
+    template <RandomAccessRange R = const D>
       constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>> n) const;
   
     template <RandomAccessRange R = D>
         requires SizedRange<R>
       constexpr decltype(auto) at(difference_type_t<iterator_t<R>> n);
-    template <RandomAccessRange R = D const>
+    template <RandomAccessRange R = const D>
         requires SizedRange<R>
       constexpr decltype(auto) at(difference_type_t<iterator_t<R>> n) const;
   
-    template <ForwardRange C, InputRange R = D const>
+    template <ForwardRange C, InputRange R = const D>
         requires !View<C> && MoveConstructible<C> &&
           ConvertibleTo<value_type_t<iterator_t<R>>, value_type_t<iterator_t<C>>> &&
           Constructible<C, @\textit{range-common-iterator}@<R>, @\textit{range-common-iterator}@<R>>
@@ -123,7 +125,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1
 
 \indexlibrary{\idxcode{empty}!\idxcode{view_interface}}%
 \begin{itemdecl}
-constexpr bool empty() const requires ForwardRange<D const>;
+constexpr bool empty() const requires ForwardRange<const D>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -133,7 +135,7 @@ constexpr bool empty() const requires ForwardRange<D const>;
 
 \indexlibrary{\idxcode{operator bool}!\idxcode{view_interface}}%
 \begin{itemdecl}
-constexpr explicit operator bool() const requires ForwardRange<D const>;
+constexpr explicit operator bool() const requires ForwardRange<const D>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -143,7 +145,7 @@ constexpr explicit operator bool() const requires ForwardRange<D const>;
 
 \indexlibrary{\idxcode{operator!}!\idxcode{view_interface}}%
 \begin{itemdecl}
-constexpr bool operator!() const requires ForwardRange<D const>;
+constexpr bool operator!() const requires ForwardRange<const D>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -153,7 +155,7 @@ constexpr bool operator!() const requires ForwardRange<D const>;
 
 \indexlibrary{\idxcode{size}!\idxcode{view_interface}}%
 \begin{itemdecl}
-template <ForwardRange R = D const>
+template <ForwardRange R = const D>
 constexpr auto size() const
   requires SizedSentinel<sentinel_t<R>, iterator_t<R>>;
 \end{itemdecl}
@@ -166,7 +168,7 @@ constexpr auto size() const
 \indexlibrary{\idxcode{front}!\idxcode{view_interface}}%
 \begin{itemdecl}
 constexpr decltype(auto) front() requires ForwardRange<D>;
-constexpr decltype(auto) front() const requires ForwardRange<D const>;
+constexpr decltype(auto) front() const requires ForwardRange<const D>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -179,8 +181,10 @@ constexpr decltype(auto) front() const requires ForwardRange<D const>;
 
 \indexlibrary{\idxcode{back}!\idxcode{view_interface}}%
 \begin{itemdecl}
-constexpr decltype(auto) back() requires BidirectionalRange<D>;
-constexpr decltype(auto) back() const requires BidirectionalRange<D const>;
+constexpr decltype(auto) back()
+  requires BidirectionalRange<D> && BoundedRange<D>;
+constexpr decltype(auto) back() const
+  requires BidirectionalRange<const D> && BoundedRange<const D>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -195,7 +199,7 @@ constexpr decltype(auto) back() const requires BidirectionalRange<D const>;
 \begin{itemdecl}
 template <RandomAccessRange R = D>
   constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>> n);
-template <RandomAccessRange R = D const>
+template <RandomAccessRange R = const D>
   constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>> n) const;
 \end{itemdecl}
 
@@ -212,7 +216,7 @@ template <RandomAccessRange R = D const>
 template <RandomAccessRange R = D>
     requires SizedRange<R>
   constexpr decltype(auto) at(difference_type_t<iterator_t<R>> n);
-template <RandomAccessRange R = D const>
+template <RandomAccessRange R = const D>
     requires SizedRange<R>
   constexpr decltype(auto) at(difference_type_t<iterator_t<R>> n) const;
 \end{itemdecl}
@@ -227,7 +231,7 @@ template <RandomAccessRange R = D const>
 
 \indexlibrary{\idxcode{at}!\idxcode{view_interface}}%
 \begin{itemdecl}
-template <ForwardRange C, InputRange R = D const>
+template <ForwardRange C, InputRange R = const D>
     requires !View<C> && MoveConstructible<C> &&
         ConvertibleTo<value_type_t<iterator_t<R>>, value_type_t<iterator_t<C>>> &&
         Constructible<C, @\textit{range-common-iterator}@<R>, @\textit{range-common-iterator}@<R>>
@@ -1032,7 +1036,7 @@ explicit constexpr sentinel(filter_view& parent);
 
 \begin{itemdescr}
 \pnum
-\effects Initializes \tcode{end_} with \tcode{range::end(parent)}.
+\effects Initializes \tcode{end_} with \tcode{ranges::end(parent)}.
 \end{itemdescr}
 
 \rSec4[ranges.adaptors.filter_view.sentinel.conv]{\tcode{filter_view::sentinel} conversion}
@@ -1159,8 +1163,8 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
       requires BoundedRange<R> && View<const R> &&
         Invocable<const F&, reference_t<iterator_t<const R>>>;
 
-    constexpr auto size() requires SizedView<R>;
-    constexpr auto size() const requires SizedView<const R>;
+    constexpr auto size() requires SizedRange<R>;
+    constexpr auto size() const requires SizedRange<const R>;
   };
 
   template <class R, class F>
@@ -1260,13 +1264,13 @@ return {*this, ranges::end(base_)};
 
 \indexlibrary{\idxcode{size}!\idxcode{transform_view}}%
 \begin{itemdecl}
-constexpr auto size() requires SizedView<R>;
-constexpr auto size() const requires SizedView<const R>;
+constexpr auto size() requires SizedRange<R>;
+constexpr auto size() const requires SizedRange<const R>;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\returns \tcode{range::size(base_)}.
+\returns \tcode{ranges::size(base_)}.
 \end{itemdescr}
 
 \rSec3[ranges.adaptors.transform_view.iterator]{Class template \tcode{transform_view::\xname{iterator}}}
@@ -1286,7 +1290,8 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
         Parent* parent_ = nullptr;
       public:
         using iterator_category = iterator_category_t<iterator_t<Base>>;
-        using value_type = value_type_t<iterator_t<Base>>;
+        using value_type = remove_const_t<remove_reference_t<
+            std::invoke_result_t<F&, reference_t<iterator_t<Base>>>>>;
         using difference_type = difference_type_t<iterator_t<Base>>;
 
         @\xname{iterator}@() = default;
@@ -1676,7 +1681,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
         using Base = conditional_t<Const, const R, R>;
         sentinel_t<Base> end_ {};
       public:
-        sentinel() = default;
+        @\xname{sentinel}@() = default;
         explicit constexpr @\xname{sentinel}@(sentinel_t<Base> end);
         constexpr @\xname{sentinel}@(@\xname{sentinel}@<!Const> i)
           requires Const && View<R> && ConvertibleTo<sentinel_t<R>, sentinel_t<const R>>;
@@ -1754,7 +1759,7 @@ friend constexpr bool operator==(const @\xname{sentinel}@& x, const @\xname{iter
 \pnum
 \returns \tcode{y == x}.
 \end{itemdescr}
-
+ 
 \indexlibrary{\idxcode{operator!=}!\idxcode{transform_view::\xname{sentinel}}}%
 \begin{itemdecl}
 friend constexpr bool operator!=(const @\xname{iterator}@<Const>& x, const @\xname{sentinel}@& y);
