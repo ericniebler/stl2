@@ -39,6 +39,13 @@ template <InputRange R, CopyConstructible F>
 class transform_view;
 
 namespace view { inline constexpr @\unspec@ transform = @\unspec@; }
+
+// \ref{ranges.adaptors.iota}:
+template <WeaklyIncrementable I, bool Bounded = false>
+  requires !Bounded || Incrementable<I>
+class iota_view;
+
+namespace view { inline constexpr @\unspec@ iota = @\unspec@; }
 \end{codeblock}
 
 \ednote{After Ranges TS subclause 10.6 [ranges.requirements], insert a new subclause
@@ -87,31 +94,31 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1
     constexpr bool empty() const requires ForwardRange<const D>;
     constexpr explicit operator bool() const requires ForwardRange<const D>;
     constexpr bool operator!() const requires ForwardRange<const D>;
-  
+
     template <ForwardRange R = const D>
     constexpr auto size() const
       requires SizedSentinel<sentinel_t<R>, iterator_t<R>>;
-  
+
     constexpr decltype(auto) front() requires ForwardRange<D>;
     constexpr decltype(auto) front() const requires ForwardRange<const D>;
-  
+
     constexpr decltype(auto) back()
       requires BidirectionalRange<D> && BoundedRange<D>;
     constexpr decltype(auto) back() const
       requires BidirectionalRange<const D> && BoundedRange<const D>;
-  
+
     template <RandomAccessRange R = D>
       constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>> n);
     template <RandomAccessRange R = const D>
       constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>> n) const;
-  
+
     template <RandomAccessRange R = D>
         requires SizedRange<R>
       constexpr decltype(auto) at(difference_type_t<iterator_t<R>> n);
     template <RandomAccessRange R = const D>
         requires SizedRange<R>
       constexpr decltype(auto) at(difference_type_t<iterator_t<R>> n) const;
-  
+
     template <ForwardRange C, InputRange R = const D>
         requires !View<C> && MoveConstructible<C> &&
           ConvertibleTo<value_type_t<iterator_t<R>>, value_type_t<iterator_t<C>>> &&
@@ -1301,7 +1308,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 
         constexpr iterator_t<Base> base() const;
         constexpr decltype(auto) operator*() const;
-    
+
         constexpr @\xname{iterator}@& operator++();
         constexpr void operator++(int);
         constexpr @\xname{iterator}@ operator++(int) requires ForwardRange<Base>;
@@ -1315,7 +1322,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
           requires RandomAccessRange<Base>;
         constexpr decltype(auto) operator[](difference_type n) const
           requires RandomAccessRange<Base>;
-        
+
         friend constexpr bool operator==(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
           requires EqualityComparable<iterator_t<Base>>;
         friend constexpr bool operator!=(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
@@ -1348,8 +1355,8 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 }}}}
 \end{codeblock}
 
-\rSec4[ranges.adaptors.transform_view.iterator.op]{\tcode{transform_view::\xname{iterator} operations}}
-\rSec5[ranges.adaptors.transform_view.iterator.op.ctor]{\tcode{transform_view::\xname{iterator} constructors}}
+\rSec4[ranges.adaptors.transform_view.iterator.op]{\tcode{transform_view::\xname{iterator}} operations}
+\rSec5[ranges.adaptors.transform_view.iterator.op.ctor]{\tcode{transform_view::\xname{iterator}} constructors}
 
 \indexlibrary{\idxcode{\xname{iterator}}!\idxcode{transform_view::\xname{iterator}}}
 \begin{itemdecl}
@@ -1359,7 +1366,7 @@ constexpr @\xname{iterator}@(Parent& parent, iterator_t<Base> current);
 \begin{itemdescr}
 \pnum
 \effects Initializes \tcode{current_} with \tcode{current} and
-initializes \tcode{parent_} with \tcode{\&parent}. 
+initializes \tcode{parent_} with \tcode{\&parent}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{\xname{iterator}}!\idxcode{transform_view::\xname{iterator}}}%
@@ -1374,7 +1381,7 @@ constexpr @\xname{iterator}@(@\xname{iterator}@<!Const> i)
 with \tcode{i.current_}.
 \end{itemdescr}
 
-\rSec5[ranges.adaptors.transform_view.iterator.op.conv]{\tcode{transform_view::\xname{iterator} conversion}}
+\rSec5[ranges.adaptors.transform_view.iterator.op.conv]{\tcode{transform_view::\xname{iterator}} conversion}
 
 \indexlibrary{\idxcode{base}!\idxcode{transform_view::\xname{iterator}}}
 \begin{itemdecl}
@@ -1685,9 +1692,9 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
         explicit constexpr @\xname{sentinel}@(sentinel_t<Base> end);
         constexpr @\xname{sentinel}@(@\xname{sentinel}@<!Const> i)
           requires Const && View<R> && ConvertibleTo<sentinel_t<R>, sentinel_t<const R>>;
-      
+
         constexpr sentinel_t<Base> base() const;
-    
+
         friend constexpr bool operator==(const @\xname{iterator}@<Const>& x, const @\xname{sentinel}@& y);
         friend constexpr bool operator==(const @\xname{sentinel}@& x, const @\xname{iterator}@<Const>& y);
         friend constexpr bool operator!=(const @\xname{iterator}@<Const>& x, const @\xname{sentinel}@& y);
@@ -1759,7 +1766,7 @@ friend constexpr bool operator==(const @\xname{sentinel}@& x, const @\xname{iter
 \pnum
 \returns \tcode{y == x}.
 \end{itemdescr}
- 
+
 \indexlibrary{\idxcode{operator!=}!\idxcode{transform_view::\xname{sentinel}}}%
 \begin{itemdecl}
 friend constexpr bool operator!=(const @\xname{iterator}@<Const>& x, const @\xname{sentinel}@& y);
@@ -1819,4 +1826,555 @@ respectively. Then the expression \tcode{view::transform(E, F)} is expression-eq
 \tcode{InputRange<T> \&\& CopyConstructible<decay_t<U>{>} \&\& Invocable<decay_t<U>\&, reference_t<iterator_t<T>{>}>}
 is satisfied.
 \item Otherwise, \tcode{view::transform(E, F)} is ill-formed.
+\end{itemize}
+
+\rSec2[ranges.adaptors.iota_view]{Class template \tcode{iota_view}}
+
+\pnum
+The purpose of \tcode{iota_view} is to generate a sequence of elements by
+monotonically incrementing an initial value.
+
+\pnum
+\enterexample
+\begin{codeblock}
+iota_view indices{1, 10};
+for (int i : squares)
+  cout << i << ' '; // prints: 1 2 3 4 5 6 7 8 9
+\end{codeblock}
+\exitexample
+
+\begin{codeblock}
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+  // \expos
+  template <class I>
+  concept bool @\textit{decrementable}@ = @\seebelow@;
+  // \expos
+  template <class I>
+  concept bool @\textit{advanceable}@ = @\seebelow@;
+
+  template <WeaklyIncrementable I, bool Bounded = false>
+    requires !Bounded || Incrementable<I>
+  struct iota_view : view_interface<iota_view<I, Bounded>> {
+  private:
+    I value_ {}; // \expos
+    I bound_ {}; // \expos, present only when Bounded is true
+  public:
+    iota_view() = default;
+    constexpr explicit iota_view(I value) requires !Bounded;
+    constexpr iota_view(I value, I bound) requires Bounded;
+
+    struct iterator;
+
+    constexpr iterator begin() const;
+    constexpr unreachable end() const requires !Bounded;
+    constexpr iterator end() const requires Bounded;
+
+    constexpr auto size() const
+      requires Bounded && @\textit{advanceable}@<I>;
+  };
+
+  template <WeaklyIncrementable I>
+  explicit iota_view(I value) -> iota_view<I, false>;
+
+  template <Incrementable I>
+  iota_view(I value, I bound) -> iota_view<I, true>;
+}}}}
+\end{codeblock}
+
+\pnum
+The exposition-only \tcode{\textit{decrementable}} concept is equivalent to:
+\begin{codeblock}
+template <class I>
+concept bool @\textit{decrementable}@ =
+  Incrementable<I> && requires(I i) {
+    { --i } -> Same<I>&;
+    { i-- } -> Same<I>&&;
+  };
+\end{codeblock}
+
+\pnum
+When an object is in the domain of both pre- and post-decrement,
+the object is said to be \techterm{decrementable}.
+
+\pnum
+Let \tcode{a} and \tcode{b} be incrementable and decrementable objects of type
+\tcode{I}. \tcode{\textit{decrementable}<I>} is satisfied only if
+\begin{itemize}
+\item \tcode{\&(--a) == \&a};
+\item If \tcode{bool(a == b)} then \tcode{bool(a-- == b)}.
+\item If \tcode{bool(a == b)} then \tcode{bool((a--, a) == --b)}.
+\item If \tcode{bool(a == b)} then \tcode{bool(--(++a) == b)} and
+\tcode{bool(++(--a) == b)}.
+\end{itemize}
+
+\pnum
+The exposition-only \tcode{\textit{advanceable}} concept is equivalent to:
+\begin{codeblock}
+template <class I>
+concept bool @\textit{advanceable}@ =
+  @\textit{decrementable}@<I> && StrictTotallyOrdered<I> &&
+    requires { typename difference_type_t<I>; } &&
+    requires(I a, const I b, const difference_type_t<I> n) {
+      { a += n } -> Same<I>&;
+      { b + n } -> Same<I>&&;
+      { n + b } -> Same<I>&&;
+      { a -= n } -> Same<I>&;
+      { b - n } -> Same<I>&&;
+      { b - b } -> Same<difference_type_t<I>>&&;
+    };
+\end{codeblock}
+
+Let \tcode{a} and \tcode{b} be objects of type \tcode{I} such that \tcode{b} is
+reachable from \tcode{a}. Let \tcode{n} be the smallest number of applications
+of \tcode{++a} necessary to make \tcode{bool(a == b)} be \tcode{true}. Then if
+\tcode{n} is representable by \tcode{difference_type_t<I>},
+\tcode{\textit{advanceable}<I>} is satisfied only if:
+\begin{itemize}
+\item \tcode{(a += n)} is equal to \tcode{b}.
+\item \tcode{\&(a += n)} is equal to \tcode{\&a}.
+\item \tcode{(a + n)} is equal to \tcode{(a += n)}.
+\item For any two positive integers \tcode{x} and \tcode{y}, if
+\tcode{a + (x + y)} is valid, then \tcode{a + (x + y)} is equal to
+\tcode{(a + x) + y}.
+\item \tcode{a + 0} is equal to \tcode{a}.
+\item If \tcode{(a + (n - 1))} is valid, then \tcode{a + n} is equal to
+\tcode{++(a + (n - 1))}.
+\item \tcode{(b += -n)} is equal to \tcode{a}.
+\item \tcode{(b -= n)} is equal to \tcode{a}.
+\item \tcode{\&(b -= n)} is equal to \tcode{\&b}.
+\item \tcode{(b - n)} is equal to \tcode{(b -= n)}.
+\item \tcode{b - a} is equal to \tcode{n}.
+\item \tcode{a - b} is equal to \tcode{-n}.
+\item \tcode{a < b || (n == 0 \&\& a == b)}.
+\end{itemize}
+
+\rSec3[ranges.adaptors.iota_view.ops]{\tcode{iota_view} operations}
+\rSec4[ranges.adaptors.iota_view.ctor]{\tcode{iota_view} constructors}
+
+\indexlibrary{\idxcode{iota_view}!\idxcode{iota_view}}%
+\begin{itemdecl}
+constexpr explicit iota_view(I value) requires !Bounded;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Initializes \tcode{value_} with \tcode{value}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{iota_view}!\idxcode{iota_view}}%
+\begin{itemdecl}
+constexpr iota_view(I value, I bound) requires Bounded;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{bound} is reachable from \tcode{value}. If
+\tcode{\textit{advanceable}<I>} is satisfied, then \tcode{value <= bound}.
+
+\pnum
+\effects Initializes \tcode{value_} with \tcode{value} and \tcode{bound_} with
+\tcode{bound}.
+\end{itemdescr}
+
+\rSec4[ranges.adaptors.iota_view.begin]{\tcode{iota_view} range begin}
+
+\indexlibrary{\idxcode{begin}!\idxcode{iota_view}}%
+\begin{itemdecl}
+constexpr iterator begin() const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{iterator\{value_\}}.
+\end{itemdescr}
+
+\rSec4[ranges.adaptors.iota_view.end]{\tcode{iota_view} range end}
+
+\indexlibrary{\idxcode{end}!\idxcode{iota_view}}%
+\begin{itemdecl}
+constexpr unreachable end() const requires !Bounded;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{\{\}}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{end}!\idxcode{iota_view}}%
+\begin{itemdecl}
+constexpr iterator end() const requires Bounded;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{iterator\{value_\}}.
+\end{itemdescr}
+
+\rSec4[ranges.adaptors.iota_view.end]{\tcode{iota_view} range end}
+
+\indexlibrary{\idxcode{size}!\idxcode{iota_view}}%
+\begin{itemdecl}
+constexpr auto size() const
+  requires Bounded && @\textit{advanceable}@<I>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{bound_ - value_}.
+\end{itemdescr}
+
+\rSec3[ranges.adaptors.iota_view.iterator]{Class \tcode{iota_view::iterator}}
+
+\begin{codeblock}
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+  template <class I, bool Bounded>
+  struct iota_view<I, Bounded>::iterator {
+  private:
+    I value_ {}; // \expos
+  public:
+    using iterator_category = @\seebelow@;
+    using value_type = I;
+    using difference_type = difference_type_t<I>;
+
+    iterator() = default;
+    constexpr iterator(I value);
+
+    constexpr I operator*() const noexcept(is_nothrow_copy_constructible_v<I>);
+
+    constexpr iterator& operator++();
+    constexpr void operator++(int);
+    constexpr iterator operator++(int) requires Incrementable<I>;
+
+    constexpr iterator& operator--() requires @\textit{decrementable}@<I>;
+    constexpr iterator operator--(int) requires @\textit{decrementable}@<I>;
+
+    constexpr iterator& operator+=(difference_type n)
+      requires @\textit{advanceable}@<I>;
+    constexpr iterator& operator-=(difference_type n)
+      requires @\textit{advanceable}@<I>;
+    constexpr I operator[](difference_type n) const
+      requires @\textit{advanceable}@<I>;
+
+    friend constexpr bool operator==(const iterator& x, const iterator& y)
+      requires EqualityComparable<I>;
+    friend constexpr bool operator!=(const iterator& x, const iterator& y)
+      requires EqualityComparable<I>;
+
+    friend constexpr bool operator<(const iterator& x, const iterator& y)
+      requires StrictTotallyOrdered<I>;
+    friend constexpr bool operator>(const iterator& x, const iterator& y)
+      requires StrictTotallyOrdered<I>;
+    friend constexpr bool operator<=(const iterator& x, const iterator& y)
+      requires StrictTotallyOrdered<I>;
+    friend constexpr bool operator>=(const iterator& x, const iterator& y)
+      requires StrictTotallyOrdered<I>;
+
+    friend constexpr iterator operator+(iterator i, difference_type n)
+      requires @\textit{advanceable}@<I>;
+    friend constexpr iterator operator+(difference_type n, iterator i)
+      requires @\textit{advanceable}@<I>;
+
+    friend constexpr iterator operator-(iterator i, difference_type n)
+      requires @\textit{advanceable}@<I>;
+    friend constexpr difference_type operator-(const iterator& x, const iterator& y)
+      requires @\textit{advanceable}@<I>;
+  };
+}}}}
+\end{codeblock}
+
+\pnum
+\tcode{iota_view<I, Bounded>::iterator::iterator_category} is defined as follows:
+\begin{itemize}
+\item If \tcode{I} satisfies \tcode{\textit{advanceable}}, then
+\tcode{iterator_category} is \tcode{ranges::random_access_iterator_tag}.
+\item Otherwise, if \tcode{I} satisfies \tcode{\textit{decrementable}}, then
+\tcode{iterator_category} is \tcode{ranges::bidirectional_iterator_tag}.
+\item Otherwise, if \tcode{I} satisfies \tcode{Incrementable}, then
+\tcode{iterator_category} is \tcode{ranges::forward_iterator_tag}.
+\item Otherwise, \tcode{iterator_category} is \tcode{ranges::input_iterator_tag}.
+\end{itemize}
+
+\pnum
+\enternote Overloads for \tcode{iter_move} and \tcode{iter_swap} are omitted
+intentionally.\exitnote
+
+\rSec4[ranges.adaptors.iota_view.iterator.op]{\tcode{iota_view::iterator} operations}
+\rSec5[ranges.adaptors.iota_view.iterator.op.ctor]{\tcode{iota_view::iterator} constructors}
+
+\indexlibrary{\idxcode{iterator}!\idxcode{iota_view::iterator}}
+\begin{itemdecl}
+constexpr iterator(I value);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Initializes \tcode{value_} with \tcode{value}.
+\end{itemdescr}
+
+\rSec5[ranges.adaptors.iota_view.iterator.op.star]{\tcode{iota_view::iterator::operator*}}
+
+\indexlibrary{\idxcode{operator*}!\idxcode{iota_view::iterator}}
+\begin{itemdecl}
+constexpr I operator*() const noexcept(is_nothrow_copy_constructible_v<I>);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{value_}.
+
+\pnum
+\enternote The \tcode{noexcept} clause is needed by the default \tcode{iter_move}
+implementation.\exitnote
+\end{itemdescr}
+
+\rSec5[ranges.adaptors.iota_view.iterator.op.inc]{\tcode{iota_view::iterator::operator++}}
+
+\indexlibrary{\idxcode{operator++}!\idxcode{iota_view::iterator}}
+\begin{itemdecl}
+constexpr iterator& operator++();
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+++value_;
+return *this;
+\end{codeblock}
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator++}!\idxcode{iota_view::iterator}}
+\begin{itemdecl}
+constexpr void operator++(int);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to \tcode{++*this}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator++}!\idxcode{iota_view::iterator}}
+\begin{itemdecl}
+constexpr iterator operator++(int) requires Incrementable<I>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+auto tmp = *this;
+++*this;
+return tmp;
+\end{codeblock}
+\end{itemdescr}
+
+\rSec5[ranges.adaptors.iota_view.iterator.op.dec]{\tcode{iota_view::iterator::operator\dcr}}
+
+\indexlibrary{\idxcode{operator\dcr}!\idxcode{iota_view::iterator}}
+\begin{itemdecl}
+constexpr iterator& operator--() requires @\textit{decrementable}@<I>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+--value_;
+return *this;
+\end{codeblock}
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator\dcr}!\idxcode{iota_view::iterator}}
+\begin{itemdecl}
+constexpr iterator operator--(int) requires @\textit{decrementable}@<I>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+auto tmp = *this;
+--*this;
+return tmp;
+\end{codeblock}
+\end{itemdescr}
+
+\rSec5[ranges.adaptors.iota_view.iterator.op.adv]{\tcode{iota_view::iterator} advance}
+
+\indexlibrary{\idxcode{operator+=}!\idxcode{iota_view::iterator}}
+\begin{itemdecl}
+constexpr iterator& operator+=(difference_type n)
+  requires @\textit{advanceable}@<I>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+value_ += n;
+return *this;
+\end{codeblock}
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator-=}!\idxcode{iota_view::iterator}}
+\begin{itemdecl}
+constexpr iterator& operator-=(difference_type n)
+  requires @\textit{advanceable}@<I>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+value_ -= n;
+return *this;
+\end{codeblock}
+\end{itemdescr}
+
+\rSec5[ranges.adaptors.iota_view.iterator.op.idx]{\tcode{iota_view::iterator} index}
+
+\indexlibrary{\idxcode{operator[]}!\idxcode{iota_view::iterator}}
+\begin{itemdecl}
+constexpr I operator[](difference_type n) const
+  requires @\textit{advanceable}@<I>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{value_ + n}.
+\end{itemdescr}
+
+\rSec5[ranges.adaptors.iota_view.iterator.op.cmp]{\tcode{iota_view::iterator} comparisons}
+
+\indexlibrary{\idxcode{operator==}!\idxcode{iota_view::iterator}}
+\begin{itemdecl}
+friend constexpr bool operator==(const iterator& x, const iterator& y)
+  requires EqualityComparable<I>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{x.value_ == y.value_}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator!=}!\idxcode{iota_view::iterator}}
+\begin{itemdecl}
+friend constexpr bool operator!=(const iterator& x, const iterator& y)
+  requires EqualityComparable<I>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{!(x == y)}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator<}!\idxcode{iota_view::iterator}}
+\begin{itemdecl}
+friend constexpr bool operator<(const iterator& x, const iterator& y)
+  requires StrictTotallyOrdered<I>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{x.value_ < y.value_}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator>}!\idxcode{iota_view::iterator}}
+\begin{itemdecl}
+friend constexpr bool operator>(const iterator& x, const iterator& y)
+  requires StrictTotallyOrdered<I>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{y < x}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator<=}!\idxcode{iota_view::iterator}}
+\begin{itemdecl}
+friend constexpr bool operator<=(const iterator& x, const iterator& y)
+  requires StrictTotallyOrdered<I>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{!(y < x)}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator>=}!\idxcode{iota_view::iterator}}
+\begin{itemdecl}
+friend constexpr bool operator>=(const iterator& x, const iterator& y)
+  requires StrictTotallyOrdered<I>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{!(x < y)}.
+\end{itemdescr}
+
+\rSec5[ranges.adaptors.iota_view.iterator.op.nonmember]{\tcode{iota_view::iterator} non-member functions}
+
+\indexlibrary{\idxcode{operator+}!\idxcode{iota_view::iterator}}
+\begin{itemdecl}
+friend constexpr iterator operator+(iterator i, difference_type n)
+  requires @\textit{advanceable}@<I>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{iterator\{*i + n\}}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator+}!\idxcode{iota_view::iterator}}
+\begin{itemdecl}
+friend constexpr iterator operator+(difference_type n, iterator i)
+  requires @\textit{advanceable}@<I>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{i + n}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator-}!\idxcode{iota_view::iterator}}
+\begin{itemdecl}
+friend constexpr iterator operator-(iterator i, difference_type n)
+  requires @\textit{advanceable}@<I>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{i + -n}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator-}!\idxcode{iota_view::iterator}}
+\begin{itemdecl}
+friend constexpr difference_type operator-(const iterator& x, const iterator& y)
+  requires @\textit{advanceable}@<I>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{*x - *y}.
+\end{itemdescr}
+
+\rSec2[ranges.adaptors.iota]{\tcode{view::iota}}
+
+\pnum
+The name \tcode{view::iota} denotes a customizatoin point object~(\cxxref{???}).
+Let \tcode{E} and \tcode{F} be expressions such that their un-\cv\ qualified type
+is \tcode{I}. Then the expression \tcode{view::iota(E)} is expression-equivalent
+to:
+
+\begin{itemize}
+\item \tcode{iota_view\{E\}} if \tcode{WeaklyIncrementable<I>} is satisfied.
+\item Otherwise, \tcode{view::iota(E)} is ill-formed.
+\end{itemize}
+
+\pnum
+The expression \tcode{view::iota(E, F)} is expression-equivalent to:
+
+\begin{itemize}
+\item \tcode{iota_view\{E, F\}} if \tcode{Incrementable<I>} is satisfied.
+\item Otherwise, \tcode{view::iota(E, F)} is ill-formed.
 \end{itemize}
