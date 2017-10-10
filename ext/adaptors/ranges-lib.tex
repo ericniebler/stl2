@@ -95,9 +95,8 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1
     constexpr explicit operator bool() const requires ForwardRange<const D>;
     constexpr bool operator!() const requires ForwardRange<const D>;
 
-    template <ForwardRange R = const D>
-    constexpr auto size() const
-      requires SizedSentinel<sentinel_t<R>, iterator_t<R>>;
+    constexpr auto size() const requires ForwardRange<const D> &&
+      SizedSentinel<sentinel_t<const D>, iterator_t<const D>>;
 
     constexpr decltype(auto) front() requires ForwardRange<D>;
     constexpr decltype(auto) front() const requires ForwardRange<const D>;
@@ -119,10 +118,10 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1
         requires SizedRange<R>
       constexpr decltype(auto) at(difference_type_t<iterator_t<R>> n) const;
 
-    template <ForwardRange C, InputRange R = const D>
+    template <ForwardRange C>
         requires !View<C> && MoveConstructible<C> &&
-          ConvertibleTo<value_type_t<iterator_t<R>>, value_type_t<iterator_t<C>>> &&
-          Constructible<C, @\textit{range-common-iterator}@<R>, @\textit{range-common-iterator}@<R>>
+          ConvertibleTo<value_type_t<iterator_t<const D>>, value_type_t<iterator_t<C>>> &&
+          Constructible<C, @\textit{range-common-iterator}@<const D>, @\textit{range-common-iterator}@<const D>>
       operator C () const;
   };
 }}}}
@@ -162,9 +161,8 @@ constexpr bool operator!() const requires ForwardRange<const D>;
 
 \indexlibrary{\idxcode{size}!\idxcode{view_interface}}%
 \begin{itemdecl}
-template <ForwardRange R = const D>
-constexpr auto size() const
-  requires SizedSentinel<sentinel_t<R>, iterator_t<R>>;
+constexpr auto size() const requires ForwardRange<const D> &&
+  SizedSentinel<sentinel_t<const D>, iterator_t<const D>>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -238,10 +236,10 @@ template <RandomAccessRange R = const D>
 
 \indexlibrary{\idxcode{at}!\idxcode{view_interface}}%
 \begin{itemdecl}
-template <ForwardRange C, InputRange R = const D>
+template <ForwardRange C>
     requires !View<C> && MoveConstructible<C> &&
-        ConvertibleTo<value_type_t<iterator_t<R>>, value_type_t<iterator_t<C>>> &&
-        Constructible<C, @\textit{range-common-iterator}@<R>, @\textit{range-common-iterator}@<R>>
+      ConvertibleTo<value_type_t<iterator_t<const D>>, value_type_t<iterator_t<C>>> &&
+      Constructible<C, @\textit{range-common-iterator}@<const D>, @\textit{range-common-iterator}@<const D>>
   operator C () const;
 \end{itemdecl}
 
@@ -268,8 +266,8 @@ iterator and a sentinel into a single object that satisfies the \tcode{View} con
 \begin{codeblock}
 template <Iterator I, Sentinel<I> S = I>
 class iterator_range
-  : tagged_pair<tag::begin(I), tag::end(S)>,
-    view_interface<iterator_range<I, S>> {
+  : public tagged_pair<tag::begin(I), tag::end(S)>,
+    public view_interface<iterator_range<I, S>> {
 public:
   using iterator = I;
   using sentinel = S;
@@ -377,7 +375,7 @@ constexpr bool empty() const;
 \begin{codeblock}
 template <Iterator I, Sentinel<I> S = I>
 class sized_iterator_range
-  : view_interface<sized_iterator_range<I, S>> {
+  : public view_interface<sized_iterator_range<I, S>> {
 private:
   iterator_range<I, S> rng_; // \expos
   difference_type_t<I> size_; // \expos
@@ -689,7 +687,8 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     filter_view() = default;
     constexpr filter_view(R base, Pred pred);
     template <InputRange O>
-        requires Constructible<R, all_view<O>>
+        requires (std::is_lvalue_reference_v<O> || View<decay_t<O>>) &&
+            Constructible<R, all_view<O>>
       constexpr filter_view(O&& o, Pred pred);
 
     constexpr R base() const;
@@ -724,7 +723,8 @@ constexpr filter_view(R base, Pred pred);
 \indexlibrary{\idxcode{filter_view}!\idxcode{filter_view}}%
 \begin{itemdecl}
 template <InputRange O>
-    requires Constructible<R, all_view<O>>
+    requires (std::is_lvalue_reference_v<O> || View<decay_t<O>>) &&
+        Constructible<R, all_view<O>>
   constexpr filter_view(O&& o, Pred pred);
 \end{itemdecl}
 
@@ -1148,7 +1148,8 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     transform_view() = default;
     constexpr transform_view(R base, F fun);
     template <InputRange O>
-      requires Constructible<R, all_view<O>>
+      requires (std::is_lvalue_reference_v<O> || View<decay_t<O>>) &&
+          Constructible<R, all_view<O>>
     constexpr transform_view(O&& o, F fun);
 
     using iterator = @\xname{iterator}@<false>;
@@ -1195,7 +1196,8 @@ constexpr transform_view(R base, F fun);
 \indexlibrary{\idxcode{transform_view}!\idxcode{transform_view}}%
 \begin{itemdecl}
 template <InputRange O>
-  requires Constructible<R, all_view<O>>
+  requires (std::is_lvalue_reference_v<O> || View<decay_t<O>>) &&
+      Constructible<R, all_view<O>>
 constexpr transform_view(O&& o, F fun);
 \end{itemdecl}
 
@@ -2407,8 +2409,9 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     take_view() = default;
     constexpr take_view(R base, difference_type_t<iterator_t<R>> count);
     template <InputRange O>
-        requires Constructible<R, all_view<O>>
-      constexpr take_view(O&& o, difference_type_t<iterator_t<R>> count);
+      requires (std::is_lvalue_reference_v<O> || View<decay_t<O>>) &&
+          Constructible<R, all_view<O>>
+    constexpr take_view(O&& o, difference_type_t<iterator_t<R>> count);
 
     constexpr R base() const;
 
@@ -2472,7 +2475,8 @@ constexpr take_view(R base, difference_type_t<iterator_t<R>> count);
 \indexlibrary{\idxcode{take_view}!\idxcode{take_view}}%
 \begin{itemdecl}
 template <InputRange O>
-  requires Constructible<R, all_view<O>>
+  requires (std::is_lvalue_reference_v<O> || View<decay_t<O>>) &&
+      Constructible<R, all_view<O>>
 constexpr take_view(O&& o, difference_type_t<iterator_t<R>> count);
 \end{itemdecl}
 
