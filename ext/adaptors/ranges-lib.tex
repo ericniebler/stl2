@@ -23,29 +23,54 @@ class sized_iterator_range;
 namespace view { inline constexpr @\unspec@ all = @\unspec@; }
 
 template <Range R>
-    requires is_lvalue_reference_v<R> || View<decay_t<R>>
+  requires is_lvalue_reference_v<R> || View<decay_t<R>>
 using all_view = decay_t<decltype(view::all(declval<R>()))>;
 
-// \ref{ranges.adaptors.filter}:
+// \ref{ranges.adaptors.filter_view}:
 template <InputRange R, IndirectUnaryPredicate<iterator_t<R>> Pred>
   requires View<R>
 class filter_view;
 
 namespace view { inline constexpr @\unspec@ filter = @\unspec@; }
 
-// \ref{ranges.adaptors.transform}:
+// \ref{ranges.adaptors.transform_view}:
 template <InputRange R, CopyConstructible F>
   requires View<R> && Invocable<F&, reference_t<iterator_t<R>>>
 class transform_view;
 
 namespace view { inline constexpr @\unspec@ transform = @\unspec@; }
 
-// \ref{ranges.adaptors.iota}:
+// \ref{ranges.adaptors.iota_view}:
 template <WeaklyIncrementable I, bool Bounded = false>
   requires !Bounded || Incrementable<I>
 class iota_view;
 
 namespace view { inline constexpr @\unspec@ iota = @\unspec@; }
+
+// \ref{ranges.adaptors.join_view}:
+template <InputRange R>
+  requires View<R> && InputRange<reference_t<iterator_t<R>>> &&
+    (is_reference_v<reference_t<iterator_t<R>>> ||
+     View<value_type_t<iterator_t<R>>>)
+class join_view;
+
+namespace view { inline constexpr @\unspec@ join = @\unspec@; }
+
+// \ref{ranges.adaptors.empty_view}:
+template <class T>
+  requires requires { typename T*; typename T&; }
+class empty_view;
+
+namespace view {
+  template <class T>
+  inline constexpr empty_view<T> empty {};
+}
+
+// \ref{ranges.adaptors.single_view}:
+template <CopyConstructible T>
+class single_view;
+
+namespace view { inline constexpr @\unspec@ single = @\unspec@; }
 \end{codeblock}
 
 \ednote{After Ranges TS subclause 10.6 [ranges.requirements], insert a new subclause
@@ -687,9 +712,9 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     filter_view() = default;
     constexpr filter_view(R base, Pred pred);
     template <InputRange O>
-        requires (is_lvalue_reference_v<O> || View<decay_t<O>>) &&
-            Constructible<R, all_view<O>>
-      constexpr filter_view(O&& o, Pred pred);
+      requires (is_lvalue_reference_v<O> || View<decay_t<O>>) &&
+        Constructible<R, all_view<O>>
+    constexpr filter_view(O&& o, Pred pred);
 
     constexpr R base() const;
 
@@ -701,7 +726,9 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     constexpr iterator end() requires BoundedRange<R>;
   };
 
-  template <class R, class Pred>
+  template <InputRange R, CopyConstructible Pred>
+    requires IndirectUnaryPredicate<Pred, iterator_t<R>> &&
+      (std::is_lvalue_reference_v<R> || View<decay_t<R>>)
   filter_view(R&&, Pred) -> filter_view<all_view<R>, Pred>;
 }}}}
 \end{codeblock}
@@ -723,9 +750,9 @@ constexpr filter_view(R base, Pred pred);
 \indexlibrary{\idxcode{filter_view}!\idxcode{filter_view}}%
 \begin{itemdecl}
 template <InputRange O>
-    requires (is_lvalue_reference_v<O> || View<decay_t<O>>) &&
-        Constructible<R, all_view<O>>
-  constexpr filter_view(O&& o, Pred pred);
+  requires (is_lvalue_reference_v<O> || View<decay_t<O>>) &&
+    Constructible<R, all_view<O>>
+constexpr filter_view(O&& o, Pred pred);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2361,7 +2388,7 @@ friend constexpr difference_type operator-(const iterator& x, const iterator& y)
 \rSec2[ranges.adaptors.iota]{\tcode{view::iota}}
 
 \pnum
-The name \tcode{view::iota} denotes a customizatoin point object~(\cxxref{???}).
+The name \tcode{view::iota} denotes a customization point object~(\cxxref{???}).
 Let \tcode{E} and \tcode{F} be expressions such that their un-\cv\ qualified type
 is \tcode{I}. Then the expression \tcode{view::iota(E)} is expression-equivalent
 to:
@@ -3275,4 +3302,224 @@ InputRange<reference_t<iterator_t<T>>> &&
  View<value_type_t<iterator_t<T>>)
 \end{codeblock}
 \item Otherwise, \tcode{view::join(E)} is ill-formed.
+\end{itemize}
+
+\rSec2[ranges.adaptors.empty_view]{Class template \tcode{empty_view}}
+
+\pnum
+The purpose of \tcode{empty_view} is to produce an emtpy range of elements of
+a particular type.
+
+\pnum
+\enterexample
+\begin{codeblock}
+empty_view<int> e;
+static_assert(ranges::empty(e));
+static_assert(0 == e.size());
+\end{codeblock}
+\exitexample
+
+\begin{codeblock}
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+  template <class T>
+    requires requires { typename T*; typename T&; }
+  class empty_view : view_interface<empty_view<T>> {
+  public:
+    empty_view() = default;
+    constexpr T* begin() const noexcept;
+    constexpr T* end() const noexcept;
+    constexpr ptrdiff_t size() const;
+    constexpr T* data() const noexcept;
+  };
+}}}}
+\end{codeblock}
+
+\rSec3[ranges.adaptors.empty_view.ops]{\tcode{empty_view} operations}
+\rSec4[ranges.adaptors.empty_view.begin]{\tcode{empty_view} begin}
+
+\indexlibrary{\idxcode{begin}!\idxcode{empty_view}}%
+\begin{itemdecl}
+constexpr T* begin() const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{nullptr}.
+\end{itemdescr}
+
+\rSec4[ranges.adaptors.empty_view.end]{\tcode{empty_view} end}
+
+\indexlibrary{\idxcode{end}!\idxcode{empty_view}}%
+\begin{itemdecl}
+constexpr T* end() const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{nullptr}.
+\end{itemdescr}
+
+\rSec4[ranges.adaptors.empty_view.size]{\tcode{empty_view} size}
+
+\indexlibrary{\idxcode{size}!\idxcode{empty_view}}%
+\begin{itemdecl}
+constexpr ptrdiff_t size() const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{0}.
+\end{itemdescr}
+
+\rSec4[ranges.adaptors.empty_view.data]{\tcode{empty_view} data}
+
+\indexlibrary{\idxcode{data}!\idxcode{empty_view}}%
+\begin{itemdecl}
+constexpr T* data() const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{nullptr}.
+\end{itemdescr}
+
+\rSec2[ranges.adaptors.single_view]{Class template \tcode{single_view}}
+
+\pnum
+The purpose of \tcode{single_view} is to produce a range that contains exactly
+one element of a specified value.
+
+\pnum
+\enterexample
+\begin{codeblock}
+single_view s{4};
+for (int i : s)
+  cout << i; // prints 4
+\end{codeblock}
+\exitexample
+
+\begin{codeblock}
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+  template <CopyConstructible T>
+  class single_view : view_interface<single_view<T>> {
+  private:
+    @\textit{semiregular}@<T> value_;
+  public:
+    single_view() = default;
+    constexpr explicit single_view(const T& t);
+    constexpr explicit single_view(T&& t);
+    template <class... Args>
+    constexpr single_view(in_place_t, Args&&... args);
+
+    constexpr const T* begin() const noexcept;
+    constexpr const T* end() const noexcept;
+    constexpr ptrdiff_t size() const noexcept;
+    constexpr const T* data() const noexcept;
+  };
+
+  template <CopyConstructible T>
+  explicit single_view(const T&) -> single_view<T>;
+}}}}
+\end{codeblock}
+
+\rSec3[ranges.adaptors.single_view.ops]{\tcode{single_view} operations}
+\rSec4[ranges.adaptors.single_view.ctor]{\tcode{single_view} constructors}
+
+\indexlibrary{\idxcode{single_view}!\idxcode{single_view}}%
+\begin{itemdecl}
+constexpr explicit single_view(const T& t);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Initializes \tcode{value_} with \tcode{t}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{single_view}!\idxcode{single_view}}%
+\begin{itemdecl}
+constexpr explicit single_view(T&& t);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Initializes \tcode{value_} with \tcode{std::move(t)}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{single_view}!\idxcode{single_view}}%
+\begin{itemdecl}
+template <class... Args>
+constexpr single_view(in_place_t, Args&&... args);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Initializes \tcode{value_} as if by
+\tcode{value_\{in_place, std::forward<Args>(args)...\}}.
+\end{itemdescr}
+
+\rSec4[ranges.adaptors.single_view.begin]{\tcode{single_view} begin}
+
+\indexlibrary{\idxcode{begin}!\idxcode{empty_view}}%
+\begin{itemdecl}
+constexpr const T* begin() const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{bool(value_)}
+
+\pnum
+\returns \tcode{value_.operator->()}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{end}!\idxcode{empty_view}}%
+\begin{itemdecl}
+constexpr const T* end() const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{bool(value_)}
+
+\pnum
+\returns \tcode{value_.operator->() + 1}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{size}!\idxcode{empty_view}}%
+\begin{itemdecl}
+constexpr ptrdiff_t size() const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{bool(value_)}
+
+\pnum
+\returns \tcode{1}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{data}!\idxcode{empty_view}}%
+\begin{itemdecl}
+constexpr const T* data() const noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{bool(value_)}
+
+\pnum
+\returns \tcode{begin()}.
+\end{itemdescr}
+
+\rSec2[ranges.adaptors.single]{\tcode{view::single}}
+
+\pnum
+The name \tcode{view::single} denotes a customization point object~(\cxxref{???}).
+Let \tcode{E} be an expression such that its un-\cv\ qualified type
+is \tcode{I}. Then the expression \tcode{view::single(E)} is expression-equivalent
+to:
+
+\begin{itemize}
+\item \tcode{single_view\{E\}} if \tcode{CopyConstructible<I>} is satisfied.
+\item Otherwise, \tcode{view::single(E)} is ill-formed.
 \end{itemize}
