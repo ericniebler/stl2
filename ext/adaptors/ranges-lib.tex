@@ -7,70 +7,102 @@
 10.3 [range.synopsis], add the following:}
 
 \begin{codeblock}
-// \ref{ranges.view_interface}:
-template <class D>
-class view_interface;
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+  // \ref{ranges.view_interface}:
+  template <class D>
+  class view_interface;
 
-// \ref{ranges.iterator_range}:
-template <Iterator I, Sentinel<I> S = I>
-class iterator_range;
+  // \ref{ranges.iterator_range}:
+  template <Iterator I, Sentinel<I> S = I>
+  class iterator_range;
 
-// \ref{ranges.sized_iterator_range}:
-template <Iterator I, Sentinel<I> S = I>
-class sized_iterator_range;
+  // \ref{ranges.sized_iterator_range}:
+  template <Iterator I, Sentinel<I> S = I>
+  class sized_iterator_range;
 
-// \ref{ranges.adaptors.all}:
-namespace view { inline constexpr @\unspec@ all = @\unspec@; }
+  // \ref{ranges.adaptors.all}:
+  namespace view { inline constexpr @\unspec@ all = @\unspec@; }
 
-template <Range R>
-  requires is_lvalue_reference_v<R> || View<decay_t<R>>
-using all_view = decay_t<decltype(view::all(declval<R>()))>;
+  template <Range R>
+    requires is_lvalue_reference_v<R> || View<decay_t<R>>
+  using all_view = decay_t<decltype(view::all(declval<R>()))>;
 
-// \ref{ranges.adaptors.filter_view}:
-template <InputRange R, IndirectUnaryPredicate<iterator_t<R>> Pred>
-  requires View<R>
-class filter_view;
+  // \ref{ranges.adaptors.filter_view}:
+  template <InputRange R, IndirectUnaryPredicate<iterator_t<R>> Pred>
+    requires View<R>
+  class filter_view;
 
-namespace view { inline constexpr @\unspec@ filter = @\unspec@; }
+  namespace view { inline constexpr @\unspec@ filter = @\unspec@; }
 
-// \ref{ranges.adaptors.transform_view}:
-template <InputRange R, CopyConstructible F>
-  requires View<R> && Invocable<F&, reference_t<iterator_t<R>>>
-class transform_view;
+  // \ref{ranges.adaptors.transform_view}:
+  template <InputRange R, CopyConstructible F>
+    requires View<R> && Invocable<F&, reference_t<iterator_t<R>>>
+  class transform_view;
 
-namespace view { inline constexpr @\unspec@ transform = @\unspec@; }
+  namespace view { inline constexpr @\unspec@ transform = @\unspec@; }
 
-// \ref{ranges.adaptors.iota_view}:
-template <WeaklyIncrementable I, bool Bounded = false>
-  requires !Bounded || Incrementable<I>
-class iota_view;
+  // \ref{ranges.adaptors.iota_view}:
+  template <WeaklyIncrementable I, bool Bounded = false>
+    requires !Bounded || Incrementable<I>
+  class iota_view;
 
-namespace view { inline constexpr @\unspec@ iota = @\unspec@; }
+  namespace view { inline constexpr @\unspec@ iota = @\unspec@; }
 
-// \ref{ranges.adaptors.join_view}:
-template <InputRange R>
-  requires View<R> && InputRange<reference_t<iterator_t<R>>> &&
-    (is_reference_v<reference_t<iterator_t<R>>> ||
-     View<value_type_t<iterator_t<R>>>)
-class join_view;
+  // \ref{ranges.adaptors.join_view}:
+  template <InputRange R>
+    requires View<R> && InputRange<reference_t<iterator_t<R>>> &&
+      (is_reference_v<reference_t<iterator_t<R>>> ||
+       View<value_type_t<iterator_t<R>>>)
+  class join_view;
 
-namespace view { inline constexpr @\unspec@ join = @\unspec@; }
+  namespace view { inline constexpr @\unspec@ join = @\unspec@; }
 
-// \ref{ranges.adaptors.empty_view}:
-template <class T>
-  requires requires { typename T*; typename T&; }
-class empty_view;
-
-namespace view {
+  // \ref{ranges.adaptors.empty_view}:
   template <class T>
-  inline constexpr empty_view<T> empty {};
+    requires requires { *(T*)nullptr; }
+  class empty_view;
+
+  namespace view {
+    template <class T>
+    inline constexpr empty_view<T> empty {};
+  }
+
+  // \ref{ranges.adaptors.single_view}:
+  template <CopyConstructible T>
+  class single_view;
+
+  namespace view { inline constexpr @\unspec@ single = @\unspec@; }
+}}}}
+
+namespace std {
+  template <class I, class S>
+    struct tuple_size<ranges::iterator_range<I, S>>
+      : std::integral_constant<size_t, 2> {};
+  template <class I, class S>
+    struct tuple_element<0, ranges::iterator_range<I, S>> {
+      using type = I;
+    };
+  template <class I, class S>
+    struct tuple_element<1, ranges::iterator_range<I, S>> {
+      using type = S;
+    };
+
+  template <class I, class S>
+    struct tuple_size<ranges::sized_iterator_range<I, S>>
+      : std::integral_constant<size_t, 3> {};
+  template <class I, class S>
+    struct tuple_element<0, ranges::sized_iterator_range<I, S>> {
+      using type = I;
+    };
+  template <class I, class S>
+    struct tuple_element<1, ranges::sized_iterator_range<I, S>> {
+      using type = S;
+    };
+  template <class I, class S>
+    struct tuple_element<2, ranges::sized_iterator_range<I, S>> {
+      using type = ranges::difference_type_t<I>;
+    };
 }
-
-// \ref{ranges.adaptors.single_view}:
-template <CopyConstructible T>
-class single_view;
-
-namespace view { inline constexpr @\unspec@ single = @\unspec@; }
 \end{codeblock}
 
 \ednote{After Ranges TS subclause 10.6 [ranges.requirements], insert a new subclause
@@ -289,30 +321,57 @@ iterator and a sentinel into a single object that satisfies the \tcode{View} con
 
 \indexlibrary{\idxcode{iterator_range}}%
 \begin{codeblock}
-template <Iterator I, Sentinel<I> S = I>
-class iterator_range
-  : public tagged_pair<tag::begin(I), tag::end(S)>,
-    public view_interface<iterator_range<I, S>> {
-public:
-  using iterator = I;
-  using sentinel = S;
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+  template <Iterator I, Sentinel<I> S = I>
+  class iterator_range
+    : public tagged_pair<tag::begin(I), tag::end(S)>,
+      public view_interface<iterator_range<I, S>> {
+  public:
+    using iterator = I;
+    using sentinel = S;
 
-  iterator_range() = default;
-  constexpr iterator_range(I i, S s);
+    iterator_range() = default;
+    constexpr iterator_range(I i, S s);
 
-  template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
-    constexpr iterator_range(iterator_range<X, Y> r);
-  template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
-    constexpr iterator_range(pair<X, Y> r);
+    template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
+      constexpr iterator_range(iterator_range<X, Y> r);
 
-  template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
-    constexpr iterator_range& operator=(iterator_range<X, Y> r);
+    template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
+      constexpr iterator_range(pair<X, Y> r);
 
-  template <Constructible<const I&> X, Constructible<const S&> Y>
-    constexpr operator pair<X, Y>() const;
+    template <Range R>
+        requires ConvertibleTo<iterator_t<R>, I> && ConvertibleTo<sentinel_t<R>, S>
+      constexpr iterator_range(R& r);
 
-  constexpr bool empty() const;
-};
+    template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
+      constexpr iterator_range& operator=(iterator_range<X, Y> r);
+
+    template <Range R>
+        requires ConvertibleTo<iterator_t<R>, I> && ConvertibleTo<sentinel_t<R>, S>
+      constexpr iterator_range& operator=(R& r);
+
+    template <Constructible<const I&> X, Constructible<const S&> Y>
+      constexpr operator pair<X, Y>() const;
+
+    constexpr bool empty() const;
+  };
+
+  template <Iterator I, Sentinel<I> S>
+  iterator_range(I, S) -> iterator_range<I, S>;
+
+  template <Range R>
+  iterator_range(R&) -> iterator_range<iterator_t<R>, sentinel_t<R>>;
+
+  template <std::size_t N, class I, class S>
+      requires N < 2
+    constexpr decltype(auto) get(iterator_range<I, S>&& r) noexcept;
+  template <std::size_t N, class I, class S>
+      requires N < 2
+    constexpr decltype(auto) get(iterator_range<I, S>& r) noexcept;
+  template <std::size_t N, class I, class S>
+      requires N < 2
+    constexpr decltype(auto) get(const iterator_range<I, S>& r) noexcept;
+}}}}
 \end{codeblock}
 
 \rSec4[ranges.iterator_range.ctors]{\tcode{iterator_range} constructors}
@@ -352,6 +411,19 @@ template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
 \tcode{r.first} and \tcode{r.second}.
 \end{itemdescr}
 
+\indexlibrary{\idxcode{iterator_range}!\idxcode{iterator_range}}%
+\begin{itemdecl}
+template <Range R>
+    requires ConvertibleTo<iterator_t<R>, I> && ConvertibleTo<sentinel_t<R>, S>
+  constexpr iterator_range(R& r);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Initializes \tcode{tagged_pair<tag::begin(I), tag::end(S)>} with
+\tcode{ranges::begin(r)} and \tcode{ranges::end(r)}.
+\end{itemdescr}
+
 \rSec4[ranges.iterator_range.ops]{\tcode{iterator_range} operators}
 
 \indexlibrary{\idxcode{operator=}!\idxcode{iterator_range}}%
@@ -366,6 +438,23 @@ template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
 \begin{codeblock}
 this->first = r.begin();
 this->second = r.end();
+return *this;
+\end{codeblock}
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator=}!\idxcode{iterator_range}}%
+\begin{itemdecl}
+template <Range R>
+    requires ConvertibleTo<iterator_t<R>, I> && ConvertibleTo<sentinel_t<R>, S>
+  constexpr iterator_range& operator=(R& r);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+this->first = ranges::begin(r);
+this->second = ranges::end(r);
 return *this;
 \end{codeblock}
 \end{itemdescr}
@@ -390,48 +479,91 @@ constexpr bool empty() const;
 
 \begin{itemdescr}
 \pnum
-\returns Equivalent to \tcode{this->first == this->second}.
+\effects Equivalent to \tcode{this->first == this->second}.
 \end{itemdescr}
 
+\rSec4[ranges.iterator_range.nonmember]{\tcode{iterator_range} non-member functions}
+
+\indexlibrary{\idxcode{get}!\idxcode{iterator_range}}%
+\begin{itemdecl}
+template <std::size_t N, class I, class S>
+  requires N < 2
+constexpr decltype(auto) get(iterator_range<I, S>&& r) noexcept;
+template <std::size_t N, class I, class S>
+  requires N < 2
+constexpr decltype(auto) get(iterator_range<I, S>& r) noexcept;
+template <std::size_t N, class I, class S>
+  requires N < 2
+constexpr decltype(auto) get(const iterator_range<I, S>& r) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+if constexpr (N == 0)
+  return static_cast<decltype(r)&&>(r).begin();
+else
+  return static_cast<decltype(r)&&>(r).end();
+\end{codeblock}
+\end{itemdescr}
 
 \rSec3[ranges.sized_iterator_range]{\tcode{sized_iterator_range}}
 
 \indexlibrary{\idxcode{sized_iterator_range}}%
 \begin{codeblock}
-template <Iterator I, Sentinel<I> S = I>
-class sized_iterator_range
-  : public view_interface<sized_iterator_range<I, S>> {
-private:
-  iterator_range<I, S> rng_; // \expos
-  difference_type_t<I> size_; // \expos
-public:
-  using iterator = I;
-  using sentinel = S;
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+  template <Iterator I, Sentinel<I> S = I>
+  class sized_iterator_range
+    : public view_interface<sized_iterator_range<I, S>> {
+  private:
+    iterator_range<I, S> rng_; // \expos
+    difference_type_t<I> size_; // \expos
+  public:
+    using iterator = I;
+    using sentinel = S;
 
-  sized_iterator_range() = default;
-  constexpr sized_iterator_range(I i, S s, difference_type_t<I> n);
+    sized_iterator_range() = default;
+    constexpr sized_iterator_range(I i, S s, difference_type_t<I> n);
 
-  template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
-    constexpr sized_iterator_range(pair<X, Y> r, difference_type_t<I> n);
-  template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
-    constexpr sized_iterator_range(iterator_range<X, Y> r, difference_type_t<I> n);
-  template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
-    constexpr sized_iterator_range(sized_iterator_range<X, Y> r);
+    template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
+      constexpr sized_iterator_range(pair<X, Y> r, difference_type_t<I> n);
+    template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
+      constexpr sized_iterator_range(iterator_range<X, Y> r, difference_type_t<I> n);
+    template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
+      constexpr sized_iterator_range(sized_iterator_range<X, Y> r);
+    template <SizedRange R>
+        requires Constructible<iterator_range<I, S>, R&>
+      constexpr sized_iterator_range(R& r);
 
-  template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
-    constexpr sized_iterator_range& operator=(sized_iterator_range<X, Y> r);
+    template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
+      constexpr sized_iterator_range& operator=(sized_iterator_range<X, Y> r);
+    template <SizedRange R>
+        requires Assignable<iterator_range<I, S>&, R&>
+      constexpr sized_iterator_range& operator=(R& r);
 
-  template <Constructible<const I&> X, Constructible<const S&> Y>
-    constexpr operator pair<X, Y>() const;
-  template <Constructible<const I&> X, Constructible<const S&> Y>
-    constexpr operator iterator_range<X, Y>() const;
+    template <Constructible<const I&> X, Constructible<const S&> Y>
+      constexpr operator pair<X, Y>() const;
+    template <Constructible<const I&> X, Constructible<const S&> Y>
+      constexpr operator iterator_range<X, Y>() const;
 
-  constexpr operator iterator_range<I, S> const &() const & noexcept;
+    constexpr operator iterator_range<I, S> const &() const & noexcept;
 
-  constexpr I begin() const;
-  constexpr S end() const;
-  constexpr difference_type_t<I> size() const noexcept;
-};
+    constexpr I begin() const;
+    constexpr S end() const;
+    constexpr difference_type_t<I> size() const noexcept;
+  };
+
+  template <Iterator I, Sentinel<I> S>
+  sized_iterator_range(I, S, difference_type_t<I>) -> sized_iterator_range<I, S>;
+
+  template <SizedRange R>
+  explicit sized_iterator_range(R&) -> sized_iterator_range<iterator_t<R>, sentinel_t<R>>;
+
+  template <std::size_t N, class I, class S>
+      requires N < 3
+    constexpr auto get(const sized_iterator_range<I, S>& r);
+}}}}
 \end{codeblock}
 
 \rSec4[ranges.sized_iterator_range.ctors]{\tcode{sized_iterator_range} constructors}
@@ -492,6 +624,19 @@ template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
 initializes \tcode{size_} with \tcode{r.size()}.
 \end{itemdescr}
 
+\indexlibrary{\idxcode{sized_iterator_range}!\idxcode{sized_iterator_range}}%
+\begin{itemdecl}
+template <SizedRange R>
+    requires Constructible<iterator_range<I, S>, R&>
+  constexpr sized_iterator_range(R& r);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Initializes \tcode{rng_} with \tcode{r}, and initializes
+\tcode{size_} with \tcode{ranges::size(r)}.
+\end{itemdescr}
+
 \rSec4[ranges.sized_iterator_range.ops]{\tcode{sized_iterator_range} operators}
 
 \indexlibrary{\idxcode{operator=}!\idxcode{sized_iterator_range}}%
@@ -507,6 +652,23 @@ template <ConvertibleTo<I> X, ConvertibleTo<S> Y>
 rng_.first = r.begin();
 rng_.second = r.end();
 size_ = r.size();
+return *this;
+\end{codeblock}
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator=}!\idxcode{sized_iterator_range}}%
+\begin{itemdecl}
+template <SizedRange R>
+    requires Assignable<iterator_range<I, S>&, R&>
+  constexpr sized_iterator_range& operator=(R& r);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+rng_ = r;
+size_ = ranges::size(r);
 return *this;
 \end{codeblock}
 \end{itemdescr}
@@ -573,6 +735,28 @@ constexpr difference_type_t<I> size() const noexcept;
 \begin{itemdescr}
 \pnum
 \returns Equivalent to \tcode{size_}.
+\end{itemdescr}
+
+\rSec4[ranges.iterator_range.nonmember]{\tcode{sized_iterator_range} non-member functions}
+
+\indexlibrary{\idxcode{get}!\idxcode{sized_iterator_range}}%
+\begin{itemdecl}
+template <std::size_t N, class I, class S>
+    requires N < 3
+  constexpr auto get(const sized_iterator_range<I, S>& r);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+if constexpr (N == 0)
+  return r.begin();
+else if constexpr (N == 1)
+  return r.end();
+else
+  return r.size();
+\end{codeblock}
 \end{itemdescr}
 
 \rSec1[ranges.adaptors]{Range adaptors}
@@ -675,12 +859,12 @@ such that \tcode{decltype((E))} is \tcode{T}, then the expression \tcode{view::a
 for some subexpression \tcode{E} is expression-equivalent to:
 
 \begin{itemize}
-\item \tcode{\textit{DECAY_COPY}(E)} if the type of \tcode{E} satisfies concepts
+\item \tcode{\textit{DECAY_COPY}(E)} if the type of \tcode{E} satisfies the concept
   \tcode{View}.
-\item \tcode{sized_iterator_range<iterator_t<T>, sentinel_t<T>{>}\{ranges::begin(E), ranges::end(E), ranges::size(E)\}}
-  if \tcode{E} is an lvalue and has a type that satisfies concept \tcode{SizedRange}.
-\item \tcode{iterator_range<iterator_t<T>, sentinel_t<T>{>}\{ranges::begin(E), ranges::end(E)\}}
-  if \tcode{E} is an lvalue and has a type that satisfies concept \tcode{Range}.
+\item \tcode{sized_iterator_range\{E\}} if \tcode{E} is an lvalue and has a type
+  that satisfies concept \tcode{SizedRange}.
+\item \tcode{iterator_range\{E\}} if \tcode{E} is an lvalue and has a type that
+  satisfies concept \tcode{Range}.
 \item Otherwise, \tcode{view::all(E)} is ill-formed.
 \end{itemize}
 
@@ -2885,11 +3069,11 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     private:
       using Base = conditional_t<Const, const R, R>;
       using Parent = conditional_t<Const, const join_view, join_view>;
-    
+
       iterator_t<Base> outer_ {};
       iterator_t<reference_t<iterator_t<Base>>> inner_ {};
       Parent* parent_ {};
-  
+
       constexpr void satisfy_();
     public:
       using iterator_category = @\seebelow@;
@@ -2921,7 +3105,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
           requires is_reference_v<reference_t<iterator_t<Base>>> &&
               BidirectionalRange<Base> &&
               BidirectionalRange<reference_t<iterator_t<Base>>>;
-    
+
       friend constexpr bool operator==(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
       requires is_reference_v<reference_t<iterator_t<Base>>> &&
           EqualityComparable<iterator_t<Base>> &&
@@ -2938,7 +3122,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
       friend constexpr void iter_swap(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
           noexcept(@\seebelow@);
     };
-}}}}    
+}}}}
 \end{codeblock}
 
 \pnum
@@ -2993,7 +3177,7 @@ where \tcode{\textit{inner-range-update}} is equivalent to:
 
 \indexlibrary{\idxcode{\xname{iterator}}!\idxcode{join_view::\xname{iterator}}}
 \begin{itemdecl}
-constexpr @\xname{iterator}@(Parent& parent, iterator_t<R> outer)      
+constexpr @\xname{iterator}@(Parent& parent, iterator_t<R> outer)
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3322,14 +3506,20 @@ static_assert(0 == e.size());
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
   template <class T>
-    requires requires { typename T*; typename T&; }
+    requires requires { *(T*)nullptr; }
   class empty_view : view_interface<empty_view<T>> {
   public:
     empty_view() = default;
-    constexpr T* begin() const noexcept;
-    constexpr T* end() const noexcept;
-    constexpr ptrdiff_t size() const;
-    constexpr T* data() const noexcept;
+
+    using iterator = T*;
+    using const_iterator = T*;
+    using sentinel = T*;
+    using const_sentinel = T*;
+
+    constexpr static T* begin() noexcept;
+    constexpr static T* end() noexcept;
+    constexpr static ptrdiff_t size() noexcept;
+    constexpr static T* data() noexcept;
   };
 }}}}
 \end{codeblock}
@@ -3339,7 +3529,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 
 \indexlibrary{\idxcode{begin}!\idxcode{empty_view}}%
 \begin{itemdecl}
-constexpr T* begin() const noexcept;
+constexpr static T* begin() noexcept;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3351,7 +3541,7 @@ constexpr T* begin() const noexcept;
 
 \indexlibrary{\idxcode{end}!\idxcode{empty_view}}%
 \begin{itemdecl}
-constexpr T* end() const noexcept;
+constexpr static T* end() noexcept;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3363,7 +3553,7 @@ constexpr T* end() const noexcept;
 
 \indexlibrary{\idxcode{size}!\idxcode{empty_view}}%
 \begin{itemdecl}
-constexpr ptrdiff_t size() const noexcept;
+constexpr static ptrdiff_t size() noexcept;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3375,7 +3565,7 @@ constexpr ptrdiff_t size() const noexcept;
 
 \indexlibrary{\idxcode{data}!\idxcode{empty_view}}%
 \begin{itemdecl}
-constexpr T* data() const noexcept;
+constexpr static T* data() noexcept;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3403,22 +3593,29 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   template <CopyConstructible T>
   class single_view : view_interface<single_view<T>> {
   private:
-    @\textit{semiregular}@<T> value_;
+    @\textit{semiregular}@<T> value_; // \expos
   public:
     single_view() = default;
     constexpr explicit single_view(const T& t);
     constexpr explicit single_view(T&& t);
     template <class... Args>
+      requires Constructible<T, Args...>
     constexpr single_view(in_place_t, Args&&... args);
+
+    using iterator = const T*;
+    using const_iterator = const T*;
+    using sentinel = const T*;
+    using const_sentinel = const T*;
 
     constexpr const T* begin() const noexcept;
     constexpr const T* end() const noexcept;
-    constexpr ptrdiff_t size() const noexcept;
+    constexpr static ptrdiff_t size() noexcept;
     constexpr const T* data() const noexcept;
   };
 
-  template <CopyConstructible T>
-  explicit single_view(const T&) -> single_view<T>;
+  template <class T>
+  requires CopyConstructible<decay_t<T>>
+  explicit single_view(T&&) -> single_view<decay_t<T>>;
 }}}}
 \end{codeblock}
 
@@ -3472,6 +3669,8 @@ constexpr const T* begin() const noexcept;
 \returns \tcode{value_.operator->()}.
 \end{itemdescr}
 
+\rSec4[ranges.adaptors.single_view.end]{\tcode{single_view} end}
+
 \indexlibrary{\idxcode{end}!\idxcode{empty_view}}%
 \begin{itemdecl}
 constexpr const T* end() const noexcept;
@@ -3485,9 +3684,11 @@ constexpr const T* end() const noexcept;
 \returns \tcode{value_.operator->() + 1}.
 \end{itemdescr}
 
+\rSec4[ranges.adaptors.single_view.size]{\tcode{single_view} size}
+
 \indexlibrary{\idxcode{size}!\idxcode{empty_view}}%
 \begin{itemdecl}
-constexpr ptrdiff_t size() const noexcept;
+constexpr static ptrdiff_t size() noexcept;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3498,7 +3699,9 @@ constexpr ptrdiff_t size() const noexcept;
 \returns \tcode{1}.
 \end{itemdescr}
 
-\indexlibrary{\idxcode{data}!\idxcode{empty_view}}%
+\rSec4[ranges.adaptors.single_view.data]{\tcode{single_view} data}
+
+\indexlibrary{\idxcode{data}!\idxcode{single_view}}%
 \begin{itemdecl}
 constexpr const T* data() const noexcept;
 \end{itemdecl}
