@@ -1,4 +1,4 @@
-%!TEX root = D0789.tex
+%!TEX root = P0789.tex
 
 \setcounter{chapter}{9}
 \rSec0[ranges]{Ranges library}
@@ -85,6 +85,9 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   struct split_view;
 
   namespace view { inline constexpr @\unspec@ split = @\unspec@; }
+
+  // \ref{ranges.adaptors.counte}:
+  namespace view { inline constexpr @\unspec@ counted = @\unspec@; }
 }}}}
 
 namespace std {
@@ -197,6 +200,9 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1
 }}}}
 \end{codeblock}
 
+\pnum
+The template parameter for \tcode{view_interface} may be an incomplete type.
+
 \rSec3[ranges.view_interface.accessors]{\tcode{view_interface} accessors}
 
 \indexlibrary{\idxcode{empty}!\idxcode{view_interface}}%
@@ -206,7 +212,7 @@ constexpr bool empty() const requires ForwardRange<const D>;
 
 \begin{itemdescr}
 \pnum
-\returns Equivalent to \tcode{ranges::begin(derived()) == ranges::end(derived())}.
+\effects Equivalent to \tcode{return ranges::begin(derived()) == ranges::end(derived());}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{operator bool}!\idxcode{view_interface}}%
@@ -216,7 +222,7 @@ constexpr explicit operator bool() const requires ForwardRange<const D>;
 
 \begin{itemdescr}
 \pnum
-\returns Equivalent to \tcode{!empty()}.
+\returns \tcode{!empty()}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{operator!}!\idxcode{view_interface}}%
@@ -226,7 +232,7 @@ constexpr bool operator!() const requires ForwardRange<const D>;
 
 \begin{itemdescr}
 \pnum
-\returns Equivalent to \tcode{empty()}.
+\returns \tcode{empty()}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{size}!\idxcode{view_interface}}%
@@ -237,7 +243,7 @@ constexpr auto size() const requires ForwardRange<const D> &&
 
 \begin{itemdescr}
 \pnum
-\returns Equivalent to \tcode{ranges::end(derived()) - ranges::begin(derived())}.
+\effects Equivalent to \tcode{return ranges::end(derived()) - ranges::begin(derived());}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{front}!\idxcode{view_interface}}%
@@ -251,7 +257,7 @@ constexpr decltype(auto) front() const requires ForwardRange<const D>;
 \requires \tcode{!empty()}.
 
 \pnum
-\returns Equivalent to \tcode{*ranges::begin(derived())}.
+\effects Equivalent to \tcode{return *ranges::begin(derived());}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{back}!\idxcode{view_interface}}%
@@ -267,7 +273,7 @@ constexpr decltype(auto) back() const
 \requires \tcode{!empty()}.
 
 \pnum
-\returns Equivalent to \tcode{*prev(ranges::end(derived()))}.
+\effects Equivalent to \tcode{return *prev(ranges::end(derived()));}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{operator[]}!\idxcode{view_interface}}%
@@ -283,7 +289,7 @@ template <RandomAccessRange R = const D>
 \requires \tcode{ranges::begin(derived()) + n} is well-formed.
 
 \pnum
-\returns Equivalent to \tcode{ranges::begin(derived())[n]}.
+\effects Equivalent to \tcode{return ranges::begin(derived())[n];}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{at}!\idxcode{view_interface}}%
@@ -298,7 +304,7 @@ template <RandomAccessRange R = const D>
 
 \begin{itemdescr}
 \pnum
-\returns Equivalent to \tcode{ranges::begin(derived())[n]}.
+\effects Equivalent to \tcode{return ranges::begin(derived())[n];}.
 
 \pnum
 \throws \tcode{out_of_range} if \tcode{n < 0 || n >= ranges::size(derived())}.
@@ -364,6 +370,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
       constexpr iterator_range& operator=(R& r);
 
     template <Constructible<const I&> X, Constructible<const S&> Y>
+        requires ConvertibleTo<const I&, X> && ConvertibleTo<const S&, Y>
       constexpr operator pair<X, Y>() const;
 
     constexpr bool empty() const;
@@ -475,12 +482,13 @@ return *this;
 \indexlibrary{\idxcode{operator pair}!\idxcode{iterator_range}}%
 \begin{itemdecl}
 template <Constructible<const I&> X, Constructible<const S&> Y>
+    requires ConvertibleTo<const I&, X> && ConvertibleTo<const S&, Y>
   constexpr operator pair<X, Y>() const;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\returns Equivalent to \tcode{\{this->first, this->second\}}.
+\effects Equivalent to \tcode{return \{this->first, this->second\};}.
 \end{itemdescr}
 
 \rSec4[ranges.iterator_range.accessors]{\tcode{iterator_range} accessors}
@@ -556,8 +564,10 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
       constexpr sized_iterator_range& operator=(R& r);
 
     template <Constructible<const I&> X, Constructible<const S&> Y>
+        requires ConvertibleTo<const I&, X> && ConvertibleTo<const S&, Y>
       constexpr operator pair<X, Y>() const;
     template <Constructible<const I&> X, Constructible<const S&> Y>
+        requires ConvertibleTo<const I&, X> && ConvertibleTo<const S&, Y>
       constexpr operator iterator_range<X, Y>() const;
 
     constexpr operator iterator_range<I, S> const &() const & noexcept;
@@ -689,23 +699,25 @@ return *this;
 \indexlibrary{\idxcode{operator pair}!\idxcode{sized_iterator_range}}%
 \begin{itemdecl}
 template <Constructible<const I&> X, Constructible<const S&> Y>
+    requires ConvertibleTo<const I&, X> && ConvertibleTo<const S&, Y>
   constexpr operator pair<X, Y>() const;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\returns Equivalent to \tcode{\{rng_.first, rng_.second\}}.
+\effects Equivalent to \tcode{return \{rng_.first, rng_.second\};}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{operator iterator_range}!\idxcode{sized_iterator_range}}%
 \begin{itemdecl}
 template <Constructible<const I&> X, Constructible<const S&> Y>
+    requires ConvertibleTo<const I&, X> && ConvertibleTo<const S&, Y>
   constexpr operator iterator_range<X, Y>() const;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\returns Equivalent to \tcode{\{rng_.first, rng_.second\}}.
+\effects Equivalent to \tcode{return \{rng_.first, rng_.second\};}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{operator iterator_range}!\idxcode{sized_iterator_range}}%
@@ -715,7 +727,7 @@ constexpr operator iterator_range<I, S> const &() const & noexcept;
 
 \begin{itemdescr}
 \pnum
-\returns Equivalent to \tcode{rng_}.
+\effects Equivalent to \tcode{return rng_;}.
 \end{itemdescr}
 
 \rSec4[ranges.sized_iterator_range.accessors]{\tcode{sized_iterator_range} accessors}
@@ -727,7 +739,7 @@ constexpr I begin() const;
 
 \begin{itemdescr}
 \pnum
-\returns Equivalent to \tcode{rng_.first}.
+\effects Equivalent to \tcode{return rng_.first;}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{end}!\idxcode{sized_iterator_range}}%
@@ -737,7 +749,7 @@ constexpr S end() const;
 
 \begin{itemdescr}
 \pnum
-\returns Equivalent to \tcode{rng_.second}.
+\effects Equivalent to \tcode{return rng_.second;}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{size}!\idxcode{sized_iterator_range}}%
@@ -747,7 +759,7 @@ constexpr difference_type_t<I> size() const noexcept;
 
 \begin{itemdescr}
 \pnum
-\returns Equivalent to \tcode{size_}.
+\effects Equivalent to \tcode{return size_;}.
 \end{itemdescr}
 
 \rSec4[ranges.iterator_range.nonmember]{\tcode{sized_iterator_range} non-member functions}
@@ -4423,9 +4435,9 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     constexpr void operator++(int);
     constexpr @\xname{inner_iterator}@ operator++(int) requires ForwardRange<Base>;
 
-    friend bool operator==(const @\xname{inner_iterator}@& x, const @\xname{inner_iterator}@& y)
+    friend constexpr bool operator==(const @\xname{inner_iterator}@& x, const @\xname{inner_iterator}@& y)
       requires ForwardRange<Base>;
-    friend bool operator!=(const @\xname{inner_iterator}@& x, const @\xname{inner_iterator}@& y)
+    friend constexpr bool operator!=(const @\xname{inner_iterator}@& x, const @\xname{inner_iterator}@& y)
       requires ForwardRange<Base>;
 
     friend constexpr decltype(auto) iter_move(const @\xname{inner_iterator}@& i)
@@ -4506,7 +4518,7 @@ return tmp;
 
 \indexlibrary{\idxcode{operator==}!\idxcode{split_view::\xname{inner_iterator}}}%
 \begin{itemdecl}
-friend bool operator==(const @\xname{inner_iterator}@& x, const @\xname{inner_iterator}@& y)
+friend constexpr bool operator==(const @\xname{inner_iterator}@& x, const @\xname{inner_iterator}@& y)
   requires ForwardRange<Base>;
 \end{itemdecl}
 
@@ -4520,7 +4532,7 @@ return x.i_.current_ == y.i_.current_;
 
 \indexlibrary{\idxcode{operator!=}!\idxcode{split_view::\xname{inner_iterator}}}%
 \begin{itemdecl}
-friend bool operator!=(const @\xname{inner_iterator}@& x, const @\xname{inner_iterator}@& y)
+friend constexpr bool operator!=(const @\xname{inner_iterator}@& x, const @\xname{inner_iterator}@& y)
   requires ForwardRange<Base>;
 \end{itemdecl}
 
@@ -4679,3 +4691,18 @@ ConvertibleTo<U, value_type_t<iterator_t<T>>>
 \item Otherwise, \tcode{view::split(E, F)} is ill-formed.
 \end{itemize}
 
+\rSec2[ranges.adaptors.counted]{\tcode{view::counted}}
+
+\pnum
+The name \tcode{view::counted} denotes a customization point object~(\cxxref{???}).
+Let \tcode{E} and \tcode{F} be expressions such that their decayed types are \tcode{T}
+and \tcode{U} respectively. Then the expression \tcode{view::counted(E, F)} is
+expression-equivalent to:
+
+\begin{itemize}
+\item \tcode{iterator_range\{E, E + F\}} is \tcode{T} is a pointer to an object type,
+and if \tcode{U} is implicitly convertible to \tcode{ptrdiff_t}.
+\item Otherwise, \tcode{iterator_range\{make_counted_iterator(E, F), default_sentinel\{\}\}}
+if \tcode{Iterator<T> \&\& ConvertibleTo<U, difference_type_t<T>{>}} is satisfied.
+\item Otherwise, \tcode{view::counted(E, F)} is ill-formed.
+\end{itemize}
