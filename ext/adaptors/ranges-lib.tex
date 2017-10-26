@@ -763,26 +763,66 @@ for (int i : ints | view::filter(even) | view::transform(square)) {
 
 \rSec2[ranges.adaptor.object]{Range adaptor objects}
 
+\begin{addedblock}
 \pnum
-A \techterm{range adaptor object} is a customization point object~(\cxxref{??}) that accepts a
-\tcode{Range} as its first argument and that returns a \tcode{View}. If the adaptor accepts only one
-argument, then the following alternate syntaxes are semantically equivalent:
+A \techterm{range adaptor closure object} is a unary function object that accepts
+a \tcode{ViewableRange} as an argument and returns a \tcode{View}. For a range
+adaptor closure object \tcode{C} and an expression \tcode{R} such that
+\tcode{decltype((R))} satisfies \tcode{ViewableRange}, the following expressions
+are equivalent and return a \tcode{View}:
+
+\begin{codeblock}
+C(R)
+R | C
+\end{codeblock}
+
+Given an additional range adaptor closure objects \tcode{D},
+the expression \tcode{C | D} is well-formed and produces another range adaptor
+closure object such that the following two expressions are equivalent:
+
+\begin{codeblock}
+R | C | D
+R | (C | D)
+\end{codeblock}
+\end{addedblock}
+
+\pnum
+A \techterm{range adaptor object} is a customization point object~(\cxxref{??})
+that accepts a \changed{\tcode{Range}}{\tcode{ViewableRange}} as its first
+argument and \removed{that} returns a \tcode{View}.
+
+\pnum
+If the adaptor accepts only one argument, then the following alternate syntaxes
+are semantically equivalent:
 
 \begin{codeblock}
 @\textit{adaptor}@(rng)
 rng | @\textit{adaptor}@
 \end{codeblock}
 
-If the adaptor accepts more than one argument, then the following alternate syntaxes are
-semantically equivalent:
+\begin{addedblock}
+In this case, \tcode{\textit{adaptor}} is also a range adaptor closure object.
+\end{addedblock}
+
+\pnum
+If the adaptor accepts more than one argument, then the following \changed{alternate
+syntaxes}{expressions} are \removed{semantically} equivalent:
 
 \begin{codeblock}
 @\textit{adaptor}@(rng, args...)
+@\added{\textit{adaptor}(args...)(rng)}@
 rng | @\textit{adaptor}@(args...)
 \end{codeblock}
 
+\begin{addedblock}
+In this case, \tcode{\textit{adaptor}(args...)} is a range adaptor closure object.
+\end{addedblock}
+
+\begin{removedblock}
 \pnum
-The first argument to a range adaptor shall be either an lvalue \tcode{Range} or a \tcode{View}.
+The first argument to a range adaptor shall be either an lvalue
+\tcode{Range} or a \tcode{View}.
+\end{removedblock}
 
 \rSec2[ranges.adaptor.semiregular_wrapper]{Semiregular wrapper}
 
