@@ -8,124 +8,126 @@
 
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
-@\added{// \ref{ranges.viewable}:}@
-@\added{template <class T>}@
-@\added{concept bool ViewableRange = \seebelow;}@
+  @\added{// \ref{ranges.viewable}:}@
+  @\added{template <class T>}@
+  @\added{concept bool ViewableRange = \seebelow;}@
 
-// \ref{ranges.view_interface}:
-template <class D>
-class view_interface;
+  // \ref{ranges.view_interface}:
+  template <class D>
+  class view_interface;
 
-@\removed{// 10.7.2.1:}@
-@\removed{template <Iterator I, Sentinel<I> S = I>}@
-@\removed{class iterator_range;}@
+  @\removed{// 10.7.2.1:}@
+  @\removed{template <Iterator I, Sentinel<I> S = I>}@
+  @\removed{class iterator_range;}@
 
-@\removed{// 10.7.2.2:}@
-@\removed{template <Iterator I, Sentinel<I> S = I>}@
-@\removed{class sized_iterator_range;}@
+  @\removed{// 10.7.2.2:}@
+  @\removed{template <Iterator I, Sentinel<I> S = I>}@
+  @\removed{class sized_iterator_range;}@
 
-@\added{// \ref{ranges.subrange}:}@
-@\added{template <Iterator I, Sentinel<I> S = I, bool Sized = SizedSentinel<S, I>{>}}@
-@\added{class subrange;}@
+  @\added{enum class subrange_kind : bool \{ unsized, sized \}; }@
 
-// \ref{ranges.adaptors.all}:
-namespace view { inline constexpr @\unspec@ all = @\unspec@; }
+  @\added{// \ref{ranges.subrange}:}@
+  @\added{template <Iterator I, Sentinel<I> S = I, subrange_kind Sized = \seebelow>}@
+  @\added{class subrange;}@
 
-template <Range R>
-  requires is_lvalue_reference_v<R> || View<decay_t<R>>
-using all_view = decay_t<decltype(view::all(declval<R>()))>;
+  // \ref{ranges.adaptors.all}:
+  namespace view { inline constexpr @\unspec@ all = @\unspec@; }
 
-// \ref{ranges.adaptors.filter_view}:
-template <InputRange R, IndirectUnaryPredicate<iterator_t<R>> Pred>
-  requires View<R>
-class filter_view;
+  template <Range R>
+    requires is_lvalue_reference_v<R> || View<decay_t<R>>
+  using all_view = decay_t<decltype(view::all(declval<R>()))>;
 
-namespace view { inline constexpr @\unspec@ filter = @\unspec@; }
+  // \ref{ranges.adaptors.filter_view}:
+  template <InputRange R, IndirectUnaryPredicate<iterator_t<R>> Pred>
+    requires View<R>
+  class filter_view;
 
-// \ref{ranges.adaptors.transform_view}:
-template <InputRange R, CopyConstructible F>
-  requires View<R> && Invocable<F&, reference_t<iterator_t<R>>>
-class transform_view;
+  namespace view { inline constexpr @\unspec@ filter = @\unspec@; }
 
-namespace view { inline constexpr @\unspec@ transform = @\unspec@; }
+  // \ref{ranges.adaptors.transform_view}:
+  template <InputRange R, CopyConstructible F>
+    requires View<R> && Invocable<F&, reference_t<iterator_t<R>>>
+  class transform_view;
 
-// \ref{ranges.adaptors.iota_view}:
-template <WeaklyIncrementable I, Semiregular Bound = unreachable>
-  requires WeaklyEqualityComparable<I, Bound>
-class iota_view;
+  namespace view { inline constexpr @\unspec@ transform = @\unspec@; }
 
-namespace view { inline constexpr @\unspec@ iota = @\unspec@; }
+  // \ref{ranges.adaptors.iota_view}:
+  template <WeaklyIncrementable I, Semiregular Bound = unreachable>
+    requires WeaklyEqualityComparable<I, Bound>
+  class iota_view;
 
-// \ref{ranges.adaptors.join_view}:
-template <InputRange R>
-  requires View<R> && InputRange<reference_t<iterator_t<R>>> &&
-    (is_reference_v<reference_t<iterator_t<R>>> ||
-      View<value_type_t<iterator_t<R>>>)
-class join_view;
+  namespace view { inline constexpr @\unspec@ iota = @\unspec@; }
 
-namespace view { inline constexpr @\unspec@ join = @\unspec@; }
+  // \ref{ranges.adaptors.join_view}:
+  template <InputRange R>
+    requires View<R> && InputRange<reference_t<iterator_t<R>>> &&
+      (is_reference_v<reference_t<iterator_t<R>>> ||
+        View<value_type_t<iterator_t<R>>>)
+  class join_view;
 
-// \ref{ranges.adaptors.empty_view}:
-template <class T>
-  requires @\changed{requires \{ *(T*)nullptr; \}}{is_object_v<T>}@
-class empty_view;
+  namespace view { inline constexpr @\unspec@ join = @\unspec@; }
 
-namespace view {
+  // \ref{ranges.adaptors.empty_view}:
   template <class T>
-  inline constexpr empty_view<T> empty {};
-}
+    requires @\changed{requires \{ *(T*)nullptr; \}}{is_object_v<T>}@
+  class empty_view;
 
-// \ref{ranges.adaptors.single_view}:
-template <CopyConstructible T>
-class single_view;
+  namespace view {
+    template <class T>
+    inline constexpr empty_view<T> empty {};
+  }
 
-namespace view { inline constexpr @\unspec@ single = @\unspec@; }
+  // \ref{ranges.adaptors.single_view}:
+  template <CopyConstructible T>
+  class single_view;
 
-// \expos
-template <class R>
-concept bool @\textit{tiny-range}@ = @\seebelow@;
+  namespace view { inline constexpr @\unspec@ single = @\unspec@; }
 
-// \ref{ranges.adaptors.split_view}:
-template <InputRange Rng, ForwardRange Pattern>
-  requires View<Rng> && View<Pattern> &&
-      IndirectlyComparable<iterator_t<Rng>, iterator_t<Pattern>> &&
-      (ForwardRange<Rng> || @\textit{tiny-range}@<Pattern>)
-@\changed{struct}{class}@ split_view;
+  // \expos
+  template <class R>
+  concept bool @\textit{tiny-range}@ = @\seebelow@;
 
-namespace view { inline constexpr @\unspec@ split = @\unspec@; }
+  // \ref{ranges.adaptors.split_view}:
+  template <InputRange Rng, ForwardRange Pattern>
+    requires View<Rng> && View<Pattern> &&
+        IndirectlyComparable<iterator_t<Rng>, iterator_t<Pattern>> &&
+        (ForwardRange<Rng> || @\textit{tiny-range}@<Pattern>)
+  @\changed{struct}{class}@ split_view;
 
-// \ref{ranges.adaptors.counted}:
-namespace view { inline constexpr @\unspec@ counted = @\unspec@; }
+  namespace view { inline constexpr @\unspec@ split = @\unspec@; }
+
+  // \ref{ranges.adaptors.counted}:
+  namespace view { inline constexpr @\unspec@ counted = @\unspec@; }
 }}}}
 
 namespace std {
-template <class I, class S@\added{, bool Sized}@>
-  struct tuple_size<ranges::@\changed{iterator_range}{subrange}@<I, S@\added{, Sized}@>>
-    : std::integral_constant<size_t, 2> {};
-template <class I, class S@\added{, bool Sized}@>
-  struct tuple_element<0, ranges::@\changed{iterator_range}{subrange}@<I, S@\added{, Sized}@>> {
-    using type = I;
-  };
-template <class I, class S@\added{, bool Sized}@>
-  struct tuple_element<1, ranges::@\changed{iterator_range}{subrange}@<I, S@\added{, Sized}@>> {
-    using type = S;
-  };
+  template <class I, class S@\added{, ranges::subrange_kind B}@>
+    struct tuple_size<ranges::@\changed{iterator_range}{subrange}@<I, S@\added{, B}@>>
+      : std::integral_constant<size_t, 2> {};
+  template <class I, class S@\added{, ranges::subrange_kind B}@>
+    struct tuple_element<0, ranges::@\changed{iterator_range}{subrange}@<I, S@\added{, B}@>> {
+      using type = I;
+    };
+  template <class I, class S@\added{, ranges::subrange_kind B}@>
+    struct tuple_element<1, ranges::@\changed{iterator_range}{subrange}@<I, S@\added{, B}@>> {
+      using type = S;
+    };
 
-@\removed{template <class I, class S>}@
-  @\removed{struct tuple_size<ranges::sized_iterator_range<I, S>{>}}@
-    @\removed{: std::integral_constant<size_t, 3> \{\};}@
-@\removed{template <class I, class S>}@
-  @\removed{struct tuple_element<0, ranges::sized_iterator_range<I, S>{>} \{}@
-    @\removed{using type = I;}@
-  @\removed{\};}@
-@\removed{template <class I, class S>}@
-  @\removed{struct tuple_element<1, ranges::sized_iterator_range<I, S>{>} \{}@
-    @\removed{using type = S;}@
-  @\removed{\};}@
-@\removed{template <class I, class S>}@
-  @\removed{struct tuple_element<2, ranges::sized_iterator_range<I, S>{>} \{}@
-    @\removed{using type = ranges::difference_type_t<I>;}@
-  @\removed{\};}@
+  @\removed{template <class I, class S>}@
+    @\removed{struct tuple_size<ranges::sized_iterator_range<I, S>{>}}@
+      @\removed{: std::integral_constant<size_t, 3> \{\};}@
+  @\removed{template <class I, class S>}@
+    @\removed{struct tuple_element<0, ranges::sized_iterator_range<I, S>{>} \{}@
+      @\removed{using type = I;}@
+    @\removed{\};}@
+  @\removed{template <class I, class S>}@
+    @\removed{struct tuple_element<1, ranges::sized_iterator_range<I, S>{>} \{}@
+      @\removed{using type = S;}@
+    @\removed{\};}@
+  @\removed{template <class I, class S>}@
+    @\removed{struct tuple_element<2, ranges::sized_iterator_range<I, S>{>} \{}@
+      @\removed{using type = ranges::difference_type_t<I>;}@
+    @\removed{\};}@
 }
 \end{codeblock}
 
@@ -166,62 +168,62 @@ container-like interface. It is parameterized with the type that inherits from i
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges { inline namespace v1
 {
-// \expos
-template <Range R>
-struct @\textit{range-common-iterator-impl}@ {
-  using type = common_iterator<iterator_t<R>, sentinel_t<R>>;
-};
-template <BoundedRange R>
-struct @\textit{range-common-iterator-impl}@<R> {
-  using type = iterator_t<R>;
-};
-template <Range R>
-  using @\textit{range-common-iterator}@ =
-    typename @\textit{range-common-iterator-impl}@<R>::type;
+  // \expos
+  template <Range R>
+  struct @\textit{range-common-iterator-impl}@ {
+    using type = common_iterator<iterator_t<R>, sentinel_t<R>>;
+  };
+  template <BoundedRange R>
+  struct @\textit{range-common-iterator-impl}@<R> {
+    using type = iterator_t<R>;
+  };
+  template <Range R>
+    using @\textit{range-common-iterator}@ =
+      typename @\textit{range-common-iterator-impl}@<R>::type;
 
-template <class D>
-class view_interface : view_base {
-private:
-  constexpr D& derived() noexcept { // \expos
-    return static_cast<D&>(*this);
-  }
-  constexpr const D& derived() const noexcept { // \expos
-    return static_cast<const D&>(*this);
-  }
-public:
-  constexpr bool empty() const requires ForwardRange<const D>;
-  constexpr explicit operator bool() const requires ForwardRange<const D>;
-  constexpr bool operator!() const requires ForwardRange<const D>;
+  template <class D>
+  class view_interface : @\added{public}@ view_base {
+  private:
+    constexpr D& derived() noexcept { // \expos
+      return static_cast<D&>(*this);
+    }
+    constexpr const D& derived() const noexcept { // \expos
+      return static_cast<const D&>(*this);
+    }
+  public:
+    constexpr bool empty() const requires ForwardRange<const D>;
+    constexpr explicit operator bool() const requires ForwardRange<const D>;
+    @\removed{constexpr bool operator!() const requires ForwardRange<const D>;}@
 
-  constexpr auto size() const requires ForwardRange<const D> &&
-    SizedSentinel<sentinel_t<const D>, iterator_t<const D>>;
+    constexpr auto size() const requires ForwardRange<const D> &&
+      SizedSentinel<sentinel_t<const D>, iterator_t<const D>>;
 
-  constexpr decltype(auto) front() requires ForwardRange<D>;
-  constexpr decltype(auto) front() const requires ForwardRange<const D>;
+    constexpr decltype(auto) front() requires ForwardRange<D>;
+    constexpr decltype(auto) front() const requires ForwardRange<const D>;
 
-  constexpr decltype(auto) back()
-    requires BidirectionalRange<D> && BoundedRange<D>;
-  constexpr decltype(auto) back() const
-    requires BidirectionalRange<const D> && BoundedRange<const D>;
+    constexpr decltype(auto) back()
+      requires BidirectionalRange<D> && BoundedRange<D>;
+    constexpr decltype(auto) back() const
+      requires BidirectionalRange<const D> && BoundedRange<const D>;
 
-  template <RandomAccessRange R = D>
-    constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>> n);
-  template <RandomAccessRange R = const D>
-    constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>> n) const;
+    template <RandomAccessRange R = D>
+      constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>> n);
+    template <RandomAccessRange R = const D>
+      constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>> n) const;
 
-  template <RandomAccessRange R = D>
-      requires SizedRange<R>
-    constexpr decltype(auto) at(difference_type_t<iterator_t<R>> n);
-  template <RandomAccessRange R = const D>
-      requires SizedRange<R>
-    constexpr decltype(auto) at(difference_type_t<iterator_t<R>> n) const;
+    template <RandomAccessRange R = D>
+        requires SizedRange<R>
+      constexpr decltype(auto) at(difference_type_t<iterator_t<R>> n);
+    template <RandomAccessRange R = const D>
+        requires SizedRange<R>
+      constexpr decltype(auto) at(difference_type_t<iterator_t<R>> n) const;
 
-  template <ForwardRange C>
-      requires !View<C> && MoveConstructible<C> &&
-        ConvertibleTo<value_type_t<iterator_t<const D>>, value_type_t<iterator_t<C>>> &&
-        Constructible<C, @\textit{range-common-iterator}@<const D>, @\textit{range-common-iterator}@<const D>>
-    operator C () const;
-};
+    template <ForwardRange C>
+        requires !View<C> && MoveConstructible<C> &&
+          ConvertibleTo<value_type_t<iterator_t<const D>>, value_type_t<iterator_t<C>>> &&
+          Constructible<C, @\textit{range-common-iterator}@<const D>, @\textit{range-common-iterator}@<const D>>
+      operator C () const;
+  };
 }}}}
 \end{codeblock}
 
@@ -250,6 +252,7 @@ constexpr explicit operator bool() const requires ForwardRange<const D>;
 \returns \tcode{!empty()}.
 \end{itemdescr}
 
+\begin{removedblock}
 \indexlibrary{\idxcode{operator!}!\idxcode{view_interface}}%
 \begin{itemdecl}
 constexpr bool operator!() const requires ForwardRange<const D>;
@@ -259,6 +262,7 @@ constexpr bool operator!() const requires ForwardRange<const D>;
 \pnum
 \returns \tcode{empty()}.
 \end{itemdescr}
+\end{removedblock}
 
 \indexlibrary{\idxcode{size}!\idxcode{view_interface}}%
 \begin{itemdecl}
@@ -380,74 +384,74 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
       typename tuple_element_t<0, T>;
       typename tuple_element_t<1, T>;
     };
-  
+
   template <class T, class U, class V>
   concept bool @\textit{pair-like-convertible-to}@ = // \expos
     @\textit{pair-like}@<T> && !Range<T> &&
     ConvertibleTo<tuple_element_t<0, T>, U> &&
     ConvertibleTo<tuple_element_t<1, T>, V>;
-  
+
   template <class T, class U, class V>
   concept bool @\textit{pair-like-convertible-from}@ = // \expos
     @\textit{pair-like}@<T> && !Range<T> &&
     Constructible<T, U, V> &&
     ConvertibleTo<U, tuple_element_t<0, T>> &&
     ConvertibleTo<V, tuple_element_t<1, T>>;
-  
+
   template <class T>
   concept bool @\textit{iterator-sentinel-pair}@ = // \expos
     @\textit{pair-like}@<T> && !Range<T> &&
     Sentinel<tuple_element_t<1, T>, tuple_element_t<0, T>>;
-  
-  template <Iterator I, Sentinel<I> S = I, bool Sized = SizedSentinel<S, I>>
+
+  template <Iterator I, Sentinel<I> S = I, subrange_kind Sized = @\seebelow@>
   struct subrange : view_interface<subrange<I, S, Sized>> {
   private:
-    static constexpr bool StoreSize = Sized && !SizedSentinel<S, I>;
+    static constexpr bool StoreSize = bool(Sized) && !SizedSentinel<S, I>; // \expos
     I begin_ {}; // \expos
     S end_ {}; // \expos
     difference_type_t<I> size_ = 0; // \expos; only present when StoreSize is true
   public:
     using iterator = I;
     using sentinel = S;
-  
+
     subrange() = default;
-  
+
     constexpr subrange(I i, S s) requires !StoreSize;
-  
-    constexpr subrange(I i, S s, difference_type_t<I> n) requires Sized;
-  
-    template <ConvertibleTo<I> X, ConvertibleTo<S> Y, bool B>
-    constexpr subrange(subrange<X, Y, B> r) requires !StoreSize || B;
-  
-    template <ConvertibleTo<I> X, ConvertibleTo<S> Y, bool B>
-    constexpr subrange(subrange<X, Y, B> r, difference_type_t<I> n) requires Sized;
-  
+
+    constexpr subrange(I i, S s, difference_type_t<I> n) requires bool(Sized);
+
+    template <ConvertibleTo<I> X, ConvertibleTo<S> Y, subrange_kind B>
+    constexpr subrange(subrange<X, Y, B> r) requires !StoreSize || bool(B);
+
+    template <ConvertibleTo<I> X, ConvertibleTo<S> Y, subrange_kind B>
+    constexpr subrange(subrange<X, Y, B> r, difference_type_t<I> n) requires bool(Sized);
+
     template <@\textit{pair-like-convertible-to}@<I, S> PairLike>
     constexpr subrange(PairLike r) requires !StoreSize;
-  
+
     template <@\textit{pair-like-convertible-to}@<I, S> PairLike>
-    constexpr subrange(PairLike r, difference_type_t<I> n) requires Sized;
-  
+    constexpr subrange(PairLike r, difference_type_t<I> n) requires bool(Sized);
+
     template <Range R>
       requires ConvertibleTo<iterator_t<R>, I> && ConvertibleTo<sentinel_t<R>, S>
     constexpr subrange(R& r) requires !StoreSize || SizedRange<R>;
-  
+
     template <@\textit{pair-like-convertible-from}@<const I&, const S&> PairLike>
     constexpr operator PairLike() const;
-  
+
     constexpr I begin() const;
     constexpr S end() const;
     constexpr bool empty() const;
     constexpr explicit operator bool() const;
     constexpr bool operator!() const;
-    constexpr auto size() const requires Sized;
+    constexpr auto size() const requires bool(Sized);
     [[nodiscard]] constexpr subrange next(difference_type_t<I> n = 1) const;
     [[nodiscard]] constexpr subrange prev(difference_type_t<I> n = 1) const;
     constexpr subrange& advance(difference_type_t<I> n);
   };
 
   template <Iterator I, Sentinel<I> S>
-  subrange(I, S, difference_type_t<I>) -> subrange<I, S, true>;
+  subrange(I, S, difference_type_t<I>) -> subrange<I, S, subrange_kind::sized>;
 
   template <@\textit{iterator-sentinel-pair}@ P>
   subrange(P) ->
@@ -455,22 +459,29 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 
   template <@\textit{iterator-sentinel-pair}@ P>
   subrange(P, difference_type_t<tuple_element_t<0, P>>) ->
-    subrange<tuple_element_t<0, P>, tuple_element_t<1, P>, true>;
+    subrange<tuple_element_t<0, P>, tuple_element_t<1, P>, subrange_kind::sized>;
 
-  template <Iterator I, Sentinel<I> S, bool B>
-  subrange(subrange<I, S, B>, difference_type_t<I>) -> subrange<I, S, true>;
+  template <Iterator I, Sentinel<I> S, subrange_kind B>
+  subrange(subrange<I, S, B>, difference_type_t<I>) -> subrange<I, S, subrange_kind::sized>;
 
   template <Range R>
   subrange(R&) -> subrange<iterator_t<R>, sentinel_t<R>>;
 
   template <SizedRange R>
-  subrange(R&) -> subrange<iterator_t<R>, sentinel_t<R>, true>;
+  subrange(R&) -> subrange<iterator_t<R>, sentinel_t<R>, subrange_kind::sized>;
 
-  template <std::size_t N, class I, class S, bool Sized>
+  template <std::size_t N, class I, class S, subrange_kind Sized>
     requires N < 2
   constexpr auto get(const subrange<I, S, Sized>& r);
 }}}}
 \end{codeblock}
+
+\pnum
+The default value for \tcode{subrange}'s third (non-type) template parameter is:
+\begin{itemize}
+\item If \tcode{SizedSentinel<S, I>} is satisfied, \tcode{subrange_kind::sized}.
+\item Otherwise, \tcode{subrange_kind::unsized}.
+\end{itemize}
 
 \rSec4[ranges.subrange.ctor]{\tcode{subrange} constructors}
 
@@ -487,7 +498,7 @@ constexpr subrange(I i, S s) requires !StoreSize;
 
 \indexlibrary{\idxcode{subrange}!\idxcode{subrange}}%
 \begin{itemdecl}
-constexpr subrange(I i, S s, difference_type_t<I> n) requires Sized;
+constexpr subrange(I i, S s, difference_type_t<I> n) requires bool(Sized);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -502,8 +513,8 @@ constexpr subrange(I i, S s, difference_type_t<I> n) requires Sized;
 
 \indexlibrary{\idxcode{subrange}!\idxcode{subrange}}%
 \begin{itemdecl}
-template <ConvertibleTo<I> X, ConvertibleTo<S> Y, bool B>
-constexpr subrange(subrange<X, Y, B> r) requires !StoreSize || B;
+template <ConvertibleTo<I> X, ConvertibleTo<S> Y, subrange_kind B>
+constexpr subrange(subrange<X, Y, B> r) requires !StoreSize || bool(B);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -518,13 +529,13 @@ constexpr subrange(subrange<X, Y, B> r) requires !StoreSize || B;
 
 \indexlibrary{\idxcode{subrange}!\idxcode{subrange}}%
 \begin{itemdecl}
-template <ConvertibleTo<I> X, ConvertibleTo<S> Y, bool B>
-constexpr subrange(subrange<X, Y, B> r, difference_type_t<I> n) requires Sized;
+template <ConvertibleTo<I> X, ConvertibleTo<S> Y, subrange_kind B>
+constexpr subrange(subrange<X, Y, B> r, difference_type_t<I> n) requires bool(Sized);
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{B} is \tcode{false} or \tcode{n == r.size()}.
+\requires \tcode{bool(B)} is \tcode{false} or \tcode{n == r.size()}.
 
 \pnum
 \effects Equivalent to \tcode{subrange\{r.begin(), r.end(), n\}}.
@@ -544,15 +555,8 @@ constexpr subrange(PairLike r) requires !StoreSize;
 
 \indexlibrary{\idxcode{subrange}!\idxcode{subrange}}%
 \begin{itemdecl}
-template <Range R>
-  requires ConvertibleTo<iterator_t<R>, I> && ConvertibleTo<sentinel_t<R>, S>
-constexpr subrange(R& r);
-\end{itemdecl}
-
-\indexlibrary{\idxcode{subrange}!\idxcode{subrange}}%
-\begin{itemdecl}
 template <@\textit{pair-like-convertible-to}@<I, S> PairLike>
-constexpr subrange(PairLike r, difference_type_t<I> n) requires Sized;
+constexpr subrange(PairLike r, difference_type_t<I> n) requires bool(Sized);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -646,7 +650,7 @@ constexpr bool operator!() const;
 
 \indexlibrary{\idxcode{size}!\idxcode{subrange}}%
 \begin{itemdecl}
-constexpr auto size() const requires Sized;
+constexpr auto size() const requires bool(Sized);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -654,7 +658,7 @@ constexpr auto size() const requires Sized;
 \effects Equivalent to:
 \begin{itemize}
 \item It \tcode{StoreSize} is \tcode{true}, \tcode{return size_;}.
-\item Otherwise, \tcode{return end_ - begin;}.
+\item Otherwise, \tcode{return end_ - begin_;}.
 \end{itemize}
 \end{itemdescr}
 
@@ -714,9 +718,9 @@ return *this;
 
 \indexlibrary{\idxcode{get}!\idxcode{subrange}}%
 \begin{itemdecl}
-template <std::size_t N, class I, class S, bool B>
+template <std::size_t N, class I, class S, subrange_kind Sized>
   requires N < 2
-constexpr auto get(const subrange<I, S, B>& r) noexcept;
+constexpr auto get(const subrange<I, S, Sized>& r) noexcept;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -801,7 +805,7 @@ copy assignment operator is equivalent to:
 \begin{codeblock}
 constexpr @\textit{semiregular}@& operator=(const @\textit{semiregular}@& that)
   noexcept(is_nothrow_copy_constructible<T>::value) {
-  if (that) emplace(*that)
+  if (that) emplace(*that);
   else reset();
   return *this;
 }
@@ -811,7 +815,7 @@ move assignment operator is equivalent to:
 \begin{codeblock}
 constexpr @\textit{semiregular}@& operator=(@\textit{semiregular}@&& that)
   noexcept(is_nothrow_move_constructible<T>::value) {
-  if (that) emplace(std::move(*that))
+  if (that) emplace(std::move(*that));
   else reset();
   return *this;
 }
@@ -847,7 +851,7 @@ The purpose of \tcode{view::all} is to return a \tcode{View} that includes all
 elements of the \tcode{Range} passed in.
 
 \pnum
-The name \tcode{view::any} denotes a range adaptor
+The name \tcode{view::all} denotes a range adaptor
 object~(\ref{ranges.adaptor.object}). \changed{Given an expression \tcode{E} and
 a type \tcode{T} such that \tcode{decltype((E))} is \tcode{T}, then t}{T}he
 expression \tcode{view::all(E)} for some subexpression \tcode{E} is
@@ -882,34 +886,34 @@ for (int i : evens)
 
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
-template <InputRange R, IndirectUnaryPredicate<iterator_t<R>> Pred>
-  requires View<R>
-class filter_view : @\added{public}@ view_interface<filter_view<R, Pred>> {
-private:
-  R base_; // \expos
-  @\textit{semiregular}@<Pred> pred_; // \expos
-public:
-  filter_view() = default;
-  constexpr filter_view(R base, Pred pred);
-  template <InputRange O>
-    requires @\changed{(is_lvalue_reference_v<O> || View<decay_t<O>{>})}{ViewableRange<O>}@ &&
-      Constructible<R, all_view<O>>
-  constexpr filter_view(O&& o, Pred pred);
+  template <InputRange R, IndirectUnaryPredicate<iterator_t<R>> Pred>
+    requires View<R>
+  class filter_view : @\added{public}@ view_interface<filter_view<R, Pred>> {
+  private:
+    R base_; // \expos
+    @\textit{semiregular}@<Pred> pred_; // \expos
+  public:
+    filter_view() = default;
+    constexpr filter_view(R base, Pred pred);
+    template <InputRange O>
+      requires @\changed{(is_lvalue_reference_v<O> || View<decay_t<O>{>})}{ViewableRange<O>}@ &&
+        Constructible<R, all_view<O>>
+    constexpr filter_view(O&& o, Pred pred);
 
-  constexpr R base() const;
+    constexpr R base() const;
 
-  class iterator;
-  class sentinel;
+    class iterator;
+    class sentinel;
 
-  constexpr iterator begin();
-  constexpr sentinel end();
-  constexpr iterator end() requires BoundedRange<R>;
-};
+    constexpr iterator begin();
+    constexpr sentinel end();
+    constexpr iterator end() requires BoundedRange<R>;
+  };
 
-template <InputRange R, CopyConstructible Pred>
-  requires IndirectUnaryPredicate<Pred, iterator_t<R>> &&
-  @\changed{(is_lvalue_reference_v<R> || View<decay_t<R>{>})}{ViewableRange<R>}@
-filter_view(R&&, Pred) -> filter_view<all_view<R>, Pred>;
+  template <InputRange R, CopyConstructible Pred>
+    requires IndirectUnaryPredicate<Pred, iterator_t<R>> &&
+    @\changed{(is_lvalue_reference_v<R> || View<decay_t<R>{>})}{ViewableRange<R>}@
+  filter_view(R&&, Pred) -> filter_view<all_view<R>, Pred>;
 }}}}
 \end{codeblock}
 
@@ -999,39 +1003,39 @@ constexpr iterator end() requires BoundedRange<R>;
 \indexlibrary{\idxcode{iterator}!\idxcode{filter_view}}%
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
-template <class R, class Pred>
-class filter_view<R, Pred>::iterator {
-private:
-  iterator_t<R> current_ {}; // \expos
-  filter_view* parent_ = nullptr; // \expos
-public:
-  using iterator_category = @\seebelow@;
-  using value_type = value_type_t<iterator_t<R>>;
-  using difference_type = difference_type_t<iterator_t<R>>;
+  template <class R, class Pred>
+  class filter_view<R, Pred>::iterator {
+  private:
+    iterator_t<R> current_ {}; // \expos
+    filter_view* parent_ = nullptr; // \expos
+  public:
+    using iterator_category = @\seebelow@;
+    using value_type = value_type_t<iterator_t<R>>;
+    using difference_type = difference_type_t<iterator_t<R>>;
 
-  iterator() = default;
-  constexpr iterator(filter_view& parent, iterator_t<R> current);
+    iterator() = default;
+    constexpr iterator(filter_view& parent, iterator_t<R> current);
 
-  constexpr iterator_t<R> base() const;
-  constexpr reference_t<iterator_t<R>> operator*() const;
+    constexpr iterator_t<R> base() const;
+    constexpr reference_t<iterator_t<R>> operator*() const;
 
-  constexpr iterator& operator++();
-  constexpr void operator++(int);
-  constexpr iterator operator++(int) requires ForwardRange<R>;
+    constexpr iterator& operator++();
+    constexpr void operator++(int);
+    constexpr iterator operator++(int) requires ForwardRange<R>;
 
-  constexpr iterator& operator--() requires BidirectionalRange<R>;
-  constexpr iterator operator--(int) requires BidirectionalRange<R>;
+    constexpr iterator& operator--() requires BidirectionalRange<R>;
+    constexpr iterator operator--(int) requires BidirectionalRange<R>;
 
-  friend constexpr bool operator==(const iterator& x, const iterator& y)
-    requires EqualityComparable<iterator_t<R>>;
-  friend constexpr bool operator!=(const iterator& x, const iterator& y)
-    requires EqualityComparable<iterator_t<R>>;
+    friend constexpr bool operator==(const iterator& x, const iterator& y)
+      requires EqualityComparable<iterator_t<R>>;
+    friend constexpr bool operator!=(const iterator& x, const iterator& y)
+      requires EqualityComparable<iterator_t<R>>;
 
-  friend constexpr rvalue_reference_t<iterator_t<R>> iter_move(const iterator& i)
-    noexcept(@\seebelow@);
-  friend constexpr void iter_swap(const iterator& x, const iterator& y)
-    noexcept(@\seebelow@) requires IndirectlySwappable<iterator_t<R>>;
-};
+    friend constexpr rvalue_reference_t<iterator_t<R>> iter_move(const iterator& i)
+      noexcept(@\seebelow@);
+    friend constexpr void iter_swap(const iterator& x, const iterator& y)
+      noexcept(@\seebelow@) requires IndirectlySwappable<iterator_t<R>>;
+  };
 }}}}
 \end{codeblock}
 
@@ -1223,21 +1227,21 @@ noexcept(ranges::iter_swap(x.current_, y.current_))
 \indexlibrary{\idxcode{sentinel}!\idxcode{filter_view}}%
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
-template <class R, class Pred>
-class filter_view<R, Pred>::sentinel {
-private:
-  sentinel_t<R> end_; // \expos
-public:
-  sentinel() = default;
-  explicit constexpr sentinel(filter_view& parent);
+  template <class R, class Pred>
+  class filter_view<R, Pred>::sentinel {
+  private:
+    sentinel_t<R> end_; // \expos
+  public:
+    sentinel() = default;
+    explicit constexpr sentinel(filter_view& parent);
 
-  constexpr sentinel_t<R> base() const;
+    constexpr sentinel_t<R> base() const;
 
-  friend constexpr bool operator==(const iterator& x, const sentinel& y);
-  friend constexpr bool operator==(const sentinel& x, const iterator& y);
-  friend constexpr bool operator!=(const iterator& x, const sentinel& y);
-  friend constexpr bool operator!=(const sentinel& x, const iterator& y);
-};
+    friend constexpr bool operator==(const iterator& x, const sentinel& y);
+    friend constexpr bool operator==(const sentinel& x, const iterator& y);
+    friend constexpr bool operator!=(const iterator& x, const sentinel& y);
+    friend constexpr bool operator!=(const sentinel& x, const iterator& y);
+  };
 }}}}
 \end{codeblock}
 
@@ -1341,48 +1345,48 @@ for (int i : squares)
 
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
-template <InputRange R, CopyConstructible F>
-  requires View<R> && Invocable<F&, reference_t<iterator_t<R>>>
-class transform_view : @\added{public}@ view_interface<transform_view<R, F>> {
-private:
-  R base_; // \expos
-  @\textit{semiregular}@<F> fun_; // \expos
-  template <bool Const>
-    struct @\xname{iterator}@; // \expos
-  template <bool Const>
-    struct @\xname{sentinel}@; // \expos
-public:
-  transform_view() = default;
-  constexpr transform_view(R base, F fun);
-  template <InputRange O>
-    requires @\changed{(is_lvalue_reference_v<O> || View<decay_t<O>{>})}{ViewableRange<O>}@ &&
-        Constructible<R, all_view<O>>
-  constexpr transform_view(O&& o, F fun);
+  template <InputRange R, CopyConstructible F>
+    requires View<R> && Invocable<F&, reference_t<iterator_t<R>>>
+  class transform_view : @\added{public}@ view_interface<transform_view<R, F>> {
+  private:
+    R base_; // \expos
+    @\textit{semiregular}@<F> fun_; // \expos
+    template <bool Const>
+      struct @\xname{iterator}@; // \expos
+    template <bool Const>
+      struct @\xname{sentinel}@; // \expos
+  public:
+    transform_view() = default;
+    constexpr transform_view(R base, F fun);
+    template <InputRange O>
+      requires @\changed{(is_lvalue_reference_v<O> || View<decay_t<O>{>})}{ViewableRange<O>}@ &&
+          Constructible<R, all_view<O>>
+    constexpr transform_view(O&& o, F fun);
 
-  using iterator = @\xname{iterator}@<@\changed{false}{\textit{simple-view}<R>}@>;
-  using sentinel = @\xname{sentinel}@<@\changed{false}{\textit{simple-view}<R>}@>;
-  using const_iterator = @\xname{iterator}@<true>;
-  using const_sentinel = @\xname{sentinel}@<true>;
+    using iterator = @\xname{iterator}@<false>;
+    using sentinel = @\xname{sentinel}@<false>;
+    using const_iterator = @\xname{iterator}@<true>;
+    using const_sentinel = @\xname{sentinel}@<true>;
 
-  constexpr R base() const;
+    constexpr R base() const;
 
-  constexpr iterator begin();
-  constexpr const_iterator begin() const requires Range<const R> &&
-    Invocable<const F&, reference_t<iterator_t<const R>>>;
+    constexpr iterator begin();
+    constexpr const_iterator begin() const requires Range<const R> &&
+      Invocable<const F&, reference_t<iterator_t<const R>>>;
 
-  constexpr sentinel end();
-  constexpr const_sentinel end() const requires Range<const R> &&
-    Invocable<const F&, reference_t<iterator_t<const R>>>;
-  constexpr iterator end() requires BoundedRange<R>;
-  constexpr const_iterator end() const requires BoundedRange<const R> &&
-    Invocable<const F&, reference_t<iterator_t<const R>>>;
+    constexpr sentinel end();
+    constexpr const_sentinel end() const requires Range<const R> &&
+      Invocable<const F&, reference_t<iterator_t<const R>>>;
+    constexpr iterator end() requires BoundedRange<R>;
+    constexpr const_iterator end() const requires BoundedRange<const R> &&
+      Invocable<const F&, reference_t<iterator_t<const R>>>;
 
-  constexpr auto size() requires SizedRange<R>;
-  constexpr auto size() const requires SizedRange<const R>;
-};
+    constexpr auto size() requires SizedRange<R>;
+    constexpr auto size() const requires SizedRange<const R>;
+  };
 
-template <class R, class F>
-transform_view(R&& r, F fun) -> transform_view<all_view<R>, F>;
+  template <class R, class F>
+  transform_view(R&& r, F fun) -> transform_view<all_view<R>, F>;
 }}}}
 \end{codeblock}
 
@@ -1494,71 +1498,71 @@ constexpr auto size() const requires SizedRange<const R>;
 
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
-template <class R, class F>
+  template <class R, class F>
   template <bool Const>
-    class transform_view<R, F>::@\xname{iterator}@ { // \expos
-    private:
-      using Parent = conditional_t<Const, const transform_view, transform_view>;
-      using Base = conditional_t<Const, const R, R>;
-      iterator_t<Base> current_ {};
-      Parent* parent_ = nullptr;
-    public:
-      using iterator_category = iterator_category_t<iterator_t<Base>>;
-      using value_type = remove_const_t<remove_reference_t<
-          invoke_result_t<F&, reference_t<iterator_t<Base>>>>>;
-      using difference_type = difference_type_t<iterator_t<Base>>;
+  class transform_view<R, F>::@\xname{iterator}@ { // \expos
+  private:
+    using Parent = conditional_t<Const, const transform_view, transform_view>;
+    using Base = conditional_t<Const, const R, R>;
+    iterator_t<Base> current_ {};
+    Parent* parent_ = nullptr;
+  public:
+    using iterator_category = iterator_category_t<iterator_t<Base>>;
+    using value_type = remove_const_t<remove_reference_t<
+        invoke_result_t<F&, reference_t<iterator_t<Base>>>>>;
+    using difference_type = difference_type_t<iterator_t<Base>>;
 
-      @\xname{iterator}@() = default;
-      constexpr @\xname{iterator}@(Parent& parent, iterator_t<Base> current);
-      constexpr @\xname{iterator}@(@\xname{iterator}@<!Const> i)
-        requires Const && ConvertibleTo<iterator_t<R>, iterator_t<Base>>;
+    @\xname{iterator}@() = default;
+    constexpr @\xname{iterator}@(Parent& parent, iterator_t<Base> current);
+    constexpr @\xname{iterator}@(@\xname{iterator}@<!Const> i)
+      requires Const && ConvertibleTo<iterator_t<R>, iterator_t<Base>>;
 
-      constexpr iterator_t<Base> base() const;
-      constexpr decltype(auto) operator*() const;
+    constexpr iterator_t<Base> base() const;
+    constexpr decltype(auto) operator*() const;
 
-      constexpr @\xname{iterator}@& operator++();
-      constexpr void operator++(int);
-      constexpr @\xname{iterator}@ operator++(int) requires ForwardRange<Base>;
+    constexpr @\xname{iterator}@& operator++();
+    constexpr void operator++(int);
+    constexpr @\xname{iterator}@ operator++(int) requires ForwardRange<Base>;
 
-      constexpr @\xname{iterator}@& operator--() requires BidirectionalRange<Base>;
-      constexpr @\xname{iterator}@ operator--(int) requires BidirectionalRange<Base>;
+    constexpr @\xname{iterator}@& operator--() requires BidirectionalRange<Base>;
+    constexpr @\xname{iterator}@ operator--(int) requires BidirectionalRange<Base>;
 
-      constexpr @\xname{iterator}@& operator+=(difference_type n)
-        requires RandomAccessRange<Base>;
-      constexpr @\xname{iterator}@& operator-=(difference_type n)
-        requires RandomAccessRange<Base>;
-      constexpr decltype(auto) operator[](difference_type n) const
-        requires RandomAccessRange<Base>;
+    constexpr @\xname{iterator}@& operator+=(difference_type n)
+      requires RandomAccessRange<Base>;
+    constexpr @\xname{iterator}@& operator-=(difference_type n)
+      requires RandomAccessRange<Base>;
+    constexpr decltype(auto) operator[](difference_type n) const
+      requires RandomAccessRange<Base>;
 
-      friend constexpr bool operator==(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
-        requires EqualityComparable<iterator_t<Base>>;
-      friend constexpr bool operator!=(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
-        requires EqualityComparable<iterator_t<Base>>;
+    friend constexpr bool operator==(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
+      requires EqualityComparable<iterator_t<Base>>;
+    friend constexpr bool operator!=(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
+      requires EqualityComparable<iterator_t<Base>>;
 
-      friend constexpr bool operator<(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
-        requires RandomAccessRange<Base>;
-      friend constexpr bool operator>(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
-        requires RandomAccessRange<Base>;
-      friend constexpr bool operator<=(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
-        requires RandomAccessRange<Base>;
-      friend constexpr bool operator>=(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
-        requires RandomAccessRange<Base>;
+    friend constexpr bool operator<(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
+      requires RandomAccessRange<Base>;
+    friend constexpr bool operator>(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
+      requires RandomAccessRange<Base>;
+    friend constexpr bool operator<=(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
+      requires RandomAccessRange<Base>;
+    friend constexpr bool operator>=(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
+      requires RandomAccessRange<Base>;
 
-      friend constexpr @\xname{iterator}@ operator+(@\xname{iterator}@ i, difference_type n)
-        requires RandomAccessRange<Base>;
-      friend constexpr @\xname{iterator}@ operator+(difference_type n, @\xname{iterator}@ i)
-        requires RandomAccessRange<Base>;
+    friend constexpr @\xname{iterator}@ operator+(@\xname{iterator}@ i, difference_type n)
+      requires RandomAccessRange<Base>;
+    friend constexpr @\xname{iterator}@ operator+(difference_type n, @\xname{iterator}@ i)
+      requires RandomAccessRange<Base>;
 
-      friend constexpr @\xname{iterator}@ operator-(@\xname{iterator}@ i, difference_type n)
-        requires RandomAccessRange<Base>;
-      friend constexpr difference_type operator-(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
-        requires RandomAccessRange<Base>;
+    friend constexpr @\xname{iterator}@ operator-(@\xname{iterator}@ i, difference_type n)
+      requires RandomAccessRange<Base>;
+    friend constexpr difference_type operator-(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
+      requires RandomAccessRange<Base>;
 
-      friend constexpr decltype(auto) iter_move(const @\xname{iterator}@& i)
-        noexcept(@\seebelow@);
-      friend constexpr void iter_swap(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
-        noexcept(@\seebelow@) requires IndirectlySwappable<iterator_t<Base>>;
-    };
+    friend constexpr decltype(auto) iter_move(const @\xname{iterator}@& i)
+      noexcept(@\seebelow@);
+    friend constexpr void iter_swap(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
+      noexcept(@\seebelow@) requires IndirectlySwappable<iterator_t<Base>>;
+  };
 }}}}
 \end{codeblock}
 
@@ -1887,33 +1891,33 @@ noexcept(ranges::iter_swap(x.current_, y.current_))
 
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
-template <class R, class F>
+  template <class R, class F>
   template <bool Const>
-    class transform_view<R, F>::@\xname{sentinel}@ {
-    private:
-      using Parent = conditional_t<Const, const transform_view, transform_view>;
-      using Base = conditional_t<Const, const R, R>;
-      sentinel_t<Base> end_ {};
-    public:
-      @\xname{sentinel}@() = default;
-      explicit constexpr @\xname{sentinel}@(sentinel_t<Base> end);
-      constexpr @\xname{sentinel}@(@\xname{sentinel}@<!Const> i)
-        requires Const && ConvertibleTo<sentinel_t<R>, sentinel_t<Base>>;
+  class transform_view<R, F>::@\xname{sentinel}@ {
+  private:
+    using Parent = conditional_t<Const, const transform_view, transform_view>;
+    using Base = conditional_t<Const, const R, R>;
+    sentinel_t<Base> end_ {};
+  public:
+    @\xname{sentinel}@() = default;
+    explicit constexpr @\xname{sentinel}@(sentinel_t<Base> end);
+    constexpr @\xname{sentinel}@(@\xname{sentinel}@<!Const> i)
+      requires Const && ConvertibleTo<sentinel_t<R>, sentinel_t<Base>>;
 
-      constexpr sentinel_t<Base> base() const;
+    constexpr sentinel_t<Base> base() const;
 
-      friend constexpr bool operator==(const @\xname{iterator}@<Const>& x, const @\xname{sentinel}@& y);
-      friend constexpr bool operator==(const @\xname{sentinel}@& x, const @\xname{iterator}@<Const>& y);
-      friend constexpr bool operator!=(const @\xname{iterator}@<Const>& x, const @\xname{sentinel}@& y);
-      friend constexpr bool operator!=(const @\xname{sentinel}@& x, const @\xname{iterator}@<Const>& y);
+    friend constexpr bool operator==(const @\xname{iterator}@<Const>& x, const @\xname{sentinel}@& y);
+    friend constexpr bool operator==(const @\xname{sentinel}@& x, const @\xname{iterator}@<Const>& y);
+    friend constexpr bool operator!=(const @\xname{iterator}@<Const>& x, const @\xname{sentinel}@& y);
+    friend constexpr bool operator!=(const @\xname{sentinel}@& x, const @\xname{iterator}@<Const>& y);
 
-      friend constexpr difference_type_t<iterator_t<Base>>
-        operator-(const @\xname{iterator}@<Const>& x, const @\xname{sentinel}@& y)
-          requires SizedSentinel<sentinel_t<Base>, iterator_t<Base>>;
-      friend constexpr difference_type_t<iterator_t<Base>>
-        operator-(const @\xname{sentinel}@& y, const @\xname{iterator}@<Const>& x)
-          requires SizedSentinel<sentinel_t<Base>, iterator_t<Base>>;
-    };
+    friend constexpr difference_type_t<iterator_t<Base>>
+      operator-(const @\xname{iterator}@<Const>& x, const @\xname{sentinel}@& y)
+        requires SizedSentinel<sentinel_t<Base>, iterator_t<Base>>;
+    friend constexpr difference_type_t<iterator_t<Base>>
+      operator-(const @\xname{sentinel}@& y, const @\xname{iterator}@<Const>& x)
+        requires SizedSentinel<sentinel_t<Base>, iterator_t<Base>>;
+  };
 }}}}
 \end{codeblock}
 
@@ -2055,43 +2059,43 @@ for (int i : squares)
 
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
-// \expos
-template <class I>
-concept bool @\textit{decrementable}@ = @\seebelow@;
-// \expos
-template <class I>
-concept bool @\textit{advanceable}@ = @\seebelow@;
+  // \expos
+  template <class I>
+  concept bool @\textit{decrementable}@ = @\seebelow@;
+  // \expos
+  template <class I>
+  concept bool @\textit{advanceable}@ = @\seebelow@;
 
-template <WeaklyIncrementable I, class Bound = unreachable>
-  requires WeaklyEqualityComparable<I, Bound>
-@\changed{struct}{class}@ iota_view : @\added{public}@ view_interface<iota_view<I, Bound>> {
-private:
-  I value_ {}; // \expos
-  I bound_ {}; // \expos
-public:
-  iota_view() = default;
-  constexpr explicit iota_view(I value)@\added{;} \removed{requires Same<Bound, unreachable>}@
-  constexpr iota_view(I value, Bound bound); // \seebelow
+  template <WeaklyIncrementable I, class Bound = unreachable>
+    requires WeaklyEqualityComparable<I, Bound>
+  @\changed{struct}{class}@ iota_view : @\added{public}@ view_interface<iota_view<I, Bound>> {
+  private:
+    I value_ {}; // \expos
+    @\changed{I}{Bound}@ bound_ {}; // \expos
+  public:
+    iota_view() = default;
+    constexpr explicit iota_view(I value)@\added{;} \removed{requires Same<Bound, unreachable>}@
+    constexpr iota_view(I value, Bound bound); // \seebelow
 
-  struct iterator;
-  struct sentinel;
+    struct iterator;
+    struct sentinel;
 
-  constexpr iterator begin() const;
-  constexpr sentinel end() const;
-  constexpr iterator end() const requires Same<I, Bound>;
+    constexpr iterator begin() const;
+    constexpr sentinel end() const;
+    constexpr iterator end() const requires Same<I, Bound>;
 
-  constexpr auto size() const requires @\seebelow@;
-};
+    constexpr auto size() const requires @\seebelow@;
+  };
 
-template <WeaklyIncrementable I>
-@\removed{explicit}@ iota_view(I) -> iota_view<I>;
+  template <WeaklyIncrementable I>
+  @\removed{explicit}@ iota_view(I) -> iota_view<I>;
 
-template <Incrementable I>
-iota_view(I, I) -> iota_view<I, I>;
+  template <Incrementable I>
+  iota_view(I, I) -> iota_view<I, I>;
 
-template <WeaklyIncrementable I, Semiregular Bound>
-  requires WeaklyEqualityComparable<I, Bound> && !ConvertibleTo<Bound, I>
-iota_view(I, Bound) -> iota_view<I, Bound>;
+  template <WeaklyIncrementable I, Semiregular Bound>
+    requires WeaklyEqualityComparable<I, Bound> && !ConvertibleTo<Bound, I>
+  iota_view(I, Bound) -> iota_view<I, Bound>;
 }}}}
 \end{codeblock}
 
@@ -2175,7 +2179,7 @@ constexpr explicit iota_view(I value)@\added{;} \removed{requires Same<Bound, un
 \pnum
 \requires \tcode{Bound\{\}} is reachable from \tcode{value}.
 \end{addedblock}
-  
+
 \pnum
 \effects Initializes \tcode{value_} with \tcode{value}.
 \end{itemdescr}
@@ -2257,58 +2261,58 @@ SizedSentinel<Bound, I>
 
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
-template <class I, class Bound>
-struct iota_view<I, Bound>::iterator {
-private:
-  I value_ {}; // \expos
-public:
-  using iterator_category = @\seebelow@;
-  using value_type = I;
-  using difference_type = difference_type_t<I>;
+  template <class I, class Bound>
+  struct iota_view<I, Bound>::iterator {
+  private:
+    I value_ {}; // \expos
+  public:
+    using iterator_category = @\seebelow@;
+    using value_type = I;
+    using difference_type = difference_type_t<I>;
 
-  iterator() = default;
-  explicit constexpr iterator(I value);
+    iterator() = default;
+    explicit constexpr iterator(I value);
 
-  constexpr I operator*() const noexcept(is_nothrow_copy_constructible_v<I>);
+    constexpr I operator*() const noexcept(is_nothrow_copy_constructible_v<I>);
 
-  constexpr iterator& operator++();
-  constexpr void operator++(int);
-  constexpr iterator operator++(int) requires Incrementable<I>;
+    constexpr iterator& operator++();
+    constexpr void operator++(int);
+    constexpr iterator operator++(int) requires Incrementable<I>;
 
-  constexpr iterator& operator--() requires @\textit{decrementable}@<I>;
-  constexpr iterator operator--(int) requires @\textit{decrementable}@<I>;
+    constexpr iterator& operator--() requires @\textit{decrementable}@<I>;
+    constexpr iterator operator--(int) requires @\textit{decrementable}@<I>;
 
-  constexpr iterator& operator+=(difference_type n)
-    requires @\textit{advanceable}@<I>;
-  constexpr iterator& operator-=(difference_type n)
-    requires @\textit{advanceable}@<I>;
-  constexpr I operator[](difference_type n) const
-    requires @\textit{advanceable}@<I>;
+    constexpr iterator& operator+=(difference_type n)
+      requires @\textit{advanceable}@<I>;
+    constexpr iterator& operator-=(difference_type n)
+      requires @\textit{advanceable}@<I>;
+    constexpr I operator[](difference_type n) const
+      requires @\textit{advanceable}@<I>;
 
-  friend constexpr bool operator==(const iterator& x, const iterator& y)
-    requires EqualityComparable<I>;
-  friend constexpr bool operator!=(const iterator& x, const iterator& y)
-    requires EqualityComparable<I>;
+    friend constexpr bool operator==(const iterator& x, const iterator& y)
+      requires EqualityComparable<I>;
+    friend constexpr bool operator!=(const iterator& x, const iterator& y)
+      requires EqualityComparable<I>;
 
-  friend constexpr bool operator<(const iterator& x, const iterator& y)
-    requires StrictTotallyOrdered<I>;
-  friend constexpr bool operator>(const iterator& x, const iterator& y)
-    requires StrictTotallyOrdered<I>;
-  friend constexpr bool operator<=(const iterator& x, const iterator& y)
-    requires StrictTotallyOrdered<I>;
-  friend constexpr bool operator>=(const iterator& x, const iterator& y)
-    requires StrictTotallyOrdered<I>;
+    friend constexpr bool operator<(const iterator& x, const iterator& y)
+      requires StrictTotallyOrdered<I>;
+    friend constexpr bool operator>(const iterator& x, const iterator& y)
+      requires StrictTotallyOrdered<I>;
+    friend constexpr bool operator<=(const iterator& x, const iterator& y)
+      requires StrictTotallyOrdered<I>;
+    friend constexpr bool operator>=(const iterator& x, const iterator& y)
+      requires StrictTotallyOrdered<I>;
 
-  friend constexpr iterator operator+(iterator i, difference_type n)
-    requires @\textit{advanceable}@<I>;
-  friend constexpr iterator operator+(difference_type n, iterator i)
-    requires @\textit{advanceable}@<I>;
+    friend constexpr iterator operator+(iterator i, difference_type n)
+      requires @\textit{advanceable}@<I>;
+    friend constexpr iterator operator+(difference_type n, iterator i)
+      requires @\textit{advanceable}@<I>;
 
-  friend constexpr iterator operator-(iterator i, difference_type n)
-    requires @\textit{advanceable}@<I>;
-  friend constexpr difference_type operator-(const iterator& x, const iterator& y)
-    requires @\textit{advanceable}@<I>;
-};
+    friend constexpr iterator operator-(iterator i, difference_type n)
+      requires @\textit{advanceable}@<I>;
+    friend constexpr difference_type operator-(const iterator& x, const iterator& y)
+      requires @\textit{advanceable}@<I>;
+  };
 }}}}
 \end{codeblock}
 
@@ -2592,19 +2596,19 @@ requires @\textit{advanceable}@<I>;
 
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
-template <class I, class Bound>
-struct iota_view<I, Bound>::sentinel {
-private:
-  Bound bound_ {}; // \expos
-public:
-  sentinel() = default;
-  constexpr explicit sentinel(Bound bound);
+  template <class I, class Bound>
+  struct iota_view<I, Bound>::sentinel {
+  private:
+    Bound bound_ {}; // \expos
+  public:
+    sentinel() = default;
+    constexpr explicit sentinel(Bound bound);
 
-  friend constexpr bool operator==(const iterator& x, const sentinel& y);
-  friend constexpr bool operator==(const sentinel& x, const iterator& y);
-  friend constexpr bool operator!=(const iterator& x, const sentinel& y);
-  friend constexpr bool operator!=(const sentinel& x, const iterator& y);
-};
+    friend constexpr bool operator==(const iterator& x, const sentinel& y);
+    friend constexpr bool operator==(const sentinel& x, const iterator& y);
+    friend constexpr bool operator!=(const iterator& x, const sentinel& y);
+    friend constexpr bool operator!=(const sentinel& x, const iterator& y);
+  };
 }}}}
 \end{codeblock}
 
@@ -2712,48 +2716,48 @@ for (int i : few)
 
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
-template <InputRange R>
-  requires View<R>
-@\changed{struct}{class}@ take_view : @\added{public}@ view_interface<take_view<R>> {
-private:
-  R base_ {}; // \expos
-  difference_type_t<iterator_t<R>> count_ {}; // \expos
-  template <bool Const>
-    struct @\xname{sentinel}@; // \expos
-public:
-  take_view() = default;
-  constexpr take_view(R base, difference_type_t<iterator_t<R>> count);
-  template <InputRange O>
-    requires @\changed{(is_lvalue_reference_v<O> || View<decay_t<O>{>})}{ViewableRange<O>}@ &&
-        Constructible<R, all_view<O>>
-  constexpr take_view(O&& o, difference_type_t<iterator_t<R>> count);
+  template <InputRange R>
+    requires View<R>
+  @\changed{struct}{class}@ take_view : @\added{public}@ view_interface<take_view<R>> {
+  private:
+    R base_ {}; // \expos
+    difference_type_t<iterator_t<R>> count_ {}; // \expos
+    template <bool Const>
+      struct @\xname{sentinel}@; // \expos
+  public:
+    take_view() = default;
+    constexpr take_view(R base, difference_type_t<iterator_t<R>> count);
+    template <InputRange O>
+      requires @\changed{(is_lvalue_reference_v<O> || View<decay_t<O>{>})}{ViewableRange<O>}@ &&
+          Constructible<R, all_view<O>>
+    constexpr take_view(O&& o, difference_type_t<iterator_t<R>> count);
 
-  constexpr R base() const;
+    constexpr R base() const;
 
-  constexpr auto begin();
-  constexpr auto begin() const requires Range<const R>;
-  constexpr auto begin() requires RandomAccessRange<R> && SizedRange<R>;
-  constexpr auto begin() const
-    requires RandomAccessRange<const R> && SizedRange<const R>;
+    constexpr auto begin();
+    constexpr auto begin() const requires Range<const R>;
+    constexpr auto begin() requires RandomAccessRange<R> && SizedRange<R>;
+    constexpr auto begin() const
+      requires RandomAccessRange<const R> && SizedRange<const R>;
 
-  constexpr auto end();
-  constexpr auto end() const requires Range<const R>;
-  constexpr auto end() requires RandomAccessRange<R> && SizedRange<R>;
-  constexpr auto end() const
-    requires RandomAccessRange<const R> && SizedRange<const R>;
+    constexpr auto end();
+    constexpr auto end() const requires Range<const R>;
+    constexpr auto end() requires RandomAccessRange<R> && SizedRange<R>;
+    constexpr auto end() const
+      requires RandomAccessRange<const R> && SizedRange<const R>;
 
-  constexpr auto size() requires SizedRange<R>;
-  constexpr auto size() const requires SizedRange<const R>;
+    constexpr auto size() requires SizedRange<R>;
+    constexpr auto size() const requires SizedRange<const R>;
 
-  using iterator = iterator_t<take_view>;
-  using const_iterator = @\seebelow@;
-  using sentinel = sentinel_t<take_view>;
-  using const_sentinel = @\seebelow@;
-};
+    using iterator = iterator_t<take_view>;
+    using const_iterator = @\seebelow@;
+    using sentinel = sentinel_t<take_view>;
+    using const_sentinel = @\seebelow@;
+  };
 
-template <InputRange R>
-take_view(R&& base, difference_type_t<iterator_t<R>> n)
-  -> take_view<all_view<R>>;
+  template <InputRange R>
+  take_view(R&& base, difference_type_t<iterator_t<R>> n)
+    -> take_view<all_view<R>>;
 }}}}
 \end{codeblock}
 
@@ -2896,31 +2900,31 @@ only one call to \tcode{ranges::size(base_)}.
 
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
-template <class R>
+  template <class R>
   template <bool Const>
-    class take_view<R>::@\xname{sentinel}@ { // \expos
-    private:
-      using Parent = conditional_t<Const, const take_view, take_view>;
-      using Base = conditional_t<Const, const R, R>;
-      sentinel_t<Base> end_ {};
-      using CI = counted_iterator<iterator_t<Base>>;
-    public:
-      @\xname{sentinel}@() = default;
-      constexpr explicit @\xname{sentinel}@(sentinel_t<Base> end);
-      constexpr @\xname{sentinel}@(@\xname{sentinel}@<!Const> s)
-        requires Const && ConvertibleTo<sentinel_t<R>, sentinel_t<Base>>;
+  class take_view<R>::@\xname{sentinel}@ { // \expos
+  private:
+    using Parent = conditional_t<Const, const take_view, take_view>;
+    using Base = conditional_t<Const, const R, R>;
+    sentinel_t<Base> end_ {};
+    using CI = counted_iterator<iterator_t<Base>>;
+  public:
+    @\xname{sentinel}@() = default;
+    constexpr explicit @\xname{sentinel}@(sentinel_t<Base> end);
+    constexpr @\xname{sentinel}@(@\xname{sentinel}@<!Const> s)
+      requires Const && ConvertibleTo<sentinel_t<R>, sentinel_t<Base>>;
 
-      constexpr sentinel_t<Base> base() const;
+    constexpr sentinel_t<Base> base() const;
 
-      friend constexpr bool operator==(const @\xname{sentinel}@& x, const CI& y)
-        requires EqualityComparable<iterator_t<Base>>;
-      friend constexpr bool operator==(const CI& x, const @\xname{sentinel}@& y)
-        requires EqualityComparable<iterator_t<Base>>;
-      friend constexpr bool operator!=(const @\xname{sentinel}@& x, const CI& y)
-        requires EqualityComparable<iterator_t<Base>>;
-      friend constexpr bool operator!=(const CI& x, const @\xname{sentinel}@& y)
-        requires EqualityComparable<iterator_t<Base>>;
-    };
+    friend constexpr bool operator==(const @\xname{sentinel}@& x, const CI& y)
+      requires EqualityComparable<iterator_t<Base>>;
+    friend constexpr bool operator==(const CI& x, const @\xname{sentinel}@& y)
+      requires EqualityComparable<iterator_t<Base>>;
+    friend constexpr bool operator!=(const @\xname{sentinel}@& x, const CI& y)
+      requires EqualityComparable<iterator_t<Base>>;
+    friend constexpr bool operator!=(const CI& x, const @\xname{sentinel}@& y)
+      requires EqualityComparable<iterator_t<Base>>;
+  };
 }}}}
 \end{codeblock}
 
@@ -3036,59 +3040,59 @@ for (char ch : greeting)
 
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
-template <InputRange R>
-    requires View<R> && InputRange<reference_t<iterator_t<R>>> &&
-        (is_reference_v<reference_t<iterator_t<R>>> ||
-        View<value_type_t<iterator_t<R>>>)
-class join_view : @\added{public}@ view_interface<join_view<R>> {
-private:
-  using InnerRng = reference_t<iterator_t<R>>; // \expos
-  template <bool Const>
-    struct @\xname{iterator}@; // \expos
-  template <bool Const>
-    struct @\xname{sentinel}@; // \expos
+  template <InputRange R>
+      requires View<R> && InputRange<reference_t<iterator_t<R>>> &&
+          (is_reference_v<reference_t<iterator_t<R>>> ||
+          View<value_type_t<iterator_t<R>>>)
+  class join_view : @\added{public}@ view_interface<join_view<R>> {
+  private:
+    using InnerRng = reference_t<iterator_t<R>>; // \expos
+    template <bool Const>
+      struct @\xname{iterator}@; // \expos
+    template <bool Const>
+      struct @\xname{sentinel}@; // \expos
 
-  R base_ {}; // \expos
-  all_view<InnerRng> inner_ {}; // \expos, only present when !is_reference_v<InnerRng>
-public:
-  join_view() = default;
-  constexpr explicit join_view(R base);
+    R base_ {}; // \expos
+    all_view<InnerRng> inner_ {}; // \expos, only present when !is_reference_v<InnerRng>
+  public:
+    join_view() = default;
+    constexpr explicit join_view(R base);
 
-  template <InputRange O>
-      requires @\changed{(is_lvalue_reference_v<O> || View<decay_t<O>{>})}{ViewableRange<O>}@ &&
-          Constructible<R, all_view<O>>
-    constexpr explicit join_view(O&& o);
+    template <InputRange O>
+        requires @\changed{(is_lvalue_reference_v<O> || View<decay_t<O>{>})}{ViewableRange<O>}@ &&
+            Constructible<R, all_view<O>>
+      constexpr explicit join_view(O&& o);
 
-  using iterator = @\xname{iterator}@<@\changed{false}{\textit{simple-view}<R>}@>;
-  using sentinel = @\xname{sentinel}@<@\changed{false}{\textit{simple-view}<R>}@>;
-  using const_iterator = @\xname{iterator}@<true>;
-  using const_sentinel = @\xname{sentinel}@<true>;
+    using iterator = @\xname{iterator}@<@\changed{false}{\textit{simple-view}<R>}@>;
+    using sentinel = @\xname{sentinel}@<@\changed{false}{\textit{simple-view}<R>}@>;
+    using const_iterator = @\xname{iterator}@<true>;
+    using const_sentinel = @\xname{sentinel}@<true>;
 
-  constexpr iterator begin();
+    constexpr iterator begin();
 
-  constexpr const_iterator begin() const requires InputRange<const R> &&
-      is_reference_v<reference_t<iterator_t<const R>>>;
+    constexpr const_iterator begin() const requires InputRange<const R> &&
+        is_reference_v<reference_t<iterator_t<const R>>>;
 
-  constexpr sentinel end();
+    constexpr sentinel end();
 
-  constexpr const_sentinel end() const requires InputRange<const R> &&
-      is_reference_v<reference_t<iterator_t<const R>>>;
+    constexpr const_sentinel end() const requires InputRange<const R> &&
+        is_reference_v<reference_t<iterator_t<const R>>>;
 
-  constexpr iterator end() requires ForwardRange<R> &&
-      is_reference_v<InnerRng> && ForwardRange<InnerRng> &&
-      BoundedRange<R> && BoundedRange<InnerRng>;
+    constexpr iterator end() requires ForwardRange<R> &&
+        is_reference_v<InnerRng> && ForwardRange<InnerRng> &&
+        BoundedRange<R> && BoundedRange<InnerRng>;
 
-  constexpr const_iterator end() const requires ForwardRange<const R> &&
-      is_reference_v<reference_t<iterator_t<const R>>> &&
-      ForwardRange<reference_t<iterator_t<const R>>> &&
-      BoundedRange<const R> && BoundedRange<reference_t<iterator_t<const R>>>;
-};
+    constexpr const_iterator end() const requires ForwardRange<const R> &&
+        is_reference_v<reference_t<iterator_t<const R>>> &&
+        ForwardRange<reference_t<iterator_t<const R>>> &&
+        BoundedRange<const R> && BoundedRange<reference_t<iterator_t<const R>>>;
+  };
 
-template <InputRange R>
-    requires InputRange<reference_t<iterator_t<R>>> &&
-        (is_reference_v<reference_t<iterator_t<R>>> ||
-        View<value_type_t<iterator_t<R>>>)
-  explicit join_view(R&&) -> join_view<all_view<R>>;
+  template <InputRange R>
+      requires InputRange<reference_t<iterator_t<R>>> &&
+          (is_reference_v<reference_t<iterator_t<R>>> ||
+          View<value_type_t<iterator_t<R>>>)
+    explicit join_view(R&&) -> join_view<all_view<R>>;
 }}}}
 \end{codeblock}
 
@@ -3489,7 +3493,7 @@ noexcept(ranges::iter_swap(x.inner_, y.inner_))
 
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
-template <class R>
+  template <class R>
   template <bool Const>
   struct join_view<R>::@\xname{sentinel}@ {
   private:
@@ -3613,22 +3617,22 @@ static_assert(0 == e.size());
 
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
-template <class T>
-  requires @\changed{requires \{ *(T*)nullptr; \}}{is_object_v<T>}@
-class empty_view : @\added{public}@ view_interface<empty_view<T>> {
-public:
-  @\removed{empty_view() = default;}@
+  template <class T>
+    requires @\changed{requires \{ *(T*)nullptr; \}}{is_object_v<T>}@
+  class empty_view : @\added{public}@ view_interface<empty_view<T>> {
+  public:
+    @\removed{empty_view() = default;}@
 
-  using iterator = T*;
-  using const_iterator = T*;
-  using sentinel = T*;
-  using const_sentinel = T*;
+    using iterator = T*;
+    using const_iterator = T*;
+    using sentinel = T*;
+    using const_sentinel = T*;
 
-  constexpr static T* begin() noexcept;
-  constexpr static T* end() noexcept;
-  constexpr static ptrdiff_t size() noexcept;
-  constexpr static T* data() noexcept;
-};
+    constexpr static T* begin() noexcept;
+    constexpr static T* end() noexcept;
+    constexpr static ptrdiff_t size() noexcept;
+    constexpr static T* data() noexcept;
+  };
 }}}}
 \end{codeblock}
 
@@ -3698,32 +3702,32 @@ for (int i : s)
 
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
-template <CopyConstructible T>
-class single_view : @\added{public}@ view_interface<single_view<T>> {
-private:
-  @\textit{semiregular}@<T> value_; // \expos
-public:
-  single_view() = default;
-  constexpr explicit single_view(const T& t);
-  constexpr explicit single_view(T&& t);
-  template <class... Args>
-    requires Constructible<T, Args...>
-  constexpr single_view(in_place_t, Args&&... args);
+  template <CopyConstructible T>
+  class single_view : @\added{public}@ view_interface<single_view<T>> {
+  private:
+    @\textit{semiregular}@<T> value_; // \expos
+  public:
+    single_view() = default;
+    constexpr explicit single_view(const T& t);
+    constexpr explicit single_view(T&& t);
+    template <class... Args>
+      requires Constructible<T, Args...>
+    constexpr single_view(in_place_t, Args&&... args);
 
-  using iterator = const T*;
-  using const_iterator = const T*;
-  using sentinel = const T*;
-  using const_sentinel = const T*;
+    using iterator = const T*;
+    using const_iterator = const T*;
+    using sentinel = const T*;
+    using const_sentinel = const T*;
 
-  constexpr const T* begin() const noexcept;
-  constexpr const T* end() const noexcept;
-  constexpr static ptrdiff_t size() noexcept;
-  constexpr const T* data() const noexcept;
-};
+    constexpr const T* begin() const noexcept;
+    constexpr const T* end() const noexcept;
+    constexpr static ptrdiff_t size() noexcept;
+    constexpr const T* data() const noexcept;
+  };
 
-template <class T>
-requires CopyConstructible<decay_t<T>>
-explicit single_view(T&&) -> single_view<decay_t<T>>;
+  template <class T>
+  requires CopyConstructible<decay_t<T>>
+  explicit single_view(T&&) -> single_view<decay_t<T>>;
 }}}}
 \end{codeblock}
 
@@ -3858,74 +3862,74 @@ for (auto word : sentence) {
 
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
-// \expos
-template <class R>
-concept bool @\textit{tiny-range}@ =
-  SizedRange<R> && requires {
-    requires remove_reference_t<R>::size() <= 1;
-  };
+  // \expos
+  template <class R>
+  concept bool @\textit{tiny-range}@ =
+    SizedRange<R> && requires {
+      requires remove_reference_t<R>::size() <= 1;
+    };
 
-template <InputRange Rng, ForwardRange Pattern>
-  requires View<Rng> && View<Pattern> &&
-      IndirectlyComparable<iterator_t<Rng>, iterator_t<Pattern>> &&
-      (ForwardRange<Rng> || @\textit{tiny-range}@<Pattern>)
-@\changed{struct}{class}@ split_view {
-private:
-  Rng base_ {}; // expos
-  Pattern pattern_ {}; // expos
-  iterator_t<Rng> current_ {}; // expos, only present if !ForwardRange<Rng>
-  template <bool Const> struct @\xname{outer_iterator}@; // expos
-  template <bool Const> struct @\xname{outer_sentinel}@; // expos
-  template <bool Const> struct @\xname{inner_iterator}@; // expos
-  template <bool Const> struct @\xname{inner_sentinel}@; // expos
-public:
-  split_view() = default;
-  constexpr split_view(Rng base, Pattern pattern);
+  template <InputRange Rng, ForwardRange Pattern>
+    requires View<Rng> && View<Pattern> &&
+        IndirectlyComparable<iterator_t<Rng>, iterator_t<Pattern>> &&
+        (ForwardRange<Rng> || @\textit{tiny-range}@<Pattern>)
+  @\changed{struct}{class}@ split_view {
+  private:
+    Rng base_ {}; // expos
+    Pattern pattern_ {}; // expos
+    iterator_t<Rng> current_ {}; // expos, only present if !ForwardRange<Rng>
+    template <bool Const> struct @\xname{outer_iterator}@; // expos
+    template <bool Const> struct @\xname{outer_sentinel}@; // expos
+    template <bool Const> struct @\xname{inner_iterator}@; // expos
+    template <bool Const> struct @\xname{inner_sentinel}@; // expos
+  public:
+    split_view() = default;
+    constexpr split_view(Rng base, Pattern pattern);
+
+    template <InputRange O, ForwardRange P>
+      requires @\changed{(is_lvalue_reference_v<O> || View<decay_t<O>{>})}{ViewableRange<O>}@ &&
+          @\changed{(is_lvalue_reference_v<P> || View<decay_t<P>{>})}{ViewableRange<P>}@ &&
+          Constructible<Rng, all_view<O>> &&
+          Constructible<Pattern, all_view<P>>
+    constexpr split_view(O&& o, P&& p);
+
+    template <InputRange O>
+      requires @\changed{(is_lvalue_reference_v<O> || View<decay_t<O>{>})}{ViewableRange<O>}@ &&
+          Constructible<Rng, all_view<O>> &&
+          Constructible<Pattern, single_view<value_type_t<iterator_t<O>>>>
+    constexpr split_view(O&& o, value_type_t<iterator_t<O>> e);
+
+    using iterator = @\xname{outer_iterator}@<@\changed{false}{\textit{simple-view}<R>}@>;
+    using sentinel = @\xname{outer_sentinel}@<@\changed{false}{\textit{simple-view}<R>}@>;
+    using const_iterator = @\xname{outer_iterator}@<true>;
+    using const_sentinel = @\xname{outer_sentinel}@<true>;
+
+    constexpr iterator begin();
+    constexpr iterator begin() requires ForwardRange<Rng>;
+    constexpr const_iterator begin() const requires ForwardRange<@\added{const}@ Rng>;
+
+    constexpr sentinel end()
+    constexpr const_sentinel end() const requires ForwardRange<@\added{const}@ Rng>;
+
+    constexpr iterator end()
+      requires ForwardRange<Rng> && BoundedRange<Rng>;
+    constexpr const_iterator end() const
+      requires ForwardRange<@\added{const}@ Rng> && BoundedRange<@\added{const}@ Rng>;
+  };
 
   template <InputRange O, ForwardRange P>
     requires @\changed{(is_lvalue_reference_v<O> || View<decay_t<O>{>})}{ViewableRange<O>}@ &&
-        @\changed{(is_lvalue_reference_v<P> || View<decay_t<P>{>})}{ViewableRange<P>}@ &&
-        Constructible<Rng, all_view<O>> &&
-        Constructible<Pattern, all_view<P>>
-  constexpr split_view(O&& o, P&& p);
+      @\changed{(is_lvalue_reference_v<P> || View<decay_t<P>{>})}{ViewableRange<P>}@ &&
+      IndirectlyComparable<iterator_t<O>, iterator_t<P>> &&
+      (ForwardRange<O> || _TinyRange<P>)
+  split_view(O&&, P&&) -> split_view<all_view<O>, all_view<P>>;
 
   template <InputRange O>
     requires @\changed{(is_lvalue_reference_v<O> || View<decay_t<O>{>})}{ViewableRange<O>}@ &&
-        Constructible<Rng, all_view<O>> &&
-        Constructible<Pattern, single_view<value_type_t<iterator_t<O>>>>
-  constexpr split_view(O&& o, value_type_t<iterator_t<O>> e);
-
-  using iterator = @\xname{outer_iterator}@<@\changed{false}{\textit{simple-view}<R>}@>;
-  using sentinel = @\xname{outer_sentinel}@<@\changed{false}{\textit{simple-view}<R>}@>;
-  using const_iterator = @\xname{outer_iterator}@<true>;
-  using const_sentinel = @\xname{outer_sentinel}@<true>;
-
-  constexpr iterator begin();
-  constexpr iterator begin() requires ForwardRange<Rng>;
-  constexpr const_iterator begin() const requires ForwardRange<@\added{const}@ Rng>;
-
-  constexpr sentinel end()
-  constexpr const_sentinel end() const requires ForwardRange<@\added{const}@ Rng>;
-
-  constexpr iterator end()
-    requires ForwardRange<Rng> && BoundedRange<Rng>;
-  constexpr const_iterator end() const
-    requires ForwardRange<@\added{const}@ Rng> && BoundedRange<@\added{const}@ Rng>;
-};
-
-template <InputRange O, ForwardRange P>
-  requires @\changed{(is_lvalue_reference_v<O> || View<decay_t<O>{>})}{ViewableRange<O>}@ &&
-    @\changed{(is_lvalue_reference_v<P> || View<decay_t<P>{>})}{ViewableRange<P>}@ &&
-    IndirectlyComparable<iterator_t<O>, iterator_t<P>> &&
-    (ForwardRange<O> || _TinyRange<P>)
-split_view(O&&, P&&) -> split_view<all_view<O>, all_view<P>>;
-
-template <InputRange O>
-  requires @\changed{(is_lvalue_reference_v<O> || View<decay_t<O>{>})}{ViewableRange<O>}@ &&
-    IndirectlyComparable<iterator_t<Rng>, const value_type_t<iterator_t<Rng>>*> &&
-    CopyConstructible<value_type_t<iterator_t<O>>>
-split_view(O&&, value_type_t<iterator_t<O>>)
-  -> split_view<all_view<O>, single_view<value_type_t<iterator_t<O>>>>;
+      IndirectlyComparable<iterator_t<Rng>, const value_type_t<iterator_t<Rng>>*> &&
+      CopyConstructible<value_type_t<iterator_t<O>>>
+  split_view(O&&, value_type_t<iterator_t<O>>)
+    -> split_view<all_view<O>, single_view<value_type_t<iterator_t<O>>>>;
 }}}}
 \end{codeblock}
 
@@ -4036,37 +4040,37 @@ requires ForwardRange<Rng> && BoundedRange<Rng>;
 
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
-template <class Rng, class Pattern>
-template <bool Const>
-struct split_view<Rng, Pattern>::@\xname{outer_iterator}@ {
-private:
-  using Base = conditional_t<Const, const Rng, Rng>;
-  using Parent = conditional_t<Const, const split_view, split_view>;
-  iterator_t<Base> current_ {}; // Only present if ForwardRange<Rng> is satisfied
-  Parent* parent_ = nullptr;
-public:
-  using iterator_category = @\seebelow@;
-  using difference_type = difference_type_t<iterator_t<Base>>;
-  struct value_type;
+  template <class Rng, class Pattern>
+  template <bool Const>
+  struct split_view<Rng, Pattern>::@\xname{outer_iterator}@ {
+  private:
+    using Base = conditional_t<Const, const Rng, Rng>;
+    using Parent = conditional_t<Const, const split_view, split_view>;
+    iterator_t<Base> current_ {}; // Only present if ForwardRange<Rng> is satisfied
+    Parent* parent_ = nullptr;
+  public:
+    using iterator_category = @\seebelow@;
+    using difference_type = difference_type_t<iterator_t<Base>>;
+    struct value_type;
 
-  @\xname{outer_iterator}@() = default;
-  constexpr explicit @\xname{outer_iterator}@(Parent& parent);
-  constexpr @\xname{outer_iterator}@(Parent& parent, iterator_t<Base> current)
-    requires ForwardRange<Base>;
-  constexpr @\xname{outer_iterator}@(@\xname{outer_iterator}@<!Const> i) requires Const &&
-    ConvertibleTo<iterator_t<Rng>, iterator_t<Base>>;
+    @\xname{outer_iterator}@() = default;
+    constexpr explicit @\xname{outer_iterator}@(Parent& parent);
+    constexpr @\xname{outer_iterator}@(Parent& parent, iterator_t<Base> current)
+      requires ForwardRange<Base>;
+    constexpr @\xname{outer_iterator}@(@\xname{outer_iterator}@<!Const> i) requires Const &&
+      ConvertibleTo<iterator_t<Rng>, iterator_t<Base>>;
 
-  constexpr value_type operator*() const;
+    constexpr value_type operator*() const;
 
-  constexpr @\xname{outer_iterator}@& operator++();
-  constexpr void operator++(int);
-  constexpr @\xname{outer_iterator}@ operator++(int) requires ForwardRange<Base>;
+    constexpr @\xname{outer_iterator}@& operator++();
+    constexpr void operator++(int);
+    constexpr @\xname{outer_iterator}@ operator++(int) requires ForwardRange<Base>;
 
-  friend constexpr bool operator==(const @\xname{outer_iterator}@& x, const @\xname{outer_iterator}@& y)
-    requires ForwardRange<Base>;
-  friend constexpr bool operator!=(const @\xname{outer_iterator}@& x, const @\xname{outer_iterator}@& y)
-    requires ForwardRange<Base>;
-};
+    friend constexpr bool operator==(const @\xname{outer_iterator}@& x, const @\xname{outer_iterator}@& y)
+      requires ForwardRange<Base>;
+    friend constexpr bool operator!=(const @\xname{outer_iterator}@& x, const @\xname{outer_iterator}@& y)
+      requires ForwardRange<Base>;
+  };
 }}}}
 \end{codeblock}
 
@@ -4226,22 +4230,22 @@ return !(x == y);
 
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
-template <class Rng, class Pattern>
-template <bool Const>
-struct split_view<Rng, Pattern>::@\xname{outer_sentinel}@ {
-private:
-  using Base = conditional_t<Const, const Rng, Rng>;
-  using Parent = conditional_t<Const, const split_view, split_view>;
-  sentinel_t<Base> end_;
-public:
-  @\xname{outer_sentinel}@() = default;
-  constexpr explicit @\xname{outer_sentinel}@(Parent& parent);
+  template <class Rng, class Pattern>
+  template <bool Const>
+  struct split_view<Rng, Pattern>::@\xname{outer_sentinel}@ {
+  private:
+    using Base = conditional_t<Const, const Rng, Rng>;
+    using Parent = conditional_t<Const, const split_view, split_view>;
+    sentinel_t<Base> end_;
+  public:
+    @\xname{outer_sentinel}@() = default;
+    constexpr explicit @\xname{outer_sentinel}@(Parent& parent);
 
-  friend constexpr bool operator==(const @\xname{outer_iterator}@<Const>& x, const @\xname{outer_sentinel}@& y);
-  friend constexpr bool operator==(const @\xname{outer_sentinel}@& x, const @\xname{outer_iterator}@<Const>& y);
-  friend constexpr bool operator!=(const @\xname{outer_iterator}@<Const>& x, const @\xname{outer_sentinel}@& y);
-  friend constexpr bool operator!=(const @\xname{outer_sentinel}@& x, const @\xname{outer_iterator}@<Const>& y);
-};
+    friend constexpr bool operator==(const @\xname{outer_iterator}@<Const>& x, const @\xname{outer_sentinel}@& y);
+    friend constexpr bool operator==(const @\xname{outer_sentinel}@& x, const @\xname{outer_iterator}@<Const>& y);
+    friend constexpr bool operator!=(const @\xname{outer_iterator}@<Const>& x, const @\xname{outer_sentinel}@& y);
+    friend constexpr bool operator!=(const @\xname{outer_sentinel}@& x, const @\xname{outer_iterator}@<Const>& y);
+  };
 }}}}
 \end{codeblock}
 
@@ -4324,23 +4328,23 @@ return !(y == x);
 
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
-template <class Rng, class Pattern>
-template <bool Const>
-struct split_view<Rng, Pattern>::@\xname{outer_iterator}@<Const>::value_type {
-private:
-  @\xname{outer_iterator}@ i_ {};
-public:
-  value_type() = default;
-  constexpr explicit value_type(@\xname{outer_iterator}@ i);
+  template <class Rng, class Pattern>
+  template <bool Const>
+  struct split_view<Rng, Pattern>::@\xname{outer_iterator}@<Const>::value_type {
+  private:
+    @\xname{outer_iterator}@ i_ {};
+  public:
+    value_type() = default;
+    constexpr explicit value_type(@\xname{outer_iterator}@ i);
 
-  using iterator = @\xname{inner_iterator}@<Const>;
-  using sentinel = @\xname{inner_sentinel}@<Const>;
-  using const_iterator = @\xname{inner_iterator}@<Const>;
-  using const_sentinel = @\xname{inner_sentinel}@<Const>;
+    using iterator = @\xname{inner_iterator}@<Const>;
+    using sentinel = @\xname{inner_sentinel}@<Const>;
+    using const_iterator = @\xname{inner_iterator}@<Const>;
+    using const_sentinel = @\xname{inner_sentinel}@<Const>;
 
-  constexpr iterator begin() const;
-  constexpr sentinel end() const;
-};
+    constexpr iterator begin() const;
+    constexpr sentinel end() const;
+  };
 }}}}
 \end{codeblock}
 
@@ -4395,37 +4399,37 @@ In the definition of \tcode{split_view<Rng, Pattern>::\xname{inner_iterator}} be
 
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
-template <class Rng, class Pattern>
-template <bool Const>
-struct split_view<Rng, Pattern>::@\xname{inner_iterator}@ {
-private:
-  using Base = conditional_t<Const, const Rng, Rng>;
-  @\xname{outer_iterator}@<Const> i_ {};
-  bool zero_ = false;
-public:
-  using iterator_category = iterator_category_t<@\xname{outer_iterator}@<Const>>;
-  using difference_type = difference_type_t<iterator_t<Base>>;
-  using value_type = value_type_t<iterator_t<Base>>;
+  template <class Rng, class Pattern>
+  template <bool Const>
+  struct split_view<Rng, Pattern>::@\xname{inner_iterator}@ {
+  private:
+    using Base = conditional_t<Const, const Rng, Rng>;
+    @\xname{outer_iterator}@<Const> i_ {};
+    bool zero_ = false;
+  public:
+    using iterator_category = iterator_category_t<@\xname{outer_iterator}@<Const>>;
+    using difference_type = difference_type_t<iterator_t<Base>>;
+    using value_type = value_type_t<iterator_t<Base>>;
 
-  @\xname{inner_iterator}@() = default;
-  constexpr explicit @\xname{inner_iterator}@(@\xname{outer_iterator}@<Const> i);
+    @\xname{inner_iterator}@() = default;
+    constexpr explicit @\xname{inner_iterator}@(@\xname{outer_iterator}@<Const> i);
 
-  constexpr decltype(auto) operator*() const;
+    constexpr decltype(auto) operator*() const;
 
-  constexpr @\xname{inner_iterator}@& operator++();
-  constexpr void operator++(int);
-  constexpr @\xname{inner_iterator}@ operator++(int) requires ForwardRange<Base>;
+    constexpr @\xname{inner_iterator}@& operator++();
+    constexpr void operator++(int);
+    constexpr @\xname{inner_iterator}@ operator++(int) requires ForwardRange<Base>;
 
-  friend constexpr bool operator==(const @\xname{inner_iterator}@& x, const @\xname{inner_iterator}@& y)
-    requires ForwardRange<Base>;
-  friend constexpr bool operator!=(const @\xname{inner_iterator}@& x, const @\xname{inner_iterator}@& y)
-    requires ForwardRange<Base>;
+    friend constexpr bool operator==(const @\xname{inner_iterator}@& x, const @\xname{inner_iterator}@& y)
+      requires ForwardRange<Base>;
+    friend constexpr bool operator!=(const @\xname{inner_iterator}@& x, const @\xname{inner_iterator}@& y)
+      requires ForwardRange<Base>;
 
-  friend constexpr decltype(auto) iter_move(const @\xname{inner_iterator}@& i)
-    noexcept(@\seebelow@);
-  friend constexpr void iter_swap(const @\xname{inner_iterator}@& x, const @\xname{inner_iterator}@& y)
-    noexcept(@\seebelow@) requires IndirectlySwappable<iterator_t<Base>>;
-};
+    friend constexpr decltype(auto) iter_move(const @\xname{inner_iterator}@& i)
+      noexcept(@\seebelow@);
+    friend constexpr void iter_swap(const @\xname{inner_iterator}@& x, const @\xname{inner_iterator}@& y)
+      noexcept(@\seebelow@) requires IndirectlySwappable<iterator_t<Base>>;
+  };
 }}}}
 \end{codeblock}
 
@@ -4568,14 +4572,14 @@ noexcept(ranges::iter_swap(@\textit{current}@(x.i_), @\textit{current}@(y.i_)))
 
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
-template <class Rng, class Pattern>
-template <bool Const>
-struct split_view<Rng, Pattern>::@\xname{inner_sentinel}@ {
-  friend constexpr bool operator==(const @\xname{inner_iterator}@<Const>& x, @\xname{inner_sentinel}@);
-  friend constexpr bool operator==(@\xname{inner_sentinel}@ x, const @\xname{inner_iterator}@<Const>& y);
-  friend constexpr bool operator!=(const @\xname{inner_iterator}@<Const>& x, @\xname{inner_sentinel}@ y);
-  friend constexpr bool operator!=(@\xname{inner_sentinel}@ x, const @\xname{inner_iterator}@<Const>& y);
-};
+  template <class Rng, class Pattern>
+  template <bool Const>
+  struct split_view<Rng, Pattern>::@\xname{inner_sentinel}@ {
+    friend constexpr bool operator==(const @\xname{inner_iterator}@<Const>& x, @\xname{inner_sentinel}@);
+    friend constexpr bool operator==(@\xname{inner_sentinel}@ x, const @\xname{inner_iterator}@<Const>& y);
+    friend constexpr bool operator!=(const @\xname{inner_iterator}@<Const>& x, @\xname{inner_sentinel}@ y);
+    friend constexpr bool operator!=(@\xname{inner_sentinel}@ x, const @\xname{inner_iterator}@<Const>& y);
+  };
 }}}}
 \end{codeblock}
 
