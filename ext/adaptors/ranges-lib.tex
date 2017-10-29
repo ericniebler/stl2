@@ -98,6 +98,13 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 
   // \ref{ranges.adaptors.counted}:
   namespace view { inline constexpr @\unspec@ counted = @\unspec@; }
+
+  @\added{// \ref{ranges.adaptors.bounded_view}:}@
+  @\added{template <View Rng>}@
+    @\added{requires !BoundedRange<Rng>}@
+  @\added{class bounded_view;}@
+
+  @\added{namespace view \{ inline constexpr \unspec bounded = \unspec; \}}@
 }}}}
 
 namespace std {
@@ -4715,4 +4722,215 @@ and if \tcode{U} is implicitly convertible to \tcode{ptrdiff_t}.
 \changed{F}{static_cast<difference_type_t<\ T>{>}(F)}), default_sentinel\{\}\}}
 if \tcode{It\-erator<T> \&\& ConvertibleTo<U, difference_type_t<T>{>}} is satisfied.
 \item Otherwise, \tcode{view::counted(E, F)} is ill-formed.
+\end{itemize}
+
+\begin{addedblock}
+\rSec2[ranges.adaptors.bounded_view]{Class template \tcode{bounded_view}}
+
+\pnum
+The \tcode{bounded_view} takes a range which has different types for its iterator
+and sentinel and turns it into an equivalent range where the iterator and sentinel
+have the same type.
+
+\pnum
+\remark \tcode{bounded_view} is useful for calling legacy algorithms that expect
+a range's iterator and sentinel types to be the same.
+
+\pnum
+\enterexample
+\begin{codeblock}
+// Legacy algorithm:
+template <class ForwardIterator>
+size_t count(ForwardIterator first, ForwardIterator last);
+
+template <ForwardRange R>
+void my_algo(R&& r) {
+  auto&& bounded = bounded_view{r};
+  auto cnt = count(bounded.begin(), bounded.end());
+  // ...
+}
+\end{codeblock}
+\exitexample
+
+\begin{codeblock}
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+  template <View Rng>
+    requires !BoundedRange<Rng>
+  class bounded_view : public view_interface<bounded_view<Rng>> {
+  private:
+    Rng base_; // \expos
+  public:
+    bounded_view() = default;
+
+    constexpr bounded_view(Rng rng);
+
+    template <ViewableRange O>
+      requires !BoundedRange<O> && Constructible<Rng, all_view<O>>
+    constexpr bounded_view(O&& o);
+
+    constexpr Rng base() const;
+
+    constexpr auto begin();
+    constexpr auto begin() const requires Range<const Rng>;
+
+    constexpr auto begin()
+      requires RandomAccessRange<Rng> && SizedRange<Rng>;
+    constexpr auto begin() const
+      requires RandomAccessRange<const Rng> && SizedRange<const Rng>;
+
+    constexpr auto end();
+    constexpr auto end() const requires Range<const Rng>;
+
+    constexpr auto end()
+      requires RandomAccessRange<Rng> && SizedRange<Rng>;
+    constexpr auto end() const
+      requires RandomAccessRange<const Rng> && SizedRange<Rng>;
+
+    constexpr auto size() const requires SizedRange<const Rng>;
+  };
+
+  template <ViewableRange O>
+    requires !BoundedRange<O>
+  bounded_view(O&&) -> bounded_view<all_view<O>>;
+}}}}
+\end{codeblock}
+
+\rSec3[ranges.adaptors.bounded_view.ops]{\tcode{bounded_view} operations}
+\rSec4[ranges.adaptors.bounded_view.ctor]{\tcode{bounded_view} constructors}
+
+\indexlibrary{\idxcode{bounded_view}!\idxcode{bounded_view}}%
+\begin{itemdecl}
+constexpr bounded_view(Rng base);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Initializes \tcode{base_} with \tcode{std::move(base)}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{bounded_view}!\idxcode{bounded_view}}%
+\begin{itemdecl}
+template <ViewableRange O>
+  requires !BoundedRange<O> && Constructible<Rng, all_view<O>>
+constexpr bounded_view(O&& o);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Initializes \tcode{base_} with \tcode{view::all(std::forward<O>(o))}.
+\end{itemdescr}
+
+\rSec4[ranges.adaptors.bounded_view.conv]{\tcode{bounded_view} conversion}
+
+\indexlibrary{\idxcode{base}!\idxcode{bounded_view}}%
+\begin{itemdecl}
+constexpr Rng base() const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{base_}.
+\end{itemdescr}
+
+\rSec4[ranges.adaptors.bounded_view.begin]{\tcode{bounded_view} begin}
+
+\indexlibrary{\idxcode{begin}!\idxcode{bounded_view}}%
+\begin{itemdecl}
+constexpr auto begin();
+constexpr auto begin() const requires Range<const Rng>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+return common_iterator<iterator_t<Rng>, sentinel_t<Rng>>(ranges::begin(base_));
+\end{codeblock}
+and
+\begin{codeblock}
+return common_iterator<iterator_t<const Rng>, sentinel_t<const Rng>>(ranges::begin(base_));
+\end{codeblock}
+for the first and second overloads, respectively.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{begin}!\idxcode{bounded_view}}%
+\begin{itemdecl}
+constexpr auto begin()
+  requires RandomAccessRange<Rng> && SizedRange<Rng>;
+constexpr auto begin() const
+  requires RandomAccessRange<const Rng> && SizedRange<const Rng>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+return ranges::begin(base_);
+\end{codeblock}
+\end{itemdescr}
+
+\rSec4[ranges.adaptors.bounded_view.end]{\tcode{bounded_view} end}
+
+\indexlibrary{\idxcode{end}!\idxcode{bounded_view}}%
+\begin{itemdecl}
+constexpr auto end();
+constexpr auto end() const requires Range<const Rng>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+return common_iterator<iterator_t<Rng>, sentinel_t<Rng>>(ranges::end(base_));
+\end{codeblock}
+and
+\begin{codeblock}
+return common_iterator<iterator_t<const Rng>, sentinel_t<const Rng>>(ranges::end(base_));
+\end{codeblock}
+for the first and second overloads, respectively.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{end}!\idxcode{bounded_view}}%
+\begin{itemdecl}
+constexpr auto end()
+  requires RandomAccessRange<Rng> && SizedRange<Rng>;
+constexpr auto end() const
+  requires RandomAccessRange<const Rng> && SizedRange<const Rng>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+return ranges::begin(base_) + ranges::size(base_);
+\end{codeblock}
+\end{itemdescr}
+
+\rSec4[ranges.adaptors.bounded_view.size]{\tcode{bounded_view} size}
+
+\indexlibrary{\idxcode{size}!\idxcode{bounded_view}}%
+\begin{itemdecl}
+constexpr auto size() const requires SizedRange<const Rng>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to: \tcode{return ranges::size(base_);}.
+\end{itemdescr}
+\end{addedblock}
+
+\rSec2[ranges.adaptors.bounded]{\tcode{view::bounded}}
+
+\pnum
+The name \tcode{view::bounded} denotes a range adaptor
+object~(\ref{ranges.adaptor.object}).
+Let \tcode{E} be an expression such that \tcode{U} is \tcode{decltype((E))}.
+Then the expression \tcode{view::bounded(E)} is expression-equivalent to:
+
+\begin{itemize}
+\item If \tcode{ViewableRange<U> \&\& BoundedRange<U>} is satisfied,
+\tcode{view::all(E)}.
+\item Otherwise, if \tcode{ViewableRange<U>} is satisfied,
+\tcode{bounded_view\{E\}}.
+\item Otherwise, \tcode{view::bounded(E)} is ill-formed.
 \end{itemize}
