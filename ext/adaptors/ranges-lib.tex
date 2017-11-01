@@ -105,6 +105,13 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   @\added{class bounded_view;}@
 
   @\added{namespace view \{ inline constexpr \unspec bounded = \unspec; \}}@
+
+  @\added{// \ref{ranges.adaptors.reverse_view}:}@
+  @\added{template <View Rng>}@
+    @\added{requires BidirectionalRange<Rng>}@
+  @\added{class reverse_view;}@
+
+  @\added{namespace view \{ inline constexpr \unspec reverse = \unspec; \}}@
 }}}}
 
 namespace std {
@@ -4762,11 +4769,11 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   public:
     bounded_view() = default;
 
-    constexpr bounded_view(Rng rng);
+    explicit constexpr bounded_view(Rng rng);
 
     template <ViewableRange O>
       requires !BoundedRange<O> && Constructible<Rng, all_view<O>>
-    constexpr bounded_view(O&& o);
+    explicit constexpr bounded_view(O&& o);
 
     constexpr Rng base() const;
 
@@ -4800,7 +4807,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 
 \indexlibrary{\idxcode{bounded_view}!\idxcode{bounded_view}}%
 \begin{itemdecl}
-constexpr bounded_view(Rng base);
+explicit constexpr bounded_view(Rng base);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4812,7 +4819,7 @@ constexpr bounded_view(Rng base);
 \begin{itemdecl}
 template <ViewableRange O>
   requires !BoundedRange<O> && Constructible<Rng, all_view<O>>
-constexpr bounded_view(O&& o);
+explicit constexpr bounded_view(O&& o);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4933,4 +4940,171 @@ Then the expression \tcode{view::bounded(E)} is expression-equivalent to:
 \tcode{bounded_view\{E\}}.
 \item Otherwise, \tcode{view::bounded(E)} is ill-formed.
 \end{itemize}
+
+\rSec2[ranges.adaptors.reverse_view]{Class template \tcode{reverse_view}}
+
+\pnum
+The \tcode{reverse_view} takes a bidirectional range and produces another range
+that iterates the same elements in reverse order.
+
+\pnum
+\enterexample
+\begin{codeblock}
+vector<int> is {0,1,2,3,4};
+reverse_view rv {is};
+for (int i : rv)
+  cout << i << ' '; // prints: 4 3 2 1 0
+\end{codeblock}
+\exitexample
+
+\begin{codeblock}
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+  template <View Rng>
+    requires BidirectionalRange<Rng>
+  class reverse_view : public view_interface<reverse_view<Rng>> {
+  private:
+    Rng base_; // \expos
+  public:
+    reverse_view() = default;
+
+    explicit constexpr reverse_view(Rng rng);
+
+    template <ViewableRange O>
+      requires BidirectionalRange<O> && Constructible<Rng, all_view<O>>
+    explicit constexpr reverse_view(O&& o);
+
+    constexpr Rng base() const;
+
+    constexpr auto begin();
+    constexpr auto begin() requires BoundedRange<Rng>;
+    constexpr auto begin() const requires BoundedRange<const Rng>;
+
+    constexpr auto end();
+    constexpr auto end() const requires BoundedRange<const Rng>;
+
+    constexpr auto size() const requires SizedRange<const Rng>;
+  };
+
+  template <ViewableRange O>
+    requires BidirectionalRange<O>
+  reverse_view(O&&) -> reverse_view<all_view<O>>;
+}}}}
+\end{codeblock}
+
+\rSec3[ranges.adaptors.reverse_view.ops]{\tcode{reverse_view} operations}
+\rSec4[ranges.adaptors.reverse_view.ctor]{\tcode{reverse_view} constructors}
+
+\indexlibrary{\idxcode{reverse_view}!\idxcode{reverse_view}}%
+\begin{itemdecl}
+explicit constexpr reverse_view(Rng base);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Initializes \tcode{base_} with \tcode{std::move(base)}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{reverse_view}!\idxcode{reverse_view}}%
+\begin{itemdecl}
+template <ViewableRange O>
+  requires !BoundedRange<O> && Constructible<Rng, all_view<O>>
+explicit constexpr reverse_view(O&& o);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Initializes \tcode{base_} with \tcode{view::all(std::forward<O>(o))}.
+\end{itemdescr}
+
+\rSec4[ranges.adaptors.reverse_view.conv]{\tcode{reverse_view} conversion}
+
+\indexlibrary{\idxcode{base}!\idxcode{reverse_view}}%
+\begin{itemdecl}
+constexpr Rng base() const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{base_}.
+\end{itemdescr}
+
+\rSec4[ranges.adaptors.reverse_view.begin]{\tcode{reverse_view} begin}
+
+\indexlibrary{\idxcode{begin}!\idxcode{reverse_view}}%
+\begin{itemdecl}
+constexpr auto begin();
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+return reverse_iterator{ranges::next(ranges::begin(base_), ranges::end(base_))};
+\end{codeblock}
+
+\pnum
+\remarks In order to provide the amortized constant time complexity required by
+the \tcode{Range} concept, this function caches the result within the
+\tcode{reverse_view} for use on subsequent calls.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{begin}!\idxcode{reverse_view}}%
+\begin{itemdecl}
+constexpr auto begin() requires BoundedRange<Rng>;
+constexpr auto begin() const requires BoundedRange<const Rng>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+return reverse_iterator{ranges::end(base_)};
+\end{codeblock}
+\end{itemdescr}
+
+\rSec4[ranges.adaptors.reverse_view.end]{\tcode{reverse_view} end}
+
+\indexlibrary{\idxcode{end}!\idxcode{reverse_view}}%
+\begin{itemdecl}
+constexpr auto end() requires BoundedRange<Rng>;
+constexpr auto end() const requires BoundedRange<const Rng>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+return reverse_iterator{ranges::begin(base_)};
+\end{codeblock}
+\end{itemdescr}
+
+\rSec4[ranges.adaptors.reverse_view.size]{\tcode{reverse_view} size}
+
+\indexlibrary{\idxcode{size}!\idxcode{reverse_view}}%
+\begin{itemdecl}
+constexpr auto size() const requires SizedRange<const Rng>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+return ranges::size(base_);
+\end{codeblock}
+\end{itemdescr}
+
+\rSec2[ranges.adaptors.reverse]{\tcode{view::reverse}}
+
+\pnum
+The name \tcode{view::reverse} denotes a range adaptor
+object~(\ref{ranges.adaptor.object}).
+Let \tcode{E} be an expression such that \tcode{U} is \tcode{decltype((E))}.
+Then the expression \tcode{view::reverse(E)} is expression-equivalent to:
+
+\begin{itemize}
+\item If \tcode{ViewableRange<U> \&\& BidirectionalRange<U>} is satisfied,
+\tcode{reverse_view\{E\}}.
+\item Otherwise, \tcode{view::reverse(E)} is ill-formed.
+\end{itemize}
+
 \end{addedblock}
