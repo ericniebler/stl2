@@ -27,7 +27,8 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   @\added{enum class subrange_kind : bool \{ unsized, sized \}; }@
 
   @\added{// \ref{ranges.subrange}:}@
-  @\added{template <Iterator I, Sentinel<I> S = I, subrange_kind Sized = \seebelow>}@
+  @\added{template <Iterator I, Sentinel<I> S = I, subrange_kind K = \seebelow>}@
+    @\added{requires K == subrange_kind::sized || !SizedSentinel<S, I>}@
   @\added{class subrange;}@
 
   // \ref{ranges.adaptors.all}:
@@ -115,15 +116,15 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 }}}}
 
 namespace std {
-  template <class I, class S@\added{, ranges::subrange_kind B}@>
-    struct tuple_size<ranges::@\changed{iterator_range}{subrange}@<I, S@\added{, B}@>>
+  template <class I, class S@\added{, ranges::subrange_kind K}@>
+    struct tuple_size<ranges::@\changed{iterator_range}{subrange}@<I, S@\added{, K}@>>
       : std::integral_constant<size_t, 2> {};
-  template <class I, class S@\added{, ranges::subrange_kind B}@>
-    struct tuple_element<0, ranges::@\changed{iterator_range}{subrange}@<I, S@\added{, B}@>> {
+  template <class I, class S@\added{, ranges::subrange_kind K}@>
+    struct tuple_element<0, ranges::@\changed{iterator_range}{subrange}@<I, S@\added{, K}@>> {
       using type = I;
     };
-  template <class I, class S@\added{, ranges::subrange_kind B}@>
-    struct tuple_element<1, ranges::@\changed{iterator_range}{subrange}@<I, S@\added{, B}@>> {
+  template <class I, class S@\added{, ranges::subrange_kind K}@>
+    struct tuple_element<1, ranges::@\changed{iterator_range}{subrange}@<I, S@\added{, K}@>> {
       using type = S;
     };
 
@@ -381,8 +382,8 @@ return C@\changed{\{}{(}@I{ranges::begin(derived())}, I{ranges::end(derived())}@
 iterator and a sentinel into a single object that satisfies the \tcode{View} concept.
 \tcode{sized_iterator_range} additionally stores the range's size and satisfies the
 \tcode{SizedRange} concept.}{The \tcode{subrange} class template bundles together an
-iterator and a sentinel into a single object that satisfies the \tcode{View} object. Additionally,
-it satisfies the \tcode{SizedRange} concept when the final template parameter is \tcode{true}.}
+iterator and a sentinel into a single object that satisfies the \tcode{View} concept. Additionally,
+it satisfies the \tcode{SizedRange} concept when the final template parameter is \tcode{subrange_kind::sized}.}
 
 \ednote{Remove sections [ranges.iterator_range] and [ranges.sized_iterator_range] and replace
 with the following:}
@@ -395,35 +396,39 @@ with the following:}
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
   template <class T>
   concept bool @\textit{pair-like}@ = // \expos
-    requires {
-      { tuple_size<T>::value } -> const Same<size_t>&;
+    requires(T t) {
+      { tuple_size<T>::value } -> Integral;
       requires tuple_size<T>::value == 2;
       typename tuple_element_t<0, T>;
       typename tuple_element_t<1, T>;
+      { get<0>(t) } -> const tuple_element_t<0, T>&;
+      { get<1>(t) } -> const tuple_element_t<1, T>&;
     };
 
   template <class T, class U, class V>
   concept bool @\textit{pair-like-convertible-to}@ = // \expos
-    @\textit{pair-like}@<T> && !Range<T> &&
-    ConvertibleTo<tuple_element_t<0, T>, U> &&
-    ConvertibleTo<tuple_element_t<1, T>, V>;
+    !Range<T> && @\textit{pair-like}@<decay_t<T>> &&
+    requires(T&& t) {
+      { get<0>(std::forward<T>(t)) } -> ConvertibleTo<U>;
+      { get<1>(std::forward<T>(t)) } -> ConvertibleTo<V>;
+    };
 
   template <class T, class U, class V>
   concept bool @\textit{pair-like-convertible-from}@ = // \expos
-    @\textit{pair-like}@<T> && !Range<T> &&
-    Constructible<T, U, V> &&
-    ConvertibleTo<U, tuple_element_t<0, T>> &&
-    ConvertibleTo<V, tuple_element_t<1, T>>;
+    !Range<T> && Same<T, decay_t<T>> && @\textit{pair-like}@<T> &&
+    Constructible<T, U, V>;
 
   template <class T>
   concept bool @\textit{iterator-sentinel-pair}@ = // \expos
-    @\textit{pair-like}@<T> && !Range<T> &&
+    !Range<T> && Same<T, decay_t<T>> && @\textit{pair-like}@<T> &&
     Sentinel<tuple_element_t<1, T>, tuple_element_t<0, T>>;
 
-  template <Iterator I, Sentinel<I> S = I, subrange_kind Sized = @\seebelow@>
-  struct subrange : view_interface<subrange<I, S, Sized>> {
+  template <Iterator I, Sentinel<I> S = I, subrange_kind K = @\seebelow@>
+    requires K == subrange_kind::sized || !SizedSentinel<S, I>
+  class subrange : public view_interface<subrange<I, S, K>> {
   private:
-    static constexpr bool StoreSize = bool(Sized) && !SizedSentinel<S, I>; // \expos
+    static constexpr bool StoreSize =
+      K == subrange_kind::sized && !SizedSentinel<S, I>; // \expos
     I begin_ {}; // \expos
     S end_ {}; // \expos
     difference_type_t<I> size_ = 0; // \expos; only present when StoreSize is true
@@ -435,19 +440,23 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 
     constexpr subrange(I i, S s) requires !StoreSize;
 
-    constexpr subrange(I i, S s, difference_type_t<I> n) requires bool(Sized);
+    constexpr subrange(I i, S s, difference_type_t<I> n)
+      requires K == subrange_kind::sized;
 
-    template <ConvertibleTo<I> X, ConvertibleTo<S> Y, subrange_kind B>
-    constexpr subrange(subrange<X, Y, B> r) requires !StoreSize || bool(B);
+    template <ConvertibleTo<I> X, ConvertibleTo<S> Y, subrange_kind Z>
+    constexpr subrange(subrange<X, Y, Z> r)
+      requires !StoreSize || Z == subrange_kind::sized;
 
-    template <ConvertibleTo<I> X, ConvertibleTo<S> Y, subrange_kind B>
-    constexpr subrange(subrange<X, Y, B> r, difference_type_t<I> n) requires bool(Sized);
+    template <ConvertibleTo<I> X, ConvertibleTo<S> Y, subrange_kind Z>
+    constexpr subrange(subrange<X, Y, Z> r, difference_type_t<I> n)
+      requires K == subrange_kind::sized;
 
     template <@\textit{pair-like-convertible-to}@<I, S> PairLike>
-    constexpr subrange(PairLike r) requires !StoreSize;
+    constexpr subrange(PairLike&& r) requires !StoreSize;
 
     template <@\textit{pair-like-convertible-to}@<I, S> PairLike>
-    constexpr subrange(PairLike r, difference_type_t<I> n) requires bool(Sized);
+    constexpr subrange(PairLike&& r, difference_type_t<I> n)
+      requires K == subrange_kind::sized;
 
     template <Range R>
       requires ConvertibleTo<iterator_t<R>, I> && ConvertibleTo<sentinel_t<R>, S>
@@ -459,9 +468,11 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     constexpr I begin() const;
     constexpr S end() const;
     constexpr bool empty() const;
-    constexpr auto size() const requires bool(Sized);
+    constexpr difference_type_t<I> size() const
+      requires K == subrange_kind::sized;
     [[nodiscard]] constexpr subrange next(difference_type_t<I> n = 1) const;
-    [[nodiscard]] constexpr subrange prev(difference_type_t<I> n = 1) const;
+    [[nodiscard]] constexpr subrange prev(difference_type_t<I> n = 1) const
+      requires BidirectionalIterator<I>;
     constexpr subrange& advance(difference_type_t<I> n);
   };
 
@@ -476,8 +487,9 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   subrange(P, difference_type_t<tuple_element_t<0, P>>) ->
     subrange<tuple_element_t<0, P>, tuple_element_t<1, P>, subrange_kind::sized>;
 
-  template <Iterator I, Sentinel<I> S, subrange_kind B>
-  subrange(subrange<I, S, B>, difference_type_t<I>) -> subrange<I, S, subrange_kind::sized>;
+  template <Iterator I, Sentinel<I> S, subrange_kind K>
+  subrange(subrange<I, S, K>, difference_type_t<I>) ->
+    subrange<I, S, subrange_kind::sized>;
 
   template <Range R>
   subrange(R&) -> subrange<iterator_t<R>, sentinel_t<R>>;
@@ -485,9 +497,9 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   template <SizedRange R>
   subrange(R&) -> subrange<iterator_t<R>, sentinel_t<R>, subrange_kind::sized>;
 
-  template <std::size_t N, class I, class S, subrange_kind Sized>
+  template <std::size_t N, class I, class S, subrange_kind K>
     requires N < 2
-  constexpr auto get(const subrange<I, S, Sized>& r);
+  constexpr auto get(const subrange<I, S, K>& r);
 }}}}
 \end{codeblock}
 
@@ -513,7 +525,8 @@ constexpr subrange(I i, S s) requires !StoreSize;
 
 \indexlibrary{\idxcode{subrange}!\idxcode{subrange}}%
 \begin{itemdecl}
-constexpr subrange(I i, S s, difference_type_t<I> n) requires bool(Sized);
+constexpr subrange(I i, S s, difference_type_t<I> n)
+  requires K == subrange_kind::sized;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -528,8 +541,9 @@ constexpr subrange(I i, S s, difference_type_t<I> n) requires bool(Sized);
 
 \indexlibrary{\idxcode{subrange}!\idxcode{subrange}}%
 \begin{itemdecl}
-template <ConvertibleTo<I> X, ConvertibleTo<S> Y, subrange_kind B>
-constexpr subrange(subrange<X, Y, B> r) requires !StoreSize || bool(B);
+template <ConvertibleTo<I> X, ConvertibleTo<S> Y, subrange_kind Z>
+constexpr subrange(subrange<X, Y, Z> r)
+  requires !StoreSize || Z == subrange_kind::sized;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -544,14 +558,12 @@ constexpr subrange(subrange<X, Y, B> r) requires !StoreSize || bool(B);
 
 \indexlibrary{\idxcode{subrange}!\idxcode{subrange}}%
 \begin{itemdecl}
-template <ConvertibleTo<I> X, ConvertibleTo<S> Y, subrange_kind B>
-constexpr subrange(subrange<X, Y, B> r, difference_type_t<I> n) requires bool(Sized);
+template <ConvertibleTo<I> X, ConvertibleTo<S> Y, subrange_kind Z>
+constexpr subrange(subrange<X, Y, Z> r, difference_type_t<I> n)
+  requires K == subrange_kind::sized;
 \end{itemdecl}
 
 \begin{itemdescr}
-\pnum
-\requires \tcode{bool(B)} is \tcode{false} or \tcode{n == r.size()}.
-
 \pnum
 \effects Equivalent to \tcode{subrange\{r.begin(), r.end(), n\}}.
 \end{itemdescr}
@@ -559,25 +571,30 @@ constexpr subrange(subrange<X, Y, B> r, difference_type_t<I> n) requires bool(Si
 \indexlibrary{\idxcode{subrange}!\idxcode{subrange}}%
 \begin{itemdecl}
 template <@\textit{pair-like-convertible-to}@<I, S> PairLike>
-constexpr subrange(PairLike r) requires !StoreSize;
+constexpr subrange(PairLike&& r) requires !StoreSize;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to
-\tcode{subrange\{get<0>(std::move(r)), get<1>(std::move(r))\}}.
+\effects Equivalent to:
+\begin{codeblock}
+subrange{get<0>(std::forward<PairLike>(r)), get<1>(std::forward<PairLike>(r))}
+\end{codeblock}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{subrange}!\idxcode{subrange}}%
 \begin{itemdecl}
 template <@\textit{pair-like-convertible-to}@<I, S> PairLike>
-constexpr subrange(PairLike r, difference_type_t<I> n) requires bool(Sized);
+constexpr subrange(PairLike&& r, difference_type_t<I> n)
+  requires K == subrange_kind::sized;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to
-\tcode{subrange\{get<0>(std::move(r)), get<1>(std::move(r)), n\}}.
+\effects Equivalent to:
+\begin{codeblock}
+subrange{get<0>(std::forward<PairLike>(r)), get<1>(std::forward<PairLike>(r)), n}
+\end{codeblock}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{subrange}!\idxcode{subrange}}%
@@ -592,7 +609,7 @@ constexpr subrange(R& r) requires !StoreSize || SizedRange<R>;
 \effects Equivalent to:
 \begin{itemize}
 \item If \tcode{StoreSize} is \tcode{true},
-\tcode{subrange\{ranges::begin(r), ranges::end(r), ranges::size(r)\}}.
+\tcode{subrange\{ranges::begin(r), ranges::end(r), distance(r)\}}.
 \item Otherwise,
 \tcode{subrange\{ranges::begin(r), ranges::end(r)\}}.
 \end{itemize}
@@ -608,7 +625,7 @@ constexpr operator PairLike() const;
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to: \tcode{return PairLike\{begin_, end_\};}.
+\effects Equivalent to: \tcode{return PairLike(begin_, end_);}.
 \end{itemdescr}
 
 \rSec4[ranges.subrange.accessors]{\tcode{subrange} accessors}
@@ -625,7 +642,7 @@ constexpr I begin() const;
 
 \indexlibrary{\idxcode{end}!\idxcode{subrange}}%
 \begin{itemdecl}
-constexpr I end() const;
+constexpr S end() const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -645,7 +662,8 @@ constexpr bool empty() const;
 
 \indexlibrary{\idxcode{size}!\idxcode{subrange}}%
 \begin{itemdecl}
-constexpr auto size() const requires bool(Sized);
+constexpr difference_type_t<I> size() const
+  requires K == subrange_kind::sized;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -670,11 +688,15 @@ auto tmp = *this;
 tmp.advance(n);
 return tmp;
 \end{codeblock}
+
+\pnum \enternote If \tcode{ForwardIterator<I>} is not satisfied, \tcode{next}
+may invalidate \tcode{*this}. \exitnote
 \end{itemdescr}
 
 \indexlibrary{\idxcode{prev}!\idxcode{subrange}}%
 \begin{itemdecl}
-[[nodiscard]] constexpr subrange prev(difference_type_t<I> n = 1) const;
+[[nodiscard]] constexpr subrange prev(difference_type_t<I> n = 1) const
+  requires BidirectionalIterator<I>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -713,9 +735,9 @@ return *this;
 
 \indexlibrary{\idxcode{get}!\idxcode{subrange}}%
 \begin{itemdecl}
-template <std::size_t N, class I, class S, subrange_kind Sized>
+template <std::size_t N, class I, class S, subrange_kind K>
   requires N < 2
-constexpr auto get(const subrange<I, S, Sized>& r) noexcept;
+constexpr auto get(const subrange<I, S, K>& r);
 \end{itemdecl}
 
 \begin{itemdescr}
