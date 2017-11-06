@@ -1423,22 +1423,22 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
           Constructible<R, all_view<O>>
     constexpr transform_view(O&& o, F fun);
 
-    using iterator = @\xname{iterator}@<false>;
-    using sentinel = @\xname{sentinel}@<false>;
-    using const_iterator = @\xname{iterator}@<true>;
-    using const_sentinel = @\xname{sentinel}@<true>;
+    @\removed{using iterator = \xname{iterator}<false>;}@
+    @\removed{using sentinel = \xname{sentinel}<false>;}@
+    @\removed{using const_iterator = \xname{iterator}<true>;}@
+    @\removed{using const_sentinel = \xname{sentinel}<true>;}@
 
     constexpr R base() const;
 
-    constexpr iterator begin();
-    constexpr const_iterator begin() const requires Range<const R> &&
+    constexpr @\changed{iterator}{auto}@ begin();
+    constexpr @\changed{const_iterator}{auto}@ begin() const requires Range<const R> &&
       Invocable<const F&, reference_t<iterator_t<const R>>>;
 
-    constexpr sentinel end();
-    constexpr const_sentinel end() const requires Range<const R> &&
+    constexpr @\changed{sentinel}{auto}@ end();
+    constexpr @\changed{const_sentinel}{auto}@ end() const requires Range<const R> &&
       Invocable<const F&, reference_t<iterator_t<const R>>>;
-    constexpr iterator end() requires BoundedRange<R>;
-    constexpr const_iterator end() const requires BoundedRange<const R> &&
+    constexpr @\changed{iterator}{auto}@ end() requires BoundedRange<R>;
+    constexpr @\changed{const_iterator}{auto}@ end() const requires BoundedRange<const R> &&
       Invocable<const F&, reference_t<iterator_t<const R>>>;
 
     constexpr auto size() requires SizedRange<R>;
@@ -1494,39 +1494,52 @@ constexpr R base() const;
 
 \indexlibrary{\idxcode{begin}!\idxcode{transform_view}}%
 \begin{itemdecl}
-constexpr iterator begin();
-constexpr const_iterator begin() const
-requires Range<const R> && Invocable<const F&, reference_t<iterator_t<const R>>>;
+constexpr @\changed{iterator}{auto}@ begin();
+constexpr @\changed{const_iterator}{auto}@ begin() const requires Range<const R> &&
+  Invocable<const F&, reference_t<iterator_t<const R>>>;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
 \effects Equivalent to:
 \begin{codeblock}
-return {*this, ranges::begin(base_)};
+return @\added{\xname{iterator}<false>}@{*this, ranges::begin(base_)};
 \end{codeblock}
+\begin{addedblock}
+  and
+\begin{codeblock}
+return @\added{\xname{iterator}<true>}@{*this, ranges::begin(base_)};
+\end{codeblock}
+for the first and second overload, respectively.
+\end{addedblock}
 \end{itemdescr}
 
 \rSec4[ranges.adaptors.transform_view.end]{\tcode{transform_view} range end}
 
 \indexlibrary{\idxcode{end}!\idxcode{transform_view}}%
 \begin{itemdecl}
-constexpr sentinel end();
-constexpr const_sentinel end() const requires Range<const R> &&
+constexpr @\changed{sentinel}{auto}@ end();
+constexpr @\changed{const_sentinel}{auto}@ end() const requires Range<const R> &&
   Invocable<const F&, reference_t<iterator_t<const R>>>;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to \tcode{sentinel\{ranges::end(base_)\}} and
-\tcode{const_sentinel\{ranges::end(base_)\}} for the first and second overload,
-respectively.
+\effects Equivalent to\added{:}
+\begin{codeblock}
+@\added{return} \changed{sentinel}{\xname{sentinel}<false>}\{ranges::end(base_)\}\added{;}@
+\end{codeblock}
+  and
+\begin{codeblock}
+@\added{return} \changed{const_sentinel}{\xname{sentinel}<true>}\{ranges::end(base_)\}\added{;}@
+\end{codeblock}
+for the first and second overload, respectively.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{end}!\idxcode{transform_view}}%
 \begin{itemdecl}
-constexpr iterator end() requires BoundedRange<R>;
-constexpr const_iterator end() const requires BoundedRange<R> &&
+constexpr @\changed{iterator}{auto}@ end() requires BoundedRange<R>;
+constexpr @\changed{const_iterator}{auto}@ end() const requires BoundedRange<@\added{const}@ R> &&
   Invocable<const F&, reference_t<iterator_t<const R>>>;
 \end{itemdecl}
 
@@ -1534,8 +1547,15 @@ constexpr const_iterator end() const requires BoundedRange<R> &&
 \pnum
 \effects Equivalent to:
 \begin{codeblock}
-return {*this, ranges::end(base_)};
+return @\added{\xname{iterator}<false>}@{*this, ranges::end(base_)};
 \end{codeblock}
+\begin{addedblock}
+  and
+\begin{codeblock}
+return @\added{\xname{iterator}<true>}@{*this, ranges::end(base_)};
+\end{codeblock}
+for the first and second overload, respectively.
+\end{addedblock}
 \end{itemdescr}
 
 \rSec4[ranges.adaptors.transform_view.size]{\tcode{transform_view} range size}
@@ -2809,10 +2829,10 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     constexpr auto size() requires SizedRange<R>;
     constexpr auto size() const requires SizedRange<const R>;
 
-    using iterator = iterator_t<take_view>;
-    using const_iterator = @\seebelow@;
-    using sentinel = sentinel_t<take_view>;
-    using const_sentinel = @\seebelow@;
+    @\removed{using iterator = iterator_t<take_view>;}@
+    @\removed{using const_iterator = \seebelow;}@
+    @\removed{using sentinel = sentinel_t<take_view>;}@
+    @\removed{using const_sentinel = \seebelow;}@
   };
 
   template <InputRange R>
@@ -2821,6 +2841,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 }}}}
 \end{codeblock}
 
+\begin{removedblock}
 \pnum
 \tcode{take_view<R>::const_iterator} is defined as follows:
 \begin{itemize}
@@ -2836,6 +2857,7 @@ an alias for \tcode{iterator_t<const take_view>}.
 an alias for \tcode{sentinel_t<const take_view>}.
 \item Otherwise, there is no type \tcode{take_view<R>::const_sentinel}.
 \end{itemize}
+\end{removedblock}
 
 \rSec3[ranges.adaptors.take_view.ops]{\tcode{take_view} operations}
 \rSec4[ranges.adaptors.take_view.ctor]{\tcode{take_view} constructors}
@@ -3123,26 +3145,26 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
             Constructible<R, all_view<O>>
       constexpr explicit join_view(O&& o);
 
-    using iterator = @\xname{iterator}@<@\changed{false}{\textit{simple-view}<R>}@>;
-    using sentinel = @\xname{sentinel}@<@\changed{false}{\textit{simple-view}<R>}@>;
-    using const_iterator = @\xname{iterator}@<true>;
-    using const_sentinel = @\xname{sentinel}@<true>;
+    @\removed{using iterator = \xname{iterator}<false>;}@
+    @\removed{using sentinel = \xname{sentinel}<false>;}@
+    @\removed{using const_iterator = \xname{iterator}<true>;}@
+    @\removed{using const_sentinel = \xname{sentinel}<true>;}@
 
-    constexpr iterator begin();
+    constexpr @\changed{iterator}{auto}@ begin();
 
-    constexpr const_iterator begin() const requires InputRange<const R> &&
+    constexpr @\changed{const_iterator}{auto}@ begin() const requires InputRange<const R> &&
         is_reference_v<reference_t<iterator_t<const R>>>;
 
-    constexpr sentinel end();
+    constexpr @\changed{sentinel}{auto}@ end();
 
-    constexpr const_sentinel end() const requires InputRange<const R> &&
+    constexpr @\changed{const_sentinel}{auto}@ end() const requires InputRange<const R> &&
         is_reference_v<reference_t<iterator_t<const R>>>;
 
-    constexpr iterator end() requires ForwardRange<R> &&
+    constexpr @\changed{iterator}{auto}@ end() requires ForwardRange<R> &&
         is_reference_v<InnerRng> && ForwardRange<InnerRng> &&
         BoundedRange<R> && BoundedRange<InnerRng>;
 
-    constexpr const_iterator end() const requires ForwardRange<const R> &&
+    constexpr @\changed{const_iterator}{auto}@ end() const requires ForwardRange<const R> &&
         is_reference_v<reference_t<iterator_t<const R>>> &&
         ForwardRange<reference_t<iterator_t<const R>>> &&
         BoundedRange<const R> && BoundedRange<reference_t<iterator_t<const R>>>;
@@ -3186,38 +3208,54 @@ constexpr explicit join_view(O&& o);
 
 \indexlibrary{\idxcode{begin}!\idxcode{join_view}}%
 \begin{itemdecl}
-constexpr iterator begin();
-constexpr const_iterator begin() const requires InputRange<const R> &&
+constexpr @\changed{iterator}{auto}@ begin();
+constexpr @\changed{const_iterator}{auto}@ begin() const requires InputRange<const R> &&
   is_reference_v<reference_t<iterator_t<const R>>>;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\returns \tcode{\{*this, ranges::begin(base_)\}}.
+\effects \added{Equivalent to:}
+\begin{codeblock}
+@\added{return \xname{iterator}<\textit{simple-view}<R{>}>}@{*this, ranges::begin(base_)}@\added{;}@
+\end{codeblock}
+\begin{addedblock}
+and
+\begin{codeblock}
+return @\xname{iterator}@<true>{*this, ranges::begin(base_)};
+\end{codeblock}
+for the first and second overloads, respectively.
+\end{addedblock}.
 \end{itemdescr}
 
 \rSec4[ranges.adaptors.join_view.end]{\tcode{join_view} range end}
 
 \indexlibrary{\idxcode{end}!\idxcode{join_view}}%
 \begin{itemdecl}
-constexpr sentinel end();
-constexpr const_sentinel end() const requires InputRange<const R> &&
+constexpr @\changed{sentinel}{auto}@ end();
+constexpr @\changed{const_sentinel}{auto}@ end() const requires InputRange<const R> &&
   is_reference_v<reference_t<iterator_t<const R>>>;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to \tcode{sentinel\{*this\}} and
-\tcode{const_sentinel\{*this\}} for the first and second overload,
-respectively.
+\effects Equivalent to\added{:}
+\begin{codeblock}
+@\added{return} \changed{sentinel}{\xname{sentinel}<\textit{simple-view}<R>{>}}\{*this\}\added{;}@
+\end{codeblock}
+  and
+\begin{codeblock}
+@\added{return} \changed{const_sentinel}{\xname{sentinel}<true>}\{*this\}\added{;}@
+\end{codeblock}
+for the first and second overload, respectively.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{end}!\idxcode{join_view}}%
 \begin{itemdecl}
-constexpr iterator end() requires ForwardRange<R> &&
+constexpr @\changed{iterator}{auto}@ end() requires ForwardRange<R> &&
   is_reference_v<InnerRng> && ForwardRange<InnerRng> &&
   BoundedRange<R> && BoundedRange<InnerRng>;
-constexpr const_iterator end() const requires ForwardRange<const R> &&
+constexpr @\changed{const_iterator}{auto}@ end() const requires ForwardRange<const R> &&
   is_reference_v<reference_t<iterator_t<const R>>> &&
   ForwardRange<reference_t<iterator_t<const R>>> &&
   BoundedRange<const R> && BoundedRange<reference_t<iterator_t<const R>>>;
@@ -3225,7 +3263,17 @@ constexpr const_iterator end() const requires ForwardRange<const R> &&
 
 \begin{itemdescr}
 \pnum
-\returns \tcode{\{*this, ranges::end(base_)\}}.
+\effects \added{Equivalent to:}
+\begin{codeblock}
+@\added{return \xname{iterator}<\textit{simple-view}<R{>}>}@{*this, ranges::end(base_)}@\added{;}@
+\end{codeblock}
+\begin{addedblock}
+and
+\begin{codeblock}
+return @\xname{iterator}@<true>{*this, ranges::end(base_)};
+\end{codeblock}
+for the first and second overloads, respectively.
+\end{addedblock}
 \end{itemdescr}
 
 \rSec3[ranges.adaptors.join_view.iterator]{Class template \tcode{join_view::\xname{iterator}}}
@@ -3683,10 +3731,10 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   public:
     @\removed{empty_view() = default;}@
 
-    using iterator = T*;
-    using const_iterator = T*;
-    using sentinel = T*;
-    using const_sentinel = T*;
+    @\removed{using iterator = T*;}@
+    @\removed{using const_iterator = T*;}@
+    @\removed{using sentinel = T*;}@
+    @\removed{using const_sentinel = T*;}@
 
     constexpr static T* begin() noexcept;
     constexpr static T* end() noexcept;
@@ -3774,10 +3822,10 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
       requires Constructible<T, Args...>
     constexpr single_view(in_place_t, Args&&... args);
 
-    using iterator = const T*;
-    using const_iterator = const T*;
-    using sentinel = const T*;
-    using const_sentinel = const T*;
+    @\removed{using iterator = const T*;}@
+    @\removed{using const_iterator = const T*;}@
+    @\removed{using sentinel = const T*;}@
+    @\removed{using const_sentinel = const T*;}@
 
     constexpr const T* begin() const noexcept;
     constexpr const T* end() const noexcept;
@@ -3959,21 +4007,21 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
           Constructible<Pattern, single_view<value_type_t<iterator_t<O>>>>
     constexpr split_view(O&& o, value_type_t<iterator_t<O>> e);
 
-    using iterator = @\xname{outer_iterator}@<@\changed{false}{\textit{simple-view}<R>}@>;
-    using sentinel = @\xname{outer_sentinel}@<@\changed{false}{\textit{simple-view}<R>}@>;
-    using const_iterator = @\xname{outer_iterator}@<true>;
-    using const_sentinel = @\xname{outer_sentinel}@<true>;
+    @\removed{using iterator = \xname{outer_iterator}<false>;}@
+    @\removed{using sentinel = \xname{outer_sentinel}<false>;}@
+    @\removed{using const_iterator = \xname{outer_iterator}<true>;}@
+    @\removed{using const_sentinel = \xname{outer_sentinel}<true>;}@
 
-    constexpr iterator begin();
-    constexpr iterator begin() requires ForwardRange<Rng>;
-    constexpr const_iterator begin() const requires ForwardRange<@\added{const}@ Rng>;
+    constexpr @\changed{iterator}{auto}@ begin();
+    constexpr @\changed{iterator}{auto}@ begin() requires ForwardRange<Rng>;
+    constexpr @\changed{const_iterator}{auto}@ begin() const requires ForwardRange<@\added{const}@ Rng>;
 
-    constexpr sentinel end()
-    constexpr const_sentinel end() const requires ForwardRange<@\added{const}@ Rng>;
+    constexpr @\changed{sentinel}{auto}@ end()
+    constexpr @\changed{const_sentinel}{auto}@ end() const requires ForwardRange<@\added{const}@ Rng>;
 
-    constexpr iterator end()
+    constexpr @\changed{iterator}{auto}@ end()
       requires ForwardRange<Rng> && BoundedRange<Rng>;
-    constexpr const_iterator end() const
+    constexpr @\changed{const_iterator}{auto}@ end() const
       requires ForwardRange<@\added{const}@ Rng> && BoundedRange<@\added{const}@ Rng>;
   };
 
@@ -4042,7 +4090,7 @@ constexpr split_view(O&& o, value_type_t<iterator_t<O>> e);
 
 \indexlibrary{\idxcode{begin}!\idxcode{split_view}}%
 \begin{itemdecl}
-constexpr iterator begin();
+constexpr @\changed{iterator}{auto}@ begin();
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4056,41 +4104,65 @@ return iterator{*this};
 
 \indexlibrary{\idxcode{begin}!\idxcode{split_view}}%
 \begin{itemdecl}
-constexpr iterator begin() requires ForwardRange<Rng>;
-constexpr const_iterator begin() const requires ForwardRange<Rng>;
+constexpr @\changed{iterator}{auto}@ begin() requires ForwardRange<Rng>;
+constexpr @\changed{const_iterator}{auto}@ begin() const requires ForwardRange<Rng>;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\returns \tcode{\{*this, ranges::begin(base_)\}}.
+\effects \added{Equivalent to:}
+\begin{codeblock}
+@\added{return \xname{outer_iterator}<\textit{simple-view}<R{>}>}@{*this, ranges::begin(base_)}@\added{;}@
+\end{codeblock}
+\begin{addedblock}
+  and
+\begin{codeblock}
+return @\xname{outer_iterator}@<true>{*this, ranges::begin(base_)};
+\end{codeblock}
+\end{addedblock}
 \end{itemdescr}
 
 \rSec4[ranges.adaptors.split_view.end]{\tcode{split_view} range end}
 
 \indexlibrary{\idxcode{end}!\idxcode{split_view}}%
 \begin{itemdecl}
-constexpr sentinel end()
-constexpr const_sentinel end() const requires ForwardRange<Rng>;
+constexpr @\changed{sentinel}{auto}@ end()
+constexpr @\changed{const_sentinel}{auto}@ end() const requires ForwardRange<Rng>;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to \tcode{sentinel\{*this\}} and
-\tcode{const_sentinel\{*this\}} for the first and second overloads,
-respectively.
+\effects Equivalent to\added{:}
+\begin{codeblock}
+@\added{return} \changed{sentinel}{\xname{outer_sentinel}<\textit{simple-view}<R{>}>}@{*this}@\added{;}@
+\end{codeblock}
+and
+\begin{codeblock}
+@\added{return} \changed{const_sentinel}{\xname{outer_sentinel}<true>}@{*this}@\added{;}@
+\end{codeblock}
+for the first and second overloads, respectively.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{end}!\idxcode{split_view}}%
 \begin{itemdecl}
-constexpr iterator end()
+constexpr @\changed{iterator}{auto}@ end()
 requires ForwardRange<Rng> && BoundedRange<Rng>;
-constexpr const_iterator end() const
+constexpr @\changed{const_iterator}{auto}@ end() const
 requires ForwardRange<Rng> && BoundedRange<Rng>;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\returns \tcode{\{*this, ranges::end(base_)\}}.
+\effects \added{Equivalent to:}
+\begin{codeblock}
+@\added{return \xname{outer_iterator}<\textit{simple-view}<R{>}>}@{*this, ranges::end(base_)}@\added{;}@
+\end{codeblock}
+\begin{addedblock}
+  and
+\begin{codeblock}
+return @\xname{outer_iterator}@<true>{*this, ranges::end(base_)};
+\end{codeblock}
+\end{addedblock}
 \end{itemdescr}
 
 \rSec3[ranges.adaptors.split_view.outer_iterator]{Class template \tcode{split_view::\xname{outer_iterator}}}
@@ -4397,13 +4469,13 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     value_type() = default;
     constexpr explicit value_type(@\xname{outer_iterator}@ i);
 
-    using iterator = @\xname{inner_iterator}@<Const>;
-    using sentinel = @\xname{inner_sentinel}@<Const>;
-    using const_iterator = @\xname{inner_iterator}@<Const>;
-    using const_sentinel = @\xname{inner_sentinel}@<Const>;
+    @\removed{using iterator = \xname{inner_iterator}<Const>;}@
+    @\removed{using sentinel = \xname{inner_sentinel}<Const>;}@
+    @\removed{using const_iterator = \xname{inner_iterator}<Const>;}@
+    @\removed{using const_sentinel = \xname{inner_sentinel}<Const>;}@
 
-    constexpr iterator begin() const;
-    constexpr sentinel end() const;
+    constexpr @\changed{iterator}{auto}@ begin() const;
+    constexpr @\changed{sentinel}{auto}@ end() const;
   };
 }}}}
 \end{codeblock}
@@ -4424,24 +4496,30 @@ constexpr explicit value_type(@\xname{outer_iterator}@ i);
 
 \indexlibrary{\idxcode{begin}!\idxcode{split_view::\xname{outer_iterator}::value_type}}%
 \begin{itemdecl}
-constexpr iterator begin() const;
+constexpr @\changed{iterator}{auto}@ begin() const;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\returns \tcode{iterator\{i_\}}.
+\effects \added{Equivalent to:}
+\begin{codeblock}
+@\added{return} \changed{iterator}{\xname{inner_iterator}<Const>}\{i_\}\added{;}@
+\end{codeblock}
 \end{itemdescr}
 
 \rSec4[ranges.adaptors.split_view.outer_iterator.value_type.end]{\tcode{split_view::\xname{outer_iterator}::value_type} range end}
 
 \indexlibrary{\idxcode{end}!\idxcode{split_view::\xname{outer_iterator}::value_type}}%
 \begin{itemdecl}
-constexpr sentinel end() const;
+constexpr @\changed{sentinel}{auto}@ end() const;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\returns \tcode{sentinel\{\}}.
+\effects \added{Equivalent to:}
+\begin{codeblock}
+@\added{return} \changed{sentinel}{\xname{inner_sentinel}<Const>}\{\}\added{;}@
+\end{codeblock}
 \end{itemdescr}
 
 \rSec3[ranges.adaptors.split_view.inner_iterator]{Class template \tcode{split_view::\xname{inner_iterator}}}
