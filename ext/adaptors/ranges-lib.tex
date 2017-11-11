@@ -211,6 +211,9 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1
       requires @\changed{ForwardRange<const D>}{requires \{ ranges::empty(derived()); \}}@;
     @\removed{constexpr bool operator!() const requires ForwardRange<const D>;}@
 
+    @\added{template <RandomAccessRange R = const D>}@
+      @\added{constexpr auto data() const requires is_pointer_v<iterator_t<R>>;}@
+
     constexpr auto size() const requires ForwardRange<const D> &&
       SizedSentinel<sentinel_t<const D>, iterator_t<const D>>;
 
@@ -281,6 +284,19 @@ constexpr bool operator!() const requires ForwardRange<const D>;
 \returns \tcode{empty()}.
 \end{itemdescr}
 \end{removedblock}
+
+\begin{addedblock}
+\indexlibrary{\idxcode{data}!\idxcode{view_interface}}%
+\begin{itemdecl}
+template <RandomAccessRange R = const D>
+  constexpr auto data() const requires is_pointer_v<iterator_t<R>>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to: \tcode{return ranges::begin(derived());}.
+\end{itemdescr}
+\end{addedblock}
 
 \indexlibrary{\idxcode{size}!\idxcode{view_interface}}%
 \begin{itemdecl}
@@ -2132,7 +2148,7 @@ stl2\#507 (\url{https://github.com/ericniebler/stl2/issues/507}).}
 \enterexample
 \begin{codeblock}
 iota_view indices{1, 10};
-for (int i : squares)
+for (int i : @\changed{squares}{indices}@)
   cout << i << ' '; // prints: 1 2 3 4 5 6 7 8 9
 \end{codeblock}
 \exitexample
@@ -4823,8 +4839,9 @@ and \tcode{U} respectively. Then the expression \tcode{view::counted(E, F)} is
 expression-equivalent to:
 
 \begin{itemize}
-\item \tcode{\changed{iterator_range}{subrange}\{E, E + F\}} if \tcode{T} is a pointer to an object type,
-and if \tcode{U} is implicitly convertible to \tcode{ptrdiff_t}.
+\item \tcode{\changed{iterator_range}{subrange}\{E, E + F\}} \changed{is}{if}
+\tcode{T} is a pointer to an object type, and if \tcode{U} is implicitly
+convertible to \tcode{ptrdiff_t}.
 \item Otherwise, \tcode{\changed{iterator_range}{subrange}\{\removed{make_}counted_iterator(E,
 \changed{F}{static_cast<difference_type_t<\ T>{>}(F)}), default_sentinel\{\}\}}
 if \tcode{It\-erator<T> \&\& ConvertibleTo<U, difference_type_t<T>{>}} is satisfied.
