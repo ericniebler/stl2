@@ -14,6 +14,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 
   // \ref{ranges.view_interface}:
   template <class D>
+    @\added{requires is_class_v<D>}@
   class view_interface;
 
   @\removed{// 10.7.2.1:}@
@@ -176,7 +177,7 @@ ranges.
 \rSec2[ranges.view_interface]{View interface}
 
 \pnum
-The \tcode{view_interface} is a helper for defining \tcode{View}-like types that offer a
+The \added{class template} \tcode{view_interface} is a helper for defining \tcode{View}-like types that offer a
 container-like interface. It is parameterized with the type that inherits from it.
 
 \indexlibrary{\idxcode{view_interface}}%
@@ -197,6 +198,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1
       typename @\textit{range-common-iterator-impl}@<R>::type;
 
   template <class D>
+    @\added{requires is_class_v<D>}@
   class view_interface : @\added{public}@ view_base {
   private:
     constexpr D& derived() noexcept { // \expos
@@ -212,7 +214,8 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1
     @\removed{constexpr bool operator!() const requires ForwardRange<const D>;}@
 
     @\added{template <RandomAccessRange R = const D>}@
-      @\added{constexpr auto data() const requires is_pointer_v<iterator_t<R>>;}@
+        @\added{requires is_pointer_v<iterator_t<R>{>}}@
+      @\added{constexpr auto data() const;}@
 
     constexpr auto size() const requires ForwardRange<const D> &&
       SizedSentinel<sentinel_t<const D>, iterator_t<const D>>;
@@ -289,7 +292,8 @@ constexpr bool operator!() const requires ForwardRange<const D>;
 \indexlibrary{\idxcode{data}!\idxcode{view_interface}}%
 \begin{itemdecl}
 template <RandomAccessRange R = const D>
-  constexpr auto data() const requires is_pointer_v<iterator_t<R>>;
+    requires is_pointer_v<iterator_t<R>>
+  constexpr auto data() const;
 \end{itemdecl}
 
 \begin{itemdescr}
