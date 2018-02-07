@@ -1,4 +1,4 @@
-\rSec0[intro]{General}
+\rSec0[intro.scope]{Scope}
 
 \begin{quote}
 ``Eventually, all things merge into one, and a river runs through it.''
@@ -7,15 +7,13 @@
 \end{flushright}
 \end{quote}
 
-\rSec1[intro.scope]{Scope}
-
 \pnum
 This document proposes to merge the ISO/IEC TS 21425:2017, aka the Ranges TS,
 into the working draft. This document is intended to be taken in conjunction with
-P0XXX, a paper which proposes importing the definitions of the Ranges TS's Concepts
-library (Clause 7) into \tcode{namespace std}.
+P0898, a paper which proposes importing the definitions of the Ranges TS's Concepts
+library (Clause 7) into namespace \tcode{std}.
 
-\rSec1[intro.refs]{References}
+\rSec0[intro.refs]{Normative References}
 
 \pnum
 The following referenced documents are indispensable for the
@@ -24,23 +22,58 @@ edition cited applies. For undated references, the latest edition
 of the referenced document (including any amendments) applies.
 
 \begin{itemize}
-\item ISO/IEC 14882:2017, \doccite{Programming Languages - \Cpp}
+\item ISO/IEC 14882, \doccite{Programming Languages - \Cpp}
 \item ISO/IEC TS 21425:2017, \doccite{Technical Specification - \Cpp Extensions for Ranges}
 \end{itemize}
 
-ISO/IEC 14882:2017 is herein called the \defn{C\Rplus\Rplus\xspace Standard} and
+ISO/IEC 14882 is herein called the \defn{C\Rplus\Rplus\xspace Standard} and
 ISO/IEC TS 21425:2017 is called the \defn{Ranges TS}.
 
-\rSec1[intro]{General Principles}
+\rSec0[intro.defs]{Terms and Definitions}
 
-\rSec2[intro.goals]{Goals}
+\ednote{The following definitions are hereby proposed for subclause [definitions]
+of ISO/IEC 14882.}
+
+For the purposes of this document, the terms and definitions given in
+ISO/IEC 14882 and the following apply.
+
+ISO and IEC maintain terminological databases for use in standardization at
+the following addresses:
+\begin{itemize}
+\item
+ISO Online browsing platform: available at http://www.iso.org/obp
+\item
+IEC Electropedia: available at http://www.electropedia.org/
+\end{itemize}
+
+\def\definition{\definitionx{\section}}%
+
+\indexdefn{projection}%
+\definition{projection}{std2.defns.projection}
+\defncontext{function object argument} transformation which an algorithm applies
+before inspecting the values of elements
+
+\enterexample
+\begin{codeblock}
+std::pair<int, const char*> pairs[] = {{2, "foo"}, {1, "bar"}, {0, "baz"}};
+std2::sort(pairs, std::less<>{}, [](auto const& p) { return p.first; });
+\end{codeblock}
+sorts the pairs in increasing order of their \tcode{first} members:
+\begin{codeblock}
+{{0, "baz"}, {1, "bar"}, {2, "foo"}}
+\end{codeblock}
+\exitexample
+
+\rSec0[intro]{General Principles}
+
+\rSec1[intro.goals]{Goals}
 
 \pnum
 The primary goal of this proposal is to deliver high-quality, constrained generic
 Standard Library components at the same time that the language gets support for
 such components. 
 
-\rSec2[intro.rationale]{Rationale}
+\rSec1[intro.rationale]{Rationale}
 
 \pnum
 The best, and arguably only practical way to achieve the goal stated above is by
@@ -59,7 +92,7 @@ Ranges TS. The experience of the authors and implementors of the Ranges TS is th
 getting concept definitions and algorithm constraints right is \textit{hard}. The
 Standard Library should save its users from needless heartache.
 
-\rSec2[intro.risks]{Risks}
+\rSec1[intro.risks]{Risks}
 
 \pnum
 Shipping constrained components from the Ranges TS in the C++20 timeframe is not
@@ -98,7 +131,7 @@ to range-v3 where they have been thoroughly vetted over the past 2 years.
 
 \pnum
 In short, concern about lack of implementation experience should not be a reason
-to without this important Standard Library advance from users.
+to withhold this important Standard Library advance from users.
 
 \rSec1[intro.methedology]{Methodology}
 
@@ -106,7 +139,13 @@ to without this important Standard Library advance from users.
 The contents of the Ranges TS, Clause 7 (``Concepts library'') are proposed
 for namespace \tcode{std} by P0898, ``Standard Library Concepts''~(\cite{P0898}).
 Additionally, P0898 proposes the \tcode{identity} function
-object~(\tsref{func.identity}) for namespace \tcode{std}.
+object~(\tsref{func.identity}) and the \tcode{common_reference} type
+trait~(\tsref{meta.trans.other}) for namespace \tcode{std}, and the \tcode{swap}
+customization point object for namespace \tcode{std2}. The changes proposed by
+the Ranges TS to \tcode{common_type} are merged into the working paper (also
+by P0898). The ``\tcode{invoke}'' function and the ``\tcode{swappable}'' type
+traits (e.g., \tcode{is_swappable_with}) already exist in the text of the
+working paper, so they are omitted here.
 
 \pnum
 The salient, high-level features of this proposal are as follows:
@@ -120,6 +159,11 @@ namespace \tcode{::std2::}.
 \item Structurally, this paper proposes to relocate the existing library clauses
 of the working draft (20-33) down one level under a new clause 20, provisionally
 titled ``Standard Library, Version 1''. No stable names are changed.
+
+\item The Concepts Library clause, proposed by P0898, is located in that paper
+between the ``Language Support Library'' and the ``Diagnostics library''. In the
+organization proposed by this paper, that places it as subclause 20.3. This paper
+refers to it as such.
 
 \item We additionally propose that a new clause 21 be created, provisionally
 titled ``Standard Library, Version 2'', and the following clauses of the Ranges
@@ -140,7 +184,7 @@ changed by preprending ``\tcode{std2.}''. References are updated accordingly.
 
 \pnum
 Conformance requirements for this specification are the same as those
-defined in \ref{intro.compliance} in the \Cpp Standard.
+defined in \cxxref{intro.compliance} in the \Cpp Standard.
 \enternote
 Conformance is defined in terms of the behavior of programs.
 \exitnote
@@ -156,5 +200,6 @@ namespace.
 \pnum
 Unless otherwise specified, references to entities described in this
 document are assumed to be qualified with \tcode{::std2::}, and
-references to entities described in the International Standard are assumed to be
-qualified with \tcode{::std::}.
+references to entities described in the current working draft of the
+International Standard, including the entities of the ``Concepts library''
+proposed by P0898, are assumed to be qualified with \tcode{::std::}.

@@ -4,8 +4,8 @@
 \rSec1[std2.iterators.general]{General}
 
 \pnum
-This Clause describes components that \Cpp programs may use to perform
-iterations over containers (Clause \cxxref{containers}),
+This \changed{C}{Subc}lause describes components that \Cpp programs may use to perform
+iterations over containers (\changed{C}{Subc}lause \cxxref{containers}),
 streams~(\cxxref{iostream.format}),
 and stream buffers~(\cxxref{stream.buffers}).
 
@@ -696,7 +696,7 @@ is undefined.
 
 \pnum
 The name \tcode{iter_move} denotes a \techterm{customization point
-object}~(\ref{customization.point.object}). The expression
+object}~(\cxxref{customization.point.object}). The expression
 \tcode{\changed{ranges}{::std2}::iter_move(E)} for some subexpression \tcode{E} is expression-equivalent to the
 following:
 
@@ -723,7 +723,7 @@ ill-formed with no diagnostic required.
 
 \pnum
 The name \tcode{iter_swap} denotes a \techterm{customization point
-object}~(\ref{customization.point.object}). The expression
+object}~(\cxxref{customization.point.object}). The expression
 \tcode{\changed{ranges}{::std2}::iter_swap(E1, E2)} for some subexpressions \tcode{E1} and \tcode{E2}
 is expression-equivalent to the following:
 
@@ -738,7 +738,7 @@ void iter_swap(auto, auto) = delete;
 
 \item Otherwise, if the types of \tcode{E1} and \tcode{E2} both satisfy
 \tcode{Readable}, and if the reference type of \tcode{E1} is swappable
-with~(\ref{concepts.lib.corelang.swappable}) the reference type of \tcode{E2},
+with~(\cxxref{concepts.lib.corelang.swappable}) the reference type of \tcode{E2},
 then \tcode{\changed{ranges}{::std2}::swap(*E1, *E2)}
 
 \item Otherwise, if the types \tcode{T1} and \tcode{T2} of \tcode{E1} and
@@ -779,11 +779,11 @@ NE(remove_reference_t<Y>, remove_reference_t<X>)
 \end{codeblock}
 Where \tcode{NE(T1, T2)} is the expression:
 \begin{codeblock}
-is_nothrow_constructible<value_type_t<T1>, rvalue_reference_t<T1>>::value &&
-is_nothrow_assignable<value_type_t<T1>&, rvalue_reference_t<T1>>::value &&
-is_nothrow_assignable<reference_t<T1>, rvalue_reference_t<T2>>::value &&
-is_nothrow_assignable<reference_t<T1>, value_type_t<T2>>::value> &&
-is_nothrow_move_constructible<value_type_t<T1>>::value &&
+is_nothrow_constructible@\added{_v}@<value_type_t<T1>, rvalue_reference_t<T1>>@\removed{::value}@ &&
+is_nothrow_assignable@\added{_v}@<value_type_t<T1>&, rvalue_reference_t<T1>>@\removed{::value}@ &&
+is_nothrow_assignable@\added{_v}@<reference_t<T1>, rvalue_reference_t<T2>>@\removed{::value}@ &&
+is_nothrow_assignable@\added{_v}@<reference_t<T1>, value_type_t<T2>>@\removed{::value}@> &&
+is_nothrow_move_constructible@\added{_v}@<value_type_t<T1>>@\removed{::value}@ &&
 noexcept(@\changed{ranges}{::std2}@::iter_move(declval<T1&>()))
 \end{codeblock}
 \end{itemdescr}
@@ -822,7 +822,7 @@ be defined as the iterator's difference type, value type and iterator category, 
 
   template <class T>
   struct difference_type<T*>
-    : enable_if<is_object<T>::value, ptrdiff_t> { };
+    : enable_if<is_object@\added{_v}@<T>@\removed{::value}@, ptrdiff_t> { };
 
   template <class I>
   struct difference_type<const I> : difference_type<decay_t<I>> { };
@@ -859,10 +859,10 @@ A \tcode{Readable} type has an associated value type that can be accessed with t
 
   template <class T>
   struct value_type<T*>
-    : enable_if<is_object<T>::value, remove_cv_t<T>> { };
+    : enable_if<is_object<T>@\removed{::value}@, remove_cv_t<T>> { };
 
   template <class I>
-    requires is_array<I>::value
+    requires is_array@\added{_v}@<I>@\removed{::value}@
   struct value_type<I> : value_type<decay_t<I>> { };
 
   template <class I>
@@ -871,13 +871,13 @@ A \tcode{Readable} type has an associated value type that can be accessed with t
   template <class T>
     requires requires { typename T::value_type; }
   struct value_type<T>
-    : enable_if<is_object<typename T::value_type>::value, typename T::value_type> { };
+    : enable_if<is_object@\added{_v}@<typename T::value_type>@\removed{::value}@, typename T::value_type> { };
 
   template <class T>
     requires requires { typename T::element_type; }
   struct value_type<T>
     : enable_if<
-        is_object<typename T::element_type>::value,
+        is_object@\added{_v}@<typename T::element_type>@\removed{::value}@,
         remove_cv_t<typename T::element_type>>
     { };
 
@@ -922,7 +922,7 @@ is implemented as if:
 
   template <class T>
   struct iterator_category<T*>
-    : enable_if<is_object<T>::value, random_access_iterator_tag> { };
+    : enable_if<is_object@\added{_v}@<T>@\removed{::value}@, random_access_iterator_tag> { };
 
   template <class T>
   struct iterator_category<T const> : iterator_category<T> { };
@@ -1224,13 +1224,13 @@ A program that instantiates a library template that requires
 \tcode{S} that meet the syntactic requirements of \tcode{SizedSentinel<S, I>}
 but do not satisfy \tcode{SizedSentinel} is ill-formed with no diagnostic required
 unless \tcode{disable_sized_sentinel<S, I>} evaluates to
-\tcode{true}~(\ref{structure.requirements}). \exitnote
+\tcode{true}~(\ref{std2.structure.requirements}). \exitnote
 
 \pnum
 \enternote The \tcode{SizedSentinel}
 concept is satisfied by pairs of
 \tcode{RandomAccessIterator}s~(\ref{std2.iterators.random.access}) and by
-counted iterators and their sentinels~(\ref{counted.iterator}).\exitnote
+counted iterators and their sentinels~(\ref{std2.counted.iterator}).\exitnote
 
 \rSec2[std2.iterators.input]{Concept \tcode{InputIterator}}
 
@@ -1240,7 +1240,7 @@ The \tcode{InputIterator} concept is a refinement of
 defines requirements for a type whose referenced values can be read (from the requirement for
 \tcode{Readable}~(\ref{std2.iterators.readable})) and which can be both pre- and post-incremented.
 \enternote Unlike in ISO/IEC 14882, input iterators are not required to satisfy
-\tcode{EqualityComparable}~(\ref{concepts.lib.compare.equalitycomparable}).\exitnote
+\tcode{EqualityComparable}~(\cxxref{concepts.lib.compare.equalitycomparable}).\exitnote
 
 \indexlibrary{\idxcode{InputIterator}}%
 \begin{codeblock}
@@ -1513,7 +1513,7 @@ callable objects~(\cxxref{func.def}) as arguments.
 
 \pnum
 The \tcode{projected} class template is intended for use when specifying the constraints of
-algorithms that accept callable objects and projections~(\ref{defns.projection}). It bundles a \tcode{Readable} type
+algorithms that accept callable objects and projections~(\ref{std2.defns.projection}). It bundles a \tcode{Readable} type
 \tcode{I} and a function \tcode{Proj} into a new \tcode{Readable} type whose
 \tcode{reference} type is the result of applying \tcode{Proj} to the
 \tcode{reference_t} of \tcode{I}.
@@ -1549,10 +1549,10 @@ for rearrangements: \tcode{Permut\-able}, \tcode{Mergeable}, and \tcode{Sortable
 There is one relational concept for comparing values from different sequences: \tcode{IndirectlyComparable}.
 
 \pnum
-\enternote The \tcode{equal_to<>} and \tcode{less<>}~(\ref{comparisons}) function types used in the
+\enternote The \tcode{equal_to<>} and \tcode{less<>}~(\ref{std2.comparisons}) function types used in the
 concepts below impose additional constraints on their arguments beyond those that appear explicitly in the
-concepts' bodies. \tcode{equal_to<>} requires its arguments satisfy \tcode{EqualityComparableWith}~(\ref{concepts.lib.compare.equalitycomparable}),
-and \tcode{less<>} requires its arguments satisfy \tcode{StrictTotallyOrderedWith}~(\ref{concepts.lib.compare.stricttotallyordered}).\exitnote
+concepts' bodies. \tcode{equal_to<>} requires its arguments satisfy \tcode{EqualityComparableWith}~(\cxxref{concepts.lib.compare.equalitycomparable}),
+and \tcode{less<>} requires its arguments satisfy \tcode{StrictTotallyOrderedWith}~(\cxxref{concepts.lib.compare.stricttotallyordered}).\exitnote
 
 \rSec2[std2.commonalgoreq.indirectlymovable]{Concept \tcode{IndirectlyMovable}}
 
@@ -1876,7 +1876,7 @@ follows:
 these partial specializations to prevent them from being considered for types that
 conform to the iterator requirements specified in ISO/IEC 14882.\exitnote
 
-\rSec2[std2.std.iterator.tags]{Standard iterator tags}
+\rSec2[std2.iterator.tags]{Standard iterator tags}
 
 \pnum
 \indexlibrary{\idxcode{output_iterator_tag}}%
@@ -1956,7 +1956,7 @@ template <class T> struct iterator_category<BinaryTreeIterator<T>> {
 Since only types that satisfy
 \tcode{RandomAccessIterator} provide the \tcode{+} operator, and
 types that satisfy \tcode{Sized\-Sent\-inel} provide the \tcode{-}
-operator, the library provides customization point objects~(\ref{customization.point.object})
+operator, the library provides customization point objects~(\cxxref{customization.point.object})
 \tcode{advance}, \tcode{dist\-ance}, \tcode{next}, and \tcode{prev}.
 These
 customization point objects
@@ -1973,7 +1973,7 @@ implementations.
 \indexlibrary{\idxcode{advance}}%
 \pnum
 The name \tcode{advance} denotes a
-customization point object~(\ref{customization.point.object}).
+customization point object~(\cxxref{customization.point.object}).
 It has the following function call operators:
 
 \begin{itemdecl}
@@ -2090,7 +2090,7 @@ template <Range R>
 \begin{itemdescr}
 \effects
 Equivalent to:
-\tcode{return distance(\changed{ranges}{::std2}::begin(r), \changed{ranges}{::std2}::end(r));}~(\ref{range.access})
+\tcode{return distance(\changed{ranges}{::std2}::begin(r), \changed{ranges}{::std2}::end(r));}~(\ref{std2.range.access})
 
 \remarks
 Instantiations of this member function template may be ill-formed if the
@@ -2107,7 +2107,7 @@ template <SizedRange R>
 \begin{itemdescr}
 \pnum
 \effects
-Equivalent to: \tcode{return \changed{ranges}{::std2}::size(r);}~(\ref{range.primitives.size})
+Equivalent to: \tcode{return \changed{ranges}{::std2}::size(r);}~(\ref{std2.range.primitives.size})
 
 \pnum
 \remarks
@@ -2703,7 +2703,7 @@ friend constexpr rvalue_reference_t<I> iter_move(const reverse_iterator& i)
 \remarks The expression in \tcode{noexcept} is equivalent to:
 \begin{codeblock}
    noexcept(@\changed{ranges}{::std2}@::iter_move(declval<I&>())) && noexcept(--declval<I&>()) &&
-     is_nothrow_copy_constructible<I>::value
+     is_nothrow_copy_constructible@\added{_v}@<I>@\removed{::value}@
 \end{codeblock}
 \end{itemdescr}
 
@@ -3818,7 +3818,7 @@ constexpr move_sentinel();
 \begin{itemdescr}
 \pnum
 \effects Constructs a \tcode{move_sentinel}, value-initializing
-\tcode{last}. If \tcode{is_\-trivially_\-default_\-constr\-uct\-ible<\brk{}S>::value} is \tcode{true}, then this constructor
+\tcode{last}. If \tcode{is_\-trivially_\-default_\-constr\-uct\-ible\-\added{_v}<\brk{}S>\removed{::value}} is \tcode{true}, then this constructor
 is a \tcode{constexpr} constructor.
 \end{itemdescr}
 
@@ -4170,7 +4170,7 @@ The expression in the requires clause is equivalent to:
 \begin{codeblock}
 Readable<const I> &&
   (requires(const I& i) { i.operator->(); } ||
-   is_reference<reference_t<I>>::value ||
+   is_reference@\added{_v}@<reference_t<I>>@\removed{::value}@ ||
    Constructible<value_type_t<I>, reference_t<I>>)
 \end{codeblock}
 \end{itemdescr}
@@ -4365,7 +4365,7 @@ namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { 
 \pnum
 Class \tcode{default_sentinel} is an empty type used to denote the end of a
 range. It is intended to be used together with iterator types that know the bound
-of their range (e.g., \tcode{counted_iterator}~(\ref{counted.iterator})).
+of their range (e.g., \tcode{counted_iterator}~(\ref{std2.counted.iterator})).
 
 \rSec2[std2.iterators.counted]{Counted iterators}
 
@@ -5094,7 +5094,7 @@ namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { 
 
   template <Range R>
   using safe_iterator_t =
-    conditional_t<is_lvalue_reference<R>::value,
+    conditional_t<is_lvalue_reference@\added{_v}@<R>@\removed{::value}@,
       iterator_t<R>,
       dangling<iterator_t<R>>>;
 }}@\removed{\}\}}@
