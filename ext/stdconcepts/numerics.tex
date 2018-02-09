@@ -1,0 +1,60 @@
+\setcounter{chapter}{28}
+\rSec0[numerics]{Numerics library}
+
+\setcounter{section}{5}
+\rSec1[rand]{Random number generation}
+
+\ednote{Relocate \cxxref{rand.synopsis} "Header /tcode{<random>} synopsis" [rand.synopsis] before \cxxref{rand.req} "Requirements" [rand.req]}
+
+\rSec2[rand.synopsis]{Header \tcode{<random>} synopsis}
+\ednote{Modify the \tcode{<random>} synopsis as follows:}
+\begin{codeblock}
+#include <initializer_list>
+
+namespace std {
+  @\added{// \ref{rand.req.urng}, concept UniformRandomBitGenerator}@
+  @\added{template <class G>}@
+  @\added{concept UniformRandom\oldtxt{Number}\newtxt{Bit}Generator = \seebelow;}@
+
+  // \tcode{\cxxref{rand.eng.lcong}, class template linear_congruential_engine}
+  template<class UIntType, UIntType a, UIntType c, UIntType m>
+    class linear_congruential_engine;
+
+  [...]
+\end{codeblock}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Uniform Random Number Generator requirements:
+
+\rSec3[rand.req.urng]{Uniform random bit generator requirements}%
+\indextext{uniform random bit generator!requirements|(}%
+\indextext{requirements!uniform random bit generator|(}
+
+\ednote{Add new paragraphs after the existing content:}
+\setcounter{Paras}{3}
+
+\begin{addedblock}
+\begin{codeblock}
+template <class G>
+concept UniformRandom@\oldtxt{Number}\newtxt{Bit}@Generator =
+  Invocable<G&> && UnsignedIntegral<@\oldtxt{result_of_t<G\&()>}\newtxt{invoke_result_t<G\&>}@> &&
+  requires {
+    @\oldtxt{\{ G::min() \} -> Same<result_of_t<G\&()>{>}\&\&;}@
+    @\newtxt{G::min(); requires Same<decltype(G::min()), invoke_result_t<G\&>{>};}@
+    @\oldtxt{\{ G::max() \} -> Same<result_of_t<G\&()>{>}\&\&;}@
+    @\newtxt{G::max(); requires Same<decltype(G::max()), invoke_result_t<G\&>{>};}@
+  };
+\end{codeblock}
+
+\pnum
+Let \tcode{g} be an object of type \tcode{G}.
+\tcode{UniformRandom\oldtxt{Number}\newtxt{Bit}Generator<G>} is satisfied only if
+
+\begin{itemize}
+\item Both \tcode{G::min()} and \tcode{G::max()} are constant expressions~(\cxxref{expr.const}).
+\item \tcode{G::min() < G::max()}.
+\item \tcode{G::min() <= g()}.
+\item \tcode{g() <= G::max()}.
+\item \tcode{g()} has amortized constant complexity.
+\end{itemize}
+\end{addedblock}
