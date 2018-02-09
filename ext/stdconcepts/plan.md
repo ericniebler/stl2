@@ -6,7 +6,6 @@ Document-wide changes to make:
 * [X] Use `_v` traits everywhere
 * [X] Use `remove_cvref_t` to replace `remove_ref_t<remove_cv_t<foo>>` and (where appropriate) `decay_t`
 * [X] Reformulate `result_of` uses in terms of `invocable`
-* [ ] Clause numbers should agree with the target Clause numbers in the IS
 * [X] Define CPOs as inline constexpr objects
 * [ ] Add an "Open Issues" subclause to the design discussion
 * [X] https://github.com/ericniebler/stl2/issues/506
@@ -47,7 +46,7 @@ I'll need to decide subclause-by-subclause what info is duplicated in C++20 and 
 * [X] 6.3.4.3: "or evaluating a concept [with an incomplete type]"
 * [X] 6.3.4.7: Totally new.
 * [X] 6.3.5.1: [customization.point.object] needs to nest under [type.descriptions] §20.4.2.1 in the IS.
-* [ ] Correct markup in here for newly-devised text that wasn't in the TS.
+* [X] Correct markup in here for newly-devised text that wasn't in the TS.
 
 Clause 7:
 * [X] This needs to be early in the library Clauses: probably between [language.support] and [diagnostics]. ([library] and [language.support] would not be insane, either.) (Queue whinging about changing the Clause numbering again.)
