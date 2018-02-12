@@ -47,14 +47,26 @@ and \tcode{E2} is
   exchange the values referenced by \tcode{E1} and \tcode{E2},
   the program is ill-formed with no diagnostic required.
 
-\ednote{FIXME: What's a \tcode{std2::swap_ranges}?}
 \item
-  Otherwise, \tcode{(void)std2::swap_ranges(E1, E2)} if \tcode{E1} and
-  \tcode{E2} are lvalues of array types~(\cxxref{basic.compound})
+  Otherwise, \tcode{\oldtxt{(void)swap_ranges(E1, E2)}}
+  \tcode{\newtxt{(void)__std2_swap_ranges(std::begin(E1), std::end(E1), std::begin(E2))}}
+  if \tcode{E1} and \tcode{E2} are lvalues of array types~(\cxxref{basic.compound})
   of equal extent and \tcode{std2::swap(*(E1), *(E2))}
   is a valid expression, except that
-  \tcode{noexcept(\brk{}std2::swap(E1, E2))} is equal to
-  \tcode{noexcept(\brk{}std2::swap(*(E1), *(E2)))}.
+  \oldtxt{\tcode{noexcept(std2::swap(E1, E2))} is equal to
+  \tcode{noexcept(std2::swap(*(E1), *(E2)))}}
+  \newtxt{\tcode{E1} is evaluated only once}.
+  \tcode{\newtxt{__std2_swap_ranges}}\newtxt{ is the exposition-only function:}
+  \begin{codeblock}
+  @\newtxt{template <class T, class U>}@
+    @\newtxt{constexpr void __std2_swap_ranges(T* first1, T* last1, U* first2)}@
+      @\newtxt{noexcept(noexcept(std2::swap(*(E1), *(E2))))}@
+  {
+    for (; first1 != last1; ++first, ++first2) {
+      std2::swap(*first1, *first2);
+    }
+  }
+  \end{codeblock}
 
 \item
   Otherwise, if \tcode{E1} and \tcode{E2} are lvalues of the

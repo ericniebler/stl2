@@ -1,37 +1,66 @@
-\rSec0[intro]{Scope/Intro/Design discussion}
+\rSec0[intro]{Introduction}
 
-\ednote{FIXME: replace.}
+Proposal \href{https://wg21.link/p0802r0}%
+{P0802R0 "Applying Concepts to the Standard Library"} and the LEWG discussion
+thereof captured in \href{https://wg21.link/p0872r0}%
+{P0872R0 "Discussion Summary: Applying Concepts to the Standard Library"} call
+for a proposal to insert the concepts library from the Ranges TS into the C++20
+WD. This is that proposal.
 
-\pnum
-This document describes extensions to the \Cpp
-Programming Language that
-permit operations on ranges of data. These extensions include
-changes and additions to the existing library facilities as well
-as the extension of one core language facility. In particular,
-changes and extensions to the Standard Library include:
+The motivating discussion from P0802R0 suggests that the Ranges TS can provide a
+basis of concepts for use in other library work, so we can avoid a string of
+proposals that all define small variations on common ideas:
+\begin{quote}
+How can the C++ Concepts core language feature be best applied to the standard
+library?
 
+It seems clear that the basis for introducing concepts to the standard library
+must be the Ranges TS. That paper encapsulates the committee's knowledge and
+experience with fundamental library concepts and how these library concepts can
+be applied to improve the existing standard library. The Ranges TS has been
+implemented and exposed to the C++ community for several years; any other
+approach would be pure invention and speculation.
+
+The Ranges TS has two separable components: a library of fundamental concepts
+(TS Clauses 6 and 7), and revisions of existing library components (TS Clauses
+8-12, also known as STL2). The characteristics of these two components are quite
+different, so they should be considered and adopted separately.
+\end{quote}
+
+This proposal includes the "library of fundamental concepts," the "revisions of
+existing library components" are in the sister proposal P0896. Again quoting P0802R0:
+\begin{quote}
+\textbf{Recommendation: Fundamental Library Concepts}
+
+Ranges TS clause 7 (Concepts library) should adopted by the C++20 WP as soon as
+a proposal can be prepared and processed by LEWG/LWG. We recommend that Casey
+Carter and Eric Niebler lead this effort and that they be given sufficient
+authority to include other fundamental material from the Ranges TS.
+
+\textbf{Rationale:} The fundamental concepts are mature and well-known, as they are
+based on standard library requirements that have been developed and refined from
+C++98 onward. Because concepts are an entirely new core language feature, these
+fundamental concepts can be defined in the standard library without breaking any
+existing C++ code (modulo the usual namespace caveats). Furthermore, failure to
+standardize these fundamental concepts quickly is likely to result in
+proliferation of similar but subtly different user-supplied concepts, often with
+the same names. Confusion seems inevitable under such circumstances.
+\end{quote}
+
+This document proposes the following parts of the Ranges TS for inclusion in C++20:
 \begin{itemize}
-\item The formulation of the foundational and iterator concept requirements
-using the syntax of the Concepts TS.
-\item Analogues of the Standard Library algorithms specified in terms of the new
-concepts.
-\item The loosening of the algorithm constraints to permit the use of
-\techterm{sentinels} to denote the end of a range and corresponding changes to algorithm
-return types where necessary.
-\item The addition of new concepts describing \techterm{range} and \techterm{view}
-abstractions; that is, objects with a begin iterator and an end sentinel.
-\item New algorithm overloads that take range objects.
-\item Support of \techterm{callable objects} (as opposed to \techterm{function objects})
-passed as arguments to the algorithms.
-\item The addition of optional \techterm{projection} arguments to the algorithms to
-permit on-the-fly data transformations.
-\item Analogues of the iterator primitives and new primitives in support of the
-addition of sentinels to the library.
-\item Constrained analogues of the standard iterator adaptors and stream iterators
-that satisfy the new iterator concepts.
-\item New iterator adaptors (\tcode{counted_iterator} and \tcode{common_iterator}) and
-sentinels (\tcode{unreachable}).
+\item The Concepts library (Clause 7) to be defined in namespace \tcode{std} inside
+  a new \tcode{<concepts>} header
+\item Portions of the utilities library which do not break existing code: the
+  \tcode{std2::swap} customization point which supports the \tcode{Swappable}
+  concept, the \tcode{identity} function object, changes to \tcode{common_type}
+  and the addition of the \tcode{common_reference} type trait
+\item The numerics library (which consists of only the
+  \tcode{UniformRandomBitGenerator} concept)
 \end{itemize}
+Some of the library concepts introduced share the names of requirement tables
+defined in [utility.arg.requirements]; the names of those requirement tables are
+changed to "make way".
 
 \rSec1[intro.stl1]{Renaming "requirements tables"}
 
@@ -48,7 +77,7 @@ sentinels (\tcode{unreachable}).
 \end{itemize}
 This document reuses these names for concept definitions.
 
-\ednote{FIXME: "swappable"/"swappable with"/"swappable requirements" need special treatment.}
+\ednote{What about "swappable"/"swappable with"/"swappable requirements"?}
 
 \rSec1[intro.style]{Style of presentation}
 
