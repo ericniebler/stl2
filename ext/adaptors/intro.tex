@@ -9,9 +9,6 @@
 
 \rSec1[intro.scope]{Scope}
 
-\ednote{For motivation and design considerations, please refer to N4128,
-``Ranges for the Standard Library, Revision 1''~(\cite{N4128}).}
-
 \pnum
 This document provides extensions to the Ranges TS~\cite{ranges-ts} to
 support the creation of pipelines of range transformations. In particular,
@@ -44,7 +41,183 @@ and lazily flattens the ranges into one range.
 \item A \tcode{view::split} range adaptor takes a range and a delimiter,
 and lazily splits the range into subranges on the delimiter. The delimiter may
 be either an element or a subrange.
+{\color{addclr}
+\item A \tcode{view::counted} range adaptor that takes an iterator and a count
+of elements, and returns a range of that many elements starting at the one
+denoted by the iterator.
+\item A \tcode{view::common} range adaptor that takes a range for which the
+iterator and sentinel types differ, and returns a range for which the iterator
+and sentinel types are the same.
+\item A \tcode{view::reverse} range adaptor that takes a bidirectional range and
+returns a new range that iterates the elements in reverse order.}
 \end{itemize}
+
+{\color{addclr}
+\rSec1[intro.design]{Design Considerations}
+
+\pnum
+The Ranges position paper, N4128 ``Ranges for the Standard Library,
+Revision 1''~(\cite{N4128}), contains extensive motivation and design
+considerations. That paper explains why the ranges design distinguishes between
+``\tcode{Range}'' and ``\tcode{View}'' (called ``\tcode{Iterable}'' and
+``\tcode{Range}'' in that paper). This section calls out specific parts of the
+adaptors and utilities design that might be of particular interest. 
+
+\rSec2[intro.filter]{The \tcode{filter} adaptor is not \tcode{const}-iterable}
+
+\pnum
+N4128 \S\-3.3.10 discusses how just because a type \tcode{T} satisfies \tcode{Range} does
+not imply that the type \tcode{const T} satisfies \tcode{Range}. It gives the
+example of an \tcode{istream_range}, which reads each value from a stream and
+stores it in a private cache. Since the range is mutated while it is iterated,
+its \tcode{begin} and \tcode{end} member functions cannot be \tcode{const}. The
+\tcode{filter} adaptor is a similar case, but it is not immediately obvious why.
+
+\pnum
+According to the semantic requirements of the \tcode{Range} concept, \tcode{begin}
+and \tcode{end} must be amortized constant-time operations. That means that
+repeated calls to \tcode{begin} or \tcode{end} on the same range will be fast,
+a property that a great many adaptors take advantage of, freeing them from the
+need to cache the results of these operations themselves.
+
+\pnum
+The \tcode{filter} view, which skips elements that fail to satisfy a predicate,
+needs to do an \bigoh{N} probe to find the first element that satisfies the
+predicate so that \tcode{begin} can return it. The options are:
+
+\begin{enumerate}
+\item \textbf{Compute this position on adaptor construction.} This solution has
+multiple problems. First, constructing an adaptor should be \bigoh{1}. Doing an
+\bigoh{N} probe obvious conflicts with that. Second, the probe would return a
+position in the source range, but when the \tcode{filter} view is copied, the
+iterator becomes invalid, lest it be left pointing to an element in the source
+range. That means that copies and moves of the \tcode{filter} view would need to
+invalidate the cache and perform \textit{another} \bigoh{N} probe to find the first
+element of the filtered range. \bigoh{N} copy and move operations make it difficult
+to reason about the cost of building adaptor pipelines.
+\item \textbf{Recompute the first position on each invocation of \tcode{begin}.} This is
+obviously in conflict with the semantic requirements of the \tcode{Range} concept,
+which specifies that \tcode{begin} is amortized constant-time.
+\item \textbf{Compute the first position once in \tcode{begin} on demand and cache
+the result, with synchronization.} Taking a lock in the \tcode{begin} member
+function in order to update an internal cache permits that operation to be
+\tcode{const} while satisfying [res.on.data.races], but obviously incurs overhead
+and violates the ``don't pay for what you don't use'' mantra.
+\item \textbf{Compute the first position once in \tcode{begin} on demand and cache
+the result, without synchronization.} The downside of this approach is that
+\tcode{begin} cannot be \tcode{const} without violating [res.on.data.races].
+\end{enumerate}
+
+\pnum
+None of these are great options, and this particular design point has been
+discussed at extensive length~(see
+\href{https://github.com/ericniebler/range-v3/issues/385}{range-v3\#385})
+in the context of the \tcode{filter} view and an assortment of other adaptors
+that are unable to provide \tcode{const} iteration. The general consensus is
+that option (4) above is the least bad option, and is consistent with the
+perspective that adaptors are lazily-evaluated algorithms: some algorithms can
+be implemented without the need to maintain mutable state. Others cannot.
+
+\rSec2[intro.join]{The \tcode{join} view is only sometimes \tcode{const}-iterable}
+
+\pnum
+As with the \tcode{filter} view, the \tcode{join} view must maintain internal
+state as it is being iterated. Since the \tcode{join} view takes a range of
+ranges and presents a flattened view, it uses two iterators to denote each
+position: an iterator into the outer range and an iterator into the inner range.
+
+\pnum
+If the outer range is generating the inner ranges on the fly (that is, if
+dereferencing the outer iterator yields a prvalue inner range), that range must
+be stored somewhere while it is being iterated. The obvious place to store it
+is within the \tcode{join_view} object itself. Each time the outer iterator is
+incremented, this inner range object must be updated. This makes the
+\tcode{join_view} non-\tcode{const}-iterable, just like the \tcode{filter} view.
+
+\pnum
+However, if the result of dereferencing the outer iterator is a glvalue, then
+we know the inner range object is reified in memory somewhere. Rather than store
+a copy of the inner range object within the \tcode{join_view}, we can simply
+assume the inner range will persist long enough for the inner iterator to
+traverse it. Additionally, we can dereference the outer iterator whenever we
+need to access the inner range object.
+
+\pnum
+For this reason, the \tcode{join} view is \textit{sometimes}
+\tcode{const}-iterable, and the constraints on the \tcode{const} overloads of
+its \tcode{begin} and \tcode{end} member functions reflect that.
+
+\rSec2[intro.reverse]{The \tcode{reverse} view is only sometimes \tcode{const}-iterable}
+
+\pnum
+As with \tcode{filter}, the \tcode{reverse} view needs to cache the end of the
+range so that \tcode{begin} can return it in amortized \bigoh{1}. The exception
+is when adapting a \tcode{CommonRange}; that is, a range for which \tcode{end}
+returns an iterator. As a result, the \tcode{reverse} view is only
+\tcode{const}-iterable when adapting a \tcode{CommonRange}.
+
+\rSec2[intro.iota.deduction]{\tcode{iota} view type deduction}
+
+\pnum
+The \tcode{iota} view takes an incrementable and (optionally) an upper bound,
+and returns a range of all the elements reachable from the start (inclusive) to
+the bound (exclusive). The bound defaults to an unreachable sentinel, yielding
+an infinite range.
+
+\pnum
+The bound need not have the same type as the iterable, which permits \tcode{iota}
+to work with iterator/sentinel pairs. However, that also opens the door to
+integral signed/unsigned mismatch bugs, like \tcode{view::iota(0, v.size())},
+where \tcode{0} is a (signed) \tcode{int} and \tcode{v.size()} is an (unsigned)
+\tcode{std::size_t}.
+
+\pnum
+The deduction guides as currently specified permit the bound to have a different
+type as the incrementable \textit{unless} both the incrementable and the bound
+are integral types with different signedness.
+
+\rSec2[intro.iota.indices]{\tcode{iota(N)} is an infinite range}
+
+\pnum
+There appears to be an expectation among some programmers that a single-argument
+invocation of \tcode{iota} such as \tcode{view::iota(10)} produces a 10 element
+range: \tcode{0} through \tcode{9} inclusive. This leads to bug reports such as
+\href{https://github.com/ericniebler/range-v3/issues/277}{range-v3\#277}, where
+the behavior of the \tcode{iota} adaptor is compared unfavorably to similar
+facilities in other languages, which provide the desired (by the submitter)
+behavior.
+
+\pnum
+There are two reasons for the behavior as specified:
+
+\begin{itemize}
+\item Consistency with the \tcode{std::iota} numeric algorithm, which accepts a
+single incrementable value and fills a range with that value and its successors, and
+\item Compatability with non-Integral incrementables. When the incrementable is
+non-Integral, as with an iterator, it is nonsensical to interpret the single
+argument as an upper bound, since there is no ``zero'' iterator that can be
+treated as the lower bound.
+\end{itemize}
+
+\pnum
+So what to do about the confusion about \tcode{view::iota(10)}? We see three
+possibilities:
+
+\begin{enumerate}
+\item Disallow it.
+\item Disallow it for Integral arguments.
+\item Permit it and educate users.
+\end{enumerate}
+
+The authors have opted for (3), to permit the usage. We further note that an
+adaptor that works \textit{only} with Integral types (\tcode{view::indices},
+perhaps) could make a different choice about the interpretation of a
+single-argument form.
+
+
+
+
+}%color{addclr}
 
 \rSec1[intro.refs]{References}
 
