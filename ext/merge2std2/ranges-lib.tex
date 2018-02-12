@@ -39,24 +39,24 @@ which is expression-equivalent to:
 
 namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { inline namespace v1 {
   // \ref{std2.range.access}, range access:
-  namespace {
-    constexpr @\unspec@ begin = @\unspec@;
-    constexpr @\unspec@ end = @\unspec@;
-    constexpr @\unspec@ cbegin = @\unspec@;
-    constexpr @\unspec@ cend = @\unspec@;
-    constexpr @\unspec@ rbegin = @\unspec@;
-    constexpr @\unspec@ rend = @\unspec@;
-    constexpr @\unspec@ crbegin = @\unspec@;
-    constexpr @\unspec@ crend = @\unspec@;
-  }
+  @\removed{namespace \{}@
+    @\added{inline}@ constexpr @\unspec@ begin = @\unspec@;
+    @\added{inline}@ constexpr @\unspec@ end = @\unspec@;
+    @\added{inline}@ constexpr @\unspec@ cbegin = @\unspec@;
+    @\added{inline}@ constexpr @\unspec@ cend = @\unspec@;
+    @\added{inline}@ constexpr @\unspec@ rbegin = @\unspec@;
+    @\added{inline}@ constexpr @\unspec@ rend = @\unspec@;
+    @\added{inline}@ constexpr @\unspec@ crbegin = @\unspec@;
+    @\added{inline}@ constexpr @\unspec@ crend = @\unspec@;
+  @\removed{\}}@
 
   // \ref{std2.range.primitives}, range primitives:
-  namespace {
-    constexpr @\unspec@ size = @\unspec@;
-    constexpr @\unspec@ empty = @\unspec@;
-    constexpr @\unspec@ data = @\unspec@;
-    constexpr @\unspec@ cdata = @\unspec@;
-  }
+  @\removed{namespace \{}@
+    @\added{inline}@ constexpr @\unspec@ size = @\unspec@;
+    @\added{inline}@ constexpr @\unspec@ empty = @\unspec@;
+    @\added{inline}@ constexpr @\unspec@ data = @\unspec@;
+    @\added{inline}@ constexpr @\unspec@ cdata = @\unspec@;
+  @\removed{\}}@
 
   template <class T>
   using iterator_t = decltype(@\changed{ranges}{::std2}@::begin(declval<T&>()));
@@ -86,9 +86,9 @@ namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { 
   template <class T>
   concept @\removed{bool}@ View = @\seebelow@;
 
-  // \ref{std2.ranges.bounded}, BoundedRange:
+  // \ref{std2.ranges.common}, @\changed{BoundedRange}{CommonRange}@:
   template <class T>
-  concept @\removed{bool}@ BoundedRange = @\seebelow@;
+  concept @\removed{bool}@ @\changed{BoundedRange}{CommonRange}@ = @\seebelow@;
 
   // \ref{std2.ranges.input}, InputRange:
   template <class T>
@@ -118,6 +118,14 @@ namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { 
 In addition to being available via inclusion of the \tcode{<\changed{experimental/ranges}{std2}/range>}
 header, the customization point objects in \ref{std2.range.access} are
 available when \tcode{<\changed{experimental/ranges}{std2}/iterator>} is included.
+
+\ednote{The customization point objects in this subsection all have deprecated
+behavior that permits them to work with rvalues. This is for compatability with
+the similarly named facilities in namespace \tcode{std}. The authors intend to
+replace the deprecated behavior with proper support for rvalue ranges, pending
+some ongoing work on an improved design. We hope to bring forward such a design
+in the summer meeting in Geneva later this year. See discussion in issue
+\href{https://github.com/ericniebler/stl2/issues/547}{stl2\#547}.}
 
 \rSec2[std2.range.access.begin]{\tcode{begin}}
 \pnum
@@ -511,7 +519,8 @@ with constant-time copy and assign operations.
 In addition to the three fundamental range categories, this document defines
 a number of convenience refinements of \tcode{Range} that group together requirements
 that appear often in the concepts and algorithms.
-\techterm{Bounded ranges} are ranges for which \tcode{begin} and \tcode{end} return objects of the
+\changed{\textit{Bounded ranges}}{\techterm{Common ranges}} are ranges for which
+\tcode{begin} and \tcode{end} return objects of the
 same type. \techterm{Random access ranges} are ranges for which
 \tcode{begin} returns a type that satisfies
 \tcode{RandomAccessIterator}~(\ref{std2.iterators.random.access}). The range
@@ -673,17 +682,24 @@ implies reference semantics. \exitnote
 \end{itemize}
 \end{itemdescr}
 
-\rSec2[std2.ranges.bounded]{Bounded ranges}
+\rSec2[std2.ranges.common]{Common ranges}
+
+\ednote{We suggest changing ``\tcode{BoundedRange}'' to ``\tcode{CommonRange}''. The authors believe
+this is a better name than ``\tcode{ClassicRange}'', which LEWG weakly preferred. The reason is
+that the iterator and sentinel of a Common range have the same type in \textit{common}.
+A non-Common range can be turned into a Common range with the help of \tcode{common_iterator}.
+P0789R2 ``Range Adaptors and Utilties'' will be proposing a \tcode{view::common} adaptor that
+does precisely that.}
 
 \pnum
-The \tcode{BoundedRange} concept specifies requirements
+The \changed{\tcode{BoundedRange}}{\tcode{CommonRange}} concept specifies requirements
 of a \tcode{Range} type for which \tcode{begin} and \tcode{end} return objects of
 the same type. \enternote The standard containers~(\cxxref{containers})
-satisfy \tcode{BoundedRange}.\exitnote
+satisfy \changed{\tcode{BoundedRange}}{\tcode{CommonRange}}.\exitnote
 
 \begin{codeblock}
 template <class T>
-concept @\removed{bool}@ BoundedRange =
+concept @\removed{bool}@ @\changed{BoundedRange}{CommonRange}@ =
   Range<T> && Same<iterator_t<T>, sentinel_t<T>>;
 \end{codeblock}
 
@@ -751,3 +767,72 @@ template <class T>
 concept @\removed{bool}@ RandomAccessRange =
   BidirectionalRange<T> && RandomAccessIterator<iterator_t<T>>;
 \end{codeblock}
+
+\ednote{\tcode{dangling} moved here from the ``Iterators library''.}
+
+\rSec1[std2.dangling.wrappers]{Dangling wrapper}
+
+\rSec2[std2.dangling.wrap]{Class template \tcode{dangling}}
+
+\pnum
+\indexlibrary{\idxcode{dangling}}%
+Class template \tcode{dangling} is a wrapper for an object that refers to another object whose
+lifetime may have ended. It is used by algorithms that accept rvalue ranges and return iterators.
+
+\begin{codeblock}
+namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { inline namespace v1 {
+  template <CopyConstructible T>
+  class dangling {
+  public:
+    constexpr dangling() requires DefaultConstructible<T>;
+    constexpr dangling(T t);
+    constexpr T get_unsafe() const;
+  private:
+    T value; // \expos
+  };
+
+  template <Range R>
+  using safe_iterator_t =
+    conditional_t<is_lvalue_reference@\added{_v}@<R>@\removed{::value}@,
+      iterator_t<R>,
+      dangling<iterator_t<R>>>;
+}}@\removed{\}\}}@
+\end{codeblock}
+
+\rSec3[std2.dangling.wrap.ops]{\tcode{dangling} operations}
+
+\rSec4[std2.dangling.wrap.op.const]{\tcode{dangling} constructors}
+
+\indexlibrary{\idxcode{dangling}!\idxcode{dangling}}%
+\begin{itemdecl}
+constexpr dangling() requires DefaultConstructible<T>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Constructs a \tcode{dangling}, value-initializing \tcode{value}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{dangling}!\idxcode{dangling}}%
+\begin{itemdecl}
+constexpr dangling(T t);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Constructs a \tcode{dangling}, initializing \tcode{value} with \tcode{t}.
+\end{itemdescr}
+
+\rSec4[std2.dangling.wrap.op.get]{\tcode{dangling::get_unsafe}}
+
+\indexlibrary{\idxcode{get_unsafe}!\idxcode{dangling}}%
+\indexlibrary{\idxcode{dangling}!\idxcode{get_unsafe}}%
+\begin{itemdecl}
+constexpr T get_unsafe() const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{value}.
+\end{itemdescr}
+
