@@ -1,0 +1,168 @@
+\rSec0[intro]{General}
+
+\begin{quote}
+``Begin at the beginning, the King said, very gravely, and go on till you come to the end: then stop.''
+\begin{flushright}
+\textemdash \textit{Lewis Carroll}
+\end{flushright}
+\end{quote}
+
+\rSec1[intro.scope]{Scope}
+
+\pnum
+This document suggests improvements to the range access customization points
+(\tcode{begin}, \tcode{end}, \textit{et.al.}) of ISO/IEC TS 21425:2017, otherwise
+known as the Ranges TS. The improvements suggested here apply to P0896,
+``Merging the Ranges TS''~(\cite{P0896}), and to P0789, ``Range Adaptors and
+Utilities''~(\cite{P0789}).
+
+\rSec1[intro.problem]{Problems with \tcode{std::experimental::ranges::begin}}
+
+\pnum
+For the sake of compatibility with \tcode{std::begin} and ease of migration,
+\tcode{std::experimental::ranges::begin} accepted rvalues and treated them the
+same as \tcode{const} lvalues. This behavior was deprecated because it is
+fundamentally unsound: any iterator returned by such an overload is highly
+likely to dangle after the full expression that contained the invocation of
+\tcode{begin}.
+
+\pnum
+Another problem, and one that until recently seemed unrelated to the design of
+\tcode{begin}, was that algorithms that return iterators will wrap those
+iterators in \tcode{std::experimental::ranges::dangling<>} if the range passed
+to them is an rvalue. This ignores the fact that for some range types ---
+P0789's \tcode{subrange<>}, in particular --- the iterator's validity does not
+depend on the range's lifetime at all. In the case where a prvalue
+\tcode{subrange<>} is passed to an algorithm, returning a wrapped iterator is
+totally unnecessary.
+
+\pnum
+The author believed that to fix the problem with \tcode{subrange} and
+\tcode{dangling} would require the addition of a new trait to give the authors
+of range types a way to say whether its iterators can safely outlive the range.
+That felt like a hack, and that feeling was reinforced by the author's inability
+to pick a name for such a trait that was sufficiently succint and clear.
+
+\rSec1[intro.design]{Suggested Design}
+
+\pnum
+We recognized that by removing the deprecated default support for rvalues from
+the range access customization points, we made design space for range authors to
+opt-in to this behavior for their range types, thereby communicating to the
+algorithms that an iterator can safely outlive its range type. This eliminates
+the need for \tcode{dangling} when passing an rvalue \tcode{subrange}, an
+important usage scenario.
+
+\pnum
+This improved design would be both safer and more expressive: users should be
+unable to pass to \tcode{std2::begin} any rvalue range unless its result is
+guaranteed to not dangle.
+
+\pnum
+The mechanics of this change are subtle. There are two typical ways for making
+a type satisfy the \tcode{Range} concept:
+
+\begin{enumerate}
+\item Give the type \tcode{begin()} and \tcode{end()} member functions
+(typically not lvalue reference-qualified), as below:
+\begin{codeblock}
+struct Buffer {
+  char* begin();
+  const char* begin() const;
+  char* end();
+  const char* end() const;
+};
+\end{codeblock}
+\item Define \tcode{begin} and \tcode{end} as free functions, typically
+overloaded for \tcode{const} and non-\tcode{const} lvalue references, as shown
+below:
+\begin{codeblock}
+struct Buffer { /*...*/ };
+
+char* begin(Buffer&);
+const char* begin(const Buffer&);
+char* end(Buffer&);
+const char* end(const Buffer&);
+\end{codeblock}
+\end{enumerate}
+
+\pnum
+These approaches offer few clues as to whether iterators yielded from this range
+will remain valid even the range itself has been destroyed. With the first,
+\tcode{Buffer\{\}.begin()} compiles successfully. Likewise, with the second,
+\tcode{begin(Buffer\{\})} is also well-formed. Neither yields any useful
+information.
+
+\pnum
+The design presented in this paper takes a two-pronged approach:
+
+\begin{enumerate}
+\item \tcode{std2::begin(E)} never considers \tcode{E.begin()} unless \tcode{E}
+is an lvalue.
+\item \tcode{std2::begin(E)} will consider an overload of \tcode{begin(E)}
+found by ADL, looked up in a context that (a) does not include
+\tcode{std2::begin}, and (b) includes the following declaration:
+\begin{codeblock}
+// "Poison pill" overload:
+template <class T>
+void begin(T&&) = delete;
+\end{codeblock}
+\end{enumerate}
+
+This approach gives \tcode{std2::begin} the property that, for some rvalue
+expression \tcode{E} of type \tcode{T}, the expression \tcode{std2::begin(E)}
+will not compile unless there is a free function \tcode{begin} findable by
+ADL that specifically accepts rvalues of type \tcode{T}, and that overload is
+prefered by partial ordering over the general \tcode{void begin(T\&\&)} ``poison
+pill'' overload.
+
+\pnum
+This design has the following benefits:
+
+\begin{itemize}
+\item No iterator returned from \tcode{std2::begin(E)} can dangle, even if
+\tcode{E} is an rvalue expression.
+\item Authors of simple view types for which iterators may safely outlive the
+range (like P0789's \tcode{subrange<>}) may denote such support by providing an
+overload of \tcode{begin} that accepts rvalues.
+\end{itemize}
+
+\pnum
+Once \tcode{std2::begin}, \tcode{end}, and friends have been redefined as
+described above, the \tcode{safe_iterator_t} alias template can be redefined to
+only wrap an iterator in \tcode{dangling<>} for a \tcode{Range} type \tcode{R}
+if \tcode{std2::begin(std::declval<R>())} is ill-formed. In code:
+
+\begin{codeblock}
+template <Range R, class = void>
+struct __safe_iterator {
+  using type = dangling<iterator_t<R>>;
+};
+template <class R>
+struct __safe_iterator<R, void_t<decltype(std2::begin(declval<R>()))>> {
+  using type = iterator_t<R>;
+};
+
+template <Range R>
+using safe_iterator_t = typename __safe_iterator<R>::type;
+\end{codeblock}
+
+Now algorithms that accept \tcode{Range} parameters by forwarding reference and
+that return iterators into that range can simply declare their return type as
+\tcode{safe_iterator_t<R>} and have that iterator wrapped only if it can dangle.
+
+\rSec1[intro.refs]{References}
+
+\pnum
+The following referenced documents are indispensable for the
+application of this document. For dated references, only the
+edition cited applies. For undated references, the latest edition
+of the referenced document (including any amendments) applies.
+
+\begin{itemize}
+\item ISO/IEC 14882:2017, \doccite{Programming Languages - \Cpp}
+\item ISO/IEC TS 21425:2017, \doccite{Technical Specification - \Cpp Extensions for Ranges}
+\end{itemize}
+
+ISO/IEC 14882:2017 is herein called the \defn{C\Rplus\Rplus\xspace Standard} and
+ISO/IEC TS 21425:2017 is called the \defn{Ranges TS}.
