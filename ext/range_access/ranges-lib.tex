@@ -1,11 +1,75 @@
 %!TEX root = D0970.tex
 
-\setcounter{chapter}{20}
+\setcounter{chapter}{19}
+\rSec0[std]{Standard Library, Version 1}
+\setcounter{SectionDepthBase}{1}
+\setcounter{section}{6}
+\setcounter{subsection}{4}
+
+\ednote{The following changes are suggested for P0896.}
+
+\rSec2[string.view.synop]{Header \tcode{<string_view>} synopsis}
+
+\ednote{change the \tcode{<string_view>} header synopsis as follows:}
+
+\indexhdr{string_view}%
+\begin{codeblock}
+namespace std {
+  // \ref{string.view.template}, class template \tcode{basic_string_view}
+  template<class charT, class traits = char_traits<charT>>
+  class basic_string_view;
+
+  // \ref{string.view.range_access}, \tcode{basic_string_view} range access
+  @\added{template<class charT, class traits>}@
+    @\added{constexpr auto begin(basic_string_view<charT, traits> x) noexcept;}@
+  @\added{template<class charT, class traits>}@
+    @\added{constexpr auto end(basic_string_view<charT, traits> x) noexcept;}@
+
+  // ... as before
+}
+\end{codeblock}
+
+\ednote{After [string.view.template], insert the following subsection and
+renumber all following subsections.}
+
+\begin{addedblock}
+\setcounter{subsubsection}{2}
+\rSec2[string.view.range_access]{\tcode{basic_string_view} range access}
+
+\pnum
+\enternote The following two range access functions are provided for interoperability with
+\tcode{std2::begin} and \tcode{std2::end}.\exitnote
+
+\indexlibrary{\idxcode{basic_string_view}!\idxcode{begin}}%
+\begin{itemdecl}
+template<class charT, class traits>
+  constexpr auto begin(basic_string_view<charT, traits> x) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{x.begin()}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{basic_string_view}!\idxcode{end}}%
+\begin{itemdecl}
+template<class charT, class traits>
+  constexpr auto end(basic_string_view<charT, traits> x) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{x.end()}.
+\end{itemdescr}
+\end{addedblock}
+
+\setcounter{SectionDepthBase}{0}
 \rSec0[std2]{Standard Library, Version 2}
 \setcounter{SectionDepthBase}{1}
 \setcounter{section}{3}
 
-\ednote{The following changes are suggested for P0896.}
+
+
 
 \rSec0[std2.ranges]{Ranges library}
 
@@ -491,12 +555,24 @@ namespace std2 { inline namespace v1 {
   };
 
   template <Range R>
-  using safe_iterator_t =
-    conditional_t<is_lvalue_reference_v<R>,
-      iterator_t<R>,
-      dangling<iterator_t<R>>>;
+  using safe_iterator_t = @\added{// \seebelow}@
+    @\removed{conditional_t<is_lvalue_reference_v<R>,}@
+      @\removed{iterator_t<R>,}@
+      @\removed{dangling<iterator_t<R>>>;}@
 }}
 \end{codeblock}
+
+\begin{addedblock}
+\pnum
+\tcode{safe_iterator_t<R>} is defined as follows:
+\begin{itemize}
+\item
+  If \tcode{std2::begin(std::declval<R>())} is a well-formed expression,
+  \tcode{safe_iterator_t<R>} is an alias for \tcode{iterator_t<R>}.
+\item
+  Otherwise, it is an alias for \tcode{dangling<iterator_t<R>{>}}.
+\end{itemize}
+\end{addedblock}
 
 \rSec3[std2.dangling.wrap.ops]{\tcode{dangling} operations}
 
