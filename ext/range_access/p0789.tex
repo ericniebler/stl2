@@ -1,0 +1,459 @@
+%!TEX root = D0970.tex
+
+\part[Changes to P0789 R2]{Changes to P0789 R2\hfill[P0789]}\label{P0789}
+\ednote{The following changes are suggested for P0789.}
+
+\ednote{Change section ``Header \tcode{<experimental/ranges/range>} synopsis''
+[range.synopsis], as follows:}
+
+\setcounter{chapter}{9}
+\rSec0[ranges]{Ranges library}
+
+\setcounter{section}{6}
+\rSec1[ranges.utilities]{Range utilities}
+\setcounter{subsection}{1}
+\rSec2[ranges.subranges]{Sub-ranges}
+%\setcounter{subsubsection}{0}
+\setcounter{paragraph}{0}
+\rSec3[ranges.subrange]{\tcode{subrange}}
+
+\begin{codeblock}
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+  // ... as before
+
+  @\added{template <class T, class U>}@
+  @\added{concept bool \textit{not-same-as} = // \expos}@
+    @\added{!Same<remove_cvref_t<T>, remove_cvref_t<U>{>};}@
+
+  template <Iterator I, Sentinel<I> S = I, subrange_kind K = @\seebelow@>
+    requires K == subrange_kind::sized || !SizedSentinel<S, I>
+  class subrange : public view_interface<subrange<I, S, K>> {
+  private:
+    static constexpr bool StoreSize =
+      K == subrange_kind::sized && !SizedSentinel<S, I>; // \expos
+    I begin_ {}; // \expos
+    S end_ {}; // \expos
+    difference_type_t<I> size_ = 0; // \expos; only present when StoreSize is true
+  public:
+    using iterator = I;
+    using sentinel = S;
+
+    subrange() = default;
+
+    constexpr subrange(I i, S s) requires !StoreSize;
+
+    constexpr subrange(I i, S s, difference_type_t<I> n)
+      requires K == subrange_kind::sized;
+
+    @\removed{template <ConvertibleTo<I> X, ConvertibleTo<S> Y, subrange_kind Z>}@
+    @\removed{constexpr subrange(subrange<X, Y, Z> r)}@
+      @\removed{requires !StoreSize || Z == subrange_kind::sized;}@
+
+    @\removed{template <ConvertibleTo<I> X, ConvertibleTo<S> Y, subrange_kind Z>}@
+    @\removed{constexpr subrange(subrange<X, Y, Z> r, difference_type_t<I> n)}@
+      @\removed{requires K == subrange_kind::sized;}@
+
+    @\added{template <\textit{not-same-as}<subrange> R>}@
+    @\added{requires Range<R> \&\& Iterator<safe_iterator_t<R>{>} \&\&}@
+      @\added{ConvertibleTo<iterator_t<R>, I> \&\& ConvertibleTo<sentinel_t<R>, S>}@
+    @\added{constexpr subrange(R\&\& r) requires !StoreSize || SizedRange<R>;}@
+
+    @\added{template <Range R>}@
+    @\added{requires Iterator<safe_iterator_t<R>{>} \&\&}@
+      @\added{ConvertibleTo<iterator_t<R>, I> \&\& ConvertibleTo<sentinel_t<R>, S>}@
+    @\added{constexpr subrange(R\&\& r, difference_type_t<I> n)}@
+      @\added{requires K == subrange_kind::sized;}@
+
+    template <@\changed{\textit{pair-like-convertible-to}<I, S>}{\textit{not-same-as}<subrange>}@ PairLike>
+      @\added{requires \textit{pair-like-convertible-to}<PairLike, I, S>}@
+    constexpr subrange(PairLike&& r) requires !StoreSize;
+
+    template <@\textit{pair-like-convertible-to}@<I, S> PairLike>
+    constexpr subrange(PairLike&& r, difference_type_t<I> n)
+      requires K == subrange_kind::sized;
+
+    @\removed{template <Range R>}@
+      @\removed{requires ConvertibleTo<iterator_t<R>, I> \&\& ConvertibleTo<sentinel_t<R>, S>}@
+    @\removed{constexpr subrange(R\& r) requires !StoreSize || SizedRange<R>;}@
+
+    template <@\changed{\textit{pair-like-convertible-from}<const I\&, const S\&>}{\textit{not-same-as}<subrange>}@ PairLike>
+      @\added{requires \textit{pair-like-convertible-from}<PairLike, const I\&, const S\&>}@
+    constexpr operator PairLike() const;
+
+    constexpr I begin() const;
+    constexpr S end() const;
+    constexpr bool empty() const;
+    constexpr difference_type_t<I> size() const
+      requires K == subrange_kind::sized;
+    [[nodiscard]] constexpr subrange next(difference_type_t<I> n = 1) const;
+    [[nodiscard]] constexpr subrange prev(difference_type_t<I> n = 1) const
+      requires BidirectionalIterator<I>;
+    constexpr subrange& advance(difference_type_t<I> n);
+  };
+
+  @\added{template <class I, class S, subrange_kind K>}@
+    @\added{constexpr I begin(subrange<I, S, K>\&\& r);}@
+
+  @\added{template <class I, class S, subrange_kind K>}@
+    @\added{constexpr S end(subrange<I, S, K>\&\& r);}@
+
+  template <Iterator I, Sentinel<I> S>
+  subrange(I, S, difference_type_t<I>) -> subrange<I, S, subrange_kind::sized>;
+
+  template <@\textit{iterator-sentinel-pair}@ P>
+  subrange(P) ->
+    subrange<tuple_element_t<0, P>, tuple_element_t<1, P>>;
+
+  template <@\textit{iterator-sentinel-pair}@ P>
+  subrange(P, difference_type_t<tuple_element_t<0, P>>) ->
+    subrange<tuple_element_t<0, P>, tuple_element_t<1, P>, subrange_kind::sized>;
+
+  @\removed{template <Iterator I, Sentinel<I> S, subrange_kind K>}@
+  @\removed{subrange(subrange<I, S, K>, difference_type_t<I>) ->}@
+    @\removed{subrange<I, S, subrange_kind::sized>;}@
+
+  @\removed{template <Range R>}@
+  @\removed{subrange(R\&) -> subrange<iterator_t<R>, sentinel_t<R>>;}@
+
+  @\removed{template <SizedRange R>}@
+  @\removed{subrange(R\&) -> subrange<iterator_t<R>, sentinel_t<R>, subrange_kind::sized>;}@
+
+  @\added{template <Range R>}@
+    @\added{requires Iterator<safe_iterator_t<R>{>}}@
+  @\added{subrange(R\&\&) -> subrange<iterator_t<R>, sentinel_t<R>{>};}@
+
+  @\added{template <SizedRange R>}@
+    @\added{requires Iterator<safe_iterator_t<R>{>}}@
+  @\added{subrange(R\&\&) -> subrange<iterator_t<R>, sentinel_t<R>, subrange_kind::sized>;}@
+
+  @\added{template <Range R>}@
+    @\added{requires Iterator<safe_iterator_t<R>{>}}@
+  @\added{subrange(R\&\&, difference_type_t<iterator_t<R>{>}) ->}@
+    @\added{subrange<iterator_t<R>, sentinel_t<R>, subrange_kind::sized>;}@
+
+  // ... as before
+
+  @\added{template <Range R>}@
+    @\added{using safe_subrange_t =}@
+      @\added{conditional_t<Iterator<safe_iterator_t<R>{>},}@
+        @\added{subrange<iterator_t<R>{>},}@
+        @\added{dangling<subrange<iterator_t<R>{>}>{>};}@
+}}}}
+\end{codeblock}
+
+\pnum
+The default value for \tcode{subrange}'s third (non-type) template parameter is:
+\begin{itemize}
+\item If \tcode{SizedSentinel<S, I>} is satisfied, \tcode{subrange_kind::sized}.
+\item Otherwise, \tcode{subrange_kind::unsized}.
+\end{itemize}
+
+\rSec4[ranges.subrange.ctor]{\tcode{subrange} constructors}
+
+\indexlibrary{\idxcode{subrange}!\idxcode{subrange}}%
+\begin{itemdecl}
+constexpr subrange(I i, S s) requires !StoreSize;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Initializes \tcode{begin_} with \tcode{i} and \tcode{end_} with
+\tcode{s}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{subrange}!\idxcode{subrange}}%
+\begin{itemdecl}
+constexpr subrange(I i, S s, difference_type_t<I> n)
+  requires K == subrange_kind::sized;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires \tcode{n == distance(i, s)}.
+
+\pnum
+\effects Initializes \tcode{begin_} with \tcode{i}, \tcode{end_} with
+\tcode{s}. If \tcode{StoreSize} is \tcode{true}, initializes \tcode{size_} with
+\tcode{n}.
+\end{itemdescr}
+
+\begin{removedblock}
+\begin{itemdecl}
+template <ConvertibleTo<I> X, ConvertibleTo<S> Y, subrange_kind Z>
+constexpr subrange(subrange<X, Y, Z> r)
+  requires !StoreSize || Z == subrange_kind::sized;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{itemize}
+\item If \tcode{StoreSize} is \tcode{true},
+\tcode{subrange\{r.begin(), r.end(), r.size()\}}.
+\item Otherwise, \tcode{subrange\{r.begin(), r.end()\}}.
+\end{itemize}
+\end{itemdescr}
+
+\begin{itemdecl}
+template <ConvertibleTo<I> X, ConvertibleTo<S> Y, subrange_kind Z>
+constexpr subrange(subrange<X, Y, Z> r, difference_type_t<I> n)
+  requires K == subrange_kind::sized;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to \tcode{subrange\{r.begin(), r.end(), n\}}.
+\end{itemdescr}
+\end{removedblock}
+
+\begin{addedblock}
+\indexlibrary{\idxcode{subrange}!\idxcode{subrange}}%
+\begin{itemdecl}
+template <@\textit{not-same-as}@<subrange> R>
+  requires Range<R> && Iterator<safe_iterator_t<R>> &&
+    ConvertibleTo<iterator_t<R>, I> && ConvertibleTo<sentinel_t<R>, S>
+constexpr subrange(R&& r) requires !StoreSize || SizedRange<R>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{itemize}
+\item If \tcode{StoreSize} is \tcode{true},
+\tcode{subrange\{ranges::begin(r), ranges::end(r), ranges::size(r)\}}.
+\item Otherwise, \tcode{subrange\{ranges::begin(r), ranges::end(r)\}}.
+\end{itemize}
+\end{itemdescr}
+
+\indexlibrary{\idxcode{subrange}!\idxcode{subrange}}%
+\begin{itemdecl}
+template <Range R>
+  requires Iterator<safe_iterator_t<R>> &&
+    ConvertibleTo<iterator_t<R>, I> && ConvertibleTo<sentinel_t<R>, S>
+constexpr subrange(R&& r, difference_type_t<I> n)
+  requires K == subrange_kind::sized;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to \tcode{subrange\{ranges::begin(r), ranges::end(r), n\}}.
+\end{itemdescr}
+\end{addedblock}
+
+\indexlibrary{\idxcode{subrange}!\idxcode{subrange}}%
+\begin{itemdecl}
+template <@\changed{\textit{pair-like-convertible-to}<I, S>}{\textit{not-same-as}<subrange>}@ PairLike>
+  @\added{requires \textit{pair-like-convertible-to}<PairLike, I, S>}@
+constexpr subrange(PairLike&& r) requires !StoreSize;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+subrange{get<0>(std::forward<PairLike>(r)), get<1>(std::forward<PairLike>(r))}
+\end{codeblock}
+\end{itemdescr}
+
+\indexlibrary{\idxcode{subrange}!\idxcode{subrange}}%
+\begin{itemdecl}
+template <@\textit{pair-like-convertible-to}@<I, S> PairLike>
+constexpr subrange(PairLike&& r, difference_type_t<I> n)
+  requires K == subrange_kind::sized;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+subrange{get<0>(std::forward<PairLike>(r)), get<1>(std::forward<PairLike>(r)), n}
+\end{codeblock}
+\end{itemdescr}
+
+\begin{removedblock}
+\begin{itemdecl}
+template <Range R>
+  requires ConvertibleTo<iterator_t<R>, I> && ConvertibleTo<sentinel_t<R>, S>
+constexpr subrange(R& r) requires !StoreSize || SizedRange<R>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{itemize}
+\item If \tcode{StoreSize} is \tcode{true},
+\tcode{subrange\{ranges::begin(r), ranges::end(r), distance(r)\}}.
+\item Otherwise,
+\tcode{subrange\{ranges::begin(r), ranges::end(r)\}}.
+\end{itemize}
+\end{itemdescr}
+\end{removedblock}
+
+\rSec4[ranges.subrange.ops]{\tcode{subrange} operators}
+
+\indexlibrary{\idxcode{operator \textit{PairLike}}!\idxcode{subrange}}%
+\begin{itemdecl}
+template <@\changed{\textit{pair-like-convertible-from}<const I\&, const S\&>}{\textit{not-same-as}<subrange>}@ PairLike>
+  @\added{requires \textit{pair-like-convertible-from}<PairLike, const I\&, const S\&>}@
+constexpr operator PairLike() const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to: \tcode{return PairLike(begin_, end_);}.
+\end{itemdescr}
+
+\rSec4[ranges.subrange.accessors]{\tcode{subrange} accessors}
+
+\indexlibrary{\idxcode{begin}!\idxcode{subrange}}%
+\begin{itemdecl}
+constexpr I begin() const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to: \tcode{return begin_;}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{end}!\idxcode{subrange}}%
+\begin{itemdecl}
+constexpr S end() const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to: \tcode{return end_;}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{empty}!\idxcode{subrange}}%
+\begin{itemdecl}
+constexpr bool empty() const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to: \tcode{return begin_ == end_;}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{size}!\idxcode{subrange}}%
+\begin{itemdecl}
+constexpr difference_type_t<I> size() const
+  requires K == subrange_kind::sized;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{itemize}
+\item It \tcode{StoreSize} is \tcode{true}, \tcode{return size_;}.
+\item Otherwise, \tcode{return end_ - begin_;}.
+\end{itemize}
+\end{itemdescr}
+
+\indexlibrary{\idxcode{next}!\idxcode{subrange}}%
+\begin{itemdecl}
+[[nodiscard]] constexpr subrange next(difference_type_t<I> n = 1) const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+auto tmp = *this;
+tmp.advance(n);
+return tmp;
+\end{codeblock}
+
+\pnum
+\enternote If \tcode{ForwardIterator<I>} is not satisfied, \tcode{next} may
+invalidate \tcode{*this}. \exitnote
+\end{itemdescr}
+
+\indexlibrary{\idxcode{prev}!\idxcode{subrange}}%
+\begin{itemdecl}
+[[nodiscard]] constexpr subrange prev(difference_type_t<I> n = 1) const
+  requires BidirectionalIterator<I>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+auto tmp = *this;
+tmp.advance(-n);
+return tmp;
+\end{codeblock}
+\end{itemdescr}
+
+\indexlibrary{\idxcode{advance}!\idxcode{subrange}}%
+\begin{itemdecl}
+constexpr subrange& advance(difference_type_t<I> n);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{itemize}
+\item If \tcode{StoreSize} is \tcode{true},
+\begin{codeblock}
+size_ -= n - ranges::advance(begin_, n, end_);
+return *this;
+\end{codeblock}
+\item Otherwise,
+\begin{codeblock}
+ranges::advance(begin_, n, end_);
+return *this;
+\end{codeblock}
+\end{itemize}
+\end{itemdescr}
+
+\rSec4[ranges.subrange.nonmember]{\tcode{subrange} non-member functions}
+
+\begin{addedblock}
+\indexlibrary{\idxcode{begin}!\idxcode{subrange}}%
+\begin{itemdecl}
+template <class I, class S, subrange_kind K>
+  constexpr I begin(subrange<I, S, K>&& r);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+return r.begin();
+\end{codeblock}
+\end{itemdescr}
+
+\indexlibrary{\idxcode{end}!\idxcode{subrange}}%
+\begin{itemdecl}
+template <class I, class S, subrange_kind K>
+  constexpr S end(subrange<I, S, K>&& r);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+return r.end();
+\end{codeblock}
+\end{itemdescr}
+\end{addedblock}
+
+\indexlibrary{\idxcode{get}!\idxcode{subrange}}%
+\begin{itemdecl}
+template <std::size_t N, class I, class S, subrange_kind K>
+  requires N < 2
+constexpr auto get(const subrange<I, S, K>& r);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+if constexpr (N == 0)
+  return r.begin();
+else
+  return r.end();
+\end{codeblock}
+\end{itemdescr}
+
