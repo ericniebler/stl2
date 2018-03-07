@@ -1,20 +1,133 @@
 %!TEX root = D0970.tex
 
 \part[Changes to P0789 R2]{Changes to P0789 R2\hfill[P0789]}\label{P0789}
+
+\setcounter{chapter}{9}
+\rSec0[ranges]{Ranges library}
+
 \ednote{The following changes are suggested for P0789.}
 
 \ednote{Change section ``Header \tcode{<experimental/ranges/range>} synopsis''
 [range.synopsis], as follows:}
 
-\setcounter{chapter}{9}
-\rSec0[ranges]{Ranges library}
+\begin{codeblock}
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+  // ... as before
 
-\setcounter{section}{6}
+  enum class subrange_kind : bool { unsized, sized };
+  // \ref{ranges.subrange}:
+  template <Iterator I, Sentinel<I> S = I, subrange_kind K = see below >
+      requires K == subrange_kind::sized || !SizedSentinel<S, I>
+  class subrange;
+
+  @\added{template <class I, class S, subrange_kind K>}@
+    @\added{constexpr I begin(subrange<I, S, K>\&\& r);}@
+
+  @\added{template <class I, class S, subrange_kind K>}@
+    @\added{constexpr S end(subrange<I, S, K>\&\& r);}@
+
+  // ... as before
+}}}}
+\end{codeblock}
+
+\setcounter{section}{5}
+\rSec1[ranges.requirements]{Range requirements}
+
+\setcounter{subsection}{1}
+\rSec2[std2.ranges.range]{Ranges}
+\ednote{The equivalent change should be made in P0896 also.}
+
+\pnum
+The \tcode{Range} concept defines the requirements of a type that allows
+iteration over its elements by providing a \tcode{begin} iterator and an
+\tcode{end} sentinel.
+\enternote Most algorithms requiring this concept simply forward to an
+\tcode{Iterator}-based algorithm by calling \tcode{begin} and \tcode{end}. \exitnote
+
+\begin{itemdecl}
+template <class T>
+concept bool @\changed{Range}{\textit{range-impl}}@ = @\added{// \expos}@
+  requires(T&& t) {
+    ranges::begin(@\added{std::forward<T>(}@t@\added{)}@); // not necessarily equality-preserving (see below)
+    ranges::end(@\added{std::forward<T>(}@t@\added{)}@);
+  };
+
+@\added{template <class T>}@
+@\added{concept bool Range =}@
+  @\added{\textit{range-impl}<T\&>;}@
+
+@\added{template <class T>}@
+@\added{concept bool \textit{forwarding-range} = // \expos}@
+  @\added{Range<T> \&\& \textit{range-impl}<T>;}@
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+Given an \changed{lvalue \tcode{t} of type \tcode{remove_reference_t<T>},
+\tcode{Range<T>}}{expression \tcode{E} such that \tcode{decltype((E))} is \tcode{T},
+\tcode{\textit{range-impl}<T>}} is satisfied only if
+
+\begin{itemize}
+\item \range{\added{ranges::}begin(\changed{t}{E})}{\added{ranges::}end(\changed{t}{E})} denotes a range.
+
+\item Both \tcode{\added{ranges::}begin(\changed{t}{E})} and \tcode{\added{ranges::}end(\changed{t}{E})} are amortized constant time
+and non-modifying. \enternote \tcode{\added{ranges::}begin(\changed{t}{E})} and \tcode{\added{ranges::}end(\changed{t}{E})} do not require
+implicit expression variations~(\cxxref{concepts.lib.general.equality}). \exitnote
+
+\item If \changed{\tcode{iterator_t<T>}}{the type of \tcode{ranges::begin(E)}} satisfies \tcode{ForwardIterator},
+\tcode{\added{ranges::}begin(\changed{t}{E})} is equality preserving.
+\end{itemize}
+
+\begin{addedblock}
+\pnum
+Given an expression \tcode{E} such that \tcode{decltype((E))} is \tcode{T},
+\tcode{\textit{forwarding-range}<T>} is satisfied only if
+\begin{itemize}
+\item
+  The expressions \tcode{ranges::begin(E)} and \tcode{ranges::begin(static_cast<T\&>(E))}
+  are equivalent.
+
+\item
+  The expressions \tcode{ranges::end(E)} and \tcode{ranges::end(static_cast<T\&>(E))}
+  are equivalent.
+\end{itemize}
+
+\end{addedblock}
+\end{itemdescr}
+
+\pnum \enternote
+Equality preservation of both \tcode{begin} and \tcode{end} enables passing a \tcode{Range}
+whose iterator type satisfies \tcode{ForwardIterator}
+to multiple algorithms and
+making multiple passes over the range by repeated calls to \tcode{begin} and \tcode{end}.
+Since \tcode{begin} is not required to be equality preserving when the return type does
+not satisfy \tcode{ForwardIterator}, repeated calls might not return equal values or
+might not be well-defined; \tcode{begin} should be called at most once for such a range.
+\exitnote
+
+\setcounter{subsection}{10}
+\rSec2[ranges.viewable]{Viewable ranges}
+
+\pnum The \tcode{ViewableRange} concept specifies the requirements of a \tcode{Range}
+type that can be converted to a \tcode{View} safely.
+
+\begin{codeblock}
+template <class T>
+concept bool ViewableRange =
+  Range<T> && (@\changed{is_lvalue_reference_v<T>}{\textit{forwarding-range}<T>}@ || View<decay_t<T>>); @\removed{// \seebelow}@
+\end{codeblock}
+
+\begin{removedblock}
+\pnum
+There need not be any subsumption relationship between \tcode{ViewableRange<T>}
+and \tcode{is_lvalue_reference_v<T>}.
+\end{removedblock}
+
 \rSec1[ranges.utilities]{Range utilities}
+
 \setcounter{subsection}{1}
 \rSec2[ranges.subranges]{Sub-ranges}
-%\setcounter{subsubsection}{0}
-\setcounter{paragraph}{0}
+
 \rSec3[ranges.subrange]{\tcode{subrange}}
 
 \begin{codeblock}
@@ -54,13 +167,12 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
       @\removed{requires K == subrange_kind::sized;}@
 
     @\added{template <\textit{not-same-as}<subrange> R>}@
-    @\added{requires Range<R> \&\& Iterator<safe_iterator_t<R>{>} \&\&}@
+    @\added{requires \textit{forwarding-range}<R> \&\&}@
       @\added{ConvertibleTo<iterator_t<R>, I> \&\& ConvertibleTo<sentinel_t<R>, S>}@
     @\added{constexpr subrange(R\&\& r) requires !StoreSize || SizedRange<R>;}@
 
-    @\added{template <Range R>}@
-    @\added{requires Iterator<safe_iterator_t<R>{>} \&\&}@
-      @\added{ConvertibleTo<iterator_t<R>, I> \&\& ConvertibleTo<sentinel_t<R>, S>}@
+    @\added{template <\textit{forwarding-range} R>}@
+    @\added{requires ConvertibleTo<iterator_t<R>, I> \&\& ConvertibleTo<sentinel_t<R>, S>}@
     @\added{constexpr subrange(R\&\& r, difference_type_t<I> n)}@
       @\added{requires K == subrange_kind::sized;}@
 
@@ -118,16 +230,14 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   @\removed{template <SizedRange R>}@
   @\removed{subrange(R\&) -> subrange<iterator_t<R>, sentinel_t<R>, subrange_kind::sized>;}@
 
-  @\added{template <Range R>}@
-    @\added{requires Iterator<safe_iterator_t<R>{>}}@
+  @\added{template <\textit{forwarding-range} R>}@
   @\added{subrange(R\&\&) -> subrange<iterator_t<R>, sentinel_t<R>{>};}@
 
-  @\added{template <SizedRange R>}@
-    @\added{requires Iterator<safe_iterator_t<R>{>}}@
+  @\added{template <\textit{forwarding-range} R>}@
+    @\added{requires SizedRange<R>}@
   @\added{subrange(R\&\&) -> subrange<iterator_t<R>, sentinel_t<R>, subrange_kind::sized>;}@
 
-  @\added{template <Range R>}@
-    @\added{requires Iterator<safe_iterator_t<R>{>}}@
+  @\added{template <\textit{forwarding-range} R>}@
   @\added{subrange(R\&\&, difference_type_t<iterator_t<R>{>}) ->}@
     @\added{subrange<iterator_t<R>, sentinel_t<R>, subrange_kind::sized>;}@
 
@@ -135,7 +245,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 
   @\added{template <Range R>}@
     @\added{using safe_subrange_t =}@
-      @\added{conditional_t<Iterator<safe_iterator_t<R>{>},}@
+      @\added{conditional_t<\textit{forwarding-range}<R>,}@
         @\added{subrange<iterator_t<R>{>},}@
         @\added{dangling<subrange<iterator_t<R>{>}>{>};}@
 }}}}
@@ -210,7 +320,7 @@ constexpr subrange(subrange<X, Y, Z> r, difference_type_t<I> n)
 \indexlibrary{\idxcode{subrange}!\idxcode{subrange}}%
 \begin{itemdecl}
 template <@\textit{not-same-as}@<subrange> R>
-  requires Range<R> && Iterator<safe_iterator_t<R>> &&
+  requires @\textit{forwarding-range}@<R> &&
     ConvertibleTo<iterator_t<R>, I> && ConvertibleTo<sentinel_t<R>, S>
 constexpr subrange(R&& r) requires !StoreSize || SizedRange<R>;
 \end{itemdecl}
@@ -227,9 +337,8 @@ constexpr subrange(R&& r) requires !StoreSize || SizedRange<R>;
 
 \indexlibrary{\idxcode{subrange}!\idxcode{subrange}}%
 \begin{itemdecl}
-template <Range R>
-  requires Iterator<safe_iterator_t<R>> &&
-    ConvertibleTo<iterator_t<R>, I> && ConvertibleTo<sentinel_t<R>, S>
+template <@\textit{forwarding-range}@ R>
+  requires ConvertibleTo<iterator_t<R>, I> && ConvertibleTo<sentinel_t<R>, S>
 constexpr subrange(R&& r, difference_type_t<I> n)
   requires K == subrange_kind::sized;
 \end{itemdecl}
@@ -457,3 +566,192 @@ else
 \end{codeblock}
 \end{itemdescr}
 
+\rSec1[ranges.adaptors]{Range adaptors}
+
+\setcounter{subsection}{3}
+\rSec2[ranges.adaptors.all]{\tcode{view::all}}
+
+\pnum
+The purpose of \tcode{view::all} is to return a \tcode{View} that includes all
+elements of the \tcode{Range} passed in.
+
+\pnum
+The name \tcode{view::all} denotes a range adaptor
+object~(\ref{ranges.adaptor.object}). The
+expression \tcode{view::all(E)} for some subexpression \tcode{E} is
+expression-equivalent to:
+
+\begin{itemize}
+\item \tcode{\textit{DECAY_COPY}(E)} if the decayed type of \tcode{E}
+satisfies the concept \tcode{View}.
+\item \tcode{subrange\{E\}} if \changed{\tcode{E}
+is an lvalue and has a type that satisfies concept \tcode{Range}}{that
+expression is well-formed}.
+\item Otherwise, \tcode{view::all(E)} is ill-formed.
+\end{itemize}
+
+\remark Whenever \tcode{view::all(E)} is a valid expression, it is a prvalue
+whose type satisfies \tcode{View}.
+
+\rSec0[algorithms]{Algorithms library}
+
+\ednote{Some of the algorithms in the Ranges TS (\tcode{rotate} and \tcode{equal_range})
+actually return subranges, but they do so using \tcode{tagged_pair}. With the addition
+of a proper \tcode{subrange} type, we suggest changing these algorithms to return
+\tcode{subrange}.}
+
+\rSec1[algorithms.general]{General}
+
+\ednote{Change the \tcode{<experimental/ranges/algorithm>} synopsis as follows:}
+
+\begin{codeblock}
+#include <initializer_list>
+
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+  // ... as before
+
+  template <ForwardIterator I, Sentinel<I> S>
+    requires Permutable<I>
+    @\removed{tagged_pair<tag::begin(I), tag::end(I)>}@
+    @\added{subrange<I>}@
+      rotate(I first, I middle, S last);
+
+  template <ForwardRange Rng>
+    requires Permutable<iterator_t<Rng>>
+    @\removed{tagged_pair<tag::begin(safe_iterator_t<Rng>),}@
+                @\removed{tag::end(safe_iterator_t<Rng>)>}@
+    @\added{safe_subrange_t<Rng>}@
+      rotate(Rng&& rng, iterator_t<Rng> middle);
+
+  // ... as before
+
+  template <ForwardIterator I, Sentinel<I> S, class T, class Proj = identity,
+      IndirectStrictWeakOrder<const T*, projected<I, Proj>> Comp = less<>>
+    @\removed{tagged_pair<tag::begin(I), tag::end(I)>}@
+    @\added{subrange<I>}@
+      equal_range(I first, S last, const T& value, Comp comp = Comp{}, Proj proj = Proj{});
+
+  template <ForwardRange Rng, class T, class Proj = identity,
+      IndirectStrictWeakOrder<const T*, projected<iterator_t<Rng>, Proj>> Comp = less<>>
+    @\removed{tagged_pair<tag::begin(safe_iterator_t<Rng>),}@
+                @\removed{tag::end(safe_iterator_t<Rng>)>}@
+    @\added{safe_subrange_t<Rng>}@
+      equal_range(Rng&& rng, const T& value, Comp comp = Comp{}, Proj proj = Proj{});
+
+  // ... as before
+}}}}
+\end{codeblock}
+
+\setcounter{section}{3}
+
+\rSec1[alg.modifying.operations]{Mutating sequence operations}
+
+\setcounter{subsection}{10}
+
+\rSec2[alg.rotate]{Rotate}
+
+\indexlibrary{\idxcode{rotate}}%
+\begin{itemdecl}
+template <ForwardIterator I, Sentinel<I> S>
+  requires Permutable<I>
+  @\removed{tagged_pair<tag::begin(I), tag::end(I)>}@
+  @\added{subrange<I>}@
+    rotate(I first, I middle, S last);
+
+template <ForwardRange Rng>
+  requires Permutable<iterator_t<Rng>>
+  @\removed{tagged_pair<tag::begin(safe_iterator_t<Rng>),}@
+              @\removed{tag::end(safe_iterator_t<Rng>)>}@
+  @\added{safe_subrange_t<Rng>}@
+    rotate(Rng&& rng, iterator_t<Rng> middle);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+For each non-negative integer
+\tcode{i < (last - first)},
+places the element from the position
+\tcode{first + i}
+into position
+\tcode{first + (i + (last - middle)) \% (last - first)}.
+
+\pnum
+\returns \tcode{\{first + (last - middle), last\}}.
+
+\pnum
+\notes
+This is a left rotate.
+
+\pnum
+\requires
+\range{first}{middle}
+and
+\range{middle}{last}
+shall be valid ranges.
+
+\pnum
+\complexity
+At most
+\tcode{last - first}
+swaps.
+\end{itemdescr}
+
+\rSec1[alg.sorting]{Sorting and related operations}
+
+\setcounter{subsection}{2}
+
+\rSec2[alg.binary.search]{Binary search}
+
+\setcounter{subsubsection}{2}
+
+\rSec3[equal.range]{\tcode{equal_range}}
+
+\indexlibrary{\idxcode{equal_range}}%
+\begin{itemdecl}
+template <ForwardIterator I, Sentinel<I> S, class T, class Proj = identity,
+    IndirectStrictWeakOrder<const T*, projected<I, Proj>> Comp = less<>>
+  @\removed{tagged_pair<tag::begin(I), tag::end(I)>}@
+  @\added{subrange<I>}@
+    equal_range(I first, S last, const T& value, Comp comp = Comp{}, Proj proj = Proj{});
+
+template <ForwardRange Rng, class T, class Proj = identity,
+    IndirectStrictWeakOrder<const T*, projected<iterator_t<Rng>, Proj>> Comp = less<>>
+  @\removed{tagged_pair<tag::begin(safe_iterator_t<Rng>),}@
+              @\removed{tag::end(safe_iterator_t<Rng>)>}@
+  @\added{safe_subrange_t<Rng>}@
+    equal_range(Rng&& rng, const T& value, Comp comp = Comp{}, Proj proj = Proj{});
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\requires
+The elements
+\tcode{e}
+of
+\range{first}{last}
+shall be partitioned with respect to the expressions
+\tcode{invoke(comp, invoke(proj, e), value)}
+and
+\tcode{!invoke(\brk{}comp, value, invoke(proj, e))}.
+Also, for all elements
+\tcode{e}
+of
+\tcode{[first, last)},
+\tcode{invoke(comp, invoke(proj, e), value)}
+shall imply \\
+\tcode{!invoke(\brk{}comp, value, invoke(proj, e))}.
+
+\pnum
+\returns
+\begin{codeblock}
+{lower_bound(first, last, value, comp, proj),
+ upper_bound(first, last, value, comp, proj)}
+\end{codeblock}
+
+\pnum
+\complexity
+At most
+$2 * \log_2(\tcode{last - first}) + \bigoh{1}$
+applications of the comparison function and projection.
+\end{itemdescr}
