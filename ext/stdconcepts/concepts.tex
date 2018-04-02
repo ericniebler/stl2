@@ -547,19 +547,84 @@ of \tcode{=}. \exitnote
 \indexlibrary{\idxcode{Swappable}}%
 \begin{itemdecl}
 template <class T>
-concept Swappable = requires(T& a, T& b) { std2::swap(a, b); };
-
-template <class T, class U>
-concept SwappableWith =
-  CommonReference<const remove_reference_t<T>&, const remove_reference_t<U>&> &&
-  requires(T&& t, U&& u) {
-    std2::swap(std::forward<T>(t), std::forward<T>(t));
-    std2::swap(std::forward<U>(u), std::forward<U>(u));
-    std2::swap(std::forward<T>(t), std::forward<U>(u));
-    std2::swap(std::forward<U>(u), std::forward<T>(t));
-  };
+@\oldtxt{concept Swappable = requires(T\& a, T\& b) \{ ranges::swap(a, b); \};}@
+@\newtxt{concept Swappable = is_swappable_v<T>; // \seebelow}@
 \end{itemdecl}
 
+{\color{newclr}
+\begin{itemdescr}
+\pnum
+Let \tcode{a1} and \tcode{a2} denote distinct equal objects of type \tcode{T},
+and let \tcode{b1} and \tcode{b2} similarly denote distinct equal objects of type
+\tcode{T}. \tcode{Swappable<T>} is satisfied only if:
+\begin{itemize}
+\item After evaluating either \tcode{swap(a1, b1)} or \tcode{swap(b1, a1)} in the
+  context described below, \tcode{a1} is equal to \tcode{b2} and \tcode{b1} is
+  equal to \tcode{a2}.
+\end{itemize}
+
+\pnum
+The context in which \tcode{swap(a1, b1)} or \tcode{swap(b1, a1)} are evaluated shall ensure that a binary non-member
+function named "swap" is selected via overload resolution~(\cxxref{over.match}) on a candidate set that includes:
+\begin{itemize}
+\item the two \tcode{swap} function templates defined in \tcode{<utility>}~(\ref{utility}) and
+\item the lookup set produced by argument-dependent lookup~(\cxxref{basic.lookup.argdep}).
+\end{itemize}
+
+\pnum
+There need be no subsumption relationship between \tcode{Swappable<T>} and
+\tcode{is_swappable_v<T>}.
+\end{itemdescr}
+} %% \color{newclr}
+
+\indexlibrary{\idxcode{SwappableWith}}%
+\begin{itemdecl}
+template <class T, class U>
+concept SwappableWith =
+  @\newtxt{is_swappable_with_v<T, T> \&\& is_swappable_with_v<U, U> \&\& // \seebelow}@
+  CommonReference<const remove_reference_t<T>&, const remove_reference_t<U>&> &&
+  @\newtxt{is_swappable_with_v<T, U> \&\& is_swappable_with_v<U, T>; // \seebelow}@
+  @\oldtxt{requires(T\&\& t, U\&\& u) \{}@
+    @\oldtxt{ranges::swap(std::forward<T>(t), std::forward<T>(t));}@
+    @\oldtxt{ranges::swap(std::forward<U>(u), std::forward<U>(u));}@
+    @\oldtxt{ranges::swap(std::forward<T>(t), std::forward<U>(u));}@
+    @\oldtxt{ranges::swap(std::forward<U>(u), std::forward<T>(t));}@
+  @\oldtxt{\};}@
+\end{itemdecl}
+
+{\color{newclr}
+\begin{itemdescr}
+\pnum
+Let \tcode{t1} and \tcode{t2} denote distinct equal objects of type
+\tcode{remove_cvref_t<T>}, and $E_t$ be an expression that denotes \tcode{t1}
+such that \tcode{decltype(($E_t$))} is \tcode{T}.
+Let \tcode{u1} and \tcode{u2} similarly denote distinct equal objects of type
+\tcode{remove_cvref_t<U>}, and $E_u$ be an expression that denotes \tcode{u1}
+such that \tcode{decltype(($E_u$))} is \tcode{U}. Let \tcode{C} be
+\tcode{common_reference_t<const remove_reference_t<T>\&, const remove_reference_t<U>\&>}.
+\tcode{SwappableWith<T, U>} is satisfied only if:
+
+\begin{itemize}
+\item After evaluating either \tcode{swap($E_t$, $E_u$)} or \tcode{swap($E_u$, $E_t$)} in the
+  context described above, \tcode{C(t1)} is equal to \tcode{C(u2)} and \tcode{C(u1)} is
+  equal to \tcode{C(t2)}.
+\end{itemize}
+
+\pnum
+The context in which \tcode{swap($E_t$, $E_u$)} or \tcode{swap($E_u$, $E_t$)} are evaluated shall ensure that a binary non-member
+function named "swap" is selected via overload resolution~(\cxxref{over.match}) on a candidate set that includes:
+\begin{itemize}
+\item the two \tcode{swap} function templates defined in \tcode{<utility>}~(\ref{utility}) and
+\item the lookup set produced by argument-dependent lookup~(\cxxref{basic.lookup.argdep}).
+\end{itemize}
+
+\pnum
+There need be no subsumption relationship between \tcode{SwappableWith<T, U>} and
+any specialization of \tcode{is_swappable_with_v}.
+\end{itemdescr}
+} %% \color{newclr}
+
+{\color{oldclr}
 \begin{itemdescr}
 \pnum
 This subclause provides definitions for swappable types and expressions. In these
@@ -571,7 +636,7 @@ An object \tcode{t} is \defn{swappable with} an object \tcode{u} if and only if
 \tcode{SwappableWith<T, U>} is satisfied. \tcode{Swappable\-With<T, U>} is satisfied
 only if given distinct objects \tcode{t2} equal to \tcode{t}
 and \tcode{u2} equal to \tcode{u}, after evaluating either
-\tcode{std2::swap(t, u)} or \tcode{std2::swap(u, t)}, \tcode{t2} is equal to
+\tcode{ranges::swap(t, u)} or \tcode{ranges::swap(u, t)}, \tcode{t2} is equal to
 \tcode{u} and \tcode{u2} is equal to \tcode{t}.
 
 \pnum
@@ -584,17 +649,17 @@ is performed in an appropriate context under the various conditions as follows:
 #include <utility>
 
 // Requires: \tcode{std::forward<T>(t)} shall be swappable with \tcode{std::forward<U>(u)}.
-template <class T, @\oldtxt{class}\newtxt{SwappableWith<T>}@ U>
+template <class T, class U>
 void value_swap(T&& t, U&& u) {
-  std2::swap(std::forward<T>(t), std::forward<U>(u)); // OK: uses ``swappable with'' conditions
-                                                      // for rvalues and lvalues
+  ranges::swap(std::forward<T>(t), std::forward<U>(u)); // OK: uses ``swappable with'' conditions
+                                                        // for rvalues and lvalues
 }
 
 // Requires: lvalues of \tcode{T} shall be swappable.
-template <@\oldtxt{class}\newtxt{Swappable}@ T>
+template <class T>
 void lv_swap(T& t1, T& t2) {
-  std2::swap(t1, t2);                                 // OK: uses swappable conditions for
-}                                                     // lvalues of type \tcode{T}
+  ranges::swap(t1, t2);                                 // OK: uses swappable conditions for
+}                                                       // lvalues of type \tcode{T}
 
 namespace N {
   struct A { int m; };
@@ -602,8 +667,8 @@ namespace N {
   Proxy proxy(A& a) { return Proxy{ &a }; }
 
   void swap(A& x, Proxy p) {
-    std2::swap(x.m, p.a->m);                // OK: uses context equivalent to swappable
-                                            // conditions for fundamental types
+    ranges::swap(x.m, p.a->m);                // OK: uses context equivalent to swappable
+                                              // conditions for fundamental types
   }
   void swap(Proxy p, A& x) { swap(x, p); }  // satisfy symmetry constraint
 }
@@ -620,6 +685,7 @@ int main() {
 \end{codeblock}
 \exitexample
 \end{itemdescr}
+} %% \color{oldclr}
 
 \rSec2[concepts.lib.corelang.destructible]{Concept \tcode{Destructible}}
 
@@ -639,7 +705,7 @@ There need not be any subsumption relationship between \tcode{Destructible<T>}
 and \tcode{is_\-no\-throw_\-destruct\-ible_v<T>}.
 
 \pnum
-\enternote Unlike the \tcode{Destructible} \oldtxt{library concept in the \Cpp
+\enternote Unlike the \tcode{\newtxt{STL1}Destructible} \oldtxt{library concept in the \Cpp
 Standard}\newtxt{requirements} (Table~\cxxref{destructible}), this concept forbids destructors
 that are \oldtxt{\tcode{noexcept(false)}}\newtxt{potentially throwing}, even if non-throwing. \exitnote
 \end{itemdescr}
