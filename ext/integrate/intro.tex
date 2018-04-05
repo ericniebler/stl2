@@ -1,0 +1,218 @@
+\rSec0[intro.scope]{Scope}
+
+\begin{quote}
+``Eventually, all things merge into one, and a river runs through it.''
+\begin{flushright}
+\textemdash \textit{Norman Maclean}
+\end{flushright}
+\end{quote}
+
+\pnum
+This document proposes changes to the components of namespace \tcode{std} and
+namespace \tcode{std::ranges} to deepen the integration of the components of the
+Ranges TS into the Standard Library.
+
+\rSec0[intro.refs]{Normative References}
+
+\pnum
+The following referenced documents are indispensable for the
+application of this document. For dated references, only the
+edition cited applies. For undated references, the latest edition
+of the referenced document (including any amendments) applies.
+
+\begin{itemize}
+\item ISO/IEC 14882, \doccite{Programming Languages - \Cpp}
+\item ISO/IEC TS 21425:2017, \doccite{Technical Specification - \Cpp Extensions for Ranges}
+\end{itemize}
+
+ISO/IEC 14882 is herein called the \defn{C\Rplus\Rplus\xspace Standard} and
+ISO/IEC TS 21425:2017 is called the \defn{Ranges TS}.
+
+\rSec0[intro]{General Principles}
+
+\rSec1[intro.goals]{Goals}
+
+\pnum
+The goal of this paper is to reduce the needless duplication of functionality
+that would come from naively dropping the Ranges TS into the \tcode{std::ranges}
+namespace. We also aim to simplify the job of authoring an iterator type that
+works with both existing generic code, which expects types to conform to the
+iterator requirements tables~([iterator.requirements]) as well as to satisfy
+the requirements of the iterator concepts as defined in the Ranges TS.
+
+This paper builds a bridge between the pre-concepts STL and the newer
+constrained facilities.
+
+\rSec1[intro.methedology]{Methodology}
+
+\rSec2[intro.background]{Background}
+
+\pnum
+When the STL was first written, there was no way test an expression to see if
+it was well-formed without causing a hard error at compile-time. As a result,
+iterators needed to explicitly tell generic code what concept they satisfied
+via a \tcode{::iterator_category} typedef, either within a specialization of
+\tcode{std::iterator_traits} or nested within the iterator type itself.
+
+\pnum
+With the addition of generalized SFINAE for expressions~(\cite{expr-sfinae}),
+and especially with the addition of concepts, generic code no longer strictly
+needs the iterator to declare which concept is satisfied; instead, generic
+code can inspect which required expressions the type supports. Iterator tag types
+are needed only to disambiguate between concepts that differ only in semantics,
+or to opt out of accidental conformance.
+
+\pnum
+For legacy reasons, in both the working draft and in the Ranges TS, generic
+algorithms still require iterator types to declare their category via tag. This
+paper proposes doing away with that requirement, using syntactic conformance to
+infer the tag type for legacy code that still requires it. New code will simply
+use \textit{requires-clauses} and the iterator concepts from the Ranges TS to
+constrain algorithms and select implementations.
+
+\pnum
+A great deal of the machinery in the Ranges TS duplicates existing functionality
+in Standard Library. This made sense when the Ranges TS was seen as the
+beginning of a fork of the Standard Library itself. That duplication now seems
+like bad design.
+
+\pnum
+By leveraging the compiler's new ability to infer concept satisfaction and by
+reusing existing library functionality, we can make it easier for users to author
+iterator types that meet the expectations of old generic code, while also
+addressing the shortcomings of the STL that the Ranges TS aimed to address.
+
+\rSec2[intro.strategy]{Implementation Strategy}
+
+\rSec3[intro.iterator_tags]{Iterator tags}
+
+\pnum
+The Ranges TS defines a parallel set of iterator tag types, from
+\tcode{input_iterator_tag} and \tcode{output_iterator_tag}, through
+\tcode{random_access_iterator_tag}. This paper proposes to remove those
+tag types and simply reuse the existing ones, with the addition of a new
+\tcode{contiguous_iterator_tag} type that represents a refinement of
+random-access iterators.
+
+\rSec3[intro.iterator_concept]{\tcode{iterator_concept}}
+
+\pnum
+There are several differences between the iterator concepts as defined in the
+C\Rplus\Rplus\xspace Standard and the Ranges TS. To accomodate the
+fact that a single type might satisfy different iterator concepts in the
+different standards -- and the fact that there will always be times when it is
+necessary to explicitly specify conformance with a tag type -- this paper
+proposes to add an additional optional member to \tcode{std::iterator_traits}
+named \tcode{::iterator_concept}.
+
+\pnum
+As always, \tcode{std::iterator_traits<I>::iterator_category} specifies which of
+the requirements tables in [iterator.requirements] the type \tcode{I} purports
+to satisfy, whereas \tcode{std::iterator_traits<I>::iterator_concept}, when
+present, is used to opt-in or -out of satisfaction of concepts as defined in the
+Ranges TS.
+
+\rSec3[intro.spec_assoc_types]{Specifying associated types}
+
+\pnum
+The Ranges TS defines three different customization points --
+\tcode{ranges::value_type<>}, \tcode{ranges::difference_type<>}, and
+\tcode{ranges::iterator_category<>} -- for specifying the associated types for
+the \tcode{Readable}, \tcode{Weakly\-Incrementable}, and \tcode{InputIterator}
+concepts, respectively.
+
+\pnum
+With the addition of the optional \tcode{iterator_concept} nested typedef of
+\tcode{std::iterator_traits<>}, the \tcode{ranges::iterator_category<>}
+customization point is no longer necessary. Should users need to non-intrusively
+specify an iterator's tag, they may simply specialize \tcode{std::iterator_traits}
+as they always have.
+
+\pnum
+For the sake of clarity and consistency with the naming of
+\tcode{std::iterator_traits}, we suggest renaming
+\tcode{std::ranges::value_type<I>::type} to \tcode{std::ranges::readable_traits<I>::value_type}.
+Likewise, \tcode{std::\-ranges::\-difference_type<I>::type} is renamed to
+\tcode{std::ranges::incrementable_traits<I>::difference_type}.
+
+\pnum
+The primary \tcode{std::iterator_traits<>} template uses
+\tcode{std::ranges::readable_traits<>} and
+\tcode{std::\-ranges::\-incrementable_traits<>} for computing \tcode{::value_type}
+and \tcode{::difference_type}, respectively. That way, users need only specify
+these traits once.
+
+\rSec3[intro.use_assoc_types]{Using associated types}
+
+\pnum
+To specify an iterator's \tcode{value_type}, users may specialize either
+\tcode{std::iterator_traits<>}, \tcode{std::\-ranges::\-readable_traits<>}, or both.
+If they specialize \tcode{iterator_traits<>} and not \tcode{readable_traits<>},
+then \tcode{readable_traits<I>::value_type} will not reflect the value type they
+specified in \tcode{iterator_traits}. Generic code that uses
+\tcode{typename std::ranges::readable_traits<I>::value_type} directly is
+most likely wrong when \tcode{I} is an iterator type.
+
+\pnum
+One possible solution would be to simply remove \tcode{std::ranges::readable_traits}
+and tell people to use \tcode{iterator_traits} to specify the value type of their
+\tcode{Readable} types. However, there are readable types that are not iterators;
+for example, \tcode{std::optional<int>}. Needing to specialize something called
+``\tcode{iterator_traits}'' and specify a \tcode{difference_type} for something
+that is not incrementable would be strange, as would telling users to create a
+specialization of \tcode{iterator_traits} that lacks some of the traditional
+typedefs.
+
+\pnum
+Instead, we propose to use the alias template \tcode{value_type_t<>} -- renamed
+to \tcode{iter_value_t} and promoted to namespace \tcode{std} -- from the
+Ranges TS, and to make it smarter. Rather than immediately dispatching to either
+\tcode{iterator_traits<I>} or \tcode{readable_traits<I>}, \tcode{iter_value_t<I>}
+first tests whether \tcode{iterator_traits<I>} has selected a user-specialization.
+If so, \tcode{iter_value_t<I>} is an alias for
+\tcode{std::iterator_traits<I>::value_type}; otherwise, it is an alias for
+\tcode{std::ranges::readable_traits<I>::value_type}.
+
+\pnum
+The \tcode{difference_type_t} alias from the Ranges TS, renamed to
+\tcode{std::iter_difference_t}, gets the same treatment.
+
+\pnum
+Testing whether the user specialized a trait is a matter of giving the primary
+template some testable property that user specializations would lack. For instance,
+the primary template \tcode{std::iterator_traits<I>} might define a hidden nested
+typedef \tcode{__unspecialized} that is an alias for \tcode{I}. Any specialization
+\tcode{std::iterator_traits<I>} that either lacks that typedef or has one that
+is not an alias for \tcode{I} is necessarily a user-defined specialization.
+
+\rSec3[intro.naming]{Names of iterator associated types}
+
+\pnum
+As already mentioned above, the aliases \tcode{std::ranges::value_type_t} and
+\tcode{std::ranges::difference_type_t} are renamed to \tcode{std::iter_value_t}
+and \tcode{std::iter_difference_t}. Here is the complete list of iterator
+associated types, and their old and new names:
+
+\begin{libsumtabbase}{Iterator associated types}{tab:intro.assoc_types_names}{Old name}{New name}
+\tcode{std::ranges::difference_type_t}  &   & \tcode{std::iter_difference_t}          \\
+\tcode{std::ranges::value_type_t}       &   & \tcode{std::iter_value_t}               \\
+\tcode{std::ranges::reference_t}        &   & \tcode{std::iter_reference_t}           \\
+\tcode{std::ranges::rvalue_reference_t} &   & \tcode{std::iter_rvalue_reference_t}    \\
+\end{libsumtabbase}
+
+\pnum
+The new names correct two problems with the old names: the term ``\tcode{type}''
+and the suffix ``\tcode{_t}'' both carry the same semantic information, and
+names like ``value type'' and ``reference'' are overly general. The prefix
+``\tcode{iter_}'' already denotes ``of iterators'', as in \tcode{iter_swap}.
+
+\rSec2[intro.spec]{Method of specification}
+
+\pnum
+The changes suggested by this paper are presented as a set of diffs against
+the working draft as ammended by P0896 and P0944.
+
+\pnum
+Where the text of the Ranges TS or the working draft needs to be updated,
+the text is presented with change markings: \removed{red strikethrough} for
+removed text and \added{blue underline} for added text.
