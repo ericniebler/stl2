@@ -2,9 +2,9 @@
 \setcounter{chapter}{26}
 \rSec0[iterators]{Iterators library}
 
+\setcounter{section}{1}
 \ednote{Change the section ``Header \tcode{iterator} synopsis''~(\cxxref{iterator.synopsis})
 as follows:}
-\setcounter{section}{2}
 \rSec1[iterator.synopsis]{Header \tcode{<iterator>} synopsis}
 
 \indexlibrary{\idxhdr{iterator}}%
@@ -46,7 +46,10 @@ namespace std {
       = decltype(*declval<T&>());
 
     template <@\placeholder{dereferenceable}@ T>
-        requires @\seebelow@ using @\added{iter_}@rvalue_reference_t
+        requires @\changed{\seebelow}{requires (T\& t) \{}@
+          @\added{\{ ranges::iter_move(t) \} -> auto \&\&;}@
+        @\added{\}}@
+    using @\added{iter_}@rvalue_reference_t
       = decltype(ranges::iter_move(declval<T&>()));
 
     // ... as before
@@ -68,7 +71,7 @@ namespace std {
     @\removed{template <class Iterator> using iterator_traits = \seebelow;}@
 
     template <Readable T> using iter_common_reference_t
-      = common_reference_t<reference_t<T>, value_type_t<T>&>;
+      = common_reference_t<@\added{iter_}@reference_t<T>, @\changed{value_type_t}{iter_value_t}@<T>&>;
 
     @\removed{// \ref{ranges.iterator.tags}, iterator tags:}@
     @\removed{struct output_iterator_tag \{ \};}@
@@ -248,21 +251,21 @@ namespace std {
     @\removed{template <class T, class charT, class traits, class Distance>}@
       @\removed{bool operator==(const istream_iterator<T, charT, traits, Distance>\& x,}@
               @\removed{const istream_iterator<T, charT, traits, Distance>\& y);}@
-    template <class T, class charT, class traits, class Distance>
-      bool operator==(default_sentinel x,
-              const istream_iterator<T, charT, traits, Distance>& y);
-    template <class T, class charT, class traits, class Distance>
-      bool operator==(const istream_iterator<T, charT, traits, Distance>& x,
-              default_sentinel y);
+    @\removed{template <class T, class charT, class traits, class Distance>}@
+      @\removed{bool operator==(default_sentinel x,}@
+              @\removed{const istream_iterator<T, charT, traits, Distance>\& y);}@
+    @\removed{template <class T, class charT, class traits, class Distance>}@
+      @\removed{bool operator==(const istream_iterator<T, charT, traits, Distance>\& x,}@
+              @\removed{default_sentinel y);}@
     @\removed{template <class T, class charT, class traits, class Distance>}@
       @\removed{bool operator!=(const istream_iterator<T, charT, traits, Distance>\& x,}@
               @\removed{const istream_iterator<T, charT, traits, Distance>\& y);}@
-    template <class T, class charT, class traits, class Distance>
-    bool operator!=(default_sentinel x,
-              const istream_iterator<T, charT, traits, Distance>& y);
-    template <class T, class charT, class traits, class Distance>
-      bool operator!=(const istream_iterator<T, charT, traits, Distance>& x,
-              default_sentinel y);
+    @\removed{template <class T, class charT, class traits, class Distance>}@
+    @\removed{bool operator!=(default_sentinel x,}@
+              @\removed{const istream_iterator<T, charT, traits, Distance>\& y);}@
+    @\removed{template <class T, class charT, class traits, class Distance>}@
+      @\removed{bool operator!=(const istream_iterator<T, charT, traits, Distance>\& x,}@
+              @\removed{default_sentinel y);}@
 
     @\removed{template <class T, class charT = char, class traits = char_traits<charT>>}@
         @\removed{class ostream_iterator;}@
@@ -272,21 +275,21 @@ namespace std {
     @\removed{template <class charT, class traits>}@
       @\removed{bool operator==(const istreambuf_iterator<charT, traits>\& a,}@
               @\removed{const istreambuf_iterator<charT, traits>\& b);}@
-    template <class charT, class traits>
-      bool operator==(default_sentinel a,
-              const istreambuf_iterator<charT, traits>& b);
-    template <class charT, class traits>
-      bool operator==(const istreambuf_iterator<charT, traits>& a,
-              default_sentinel b);
+    @\removed{template <class charT, class traits>}@
+      @\removed{bool operator==(default_sentinel a,}@
+              @\removed{const istreambuf_iterator<charT, traits>\& b);}@
+    @\removed{template <class charT, class traits>}@
+      @\removed{bool operator==(const istreambuf_iterator<charT, traits>\& a,}@
+              @\removed{default_sentinel b);}@
     @\removed{template <class charT, class traits>}@
       @\removed{bool operator!=(const istreambuf_iterator<charT, traits>\& a,}@
               @\removed{const istreambuf_iterator<charT, traits>\& b);}@
-    template <class charT, class traits>
-      bool operator!=(default_sentinel a,
-              const istreambuf_iterator<charT, traits>& b);
-    template <class charT, class traits>
-      bool operator!=(const istreambuf_iterator<charT, traits>& a,
-              default_sentinel b);
+    @\removed{template <class charT, class traits>}@
+      @\removed{bool operator!=(default_sentinel a,}@
+              @\removed{const istreambuf_iterator<charT, traits>\& b);}@
+    @\removed{template <class charT, class traits>}@
+      @\removed{bool operator!=(const istreambuf_iterator<charT, traits>\& a,}@
+              @\removed{default_sentinel b);}@
 
     @\removed{template <class charT, class traits = char_traits<charT> >}@
       @\removed{class ostreambuf_iterator;}@
@@ -296,6 +299,7 @@ namespace std {
   @\added{using ranges::iter_difference_t;}@
   @\added{using ranges::iter_reference_t;}@
   @\added{using ranges::iter_rvalue_reference_t;}@
+  @\added{using ranges::iter_common_reference_t;}@
 
   @\added{using ranges::default_sentinel;}@
   @\added{using ranges::move_sentinel;}@
@@ -313,6 +317,306 @@ namespace std {
 }
 \end{codeblock}
 
+\ednote{For the remainder of Clauses [iterator] and [ranges], textually replace
+\tcode{value_type<>}, \tcode{difference_type<>}, \tcode{value_type_t<>},
+\tcode{difference_type_t<>}, \tcode{reference_t<>}, and \tcode{rvalue_reference_t<>}
+with \tcode{readable_traits<>}, \tcode{incrementable_traits<>}, \tcode{iter_value_t<>},
+\tcode{iter_difference_t<>}, \tcode{iter_reference_t<>}, and
+\tcode{iter_rvalue_reference_t<>}, respectively.}
+
+\rSec1[iterator.requirements]{Iterator requirements}
+\setcounter{subsection}{1}
+\ednote{TODO check the section numbers and names from P0896R2.}
+\rSec2[iterator.concepts]{Iterator concepts}
+\setcounter{subsubsection}{2}
+\rSec3[iterator.assoc.types]{Iterator associated types}
+\ednote{Change section ``Iterator associated types'' as follows:}
+
+\pnum
+To implement algorithms only in terms of iterators, it is often necessary to
+determine the value and
+difference types that correspond to a particular iterator type.
+Accordingly, it is required that if
+\tcode{WI} is the name of a type that
+satisfies the \tcode{WeaklyIncrementable} concept~(\ref{iterators.weaklyincrementable})\changed{,}{ and}
+\tcode{R} is the name of a type that
+satisfies the \tcode{Readable} concept~(\ref{iterators.readable})\removed{, and
+\tcode{II} is the name of a type that satisfies the
+\tcode{InputIterator} concept~(\ref{iterators.input}) concept}, the types
+
+\begin{codeblock}
+@\changed{difference_type_t}{iter_difference_t}@<WI>
+@\changed{value_type_t}{iter_value_t}@<R>
+@\removed{iterator_category_t<II>}@
+\end{codeblock}
+
+be defined as the iterator's difference type\changed{,}{ and} value type\removed{ and iterator category}, respectively.
+
+\ednote{Change the name of [terator.assoc.types.difference_type] from
+``\tcode{difference_type}'' to ``\tcode{incrementable_traits}''.}
+\rSec4[iterator.assoc.types.incrementable_traits]{\tcode{incrementable_traits}}
+
+\pnum
+\indexlibrary{\idxcode{iter_difference_t}}%
+\tcode{\changed{difference_type_t}{iter_difference_t}<T>} is implemented as if:
+
+\indexlibrary{\idxcode{incrementable_traits}}%
+\begin{codeblock}
+@\added{namespace std \{ namespace ranges \{}@
+  @\added{struct \xname{empty} \{ \}; // \expos}@
+
+  @\added{template <class T> struct \xname{with_difference_type} \{ // \expos}@
+    @\added{using difference_type = T;}@
+  @\added{\};}@
+
+  template <class> struct @\changed{difference_type}{incrementable_traits}@ { };
+
+  template <class T>
+  struct @\changed{difference_type}{incrementable_traits}@<T*>
+    : @\changed{enable_if}{conditional_t}@<is_object@\added{_v}@<T>@\removed{::value}@,
+        @\added{\xname{with_difference_type}<}@ptrdiff_t@\added{>, \xname{empty}}@> { };
+
+  template <class I>
+  struct @\changed{difference_type}{incrementable_traits}@<const I>
+    : @\changed{difference_type}{incrementable_traits}@<decay_t<I>> { };
+
+  template <class T>
+    requires requires { typename T::difference_type; }
+  struct @\changed{difference_type}{incrementable_traits}@<T> {
+    using @\added{difference_}@type = typename T::difference_type;
+  };
+
+  template <class T>
+    requires !requires { typename T::difference_type; } &&
+      requires(const T& a, const T& b) { { a - b } -> Integral; }
+  struct @\changed{difference_type}{incrementable_traits}@<T>
+    : @\added{\xname{with_difference_type< }}@make_signed@\added{_t}@< decltype(declval<T>() - declval<T>()) >@\added{>}@ {
+  };
+
+  template <class T> using @\changed{difference_type_t}{iter_difference_t = \seebelow;}@
+    @\removed{= typename difference_type<T>::type;}@
+@\added{\}\}}@
+\end{codeblock}
+
+\begin{addedblock}
+\pnum
+If \tcode{iterator_traits<T>} does not name an instantiation of the primary
+template, then \tcode{iter_difference_t<T>}
+is an alias for the type \tcode{iterator_traits<T>::difference_type}; otherwise,
+it is an alias for the type \tcode{incrementable_traits<T>::difference_type}.
+\end{addedblock}
+
+\pnum
+Users may specialize \changed{\tcode{difference_type}}{\tcode{incrementable_traits}}
+on user-defined types.
+
+\ednote{Change the name of [iterator.assoc.types.value_type] from
+``\tcode{value_type}'' to ``\tcode{readable_traits}''.}
+\rSec4[iterator.assoc.types.readable_traits]{\tcode{readable_traits}}
+
+\pnum
+A \tcode{Readable} type has an associated value type that can be accessed with the
+\changed{\tcode{value_type_t}}{\tcode{iter_value_t}} alias template.
+
+\indexlibrary{\idxcode{readable_traits}}%
+\begin{codeblock}
+  @\added{template <class T> struct \xname{with_value_type} \{ // \expos}@
+    @\added{using value_type = T;}@
+  @\added{\};}@
+
+  template <class> struct @\changed{value_type}{readable_traits}@ { };
+
+  template <class T>
+  struct @\changed{value_type}{readable_traits}@<T*>
+    : @\changed{enable_if}{conditional_t}@<is_object@\added{_v}@<T>@\removed{::value}@,
+        @\added{\xname{with_value_type}< }@remove_cv_t<T> @\added{>, \xname{empty}}@ > { };
+
+  template <class I>
+    requires is_array@\added{_v}@<I>@\removed{::value}@
+  struct @\changed{value_type}{readable_traits}@<I>
+    : @\changed{value_type}{readable_traits}@<decay_t<I>> { };
+
+  template <class I>
+  struct @\changed{value_type}{readable_traits}@<const I>
+    : @\changed{value_type}{readable_traits}@<decay_t<I>> { };
+
+  template <class T>
+    requires requires { typename T::value_type; }
+  struct @\changed{value_type}{readable_traits}@<T>
+    : @\changed{enable_if}{conditional_t}@<is_object@\added{_v}@<typename T::value_type>@\removed{::value}@,
+        @\added{\xname{with_value_type}< }@typename T::value_type @\added{>, \xname{empty}}@ > { };
+
+  template <class T>
+    requires requires { typename T::element_type; }
+  struct value_type<T>
+    : @\changed{enable_if}{conditional_t}@<
+        is_object@\added{_v}@<typename T::element_type>@\removed{::value}@,
+        @\added{\xname{with_value_type}< }@remove_cv_t<typename T::element_type> @\added{>,}@
+        @\added{\xname{empty}}@>
+    { };
+
+  template <class T> using @\changed{value_type_t}{iter_value_t = // \seebelow;}@
+    @\removed{= typename value_type<T>::type;}@
+\end{codeblock}
+
+\begin{addedblock}
+\pnum
+If \tcode{iterator_traits<T>} does not name an instantiation of the primary
+template, then \tcode{iter_value_t<T>} is an
+alias for the type \tcode{iterator_traits<T>::value_type}; otherwise, it is an
+alias for the type \tcode{readable_traits<T>::value_type}.
+\end{addedblock}
+
+\pnum
+If a type \tcode{I} has an associated value type, then
+\changed{\tcode{value_type<I>::type}}{\tcode{readable_traits<I>::value_type}}
+shall name the value type. Otherwise, there shall be no nested type
+\changed{\tcode{type}}{\tcode{value_type}}.
+
+\pnum
+The \changed{\tcode{value_type}}{\tcode{readable_traits}} class template may be
+specialized on user-defined types.
+
+\pnum
+When instantiated with a type \tcode{I}
+such that \tcode{I::value_type} is valid and denotes a type,
+\removed{\tcode{value_type<I>::type}}\ \ \added{\tcode{read\-able_traits<I>::value_type}}
+names that type, unless it is not an object type~(\cxxref{basic.types}) in which case
+\changed{\tcode{value_type<I>}}{\tcode{readable_traits<I>}}
+shall have no nested type \tcode{\added{value_}type}. \enternote Some legacy output
+iterators define a nested type named \tcode{value_type} that is an alias for \tcode{void}. These
+types are not \tcode{Readable} and have no associated value types.\exitnote
+
+\pnum
+When instantiated with a type \tcode{I}
+such that \tcode{I::element_type} is valid and denotes a type,
+\removed{\tcode{value_type<I>::\brk{}type}}\ \ \added{\tcode{readable_traits<I>::value_type}}
+names the type \tcode{remove_cv_t<I::element_type>}, unless it is
+not an object type~(\cxxref{basic.types}) in which case
+\changed{\tcode{value_type<I>}}{\tcode{readable_traits<I>}} shall have no nested
+type \tcode{\added{value_}type}. \enternote Smart pointers like
+\tcode{shared_ptr<int>} are \tcode{Readable} and have an associated value type.
+But a smart pointer like \tcode{shared_ptr<void>} is not \tcode{Readable} and
+has no associated value type.\exitnote
+
+\ednote{Remove section ``\tcode{iterator_category}'' [iterator.assoc.types.iterator_category].}
+
+
+\ednote{Change section ``Concept InputIterator''~(\ref{iterators.input}) as follows:}
+
+\setcounter{subsubsection}{10}
+\rSec3[iterators.input]{Concept \tcode{InputIterator}}
+
+\begin{addedblock}
+\pnum
+Let \tcode{\textit{ITER_TRAITS}(I)} be \tcode{I} if \tcode{iterator_traits<I>}
+names an instantiation of the primary template; otherwise, \tcode{iterator_traits<I>}.
+
+\pnum
+Let \tcode{\textit{ITER_CONCEPT}(I)} be defined as follows:
+\begin{itemize}
+\item If \tcode{\textit{ITER_TRAITS}(I)::iterator_concept} is valid
+  and names a type, then \tcode{\textit{ITER_TRAITS}(I)::iterator_concept}.
+\item Otherwise, if \tcode{\textit{ITER_TRAITS}(I)::iterator_category} is valid
+  and names a type then \tcode{\textit{ITER_TRAITS}(I)::iterator_category}.
+\item Otherwise, if \tcode{iterator_traits<I>} names an instantiation of
+  the primary template, then \tcode{random_access_iterator_tag}.
+\item Otherwise, \tcode{\textit{ITER_CONCEPT}(I)} does not name a type.
+\end{itemize}
+\end{addedblock}
+
+\pnum
+The \tcode{InputIterator} concept is a refinement of
+\tcode{Iterator}~(\ref{iterators.iterator}). It defines requirements for a type
+whose referenced values can be read (from the requirement for
+\tcode{Readable}~(\ref{iterators.readable})) and which can be both pre- and
+post-incremented.
+\enternote Unlike in ISO/IEC 14882, input iterators are not required to satisfy
+\tcode{EqualityComparable}~(\ref{concepts.lib.compare.equalitycomparable}).\exitnote
+
+\indexlibrary{\idxcode{InputIterator}}%
+\begin{codeblock}
+  template <class I>
+  concept InputIterator =
+    Iterator<I> &&
+    Readable<I> &&
+    requires { typename @\changed{iterator_category_t<I>}{\textit{ITER_CONCEPT}(I)}@; } &&
+    DerivedFrom<@\changed{iterator_category_t<I>}{\textit{ITER_CONCEPT}(I)}@, input_iterator_tag>;
+\end{codeblock}
+
+\setcounter{subsubsection}{12}
+\rSec3[iterators.forward]{Concept \tcode{ForwardIterator}}
+
+\ednote{In subsection ``Concept ForwardIterator''~(\ref{iterators.forward}),
+change the definition of the \tcode{ForwardIterator} concept as follows:}
+
+\indexlibrary{\idxcode{ForwardIterator}}%
+\begin{codeblock}
+  template <class I>
+  concept ForwardIterator =
+    InputIterator<I> &&
+    DerivedFrom<@\changed{iterator_category_t<I>}{\textit{ITER_CONCEPT}(I)}@, forward_iterator_tag> &&
+    Incrementable<I> &&
+    Sentinel<I, I>;
+\end{codeblock}
+
+\rSec3[iterators.bidirectional]{Concept \tcode{BidirectionalIterator}}
+
+\ednote{In subsection ``Concept BidirectionalIterator''~(\ref{iterators.bidirectional}),
+change the definition of the \tcode{BidirectionalIterator} concept as follows:}
+
+\indexlibrary{\idxcode{BidirectionalIterator}}%
+\begin{codeblock}
+  template <class I>
+  concept bool BidirectionalIterator =
+    ForwardIterator<I> &&
+    DerivedFrom<@\changed{iterator_category_t<I>}{\textit{ITER_CONCEPT}(I)}@, bidirectional_iterator_tag> &&
+    requires(I i) {
+      { --i } -> Same<I>&;
+      { i-- } -> Same<I>&&;
+    };
+\end{codeblock}
+
+\rSec3[iterators.random.access]{Concept \tcode{RandomAccessIterator}}
+
+\ednote{In subsection ``Concept RandomAccessIterator''~(\ref{iterators.random.access}),
+change the definition of the \tcode{RandomAccessIterator} concept as follows:}
+
+\indexlibrary{\idxcode{RandomAccessIterator}}%
+\begin{codeblock}
+  template <class I>
+  concept RandomAccessIterator =
+    BidirectionalIterator<I> &&
+    DerivedFrom<@\changed{iterator_category_t<I>}{\textit{ITER_CONCEPT}(I)}@, random_access_iterator_tag> &&
+    StrictTotallyOrdered<I> &&
+    SizedSentinel<I, I> &&
+    requires(I i, const I j, const difference_type_t<I> n) {
+      { i += n } -> Same<I>&;
+      { j + n }  -> Same<I>&&;
+      { n + j }  -> Same<I>&&;
+      { i -= n } -> Same<I>&;
+      { j - n }  -> Same<I>&&;
+      j[n];
+      requires Same<decltype(j[n]), @\added{iter_}@reference_t<I>>;
+    };
+\end{codeblock}
+
+\rSec3[iterators.contiguous]{Concept \tcode{ContiguousIterator}}
+
+\ednote{In subsection ``Concept ContiguousIterator''~(\ref{iterators.contiguous}),
+change the definition of the \tcode{ContiguousIterator} concept as follows:}
+
+\indexlibrary{\idxcode{ContiguousIterator}}%
+\begin{codeblock}
+  template <class I>
+  concept ContiguousIterator =
+    RandomAccessIterator<I> &&
+    DerivedFrom<@\changed{iterator_category_t<I>}{\textit{ITER_CONCEPT}(I)}@, contiguous_iterator_tag> &&
+    @\changed{is_lvalue_reference_v<reference_t<I>{>}}{Same<iter_reference_t<I>\&, iter_reference_t<I>{>}}@ &&
+    @\changed{Same<value_type_t<I>, remove_cv_t<remove_reference_t<reference_t<I>{>}>{>}}{requires (I i) \{}@
+      @\added{\{ *i \} -> Same<iter_value_t<I>{>} const volatile \&;}@
+    @\added{\}}@;
+\end{codeblock}
 
 \rSec1[iterator.primitives]{Iterator primitives}
 
@@ -515,6 +819,7 @@ namespace std {
     using pointer           = T*;
     using reference         = T&;
     using iterator_category = random_access_iterator_tag;
+    @\added{using iterator_concept  = contiguous_iterator_tag;}@
   };
 }
 \end{codeblock}
@@ -667,11 +972,12 @@ namespace std {
   class reverse_iterator {
   public:
     using iterator_type     = Iterator;
-    using iterator_category = typename iterator_traits<Iterator>::iterator_category;
+    @\removed{using iterator_category = typename iterator_traits<Iterator>::iterator_category;}@
     @\removed{using value_type        = typename iterator_traits<Iterator>::value_type;}@
     @\removed{using difference_type   = typename iterator_traits<Iterator>::difference_type;}@
     @\removed{using pointer           = typename iterator_traits<Iterator>::pointer;}@
     @\removed{using reference         = typename iterator_traits<Iterator>::reference;}@
+    @\added{using iterator_category = \seebelow;}@
     @\added{using iterator_concept  = \seebelow;}@
     @\added{using value_type        = iter_value_t<Iterator>;}@
     @\added{using difference_type   = iter_difference_t<Iterator>;}@
@@ -755,12 +1061,17 @@ namespace std {
 
 \begin{addedblock}
 \pnum
-The member type \tcode{iterator_concept} of \tcode{reverse_iterator<Iterator>} is
-defined as follows:
+The member type \tcode{iterator_ccategory} is defined as follows:
 \begin{itemize}
-\item If \tcode{Iterator} satisfies \tcode{ranges::ContiguousIterator}, then
-\tcode{contiguous_iterator_tag}.
-\item Otherwise, if \tcode{Iterator} satisfies \tcode{ranges::RandomAccessIterator}, then
+\item If \tcode{iterator_traits<Iterator>::iterator_category} is
+\tcode{contiguous_iterator_tag}, then \tcode{random_access_iterator_tag}.
+\item Otherwise, \tcode{iterator_traits<Iterator>::iterator_category}.
+\end{itemize}
+
+\pnum
+The member type \tcode{iterator_concept} is defined as follows:
+\begin{itemize}
+\item If \tcode{Iterator} satisfies \tcode{ranges::RandomAccessIterator}, then
 \tcode{random_access_iterator_tag}.
 \item Otherwise, \tcode{bidirectional_iterator_tag}.
 \end{itemize}
@@ -947,7 +1258,7 @@ namespace std {
     using reference         = void;
     using container_type    = Container;
 
-    @\added{constexpr back_insert_iterator() = default;}@
+    @\added{constexpr back_insert_iterator() noexcept = default;}@
     explicit back_insert_iterator(Container& x);
     back_insert_iterator& operator=(const typename Container::value_type& value);
     back_insert_iterator& operator=(typename Container::value_type&& value);
@@ -986,7 +1297,7 @@ namespace std {
     using reference         = void;
     using container_type    = Container;
 
-    @\added{constexpr front_insert_iterator() = default;}@
+    @\added{constexpr front_insert_iterator() noexcept = default;}@
     explicit front_insert_iterator(Container& x);
     front_insert_iterator& operator=(const typename Container::value_type& value);
     front_insert_iterator& operator=(typename Container::value_type&& value);
@@ -1199,23 +1510,23 @@ namespace std {
     @\ednote{These are relocated from the \tcode{ranges::} namespace.}@
     @\added{template <ranges::Sentinel<Iterator> S>}@
       @\added{friend constexpr bool operator==(}@
-        @\added{const move_iterator\& x, const move_sentinel<S>\& y);}@
+        @\added{const move_iterator\& x, const ranges::move_sentinel<S>\& y);}@
     @\added{template <ranges::Sentinel<Iterator> S>}@
       @\added{friend constexpr bool operator==(}@
-        @\added{const move_sentinel<S>\& x, const move_iterator\& y);}@
+        @\added{const ranges::move_sentinel<S>\& x, const move_iterator\& y);}@
     @\added{template <ranges::Sentinel<Iterator> S>}@
       @\added{friend constexpr bool operator!=(}@
-        @\added{const move_iterator\& x, const move_sentinel<S>\& y);}@
+        @\added{const move_iterator\& x, const ranges::move_sentinel<S>\& y);}@
     @\added{template <ranges::Sentinel<Iterator> S>}@
       @\added{friend constexpr bool operator!=(}@
-        @\added{const move_sentinel<S>\& x, const move_iterator\& y);}@
+        @\added{const ranges::move_sentinel<S>\& x, const move_iterator\& y);}@
 
     @\added{template <ranges::SizedSentinel<Iterator> S>}@
       @\added{friend constexpr iter_difference_t<Iterator> operator-(}@
-        @\added{const move_sentinel<S>\& x, const move_iterator\& y);}@
+        @\added{const ranges::move_sentinel<S>\& x, const move_iterator\& y);}@
     @\added{template <ranges::SizedSentinel<Iterator> S>}@
       @\added{friend constexpr iter_difference_t<Iterator> operator-(}@
-        @\added{const move_iterator\& x, const move_sentinel<S>\& y);}@
+        @\added{const move_iterator\& x, const ranges::move_sentinel<S>\& y);}@
 
     @\added{friend constexpr iter_rvalue_reference_t<Iterator> iter_move(const move_iterator\& i)}@
       @\added{noexcept(\seebelow);}@
@@ -1562,9 +1873,9 @@ expression in their \textit{Returns:} clause is well-formed.
 template<class Iterator1, class Iterator2>
 constexpr bool operator==(const move_iterator<Iterator1>& x, const move_iterator<Iterator2>& y);
 @\added{template <ranges::Sentinel<Iterator> S>}@
-@\added{friend constexpr bool operator==(const move_iterator\& x, const move_sentinel<S>\& y);}@
+@\added{friend constexpr bool operator==(const move_iterator\& x, const ranges::move_sentinel<S>\& y);}@
 @\added{template <ranges::Sentinel<Iterator> S>}@
-@\added{friend constexpr bool operator==(const move_sentinel<S>\& x, const move_iterator\& y);}@
+@\added{friend constexpr bool operator==(const ranges::move_sentinel<S>\& x, const move_iterator\& y);}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -1577,9 +1888,9 @@ constexpr bool operator==(const move_iterator<Iterator1>& x, const move_iterator
 template<class Iterator1, class Iterator2>
 constexpr bool operator!=(const move_iterator<Iterator1>& x, const move_iterator<Iterator2>& y);
 @\added{template <ranges::Sentinel<Iterator> S>}@
-@\added{friend constexpr bool operator!=(const move_iterator\& x, const move_sentinel<S>\& y);}@
+@\added{friend constexpr bool operator!=(const move_iterator\& x, const ranges::move_sentinel<S>\& y);}@
 @\added{template <ranges::Sentinel<Iterator> S>}@
-@\added{friend constexpr bool operator!=(const move_sentinel<S>\& x, const move_iterator\& y);}@
+@\added{friend constexpr bool operator!=(const ranges::move_sentinel<S>\& x, const move_iterator\& y);}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -1642,15 +1953,15 @@ expression in their \textit{Returns:} clause is well-formed.
 \indexlibrarymember{operator-}{move_iterator}%
 \begin{itemdecl}
 template<class Iterator1, class Iterator2>
-    constexpr auto operator-(
+  constexpr auto operator-(
     const move_iterator<Iterator1>& x,
     const move_iterator<Iterator2>& y) -> decltype(x.base() - y.base());
 @\added{template <ranges::SizedSentinel<Iterator> S>}@
 @\added{friend constexpr iter_difference_t<Iterator> operator-(}@
-    @\added{const move_sentinel<S>\& x, const move_iterator\& y);}@
+    @\added{const ranges::move_sentinel<S>\& x, const move_iterator\& y);}@
 @\added{template <ranges::SizedSentinel<Iterator> S>}@
 @\added{friend constexpr iter_difference_t<Iterator> operator-(}@
-    @\added{const move_iterator\& x, const move_sentinel<S>\& y);}@
+    @\added{const move_iterator\& x, const ranges::move_sentinel<S>\& y);}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -1688,6 +1999,133 @@ constexpr move_iterator<Iterator> make_move_iterator(Iterator i);
 
 
 
+\rSec3[move.sentinel]{Class template \tcode{move_sentinel}}
+
+\ednote{This section is relocated from REF TODO.}
+
+\pnum
+Class template \tcode{move_sentinel} is a sentinel adaptor useful for denoting
+ranges together with \tcode{move_iterator}. When an input iterator type
+\tcode{I} and sentinel type \tcode{S} satisfy \tcode{Sentinel<S, I>},
+\tcode{Sentinel<move_sentinel<S>, move_iterator<I>{>}} is satisfied as well.
+
+\pnum
+\enterexample A \tcode{move_if} algorithm is easily implemented with
+\tcode{copy_if} using \tcode{move_iterator} and \tcode{move_sentinel}:
+
+\begin{codeblock}
+template <InputIterator I, Sentinel<I> S, WeaklyIncrementable O,
+          IndirectUnaryPredicate<I> Pred>
+  requires IndirectlyMovable<I, O>
+void move_if(I first, S last, O out, Pred pred)
+{
+  copy_if(move_iterator<I>{first}, move_sentinel<S>{last}, out, pred);
+}
+\end{codeblock}
+
+\exitexample
+
+\indexlibrary{\idxcode{move_sentinel}}%
+\begin{codeblock}
+namespace std { namespace ranges {
+  template <Semiregular S>
+  class move_sentinel {
+  public:
+    constexpr move_sentinel();
+    explicit @\added{constexpr}@ move_sentinel(S s);
+    template <ConvertibleTo<S> S2>
+      move_sentinel(const move_sentinel<S2>& s);
+    template <ConvertibleTo<S> S2>
+      move_sentinel& operator=(const move_sentinel<S2>& s);
+
+    S base() const;
+
+  private:
+    S last; // \expos
+  };
+
+  @\removed{template <class I, Sentinel<I> S>}@
+    @\removed{constexpr bool operator==(}@
+      @\removed{const move_iterator<I>\& i, const move_sentinel<S>\& s);}@
+  @\removed{template <class I, Sentinel<I> S>}@
+    @\removed{constexpr bool operator==(}@
+      @\removed{const move_sentinel<S>\& s, const move_iterator<I>\& i);}@
+  @\removed{template <class I, Sentinel<I> S>}@
+    @\removed{constexpr bool operator!=(}@
+      @\removed{const move_iterator<I>\& i, const move_sentinel<S>\& s);}@
+  @\removed{template <class I, Sentinel<I> S>}@
+    @\removed{constexpr bool operator!=(}@
+      @\removed{const move_sentinel<S>\& s, const move_iterator<I>\& i);}@
+
+  @\removed{template <class I, SizedSentinel<I> S>}@
+    @\removed{constexpr difference_type_t<I> operator-(}@
+      @\removed{const move_sentinel<S>\& s, const move_iterator<I>\& i);}@
+  @\removed{template <class I, SizedSentinel<I> S>}@
+    @\removed{constexpr difference_type_t<I> operator-(}@
+      @\removed{const move_iterator<I>\& i, const move_sentinel<S>\& s);}@
+
+  @\removed{template <Semiregular S>}@
+    @\removed{constexpr move_sentinel<S> make_move_sentinel(S s);}@
+}}
+\end{codeblock}
+
+\rSec3[move.sent.ops]{\tcode{move_sentinel} operations}
+
+\rSec4[move.sent.op.const]{\tcode{move_sentinel} constructors}
+
+\indexlibrary{\idxcode{move_sentinel}!\idxcode{move_sentinel}}%
+\begin{itemdecl}
+constexpr move_sentinel();
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Constructs a \tcode{move_sentinel}, value-initializing
+\tcode{last}. If \tcode{is_\-trivially_\-default_\-constr\-uct\-ible<\brk{}S>::value} is \tcode{true}, then this constructor
+is a \tcode{constexpr} constructor.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{move_sentinel}!constructor}%
+\begin{itemdecl}
+explicit @\added{constexpr}@ move_sentinel(S s);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Constructs a \tcode{move_sentinel}, initializing
+\tcode{last} with \tcode{s}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{move_sentinel}!constructor}%
+\begin{itemdecl}
+template <ConvertibleTo<S> S2>
+  move_sentinel(const move_sentinel<S2>& s);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Constructs a \tcode{move_sentinel}, initializing
+\tcode{last} with \tcode{s.last}.
+\end{itemdescr}
+
+\rSec4[move.sent.op=]{\tcode{move_sentinel::operator=}}
+
+\indexlibrary{\idxcode{operator=}!\idxcode{move_sentinel}}%
+\indexlibrary{\idxcode{move_sentinel}!\idxcode{operator=}}%
+\begin{itemdecl}
+template <ConvertibleTo<S> S2>
+  move_sentinel& operator=(const move_sentinel<S2>& s);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Assigns \tcode{s.last} to \tcode{last}.
+
+\pnum
+\returns \tcode{*this}.
+\end{itemdescr}
+
+\ednote{Remove subsections REF TODO [move.sent.op.comp] and [move.sent.nonmember].}
 
 
 
