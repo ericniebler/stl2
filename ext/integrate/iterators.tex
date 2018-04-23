@@ -690,16 +690,17 @@ concept @\textit{_Cpp98Iterator}@ =
 template <class I>
 concept @\textit{_Cpp98InputIterator}@ =
   @\textit{_Cpp98Iterator}@<I> && EqualityComparable<I> && requires (I i) {
-    { *i } -> typename ranges::readable_traits<I>::value_type const &;
-    { *i++ } -> typename ranges::readable_traits<I>::value_type const &;
+    typename common_reference_t<iter_reference_t<I> &&,
+                                typename ranges::readable_traits<I>::value_type &>;
+    typename common_reference_t<decltype(*i++) &&,
+                                typename ranges::readable_traits<I>::value_type &>;
   } && SignedIntegral<typename ranges::incrementable_traits<I>::difference_type>;
 
 template <class I>
 concept @\textit{_Cpp98ForwardIterator}@ =
   @\textit{_Cpp98InputIterator}@<I> && Constructible<I> &&
-  Same<iter_reference_t<I>&&, iter_reference_t<I>> &&
+  Same<remove_cvref_t<iter_reference_t<I>>, typename ranges::readable_traits<I>::value_type> &&
   requires (I i) {
-    { *i } -> Same<typename ranges::readable_traits<I>::value_type> const &;
     { i++ } -> I const &;
     requires Same<iter_reference_t<I>, decltype(*i++)>;
   };
@@ -740,10 +741,17 @@ shall have the following as publicly accessible members:
   using pointer           = @\changed{typename Iterator::pointer}{\seebelow}@;
   using reference         = typename Iterator::reference;
   using iterator_category = typename Iterator::iterator_category;
+  @\added{using iterator_concept  = \seebelow;}@
 \end{codeblock}
-\added{If \tcode{Iterator} has a valid member type \tcode{pointer}, then
+\begin{addedblock}
+If \tcode{Iterator} has a valid member type \tcode{pointer}, then
 \tcode{iterator_traits<Iterator>::pointer} names that type; otherwise, it
-is \tcode{void}.}
+is \tcode{void}.
+
+If \tcode{Iterator} has a valid member type \tcode{iterator_concept}, then
+\tcode{iterator_traits<Iterator>::iterator_concept} names that type; otherwise,
+it is \tcode{Iterator::iterator_category}.
+\end{addedblock}
 
 \begin{addedblock}
 \item
@@ -756,6 +764,7 @@ have the following as publicly accessible members:
   using pointer           = @\seebelow@;
   using reference         = @\seebelow@;
   using iterator_category = @\seebelow@;
+  using iterator_concept  = @\seebelow@;
 \end{codeblock}
 If \tcode{Iterator::pointer} is well-formed and names a type, \tcode{pointer} is
 an alias for that type. Otherwise, if \tcode{decltype(declval<Iterator\&>().operator->())}
@@ -777,6 +786,10 @@ satisfies \tcode{\textit{_Cpp98ForwardIterator}}, \tcode{iterator_category}
 is \tcode{forward_iterator_tag}. Otherwise, \tcode{iterator_category}
 is \tcode{input_iterator_tag}.
 
+If \tcode{Iterator::iterator_concept} is well-formed and names a type,
+\tcode{iterator_concept} names that type. Otherwise, \tcode{iterator_concept}
+names the same type as \tcode{iterator_category}.
+
 \item
 Otherwise, if \tcode{Iterator} satisfies the exposition-only concept
 \tcode{\textit{_Cpp98Iterator}}, \tcode{iterator_traits<{}Iterator>} shall
@@ -787,6 +800,7 @@ have the following as publicly accessible members:
   using pointer           = void;
   using reference         = void;
   using iterator_category = output_iterator_tag;
+  using iterator_concept  = output_iterator_tag;
 \end{codeblock}
 If \tcode{ranges::incrementable_traits<Iterator>::difference_type} is well-formed
 and names a type, then \tcode{difference_type} names that type; otherwise, it is
@@ -1061,7 +1075,7 @@ namespace std {
 
 \begin{addedblock}
 \pnum
-The member type \tcode{iterator_ccategory} is defined as follows:
+The member type \tcode{iterator_category} is defined as follows:
 \begin{itemize}
 \item If \tcode{iterator_traits<Iterator>::iterator_category} is
 \tcode{contiguous_iterator_tag}, then \tcode{random_access_iterator_tag}.
