@@ -82,7 +82,7 @@ reusing existing library functionality, we can make it easier for users to autho
 iterator types that meet the expectations of old generic code, while also
 addressing the shortcomings of the STL that the Ranges TS aimed to address.
 
-\rSec2[intro.strategy]{Implementation Strategy}
+\rSec2[intro.strategy]{Implementation strategy}
 
 \rSec3[intro.iterator_tags]{Iterator tags}
 
@@ -168,7 +168,7 @@ Instead, we propose to use the alias template \tcode{value_type_t<>} -- renamed
 to \tcode{iter_value_t} and promoted to namespace \tcode{std} -- from the
 Ranges TS, and to make it smarter. Rather than immediately dispatching to either
 \tcode{iterator_traits<I>} or \tcode{readable_traits<I>}, \tcode{iter_value_t<I>}
-first tests whether \tcode{iterator_traits<I>} has selected a user-specialization.
+first tests whether \tcode{iterator_traits<I>} has selected the primary template.
 If so, \tcode{iter_value_t<I>} is an alias for
 \tcode{std::iterator_traits<I>::value_type}; otherwise, it is an alias for
 \tcode{std::ranges::readable_traits<I>::value_type}.
@@ -178,12 +178,13 @@ The \tcode{difference_type_t} alias from the Ranges TS, renamed to
 \tcode{std::iter_difference_t}, gets the same treatment.
 
 \pnum
-Testing whether the user specialized a trait is a matter of giving the primary
-template some testable property that user specializations would lack. For instance,
-the primary template \tcode{std::iterator_traits<I>} might define a hidden nested
-typedef \tcode{__unspecialized} that is an alias for \tcode{I}. Any specialization
+Testing whether a particular instantiation has selected the primary template is
+a matter of giving the primary template some testable property that
+specializations would lack. For instance, the primary template
+\tcode{std::iterator_traits<I>} might define a hidden nested typedef
+\tcode{__unspecialized} that is an alias for \tcode{I}. Any instantiation
 \tcode{std::iterator_traits<I>} that either lacks that typedef or has one that
-is not an alias for \tcode{I} is necessarily a user-defined specialization.
+is not an alias for \tcode{I} is necessarily not the primary template.
 
 \rSec3[intro.naming]{Names of iterator associated types}
 
@@ -191,7 +192,7 @@ is not an alias for \tcode{I} is necessarily a user-defined specialization.
 As already mentioned above, the aliases \tcode{std::ranges::value_type_t} and
 \tcode{std::ranges::difference_type_t} are renamed to \tcode{std::iter_value_t}
 and \tcode{std::iter_difference_t}. Here is the complete list of iterator
-associated types, and their old and new names:
+associated types, and their old and new names as suggested by this paper:
 
 \begin{libsumtabbase}{Iterator associated types}{tab:intro.assoc_types_names}{Old name}{New name}
 \tcode{std::ranges::difference_type_t}  &   & \tcode{std::iter_difference_t}          \\
@@ -204,7 +205,19 @@ associated types, and their old and new names:
 The new names correct two problems with the old names: the term ``\tcode{type}''
 and the suffix ``\tcode{_t}'' both carry the same semantic information, and
 names like ``value type'' and ``reference'' are overly general. The prefix
-``\tcode{iter_}'' already denotes ``of iterators'', as in \tcode{iter_swap}.
+``\tcode{iter_}'' already means ``relating to iterators'', as in
+\tcode{iter_swap}.
+
+\rSec2[intro.impl]{Implementation experience}
+\pnum
+The design described in this document has been prototyped and is available
+online for analysis and experimentation here: 
+\url{https://gist.github.com/ericniebler/d07bfb0d8ebf2e25f94f2111f893ec30}.
+
+\pnum
+Given the scope of this work, it makes sense to insist on a full implementation
+of this within an existing Standard Library implementation. That work has not
+yet begun.
 
 \rSec2[intro.spec]{Method of specification}
 

@@ -239,6 +239,23 @@ namespace std {
     bool operator!=(
       const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
 
+    template <class I2, SizedSentinel<I2> I1, SizedSentinel<I2> S1, SizedSentinel<I1> S2>
+    difference_type_t<I2> operator-(
+      const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
+
+    // \ref{default.sentinels}, default sentinels:
+    class default_sentinel;
+
+    // \ref{iterators.counted}, counted iterators:
+    template <Iterator I> class counted_iterator;
+
+    @\added{template <Readable I>}@
+      @\added{struct readable_traits<counted_iterator<I>>;}@
+
+    template <class I1, class I2>
+        requires Common<I1, I2>
+      constexpr bool operator==(
+        const counted_iterator<I1>& x, const counted_iterator<I2>& y);
     // ... as before
 
     // \ref{ranges.dangling.wrappers}, dangling wrapper:
@@ -312,7 +329,15 @@ namespace std {
   @\removed{template <ranges::InputIterator In>}@
       @\removed{requires ranges::Sentinel<In, In>}@
     @\removed{struct iterator_traits;}@
-  
+
+  @\added{template <ranges::InputIterator I, class S>}@
+    @\added{struct iterator_traits<ranges::common_iterator<I, S>{>};}@
+
+  @\added{template <ranges::ForwardIterator I, class S>}@
+    @\added{struct iterator_traits<ranges::common_iterator<I, S>{>};}@
+
+  @\added{template <ranges::InputIterator I>}@
+    @\added{struct iterator_traits<ranges::counted_iterator<I>{>};}@
   // ... as before
 }
 \end{codeblock}
@@ -350,9 +375,10 @@ satisfies the \tcode{Readable} concept~(\ref{iterators.readable})\removed{, and
 @\removed{iterator_category_t<II>}@
 \end{codeblock}
 
-be defined as the iterator's difference type\changed{,}{ and} value type\removed{ and iterator category}, respectively.
+be defined as the iterator's difference type\changed{,}{ and} value type
+\removed{ and iterator category}, respectively.
 
-\ednote{Change the name of [terator.assoc.types.difference_type] from
+\ednote{Change the name of [iterator.assoc.types.difference_type] from
 ``\tcode{difference_type}'' to ``\tcode{incrementable_traits}''.}
 \rSec4[iterator.assoc.types.incrementable_traits]{\tcode{incrementable_traits}}
 
@@ -612,11 +638,46 @@ change the definition of the \tcode{ContiguousIterator} concept as follows:}
   concept ContiguousIterator =
     RandomAccessIterator<I> &&
     DerivedFrom<@\changed{iterator_category_t<I>}{\textit{ITER_CONCEPT}(I)}@, contiguous_iterator_tag> &&
-    @\changed{is_lvalue_reference_v<reference_t<I>{>}}{Same<iter_reference_t<I>\&, iter_reference_t<I>{>}}@ &&
-    @\changed{Same<value_type_t<I>, remove_cv_t<remove_reference_t<reference_t<I>{>}>{>}}{requires (I i) \{}@
-      @\added{\{ *i \} -> Same<iter_value_t<I>{>} const volatile \&;}@
-    @\added{\}}@;
+    is_lvalue_reference_v<@\added{iter_}@reference_t<I>> &&
+    Same<@\changed{value_type_t}{iter_value_t}@<I>, remove_cv@\added{ref}@_t<@\changed{remove_reference_t<}{iter_}@reference_t<I>@\removed{>}@>>;
 \end{codeblock}
+
+
+\rSec2[indirectcallable]{Indirect callable requirements}
+\ednote{This section is relocated from REF TODO in the Ranges TS.}
+
+\setcounter{subsubsection}{2}
+\rSec3[projected]{Class template \tcode{projected}}
+\ednote{Change ``Class template \tcode{projected}'' as follows:}
+
+\pnum
+The \tcode{projected} class template is intended for use when specifying the constraints of
+algorithms that accept callable objects and projections~(\ref{defns.projection}). It bundles a \tcode{Readable} type
+\tcode{I} and a function \tcode{Proj} into a new \tcode{Readable} type whose
+\tcode{reference} type is the result of applying \tcode{Proj} to the
+\tcode{\added{iter_}}\tcode{reference_t} of \tcode{I}.
+
+\indexlibrary{\idxcode{projected}}%
+\begin{codeblock}
+@\added{namespace std \{ namespace ranges \{}@
+  template <Readable I, IndirectRegularUnaryInvocable<I> Proj>
+  struct projected {
+    using value_type = remove_cv@\added{ref}@_t<@\removed{remove_reference_t<}@indirect_result_of_t<Proj&(I)>@\removed{>}@>;
+    indirect_result_of_t<Proj&(I)> operator*() const;
+  };
+
+  template <WeaklyIncrementable I, class Proj>
+  struct @\changed{difference_type}{incrementable_traits}@<projected<I, Proj>> {
+    @\removed{using type = difference_type_t<I>;}@
+    @\added{using difference_type = iter_difference_t<I>;}@
+  };
+@\added{\}\}}@
+\end{codeblock}
+
+\pnum
+\enternote \tcode{projected} is only used to ease constraints specification. Its
+member function need not be defined.\exitnote
+
 
 \rSec1[iterator.primitives]{Iterator primitives}
 
@@ -626,7 +687,9 @@ several classes and functions:
 
 \rSec2[iterator.traits]{Iterator traits}
 
-\ednote{Change section ``Iterator traits''~(\ref{iterator.traits}) as follows:}
+\ednote{From the Ranges TS, strike [iterator.traits], [iterator.stdtraits], and
+[std.iterator.tags]. In the working draft of the IS, change section
+``Iterator traits''~(\ref{iterator.traits}) as follows:}
 
 \pnum
 \indexlibrary{\idxcode{iterator_traits}}%
@@ -1462,7 +1525,10 @@ template<class Container>
 
 
 
-\rSec2[move.iterators]{Move iterators}
+\rSec2[move.iterators]{Move iterators and sentinels}
+
+\ednote{Note that this section in the working draft has changed name from
+``Move iterators'' to ``Move iterators and sentinels''.}
 
 \pnum
 Class template \tcode{move_iterator} is an iterator adaptor
@@ -2142,15 +2208,228 @@ template <ConvertibleTo<S> S2>
 \ednote{Remove subsections REF TODO [move.sent.op.comp] and [move.sent.nonmember].}
 
 
+\rSec2[iterators.common]{Common iterators}
 
+\ednote{Change sub-subsection [iterators.common]/p1 from the Ranges TS as
+follows:}
 
+\pnum
+Class template \tcode{common_iterator} is an iterator/sentinel adaptor that is
+capable of representing a non-\changed{bounded}{common} range of elements (where the types of the
+iterator and sentinel differ) as a \changed{bounded}{common} range (where they are the same). It
+does this by holding either an iterator or a sentinel, and implementing the
+equality comparison operators appropriately.
+
+\ednote{Change sub-subsection ``[common.iterator]'' from the Ranges TS as
+follows:}
+
+\rSec3[common.iterator]{Class template \tcode{common_iterator}}
+
+\indexlibrary{\idxcode{common_iterator}}%
+\begin{codeblock}
+namespace std { namespace ranges {
+  template <Iterator I, Sentinel<I> S>
+    requires !Same<I, S>
+  class common_iterator {
+  public:
+    using difference_type = difference_type_t<I>;
+
+    constexpr common_iterator();
+    constexpr common_iterator(I i);
+    constexpr common_iterator(S s);
+    template <ConvertibleTo<I> I2, ConvertibleTo<S> S2>
+      constexpr common_iterator(const common_iterator<I2, S2>& u);
+    template <ConvertibleTo<I> I2, ConvertibleTo<S> S2>
+      common_iterator& operator=(const common_iterator<I2, S2>& u);
+
+    decltype(auto) operator*();
+    decltype(auto) operator*() const
+      requires @\placeholder{dereferenceable}@<const I>;
+    decltype(auto) operator->() const
+      requires @\seebelow@;
+
+    common_iterator& operator++();
+    decltype(auto) operator++(int);
+    common_iterator operator++(int)
+      requires ForwardIterator<I>;
+
+    friend rvalue_reference_t<I> iter_move(const common_iterator& i)
+      noexcept(@\seebelow@)
+        requires InputIterator<I>;
+    template <IndirectlySwappable<I> I2, class S2>
+      friend void iter_swap(const common_iterator& x, const common_iterator<I2, S2>& y)
+        noexcept(@\seebelow@);
+
+  private:
+    bool is_sentinel; // \expos
+    I iter;           // \expos
+    S sentinel;       // \expos
+  };
+
+  template <Readable I, class S>
+  struct @\changed{value_type}{readable_traits}@<common_iterator<I, S>> {
+    @\removed{using type = value_type_t<I>;}@
+    @\added{using value_type = iter_value_t<I>;}@
+  };
+
+  @\removed{template <InputIterator I, class S>}@
+  @\removed{struct iterator_category<common_iterator<I, S>> \{}@
+    @\removed{using type = input_iterator_tag;}@
+  @\removed{\};}@
+
+  @\removed{template <ForwardIterator I, class S>}@
+  @\removed{struct iterator_category<common_iterator<I, S>> \{}@
+    @\removed{using type = forward_iterator_tag;}@
+  @\removed{\};}@
+
+  template <class I1, class I2, Sentinel<I2> S1, Sentinel<I1> S2>
+  bool operator==(
+    const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
+  template <class I1, class I2, Sentinel<I2> S1, Sentinel<I1> S2>
+    requires EqualityComparableWith<I1, I2>
+  bool operator==(
+    const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
+  template <class I1, class I2, Sentinel<I2> S1, Sentinel<I1> S2>
+  bool operator!=(
+    const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
+
+  template <class I2, SizedSentinel<I2> I1, SizedSentinel<I2> S1, SizedSentinel<I1> S2>
+  difference_type_t<I2> operator-(
+    const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
+}}
+\end{codeblock}
+\begin{addedblock}
+\begin{codeblock}
+namespace std {
+  template <ranges::InputIterator I, class S>
+  struct iterator_traits<ranges::common_iterator<I, S>> {
+    using difference_type = iter_difference_t<I>;
+    using value_type = iter_value_t<I>;
+    using reference = iter_reference_t<I>;
+    using pointer = @\seebelow@;
+    using iterator_category = input_iterator_tag;
+    using iterator_concept = input_iterator_tag;
+  };
+
+  template <ranges::ForwardIterator I, class S>
+  struct iterator_traits<ranges::common_iterator<I, S>> {
+    using difference_type = iter_difference_t<I>;
+    using value_type = iter_value_t<I>;
+    using reference = iter_reference_t<I>;
+    using pointer = @\seebelow@;
+    using iterator_category = forward_iterator_tag;
+    using iterator_concept = forward_iterator_tag;
+  };
+}
+\end{codeblock}
+
+\pnum
+For both specializations of \tcode{iterator_traits} for
+\tcode{common_iterator<I, S>}, the nested \tcode{pointer} type alias is defined
+as follows:
+\begin{itemize}
+\item If the expression \tcode{a.operator->()} is well-formed, where \tcode{a}
+is an lvalue of type \tcode{const ranges::common_iterator<I, S>}, then
+\tcode{pointer} is an alias for the type of that expression.
+\item Otherwise, \tcode{pointer} is an alias for \tcode{void}.
+\end{itemize}
+\end{addedblock}
+
+\setcounter{subsection}{5}
+\rSec2[iterators.counted]{Counted iterators}
+\rSec3[counted.iterator]{Class template \tcode{counted_iterator}}
+
+\ednote{Change the class synopsis of \tcode{counted_iterator} as follows:}
+
+\indexlibrary{\idxcode{counted_iterator}}%
+\begin{codeblock}
+namespace std { namespace ranges {
+  template <Iterator I>
+  class counted_iterator {
+  public:
+    using iterator_type = I;
+    using difference_type = difference_type_t<I>;
+
+    constexpr counted_iterator();
+    constexpr counted_iterator(I x, difference_type_t<I> n);
+    template <ConvertibleTo<I> I2>
+      constexpr counted_iterator(const counted_iterator<I2>& i);
+    template <ConvertibleTo<S> S2>
+      constexpr counted_iterator& operator=(const counted_iterator<S2>& i);
+
+    constexpr I base() const;
+    constexpr difference_type_t<I> count() const;
+    constexpr decltype(auto) operator*();
+    constexpr decltype(auto) operator*() const
+      requires @\placeholder{dereferenceable}@<const I>;
+
+    constexpr counted_iterator& operator++();
+    decltype(auto) operator++(int);
+    constexpr counted_iterator operator++(int)
+      requires ForwardIterator<I>;
+    constexpr counted_iterator& operator--()
+      requires BidirectionalIterator<I>;
+    constexpr counted_iterator operator--(int)
+      requires BidirectionalIterator<I>;
+
+    constexpr counted_iterator  operator+ (difference_type n) const
+      requires RandomAccessIterator<I>;
+    constexpr counted_iterator& operator+=(difference_type n)
+      requires RandomAccessIterator<I>;
+    constexpr counted_iterator  operator- (difference_type n) const
+      requires RandomAccessIterator<I>;
+    constexpr counted_iterator& operator-=(difference_type n)
+      requires RandomAccessIterator<I>;
+    constexpr decltype(auto) operator[](difference_type n) const
+      requires RandomAccessIterator<I>;
+
+    friend constexpr rvalue_reference_t<I> iter_move(const counted_iterator& i)
+      noexcept(@\seebelow@)
+        requires InputIterator<I>;
+    template <IndirectlySwappable<I> I2>
+      friend constexpr void iter_swap(const counted_iterator& x, const counted_iterator<I2>& y)
+        noexcept(@\seebelow@);
+
+  private:
+    I current; // \expos
+    difference_type_t<I> cnt; // \expos
+  };
+
+  template <Readable I>
+  struct @\changed{value_type}{readable_traits}@<counted_iterator<I>> {
+    @\removed{using type = value_type_t<I>;}@
+    @\added{using value_type = iter_value_t<I>;}@
+  };
+
+  @\removed{template <InputIterator I>}@
+  @\removed{struct iterator_category<counted_iterator<I>{>} \{}@
+    @\removed{using type = iterator_category_t<I>;}@
+  @\removed{\};}@
+
+  template <class I1, class I2>
+      requires Common<I1, I2>
+    constexpr bool operator==(
+      const counted_iterator<I1>& x, const counted_iterator<I2>& y);
+  // ... as before
+}}
+\end{codeblock}
+\begin{addedblock}
+\begin{codeblock}
+namespace std {
+  template <ranges::InputIterator I>
+  struct iterator_traits<ranges::counted_iterator<I>> : iterator_traits<I> {
+    using pointer = void;
+  };
+}
+\end{codeblock}
+\end{addedblock}
 
 
 \rSec1[stream.iterators]{Stream iterators}
-
 \rSec2[istream.iterator]{Class template \tcode{istream_iterator}}
 
-\ednote{Change the class synopsis of \tcode{istream_iterator} as follows:}
+\ednote{Change the class synopsis of \tcode{istream_iterator} from the working
+draft of the IS as follows:}
 
 \begin{codeblock}
 namespace std {
