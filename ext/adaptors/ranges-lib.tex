@@ -1,4 +1,4 @@
-%!TEX root = D0789R2.tex
+%!TEX root = D0789R3.tex
 
 \setcounter{chapter}{9}
 \rSec0[ranges]{Ranges library}
@@ -6,49 +6,37 @@
 \ednote{To the section ``Header \tcode{<experimental/ranges/range>} synopsis''
 10.3 [range.synopsis], add the following:}
 
-\ednote{Recommend changing the name of ``\tcode{BoundedRange}''~([ranges.bounded])
-to ``\tcode{CommonRange}''~([ranges.common]):}
-
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
   // ...
 
-  // 10.6.5, \changed{BoundedRange}{CommonRange}
+  // 10.6.5, CommonRange
   template <class T>
-  concept bool @\changed{BoundedRange}{CommonRange}@ = // as before
+  concept bool CommonRange = // as before
   
   // ...
 
-  @\added{// \ref{ranges.viewable}:}@
-  @\added{template <class T>}@
-  @\added{concept bool ViewableRange = \seebelow;}@
+  // \ref{ranges.viewable}:
+  template <class T>
+  concept bool ViewableRange = @\seebelow@;
 
   // \ref{ranges.view_interface}:
   template <class D>
-    @\added{requires is_class_v<D>}@
+    requires is_class_v<D>
   class view_interface;
 
-  @\removed{// 10.7.2.1:}@
-  @\removed{template <Iterator I, Sentinel<I> S = I>}@
-  @\removed{class iterator_range;}@
+  enum class subrange_kind : bool { unsized, sized };
 
-  @\removed{// 10.7.2.2:}@
-  @\removed{template <Iterator I, Sentinel<I> S = I>}@
-  @\removed{class sized_iterator_range;}@
-
-  @\added{enum class subrange_kind : bool \{ unsized, sized \}; }@
-
-  @\added{// \ref{ranges.subrange}:}@
-  @\added{template <Iterator I, Sentinel<I> S = I, subrange_kind K = \seebelow>}@
-    @\added{requires K == subrange_kind::sized || !SizedSentinel<S, I>}@
-  @\added{class subrange;}@
+  // \ref{ranges.subrange}:
+  template <Iterator I, Sentinel<I> S = I, subrange_kind K = @\seebelow@>
+    requires K == subrange_kind::sized || !SizedSentinel<S, I>
+  class subrange;
 
   // \ref{ranges.adaptors.all}:
   namespace view { inline constexpr @\unspec@ all = @\unspec@; }
 
-  template <@\changed{Range}{ViewableRange}@ R>
-    @\removed{requires is_lvalue_reference_v<R> || View<decay_t<R>>}@
-  using all_view = @\removed{decay_t<}@decltype(view::all(declval<R>()))@\removed{>}@;
+  template <ViewableRange R>
+  using all_view = decltype(view::all(declval<R>()));
 
   // \ref{ranges.adaptors.filter_view}:
   template <InputRange R, IndirectUnaryPredicate<iterator_t<R>> Pred>
@@ -66,7 +54,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 
   // \ref{ranges.adaptors.iota_view}:
   template <WeaklyIncrementable I, Semiregular Bound = unreachable>
-    requires WeaklyEqualityComparable@\added{With}@<I, Bound>
+    requires WeaklyEqualityComparableWith<I, Bound>
   class iota_view;
 
   namespace view { inline constexpr @\unspec@ iota = @\unspec@; }
@@ -82,7 +70,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 
   // \ref{ranges.adaptors.empty_view}:
   template <class T>
-    requires @\changed{requires \{ *(T*)nullptr; \}}{is_object_v<T>}@
+    requires is_object_v<T>
   class empty_view;
 
   namespace view {
@@ -105,56 +93,40 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     requires View<Rng> && View<Pattern> &&
         IndirectlyComparable<iterator_t<Rng>, iterator_t<Pattern>> &&
         (ForwardRange<Rng> || @\textit{tiny-range}@<Pattern>)
-  @\changed{struct}{class}@ split_view;
+  class split_view;
 
   namespace view { inline constexpr @\unspec@ split = @\unspec@; }
 
   // \ref{ranges.adaptors.counted}:
   namespace view { inline constexpr @\unspec@ counted = @\unspec@; }
 
-  @\added{// \ref{ranges.adaptors.common_view}:}@
-  @\added{template <View Rng>}@
-    @\added{requires !CommonRange<Rng>}@
-  @\added{class common_view;}@
+  // \ref{ranges.adaptors.common_view}:
+  template <View Rng>
+    requires !CommonRange<Rng>
+  class common_view;
 
-  @\added{namespace view \{ inline constexpr \unspec common = \unspec; \}}@
+  namespace view { inline constexpr @\unspec@ common = @\unspec@; }
 
-  @\added{// \ref{ranges.adaptors.reverse_view}:}@
-  @\added{template <View Rng>}@
-    @\added{requires BidirectionalRange<Rng>}@
-  @\added{class reverse_view;}@
+  // \ref{ranges.adaptors.reverse_view}:
+  template <View Rng>
+    requires BidirectionalRange<Rng>
+  class reverse_view;
 
-  @\added{namespace view \{ inline constexpr \unspec reverse = \unspec; \}}@
+  namespace view { inline constexpr @\unspec@ reverse = @\unspec@; }
 }}}}
 
 namespace std {
-  template <class I, class S@\added{, ranges::subrange_kind K}@>
-    struct tuple_size<ranges::@\changed{iterator_range}{subrange}@<I, S@\added{, K}@>>
-      : std::integral_constant<size_t, 2> {};
-  template <class I, class S@\added{, ranges::subrange_kind K}@>
-    struct tuple_element<0, ranges::@\changed{iterator_range}{subrange}@<I, S@\added{, K}@>> {
+  template <class I, class S, ranges::subrange_kind K>
+    struct tuple_size<ranges::subrange<I, S, K>>
+      : integral_constant<size_t, 2> {};
+  template <class I, class S, ranges::subrange_kind K>
+    struct tuple_element<0, ranges::subrange<I, S, K>> {
       using type = I;
     };
-  template <class I, class S@\added{, ranges::subrange_kind K}@>
-    struct tuple_element<1, ranges::@\changed{iterator_range}{subrange}@<I, S@\added{, K}@>> {
+  template <class I, class S, ranges::subrange_kind K>
+    struct tuple_element<1, ranges::subrange<I, S, K>> {
       using type = S;
     };
-
-  @\removed{template <class I, class S>}@
-    @\removed{struct tuple_size<ranges::sized_iterator_range<I, S>{>}}@
-      @\removed{: std::integral_constant<size_t, 3> \{\};}@
-  @\removed{template <class I, class S>}@
-    @\removed{struct tuple_element<0, ranges::sized_iterator_range<I, S>{>} \{}@
-      @\removed{using type = I;}@
-    @\removed{\};}@
-  @\removed{template <class I, class S>}@
-    @\removed{struct tuple_element<1, ranges::sized_iterator_range<I, S>{>} \{}@
-      @\removed{using type = S;}@
-    @\removed{\};}@
-  @\removed{template <class I, class S>}@
-    @\removed{struct tuple_element<2, ranges::sized_iterator_range<I, S>{>} \{}@
-      @\removed{using type = ranges::difference_type_t<I>;}@
-    @\removed{\};}@
 }
 \end{codeblock}
 
@@ -163,7 +135,6 @@ namespace std {
 
 \setcounter{section}{6}
 \setcounter{subsection}{10}
-{\color{addclr}
 \rSec2[ranges.viewable]{Viewable ranges}
 \pnum The \tcode{ViewableRange} concept specifies the requirements of a \tcode{Range}
 type that can be converted to a \tcode{View} safely.
@@ -177,7 +148,6 @@ concept bool ViewableRange =
 \pnum
 There need not be any subsumption relationship between \tcode{ViewableRange<T>}
 and \tcode{is_lvalue_reference_v<T>}.
-}
 
 \rSec1[ranges.utilities]{Range utilities}
 
@@ -188,7 +158,7 @@ ranges.
 \rSec2[ranges.view_interface]{View interface}
 
 \pnum
-The \added{class template} \tcode{view_interface} is a helper for defining \tcode{View}-like types that offer a
+The class template \tcode{view_interface} is a helper for defining \tcode{View}-like types that offer a
 container-like interface. It is parameterized with the type that inherits from it.
 
 \indexlibrary{\idxcode{view_interface}}%
@@ -200,7 +170,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1
   struct @\textit{range-common-iterator-impl}@ {
     using type = common_iterator<iterator_t<R>, sentinel_t<R>>;
   };
-  template <@\changed{BoundedRange}{CommonRange}@ R>
+  template <CommonRange R>
   struct @\textit{range-common-iterator-impl}@<R> {
     using type = iterator_t<R>;
   };
@@ -209,8 +179,8 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1
       typename @\textit{range-common-iterator-impl}@<R>::type;
 
   template <class D>
-    @\added{requires is_class_v<D>}@
-  class view_interface : @\added{public}@ view_base {
+    requires is_class_v<D>
+  class view_interface : public view_base {
   private:
     constexpr D& derived() noexcept { // \expos
       return static_cast<D&>(*this);
@@ -221,12 +191,11 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1
   public:
     constexpr bool empty() const requires ForwardRange<const D>;
     constexpr explicit operator bool() const
-      requires @\changed{ForwardRange<const D>}{requires \{ ranges::empty(derived()); \}}@;
-    @\removed{constexpr bool operator!() const requires ForwardRange<const D>;}@
+      requires requires { ranges::empty(derived()); };
 
-    @\added{template <RandomAccessRange R = const D>}@
-        @\added{requires is_pointer_v<iterator_t<R>{>}}@
-      @\added{constexpr auto data() const;}@
+    template <RandomAccessRange R = const D>
+        requires is_pointer_v<iterator_t<R>>
+      constexpr auto data() const;
 
     constexpr auto size() const requires ForwardRange<const D> &&
       SizedSentinel<sentinel_t<const D>, iterator_t<const D>>;
@@ -235,9 +204,9 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1
     constexpr decltype(auto) front() const requires ForwardRange<const D>;
 
     constexpr decltype(auto) back()
-      requires BidirectionalRange<D> && @\changed{BoundedRange}{CommonRange}@<D>;
+      requires BidirectionalRange<D> && CommonRange<D>;
     constexpr decltype(auto) back() const
-      requires BidirectionalRange<const D> && @\changed{BoundedRange}{CommonRange}@<const D>;
+      requires BidirectionalRange<const D> && CommonRange<const D>;
 
     template <RandomAccessRange R = D>
       constexpr decltype(auto) operator[](difference_type_t<iterator_t<R>> n);
@@ -252,8 +221,8 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1
       constexpr decltype(auto) at(difference_type_t<iterator_t<R>> n) const;
 
     template <ForwardRange C>
-        requires !View<C> && @\removed{MoveConstructible<C> \&\&}@
-          ConvertibleTo<@\changed{value_type_t}{reference_t}@<iterator_t<const D>>, value_type_t<iterator_t<C>>> &&
+        requires !View<C> &&
+          ConvertibleTo<reference_t<iterator_t<const D>>, value_type_t<iterator_t<C>>> &&
           Constructible<C, @\textit{range-common-iterator}@<const D>, @\textit{range-common-iterator}@<const D>>
       operator C () const;
   };
@@ -278,28 +247,14 @@ constexpr bool empty() const requires ForwardRange<const D>;
 \indexlibrary{\idxcode{operator bool}!\idxcode{view_interface}}%
 \begin{itemdecl}
 constexpr explicit operator bool() const
-  requires @\changed{ForwardRange<const D>}{requires \{ ranges::empty(derived()); \}}@;
+  requires requires { ranges::empty(derived()); };
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\removed{\returns \tcode{!empty()}.}
-\added{\effects Equivalent to: \tcode{return !ranges::empty(derived());}}
+\effects Equivalent to: \tcode{return !ranges::empty(derived());}
 \end{itemdescr}
 
-\begin{removedblock}
-\indexlibrary{\idxcode{operator!}!\idxcode{view_interface}}%
-\begin{itemdecl}
-constexpr bool operator!() const requires ForwardRange<const D>;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\returns \tcode{empty()}.
-\end{itemdescr}
-\end{removedblock}
-
-\begin{addedblock}
 \indexlibrary{\idxcode{data}!\idxcode{view_interface}}%
 \begin{itemdecl}
 template <RandomAccessRange R = const D>
@@ -311,7 +266,6 @@ template <RandomAccessRange R = const D>
 \pnum
 \effects Equivalent to: \tcode{return ranges::begin(derived());}.
 \end{itemdescr}
-\end{addedblock}
 
 \indexlibrary{\idxcode{size}!\idxcode{view_interface}}%
 \begin{itemdecl}
@@ -341,9 +295,9 @@ constexpr decltype(auto) front() const requires ForwardRange<const D>;
 \indexlibrary{\idxcode{back}!\idxcode{view_interface}}%
 \begin{itemdecl}
 constexpr decltype(auto) back()
-requires BidirectionalRange<D> && @\changed{BoundedRange}{CommonRange}@<D>;
+requires BidirectionalRange<D> && CommonRange<D>;
 constexpr decltype(auto) back() const
-requires BidirectionalRange<const D> && @\changed{BoundedRange}{CommonRange}@<const D>;
+requires BidirectionalRange<const D> && CommonRange<const D>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -382,7 +336,7 @@ constexpr decltype(auto) at(difference_type_t<iterator_t<R>> n) const;
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to: \tcode{return \changed{ranges::begin(derived())}{derived()}[n];}.
+\effects Equivalent to: \tcode{return derived()[n];}.
 
 \pnum
 \throws \tcode{out_of_range} if \tcode{n < 0 || n >= ranges::size(derived())}.
@@ -391,8 +345,8 @@ constexpr decltype(auto) at(difference_type_t<iterator_t<R>> n) const;
 \indexlibrary{\idxcode{at}!\idxcode{view_interface}}%
 \begin{itemdecl}
 template <ForwardRange C>
-  requires !View<C> && @\removed{MoveConstructible<C> \&\&}@
-    ConvertibleTo<@\changed{value_type_t}{reference_t}@<iterator_t<const D>>, value_type_t<iterator_t<C>>> &&
+  requires !View<C> &&
+    ConvertibleTo<reference_t<iterator_t<const D>>, value_type_t<iterator_t<C>>> &&
     Constructible<C, @\textit{range-common-iterator}@<const D>, @\textit{range-common-iterator}@<const D>>
 operator C () const;
 \end{itemdecl}
@@ -402,27 +356,21 @@ operator C () const;
 \effects Equivalent to:
 \begin{codeblock}
 using I = @\textit{range-common-iterator}@<R>;
-return C@\changed{\{}{(}@I{ranges::begin(derived())}, I{ranges::end(derived())}@\changed{\}}{)}@;
+return C(I{ranges::begin(derived())}, I{ranges::end(derived())});
 \end{codeblock}
 \end{itemdescr}
 
 \rSec2[ranges.subranges]{Sub-ranges}
 
 \pnum
-\changed{The \tcode{iterator_range} and \tcode{sized_iterator_range} classes bundle together an
-iterator and a sentinel into a single object that satisfies the \tcode{View} concept.
-\tcode{sized_iterator_range} additionally stores the range's size and satisfies the
-\tcode{SizedRange} concept.}{The \tcode{subrange} class template bundles together an
+The \tcode{subrange} class template bundles together an
 iterator and a sentinel into a single object that satisfies the \tcode{View} concept. Additionally,
-it satisfies the \tcode{SizedRange} concept when the final template parameter is \tcode{subrange_kind::sized}.}
+it satisfies the \tcode{SizedRange} concept when the final template parameter is \tcode{subrange_kind::sized}.
 
-\ednote{Remove sections [ranges.iterator_range] and [ranges.sized_iterator_range] and replace
-with the following:}
 
 \rSec3[ranges.subrange]{\tcode{subrange}}
 
 \indexlibrary{\idxcode{subrange}}%
-\begin{addedblock}
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
   template <class T>
@@ -781,7 +729,6 @@ else
   return r.end();
 \end{codeblock}
 \end{itemdescr}
-\end{addedblock}
 
 \rSec1[ranges.adaptors]{Range adaptors}
 
@@ -811,7 +758,6 @@ for (int i : ints | view::filter(even) | view::transform(square)) {
 
 \rSec2[ranges.adaptor.object]{Range adaptor objects}
 
-\begin{addedblock}
 \pnum
 A \techterm{range adaptor closure object} is a unary function object that accepts
 a \tcode{ViewableRange} as an argument and returns a \tcode{View}. For a range
@@ -832,43 +778,26 @@ closure object such that the following two expressions are equivalent:
 R | C | D
 R | (C | D)
 \end{codeblock}
-\end{addedblock}
 
 \pnum
 A \techterm{range adaptor object} is a customization point object~(\cxxref{??})
-that accepts a \changed{\tcode{Range}}{\tcode{ViewableRange}} as its first
-argument and \removed{that} returns a \tcode{View}.
+that accepts a \tcode{ViewableRange} as its first
+argument and returns a \tcode{View}.
 
 \pnum
-If the adaptor accepts only one argument, then \changed{the following alternate
-syntaxes are semantically equivalent:}{it is a range adaptor closure object.}
-
-\begin{removedblock}
-\begin{codeblock}
-@\textit{adaptor}@(rng)
-rng | @\textit{adaptor}@
-\end{codeblock}
-\end{removedblock}
+If the adaptor accepts only one argument, then it is a range adaptor closure object.
 
 \pnum
-If the adaptor accepts more than one argument, then the following \changed{alternate
-syntaxes}{expressions} are \removed{semantically} equivalent:
+If the adaptor accepts more than one argument, then the following expressions
+are equivalent:
 
 \begin{codeblock}
 @\textit{adaptor}@(rng, args...)
-@\added{\textit{adaptor}(args...)(rng)}@
+@\textit{adaptor}@(args...)(rng)
 rng | @\textit{adaptor}@(args...)
 \end{codeblock}
 
-\begin{addedblock}
 In this case, \tcode{\textit{adaptor}(args...)} is a range adaptor closure object.
-\end{addedblock}
-
-\begin{removedblock}
-\pnum
-The first argument to a range adaptor shall be either an lvalue
-\tcode{Range} or a \tcode{View}.
-\end{removedblock}
 
 \rSec2[ranges.adaptor.semiregular_wrapper]{Semiregular wrapper}
 
@@ -908,7 +837,6 @@ constexpr @\textit{semiregular}@& operator=(@\textit{semiregular}@&& that)
 \end{codeblock}
 \end{itemize}
 
-{\color{addclr}
 \rSec2[ranges.adaptor.simple_view]{Simple views}
 
 \pnum
@@ -928,7 +856,6 @@ template <class R>
 template <@\textit{\xname{simple-view}}@ R>
   constexpr bool @\textit{simple-view}@<R> = true;
 \end{codeblock}
-}
 
 \rSec2[ranges.adaptors.all]{\tcode{view::all}}
 
@@ -938,26 +865,19 @@ elements of the \tcode{Range} passed in.
 
 \pnum
 The name \tcode{view::all} denotes a range adaptor
-object~(\ref{ranges.adaptor.object}). \changed{Given an expression \tcode{E} and
-a type \tcode{T} such that \tcode{decltype((E))} is \tcode{T}, then t}{T}he
-expression \tcode{view::all(E)} for some subexpression \tcode{E} is
-expression-equivalent to:
+object~(\ref{ranges.adaptor.object}). The expression \tcode{view::all(E)} for
+some subexpression \tcode{E} is expression-equivalent to:
 
 \begin{itemize}
-\item \tcode{\textit{DECAY_COPY}(E)} if the \added{decayed} type of \tcode{E}
+\item \tcode{\textit{DECAY_COPY}(E)} if the decayed type of \tcode{E}
 satisfies the concept \tcode{View}.
-{\color{remclr}
-\item \removed{\tcode{sized_iterator_range\{E\}} if \tcode{E} is an lvalue and has
-a type that satisfies concept \tcode{SizedRange}.}}
-\item \changed{\tcode{iterator_range\{E\}}}{\tcode{subrange\{E\}}} if \tcode{E}
+\item \tcode{subrange\{E\}} if \tcode{E}
 is an lvalue and has a type that satisfies concept \tcode{Range}.
 \item Otherwise, \tcode{view::all(E)} is ill-formed.
 \end{itemize}
 
-\begin{addedblock}
 \remark Whenever \tcode{view::all(E)} is a valid expression, it is a prvalue
 whose type satisfies \tcode{View}.
-\end{addedblock}
 
 \rSec2[ranges.adaptors.filter_view]{Class template \tcode{filter_view}}
 
@@ -979,16 +899,15 @@ for (int i : evens)
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
   template <InputRange R, IndirectUnaryPredicate<iterator_t<R>> Pred>
     requires View<R>
-  class filter_view : @\added{public}@ view_interface<filter_view<R, Pred>> {
+  class filter_view : public view_interface<filter_view<R, Pred>> {
   private:
-    R base_ @\added{\{\}}@; // \expos
+    R base_ {}; // \expos
     @\textit{semiregular}@<Pred> pred_; // \expos
   public:
     filter_view() = default;
     constexpr filter_view(R base, Pred pred);
     template <InputRange O>
-      requires @\changed{(is_lvalue_reference_v<O> || View<decay_t<O>{>})}{ViewableRange<O>}@ &&
-        Constructible<R, all_view<O>>
+      requires ViewableRange<O> && Constructible<R, all_view<O>>
     constexpr filter_view(O&& o, Pred pred);
 
     constexpr R base() const;
@@ -998,12 +917,11 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 
     constexpr iterator begin();
     constexpr sentinel end();
-    constexpr iterator end() requires @\changed{BoundedRange}{CommonRange}@<R>;
+    constexpr iterator end() requires CommonRange<R>;
   };
 
   template <InputRange R, CopyConstructible Pred>
-    requires IndirectUnaryPredicate<Pred, iterator_t<R>> &&
-    @\changed{(is_lvalue_reference_v<R> || View<decay_t<R>{>})}{ViewableRange<R>}@
+    requires IndirectUnaryPredicate<Pred, iterator_t<R>> && ViewableRange<R>
   filter_view(R&&, Pred) -> filter_view<all_view<R>, Pred>;
 }}}}
 \end{codeblock}
@@ -1025,8 +943,7 @@ constexpr filter_view(R base, Pred pred);
 \indexlibrary{\idxcode{filter_view}!\idxcode{filter_view}}%
 \begin{itemdecl}
 template <InputRange O>
-requires @\changed{(is_lvalue_reference_v<O> || View<decay_t<O>{>})}{ViewableRange<O>}@ &&
-  Constructible<R, all_view<O>>
+requires ViewableRange<O> && Constructible<R, all_view<O>>
 constexpr filter_view(O&& o, Pred pred);
 \end{itemdecl}
 
@@ -1081,7 +998,7 @@ constexpr sentinel end();
 \end{itemdescr}
 
 \begin{itemdecl}
-constexpr iterator end() requires @\changed{BoundedRange}{CommonRange}@<R>;
+constexpr iterator end() requires CommonRange<R>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -1321,7 +1238,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   template <class R, class Pred>
   class filter_view<R, Pred>::sentinel {
   private:
-    sentinel_t<R> end_ @\added{\{\}}@; // \expos
+    sentinel_t<R> end_ {}; // \expos
   public:
     sentinel() = default;
     explicit constexpr sentinel(filter_view& parent);
@@ -1438,9 +1355,9 @@ for (int i : squares)
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
   template <InputRange R, CopyConstructible F>
     requires View<R> && Invocable<F&, reference_t<iterator_t<R>>>
-  class transform_view : @\added{public}@ view_interface<transform_view<R, F>> {
+  class transform_view : public view_interface<transform_view<R, F>> {
   private:
-    R base_ @\added{\{\}}@; // \expos
+    R base_ {}; // \expos
     @\textit{semiregular}@<F> fun_; // \expos
     template <bool Const>
       struct @\xname{iterator}@; // \expos
@@ -1450,26 +1367,20 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     transform_view() = default;
     constexpr transform_view(R base, F fun);
     template <InputRange O>
-      requires @\changed{(is_lvalue_reference_v<O> || View<decay_t<O>{>})}{ViewableRange<O>}@ &&
-          Constructible<R, all_view<O>>
+      requires ViewableRange<O> && Constructible<R, all_view<O>>
     constexpr transform_view(O&& o, F fun);
-
-    @\removed{using iterator = \xname{iterator}<false>;}@
-    @\removed{using sentinel = \xname{sentinel}<false>;}@
-    @\removed{using const_iterator = \xname{iterator}<true>;}@
-    @\removed{using const_sentinel = \xname{sentinel}<true>;}@
 
     constexpr R base() const;
 
-    constexpr @\changed{iterator}{auto}@ begin();
-    constexpr @\changed{const_iterator}{auto}@ begin() const requires Range<const R> &&
+    constexpr auto begin();
+    constexpr auto begin() const requires Range<const R> &&
       Invocable<const F&, reference_t<iterator_t<const R>>>;
 
-    constexpr @\changed{sentinel}{auto}@ end();
-    constexpr @\changed{const_sentinel}{auto}@ end() const requires Range<const R> &&
+    constexpr auto end();
+    constexpr auto end() const requires Range<const R> &&
       Invocable<const F&, reference_t<iterator_t<const R>>>;
-    constexpr @\changed{iterator}{auto}@ end() requires @\changed{BoundedRange}{CommonRange}@<R>;
-    constexpr @\changed{const_iterator}{auto}@ end() const requires @\changed{BoundedRange}{CommonRange}@<const R> &&
+    constexpr auto end() requires CommonRange<R>;
+    constexpr auto end() const requires CommonRange<const R> &&
       Invocable<const F&, reference_t<iterator_t<const R>>>;
 
     constexpr auto size() requires SizedRange<R>;
@@ -1498,8 +1409,7 @@ constexpr transform_view(R base, F fun);
 \indexlibrary{\idxcode{transform_view}!\idxcode{transform_view}}%
 \begin{itemdecl}
 template <InputRange O>
-requires @\changed{(is_lvalue_reference_v<O> || View<decay_t<O>{>})}{ViewableRange<O>}@ &&
-    Constructible<R, all_view<O>>
+requires ViewableRange<O> && Constructible<R, all_view<O>>
 constexpr transform_view(O&& o, F fun);
 \end{itemdecl}
 
@@ -1525,8 +1435,8 @@ constexpr R base() const;
 
 \indexlibrary{\idxcode{begin}!\idxcode{transform_view}}%
 \begin{itemdecl}
-constexpr @\changed{iterator}{auto}@ begin();
-constexpr @\changed{const_iterator}{auto}@ begin() const requires Range<const R> &&
+constexpr auto begin();
+constexpr auto begin() const requires Range<const R> &&
   Invocable<const F&, reference_t<iterator_t<const R>>>;
 \end{itemdecl}
 
@@ -1534,43 +1444,21 @@ constexpr @\changed{const_iterator}{auto}@ begin() const requires Range<const R>
 \pnum
 \effects Equivalent to:
 \begin{codeblock}
-return @\added{\xname{iterator}<false>}@{*this, ranges::begin(base_)};
+return @\xname{iterator}@<false>{*this, ranges::begin(base_)};
 \end{codeblock}
-\begin{addedblock}
   and
 \begin{codeblock}
-return @\added{\xname{iterator}<true>}@{*this, ranges::begin(base_)};
+return @\xname{iterator}@<true>{*this, ranges::begin(base_)};
 \end{codeblock}
 for the first and second overload, respectively.
-\end{addedblock}
 \end{itemdescr}
 
 \rSec4[ranges.adaptors.transform_view.end]{\tcode{transform_view} range end}
 
 \indexlibrary{\idxcode{end}!\idxcode{transform_view}}%
 \begin{itemdecl}
-constexpr @\changed{sentinel}{auto}@ end();
-constexpr @\changed{const_sentinel}{auto}@ end() const requires Range<const R> &&
-  Invocable<const F&, reference_t<iterator_t<const R>>>;
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\effects Equivalent to\added{:}
-\begin{codeblock}
-@\added{return} \changed{sentinel}{\xname{sentinel}<false>}\{ranges::end(base_)\}\added{;}@
-\end{codeblock}
-  and
-\begin{codeblock}
-@\added{return} \changed{const_sentinel}{\xname{sentinel}<true>}\{ranges::end(base_)\}\added{;}@
-\end{codeblock}
-for the first and second overload, respectively.
-\end{itemdescr}
-
-\indexlibrary{\idxcode{end}!\idxcode{transform_view}}%
-\begin{itemdecl}
-constexpr @\changed{iterator}{auto}@ end() requires @\changed{BoundedRange}{CommonRange}@<R>;
-constexpr @\changed{const_iterator}{auto}@ end() const requires @\changed{BoundedRange}{CommonRange}@<@\added{const}@ R> &&
+constexpr auto end();
+constexpr auto end() const requires Range<const R> &&
   Invocable<const F&, reference_t<iterator_t<const R>>>;
 \end{itemdecl}
 
@@ -1578,15 +1466,33 @@ constexpr @\changed{const_iterator}{auto}@ end() const requires @\changed{Bounde
 \pnum
 \effects Equivalent to:
 \begin{codeblock}
-return @\added{\xname{iterator}<false>}@{*this, ranges::end(base_)};
+return @\xname{sentinel}@<false>{ranges::end(base_)};
 \end{codeblock}
-\begin{addedblock}
   and
 \begin{codeblock}
-return @\added{\xname{iterator}<true>}@{*this, ranges::end(base_)};
+return @\xname{sentinel}@<true>{ranges::end(base_)};
 \end{codeblock}
 for the first and second overload, respectively.
-\end{addedblock}
+\end{itemdescr}
+
+\indexlibrary{\idxcode{end}!\idxcode{transform_view}}%
+\begin{itemdecl}
+constexpr auto end() requires CommonRange<R>;
+constexpr auto end() const requires CommonRange<const R> &&
+  Invocable<const F&, reference_t<iterator_t<const R>>>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+return @\xname{iterator}@<false>{*this, ranges::end(base_)};
+\end{codeblock}
+  and
+\begin{codeblock}
+return @\xname{iterator}@<true>{*this, ranges::end(base_)};
+\end{codeblock}
+for the first and second overload, respectively.
 \end{itemdescr}
 
 \rSec4[ranges.adaptors.transform_view.size]{\tcode{transform_view} range size}
@@ -2163,7 +2069,7 @@ stl2\#507 (\url{https://github.com/ericniebler/stl2/issues/507}).}
 \enterexample
 \begin{codeblock}
 iota_view indices{1, 10};
-for (int i : @\changed{squares}{indices}@)
+for (int i : indices)
   cout << i << ' '; // prints: 1 2 3 4 5 6 7 8 9
 \end{codeblock}
 \exitexample
@@ -2178,14 +2084,14 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   concept bool @\textit{advanceable}@ = @\seebelow@;
 
   template <WeaklyIncrementable I, class Bound = unreachable>
-    requires WeaklyEqualityComparable@\added{With}@<I, Bound>
-  @\changed{struct}{class}@ iota_view : @\added{public}@ view_interface<iota_view<I, Bound>> {
+    requires WeaklyEqualityComparableWith<I, Bound>
+  class iota_view : public view_interface<iota_view<I, Bound>> {
   private:
     I value_ {}; // \expos
-    @\changed{I}{Bound}@ bound_ {}; // \expos
+    Bound bound_ {}; // \expos
   public:
     iota_view() = default;
-    constexpr explicit iota_view(I value)@\added{;} \removed{requires Same<Bound, unreachable>}@
+    constexpr explicit iota_view(I value);
     constexpr iota_view(I value, Bound bound); // \seebelow
 
     struct iterator;
@@ -2199,14 +2105,11 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   };
 
   template <WeaklyIncrementable I>
-  @\removed{explicit}@ iota_view(I) -> iota_view<I>;
-
-  @\removed{template <Incrementable I>}@
-  @\removed{iota_view(I, I) -> iota_view<I, I>;}@
+  iota_view(I) -> iota_view<I>;
 
   template <WeaklyIncrementable I, Semiregular Bound>
-    requires WeaklyEqualityComparable@\added{With}@<I, Bound> && @\removed{!ConvertibleTo<Bound, I>}@
-      @\added{(!Integral<I> || !Integral<Bound> || is_signed_v<I> == is_signed_v<Bound>)}@
+    requires WeaklyEqualityComparableWith<I, Bound> &&
+      (!Integral<I> || !Integral<Bound> || is_signed_v<I> == is_signed_v<Bound>)
   iota_view(I, Bound) -> iota_view<I, Bound>;
 }}}}
 \end{codeblock}
@@ -2283,14 +2186,12 @@ of \tcode{++a} necessary to make \tcode{bool(a == b)} be \tcode{true}. Then if
 
 \indexlibrary{\idxcode{iota_view}!\idxcode{iota_view}}%
 \begin{itemdecl}
-constexpr explicit iota_view(I value)@\added{;} \removed{requires Same<Bound, unreachable>}@
+constexpr explicit iota_view(I value);
 \end{itemdecl}
 
 \begin{itemdescr}
-\begin{addedblock}
 \pnum
 \requires \tcode{Bound\{\}} is reachable from \tcode{value}.
-\end{addedblock}
 
 \pnum
 \effects Initializes \tcode{value_} with \tcode{value}.
@@ -2795,18 +2696,13 @@ is expression-equivalent to:
 The expression \tcode{view::iota(E, F)} is expression-equivalent to:
 
 \begin{itemize}
-\item \tcode{iota_view\{E, F\}} if \removed{either of} the following set\removed{s} of constraints
+\item \tcode{iota_view\{E, F\}} if the following set of constraints
 is satisfied:
 \begin{itemize}
-{\color{remclr}
-\item \begin{codeblock}
-Incrementable<I> && Same<I, J>
-\end{codeblock}
-}
 \item \begin{codeblock}
 WeaklyIncrementable<I> && Semiregular<J> &&
-WeaklyEqualityComparable@\added{With}@<I, J> && @\removed{!ConvertibleTo<J, I>}@
-@\added{(!Integral<I> || !Integral<Bound> || std::is_signed_v<I> == std::is_signed_v<Bound>)}@
+WeaklyEqualityComparableWith<I, J> &&
+(!Integral<I> || !Integral<Bound> || std::is_signed_v<I> == std::is_signed_v<Bound>)
 \end{codeblock}
 \end{itemize}
 \item Otherwise, \tcode{view::iota(E, F)} is ill-formed.
@@ -2832,7 +2728,7 @@ for (int i : few)
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
   template <InputRange R>
     requires View<R>
-  @\changed{struct}{class}@ take_view : @\added{public}@ view_interface<take_view<R>> {
+  class take_view : public view_interface<take_view<R>> {
   private:
     R base_ {}; // \expos
     difference_type_t<iterator_t<R>> count_ {}; // \expos
@@ -2842,8 +2738,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     take_view() = default;
     constexpr take_view(R base, difference_type_t<iterator_t<R>> count);
     template <InputRange O>
-      requires @\changed{(is_lvalue_reference_v<O> || View<decay_t<O>{>})}{ViewableRange<O>}@ &&
-          Constructible<R, all_view<O>>
+      requires ViewableRange<O> && Constructible<R, all_view<O>>
     constexpr take_view(O&& o, difference_type_t<iterator_t<R>> count);
 
     constexpr R base() const;
@@ -2862,11 +2757,6 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 
     constexpr auto size() requires SizedRange<R>;
     constexpr auto size() const requires SizedRange<const R>;
-
-    @\removed{using iterator = iterator_t<take_view>;}@
-    @\removed{using const_iterator = \seebelow;}@
-    @\removed{using sentinel = sentinel_t<take_view>;}@
-    @\removed{using const_sentinel = \seebelow;}@
   };
 
   template <InputRange R>
@@ -2874,24 +2764,6 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     -> take_view<all_view<R>>;
 }}}}
 \end{codeblock}
-
-\begin{removedblock}
-\pnum
-\tcode{take_view<R>::const_iterator} is defined as follows:
-\begin{itemize}
-\item If \tcode{const R} satisfies \tcode{Range} then \tcode{const_iterator} is
-an alias for \tcode{iterator_t<const take_view>}.
-\item Otherwise, there is no type \tcode{take_view<R>::const_iterator}.
-\end{itemize}
-
-\pnum
-\tcode{take_view<R>::const_sentinel} is defined as follows:
-\begin{itemize}
-\item If \tcode{const R} satisfies \tcode{Range} then \tcode{const_sentinel} is
-an alias for \tcode{sentinel_t<const take_view>}.
-\item Otherwise, there is no type \tcode{take_view<R>::const_sentinel}.
-\end{itemize}
-\end{removedblock}
 
 \rSec3[ranges.adaptors.take_view.ops]{\tcode{take_view} operations}
 \rSec4[ranges.adaptors.take_view.ctor]{\tcode{take_view} constructors}
@@ -2910,8 +2782,7 @@ constexpr take_view(R base, difference_type_t<iterator_t<R>> count);
 \indexlibrary{\idxcode{take_view}!\idxcode{take_view}}%
 \begin{itemdecl}
 template <InputRange O>
-requires @\changed{(is_lvalue_reference_v<O> || View<decay_t<O>{>})}{ViewableRange<O>}@ &&
-    Constructible<R, all_view<O>>
+requires ViewableRange<O> && Constructible<R, all_view<O>>
 constexpr take_view(O&& o, difference_type_t<iterator_t<R>> count);
 \end{itemdecl}
 
@@ -2974,8 +2845,8 @@ constexpr auto end() const requires Range<const R>;
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to \tcode{\xname{sentinel}<\changed{false}{\textit{simple-view}<R>}>\{ranges::end(base_)\}} and
-\tcode{\xname{sentinel}<\ true>\{ranges::end(base_)\}} for the first and second
+\effects Equivalent to \tcode{\xname{sentinel}<\textit{simple-view}<R{>}>\{ranges::end(base_)\}} and
+\tcode{\xname{sentinel}<true>\{ranges::end(base_)\}} for the first and second
 overload, respectively.
 \end{itemdescr}
 
@@ -3160,7 +3031,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
       requires View<R> && InputRange<reference_t<iterator_t<R>>> &&
           (is_reference_v<reference_t<iterator_t<R>>> ||
           View<value_type_t<iterator_t<R>>>)
-  class join_view : @\added{public}@ view_interface<join_view<R>> {
+  class join_view : public view_interface<join_view<R>> {
   private:
     using InnerRng = reference_t<iterator_t<R>>; // \expos
     template <bool Const>
@@ -3175,33 +3046,27 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     constexpr explicit join_view(R base);
 
     template <InputRange O>
-        requires @\changed{(is_lvalue_reference_v<O> || View<decay_t<O>{>})}{ViewableRange<O>}@ &&
-            Constructible<R, all_view<O>>
+        requires ViewableRange<O> && Constructible<R, all_view<O>>
       constexpr explicit join_view(O&& o);
 
-    @\removed{using iterator = \xname{iterator}<false>;}@
-    @\removed{using sentinel = \xname{sentinel}<false>;}@
-    @\removed{using const_iterator = \xname{iterator}<true>;}@
-    @\removed{using const_sentinel = \xname{sentinel}<true>;}@
+    constexpr auto begin();
 
-    constexpr @\changed{iterator}{auto}@ begin();
-
-    constexpr @\changed{const_iterator}{auto}@ begin() const requires InputRange<const R> &&
+    constexpr auto begin() const requires InputRange<const R> &&
         is_reference_v<reference_t<iterator_t<const R>>>;
 
-    constexpr @\changed{sentinel}{auto}@ end();
+    constexpr auto end();
 
-    constexpr @\changed{const_sentinel}{auto}@ end() const requires InputRange<const R> &&
+    constexpr auto end() const requires InputRange<const R> &&
         is_reference_v<reference_t<iterator_t<const R>>>;
 
-    constexpr @\changed{iterator}{auto}@ end() requires ForwardRange<R> &&
+    constexpr auto end() requires ForwardRange<R> &&
         is_reference_v<InnerRng> && ForwardRange<InnerRng> &&
-        @\changed{BoundedRange}{CommonRange}@<R> && @\changed{BoundedRange}{CommonRange}@<InnerRng>;
+        CommonRange<R> && CommonRange<InnerRng>;
 
-    constexpr @\changed{const_iterator}{auto}@ end() const requires ForwardRange<const R> &&
+    constexpr auto end() const requires ForwardRange<const R> &&
         is_reference_v<reference_t<iterator_t<const R>>> &&
         ForwardRange<reference_t<iterator_t<const R>>> &&
-        @\changed{BoundedRange}{CommonRange}@<const R> && @\changed{BoundedRange}{CommonRange}@<reference_t<iterator_t<const R>>>;
+        CommonRange<const R> && CommonRange<reference_t<iterator_t<const R>>>;
   };
 
   template <InputRange R>
@@ -3228,8 +3093,7 @@ explicit constexpr join_view(R base);
 \indexlibrary{\idxcode{join_view}!\idxcode{join_view}}%
 \begin{itemdecl}
 template <InputRange O>
-  requires @\changed{(is_lvalue_reference_v<O> || View<decay_t<O>{>})}{ViewableRange<O>}@ &&
-      Constructible<R, all_view<O>>
+  requires ViewableRange<O> && Constructible<R, all_view<O>>
 constexpr explicit join_view(O&& o);
 \end{itemdecl}
 
@@ -3242,72 +3106,68 @@ constexpr explicit join_view(O&& o);
 
 \indexlibrary{\idxcode{begin}!\idxcode{join_view}}%
 \begin{itemdecl}
-constexpr @\changed{iterator}{auto}@ begin();
-constexpr @\changed{const_iterator}{auto}@ begin() const requires InputRange<const R> &&
+constexpr auto begin();
+constexpr auto begin() const requires InputRange<const R> &&
   is_reference_v<reference_t<iterator_t<const R>>>;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects \added{Equivalent to:}
+\effects Equivalent to:
 \begin{codeblock}
-@\added{return \xname{iterator}<\textit{simple-view}<R{>}>}@{*this, ranges::begin(base_)}@\added{;}@
+return @\xname{iterator}<\textit{simple-view}@<R>>{*this, ranges::begin(base_)};
 \end{codeblock}
-\begin{addedblock}
 and
 \begin{codeblock}
 return @\xname{iterator}@<true>{*this, ranges::begin(base_)};
 \end{codeblock}
 for the first and second overloads, respectively.
-\end{addedblock}.
 \end{itemdescr}
 
 \rSec4[ranges.adaptors.join_view.end]{\tcode{join_view} range end}
 
 \indexlibrary{\idxcode{end}!\idxcode{join_view}}%
 \begin{itemdecl}
-constexpr @\changed{sentinel}{auto}@ end();
-constexpr @\changed{const_sentinel}{auto}@ end() const requires InputRange<const R> &&
+constexpr auto end();
+constexpr auto end() const requires InputRange<const R> &&
   is_reference_v<reference_t<iterator_t<const R>>>;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to\added{:}
+\effects Equivalent to:
 \begin{codeblock}
-@\added{return} \changed{sentinel}{\xname{sentinel}<\textit{simple-view}<R>{>}}\{*this\}\added{;}@
+return @\xname{sentinel}<\textit{simple-view}@<R>{>}{*this};
 \end{codeblock}
   and
 \begin{codeblock}
-@\added{return} \changed{const_sentinel}{\xname{sentinel}<true>}\{*this\}\added{;}@
+return @\xname{sentinel}@<true>{*this};
 \end{codeblock}
 for the first and second overload, respectively.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{end}!\idxcode{join_view}}%
 \begin{itemdecl}
-constexpr @\changed{iterator}{auto}@ end() requires ForwardRange<R> &&
+constexpr auto end() requires ForwardRange<R> &&
   is_reference_v<InnerRng> && ForwardRange<InnerRng> &&
-  @\changed{BoundedRange}{CommonRange}@<R> && @\changed{BoundedRange}{CommonRange}@<InnerRng>;
-constexpr @\changed{const_iterator}{auto}@ end() const requires ForwardRange<const R> &&
+  CommonRange<R> && CommonRange<InnerRng>;
+constexpr auto end() const requires ForwardRange<const R> &&
   is_reference_v<reference_t<iterator_t<const R>>> &&
   ForwardRange<reference_t<iterator_t<const R>>> &&
-  @\changed{BoundedRange}{CommonRange}@<const R> && @\changed{BoundedRange}{CommonRange}@<reference_t<iterator_t<const R>>>;
+  CommonRange<const R> && CommonRange<reference_t<iterator_t<const R>>>;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects \added{Equivalent to:}
+\effects Equivalent to:
 \begin{codeblock}
-@\added{return \xname{iterator}<\textit{simple-view}<R{>}>}@{*this, ranges::end(base_)}@\added{;}@
+return @\xname{iterator}<\textit{simple-view}@<R>>{*this, ranges::end(base_)};
 \end{codeblock}
-\begin{addedblock}
 and
 \begin{codeblock}
 return @\xname{iterator}@<true>{*this, ranges::end(base_)};
 \end{codeblock}
 for the first and second overloads, respectively.
-\end{addedblock}
 \end{itemdescr}
 
 \rSec3[ranges.adaptors.join_view.iterator]{Class template \tcode{join_view::\xname{iterator}}}
@@ -3760,16 +3620,9 @@ static_assert(0 == e.size());
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
   template <class T>
-    requires @\changed{requires \{ *(T*)nullptr; \}}{is_object_v<T>}@
-  class empty_view : @\added{public}@ view_interface<empty_view<T>> {
+    requires is_object_v<T>
+  class empty_view : public view_interface<empty_view<T>> {
   public:
-    @\removed{empty_view() = default;}@
-
-    @\removed{using iterator = T*;}@
-    @\removed{using const_iterator = T*;}@
-    @\removed{using sentinel = T*;}@
-    @\removed{using const_sentinel = T*;}@
-
     constexpr static T* begin() noexcept;
     constexpr static T* end() noexcept;
     constexpr static ptrdiff_t size() noexcept;
@@ -3845,7 +3698,7 @@ for (int i : s)
 \begin{codeblock}
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
   template <CopyConstructible T>
-  class single_view : @\added{public}@ view_interface<single_view<T>> {
+  class single_view : public view_interface<single_view<T>> {
   private:
     @\textit{semiregular}@<T> value_; // \expos
   public:
@@ -3855,11 +3708,6 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     template <class... Args>
       requires Constructible<T, Args...>
     constexpr single_view(in_place_t, Args&&... args);
-
-    @\removed{using iterator = const T*;}@
-    @\removed{using const_iterator = const T*;}@
-    @\removed{using sentinel = const T*;}@
-    @\removed{using const_sentinel = const T*;}@
 
     constexpr const T* begin() const noexcept;
     constexpr const T* end() const noexcept;
@@ -4015,7 +3863,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     requires View<Rng> && View<Pattern> &&
         IndirectlyComparable<iterator_t<Rng>, iterator_t<Pattern>> &&
         (ForwardRange<Rng> || @\textit{tiny-range}@<Pattern>)
-  @\changed{struct}{class}@ split_view {
+  class split_view {
   private:
     Rng base_ {}; // \expos
     Pattern pattern_ {}; // \expos
@@ -4029,45 +3877,38 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     constexpr split_view(Rng base, Pattern pattern);
 
     template <InputRange O, ForwardRange P>
-      requires @\changed{(is_lvalue_reference_v<O> || View<decay_t<O>{>})}{ViewableRange<O>}@ &&
-          @\changed{(is_lvalue_reference_v<P> || View<decay_t<P>{>})}{ViewableRange<P>}@ &&
+      requires ViewableRange<O> && ViewableRange<P> &&
           Constructible<Rng, all_view<O>> &&
           Constructible<Pattern, all_view<P>>
     constexpr split_view(O&& o, P&& p);
 
     template <InputRange O>
-      requires @\changed{(is_lvalue_reference_v<O> || View<decay_t<O>{>})}{ViewableRange<O>}@ &&
+      requires ViewableRange<O> &&
           Constructible<Rng, all_view<O>> &&
           Constructible<Pattern, single_view<value_type_t<iterator_t<O>>>>
     constexpr split_view(O&& o, value_type_t<iterator_t<O>> e);
 
-    @\removed{using iterator = \xname{outer_iterator}<false>;}@
-    @\removed{using sentinel = \xname{outer_sentinel}<false>;}@
-    @\removed{using const_iterator = \xname{outer_iterator}<true>;}@
-    @\removed{using const_sentinel = \xname{outer_sentinel}<true>;}@
+    constexpr auto begin();
+    constexpr auto begin() requires ForwardRange<Rng>;
+    constexpr auto begin() const requires ForwardRange<const Rng>;
 
-    constexpr @\changed{iterator}{auto}@ begin();
-    constexpr @\changed{iterator}{auto}@ begin() requires ForwardRange<Rng>;
-    constexpr @\changed{const_iterator}{auto}@ begin() const requires ForwardRange<@\added{const}@ Rng>;
+    constexpr auto end()
+    constexpr auto end() const requires ForwardRange<const Rng>;
 
-    constexpr @\changed{sentinel}{auto}@ end()
-    constexpr @\changed{const_sentinel}{auto}@ end() const requires ForwardRange<@\added{const}@ Rng>;
-
-    constexpr @\changed{iterator}{auto}@ end()
-      requires ForwardRange<Rng> && @\changed{BoundedRange}{CommonRange}@<Rng>;
-    constexpr @\changed{const_iterator}{auto}@ end() const
-      requires ForwardRange<@\added{const}@ Rng> && @\changed{BoundedRange}{CommonRange}@<@\added{const}@ Rng>;
+    constexpr auto end()
+      requires ForwardRange<Rng> && CommonRange<Rng>;
+    constexpr auto end() const
+      requires ForwardRange<const Rng> && CommonRange<const Rng>;
   };
 
   template <InputRange O, ForwardRange P>
-    requires @\changed{(is_lvalue_reference_v<O> || View<decay_t<O>{>})}{ViewableRange<O>}@ &&
-      @\changed{(is_lvalue_reference_v<P> || View<decay_t<P>{>})}{ViewableRange<P>}@ &&
+    requires ViewableRange<O> && ViewableRange<P> &&
       IndirectlyComparable<iterator_t<O>, iterator_t<P>> &&
       (ForwardRange<O> || @\textit{tiny-range}@<P>)
   split_view(O&&, P&&) -> split_view<all_view<O>, all_view<P>>;
 
   template <InputRange O>
-    requires @\changed{(is_lvalue_reference_v<O> || View<decay_t<O>{>})}{ViewableRange<O>}@ &&
+    requires ViewableRange<O> &&
       IndirectlyComparable<iterator_t<Rng>, const value_type_t<iterator_t<Rng>>*> &&
       CopyConstructible<value_type_t<iterator_t<O>>>
   split_view(O&&, value_type_t<iterator_t<O>>)
@@ -4092,8 +3933,7 @@ constexpr split_view(Rng base, Pattern pattern);
 \indexlibrary{\idxcode{split_view}!\idxcode{split_view}}%
 \begin{itemdecl}
 template <InputRange O, ForwardRange P>
-requires @\changed{(is_lvalue_reference_v<O> || View<decay_t<O>{>})}{ViewableRange<O>}@ &&
-    @\changed{(is_lvalue_reference_v<P> || View<decay_t<P>{>})}{ViewableRange<P>}@ &&
+requires ViewableRange<O> && ViewableRange<P> &&
     Constructible<Rng, all_view<O>> &&
     Constructible<Pattern, all_view<P>>
 constexpr split_view(O&& o, P&& p);
@@ -4108,7 +3948,7 @@ constexpr split_view(O&& o, P&& p);
 \indexlibrary{\idxcode{split_view}!\idxcode{split_view}}%
 \begin{itemdecl}
 template <InputRange O>
-requires @\changed{(is_lvalue_reference_v<O> || View<decay_t<O>{>})}{ViewableRange<O>}@ &&
+requires ViewableRange<O> &&
     Constructible<Rng, all_view<O>> &&
     Constructible<Pattern, single_view<value_type_t<iterator_t<O>>>>
 constexpr split_view(O&& o, value_type_t<iterator_t<O>> e);
@@ -4124,7 +3964,7 @@ constexpr split_view(O&& o, value_type_t<iterator_t<O>> e);
 
 \indexlibrary{\idxcode{begin}!\idxcode{split_view}}%
 \begin{itemdecl}
-constexpr @\changed{iterator}{auto}@ begin();
+constexpr auto begin();
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4138,65 +3978,61 @@ return iterator{*this};
 
 \indexlibrary{\idxcode{begin}!\idxcode{split_view}}%
 \begin{itemdecl}
-constexpr @\changed{iterator}{auto}@ begin() requires ForwardRange<Rng>;
-constexpr @\changed{const_iterator}{auto}@ begin() const requires ForwardRange<Rng>;
+constexpr auto begin() requires ForwardRange<Rng>;
+constexpr auto begin() const requires ForwardRange<Rng>;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects \added{Equivalent to:}
+\effects Equivalent to:
 \begin{codeblock}
-@\added{return \xname{outer_iterator}<\textit{simple-view}<R{>}>}@{*this, ranges::begin(base_)}@\added{;}@
+return @\xname{outer_iterator}<\textit{simple-view}@<R>>{*this, ranges::begin(base_)};
 \end{codeblock}
-\begin{addedblock}
   and
 \begin{codeblock}
 return @\xname{outer_iterator}@<true>{*this, ranges::begin(base_)};
 \end{codeblock}
-\end{addedblock}
 \end{itemdescr}
 
 \rSec4[ranges.adaptors.split_view.end]{\tcode{split_view} range end}
 
 \indexlibrary{\idxcode{end}!\idxcode{split_view}}%
 \begin{itemdecl}
-constexpr @\changed{sentinel}{auto}@ end()
-constexpr @\changed{const_sentinel}{auto}@ end() const requires ForwardRange<Rng>;
+constexpr auto end()
+constexpr auto end() const requires ForwardRange<Rng>;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to\added{:}
+\effects Equivalent to:
 \begin{codeblock}
-@\added{return} \changed{sentinel}{\xname{outer_sentinel}<\textit{simple-view}<R{>}>}@{*this}@\added{;}@
+return @\xname{outer_sentinel}<\textit{simple-view}@<R{>}>{*this};
 \end{codeblock}
 and
 \begin{codeblock}
-@\added{return} \changed{const_sentinel}{\xname{outer_sentinel}<true>}@{*this}@\added{;}@
+return @\xname{outer_sentinel}@<true>{*this};
 \end{codeblock}
 for the first and second overloads, respectively.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{end}!\idxcode{split_view}}%
 \begin{itemdecl}
-constexpr @\changed{iterator}{auto}@ end()
-requires ForwardRange<Rng> && @\changed{BoundedRange}{CommonRange}@<Rng>;
-constexpr @\changed{const_iterator}{auto}@ end() const
-requires ForwardRange<Rng> && @\changed{BoundedRange}{CommonRange}@<Rng>;
+constexpr auto end()
+requires ForwardRange<Rng> && CommonRange<Rng>;
+constexpr auto end() const
+requires ForwardRange<Rng> && CommonRange<Rng>;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects \added{Equivalent to:}
+\effects Equivalent to:
 \begin{codeblock}
-@\added{return \xname{outer_iterator}<\textit{simple-view}<R{>}>}@{*this, ranges::end(base_)}@\added{;}@
+return @\xname{outer_iterator}<\textit{simple-view}@<R>>{*this, ranges::end(base_)};
 \end{codeblock}
-\begin{addedblock}
   and
 \begin{codeblock}
 return @\xname{outer_iterator}@<true>{*this, ranges::end(base_)};
 \end{codeblock}
-\end{addedblock}
 \end{itemdescr}
 
 \rSec3[ranges.adaptors.split_view.outer_iterator]{Class template \tcode{split_view::\xname{outer_iterator}}}
@@ -4311,7 +4147,7 @@ constexpr @\xname{outer_iterator}@& operator++();
 \begin{codeblock}
 auto const end = ranges::end(parent_->base_);
 if (@\textit{current}@ == end) return *this;
-auto const [pbegin, pend] = @\changed{iterator_range}{subrange}@{parent_->pattern_};
+auto const [pbegin, pend] = subrange{parent_->pattern_};
 do {
   auto [b,p] = mismatch(@\textit{current}@, end, pbegin, pend);
   if (p != pend) continue; // The pattern didn't match
@@ -4503,13 +4339,8 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     value_type() = default;
     constexpr explicit value_type(@\xname{outer_iterator}@ i);
 
-    @\removed{using iterator = \xname{inner_iterator}<Const>;}@
-    @\removed{using sentinel = \xname{inner_sentinel}<Const>;}@
-    @\removed{using const_iterator = \xname{inner_iterator}<Const>;}@
-    @\removed{using const_sentinel = \xname{inner_sentinel}<Const>;}@
-
-    constexpr @\changed{iterator}{auto}@ begin() const;
-    constexpr @\changed{sentinel}{auto}@ end() const;
+    constexpr auto begin() const;
+    constexpr auto end() const;
   };
 }}}}
 \end{codeblock}
@@ -4530,14 +4361,14 @@ constexpr explicit value_type(@\xname{outer_iterator}@ i);
 
 \indexlibrary{\idxcode{begin}!\idxcode{split_view::\xname{outer_iterator}::value_type}}%
 \begin{itemdecl}
-constexpr @\changed{iterator}{auto}@ begin() const;
+constexpr auto begin() const;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects \added{Equivalent to:}
+\effects Equivalent to:
 \begin{codeblock}
-@\added{return} \changed{iterator}{\xname{inner_iterator}<Const>}\{i_\}\added{;}@
+return @\xname{inner_iterator}@<Const>{i_};
 \end{codeblock}
 \end{itemdescr}
 
@@ -4545,14 +4376,14 @@ constexpr @\changed{iterator}{auto}@ begin() const;
 
 \indexlibrary{\idxcode{end}!\idxcode{split_view::\xname{outer_iterator}::value_type}}%
 \begin{itemdecl}
-constexpr @\changed{sentinel}{auto}@ end() const;
+constexpr auto end() const;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects \added{Equivalent to:}
+\effects Equivalent to:
 \begin{codeblock}
-@\added{return} \changed{sentinel}{\xname{inner_sentinel}<Const>}\{\}\added{;}@
+return \xname{inner_sentinel}@<Const>{};
 \end{codeblock}
 \end{itemdescr}
 
@@ -4769,7 +4600,7 @@ friend constexpr bool operator==(const @\xname{inner_iterator}@<Const>& x, @\xna
 auto cur = x.i_.current();
 auto end = ranges::end(x.i_.parent_->base_);
 if (cur == end) return true;
-auto [pcur, pend] = @\changed{iterator_range}{subrange}@{x.i_.parent_->pattern_};
+auto [pcur, pend] = subrange{x.i_.parent_->pattern_};
 if (pcur == pend) return x.zero_;
 do {
   if (*cur != *pcur) return false;
@@ -4832,14 +4663,13 @@ is satisfied:
 \begin{itemize}
 \item \begin{codeblock}
 InputRange<T> && ForwardRange<U> &&
-@\changed{(is_lvalue_reference_v<T> || View<decay_t<T>{>})}{ViewableRange<T>}@ &&
-@\changed{(is_lvalue_reference_v<U> || View<decay_t<U>{>})}{ViewableRange<U>}@ &&
+ViewableRange<T> && ViewableRange<U> &&
 IndirectlyComparable<iterator_t<T>, iterator_t<U>> &&
 (ForwardRange<T> || @\textit{tiny-range}@<U>)
 \end{codeblock}
 
 \item \begin{codeblock}
-InputRange<T> && @\changed{(is_lvalue_reference_v<T> || View<decay_t<T>{>})}{ViewableRange<T>}@ &&
+InputRange<T> && ViewableRange<T> &&
 IndirectlyComparable<iterator_t<T>, const value_type_t<iterator_t<T>>*> &&
 CopyConstructible<value_type_t<iterator_t<T>>> &&
 ConvertibleTo<U, value_type_t<iterator_t<T>>>
@@ -4857,16 +4687,15 @@ and \tcode{U} respectively. Then the expression \tcode{view::counted(E, F)} is
 expression-equivalent to:
 
 \begin{itemize}
-\item \tcode{\changed{iterator_range}{subrange}\{E, E + F\}} \changed{is}{if}
+\item \tcode{subrange\{E, E + F\}} if
 \tcode{T} is a pointer to an object type, and if \tcode{U} is implicitly
 convertible to \tcode{ptrdiff_t}.
-\item Otherwise, \tcode{\changed{iterator_range}{subrange}\{\removed{make_}counted_iterator(E,
-\changed{F}{static_cast<difference_type_t<\ T>{>}(F)}), default_sentinel\{\}\}}
+\item Otherwise, \tcode{subrange\{counted_iterator(E,
+static_cast<difference_type_t<T>{>}(F)), default_sentinel\{\}\}}
 if \tcode{It\-erator<T> \&\& ConvertibleTo<U, difference_type_t<T>{>}} is satisfied.
 \item Otherwise, \tcode{view::counted(E, F)} is ill-formed.
 \end{itemize}
 
-\begin{addedblock}
 \rSec2[ranges.adaptors.common_view]{Class template \tcode{common_view}}
 
 \pnum
@@ -5143,7 +4972,7 @@ explicit constexpr reverse_view(Rng base);
 \indexlibrary{\idxcode{reverse_view}!\idxcode{reverse_view}}%
 \begin{itemdecl}
 template <ViewableRange O>
-  requires @\changed{!CommonRange}{BidirectionalRange}@<O> && Constructible<Rng, all_view<O>>
+  requires BidirectionalRange<O> && Constructible<Rng, all_view<O>>
 explicit constexpr reverse_view(O&& o);
 \end{itemdecl}
 
@@ -5242,5 +5071,3 @@ Then the expression \tcode{view::reverse(E)} is expression-equivalent to:
 \tcode{reverse_view\{E\}}.
 \item Otherwise, \tcode{view::reverse(E)} is ill-formed.
 \end{itemize}
-
-\end{addedblock}
