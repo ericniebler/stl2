@@ -1,8 +1,8 @@
-DOCNO = 0370
-REV = 3
-PD = P
-SOURCE = P$(DOCNO).md
-TARGET = $(PD)$(DOCNO)R$(REV)
+DOCNO = 4621
+PD = D
+SOURCE = N$(DOCNO).md
+TARGET = $(PD)$(DOCNO)
+
 PANDOC = pandoc
 
 $(TARGET).html: $(SOURCE) header.html pandoc-template.html

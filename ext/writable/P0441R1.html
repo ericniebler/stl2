@@ -49,16 +49,16 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
   <tr>
     <td width="172" align="left" valign="top">Document number:</td>
     <td width="435">
-      D0441R0
+      P0441R1
     </td>
   </tr>
   <tr>
     <td width="172" align="left" valign="top">Date:</td>
-    <td width="435">2016-10-17</td>
+    <td width="435">2016-11-17</td>
   </tr>
   <tr>
     <td width="172" align="left" valign="top">Project:</td>
-    <td width="435">C++ Extensions for Ranges, Library Evolution Working Group and Library Working Group</td>
+    <td width="435">C++ Extensions for Ranges, Library Working Group</td>
   </tr>
   <tr>
     <td width="172" align="left" valign="top">Reply-to:</td>
@@ -74,7 +74,10 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <div id="TOC">
 <ul>
 <li><a href="#introduction"><span class="toc-section-number">1</span> Introduction</a><ul>
-<li><a href="#motivation"><span class="toc-section-number">1.1</span> Motivation</a></li>
+<li><a href="#revision-history"><span class="toc-section-number">1.1</span> Revision history</a><ul>
+<li><a href="#r0---r1"><span class="toc-section-number">1.1.1</span> R0 -&gt; R1</a></li>
+</ul></li>
+<li><a href="#motivation"><span class="toc-section-number">1.2</span> Motivation</a></li>
 </ul></li>
 <li><a href="#proposed-design"><span class="toc-section-number">2</span> Proposed Design</a><ul>
 <li><a href="#coalescing-writable-and-movewritable"><span class="toc-section-number">2.1</span> Coalescing <code>Writable</code> and <code>MoveWritable</code></a></li>
@@ -91,7 +94,15 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </div>
 <h1 id="introduction"><span class="header-section-number">1</span> Introduction</h1>
 <p>This paper presents a design change to <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4560.pdf" title="Working Draft: C++ Extensions for Ranges">N4560, the working paper for the Technical Specification for C++ Extensions for Ranges (the “Ranges TS”)</a><span class="citation">[3]</span>. This work has already been speculatively integrated - along with the proposals in <a href="http://wg21.link/p0370">P0370 “Ranges TS Design Updates Omnibus”</a><span class="citation">[1]</span> - with the text of the working paper. The resulting document is <a href="http://wg21.link/p0459">P0459 “C++ Extensions for Ranges: Speculative Combined Proposals”</a><span class="citation">[4]</span>. We briefly discuss how the design of the <code>Writable</code> and <code>MoveWritable</code> concepts impacts the specification of algorithms, and propose to correct the problem by merging the two into a single concept.</p>
-<h2 id="motivation"><span class="header-section-number">1.1</span> Motivation</h2>
+<h2 id="revision-history"><span class="header-section-number">1.1</span> Revision history</h2>
+<h3 id="r0---r1"><span class="header-section-number">1.1.1</span> R0 -&gt; R1</h3>
+<ul>
+<li><p>Editorial wording cleanup from LWG review comments.</p></li>
+<li><p>Don’t perpetrate the mis-use of “literal type” in the move_sentinel constructor that we corrected in the rest of the library with P0503.</p></li>
+<li><p>Add a Returns element for move_sentinel’s assignment operator.</p></li>
+<li><p>Correct occurrences of “Effects: Equivalent to <code>foo</code>.” to “Effects: Equivalent to: <code>return foo;</code>” when that is intended.</p></li>
+</ul>
+<h2 id="motivation"><span class="header-section-number">1.2</span> Motivation</h2>
 <p>The current Ranges TS Working Paper (N4560) includes two concepts used to describe relationships between a readable and a writable iterator, <code>MoveWritable</code> and <code>Writable</code>:</p>
 <div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> Out, <span class="kw">class</span> T&gt;
 concept <span class="dt">bool</span> MoveWritable() {
@@ -221,7 +232,7 @@ concept <span class="dt">bool</span> IndirectlyCopyableStorable() {
         *o = std::forward&lt;T&gt;(t); <span class="co">// not required to be equality preserving</span>
       };
   }</code></pre></div>
-<p>Let <code>E</code> be an expression such that <code>decltype(E)</code> is <code>T</code>, and let <code>o</code> be a dereferenceable object of type <code>Out</code>. Then <code>Writable&lt;Out, T&gt;()</code> is satisfied if and only if</p>
+<p>Let <code>E</code> be an expression such that <code>decltype((E))</code> is <code>T</code>, and let <code>o</code> be a dereferenceable object of type <code>Out</code>. Then <code>Writable&lt;Out, T&gt;()</code> is satisfied if and only if</p>
 <ul>
 <li>If <code>Readable&lt;Out&gt;() &amp;&amp; Same&lt;value_type_t&lt;Out&gt;, decay_t&lt;T&gt;&gt;()</code> is satisfied, then <code>*o</code> after the assignment is equal to the value of <code>E</code> before the assignment.</li>
 </ul>
@@ -367,7 +378,7 @@ concept <span class="dt">bool</span> IndirectlyCopyableStorable() {
 <p>24.7.3.5 <code>move_sentinel</code> operations [move.sent.ops]<br />
 24.7.3.5.1 <code>move_sentinel</code> constructors [move.sent.op.const]</p>
 <div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">constexpr</span> move_sentinel();</code></pre></div>
-<p>1 Effects: Constructs a <code>move_sentinel</code>, value-initializing <code>last</code>. If <code>S</code> is a literal type, this constructor shall be a <code>constexpr</code> constructor.</p>
+<p>1 Effects: Constructs a <code>move_sentinel</code>, value-initializing <code>last</code>. If <code>is_trivially_default_constructible&lt;S&gt;::value</code> is <code>true</code>, then this constructor is a <code>constexpr</code> constructor.</p>
 <div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">explicit</span> move_sentinel(S s);</code></pre></div>
 <p>2 Effects: Constructs a <code>move_sentinel</code>, initializing <code>last</code> with <code>s</code>.</p>
 <div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">move_sentinel(<span class="dt">const</span> move_sentinel&lt;ConvertibleTo&lt;S&gt;&gt;&amp; s);</code></pre></div>
@@ -375,30 +386,31 @@ concept <span class="dt">bool</span> IndirectlyCopyableStorable() {
 <p>24.7.3.5.2 <code>move_sentinel::operator=</code> [move.sent.op=]</p>
 <div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">move_sentinel&amp; <span class="kw">operator</span>=(<span class="dt">const</span> move_sentinel&lt;ConvertibleTo&lt;S&gt;&gt;&amp; s);</code></pre></div>
 <p>1 Effects: Assigns <code>s.last</code> to <code>last</code>.</p>
+<p>2 Returns: <code>*this</code></p>
 <p>24.7.3.5.3 <code>move_sentinel</code> comparisons [move.sent.op.comp]</p>
 <div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> I, Sentinel&lt;I&gt; S&gt;
   <span class="dt">bool</span> <span class="kw">operator</span>==(
-    <span class="dt">const</span> move_iterator&lt;I&gt;&amp; i, <span class="dt">const</span> move_sentinel&lt;S&gt;&amp; s);<span class="er">```</span>
+    <span class="dt">const</span> move_iterator&lt;I&gt;&amp; i, <span class="dt">const</span> move_sentinel&lt;S&gt;&amp; s);
 <span class="kw">template</span> &lt;<span class="kw">class</span> I, Sentinel&lt;I&gt; S&gt;
   <span class="dt">bool</span> <span class="kw">operator</span>==(
     <span class="dt">const</span> move_sentinel&lt;S&gt;&amp; s, <span class="dt">const</span> move_iterator&lt;I&gt;&amp; i);</code></pre></div>
-<p>1 Effects: Equivalent to <code>i.current == s.last</code>.</p>
+<p>1 Effects: Equivalent to: <code>return i.current == s.last;</code></p>
 <div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> I, Sentinel&lt;I&gt; S&gt;
   <span class="dt">bool</span> <span class="kw">operator</span>!=(
     <span class="dt">const</span> move_iterator&lt;I&gt;&amp; i, <span class="dt">const</span> move_sentinel&lt;S&gt;&amp; s);
 <span class="kw">template</span> &lt;<span class="kw">class</span> I, Sentinel&lt;I&gt; S&gt;
   <span class="dt">bool</span> <span class="kw">operator</span>!=(
     <span class="dt">const</span> move_sentinel&lt;S&gt;&amp; s, <span class="dt">const</span> move_iterator&lt;I&gt;&amp; i);</code></pre></div>
-<p>2 Effects: Equivalent to <code>!(i == s)</code>.</p>
+<p>2 Effects: Equivalent to: <code>return !(i == s);</code></p>
 <p>24.7.3.5.4 <code>move_sentinel</code> non-member functions [move.sent.nonmember]</p>
 <div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> I, SizedSentinel&lt;I&gt; S&gt;
   difference_type_t&lt;I&gt; <span class="kw">operator</span>-(
     <span class="dt">const</span> move_sentinel&lt;S&gt;&amp; s, <span class="dt">const</span> move_iterator&lt;I&gt;&amp; i);</code></pre></div>
-<p>1 Effects: Equivalent to <code>s.last - i.current</code>.</p>
+<p>1 Effects: Equivalent to: <code>return s.last - i.current;</code></p>
 <div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> I, SizedSentinel&lt;I&gt; S&gt;
   difference_type_t&lt;I&gt; <span class="kw">operator</span>-(
     <span class="dt">const</span> move_iterator&lt;I&gt;&amp; i, <span class="dt">const</span> move_sentinel&lt;S&gt;&amp; s);</code></pre></div>
-<p>2 Effects: Equivalent to <code>i.current - s.last</code>.</p>
+<p>2 Effects: Equivalent to: <code>return i.current - s.last;</code></p>
 <div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;Semiregular S&gt;
 move_sentinel&lt;S&gt; make_move_sentinel(S s);</code></pre></div>
 <p>3 Returns: <code>move_sentinel&lt;S&gt;(s)</code>.</p>
@@ -407,7 +419,7 @@ move_sentinel&lt;S&gt; make_move_sentinel(S s);</code></pre></div>
 <p>In the synopsis of the <code>&lt;experimental/ranges/algorithm&gt;</code> header in [algorithms.general], in the declarations of <code>unique_copy</code>, replace the constraint clause <code>Copyable&lt;value_type_t&lt;I&gt;&gt;()</code> (resp. <code>Copyable&lt;value_type_t&lt;iterator_t&lt;Rng&gt;&gt;&gt;()</code>) with <code>IndirectlyCopyableStorable&lt;I, O&gt;()</code> (resp. <code>IndirectlyCopyableStorable&lt;iterator_t&lt;Rng&gt;, O&gt;()</code>). Remove both declarations of <code>partition_move</code> and <code>merge_move</code>.</p>
 <p>In [alg.unique], in the declarations of <code>unique_copy</code>, again replace the constraint clauses <code>Copyable&lt;value_type_t&lt;I&gt;&gt;()</code> (resp. <code>Copyable&lt;value_type_t&lt;iterator_t&lt;Rng&gt;&gt;&gt;()</code>) with <code>IndirectlyCopyableStorable&lt;I, O&gt;()</code> (resp. <code>IndirectlyCopyableStorable&lt;iterator_t&lt;Rng&gt;, O&gt;()</code>).</p>
 <p>In [alg.partitions], strike the declarations of <code>partition_move</code> and remove paragraphs 16-19 that specify its behavior.</p>
-<p>In [alg.merge], strike the declarations of <code>merge_move</code> adn remove paragraphs 6-10 that specify its behavior.</p>
+<p>In [alg.merge], strike the declarations of <code>merge_move</code> and remove paragraphs 6-10 that specify its behavior.</p>
 <h2 id="implementation-experience"><span class="header-section-number">3.1</span> Implementation Experience</h2>
 <p>The proposed design changes are implemented in both <a href="https://github.com/CaseyCarter/cmcstl2" title="CMCSTL2: Casey Carter&#39;s reference implementation of STL2">CMCSTL2, a full implementation of the Ranges TS with proxy extensions</a><span class="citation">[2]</span>, and <a href="http://github.com/ericniebler/range-v3" title="Range v3">range-v3</a><span class="citation">[5]</span>.</p>
 <h1 id="references" class="unnumbered">References</h1>
