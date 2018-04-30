@@ -1,0 +1,97 @@
+%!TEX root = p1033.tex
+\normannex{depr}{Compatibility features}
+
+\rSec1[depr.general]{General}
+
+\pnum
+This Clause describes features of this document that are specified for compatibility with existing
+implementations.
+
+\rSec1[depr.memory.range-and-a-half]{Memory specialisation range-and-a-half algorithms}
+{\color{addclr}
+\pnum
+The following algorithm signatures are deemed unsafe, and are proposed to be deprecated.
+
+\begin{codeblock}
+template <InputIterator I, Sentinel<I> S, NoThrowForwardIterator O>
+requires
+  Constructible<value_type_t<O>, reference_t<I>> &&
+tagged_pair<tag::in(I), tag::out(O)>
+  uninitialized_copy(I first, S last, O result);
+\end{codeblock}
+
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+    for (; first != last; ++result, (void)++first) {
+      ::new (const_cast<void*>(static_cast<const volatile void*>(addressof(*result))))
+        remove_reference_t<reference_t<O>>(*first);
+    }
+    return {first, result};
+\end{codeblock}
+
+\requires \tcode{result} shall not be in the range \range{first}{last}.
+
+\begin{codeblock}
+template <InputRange Rng, NoThrowForwardIterator O>
+  requires
+Constructible<value_type_t<O>, reference_t<iterator_t<Rng>>>
+  tagged_pair<tag::in(safe_iterator_t<Rng>), tag::out(O)>
+uninitialized_copy(Rng&& rng, O result);
+\end{codeblock}
+
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+   return uninitialized_copy(begin(rng), end(rng), result);
+\end{codeblock}
+
+\pnum
+\requires \tcode{result} shall not be in the range \range{begin(rng)}{end(rng)}.
+
+\begin{codeblock}
+template <InputIterator I, Sentinel<I> S, __NoThrowForwardIterator O>
+  requires
+Constructible<value_type_t<O>, rvalue_reference_t<I>>
+  tagged_pair<tag::in(I), tag::out(O)>
+uninitialized_move(I first, S last, O result);
+\end{codeblock}
+
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+   for (; first != last; ++result, (void)++first) {
+     ::new (const_cast<void*>(static_cast<const volatile void*>(addressof(*result))))
+       remove_reference_t<reference_t<O>>(std::move(*first));
+   }
+   return {first, result};
+\end{codeblock}
+
+\pnum
+\remarks If an exception is thrown, some objects in the range \range{first}{last} are left in a
+valid but unspecified state.
+
+\pnum
+\requires \tcode{result} shall not be in the range \range{first}{last}.
+
+\begin{codeblock}
+template <InputRange Rng, NoThrowForwardIterator O>
+   requires
+Constructible<value_type_t<O>, reference_t<iterator_t<Rng>>>
+   tagged_pair<tag::in(safe_iterator_t<Rng>), tag::out(O)>
+uninitialized_copy(Rng&& rng, O result);
+\end{codeblock}
+
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+   return uninitialized_copy(begin(rng), end(rng), result);
+\end{codeblock}
+
+\pnum
+\remarks If an exception is thrown, some objects in the range \range{begin(rng)}{end(rng)} are left
+in a valid but unspecified state.
+
+\pnum
+\requires \tcode{result} shall not be in the range \range{begin(rng)}{end(rng)}.
+} %% \color{addclr}
