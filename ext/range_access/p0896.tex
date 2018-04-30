@@ -1,0 +1,614 @@
+%!TEX root = D0970.tex
+
+\part[Changes to P0896]{Changes to P0896\hfill[P0896]}\label{P0896}
+
+\setcounter{chapter}{19}
+\rSec0[std]{Standard Library, Version 1}
+\setcounter{SectionDepthBase}{1}
+\setcounter{section}{6}
+\setcounter{subsection}{4}
+
+\ednote{The following changes are suggested for P0896.}
+
+\rSec2[string.view.synop]{Header \tcode{<string_view>} synopsis}
+
+\ednote{change the \tcode{<string_view>} header synopsis as follows:}
+
+\indexhdr{string_view}%
+\begin{codeblock}
+namespace std {
+  // \ref{string.view.template}, class template \tcode{basic_string_view}
+  template<class charT, class traits = char_traits<charT>>
+  class basic_string_view;
+
+  // \ref{string.view.range_access}, \tcode{basic_string_view} range access
+  @\added{template<class charT, class traits>}@
+    @\added{constexpr auto begin(basic_string_view<charT, traits> x) noexcept;}@
+  @\added{template<class charT, class traits>}@
+    @\added{constexpr auto end(basic_string_view<charT, traits> x) noexcept;}@
+
+  // ... as before
+}
+\end{codeblock}
+
+\ednote{After [string.view.template], insert the following subsection and
+renumber all following subsections.}
+
+\begin{addedblock}
+\setcounter{subsubsection}{2}
+\rSec2[string.view.range_access]{\tcode{basic_string_view} range access}
+
+\pnum
+\enternote The following two range access functions are provided for interoperability with
+\tcode{std2::begin} and \tcode{std2::end}.\exitnote
+
+\indexlibrary{\idxcode{basic_string_view}!\idxcode{begin}}%
+\begin{itemdecl}
+template<class charT, class traits>
+  constexpr auto begin(basic_string_view<charT, traits> x) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{x.begin()}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{basic_string_view}!\idxcode{end}}%
+\begin{itemdecl}
+template<class charT, class traits>
+  constexpr auto end(basic_string_view<charT, traits> x) noexcept;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{x.end()}.
+\end{itemdescr}
+\end{addedblock}
+
+\setcounter{SectionDepthBase}{0}
+\rSec0[std2]{Standard Library, Version 2}
+\setcounter{SectionDepthBase}{1}
+\setcounter{section}{3}
+
+
+\rSec0[std2.ranges]{Ranges library}
+
+\setcounter{subsection}{3}
+
+\rSec1[std2.range.access]{Range access}
+
+\pnum
+In addition to being available via inclusion of the \tcode{<std2/range>}
+header, the customization point objects in \ref{std2.range.access} are
+available when \tcode{<std2/iterator>} is included.
+
+\rSec2[std2.range.access.begin]{\tcode{begin}}
+
+\pnum
+The name \tcode{begin} denotes a customization point
+ object~(\cxxref{customization.point.object}). The expression
+ \tcode{::std2::begin(E)} for some subexpression \tcode{E} is
+ expression-equivalent to:
+
+\begin{itemize}
+\item
+  \removed{\tcode{::std2::begin(static_cast<const T\&>(E))} if \tcode{E} is an
+  rvalue of type \tcode{T}. This usage is deprecated. \enternote This deprecated
+  usage exists so that \tcode{::std2::begin(E)} behaves similarly to
+  \tcode{std::begin(E)} as defined in ISO/IEC 14882 when \tcode{E} is an rvalue.
+  \exitnote}
+
+\item
+  \removed{Otherwise, }\tcode{(E) + 0} if \tcode{E} has array
+  type~(\cxxref{basic.compound})\added{ and is an lvalue}.
+
+\item
+  Otherwise, \added{if \tcode{E} is an lvalue,}
+  \tcode{\textit{DECAY_COPY}((E).begin())} if it is a valid expression and its
+  type \tcode{I} meets the syntactic requirements of \tcode{Iterator<I>}. If
+  \tcode{Iterator} is not satisfied, the program is ill-formed with no
+  diagnostic required.
+
+\item
+  Otherwise, \tcode{\textit{DECAY_COPY}(begin(E))} if it is a valid expression
+  and its type \tcode{I} meets the syntactic requirements of \tcode{Iterator<I>}
+  with overload resolution performed in a context that includes the
+  \added{following} declaration\added{s:}
+  \begin{codeblock}
+  template <class T> void begin(T&@\added{\&}@) = delete;
+  @\added{template <class T> void begin(std::initializer_list<T>\&\&) = delete;}@
+  \end{codeblock}
+  and does not include a declaration of \tcode{::std2::begin}. If
+  \tcode{Iterator} is not satisfied, the program is ill-formed with no
+  diagnostic required.
+
+\item
+  Otherwise, \tcode{::std2::begin(E)} is ill-formed.
+\end{itemize}
+
+\pnum
+\enternote Whenever \tcode{::std2::begin(E)} is a valid expression, its
+type satisfies \tcode{Iterator}. \exitnote
+
+\rSec2[std2.range.access.end]{\tcode{end}}
+\pnum
+The name \tcode{end} denotes a customization point
+object~(\cxxref{customization.point.object}). The expression
+\tcode{::std2::end(E)} for some subexpression \tcode{E} is expression-equivalent to:
+
+\begin{itemize}
+\item
+  \removed{\tcode{::std2::end(static_cast<const T\&>(E))} if \tcode{E} is an rvalue of
+  type \tcode{T}. This usage is deprecated.
+  \enternote This deprecated usage exists so that
+  \tcode{::std2::end(E)} behaves similarly to \tcode{std::end(E)}
+  as defined in ISO/IEC 14882 when \tcode{E} is an rvalue. \exitnote}
+
+\item
+  \removed{Otherwise, }\tcode{(E) + extent_v<T>} if \tcode{E} has array
+  type~(\cxxref{basic.compound}) \changed{\tcode{T}}{and is an lvalue}.
+
+\item
+  Otherwise, \added{if \tcode{E} is an lvalue, }
+  \tcode{\textit{DECAY_COPY}((E).end())} if it is a valid expression and its
+  type \tcode{S} meets the syntactic requirements of
+  \tcode{Sentinel<\brk{}S, decltype(\brk{}::std2::\brk{}begin(E))>}. If
+  \tcode{Sentinel} is not satisfied, the program is ill-formed with
+  no diagnostic required.
+
+\item
+  Otherwise, \tcode{\textit{DECAY_COPY}(end(E))} if it is a valid expression and
+  its type \tcode{S} meets the syntactic requirements of
+  \tcode{Sentinel<\brk{}S, decltype(\brk{}::std2::\brk{}begin(E))>} with
+  overload resolution performed in a context that includes the \added{following}
+  declaration\added{s:}
+  \begin{codeblock}
+  template <class T> void end(T&@\added{\&}@) = delete;
+  @\added{template <class T> void end(std::initializer_list<T>\&\&) = delete;}@
+  \end{codeblock}
+  and does not include a declaration of \tcode{::std2::end}. If \tcode{Sentinel}
+  is not satisfied, the program is ill-formed with no diagnostic required.
+
+\item
+  Otherwise, \tcode{::std2::end(E)} is ill-formed.
+\end{itemize}
+
+\pnum
+\enternote Whenever \tcode{::std2::end(E)} is a valid expression, the
+types of \tcode{::std2::end(E)} and \tcode{::std2::\brk{}begin(E)} satisfy
+\tcode{Sentinel}. \exitnote
+
+\rSec2[std2.range.access.cbegin]{\tcode{cbegin}}
+\pnum
+The name \tcode{cbegin} denotes a customization point
+object~(\cxxref{customization.point.object}). The expression
+\tcode{::std2::\brk{}cbegin(E)} for some subexpression \tcode{E} of type
+\tcode{T} is expression-equivalent to\added{:}
+\begin{itemize}
+\item
+  \tcode{::std2::begin(static_cast<const T\&>(E))} \added{if \tcode{E} is an lvalue}.
+\item
+  \added{Otherwise, \tcode{::std2::begin(static_cast<const T\&\&>(E))}.}
+\end{itemize}
+
+\pnum
+\removed{Use of \tcode{::std2::cbegin(E)} with rvalue \tcode{E} is deprecated.
+\enternote This deprecated usage exists so that \tcode{::std2::cbegin(E)}
+behaves similarly to \tcode{std::cbegin(E)} as defined in ISO/IEC 14882 when
+\tcode{E} is an rvalue. \exitnote}
+
+\pnum
+\enternote Whenever \tcode{::std2::cbegin(E)} is a valid expression, its
+type satisfies \tcode{Iterator}. \exitnote
+
+\rSec2[std2.range.access.cend]{\tcode{cend}}
+\pnum
+The name \tcode{cend} denotes a customization point
+object~(\cxxref{customization.point.object}). The expression
+\tcode{::std2::cend(E)} for some subexpression \tcode{E} of type \tcode{T}
+is expression-equivalent to\added{:}
+\begin{itemize}
+\item
+  \tcode{::std2::end(static_cast<const T\&>(E))} \added{if \tcode{E} is an lvalue}.
+\item
+  \added{Otherwise, \tcode{::std2::end(static_cast<const T\&\&>(E))}.}
+\end{itemize}
+
+\pnum
+\removed{Use of \tcode{::std2::cend(E)} with rvalue \tcode{E} is deprecated.
+\enternote This deprecated usage exists so that \tcode{::std2::\brk{}cend(E)}
+behaves similarly to \tcode{std::cend(E)} as defined in ISO/IEC 14882 when
+\tcode{E} is an rvalue. \exitnote}
+
+\pnum
+\enternote Whenever \tcode{::std2::cend(E)} is a valid expression, the
+types of \tcode{::std2::cend(E)} and \tcode{::std2::\brk{}cbegin(E)} satisfy
+\tcode{Sentinel}. \exitnote
+
+\rSec2[std2.range.access.rbegin]{\tcode{rbegin}}
+\ednote{This changes \tcode{rbegin} and \tcode{rend} into proper customization
+points, with ``\tcode{rbegin}'' and ``\tcode{rend}'' looked up via
+argument-dependent lookup. The idea is to support types for which reverse
+iterators can be implemented more efficiently than with
+\tcode{reverse_iterator}, and which might want to overload \tcode{rbegin} and
+\tcode{rend} for rvalue arguments. A simple example might be a
+\tcode{reverse_subrange} type, which would want to overload \tcode{rbegin} and
+\tcode{rend} to return the unmodified underlying iterator and sentinel (as
+opposed to \tcode{begin} which would return \tcode{reverse_iterator}s).}
+
+\pnum
+The name \tcode{rbegin} denotes a customization point
+object~(\cxxref{customization.point.object}). The expression
+\tcode{::std2::rbegin(E)} for some subexpression \tcode{E} is
+expression-equivalent to:
+
+\begin{itemize}
+\item
+  \removed{\tcode{::std2::rbegin(static_cast<const T\&>(E))} if \tcode{E} is an
+  rvalue of type \tcode{T}. This usage is deprecated. \enternote This deprecated
+  usage exists so that \tcode{::std2::rbegin(E)} behaves similarly to
+  \tcode{std::rbegin(E)} as defined in ISO/IEC 14882 when \tcode{E} is an
+  rvalue. \exitnote}
+
+\item
+  \changed{Otherwise}{If \tcode{E} is an lvalue},
+  \tcode{\textit{DECAY_COPY}((E).rbegin())} if it is a valid expression and its
+  type \tcode{I} meets the syntactic requirements of \tcode{Iterator<I>}. If
+  \tcode{Iterator} is not satisfied, the program is ill-formed with no
+  diagnostic required.
+
+\item
+  \added{Otherwise, \tcode{\textit{DECAY_COPY}(rbegin(E))} if it is a valid
+  expression and its type \tcode{I} meets the syntactic requirements
+  of \tcode{Iterator<I>} with overload resolution performed in a context that
+  includes the following declaration:}
+  \begin{addedblock}
+  \begin{codeblock}
+  template <class T> void rbegin(T&&) = delete;
+  \end{codeblock}
+  \end{addedblock}
+  \added{and does not include a declaration of \tcode{::std2::rbegin}. If
+  \tcode{Iterator} is not satisfied, the program is ill-formed with no
+  diagnostic required.}
+
+\item
+  Otherwise, \tcode{make_reverse_iterator(::std2::end(E))} if both
+  \tcode{::std2::begin(E)} and \tcode{::std2::\brk{}end(\brk{}E)} are valid
+  expressions of the same type \tcode{I} which meets the syntactic requirements
+  of \tcode{Bi\-direct\-ional\-Iterator<I>}~(\ref{std2.iterators.bidirectional}).
+
+\item
+  Otherwise, \tcode{::std2::rbegin(E)} is ill-formed.
+\end{itemize}
+
+\pnum
+\enternote Whenever \tcode{::std2::rbegin(E)} is a valid expression, its
+type satisfies \tcode{Iterator}. \exitnote
+
+\rSec2[std2.range.access.rend]{\tcode{rend}}
+\pnum
+The name \tcode{rend} denotes a customization point
+object~(\cxxref{customization.point.object}). The expression
+\tcode{::std2::rend(E)} for some subexpression \tcode{E} is
+expression-equivalent to:
+
+\begin{itemize}
+\item
+  \removed{\tcode{::std2::rend(static_cast<const T\&>(E))} if \tcode{E} is an
+  rvalue of type \tcode{T}. This usage is deprecated. \enternote This deprecated
+  usage exists so that \tcode{::std2::rend(E)} behaves similarly to
+  \tcode{std::rend(E)} as defined in ISO/IEC 14882 when \tcode{E} is an rvalue.
+  \exitnote}
+
+\item
+  \changed{Otherwise}{If \tcode{E} is an lvalue},
+  \tcode{\textit{DECAY_COPY}((E).rend())} if it is a valid expression and its
+  type \tcode{S} meets the syntactic requirements of
+  \tcode{Sentinel<\brk{}S, decltype(\brk{}::std2::\brk{}rbegin(E))>}. If
+  \tcode{Sentinel} is not satisfied, the program is ill-formed with
+  no diagnostic required.
+
+\item
+  \added{Otherwise, \tcode{\textit{DECAY_COPY}(rend(E))} if it is a valid
+  expression and its type \tcode{S} meets the syntactic requirements
+  of \tcode{Sentinel<S, decltype(\brk{}::std2::\brk{}rbegin(E))>} with overload
+  resolution performed in a context that includes the following declaration:}
+  \begin{addedblock}
+  \begin{codeblock}
+  template <class T> void rend(T&&) = delete;
+  \end{codeblock}
+  \end{addedblock}
+  \added{and does not include a declaration of \tcode{::std2::rend}. If
+  \tcode{Sentinel} is not satisfied, the program is ill-formed with no
+  diagnostic required.}
+
+\item
+  Otherwise, \tcode{make_reverse_iterator(::std2\colcol{}begin(E))} if both
+  \tcode{::std2::begin(E)} and \tcode{::std2\colcol{}end(\brk{}E)} are valid
+  expressions of the same type \tcode{I} which meets the syntactic requirements
+  of \tcode{Bi\-dir\-ect\-ion\-al\-It\-er\-at\-or<I>}~(\ref{std2.iterators.bidirectional}).
+
+\item
+  Otherwise, \tcode{::std2::rend(E)} is ill-formed.
+\end{itemize}
+
+\pnum
+\enternote Whenever \tcode{::std2::rend(E)} is a valid expression, the
+types of \tcode{::std2::\brk{}rend(E)} and \tcode{::std2::\brk{}rbegin(E)} satisfy
+\tcode{Sentinel}. \exitnote
+
+\rSec2[std2.range.access.crbegin]{\tcode{crbegin}}
+\pnum
+The name \tcode{crbegin} denotes a customization point
+object~(\cxxref{customization.point.object}). The expression
+\tcode{::std2::\brk{}crbegin(E)} for some subexpression \tcode{E} of type
+\tcode{T} is expression-equivalent to\added{:}
+
+\begin{itemize}
+\item
+  \tcode{::std2::\brk{}rbegin(static_cast<const T\&>(E))}\added{ if \tcode{E}
+  is an lvalue}.
+\item
+  \added{Otherwise, \tcode{::std2::\brk{}rbegin(static_cast<const T\&\&>(E))}.}
+\end{itemize}
+
+\pnum
+\removed{Use of \tcode{::std2::crbegin(E)} with rvalue \tcode{E} is deprecated.
+\enternote This deprecated usage exists so that \tcode{::std2::crbegin(E)}
+behaves similarly to \tcode{std::crbegin(E)} as defined in ISO/IEC 14882 when
+\tcode{E} is an rvalue. \exitnote}
+
+\pnum
+\enternote Whenever \tcode{::std2::crbegin(E)} is a valid expression, its
+type satisfies \tcode{Iterator}. \exitnote
+
+\rSec2[std2.range.access.crend]{\tcode{crend}}
+\pnum
+The name \tcode{crend} denotes a customization point
+object~(\cxxref{customization.point.object}). The expression
+\tcode{::std2::crend(E)} for some subexpression \tcode{E} of type \tcode{T}
+is expression-equivalent to\added{:}
+
+\begin{itemize}
+\item
+  \tcode{::std2::\brk{}rend(static_cast<const T\&>(E))}\added{ if \tcode{E}
+  is an lvalue}.
+\item
+  \added{Otherwise, \tcode{::std2::\brk{}rend(static_cast<const T\&\&>(E))}.}
+\end{itemize}
+
+\pnum
+\removed{Use of \tcode{::std2::crend(E)} with rvalue \tcode{E} is deprecated.
+\enternote This deprecated usage exists so that \tcode{::std2::crend(E)}
+behaves similarly to \tcode{std::crend(E)} as defined in ISO/IEC 14882 when
+\tcode{E} is an rvalue. \exitnote}
+
+\pnum
+\enternote Whenever \tcode{::std2::crend(E)} is a valid expression, the
+types of \tcode{::std2::crend(E)} and \tcode{::std2::\brk{}crbegin(\brk{}E)} satisfy
+\tcode{Sentinel}. \exitnote
+
+\rSec1[std2.range.primitives]{Range primitives}
+
+\pnum
+In addition to being available via inclusion of the \tcode{<std2/range>}
+header, the customization point objects in \ref{std2.range.primitives} are
+available when \tcode{<std2/iterator>} is included.
+
+\rSec2[std2.range.primitives.size]{\tcode{size}}
+\pnum
+The name \tcode{size} denotes a customization point
+object~(\cxxref{customization.point.object}). The expression
+\tcode{::std2::size(E)} for some subexpression \tcode{E} with type
+\tcode{T} is expression-equivalent to:
+
+\begin{itemize}
+\item
+  \tcode{\textit{DECAY_COPY}(extent_v<T>)} if \tcode{T} is an array
+  type~(\cxxref{basic.compound}).
+
+\item
+  Otherwise,
+  \tcode{\textit{DECAY_COPY}(\removed{static_cast<const T\&>(}E\removed{)}.size())}
+  if it is a valid expression and its type \tcode{I} satisfies
+  \tcode{Integral<I>} and
+  \tcode{disable_\-sized_\-range<\added{remove_cvref_t<}T\added{>}>}~(\ref{std2.ranges.sized})
+  is \tcode{false}.
+
+\item
+  Otherwise,
+  \tcode{\textit{DECAY_COPY}(size(\removed{static_cast<const T\&>(}E\removed{)}))}
+  if it is a valid expression and its type \tcode{I} satisfies \tcode{Integral<I>}
+  with overload resolution performed in a context that includes the
+  \added{following} declaration\added{:}
+  \begin{codeblock}
+  template <class T> void size(@\removed{const}@ T&@\added{\&}@) = delete;
+  \end{codeblock}
+  and does not include a declaration of \tcode{::std2::size}, and
+  \tcode{disable_\-sized_\-range<\added{remove_cvref_t<}T\added{>}>} is \tcode{false}.
+
+\item
+  Otherwise,
+  \tcode{\textit{DECAY_COPY}(::std2::\removed{c}end(E) - ::std2::\removed{c}begin(E))},
+  except that \tcode{E} is only evaluated once, if it is a valid expression and
+  the types \tcode{I} and \tcode{S} of \tcode{::std2::\removed{c}begin(E)} and
+  \tcode{::std2\colcol{}\removed{c}end(\brk{}E)} meet the syntactic requirements
+  of \tcode{SizedSentinel<S, I>}~(\ref{std2.iterators.sizedsentinel}) and
+  \tcode{Forward\-Iter\-at\-or<I>}. If \tcode{SizedSentinel} and
+  \tcode{Forward\-Iter\-at\-or} are not satisfied, the program is ill-formed
+  with no diagnostic required.
+
+\item
+  Otherwise, \tcode{::std2::size(E)} is ill-formed.
+\end{itemize}
+
+\pnum
+\enternote Whenever \tcode{::std2::size(E)} is a valid expression, its
+type satisfies \tcode{Integral}. \exitnote
+
+\rSec2[std2.range.primitives.empty]{\tcode{empty}}
+\pnum
+The name \tcode{empty} denotes a customization point
+object~(\cxxref{customization.point.object}). The expression
+\tcode{::std2::empty(E)} for some subexpression \tcode{E} is
+expression-equivalent to:
+
+\begin{itemize}
+\item
+  \tcode{bool((E).empty())} if it is a valid expression.
+
+\item
+  Otherwise, \tcode{::std2::size(E) == 0} if it is a valid expression.
+
+\item
+  Otherwise, \tcode{bool(::std2::begin(E) == ::std2::end(E))},
+  except that \tcode{E} is only evaluated once, if it is a valid expression and the type of
+  \tcode{::std2::begin(E)} satisfies \tcode{ForwardIterator}.
+
+\item
+  Otherwise, \tcode{::std2::empty(E)} is ill-formed.
+\end{itemize}
+
+\pnum
+\enternote Whenever \tcode{::std2::empty(E)} is a valid expression, it
+has type \tcode{bool}. \exitnote
+
+\rSec2[std2.range.primitives.data]{\tcode{data}}
+\pnum
+The name \tcode{data} denotes a customization point
+object~(\cxxref{customization.point.object}). The expression
+\tcode{::std2::data(E)} for some subexpression \tcode{E} is
+expression-equivalent to:
+
+\begin{itemize}
+\item
+  \removed{\tcode{::std2::data(static_cast<const T\&>(E))} if \tcode{E} is an
+  rvalue of type \tcode{T}. This usage is deprecated. \enternote
+  This deprecated usage exists so that \tcode{::std2::data(E)} behaves
+  similarly to \tcode{std::data(E)} as defined in the \Cpp Working
+  Paper when \tcode{E} is an rvalue. \exitnote}
+
+\item
+  \changed{Otherwise}{If \tcode{E} is an lvalue},
+  \tcode{\textit{DECAY_COPY}((E).data())} if it is a valid expression of pointer
+  to object type.
+
+\item
+  Otherwise, \tcode{::std2::begin(E)} if it is a valid expression of pointer to
+  object type.
+
+\item
+  Otherwise, \tcode{::std2::data(E)} is ill-formed.
+\end{itemize}
+
+\pnum
+\enternote Whenever \tcode{::std2::data(E)} is a valid expression, it
+has pointer to object type. \exitnote
+
+\rSec2[std2.range.primitives.cdata]{\tcode{cdata}}
+\pnum
+The name \tcode{cdata} denotes a customization point
+object~(\cxxref{customization.point.object}). The expression
+\tcode{::std2::cdata(E)} for some subexpression \tcode{E} of type \tcode{T}
+is expression-equivalent to\added{:}
+\begin{itemize}
+\item
+  \tcode{::std2::data(static_cast<const T\&>(E))}\added{ if \tcode{E} is an
+  lvalue}.
+\item
+  \added{Otherwise, \tcode{::std2::data(static_cast<const T\&\&>(E))}.}
+\end{itemize}
+
+\pnum
+\removed{Use of \tcode{::std2::cdata(E)} with rvalue \tcode{E} is deprecated.
+\enternote This deprecated usage exists so that \tcode{::std2::cdata(E)}
+has behavior consistent with \tcode{::std2::data(E)} when \tcode{E} is
+an rvalue. \exitnote}
+
+\pnum
+\enternote Whenever \tcode{::std2::cdata(E)} is a valid expression, it
+has pointer to object type. \exitnote
+
+\rSec1[std2.ranges.requirements]{Range requirements}
+
+\ednote{As in P0896.}
+
+\rSec1[std2.dangling.wrappers]{Dangling wrapper}
+
+\rSec2[std2.dangling.wrap]{Class template \tcode{dangling}}
+
+\pnum
+\indexlibrary{\idxcode{dangling}}%
+Class template \tcode{dangling} is a wrapper for an object that refers to another object whose
+lifetime may have ended. It is used by algorithms that accept rvalue ranges and return iterators.
+
+\begin{codeblock}
+namespace std2 { inline namespace v1 {
+  template <CopyConstructible T>
+  class dangling {
+  public:
+    constexpr dangling() requires DefaultConstructible<T>;
+    constexpr dangling(T t);
+    constexpr T get_unsafe() const;
+  private:
+    T value; // \expos
+  };
+
+  template <Range R>
+  using safe_iterator_t = @\added{// \seebelow}@
+    @\removed{conditional_t<is_lvalue_reference_v<R>,}@
+      @\removed{iterator_t<R>,}@
+      @\removed{dangling<iterator_t<R>>>;}@
+}}
+\end{codeblock}
+
+\begin{addedblock}
+\pnum
+\tcode{safe_iterator_t<R>} is defined as follows:
+\begin{itemize}
+\item
+  If \tcode{std2::begin(std::declval<R>())} is a well-formed expression,
+  \tcode{safe_iterator_t<R>} is an alias for \tcode{iterator_t<R>}.
+\item
+  Otherwise, it is an alias for \tcode{dangling<iterator_t<R>{>}}.
+\end{itemize}
+\end{addedblock}
+
+\rSec3[std2.dangling.wrap.ops]{\tcode{dangling} operations}
+
+\rSec4[std2.dangling.wrap.op.const]{\tcode{dangling} constructors}
+
+\indexlibrary{\idxcode{dangling}!\idxcode{dangling}}%
+\begin{itemdecl}
+constexpr dangling() requires DefaultConstructible<T>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Constructs a \tcode{dangling}, value-initializing \tcode{value}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{dangling}!\idxcode{dangling}}%
+\begin{itemdecl}
+constexpr dangling(T t);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Constructs a \tcode{dangling}, initializing \tcode{value} with \tcode{t}.
+\end{itemdescr}
+
+\rSec4[std2.dangling.wrap.op.get]{\tcode{dangling::get_unsafe}}
+
+\indexlibrary{\idxcode{get_unsafe}!\idxcode{dangling}}%
+\indexlibrary{\idxcode{dangling}!\idxcode{get_unsafe}}%
+\begin{itemdecl}
+constexpr T get_unsafe() const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{value}.
+\end{itemdescr}
+
+\setcounter{SectionDepthBase}{0}

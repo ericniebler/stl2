@@ -1,0 +1,750 @@
+%!TEX root = std.tex
+\rSec0[ranges]{Ranges library}
+
+\rSec1[ranges.general]{General}
+
+\pnum
+This Clause describes components for dealing with ranges of elements.
+
+\pnum
+The following subclauses describe
+range and view requirements, and
+components for
+range primitives
+as summarized in Table~\ref{tab:ranges.lib.summary}.
+
+\begin{libsumtab}{Ranges library summary}{tab:ranges.lib.summary}
+  \ref{range.access}        & Range access      & \tcode{<experimental/ranges/range>} \\
+  \ref{range.primitives}    & Range primitives  & \\ \rowsep
+  \ref{ranges.requirements} & Requirements      & \\
+\end{libsumtab}
+
+\rSec1[ranges.decaycopy]{decay_copy}
+
+\pnum
+Several places in this Clause use the expression \tcode{\textit{DECAY_COPY}(x)},
+which is expression-equivalent to:
+\begin{codeblock}
+  decay_t<decltype((x))>(x)
+\end{codeblock}
+
+\rSec1[range.synopsis]{Header \tcode{<experimental/ranges/range>} synopsis}
+
+\indexlibrary{\idxhdr{experimental/ranges/range}}%
+\begin{codeblock}
+#include <experimental/ranges/iterator>
+
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+  // \ref{range.access}, range access:
+  namespace {
+    constexpr @\unspec@ begin = @\unspec@;
+    constexpr @\unspec@ end = @\unspec@;
+    constexpr @\unspec@ cbegin = @\unspec@;
+    constexpr @\unspec@ cend = @\unspec@;
+    constexpr @\unspec@ rbegin = @\unspec@;
+    constexpr @\unspec@ rend = @\unspec@;
+    constexpr @\unspec@ crbegin = @\unspec@;
+    constexpr @\unspec@ crend = @\unspec@;
+  }
+
+  // \ref{range.primitives}, range primitives:
+  namespace {
+    constexpr @\unspec@ size = @\unspec@;
+    constexpr @\unspec@ empty = @\unspec@;
+    constexpr @\unspec@ data = @\unspec@;
+    constexpr @\unspec@ cdata = @\unspec@;
+  }
+
+  template <class T>
+  using iterator_t = decltype(ranges::begin(declval<T&>()));
+
+  template <class T>
+  using sentinel_t = decltype(ranges::end(declval<T&>()));
+
+  template <class>
+  constexpr bool disable_sized_range = false;
+
+  template <class T>
+  struct enable_view { };
+
+  struct view_base { };
+
+  // \ref{ranges.requirements}, range requirements:
+
+  // \ref{ranges.range}, Range:
+  template <class T>
+  concept bool Range = @\seebelow@;
+
+  // \ref{ranges.sized}, SizedRange:
+  template <class T>
+  concept bool SizedRange = @\seebelow@;
+
+  // \ref{ranges.view}, View:
+  template <class T>
+  concept bool View = @\seebelow@;
+
+  // \ref{ranges.bounded}, BoundedRange:
+  template <class T>
+  concept bool BoundedRange = @\seebelow@;
+
+  // \ref{ranges.input}, InputRange:
+  template <class T>
+  concept bool InputRange = @\seebelow@;
+
+  // \ref{ranges.output}, OutputRange:
+  template <class R, class T>
+  concept bool OutputRange = @\seebelow@;
+
+  // \ref{ranges.forward}, ForwardRange:
+  template <class T>
+  concept bool ForwardRange = @\seebelow@;
+
+  // \ref{ranges.bidirectional}, BidirectionalRange:
+  template <class T>
+  concept bool BidirectionalRange = @\seebelow@;
+
+  // \ref{ranges.random.access}, RandomAccessRange:
+  template <class T>
+  concept bool RandomAccessRange = @\seebelow@;
+}}}}
+\end{codeblock}
+
+\rSec1[range.access]{Range access}
+
+\pnum
+In addition to being available via inclusion of the \tcode{<experimental/ranges/range>}
+header, the customization point objects in \ref{range.access} are
+available when \tcode{<experimental/ranges/iterator>} is included.
+
+\rSec2[range.access.begin]{\tcode{begin}}
+\pnum
+The name \tcode{begin} denotes a customization point
+ object~(\ref{customization.point.object}). The expression
+\tcode{ranges::begin(E)} for some subexpression \tcode{E} is expression-equivalent to:
+
+\begin{itemize}
+\item
+  \tcode{ranges::begin(static_cast<const T\&>(E))} if \tcode{E} is an rvalue of
+  type \tcode{T}. This usage is deprecated.
+  \enternote This deprecated usage exists so that
+  \tcode{ranges::begin(E)} behaves similarly to \tcode{std::begin(E)}
+  as defined in ISO/IEC 14882 when \tcode{E} is an rvalue. \exitnote
+
+\item
+  Otherwise, \tcode{(E) + 0} if \tcode{E} has array
+  type~(\cxxref{basic.compound}).
+
+\item
+  Otherwise, \tcode{\textit{DECAY_COPY}((E).begin())} if it is a valid expression and its type \tcode{I} meets the
+  syntactic requirements of \tcode{Iterator<I>}. If
+  \tcode{Iterator} is not satisfied, the program is ill-formed
+  with no diagnostic required.
+
+\item
+  Otherwise, \tcode{\textit{DECAY_COPY}(begin(E))} if it is a valid expression and its type \tcode{I} meets the
+  syntactic requirements of \tcode{Iterator<I>} with overload
+  resolution performed in a context that includes the declaration
+  \tcode{void begin(auto\&) = delete;} and does not include
+  a declaration of \tcode{ranges::begin}. If \tcode{Iterator}
+  is not satisfied, the program is ill-formed with no diagnostic
+  required.
+
+\item
+  Otherwise, \tcode{ranges::begin(E)} is ill-formed.
+\end{itemize}
+
+\pnum
+\enternote Whenever \tcode{ranges::begin(E)} is a valid expression, its
+type satisfies \tcode{Iterator}. \exitnote
+
+\rSec2[range.access.end]{\tcode{end}}
+\pnum
+The name \tcode{end} denotes a customization point
+object~(\ref{customization.point.object}). The expression
+\tcode{ranges::end(E)} for some subexpression \tcode{E} is expression-equivalent to:
+
+\begin{itemize}
+\item
+  \tcode{ranges::end(static_cast<const T\&>(E))} if \tcode{E} is an rvalue of
+  type \tcode{T}. This usage is deprecated.
+  \enternote This deprecated usage exists so that
+  \tcode{ranges::end(E)} behaves similarly to \tcode{std::end(E)}
+  as defined in ISO/IEC 14882 when \tcode{E} is an rvalue. \exitnote
+
+\item
+  Otherwise, \tcode{(E) + extent<T>::value} if \tcode{E} has array
+  type~(\cxxref{basic.compound}) \tcode{T}.
+
+\item
+  Otherwise, \tcode{\textit{DECAY_COPY}((E).end())} if it is a valid expression and its type \tcode{S} meets the
+  syntactic requirements of
+  \tcode{Sentinel<\brk{}S, decltype(\brk{}ranges::\brk{}begin(E))>}. If
+  \tcode{Sentinel} is not satisfied, the program is ill-formed with
+  no diagnostic required.
+
+\item
+  Otherwise, \tcode{\textit{DECAY_COPY}(end(E))} if it is a valid expression and its type \tcode{S} meets the
+  syntactic requirements of
+  \tcode{Sentinel<\brk{}S, decltype(\brk{}ranges::\brk{}begin(E))>} with overload
+  resolution performed in a context that includes the declaration
+  \tcode{void end(auto\&) = delete;} and does not include
+  a declaration of \tcode{ranges::end}. If \tcode{Sentinel} is not
+  satisfied, the program is ill-formed with no diagnostic required.
+
+\item
+  Otherwise, \tcode{ranges::end(E)} is ill-formed.
+\end{itemize}
+
+\pnum
+\enternote Whenever \tcode{ranges::end(E)} is a valid expression, the
+types of \tcode{ranges::end(E)} and \tcode{ranges::\brk{}begin(E)} satisfy
+\tcode{Sentinel}. \exitnote
+
+\rSec2[range.access.cbegin]{\tcode{cbegin}}
+\pnum
+The name \tcode{cbegin} denotes a customization point
+object~(\ref{customization.point.object}). The expression
+\tcode{ranges::\brk{}cbegin(E)} for some subexpression \tcode{E} of type \tcode{T}
+is expression-equivalent to \tcode{ranges::\brk{}begin(static_cast<const T\&>(E))}.
+
+\pnum
+Use of \tcode{ranges::cbegin(E)} with rvalue \tcode{E} is deprecated.
+\enternote This deprecated usage exists so that \tcode{ranges::cbegin(E)}
+behaves similarly to \tcode{std::cbegin(E)} as defined in ISO/IEC 14882 when
+\tcode{E} is an rvalue. \exitnote
+
+\pnum
+\enternote Whenever \tcode{ranges::cbegin(E)} is a valid expression, its
+type satisfies \tcode{Iterator}. \exitnote
+
+\rSec2[range.access.cend]{\tcode{cend}}
+\pnum
+The name \tcode{cend} denotes a customization point
+object~(\ref{customization.point.object}). The expression
+\tcode{ranges::cend(E)} for some subexpression \tcode{E} of type \tcode{T}
+is expression-equivalent to \tcode{ranges::end(static_cast<const T\&>(E))}.
+
+\pnum
+Use of \tcode{ranges::cend(E)} with rvalue \tcode{E} is deprecated.
+\enternote This deprecated usage exists so that \tcode{ranges::\brk{}cend(E)}
+behaves similarly to \tcode{std::cend(E)} as defined in ISO/IEC 14882 when
+\tcode{E} is an rvalue. \exitnote
+
+\pnum
+\enternote Whenever \tcode{ranges::cend(E)} is a valid expression, the
+types of \tcode{ranges::cend(E)} and \tcode{ranges::\brk{}cbegin(E)} satisfy
+\tcode{Sentinel}. \exitnote
+
+\rSec2[range.access.rbegin]{\tcode{rbegin}}
+\pnum
+The name \tcode{rbegin} denotes a customization point
+object~(\ref{customization.point.object}). The expression
+\tcode{ranges::rbegin(E)} for some subexpression \tcode{E} is expression-equivalent
+to:
+
+\begin{itemize}
+\item
+  \tcode{ranges::rbegin(static_cast<const T\&>(E))} if \tcode{E} is an rvalue of
+  type \tcode{T}. This usage is deprecated.
+  \enternote This deprecated usage exists so that
+  \tcode{ranges::rbegin(E)} behaves similarly to \tcode{std::rbegin(E)}
+  as defined in ISO/IEC 14882 when \tcode{E} is an rvalue. \exitnote
+
+\item
+  Otherwise, \tcode{\textit{DECAY_COPY}((E).rbegin())} if it is a valid expression and its type \tcode{I} meets the
+  syntactic requirements of \tcode{Iterator<I>}. If \tcode{Iterator}
+  is not satisfied, the program is ill-formed with no diagnostic
+  required.
+
+\item
+  Otherwise, \tcode{make_reverse_iterator(ranges::end(E))} if both
+  \tcode{ranges::begin(E)} and \tcode{ranges::\brk{}end(\brk{}E)} are valid expressions of the same
+  type \tcode{I} which meets the syntactic requirements of
+  \tcode{Bi\-direct\-ional\-Iterator<I>}~(\ref{iterators.bidirectional}).
+
+\item
+  Otherwise, \tcode{ranges::rbegin(E)} is ill-formed.
+\end{itemize}
+
+\pnum
+\enternote Whenever \tcode{ranges::rbegin(E)} is a valid expression, its
+type satisfies \tcode{Iterator}. \exitnote
+
+\rSec2[range.access.rend]{\tcode{rend}}
+\pnum
+The name \tcode{rend} denotes a customization point
+object~(\ref{customization.point.object}). The expression
+\tcode{ranges::rend(E)} for some subexpression \tcode{E} is expression-equivalent to:
+
+\begin{itemize}
+\item
+  \tcode{ranges::rend(static_cast<const T\&>(E))} if \tcode{E} is an rvalue of
+  type \tcode{T}. This usage is deprecated.
+  \enternote This deprecated usage exists so that
+  \tcode{ranges::rend(E)} behaves similarly to \tcode{std::rend(E)}
+  as defined in ISO/IEC 14882 when \tcode{E} is an rvalue. \exitnote
+
+\item
+  Otherwise, \tcode{\textit{DECAY_COPY}((E).rend())} if it is a valid expression and its type \tcode{S} meets the
+  syntactic requirements of
+  \tcode{Sentinel<\brk{}S, decltype(\brk{}ranges::\brk{}rbegin(E))>}. If
+  \tcode{Sentinel} is not satisfied, the program is ill-formed with
+  no diagnostic required.
+
+\item
+  Otherwise, \tcode{make_reverse_iterator(ranges\colcol{}begin(E))} if both
+  \tcode{ranges::begin(E)} and \tcode{ranges\colcol{}end(\brk{}E)} are valid expressions of the same
+  type \tcode{I} which meets the syntactic requirements of
+  \tcode{Bi\-dir\-ect\-ion\-al\-It\-er\-at\-or<I>}~(\ref{iterators.bidirectional}).
+
+\item
+  Otherwise, \tcode{ranges::rend(E)} is ill-formed.
+\end{itemize}
+
+\pnum
+\enternote Whenever \tcode{ranges::rend(E)} is a valid expression, the
+types of \tcode{ranges::\brk{}rend(E)} and \tcode{ranges::\brk{}rbegin(E)} satisfy
+\tcode{Sentinel}. \exitnote
+
+\rSec2[range.access.crbegin]{\tcode{crbegin}}
+\pnum
+The name \tcode{crbegin} denotes a customization point
+object~(\ref{customization.point.object}). The expression
+\tcode{ranges::\brk{}crbegin(E)} for some subexpression \tcode{E} of type \tcode{T}
+is expression-equivalent to \tcode{ranges::\brk{}rbegin(static_cast<const T\&>(E))}.
+
+\pnum
+Use of \tcode{ranges::crbegin(E)} with rvalue \tcode{E} is deprecated.
+\enternote This deprecated usage exists so that \tcode{ranges::crbegin(E)}
+behaves similarly to \tcode{std::crbegin(E)} as defined in ISO/IEC 14882 when
+\tcode{E} is an rvalue. \exitnote
+
+\pnum
+\enternote Whenever \tcode{ranges::crbegin(E)} is a valid expression, its
+type satisfies \tcode{Iterator}. \exitnote
+
+\rSec2[range.access.crend]{\tcode{crend}}
+\pnum
+The name \tcode{crend} denotes a customization point
+object~(\ref{customization.point.object}). The expression
+\tcode{ranges::crend(E)} for some subexpression \tcode{E} of type \tcode{T}
+is expression-equivalent to \tcode{ranges::rend(static_cast<const T\&>(E))}.
+
+\pnum
+Use of \tcode{ranges::crend(E)} with rvalue \tcode{E} is deprecated.
+\enternote This deprecated usage exists so that \tcode{ranges::crend(E)}
+behaves similarly to \tcode{std::crend(E)} as defined in ISO/IEC 14882 when
+\tcode{E} is an rvalue. \exitnote
+
+\pnum
+\enternote Whenever \tcode{ranges::crend(E)} is a valid expression, the
+types of \tcode{ranges::crend(E)} and \tcode{ranges::\brk{}crbegin(\brk{}E)} satisfy
+\tcode{Sentinel}. \exitnote
+
+\rSec1[range.primitives]{Range primitives}
+
+\pnum
+In addition to being available via inclusion of the \tcode{<experimental/ranges/range>}
+header, the customization point objects in \ref{range.primitives} are
+available when \tcode{<experimental/ranges/iterator>} is included.
+
+\rSec2[range.primitives.size]{\tcode{size}}
+\pnum
+The name \tcode{size} denotes a customization point
+object~(\ref{customization.point.object}). The expression
+\tcode{ranges::size(E)} for some subexpression \tcode{E} with type
+\tcode{T} is expression-equivalent to:
+
+\begin{itemize}
+\item
+  \tcode{\textit{DECAY_COPY}(extent<T>::value)} if \tcode{T} is an array
+  type~(\cxxref{basic.compound}).
+
+\item
+  Otherwise, \tcode{\textit{DECAY_COPY}(static_cast<const T\&>(E).size())} if it is a valid expression and its type \tcode{I}
+  satisfies \tcode{Integral<I>} and
+  \tcode{disable_\-sized_\-range<T>}~(\ref{ranges.sized}) is
+  \tcode{false}.
+
+\item
+  Otherwise, \tcode{\textit{DECAY_COPY}(size(static_cast<const T\&>(E)))} if it is a valid expression and its type \tcode{I}
+  satisfies \tcode{Integral<I>} with overload resolution
+  performed in a context that includes the declaration
+  \tcode{void size(const auto\&) = delete;} and does not include
+  a declaration of \tcode{ranges::size}, and
+  \tcode{disable_\-sized_\-range<T>} is \tcode{false}.
+
+\item
+  Otherwise,
+  \tcode{\textit{DECAY_COPY}(ranges::cend(E) - ranges::cbegin(E))}, except that \tcode{E}
+  is only evaluated once, if it is a valid expression and the types \tcode{I} and \tcode{S} of
+  \tcode{ranges::cbegin(E)} and \tcode{ranges\colcol{}cend(\brk{}E)} meet the
+  syntactic requirements of
+  \tcode{SizedSentinel<S, I>}~(\ref{iterators.sizedsentinel}) and
+  \tcode{Forward\-Iter\-at\-or<I>}. If \tcode{SizedSentinel} and
+  \tcode{Forward\-Iter\-at\-or} are not satisfied, the program is ill-formed with no
+  diagnostic required.
+
+\item
+  Otherwise, \tcode{ranges::size(E)} is ill-formed.
+\end{itemize}
+
+\pnum
+\enternote Whenever \tcode{ranges::size(E)} is a valid expression, its
+type satisfies \tcode{Integral}. \exitnote
+
+\rSec2[range.primitives.empty]{\tcode{empty}}
+\pnum
+The name \tcode{empty} denotes a customization point
+object~(\ref{customization.point.object}). The expression
+\tcode{ranges::empty(E)} for some subexpression \tcode{E} is
+expression-equivalent to:
+
+\begin{itemize}
+\item
+  \tcode{bool((E).empty())} if it is a valid expression.
+
+\item
+  Otherwise, \tcode{ranges::size(E) == 0} if it is a valid expression.
+
+\item
+  Otherwise, \tcode{bool(ranges::begin(E) == ranges::end(E))},
+  except that \tcode{E} is only evaluated once, if it is a valid expression and the type of
+  \tcode{ranges::begin(E)} satisfies \tcode{ForwardIterator}.
+
+\item
+  Otherwise, \tcode{ranges::empty(E)} is ill-formed.
+\end{itemize}
+
+\pnum
+\enternote Whenever \tcode{ranges::empty(E)} is a valid expression, it
+has type \tcode{bool}. \exitnote
+
+\rSec2[range.primitives.data]{\tcode{data}}
+\pnum
+The name \tcode{data} denotes a customization point
+object~(\ref{customization.point.object}). The expression
+\tcode{ranges::data(E)} for some subexpression \tcode{E} is
+expression-equivalent to:
+
+\begin{itemize}
+\item
+  \tcode{ranges::data(static_cast<const T\&>(E))} if \tcode{E} is an rvalue of
+  type \tcode{T}. This usage is deprecated. \enternote
+  This deprecated usage exists so that \tcode{ranges::data(E)} behaves
+  similarly to \tcode{std::data(E)} as defined in the \Cpp Working
+  Paper when \tcode{E} is an rvalue. \exitnote
+
+\item
+  Otherwise, \tcode{\textit{DECAY_COPY}((E).data())} if it is a valid expression of pointer to object type.
+
+\item
+  Otherwise, \tcode{ranges::begin(E)} if it is a valid expression of pointer to object type.
+
+\item
+  Otherwise, \tcode{ranges::data(E)} is ill-formed.
+\end{itemize}
+
+\pnum
+\enternote Whenever \tcode{ranges::data(E)} is a valid expression, it
+has pointer to object type. \exitnote
+
+\rSec2[range.primitives.cdata]{\tcode{cdata}}
+\pnum
+The name \tcode{cdata} denotes a customization point
+object~(\ref{customization.point.object}). The expression
+\tcode{ranges::cdata(E)} for some subexpression \tcode{E} of type \tcode{T}
+is expression-equivalent to \tcode{ranges::data(static_cast<const T\&>(E))}.
+
+\pnum
+Use of \tcode{ranges::cdata(E)} with rvalue \tcode{E} is deprecated.
+\enternote This deprecated usage exists so that \tcode{ranges::cdata(E)}
+has behavior consistent with \tcode{ranges::data(E)} when \tcode{E} is
+an rvalue. \exitnote
+
+\pnum
+\enternote Whenever \tcode{ranges::cdata(E)} is a valid expression, it
+has pointer to object type. \exitnote
+
+\rSec1[ranges.requirements]{Range requirements}
+
+\rSec2[ranges.requirements.general]{General}
+
+\pnum
+Ranges are an abstraction of containers that allow a \Cpp program to
+operate on elements of data structures uniformly. It their simplest form, a
+range object is one on which one can call \tcode{begin} and
+\tcode{end} to get an iterator~(\ref{iterators.iterator}) and a
+sentinel~(\ref{iterators.sentinel}). To be able to construct
+template algorithms and range adaptors that work correctly and efficiently on
+different types of sequences, the library formalizes not just the interfaces but
+also the semantics and complexity assumptions of ranges.
+
+\pnum
+This document defines three fundamental categories of ranges
+based on the syntax and semantics supported by each: \techterm{range},
+\techterm{sized range} and \techterm{view}, as shown in
+Table~\ref{tab:ranges.relations}.
+
+\begin{floattable}{Relations among range categories}{tab:ranges.relations}
+  {lll}
+  \topline
+  \textbf{Sized Range}  &               &                   \\
+                        & $\searrow$    &                   \\
+                        &               &  \textbf{Range}   \\
+                        & $\nearrow$    &                   \\
+  \textbf{View}         &               &                   \\
+\end{floattable}
+
+\pnum
+The \tcode{Range} concept requires only that \tcode{begin} and \tcode{end}
+return an iterator and a sentinel. The \tcode{SizedRange} concept refines \tcode{Range}
+with the requirement that the number of elements in the range can be determined
+in constant time using the \tcode{size} function. The \tcode{View} concept
+specifies requirements on a \tcode{Range} type
+with constant-time copy and assign operations.
+
+\pnum
+In addition to the three fundamental range categories, this document defines
+a number of convenience refinements of \tcode{Range} that group together requirements
+that appear often in the concepts and algorithms.
+\techterm{Bounded ranges} are ranges for which \tcode{begin} and \tcode{end} return objects of the
+same type. \techterm{Random access ranges} are ranges for which
+\tcode{begin} returns a type that satisfies
+\tcode{RandomAccessIterator}~(\ref{iterators.random.access}). The range
+categories \techterm{bidirectional ranges},
+\techterm{forward ranges},
+\techterm{input ranges}, and
+\techterm{output ranges} are defined similarly.
+
+\rSec2[ranges.range]{Ranges}
+
+\pnum
+The \tcode{Range} concept defines the requirements of a type that allows
+iteration over its elements by providing a \tcode{begin} iterator and an
+\tcode{end} sentinel.
+\enternote Most algorithms requiring this concept simply forward to an
+\tcode{Iterator}-based algorithm by calling \tcode{begin} and \tcode{end}. \exitnote
+
+\begin{itemdecl}
+template <class T>
+concept bool Range =
+  requires(T&& t) {
+    ranges::begin(t); // not necessarily equality-preserving (see below)
+    ranges::end(t);
+  };
+\end{itemdecl}
+
+\begin{itemdescr}
+
+\pnum
+Given an lvalue \tcode{t} of type \tcode{remove_reference_t<T>}, \tcode{Range<T>} is satisfied
+only if
+
+\begin{itemize}
+\item \range{begin(t)}{end(t)} denotes a range.
+
+\item Both \tcode{begin(t)} and \tcode{end(t)} are amortized constant time
+and non-modifying. \enternote \tcode{begin(t)} and \tcode{end(t)} do not require
+implicit expression variations~(\ref{concepts.lib.general.equality}). \exitnote
+
+\item If \tcode{iterator_t<T>} satisfies \tcode{ForwardIterator},
+\tcode{begin(t)} is equality preserving.
+\end{itemize}
+\end{itemdescr}
+
+\pnum \enternote
+Equality preservation of both \tcode{begin} and \tcode{end} enables passing a \tcode{Range}
+whose iterator type satisfies \tcode{ForwardIterator}
+to multiple algorithms and
+making multiple passes over the range by repeated calls to \tcode{begin} and \tcode{end}.
+Since \tcode{begin} is not required to be equality preserving when the return type does
+not satisfy \tcode{ForwardIterator}, repeated calls might not return equal values or
+might not be well-defined; \tcode{begin} should be called at most once for such a range.
+\exitnote
+
+\rSec2[ranges.sized]{Sized ranges}
+
+\pnum
+The \tcode{SizedRange} concept specifies the requirements
+of a \tcode{Range} type that knows its size in constant time with the
+\tcode{size} function.
+
+\begin{itemdecl}
+template <class T>
+concept bool SizedRange =
+  Range<T> &&
+  !disable_sized_range<remove_cv_t<remove_reference_t<T>>> &&
+  requires(T& t) {
+    { ranges::size(t) } -> ConvertibleTo<difference_type_t<iterator_t<T>>>;
+  };
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+Given an lvalue \tcode{t} of type \tcode{remove_reference_t<T>}, \tcode{SizedRange<T>} is satisfied only if:
+
+\begin{itemize}
+\item \tcode{ranges::size(t)} is \bigoh{1}, does not modify \tcode{t}, and is equal
+to \tcode{ranges::distance(t)}.
+
+\item If \tcode{iterator_t<T>} satisfies \tcode{ForwardIterator},
+\tcode{size(t)} is well-defined regardless of the evaluation of
+\tcode{begin(t)}. \enternote \tcode{size(t)} is otherwise not required be
+well-defined after evaluating \tcode{begin(t)}. For a \tcode{SizedRange}
+whose iterator type does not model \tcode{ForwardIterator}, for
+example, \tcode{size(t)} might only be well-defined if evaluated before
+the first call to \tcode{begin(t)}. \exitnote
+\end{itemize}
+
+\pnum
+\enternote The \tcode{disable_sized_range} predicate provides a mechanism to enable use
+of range types with the library that meet the syntactic requirements but do
+not in fact satisfy \tcode{SizedRange}. A program that instantiates a library template
+that requires a \tcode{Range} with such a range type \tcode{R} is ill-formed with no
+diagnostic required unless
+\tcode{disable_sized_range<remove_cv_t<remove_reference_t<R>{>}{>}} evaluates
+to \tcode{true}~(\ref{structure.requirements}). \exitnote
+\end{itemdescr}
+
+\rSec2[ranges.view]{Views}
+
+\pnum
+The \tcode{View} concept specifies the requirements of a
+\tcode{Range} type that has constant time copy, move and assignment operators; that
+is, the cost of these operations is not proportional to the number of elements in
+the \tcode{View}.
+
+\pnum
+\enterexample
+Examples of \tcode{View}s are:
+
+\begin{itemize}
+\item A \tcode{Range} type that wraps a pair of iterators.
+
+\item A \tcode{Range} type that holds its elements by \tcode{shared_ptr}
+and shares ownership with all its copies.
+
+\item A \tcode{Range} type that generates its elements on demand.
+\end{itemize}
+
+A container~(\cxxref{containers}) is not a \tcode{View} since copying the
+container copies the elements, which cannot be done in constant time.
+\exitexample
+
+\begin{itemdecl}
+template <class T>
+constexpr bool @\placeholder{view-predicate}@ // \expos
+  = @\seebelow@;
+
+template <class T>
+concept bool View =
+  Range<T> &&
+  Semiregular<T> &&
+  @\placeholder{view-predicate}@<T>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+Since the difference between \tcode{Range} and \tcode{View} is largely semantic, the
+two are differentiated with the help of the \tcode{enable_view}
+trait. Users may specialize \tcode{enable_view}
+to derive from \tcode{true_type} or \tcode{false_type}.
+
+\pnum
+For a type \tcode{T}, the value of \tcode{\placeholder{view-predicate}<T>} shall be:
+\begin{itemize}
+\item If \tcode{enable_view<T>} has a member type \tcode{type}, \tcode{enable_view<T>::type::value};
+\item Otherwise, if \tcode{T} is derived from \tcode{view_base}, \tcode{true};
+\item Otherwise, if \tcode{T} is an instantiation of class template
+\tcode{initializer_list}~(\cxxref{support.initlist}),
+\tcode{set}~(\cxxref{set}),
+\tcode{multiset}~(\cxxref{multiset}),
+\tcode{unordered_set}~(\cxxref{unord.set}), or
+\tcode{unordered_multiset}~(\cxxref{unord.multiset}), \tcode{false};
+\item Otherwise, if both \tcode{T} and \tcode{const T} satisfy \tcode{Range} and
+\tcode{reference_t<iterator_t<T>{>}} is not the same type as \tcode{reference_t<iterator_t<const T>{>}},
+\tcode{false}; \enternote Deep \tcode{const}-ness implies element ownership, whereas shallow \tcode{const}-ness
+implies reference semantics. \exitnote
+\item Otherwise, \tcode{true}.
+\end{itemize}
+\end{itemdescr}
+
+\rSec2[ranges.bounded]{Bounded ranges}
+
+\pnum
+The \tcode{BoundedRange} concept specifies requirements
+of a \tcode{Range} type for which \tcode{begin} and \tcode{end} return objects of
+the same type. \enternote The standard containers~(\cxxref{containers})
+satisfy \tcode{BoundedRange}.\exitnote
+
+\begin{codeblock}
+template <class T>
+concept bool BoundedRange =
+  Range<T> && Same<iterator_t<T>, sentinel_t<T>>;
+\end{codeblock}
+
+\rSec2[ranges.input]{Input ranges}
+
+\pnum
+The \tcode{InputRange} concept specifies requirements of
+a \tcode{Range} type for which \tcode{begin} returns a type
+that satisfies \tcode{InputIterator}~(\ref{iterators.input}).
+
+\begin{codeblock}
+template <class T>
+concept bool InputRange =
+  Range<T> && InputIterator<iterator_t<T>>;
+\end{codeblock}
+
+\rSec2[ranges.output]{Output ranges}
+
+\pnum
+The \tcode{OutputRange} concept specifies requirements of
+a \tcode{Range} type for which \tcode{begin} returns a type that satisfies
+\tcode{OutputIterator}~(\ref{iterators.output}).
+
+\begin{codeblock}
+template <class R, class T>
+concept bool OutputRange =
+  Range<R> && OutputIterator<iterator_t<R>, T>;
+\end{codeblock}
+
+\rSec2[ranges.forward]{Forward ranges}
+
+\pnum
+The \tcode{ForwardRange} concept specifies requirements of an
+\tcode{InputRange} type for which \tcode{begin} returns a type that satisfies
+\tcode{ForwardIterator}~(\ref{iterators.forward}).
+
+\begin{codeblock}
+template <class T>
+concept bool ForwardRange =
+  InputRange<T> && ForwardIterator<iterator_t<T>>;
+\end{codeblock}
+
+\rSec2[ranges.bidirectional]{Bidirectional ranges}
+
+\pnum
+The \tcode{BidirectionalRange} concept specifies requirements of a
+\tcode{ForwardRange} type for which \tcode{begin} returns a type that satisfies
+\tcode{BidirectionalIterator}~(\ref{iterators.bidirectional}).
+
+\begin{codeblock}
+template <class T>
+concept bool BidirectionalRange =
+  ForwardRange<T> && BidirectionalIterator<iterator_t<T>>;
+\end{codeblock}
+
+\rSec2[ranges.random.access]{Random access ranges}
+
+\pnum
+The \tcode{RandomAccessRange} concept specifies requirements of a
+\tcode{BidirectionalRange} type for which \tcode{begin} returns a type that satisfies
+\tcode{RandomAccessIterator}~(\ref{iterators.random.access}).
+
+\begin{codeblock}
+template <class T>
+concept bool RandomAccessRange =
+  BidirectionalRange<T> && RandomAccessIterator<iterator_t<T>>;
+\end{codeblock}

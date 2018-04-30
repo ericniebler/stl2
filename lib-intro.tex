@@ -25,6 +25,7 @@ Table~\ref{tab:library.categories}.
 \ref{concepts.lib}      &   &   Concepts library            \\
 \ref{utilities}         &   &   General utilities library   \\
 \ref{iterators}         &   &   Iterators library           \\
+\ref{ranges}            &   &   Ranges library              \\
 \ref{algorithms}        &   &   Algorithms library          \\
 \ref{numerics}          &   &   Numerics library            \\
 \end{libsumtabbase}
@@ -46,9 +47,13 @@ streams~(\cxxref{iostream.format}), stream buffers~(\cxxref{stream.buffers}),
 and ranges~(\ref{ranges}).
 
 \pnum
+The ranges library (Clause~\ref{ranges}) describes components for dealing with
+ranges of elements.
+
+\pnum
 The algorithms library (Clause~\ref{algorithms}) describes components that \Cpp
 programs may use to perform algorithmic operations on containers
-(Clause~\cxxref{containers}) and other sequences
+(Clause~\cxxref{containers}) and other sequences.
 
 \pnum
 The numerics library (Clause~\ref{numerics}) provides concepts that are useful
@@ -154,19 +159,15 @@ This does not affect whether a type satisfies the concept.
 
 \pnum
 A declaration may explicitly impose requirements through its associated
-constraints (Concepts TS [temp.constr.decl]). When the associated constraints
+constraints (Concepts TS\brk{} [temp.\brk{}constr.\brk{}decl]). When the associated constraints
 refer to a concept~(Concepts TS [dcl.spec.concept]), additional semantic requirements are
 imposed on the use of the declaration.
-
-\pnum
-If the semantic requirements of a declaration are not satisfied at the
-point of use, the program is ill-formed, no diagnostic required.
 
 \rSec3[structure.specifications]{Detailed specifications}
 
 \pnum
 The detailed specifications of each entity defined in
-Clauses~\ref{\firstlibchapter}--\ref{\lastlibchapter} follows the conventions
+Clauses~\ref{\firstlibchapter}--\ref{\lastlibchapter} follow the conventions
 established by \cxxref{structure.specifications}.
 
 \rSec2[conventions]{Other conventions}
@@ -176,8 +177,7 @@ established by \cxxref{structure.specifications}.
 This subclause describes several editorial conventions used to describe the contents
 of the Ranges library. These conventions are for describing
 member functions~(\ref{functions.within.classes}),
-private members~(\ref{objects.within.classes}),
-and customization point objects~(\ref{customization.point.object}).
+and private members~(\ref{objects.within.classes}).
 
 \rSec3[functions.within.classes]{Functions within classes}
 
@@ -188,52 +188,6 @@ This document follows the same conventions as specified in \cxxref{functions.wit
 
 \pnum
 This document follows the same conventions as specified in \cxxref{objects.within.classes}.
-
-\rSec3[customization.point.object]{Customization Point Objects}
-\pnum
-A \techterm{customization point object} is a function object~(\ref{function.objects}) with a
-literal class type that interacts with user-defined types while
-enforcing semantic requirements on that interaction.
-
-\pnum
-The type of a customization point object shall satisfy
-\tcode{Semiregular}~(\ref{concepts.lib.object.semiregular}).
-
-\pnum
-All instances of a specific customization point object type shall
-be equal~(\ref{concepts.lib.general.equality}).
-
-\pnum
-The type of a customization point object \tcode{T} shall satisfy
-\tcode{Invocable<const T, Args...>()}~(\ref{concepts.lib.callable.invocable}) when the types of
-\tcode{Args...} meet the requirements specified in that
-customization point object's definition. Otherwise, \tcode{T}
-shall not have a function call operator that participates in
-overload resolution.
-
-\pnum
-Each customization point object type constrains its return type
-to satisfy a particular concept.
-
-\pnum
-The library defines several named customization point objects.
-In every translation unit where such a name is defined, it shall
-refer to the same instance of the customization point object.
-
-\pnum
-\enternote Many of the customization point objects in the library
-evaluate function call expressions with an unqualified name which
-results in a call to a user-defined function found by argument
-dependent name lookup~(\cxxref{basic.lookup.argdep}). To preclude
-such an expression resulting in a call to unconstrained functions
-with the same name in namespace \tcode{std}, customization point
-objects specify that lookup for these expressions is performed in
-a context that includes deleted overloads matching the signatures
-of overloads defined in namespace \tcode{std}. When the deleted
-overloads are viable, user-defined overloads must be more
-specialized~(\cxxref{temp.func.order}) or more
-constrained~(Concepts TS [temp.constr.order]) to be used by a
-customization point object. \exitnote
 
 \rSec1[requirements]{Library-wide requirements}
 
@@ -266,7 +220,7 @@ the Ranges library headers~(\ref{headers}).
 
 \pnum
 All library entities are defined within an inline namespace \tcode{v1} within
-the namespace \tcode{std::experimental::ranges} or namespaces nested within
+the namespace \tcode{std::\brk{}experimental::\brk{}ranges} or namespaces nested within
 namespace \tcode{std::experimental::ranges::v1}.
 \indextext{namespace}
 It is unspecified whether names declared in a specific namespace are declared
@@ -284,10 +238,11 @@ The Ranges library provides the Ranges library headers, shown in Table~\ref{tab:
 \begin{floattable}{Ranges TS library headers}{tab:headers}
 {ll}
 \topline
-\tcode{<experimental/ranges/algorithm>}  & \tcode{<experimental/ranges/random>}   \\
-\tcode{<experimental/ranges/concepts>}   & \tcode{<experimental/ranges/tuple>}    \\
-\tcode{<experimental/ranges/functional>} & \tcode{<experimental/ranges/utility>}  \\
-\tcode{<experimental/ranges/iterator>}   &                                        \\
+\tcode{<experimental/ranges/algorithm>}  & \tcode{<experimental/ranges/range>}       \\
+\tcode{<experimental/ranges/concepts>}   & \tcode{<experimental/ranges/tuple>}       \\
+\tcode{<experimental/ranges/functional>} & \tcode{<experimental/ranges/type_traits>} \\
+\tcode{<experimental/ranges/iterator>}   & \tcode{<experimental/ranges/utility>}     \\
+\tcode{<experimental/ranges/random>} & \\
 \bottomline
 \end{floattable}
 
@@ -372,9 +327,62 @@ Violation of the preconditions specified in a function's \requires paragraph
 results in undefined behavior unless the function's \throws paragraph specifies
 throwing an exception when the precondition is violated.
 
+\rSec3[res.on.requirements]{Semantic requirements}
+
+\pnum
+If the semantic requirements of a declaration's
+constraints~(\ref{structure.requirements}) are not satisfied at the point of
+use, the program is ill-formed, no diagnostic required.
+
 \rSec2[conforming]{Conforming implementations}
 
 \pnum
 The constraints upon, and latitude of, implementations of the Ranges library
 follow the same constraints and latitudes for implementations of the \Cpp
 standard library as specified in \cxxref{conforming}.
+
+\rSec3[customization.point.object]{Customization Point Objects}
+\pnum
+A \techterm{customization point object} is a function object~(\ref{function.objects}) with a
+literal class type that interacts with user-defined types while
+enforcing semantic requirements on that interaction.
+
+\pnum
+The type of a customization point object shall satisfy
+\tcode{Semiregular}~(\ref{concepts.lib.object.semiregular}).
+
+\pnum
+All instances of a specific customization point object type shall
+be equal~(\ref{concepts.lib.general.equality}).
+
+\pnum
+The type of a customization point object \tcode{T} shall satisfy
+\tcode{Invocable<const T, Args...>}~(\ref{concepts.lib.callable.invocable}) when the types of
+\tcode{Args...} meet the requirements specified in that
+customization point object's definition. Otherwise, \tcode{T}
+shall not have a function call operator that participates in
+overload resolution.
+
+\pnum
+Each customization point object type constrains its return type
+to satisfy a particular concept.
+
+\pnum
+The library defines several named customization point objects.
+In every translation unit where such a name is defined, it shall
+refer to the same instance of the customization point object.
+
+\pnum
+\enternote Many of the customization point objects in the library
+evaluate function call expressions with an unqualified name which
+results in a call to a user-defined function found by argument
+dependent name lookup~(\cxxref{basic.lookup.argdep}). To preclude
+such an expression resulting in a call to unconstrained functions
+with the same name in namespace \tcode{std}, customization point
+objects specify that lookup for these expressions is performed in
+a context that includes deleted overloads matching the signatures
+of overloads defined in namespace \tcode{std}. When the deleted
+overloads are viable, user-defined overloads must be more
+specialized~(\cxxref{temp.func.order}) or more
+constrained~(Concepts TS [temp.constr.order]) to be used by a
+customization point object. \exitnote
