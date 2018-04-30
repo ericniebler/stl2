@@ -1,11 +1,11 @@
-# Makefile for specializations changes
+# Makefile for d1033 changes
 
 LATEX=pdflatex
 BIBTEX=bibtex
 
-MAIN=specializations
+MAIN=d1033
 
-SOURCE=specializations.bib\
+SOURCE=d1033.bib\
        acknowledgements.tex\
        config.tex\
        cover-proposal.tex\
@@ -25,4 +25,4 @@ all: $(SOURCE)
 	$(LATEX) $(MAIN).tex
 
 clean:
-	rm specializations.pdf *.aux *.idx *.log *.out
+	rm d1033.pdf *.aux *.idx *.log *.out

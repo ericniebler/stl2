@@ -519,7 +519,7 @@ uninitialized_copy(I ifirst, S1 ilast, O ofirst, S2 olast);
 \end{codeblock}
 
 \pnum
-\requires \tcode{result} shall not be in the range \range{first}{last}.
+\requires \range{ofirst}{olast} shall not overlap with \range{first}{last}.
 
 \begin{codeblock}
 template <InputRange IRng, NoThrowForwardRange ORng>
@@ -536,7 +536,7 @@ tagged_pair<tag::in(safe_iterator_t<IRng>), tag::out(safe_iterator_t<ORng>O)>
 \end{codeblock}
 
 \pnum
-\requires \tcode{result} shall not be in the range \range{begin(rng)}{end(rng))}.
+\requires \tcode{orng} shall not overlap with \range{begin(rng)}{end(rng))}.
 } %% \color{addclr}
 
 {\color{remclr}
@@ -577,7 +577,7 @@ Constructible<value_type_t<O>, reference_t<I>>
 \end{codeblock}
 
 \pnum
-\requires \tcode{result} shall not be in the range \range{first}{next(first, n)}.
+\requires \range{result}{next(first, n)} shall not overlap with \range{first}{next(first, n)}.
 } %% \color{addclr}
 
 \rSec3[uninitialized.move]{\tcode{uninitialized_move}}
@@ -594,7 +594,7 @@ template <class InputIterator, class ForwardIterator>
 \begin{codeblock}
     for (; first != last; (void)++result, ++first)
       ::new (static_cast<void*>(addressof(*result)))
-        typename iterator_traits<ForwardIterator>::value_type(std::move(*first));
+        typename iterator_traits<ForwardIterator>::value_type(iter_move(first));
     return result;
 \end{codeblock}
 } %% \color{remclr}
@@ -613,19 +613,19 @@ uninitialized_move(I ifirst, S1 ilast, O ofirst, S2 olast);
 \begin{codeblock}
     for (; ifirst != ilast && ofirst != olast; ++ofirst, (void)++ifirst) {
       ::new (const_cast<void*>(static_cast<const volatile void*>(addressof(*ofirst))))
-        remove_reference_t<reference_t<O>>(std::move(*ifirst));
+        remove_reference_t<reference_t<O>>(iter_move(ifirst));
     }
     return {ifirst, ofirst};
 \end{codeblock}
 } %% color\addclr
 
 \pnum
-\remarks If an exception is thrown, some objects in the range \range{first}{last} are left in a valid but
-unspecified state.
+\remarks If an exception is thrown, some objects in the range \range{first}{last} are left in a
+valid, but unspecified state.
 
 {\color{addclr}
 \pnum
-\requires \range{first}{last} shall not be in the range \range{first}{last}.
+\requires \range{first}{last} shall not overlap with \range{first}{last}.
 
 \begin{codeblock}
 template <InputRange IRng, NoThrowForwardRng ORng>
@@ -642,11 +642,11 @@ uninitialized_move(IRng&& irng, ORng&& orng);
 \end{codeblock}
 
 \pnum
-\remarks If an exception is thrown, some objects in the range \range{begin(rng)}{end(rng)} are left in a valid, but
-unspecified state.
+\remarks If an exception is thrown, some objects in the range \range{begin(rng)}{end(rng)} are left
+in a valid, but unspecified state.
 
 \pnum
-\requires \tcode{orng} shall not be in the range \tcode{irng}.
+\requires \tcode{orng} shall not overlap with \tcode{irng}.
 } %% \color{addclr}
 
 {\color{remclr}
@@ -662,7 +662,7 @@ template <class InputIterator, class Size, class ForwardIterator>
 \begin{codeblock}
         for (; n > 0; ++result, (void) ++first, --n)
           ::new (static_cast<void*>(addressof(*result)))
-            typename iterator_traits<ForwardIterator>::value_type(std::move(*first));
+            typename iterator_traits<ForwardIterator>::value_type(iter_move(first));
         return {first,result};
 \end{codeblock}
 } %% \color{remclr}
@@ -687,13 +687,13 @@ tagged_pair<tag::in(I), tag::out(O)>
 
 \setcounter{Paras}{3}
 \pnum
-\remarks If an exception is thrown, some objects in the range \range{first}{std::next(first, n)}
-are left in a valid\added{,} but unspecified state.
+\remarks If an exception is thrown, some objects in the range \range{first}{next(first, n)} are left
+in a valid\added{,} but unspecified state.
 
 {\color{addclr}
 \setcounter{Paras}{5}
 \pnum
-\requires \tcode{result} shall not be in the range \range{first}{std::next(first, n)}.
+\requires \range{result}{next(result, n)} shall not overlap with \range{first}{next(first, n)}.
 } %% \color{addclr}
 
 \rSec3[uninitialized.fill]{\tcode{uninitialized_fill}}
