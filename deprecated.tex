@@ -1,6 +1,8 @@
 %!TEX root = N4382.tex
 \normannex{depr}{Compatibility features}
 
+\rSec1[depr.general]{General}
+
 \pnum
 This Clause describes features of this document that are specified for compatibility with
 existing implementations.
@@ -9,7 +11,7 @@ existing implementations.
 These are deprecated features, where
 \term{deprecated}
 is defined as:
-Normative for the current edition of the Ranges TS,
+Normative for the current edition of this document,
 but having been identified as a candidate for removal from future revisions.
 An implementation may declare library names and entities described in this section with the
 \tcode{deprecated} attribute~(\cxxref{dcl.attr.deprecated}).
@@ -31,73 +33,133 @@ such usage could become ill-formed.
 \pnum
 The following algorithm signatures are deemed unsafe and are deprecated in this document.
 
+\pnum
+Overloads of algorithms that take a \tcode{Range} argument and a forwarding
+reference parameter \tcode{first2_} behave as if they are implemented by calling
+\tcode{begin} and \tcode{end} on the \tcode{Range} and dispatching to the
+overload that takes separate iterator and sentinel arguments, perfectly forwarding
+\tcode{first2_}.
+
 \begin{codeblock}
-template <InputIterator I1, Sentinel<I1> S1, InputIterator I2,
-    class Proj1 = identity, class Proj2 = identity,
-    IndirectPredicate<projected<I1, Proj1>, projected<I2, Proj2>> Pred = equal_to<>>
-  tagged_pair<tag::in1(I1), tag::in2(I2)>
-    mismatch(I1 first1, S1 last1, I2 first2, Pred pred = Pred{},
-             Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
-
-template <InputRange Rng1, InputIterator I2,
-    class Proj1 = identity, class Proj2 = identity,
-    IndirectPredicate<projected<iterator_t<Rng1>, Proj1>,
-      projected<I2, Proj2>> Pred = equal_to<>>
-  tagged_pair<tag::in1(safe_iterator_t<Rng1>), tag::in2(I2)>
-    mismatch(Rng1&& rng1, I2 first2, Pred pred = Pred{},
-             Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
-
-template <InputIterator I1, Sentinel<I1> S1, InputIterator I2,
-    class Pred = equal_to<>, class Proj1 = identity, class Proj2 = identity>
-  requires IndirectlyComparable<I1, I2, Pred, Proj1, Proj2>()
-  bool equal(I1 first1, S1 last1,
-             I2 first2, Pred pred = Pred{},
-             Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
-
-template <InputRange Rng1, InputIterator I2, class Pred = equal_to<>,
+template <InputIterator I1, Sentinel<I1> S1, class I2, class R = equal_to<>,
     class Proj1 = identity, class Proj2 = identity>
-  requires IndirectlyComparable<iterator_t<Rng1>, I2, Pred, Proj1, Proj2>()
-  bool equal(Rng1&& rng1, I2 first2, Pred pred = Pred{},
+  requires InputIterator<decay_t<I2>> && !Range<I2> &&
+    IndirectRelation<R, projected<I1, Proj1>, projected<decay_t<I2>, Proj2>>
+  tagged_pair<tag::in1(I1), tag::in2(decay_t<I2>)>
+    mismatch(I1 first1, S1 last1, I2&& first2_, R comp = R{},
              Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
 
-template <ForwardIterator I1, Sentinel<I1> S1, ForwardIterator I2,
-    class Pred = equal_to<>, class Proj1 = identity, class Proj2 = identity>
-  requires IndirectlyComparable<I1, I2, Pred, Proj1, Proj2>()
-  bool is_permutation(I1 first1, S1 last1, I2 first2,
-                      Pred pred = Pred{},
+template <InputRange Rng1, class I2, class R = equal_to<>,
+    class Proj1 = identity, class Proj2 = identity>
+  requires InputIterator<decay_t<I2>> && !Range<I2> &&
+    IndirectRelation<R, projected<iterator_t<Rng1>, Proj1>, projected<decay_t<I2>, Proj2>>
+  tagged_pair<tag::in1(safe_iterator_t<Rng1>), tag::in2(decay_t<I2>)>
+    mismatch(Rng1&& rng1, I2&& first2_, R comp = R{},
+             Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+\end{codeblock}
+
+\pnum
+\effects
+Equivalent to:
+\begin{codeblock}
+return mismatch(first1, last1, std::forward<I2>(first2_), unreachable{}, comp, proj1, proj2);
+\end{codeblock}
+except that the underlying algorithm never increments \tcode{first2} more than \tcode{last1 - first1} times.
+
+\begin{codeblock}
+template <InputIterator I1, Sentinel<I1> S1, class I2,
+    class R = equal_to<>, class Proj1 = identity, class Proj2 = identity>
+  requires InputIterator<decay_t<I2>> && !Range<I2> &&
+    IndirectlyComparable<I1, decay_t<I2>, R, Proj1, Proj2>
+  bool equal(I1 first1, S1 last1, I2&& first2_, R comp = R{},
+             Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+
+template <InputRange Rng1, class I2, class R = equal_to<>,
+    class Proj1 = identity, class Proj2 = identity>
+  requires InputIterator<decay_t<I2>> && !Range<I2> &&
+    IndirectlyComparable<iterator_t<Rng1>, decay_t<I2>, R, Proj1, Proj2>
+  bool equal(Rng1&& rng1, I2&& first2_, R comp = R{},
+             Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+\end{codeblock}
+
+\pnum
+\effects
+Equivalent to:
+\begin{codeblock}
+return first1 == mismatch(first1, last1, std::forward<I2>(first2_), comp, proj1, proj2).in1();
+\end{codeblock}
+
+\begin{codeblock}
+template <ForwardIterator I1, Sentinel<I1> S1, class I2,
+    class R = equal_to<>, class Proj1 = identity, class Proj2 = identity>
+  requires ForwardIterator<decay_t<I2>> && !Range<I2> &&
+    IndirectlyComparable<I1, decay_t<I2>, R, Proj1, Proj2>
+  bool is_permutation(I1 first1, S1 last1, I2&& first2_, R comp = R{},
                       Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
 
-template <ForwardRange Rng1, ForwardIterator I2, class Pred = equal_to<>,
+template <ForwardRange Rng1, class I2, class R = equal_to<>,
     class Proj1 = identity, class Proj2 = identity>
-  requires IndirectlyComparable<iterator_t<Rng1>, I2, Pred, Proj1, Proj2>()
-  bool is_permutation(Rng1&& rng1, I2 first2, Pred pred = Pred{},
+  requires ForwardIterator<decay_t<I2>> && !Range<I2> &&
+    IndirectlyComparable<iterator_t<Rng1>, decay_t<I2>, R, Proj1, Proj2>
+  bool is_permutation(Rng1&& rng1, I2&& first2_, R comp = R{},
                       Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+\end{codeblock}
 
-template <ForwardIterator I1, Sentinel<I1> S1, ForwardIterator I2>
-  requires IndirectlySwappable<I1, I2>()
-  tagged_pair<tag::in1(I1), tag::in2(I2)>
-    swap_ranges(I1 first1, S1 last1, I2 first2);
+\pnum
+\effects
+Equivalent to:
+\begin{codeblock}
+  auto first2 = std::forward<I2>(first2_);
+  return is_permutation(first1, last1, first2, next(first2, distance(first1, last1)),
+                        comp, proj1, proj2);
+\end{codeblock}
 
-template <ForwardRange Rng, ForwardIterator I>
-  requires IndirectlySwappable<iterator_t<Rng>, I>()
-  tagged_pair<tag::in1(safe_iterator_t<Rng>), tag::in2(I)>
-    swap_ranges(Rng&& rng1, I first2);
+\begin{codeblock}
+template <ForwardIterator I1, Sentinel<I1> S1, class I2>
+  requires ForwardIterator<decay_t<I2>> && !Range<I2> &&
+    IndirectlySwappable<I1, decay_t<I2>>
+  tagged_pair<tag::in1(I1), tag::in2(decay_t<I2>)>
+    swap_ranges(I1 first1, S1 last1, I2&& first2_);
 
-template <InputIterator I1, Sentinel<I1> S1, InputIterator I2, WeaklyIncrementable O,
-    class F, class Proj1 = identity, class Proj2 = identity>
-  requires Writable<O, indirect_result_of_t<F&(projected<I1, Proj1>, projected<I2, Proj2>)>>()
-  tagged_tuple<tag::in1(I1), tag::in2(I2), tag::out(O)>
-    transform(I1 first1, S1 last1, I2 first2, O result,
+template <ForwardRange Rng, class I2>
+  requires ForwardIterator<decay_t<I2>> && !Range<I2> &&
+    IndirectlySwappable<iterator_t<Rng>, decay_t<I2>>
+  tagged_pair<tag::in1(safe_iterator_t<Rng>), tag::in2(decay_t<I2>)>
+    swap_ranges(Rng&& rng1, I2&& first2_);
+\end{codeblock}
+
+\pnum
+\effects
+Equivalent to:
+\begin{codeblock}
+  auto first2 = std::forward<I2>(first2_);
+  return swap_ranges(first1, last1, first2, next(first2, distance(first1, last1)));
+\end{codeblock}
+
+\begin{codeblock}
+template <InputIterator I1, Sentinel<I1> S1, class I2, WeaklyIncrementable O,
+    CopyConstructible F, class Proj1 = identity, class Proj2 = identity>
+  requires InputIterator<decay_t<I2>> && !Range<I2> &&
+    Writable<O, indirect_result_of_t<F&(projected<I1, Proj1>,
+        projected<decay_t<I2>, Proj2>)>>
+  tagged_tuple<tag::in1(I1), tag::in2(decay_t<I2>), tag::out(O)>
+    transform(I1 first1, S1 last1, I2&& first2_, O result,
               F binary_op, Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
 
-template <InputRange Rng, InputIterator I, WeaklyIncrementable O, class F,
+template <InputRange Rng, class I2, WeaklyIncrementable O, CopyConstructible F,
     class Proj1 = identity, class Proj2 = identity>
-  requires Writable<O, indirect_result_of_t<F&(
-    projected<iterator_t<Rng>, Proj1>, projected<I, Proj2>>)>()
-  tagged_tuple<tag::in1(safe_iterator_t<Rng>), tag::in2(I), tag::out(O)>
-    transform(Rng&& rng1, I first2, O result,
+  requires InputIterator<decay_t<I2>> && !Range<I2> &&
+    Writable<O, indirect_result_of_t<F&(
+        projected<iterator_t<Rng>, Proj1>, projected<decay_t<I2>, Proj2>>)>
+  tagged_tuple<tag::in1(safe_iterator_t<Rng>), tag::in2(decay_t<I2>), tag::out(O)>
+    transform(Rng&& rng1, I2&& first2_, O result,
               F binary_op, Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
 \end{codeblock}
 
-\remark These signatures behave as described in Clause~\ref{algorithms} with the name
-\tcode{last2} defined as \tcode{first2 + (last1 - first1)}.
+\pnum
+\effects
+Equivalent to:
+\begin{codeblock}
+return transform(first1, last1, std::forward<I2>(first2_), unreachable{}, pred, proj1, proj2);
+\end{codeblock}
+except that the underlying algorithm never increments \tcode{first2} more than \tcode{last1 - first1} times.

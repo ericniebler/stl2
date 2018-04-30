@@ -1,0 +1,333 @@
+%!TEX root = stdconcepts.tex
+\newpage
+\setcounter{chapter}{19}
+\setcounter{table}{14}
+\rSec0[library]{Library introduction}
+
+\rSec1[library.general]{General}
+
+\ednote{Modify Table \ref{tab:library.categories} as follows (note that the
+consequent renumbering of the clauses following the newly-inserted "Concepts
+library" is NOT depicted here or in the remainder of this document for ease of
+review):}
+
+\begin{libsumtabbase}{Library categories}{tab:library.categories}{Clause}{Category}
+Clause \cxxref{language.support}  &   &   Language support library    \\
+\added{\ref{concepts.lib}} &   &   \added{Concepts library}    \\
+Clause \cxxref{diagnostics}       &   &   Diagnostics library         \\
+Clause \cxxref{utilities}         &   &   General utilities library   \\
+Clause \cxxref{strings}           &   &   Strings library             \\
+Clause \cxxref{localization}      &   &   Localization library        \\
+Clause \cxxref{containers}        &   &   Containers library          \\
+Clause \cxxref{iterators}         &   &   Iterators library           \\
+Clause \cxxref{algorithms}        &   &   Algorithms library          \\
+Clause \cxxref{numerics}          &   &   Numerics library            \\
+Clause \cxxref{input.output}      &   &   Input/output library        \\
+Clause \cxxref{re}                &   &   Regular expressions library \\
+Clause \cxxref{atomics}           &   &   Atomic operations library   \\
+Clause \cxxref{thread}            &   &   Thread support library      \\
+\end{libsumtabbase}
+
+\ednote{Add a new paragraph between paragraphs 4 and 5:}
+
+\setcounter{Paras}{4}
+\begin{addedblock}
+\pnum
+The concepts library (\ref{concepts.lib}) describes library components
+that \Cpp programs may use to perform compile-time validation of template
+parameters and perform function dispatch based on properties of types.
+\end{addedblock}
+
+\setcounter{section}{2}
+\rSec1[definitions]{Definitions}
+
+\ednote{Add a new definition for "expression-equivalent":}
+
+{\color{addclr}
+\setcounter{subsection}{10}
+\definition{expression-equivalent}{defns.expression.equivalent}
+\indexdefn{expression-equivalent}%
+relationship that exists between two expressions \tcode{E1} and \tcode{E2} such that
+\begin{itemize}
+\item
+\tcode{E1} and \tcode{E2} have the same effects,
+
+\item
+\tcode{noexcept(E1) == noexcept(E2)}, and
+
+\item
+\tcode{E1} is a constant subexpression if and only if \tcode{E2} is a constant subexpression
+\end{itemize}
+} %% \color{newclr}
+
+\rSec1[description]{Method of description (Informative)}
+
+\rSec2[structure]{Structure of each clause}
+
+\setcounter{subsubsection}{1}
+\rSec3[structure.summary]{Summary}
+
+\ednote{Add a new bullet to the list in paragraph 2:}
+
+\setcounter{Paras}{1}
+\pnum
+The contents of the summary and the detailed specifications include:
+
+\begin{itemize}
+\item macros
+\item values
+\item types
+\item classes and class templates
+\item functions and function templates
+\item objects
+\item \added{concepts}
+\end{itemize}
+
+\rSec3[structure.requirements]{Requirements}
+
+\ednote{Modify paragraph 1 as follows:}
+
+\pnum
+\indextext{requirements}%
+Requirements describe constraints that shall be met by a \Cpp{} program that extends the standard library.
+Such extensions are generally one of the following:
+
+\begin{itemize}
+\item Template arguments
+\item Derived classes
+\item Containers, iterators, and algorithms that meet an interface convention \added{or satisfy a concept}
+\end{itemize}
+
+\ednote{Modify paragraph 4 as follows:}
+
+\setcounter{Paras}{3}
+\pnum
+Requirements are stated in terms of well-defined expressions that define valid terms of
+the types that satisfy the requirements. For every set of well-defined expression
+requirements there is \newnewtxt{either a named concept or}
+a table that specifies an initial set of the valid expressions and
+their semantics. Any generic algorithm~(\cxxref{algorithms}) that uses the
+well-defined expression requirements is described in terms of the valid expressions for
+its template type parameters.
+
+\ednote{Add new paragraphs after the existing paragraphs:}
+
+\setcounter{Paras}{6}
+\begin{addedblock}
+\pnum
+Required operations of any concept defined in this document need not be
+total functions; that is, some arguments to a required operation may
+result in the required semantics failing to be satisfied. \enterexample
+The required \tcode{<} operator of the \tcode{StrictTotallyOrdered}
+concept~(\ref{concepts.lib.compare.stricttotallyordered}) does not meet the
+semantic requirements of that concept when operating on NaNs.\exitexample
+This does not affect whether a type satisfies the concept.
+
+\pnum
+A declaration may explicitly impose requirements through its associated
+constraints~(\cxxref{temp.constr.decl}). When the associated constraints
+refer to a concept~(\cxxref{temp.concept}), additional semantic requirements are
+imposed on the use of the declaration.
+\end{addedblock}
+
+\rSec2[conventions]{Other conventions}
+
+\rSec3[type.descriptions]{Type descriptions}
+
+\ednote{Add a new subclause after [character.seq]:}
+\setcounter{paragraph}{5}
+\begin{addedblock}
+\rSec4[customization.point.object]{Customization Point Object types}
+
+\pnum
+A \techterm{customization point object} is a function object~(\ref{function.objects}) with a
+literal class type that interacts with user-defined types while
+enforcing semantic requirements on that interaction.
+
+\pnum
+The type of a customization point object shall satisfy
+\tcode{Semiregular}~(\ref{concepts.lib.object.semiregular}).
+
+\pnum
+All instances of a specific customization point object type shall
+be equal~(\ref{concepts.lib.general.equality}).
+
+\pnum
+The type of a customization point object \tcode{T} shall satisfy
+\tcode{Invocable<const T\newtxt{\&}, Args...>}~(\ref{concepts.lib.callable.invocable}) when the types of
+\tcode{Args...} meet the requirements specified in that
+customization point object's definition. \oldtxt{Otherwise}\newtxt{When the types of
+\tcode{Args...} do not meet the customization point object's requirements}, \tcode{T}
+shall not have a function call operator that participates in
+overload resolution.
+
+\pnum
+Each customization point object type constrains its return type
+to satisfy a particular concept.
+
+\pnum
+\oldtxt{The library defines several named customization point objects.
+In every translation unit where such a name is defined, it shall
+refer to the same instance of the customization point object.}
+
+\pnum
+\enternote Many of the customization point objects in the library
+evaluate function call expressions with an unqualified name which
+results in a call to a user-defined function found by argument
+dependent name lookup~(\cxxref{basic.lookup.argdep}). To preclude
+such an expression resulting in a call to unconstrained functions
+with the same name in namespace \tcode{std}, customization point
+objects specify that lookup for these expressions is performed in
+a context that includes deleted overloads matching the signatures
+of overloads defined in namespace \tcode{std}. When the deleted
+overloads are viable, user-defined overloads must be more
+specialized~(\cxxref{temp.func.order}) or more
+constrained~(\cxxref{temp.constr.order}) to be used by a
+customization point object. \exitnote
+\end{addedblock}
+
+\rSec1[requirements]{Library-wide requirements}
+
+\setcounter{subsection}{1}
+\setcounter{subsubsection}{1}
+\rSec3[headers]{Headers}
+
+\ednote{Add header \tcode{<concepts>} to Table \ref{tab:cpp.library.headers}}
+
+\begin{floattable}{\Cpp{} library headers}{tab:cpp.library.headers}
+{llll}
+\topline
+\tcode{<algorithm>} &
+\tcode{<fstream>} &
+\tcode{<new>} &
+\tcode{<string_view>} \\
+
+\tcode{<any>} &
+\tcode{<functional>} &
+\tcode{<numeric>} &
+\tcode{<strstream>} \\
+
+\tcode{<array>} &
+\tcode{<future>} &
+\tcode{<optional>} &
+\tcode{<syncstream>} \\
+
+\tcode{<atomic>} &
+\tcode{<initializer_list>} &
+\tcode{<ostream>} &
+\tcode{<system_error>} \\
+
+\tcode{<bitset>} &
+\tcode{<iomanip>} &
+\tcode{<queue>} &
+\tcode{<thread>} \\
+
+\tcode{<charconv>} &
+\tcode{<ios>} &
+\tcode{<random>} &
+\tcode{<tuple>} \\
+
+\tcode{<chrono>} &
+\tcode{<iosfwd>} &
+\tcode{<ratio>} &
+\tcode{<type_traits>} \\
+
+\tcode{<codecvt>} &
+\tcode{<iostream>} &
+\tcode{<regex>} &
+\tcode{<typeindex>} \\
+
+\tcode{<compare>} &
+\tcode{<istream>} &
+\tcode{<scoped_allocator>} &
+\tcode{<typeinfo>} \\
+
+\tcode{<complex>} &
+\tcode{<iterator>} &
+\tcode{<set>} &
+\tcode{<unordered_map>} \\
+
+\added{\tcode{<concepts>}} &
+\tcode{<limits>} &
+\tcode{<shared_mutex>} &
+\tcode{<unordered_set>} \\
+
+\tcode{<condition_variable>} &
+\tcode{<list>} &
+\tcode{<sstream>} &
+\tcode{<utility>} \\
+
+\tcode{<deque>} &
+\tcode{<locale>} &
+\tcode{<stack>} &
+\tcode{<valarray>} \\
+
+\tcode{<exception>} &
+\tcode{<map>} &
+\tcode{<stdexcept>} &
+\tcode{<variant>} \\
+
+\tcode{<execution>} &
+\tcode{<memory>} &
+\tcode{<streambuf>} & \\
+
+\tcode{<filesystem>} &
+\tcode{<memory_resource>} &
+\tcode{<vector>} & \\
+
+\tcode{<forward_list>} &
+\tcode{<mutex>} &
+\tcode{<string>} & \\
+\end{floattable}
+
+\setcounter{subsection}{3}
+\rSec2[constraints]{Constraints on programs}
+
+\setcounter{subsubsection}{7}
+\rSec3[res.on.functions]{Other functions}
+\ednote{Modify paragraph 2 as follows:}
+
+\setcounter{Paras}{1}
+\pnum
+In particular, the effects are undefined in the following cases:
+
+\begin{itemize}
+\item
+for replacement functions~(\cxxref{new.delete}), if the installed replacement function does not
+implement the semantics of the applicable
+\required
+paragraph.
+\item
+for handler functions~(\cxxref{new.handler}, \cxxref{terminate.handler}),
+if the installed handler function does not implement the semantics of the applicable
+\required
+paragraph
+\item
+for types used as template arguments when instantiating a template component,
+if the operations on the type do not implement the semantics of the applicable
+\emph{Requirements}
+subclause~(\cxxref{allocator.requirements}, \cxxref{container.requirements}, \cxxref{iterator.requirements},
+\cxxref{algorithms.requirements}, \cxxref{numeric.requirements}).
+Operations on such types can report a failure by throwing an exception
+unless otherwise specified.
+\item
+if any replacement function or handler function or destructor operation exits via an exception,
+unless specifically allowed
+in the applicable
+\required
+paragraph.
+\item
+if an incomplete type~(\cxxref{basic.types}) is used as a template
+argument when instantiating a template component \added{or evaluating a concept}, unless specifically
+allowed for that component.
+\end{itemize}
+
+\ednote{Add a new subclause after [res.on.required]:}
+\begin{addedblock}
+\setcounter{subsubsection}{11}
+\rSec3[res.on.requirements]{Semantic requirements}
+\pnum
+If the semantic requirements of a declaration's
+constraints~(\ref{structure.requirements}) are not satisfied at the point of
+use, the program is ill-formed, no diagnostic required.
+\end{addedblock}

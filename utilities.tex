@@ -40,19 +40,15 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 
   // \ref{utility.exchange}, exchange:
   template <MoveConstructible T, class U=T>
-    requires Assignable<T&, U>()
-  T exchange(T& obj, U&& new_val);
+    requires Assignable<T&, U>
+  constexpr T exchange(T& obj, U&& new_val) noexcept(@\seebelow@);
 
   // \ref{taggedtup.tagged}, struct with named accessors
   template <class T>
-  concept bool TagSpecifier() {
-    return @\seebelow@;
-  }
+  concept bool TagSpecifier = @\seebelow@;
 
   template <class F>
-  concept bool TaggedType() {
-    return @\seebelow@;
-  }
+  concept bool TaggedType = @\seebelow@;
 
   template <class Base, TagSpecifier... Tags>
     requires sizeof...(Tags) <= tuple_size<Base>::value
@@ -75,26 +71,12 @@ namespace std {
 }
 \end{codeblock}
 
-\pnum
-Any entities declared or defined directly in namespace \tcode{std} in header \tcode{<utility>}
-that are not already defined in namespace \tcode{std::experimental::ranges::v1} in header
-\tcode{<experimental/ranges/utility>} are imported with
-\grammarterm{using-declaration}{s}~(\cxxref{namespace.udecl}). \enterexample
-\begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
-  using std::pair;
-  using std::make_pair;
-  // ... others
-}}}}
-\end{codeblock}
-\exitexample
-
 \rSec2[utility.swap]{\tcode{swap}}
 
 \indexlibrary{\idxcode{swap}}%
 \pnum The name \tcode{swap} denotes a customization point
 object~(\ref{customization.point.object}). The effect of the expression
-\tcode{ranges::swap(E1, E2)} for some expressions \tcode{E1}
+\tcode{ranges\colcol{}swap(\brk{}E1, E2)} for some expressions \tcode{E1}
 and \tcode{E2} is equivalent to:
 
 \begin{itemize}
@@ -123,17 +105,17 @@ and \tcode{E2} is equivalent to:
 \item
   Otherwise, if \tcode{E1} and \tcode{E2} are lvalues of the
   same type \tcode{T} which meets the syntactic requirements of
-  \tcode{MoveConstructible<T>()} and
-  \tcode{Assignable<T\&, T>()}, exchanges the referenced values.
-  \tcode{ranges::swap(E1, E2)} is a constant expression if
+  \tcode{MoveConstructible<T>} and
+  \tcode{Assignable<T\&, T>}, exchanges the referenced values.
+  \tcode{ranges\colcol{}swap(\brk{}E1, E2)} is a constant expression if
   the constructor selected by overload resolution for
-  \tcode{T\{std::move(E1)\}} is a constexpr constructor and
+  \tcode{T\{std\colcol{}move(E1)\}} is a constexpr constructor and
   the expression \tcode{E1 = std::move(E2)} can appear in a
-  constexpr function. \tcode{noexcept(ranges::swap(E1, E2))}
-  is equal to \tcode{is_nothrow_move_constructible<T>::value
-  \&\& is_nothrow_move_assignable<T>::value}. If either
-  \tcode{MoveConstructible} or
-  \tcode{Assignable} is not satisfied, the program
+  constexpr function. \tcode{noexcept(ranges\colcol{}swap(\brk{}E1, E2))}
+  is equal to \tcode{is_nothrow_move_construct\-ible<T>\colcol{}value
+  \&\& is_nothrow_move_assignable<T>\colcol{}value}. If either
+  \tcode{Move\-Const\-ructible} or
+  \tcode{Assign\-able} is not satisfied, the program
   is ill-formed with no diagnostic required.
 
 \item
@@ -149,8 +131,8 @@ and \tcode{E2} and has type \tcode{void}.
 
 \begin{itemdecl}
 template <MoveConstructible T, class U=T>
-  requires Assignable<T&, U>()
-T exchange(T& obj, U&& new_val);
+  requires Assignable<T&, U>
+constexpr T exchange(T& obj, U&& new_val) noexcept(@\seebelow@);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -162,6 +144,13 @@ Equivalent to:
 T old_val = std::move(obj);
 obj = std::forward<U>(new_val);
 return old_val;
+\end{codeblock}
+
+\remarks
+The expression in \tcode{noexcept} is equivalent to:
+\begin{codeblock}
+is_nothrow_move_constructible<T>::value &&
+is_nothrow_assignable<T&, U>::value
 \end{codeblock}
 \end{itemdescr}
 
@@ -178,27 +167,27 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 
   // \ref{comparisons}, comparisons:
   template <class T = void>
-    requires EqualityComparable<T>() || Same<T, void>()
+    requires @\seebelow@
   struct equal_to;
 
   template <class T = void>
-    requires EqualityComparable<T>() || Same<T, void>()
+    requires @\seebelow@
   struct not_equal_to;
 
   template <class T = void>
-    requires StrictTotallyOrdered<T>() || Same<T, void>()
+    requires @\seebelow@
   struct greater;
 
   template <class T = void>
-    requires StrictTotallyOrdered<T>() || Same<T, void>()
+    requires @\seebelow@
   struct less;
 
   template <class T = void>
-    requires StrictTotallyOrdered<T>() || Same<T, void>()
+    requires @\seebelow@
   struct greater_equal;
 
   template <class T = void>
-    requires StrictTotallyOrdered<T>() || Same<T, void>()
+    requires @\seebelow@
   struct less_equal;
 
   template <> struct equal_to<void>;
@@ -212,32 +201,6 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   struct identity;
 }}}}
 \end{codeblock}
-
-\pnum
-Any entities declared or defined directly in namespace \tcode{std} in header \tcode{<functional>}
-that are not already defined in namespace \tcode{std::experimental::ranges} in header
-\tcode{<experimental/ranges/functional>} are imported with
-\grammarterm{using-declaration}{s}~(\cxxref{namespace.udecl}). \enterexample
-\begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
-  using std::reference_wrapper;
-  using std::ref;
-  // ... others
-}}}}
-\end{codeblock}
-\exitexample
-
-\pnum
-Any nested namespaces defined directly in namespace \tcode{std} in header \tcode{<functional>}
-that are not already defined in namespace \tcode{std::experimental::ranges} in header
-\tcode{<experimental/ranges/functional>} are aliased with a
-\grammarterm{namespace-alias-definition}~(\cxxref{namespace.alias}). \enterexample
-\begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
-  namespace placeholders = std::placeholders;
-}}}}
-\end{codeblock}
-\exitexample
 
 \rSec2[func.invoke]{Function template \tcode{invoke}}
 \begin{itemdecl}
@@ -255,10 +218,23 @@ result_of_t<F&&(Args&&...)> invoke(F&& f, Args&&... args);
 The library provides basic function object classes for all of the comparison
 operators in the language~(\cxxref{expr.rel}, \cxxref{expr.eq}).
 
+\pnum
+In this section, \tcode{\textit{BUILTIN_PTR_CMP}(T, $op$, U)} for types \tcode{T}
+and \tcode{U} and where $op$ is an equality~(\cxxref{expr.eq}) or relational
+operator~(\cxxref{expr.rel}) is a boolean constant expression.
+\tcode{\textit{BUILTIN_PTR_CMP}(T, $op$, U)} is \tcode{true} if and only if $op$
+in the expression \tcode{declval<T>() $op$ declval<U>()} resolves to a built-in
+operator comparing pointers.
+
+\pnum
+There is an implementation-defined strict total ordering over all pointer values
+of a given type. This total ordering is consistent with the partial order imposed
+by the builtin operators \tcode{<}, \tcode{>}, \tcode{<=}, and \tcode{>=}.
+
 \indexlibrary{\idxcode{equal_to}}%
 \begin{itemdecl}
 template <class T = void>
-  requires EqualityComparable<T>() || Same<T, void>()
+  requires EqualityComparable<T> || Same<T, void> || @\textit{\tcode{BUILTIN_PTR_CMP}}@(const T&, ==, const T&)
 struct equal_to {
   constexpr bool operator()(const T& x, const T& y) const;
 };
@@ -266,13 +242,13 @@ struct equal_to {
 
 \begin{itemdescr}
 \pnum
-\tcode{operator()} returns \tcode{x == y}.
+\tcode{operator()} has effects equivalent to: \tcode{return equal_to<>{}(x, y);}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{not_equal_to}}%
 \begin{itemdecl}
 template <class T = void>
-  requires EqualityComparable<T>() || Same<T, void>()
+  requires EqualityComparable<T> || Same<T, void> || @\textit{\tcode{BUILTIN_PTR_CMP}}@(const T&, ==, const T&)
 struct not_equal_to {
   constexpr bool operator()(const T& x, const T& y) const;
 };
@@ -280,13 +256,13 @@ struct not_equal_to {
 
 \begin{itemdescr}
 \pnum
-\tcode{operator()} returns \tcode{x != y}.
+\tcode{operator()} has effects equivalent to: \tcode{return !equal_to<>{}(x, y);}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{greater}}%
 \begin{itemdecl}
 template <class T = void>
-  requires StrictTotallyOrdered<T>() || Same<T, void>()
+  requires StrictTotallyOrdered<T> || Same<T, void> || @\textit{\tcode{BUILTIN_PTR_CMP}}@(const T&, <, const T&)
 struct greater {
   constexpr bool operator()(const T& x, const T& y) const;
 };
@@ -294,13 +270,13 @@ struct greater {
 
 \begin{itemdescr}
 \pnum
-\tcode{operator()} returns \tcode{x > y}.
+\tcode{operator()} has effects equivalent to: \tcode{return less<>{}(y, x);}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{less}}%
 \begin{itemdecl}
 template <class T = void>
-  requires StrictTotallyOrdered<T>() || Same<T, void>()
+  requires StrictTotallyOrdered<T> || Same<T, void> || @\textit{\tcode{BUILTIN_PTR_CMP}}@(const T&, <, const T&)
 struct less {
   constexpr bool operator()(const T& x, const T& y) const;
 };
@@ -308,13 +284,13 @@ struct less {
 
 \begin{itemdescr}
 \pnum
-\tcode{operator()} returns \tcode{x < y}.
+\tcode{operator()} has effects equivalent to: \tcode{return less<>{}(x, y);}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{greater_equal}}%
 \begin{itemdecl}
 template <class T = void>
-  requires StrictTotallyOrdered<T>() || Same<T, void>()
+  requires StrictTotallyOrdered<T> || Same<T, void> || @\textit{\tcode{BUILTIN_PTR_CMP}}@(const T&, <, const T&)
 struct greater_equal {
   constexpr bool operator()(const T& x, const T& y) const;
 };
@@ -322,13 +298,13 @@ struct greater_equal {
 
 \begin{itemdescr}
 \pnum
-\tcode{operator()} returns \tcode{x >= y}.
+\tcode{operator()} has effects equivalent to: \tcode{return !less<>{}(x, y);}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{less_equal}}%
 \begin{itemdecl}
 template <class T = void>
-  requires StrictTotallyOrdered<T>() || Same<T, void>()
+  requires StrictTotallyOrdered<T> || Same<T, void> || @\textit{\tcode{BUILTIN_PTR_CMP}}@(const T&, <, const T&)
 struct less_equal {
   constexpr bool operator()(const T& x, const T& y) const;
 };
@@ -336,16 +312,15 @@ struct less_equal {
 
 \begin{itemdescr}
 \pnum
-\tcode{operator()} returns \tcode{x <= y}.
+\tcode{operator()} has effects equivalent to: \tcode{return !less<>{}(y, x);}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{equal_to<>}}%
 \begin{itemdecl}
 template <> struct equal_to<void> {
   template <class T, class U>
-    requires EqualityComparable<T, U>()
-  constexpr auto operator()(T&& t, U&& u) const
-    -> decltype(std::forward<T>(t) == std::forward<U>(u));
+    requires EqualityComparableWith<T, U> || @\textit{\tcode{BUILTIN_PTR_CMP}}@(T, ==, U)
+  constexpr bool operator()(T&& t, U&& u) const;
 
   typedef @\unspec@ is_transparent;
 };
@@ -353,16 +328,32 @@ template <> struct equal_to<void> {
 
 \begin{itemdescr}
 \pnum
-\tcode{operator()} returns \tcode{std::forward<T>(t) == std::forward<U>(u)}.
+\requires If the expression \tcode{std::forward<T>(t) == std::forward<U>(u)}
+results in a call to a built-in operator \tcode{==} comparing pointers of type
+\tcode{P}, the conversion sequences from both \tcode{T} and \tcode{U} to \tcode{P}
+shall be equality-preserving~(\ref{concepts.lib.general.equality}).
+
+\pnum
+\effects
+\begin{itemize}
+\item
+If the expression \tcode{std::forward<T>(t) == std::forward<U>(u)} results in a
+call to a built-in operator \tcode{==} comparing pointers of type \tcode{P}:
+returns \tcode{false} if either (the converted value of) \tcode{t} precedes
+\tcode{u} or \tcode{u} precedes \tcode{t} in the implementation-defined strict
+total order over pointers of type \tcode{P} and otherwise \tcode{true}.
+
+\item
+Otherwise, equivalent to: \tcode{return std::forward<T>(t) == std::forward<U>(u);}
+\end{itemize}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{not_equal_to<>}}%
 \begin{itemdecl}
 template <> struct not_equal_to<void> {
   template <class T, class U>
-    requires EqualityComparable<T, U>()
-  constexpr auto operator()(T&& t, U&& u) const
-    -> decltype(std::forward<T>(t) != std::forward<U>(u));
+    requires EqualityComparableWith<T, U> || @\textit{\tcode{BUILTIN_PTR_CMP}}@(T, ==, U)
+  constexpr bool operator()(T&& t, U&& u) const;
 
   typedef @\unspec@ is_transparent;
 };
@@ -370,16 +361,18 @@ template <> struct not_equal_to<void> {
 
 \begin{itemdescr}
 \pnum
-\tcode{operator()} returns \tcode{std::forward<T>(t) != std::forward<U>(u)}.
+\tcode{operator()} has effects equivalent to:
+\begin{codeblock}
+return !equal_to<>{}(std::forward<T>(t), std::forward<U>(u));
+\end{codeblock}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{greater<>}}%
 \begin{itemdecl}
 template <> struct greater<void> {
   template <class T, class U>
-    requires StrictTotallyOrdered<T, U>()
-  constexpr auto operator()(T&& t, U&& u) const
-    -> decltype(std::forward<T>(t) > std::forward<U>(u));
+    requires StrictTotallyOrderedWith<T, U> || @\textit{\tcode{BUILTIN_PTR_CMP}}@(U, <, T)
+  constexpr bool operator()(T&& t, U&& u) const;
 
   typedef @\unspec@ is_transparent;
 };
@@ -387,16 +380,18 @@ template <> struct greater<void> {
 
 \begin{itemdescr}
 \pnum
-\tcode{operator()} returns \tcode{std::forward<T>(t) > std::forward<U>(u)}.
+\tcode{operator()} has effects equivalent to:
+\begin{codeblock}
+return less<>{}(std::forward<U>(u), std::forward<T>(t));
+\end{codeblock}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{less<>}}%
 \begin{itemdecl}
 template <> struct less<void> {
   template <class T, class U>
-    requires StrictTotallyOrdered<T, U>()
-  constexpr auto operator()(T&& t, U&& u) const
-    -> decltype(std::forward<T>(t) < std::forward<U>(u));
+    requires StrictTotallyOrderedWith<T, U> || @\textit{\tcode{BUILTIN_PTR_CMP}}@(T, <, U)
+  constexpr bool operator()(T&& t, U&& u) const;
 
   typedef @\unspec@ is_transparent;
 };
@@ -404,16 +399,37 @@ template <> struct less<void> {
 
 \begin{itemdescr}
 \pnum
-\tcode{operator()} returns \tcode{std::forward<T>(t) < std::forward<U>(u)}.
+\requires
+If the expression \tcode{std::forward<T>(t) < std::forward<U>(u)} results in a
+call to a built-in operator \tcode{<} comparing pointers of type \tcode{P}, the
+conversion sequences from both \tcode{T} and \tcode{U} to \tcode{P} shall be
+equality-preserving~(\ref{concepts.lib.general.equality}). For any expressions
+\tcode{ET} and \tcode{EU} such that \tcode{decltype((ET))} is \tcode{T} and
+\tcode{decltype((EU))} is \tcode{U}, exactly one of \tcode{less<>\{\}(ET, EU)},
+\tcode{less<>\{\}(EU, ET)} or \tcode{equal_to<>\{\}(ET, EU)} shall be
+\tcode{true}.
+
+\pnum
+\effects
+\begin{itemize}
+\item
+If the expression \tcode{std::forward<T>(t) < std::forward<U>(u)} results in a
+call to a built-in operator \tcode{<} comparing pointers of type \tcode{P}:
+returns \tcode{true} if (the converted value of) \tcode{t} precedes \tcode{u} in
+the implementation-defined strict total order over pointers of type \tcode{P}
+and otherwise \tcode{false}.
+
+\item
+Otherwise, equivalent to: \tcode{return std::forward<T>(t) < std::forward<U>(u);}
+\end{itemize}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{greater_equal<>}}%
 \begin{itemdecl}
 template <> struct greater_equal<void> {
   template <class T, class U>
-    requires StrictTotallyOrdered<T, U>()
-  constexpr auto operator()(T&& t, U&& u) const
-    -> decltype(std::forward<T>(t) >= std::forward<U>(u));
+    requires StrictTotallyOrderedWith<T, U> || @\textit{\tcode{BUILTIN_PTR_CMP}}@(T, <, U)
+  constexpr bool operator()(T&& t, U&& u) const;
 
   typedef @\unspec@ is_transparent;
 };
@@ -421,16 +437,18 @@ template <> struct greater_equal<void> {
 
 \begin{itemdescr}
 \pnum
-\tcode{operator()} returns \tcode{std::forward<T>(t) >= std::forward<U>(u)}.
+\tcode{operator()} has effects equivalent to:
+\begin{codeblock}
+return !less<>{}(std::forward<T>(t), std::forward<U>(u));
+\end{codeblock}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{less_equal<>}}%
 \begin{itemdecl}
 template <> struct less_equal<void> {
   template <class T, class U>
-    requires StrictTotallyOrdered<T, U>()
-  constexpr auto operator()(T&& t, U&& u) const
-    -> decltype(std::forward<T>(t) <= std::forward<U>(u));
+    requires StrictTotallyOrderedWith<T, U> || @\textit{\tcode{BUILTIN_PTR_CMP}}@(U, <, T)
+  constexpr bool operator()(T&& t, U&& u) const;
 
   typedef @\unspec@ is_transparent;
 };
@@ -438,14 +456,11 @@ template <> struct less_equal<void> {
 
 \begin{itemdescr}
 \pnum
-\tcode{operator()} returns \tcode{std::forward<T>(t) <= std::forward<U>(u)}.
+\tcode{operator()} has effects equivalent to:
+\begin{codeblock}
+return !less<>{}(std::forward<U>(u), std::forward<T>(t));
+\end{codeblock}
 \end{itemdescr}
-
-\pnum
-For templates \tcode{greater}, \tcode{less}, \tcode{greater_equal}, and
-\tcode{less_equal}, the specializations for any pointer type yield a total order,
-even if the built-in operators \tcode{<}, \tcode{>}, \tcode{<=}, \tcode{>=}
-do not.
 
 \rSec2[func.identity]{Class \tcode{identity}}
 
@@ -466,203 +481,173 @@ struct identity {
 \end{itemdescr}
 
 \rSec1[meta]{Metaprogramming and type traits}
-\rSec2[meta.type.synop]{Header \tcode{<type_traits>} synopsis}
 
-\ednote{Change the \tcode{<type_traits>} synopsis~(\cxxref{meta.type.synop}) as
-follows. Note: this change is intended to be made in \tcode{namespace std}.}
-
+\rSec2[meta.type.synop]{Header \tcode{<experimental/ranges/type_traits>} synopsis}
 \begin{codeblock}
-namespace std {
-  [@...@]
-  // 20.10.4.3, type properties:
-  [@...@]
-  template <class T> struct is_move_assignable;
+namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+  // \ref{meta.unary.prop}, type properties:
+  template <class T, class U> struct is_swappable_with;
+  template <class T> struct is_swappable;
 
-  @\added{template <class T, class U> struct is_swappable_with;}@
-  @\added{template <class T> struct is_swappable;}@
+  template <class T, class U> struct is_nothrow_swappable_with;
+  template <class T> struct is_nothrow_swappable;
 
-  template <class T> struct is_destructible;
-  [@...@]
-  template <class T> struct is_nothrow_move_assignable;
+  template <class T, class U> constexpr bool is_swappable_with_v
+    = is_swappable_with<T, U>::value;
+  template <class T> constexpr bool is_swappable_v
+    = is_swappable<T>::value;
 
-  @\added{template <class T, class U> struct is_nothrow_swappable_with;}@
-  @\added{template <class T> struct is_nothrow_swappable;}@
+  template <class T, class U> constexpr bool is_nothrow_swappable_with_v
+    = is_nothrow_swappable_with<T, U>::value;
+  template <class T> constexpr bool is_nothrow_swappable_v
+    = is_nothrow_swappable<T>::value;
 
-  template <class T> struct is_nothrow_destructible;
-  [@...@]
-
-  // 20.10.7.6, other transformations:
-  [@...@]
+  // \ref{meta.trans.other}, other transformations:
   template <class... T> struct common_type;
-  @\added{template <class T, class U, template <class> class TQual, template <class> class UQual>}@
-    @\added{struct basic_common_reference \{ \};}@
-  @\added{template <class... T> struct common_reference;}@
-  template <class T> struct underlying_type;
-  [@...@]
+  template <class T, class U, template <class> class TQual, template <class> class UQual>
+    struct basic_common_reference { };
+  template <class... T> struct common_reference;
+
   template <class... T>
     using common_type_t = typename common_type<T...>::type;
-  @\added{template <class... T>}@
-    @\added{using common_reference_t = typename common_reference<T...>::type;}@
-  template <class T>
-    using underlying_type_t = typename underlying_type<T>::type;
-  [@...@]
-
-  // 20.15.4.3, type properties
-  [@...@]
-  @\added{template <class T, class U> constexpr bool is_swappable_with_v}@
-    @\added{= is_swappable_with<T, U>::value;}@
-  @\added{template <class T> constexpr bool is_swappable_v}@
-    @\added{= is_swappable<T>::value;}@
-  [@...@]
-  @\added{template <class T, class U> constexpr bool is_nothrow_swappable_with_v}@
-    @\added{= is_nothrow_swappable_with<T, U>::value;}@
-  @\added{template <class T> constexpr bool is_nothrow_swappable_v}@
-    @\added{= is_nothrow_swappable<T>::value;}@
-  [@...@]
-}
+  template <class... T>
+    using common_reference_t = typename common_reference<T...>::type;
+}}}}
 \end{codeblock}
 
 \rSec2[meta.unary.prop]{Type properties}
 
-\ednote{Change [meta.unary.prop], Table 49 -- ``Type property predicates'' in
-ISO/IEC 14882:2014 as indicated. The following is taken from the current
-Working Draft of C++17.}
+\pnum
+These templates provide access to some of the more important properties of types.
 
-\setcounter{scratch}{\value{table}}
-\setcounter{table}{48}
-\begin{libreqtab3b}{Type property predicates}{tab:type-traits.properties}
+\pnum
+It is unspecified whether the library defines any full or partial specializations
+of any of these templates.
+
+\pnum
+For all of the class templates \tcode{X} declared in this subclause, instantiating
+that template with a template argument that is a class template specialization may
+result in the implicit instantiation of the template argument if and only if the
+semantics of \tcode{X} require that the argument must be a complete type.
+
+\pnum
+For the purpose of defining the templates in this subclause, a function call
+expression \tcode{declval<T>()} for any type \tcode{T} is considered to be a
+trivial~(\cxxref{basic.types}, \cxxref{special}) function call that is not an
+odr-use~(\cxxref{basic.def.odr}) of \tcode{declval} in the context of the
+corresponding definition notwithstanding the restrictions of~(\cxxref{declval}).
+
+\begin{libreqtab3b}{Additional type property predicates}{tab:type-traits.properties}
 \\ \topline
-\lhdr{Template} &   \chdr{Condition}    &   \rhdr{Preconditions}    \\ \capsep
+\lhdr{Template} &   \chdr{Condition}    &   \rhdr{Precondition}    \\ \capsep
 \endfirsthead
 \continuedcaption\\
 \topline
-\lhdr{Template} &   \chdr{Condition}    &   \rhdr{Preconditions}    \\ \capsep
+\lhdr{Template} &   \chdr{Condition}    &   \rhdr{Precondition}    \\ \capsep
 \endhead
 
-...  & & \\ \rowsep
-
 \indexlibrary{\idxcode{is_swappable_with}}%
-\added{\tcode{template <class T, class U>}}\br
-  \added{\tcode{struct is_swappable_with;}} &
-  \added{The expressions \tcode{swap(declval<T>(),}}\brk\added{\tcode{ declval<U>())}
-  and \tcode{swap(}}\brk\added{\tcode{declval<U>(),}}\brk\added{\tcode{ declval<T>())}
-  are each well-formed when treated as an unevaluated operand (Clause~\cxxref{expr})
-  in an overload-resolution context for swappable
-  values~(\ref{concepts.lib.corelang.swappable}).
+\tcode{template <class T, class U>}\br
+  \tcode{struct is_swappable_with;} &
+  The expressions \tcode{ranges::swap(}\brk{}\tcode{declval<T>(),}\brk\tcode{ declval<U>())}
+  and \tcode{ranges::swap(}\brk\tcode{declval<U>(),}\brk\tcode{ declval<T>())}
+  are each well-formed when treated as an unevaluated operand (Clause~\cxxref{expr}).
   Access checking is performed as if in a context unrelated to \tcode{T} and \tcode{U}.
   Only the validity of the immediate context of the \tcode{swap} expressions is
-  considered.}
-  \begin{note}
-  \added{The compilation of the expressions can result in side effects such as the
+  considered.
+  \enternote
+  The compilation of the expressions can result in side effects such as the
   instantiation of class template specializations and function template specializations,
   the generation of implicitly-defined functions, and so on. Such side effects are not
-  in the ``immediate context'' and can result in the program being ill-formed.}
-  \end{note} &
-  \added{\tcode{T} and \tcode{U} shall be complete types,
-  (possibly cv-qualified) \tcode{void}, or
-  arrays of unknown bound.}  \\ \rowsep
+  in the ``immediate context'' and can result in the program being ill-formed.
+  \exitnote &
+  \tcode{T} and \tcode{U} shall be complete types,
+  (possibly \cv-qualified) \tcode{void}, or
+  arrays of unknown bound.  \\ \rowsep
 
 \indexlibrary{\idxcode{is_swappable}}%
-\added{\tcode{template <class T>}}\br
-  \added{\tcode{struct is_swappable;}} &
-  \added{For a referenceable type \tcode{T},
-  the same result as \tcode{is_\brk\-swappable_\brk\-with_\brk\-v<}}\brk\added{\tcode{T\&,\brk T\&>},
-  otherwise \tcode{false}.} &
-  \added{\tcode{T} shall be a complete type,
-  (possibly cv-qualified) \tcode{void}, or
-  an array of unknown bound.} \\ \rowsep
-
-... & & \\ \rowsep
+\tcode{template <class T>}\br
+  \tcode{struct is_swappable;} &
+  For a referenceable type \tcode{T},
+  the same result as \tcode{is_\brk\-swappable_\brk\-with_\brk\-v<}\brk\tcode{T\&,\brk T\&>},
+  otherwise \tcode{false}. &
+  \tcode{T} shall be a complete type,
+  (possibly \cv-qualified) \tcode{void}, or
+  an array of unknown bound. \\ \rowsep
 
 \indexlibrary{\idxcode{is_nothrow_swappable_with}}%
-\tcode{\added{template <class T, class U>}}\br
-  \added{\tcode{struct is_nothrow_swappable_with;}} &
-  \added{\tcode{is_swappable_with_v<T, }}\brk\added{\tcode{U>} is \tcode{true} and
+\tcode{template <class T, class U>}\br
+  \tcode{struct is_nothrow_swappable_with;} &
+  \tcode{is_swappable_with_v<T, }\brk\tcode{U>} is \tcode{true} and
   each \tcode{swap} expression of the definition of
   \tcode{is_swappable_with<T, U>} is known not to throw
-  any exceptions~(\cxxref{expr.unary.noexcept}).} &
-  \added{\tcode{T} and \tcode{U} shall be complete types,
-  (possibly cv-qualified) \tcode{void}, or
-  arrays of unknown bound.} \\ \rowsep
+  any exceptions~(\cxxref{expr.unary.noexcept}). &
+  \tcode{T} and \tcode{U} shall be complete types,
+  (possibly \cv-qualified) \tcode{void}, or
+  arrays of unknown bound. \\ \rowsep
 
 \indexlibrary{\idxcode{is_nothrow_swappable}}%
-\tcode{\added{template <class T>}}\br
-  \added{\tcode{struct is_nothrow_swappable;}} &
-  \added{For a referenceable type \tcode{T},
-  the same result as \tcode{is_nothrow_swappable_}}\brk\added{\tcode{with_v<T\&, T\&>},
-  otherwise \tcode{false}.} &
-  \added{\tcode{T} shall be a complete type,
-  (possibly cv-qualified) \tcode{void}, or
-  an array of unknown bound.} \\ \rowsep
-
-... & & \\ \rowsep
+\tcode{template <class T>}\br
+  \tcode{struct is_nothrow_swappable;} &
+  For a referenceable type \tcode{T},
+  the same result as \tcode{is_nothrow_swappable_}\brk\tcode{with_v<T\&, T\&>},
+  otherwise \tcode{false}. &
+  \tcode{T} shall be a complete type,
+  (possibly \cv-qualified) \tcode{void}, or
+  an array of unknown bound. \\ \rowsep
 
 \end{libreqtab3b}
-\setcounter{table}{\value{scratch}}
 
 \rSec2[meta.trans.other]{Other transformations}
 
-\ednote{Change Table 57 -- ``Other Transformations'' in ISO/IEC 14882:2014 as
-follows:}
-
-\setcounter{scratch}{\value{table}}
-\setcounter{table}{56}
-\begin{libreqtab3d}{Other transformations}{tab:type-traits.other}
+\begin{libreqtab2b}{Other transformations}{tab:type-traits.other}
 \\ \topline
-\lhdr{Template} &   \chdr{Condition}    &   \rhdr{Comments} \\ \capsep
+\lhdr{Template} &   \rhdr{Comments} \\ \capsep
 \endfirsthead
 \continuedcaption\\
 \topline
-\lhdr{Template} &   \chdr{Condition}    &   \rhdr{Comments} \\ \capsep
+\lhdr{Template} &   \rhdr{Comments} \\ \capsep
 \endhead
 
-... & & \\ \rowsep
-
- \tcode{template <class... T>} \tcode{struct common_type;}
- & &
+ \tcode{template <class... T>}\br
+ \tcode{  struct common_type;}
+ &
  The member typedef \tcode{type} shall be defined or omitted as specified below.
- If it is omitted, there shall be no member \tcode{type}. \removed{All types}
- \added{Each type} in the parameter pack \tcode{T} shall be complete or
+ If it is omitted, there shall be no member \tcode{type}.
+ Each type in the parameter pack \tcode{T} shall be complete or
  (possibly \cv) \tcode{void}. A program may specialize this trait if at least one
- template parameter in the specialization \removed{is}\added{depends on} a
- user-defined type\added{ and \tcode{sizeof...(T) == 2}}. \begin{note} Such
+ template parameter in the specialization depends on a
+ user-defined type and \tcode{sizeof...(T) == 2}. \enternote Such
  specializations are needed when only explicit conversions are desired among the
  template arguments.
- \end{note} \\ \rowsep
+ \exitnote \\ \rowsep
 
-\added{\tcode{template <class T, class U,}}\br
-\added{\tcode{  template <class> class TQual,}}
-\added{\tcode{  template <class> class UQual>}}
-\added{\tcode{struct basic_common_reference;}} & &
-\added{The primary template shall have no member typedef
+\tcode{template <class T, class U,}\br
+\tcode{    template <class> class TQual,}\br
+\tcode{    template <class> class UQual>}\br
+\tcode{  struct basic_common_reference;} &
+The primary template shall have no member typedef
 \tcode{type}. A program may specialize this trait if at least one
 template parameter in the specialization depends on a user-defined
 type. In such a specialization, a member typedef \tcode{type} may be
 defined or omitted. If it is omitted, there shall be no member
-\tcode{type}.}
-\begin{note} \added{Such specializations may be used to influence
-the result of \tcode{common_reference}.}\end{note} \\ \rowsep
+\tcode{type}.
+\enternote Such specializations may be used to influence
+the result of \tcode{common_reference}.\exitnote \\ \rowsep
 
-\added{\tcode{template <class... T>}}
-\added{\tcode{struct common_reference;}} & &
-\added{The member typedef \tcode{type} shall be defined or omitted
+\tcode{template <class... T>}\br
+\tcode{  struct common_reference;} &
+The member typedef \tcode{type} shall be defined or omitted
 as specified below. If it is omitted, there shall be no member
 \tcode{type}. Each type in the parameter pack \tcode{T} shall be
-complete or (possibly \cv) \tcode{void}.} \\ \rowsep
+complete or (possibly \cv) \tcode{void}. \\ \rowsep
 
-... & & \\ \rowsep
+\end{libreqtab2b}
 
-\end{libreqtab3d}
-\setcounter{table}{\value{scratch}}
-
-\ednote{Delete [meta.trans.other]/p3 from ISO/IEC 14882:2014 and replace it with
-the following:}
-
-{\color{addclr}
 \pnum
 Let \tcode{CREF(A)} be \tcode{add_lvalue_reference_t<const
 remove_reference_t<A>{}>}. Let \tcode{UNCVREF(A)} be
-\tcode{remove_cv_t<remove_reference_t<A>{}>}. Let \tcode{XREF(A)}
+\tcode{rem\-ove_cv_t<remove_reference_t<A>{}>}. Let \tcode{XREF(A)}
 denote a unary template \tcode{T} such that \tcode{T<UNCVREF(A)>}
 denotes the same type as \tcode{A}. Let \tcode{COPYCV(FROM, TO)} be
 an alias for type \tcode{TO} with the addition of \tcode{FROM}'s
@@ -671,7 +656,7 @@ volatile short)} is an alias for \tcode{const volatile short}.
 \exitexample Let \tcode{RREF_RES(Z)} be
 \tcode{remove_reference_t<Z>\&\&} if \tcode{Z} is a reference type
 or \tcode{Z} otherwise. Let \tcode{COND_RES(X, Y)} be
-\tcode{decltype(declval<bool>() ? declval<X>() : declval<Y>())}.
+\tcode{decltype(declval<bool>() ? declval<X(\&)()>()() : declval<Y(\&)()>()())}.
 Given types \tcode{A} and \tcode{B}, let \tcode{X} be
 \tcode{remove_reference_t<A>}, let \tcode{Y} be
 \tcode{remove_reference_t<B>}, and let \tcode{COMMON_REF(A, B)} be:
@@ -701,15 +686,14 @@ If any of the types computed above are ill-formed, then
 \tcode{COMMON_REF(A, B)} is ill-formed.
 
 \pnum
-\color{black} For the \tcode{common_type} trait applied to a parameter pack
+Note A: For the \tcode{common_type} trait applied to a parameter pack
 \tcode{T} of types, the member \tcode{type} shall be either defined or not
 present as follows:
 \begin{itemize}
 \item If \tcode{sizeof...(T)} is zero, there shall be no member \tcode{type}.
-\item Otherwise, if \tcode{sizeof...(T)} is one, let \changed{T0}{T1}
+\item Otherwise, if \tcode{sizeof...(T)} is one, let T1
   denote the sole type in the pack \tcode{T}. The member typedef \tcode{type}
-  shall denote the same type as \tcode{decay_t<\changed{T0}{T1}>}.
-  \color{addclr}
+  shall denote the same type as \tcode{decay_t<T1>}.
 \item Otherwise, if \tcode{sizeof...(T)} is two, let \tcode{T1} and \tcode{T2}
   denote the two types in the pack \tcode{T}, and let \tcode{D1} and \tcode{D2}
   be \tcode{decay_t<T1>} and \tcode{decay_t<T2>} respectively. Then
@@ -717,6 +701,8 @@ present as follows:
 \item If \tcode{D1} and \tcode{T1} denote the same type and \tcode{D2} and
   \tcode{T2} denote the same type, then
 \begin{itemize}
+\item If \tcode{std::common_type_t<T1, T2>} is well-formed, then the member typedef
+  \tcode{type} denotes \tcode{std::common_type_t<T1, T2>}.
 \item If \tcode{COMMON_REF(T1, T2)} is well-formed, then the member typedef
   \tcode{type} denotes that type.
 \item Otherwise, there shall be no member \tcode{type}.
@@ -724,25 +710,37 @@ present as follows:
 \item Otherwise, if \tcode{common_type_t<D1, D2>} is well-formed, then the
   member typedef \tcode{type} denotes that type.
 \item Otherwise, there shall be no member \tcode{type}.
-\end{itemize}\color{black}
-\item Otherwise, if \tcode{sizeof...(T)} is greater than \changed{one}{two},
-  let \tcode{T1}, \tcode{T2}, and \tcode{R\added{est}},
+\end{itemize}
+\item Otherwise, if \tcode{sizeof...(T)} is greater than two,
+  let \tcode{T1}, \tcode{T2}, and \tcode{Rest},
   respectively, denote the first, second, and (pack of) remaining types
-  comprising \tcode{T}. \removed{\enternote \tcode{sizeof...(R)} may be zero.
-  \exitnote} Let \tcode{C} \removed{denote the type, if any, of an unevaluated
-  conditional expression (5.16) whose first operand is an arbitrary value of
-  type \tcode{bool}, whose second operand is an xvalue of type \tcode{T1}, and
-  whose third operand is an xvalue of type \tcode{T2}.}\color{addclr}be the type
+  comprising \tcode{T}. Let \tcode{C} be the type
   \tcode{common_type_t<T1, T2>}. Then:
 \begin{itemize}
-\item {\color{black}If there is such a type \tcode{C}, the member typedef
+\item If there is such a type \tcode{C}, the member typedef
   \tcode{type} shall denote the same type, if any, as
-  \tcode{common_type_t<C, R\added{est}...>}.}
-\item {\color{black}Otherwise, there shall be no member \tcode{type}.}
+  \tcode{common_type_t<C, Rest...>}.
+\item Otherwise, there shall be no member \tcode{type}.
 \end{itemize}
 \end{itemize}
 
-\color{addclr}
+\pnum
+Note B: Notwithstanding the provisions of \cxxref{meta.type.synop}, and
+pursuant to \cxxref{namespace.std},
+a program may specialize \tcode{common_type<T1, T2>}
+for types \tcode{T1} and \tcode{T2} such that
+\tcode{is_same<T1, decay_t<T1>{>}::value} and
+\tcode{is_same<T2, decay_t<T2>{>}::value} are each \tcode{true}.
+\enternote Such specializations are needed when only explicit conversions
+are desired between the template arguments. \exitnote
+Such a specialization need not have a member named \tcode{type},
+but if it does, that member shall be a \grammarterm{typedef-name}
+for an accessible and unambiguous \cv-unqualified non-reference type \tcode{C}
+to which each of the types \tcode{T1} and \tcode{T2} is explicitly convertible.
+Moreover, \tcode{common_type_t<T1, T2>} shall denote
+the same type, if any, as does \tcode{common_type_t<T2, T1>}.
+No diagnostic is required for a violation of this Note's rules.
+
 \pnum
 For the \tcode{common_reference} trait applied to a parameter pack \tcode{T} of
 types, the member \tcode{type} shall be either defined or not present as follows:
@@ -754,11 +752,14 @@ types, the member \tcode{type} shall be either defined or not present as follows
 \item Otherwise, if \tcode{sizeof...(T)} is two, let \tcode{T1} and \tcode{T2}
   denote the two types in the pack \tcode{T}. Then
 \begin{itemize}
-\item If \tcode{COMMON_REF(T1, T2)} is well-formed and denotes a reference type
+\item If \tcode{T1} and \tcode{T2} are reference types and
+  \tcode{COMMON_REF(T1, T2)} is well-formed and denotes a reference type
   then the member typedef \tcode{type} denotes that type.
 \item Otherwise, if \tcode{basic_common_reference<UNCVREF(T1), UNCVREF(T2),
-  XREF(T1), XREF(T2)>::type} is well-formed, then the member typedef
+  XREF(T1), XREF(\brk{}T2\brk{})\brk{}>\colcol{}type} is well-formed, then the member typedef
   \tcode{type} denotes that type.
+\item Otherwise, if \tcode{COND_RES(T1, T2)} is well-formed, then the
+  member typedef \tcode{type} denotes that type.
 \item Otherwise, if \tcode{common_type_t<T1, T2>} is well-formed, then the
   member typedef \tcode{type} denotes that type.
 \item Otherwise, there shall be no member \tcode{type}.
@@ -773,11 +774,29 @@ types, the member \tcode{type} shall be either defined or not present as follows
 \item Otherwise, there shall be no member \tcode{type}.
 \end{itemize}
 \end{itemize}
-} %\color{addclr}
+
+\pnum
+Notwithstanding the provisions of \cxxref{meta.type.synop}, and
+pursuant to \cxxref{namespace.std},
+a program may specialize \tcode{basic_common_reference<T, U, TQual, UQual>}
+for types \tcode{T} and \tcode{U} such that
+\tcode{is_same<T, decay_t<T>{>}::value} and
+\tcode{is_same<U, decay_t<U>{>}::value} are each \tcode{true}.
+\enternote Such specializations are needed when only explicit conversions
+are desired between the template arguments. \exitnote
+Such a specialization need not have a member named \tcode{type},
+but if it does, that member shall be a \grammarterm{typedef-name}
+for an accessible and unambiguous type \tcode{C}
+to which each of the types \tcode{TQual<T>} and \tcode{UQual<U>} is convertible.
+Moreover, \tcode{basic_common_reference<T, U, TQual, UQual>::type} shall denote
+the same type, if any, as does \tcode{basic_common_reference<U, T, UQual, TQual>::type}.
+A program may not specialize \tcode{basic_common_reference} on the third or
+fourth parameters, \tcode{TQual} or \tcode{UQual}. No diagnostic is required for
+a violation of these rules.
 
 \rSec1[taggedtup]{Tagged tuple-like types}
 
-\rSec2[taggedtup.general]{In general}
+\rSec2[taggedtup.general]{General}
 
 \pnum The library provides a template for augmenting a tuple-like type with named element accessor
 member functions. The library also provides several templates that provide access to \tcode{tagged}
@@ -787,7 +806,7 @@ objects as if they were \tcode{tuple} objects (see~\cxxref{tuple.elem}).
 
 \pnum
 Class template \tcode{tagged} augments a tuple-like class type (e.g., \tcode{pair}~(\cxxref{pairs}),
-\tcode{tuple}~(\cxxref{tuple})) by giving it named accessors. It is used to define the alias
+\tcode{tuple} (\cxxref{tuple})) by giving it named accessors. It is used to define the alias
 templates \tcode{tagged_pair}~(\ref{tagged.pairs}) and
 \tcode{tagged_tuple}~(\ref{tagged.tuple}).
 
@@ -801,14 +820,10 @@ is zero-based.
 
 namespace std { namespace experimental { namespace ranges { inline namespace v1 {
   template <class T>
-  concept bool TagSpecifier() {
-    return @\impdef@;
-  }
+  concept bool TagSpecifier = @\impdef@;
 
   template <class F>
-  concept bool TaggedType() {
-    return @\impdef@;
-  }
+  concept bool TaggedType = @\impdef@;
 
   template <class Base, TagSpecifier... Tags>
     requires sizeof...(Tags) <= tuple_size<Base>::value
@@ -820,25 +835,29 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     tagged(const tagged&) = default;
     tagged &operator=(tagged&&) = default;
     tagged &operator=(const tagged&) = default;
+    tagged(Base&&) noexcept(@\seebelow@)
+      requires MoveConstructible<Base>;
+    tagged(const Base&) noexcept(@\seebelow@)
+      requires CopyConstructible<Base>;
     template <class Other>
-      requires Constructible<Base, Other>()
-    tagged(tagged<Other, Tags...> &&that) noexcept(@\seebelow@);
+      requires Constructible<Base, Other>
+    constexpr tagged(tagged<Other, Tags...> &&that) noexcept(@\seebelow@);
     template <class Other>
-      requires Constructible<Base, const Other&>()
-    tagged(const tagged<Other, Tags...> &that);
+      requires Constructible<Base, const Other&>
+    constexpr tagged(const tagged<Other, Tags...> &that);
     template <class Other>
-      requires Assignable<Base&, Other>()
-    tagged& operator=(tagged<Other, Tags...>&& that) noexcept(@\seebelow@);
+      requires Assignable<Base&, Other>
+    constexpr tagged& operator=(tagged<Other, Tags...>&& that) noexcept(@\seebelow@);
     template <class Other>
-      requires Assignable<Base&, const Other&>()
-    tagged& operator=(const tagged<Other, Tags...>& that);
+      requires Assignable<Base&, const Other&>
+    constexpr tagged& operator=(const tagged<Other, Tags...>& that);
     template <class U>
-      requires Assignable<Base&, U>() && !Same<decay_t<U>, tagged>()
-    tagged& operator=(U&& u) noexcept(@\seebelow@);
-    void swap(tagged& that) noexcept(@\seebelow@)
-      requires Swappable<Base&>();
-    friend void swap(tagged&, tagged&) noexcept(@\seebelow@)
-      requires Swappable<Base&>();
+      requires Assignable<Base&, U> && !Same<decay_t<U>, tagged>
+    constexpr tagged& operator=(U&& u) noexcept(@\seebelow@);
+    constexpr void swap(tagged& that) noexcept(@\seebelow@)
+      requires Swappable<Base>;
+    friend constexpr void swap(tagged&, tagged&) noexcept(@\seebelow@)
+      requires Swappable<Base>;
   };
 }}}}
 \end{codeblock}
@@ -864,7 +883,7 @@ struct @\xname{\textit{TAGGED_GETTER}}@ {
 \pnum
 A \techterm{tag specifier} is a type that facilitates a mapping from a tuple-like type and an
 element index into a \textit{tagged getter} that gives named access to the element at that index.
-\tcode{TagSpecifier<T>()} is satisfied if and only if \tcode{T} is a tag specifier. The tag specifiers in the
+\tcode{TagSpecifier<T>} is satisfied if and only if \tcode{T} is a tag specifier. The tag specifiers in the
 \tcode{Tags} parameter pack shall be unique. \enternote The mapping mechanism from tag specifier to
 tagged getter is unspecified.\exitnote
 
@@ -875,35 +894,70 @@ access to the $N$-th element of the tuple-like type \tcode{D}.
 pointer to any base other than \tcode{Base}.
 
 \pnum
-\tcode{TaggedType<F>()} is satisfied if and only if \tcode{F} is a unary function
-type with return type \tcode{T} which satisfies \tcode{TagSpecifier<T>()}. Let
+\tcode{TaggedType<F>} is satisfied if and only if \tcode{F} is a unary function
+type with return type \tcode{T} which satisfies \tcode{TagSpecifier<T>}. Let
 \tcode{\textit{TAGSPEC}(F)} name the tag specifier of the \tcode{TaggedType} \tcode{F}, and let
 \tcode{\textit{TAGELEM}(F)} name the argument type of the \tcode{TaggedType} \tcode{F}.
 
 \indexlibrary{\idxcode{tagged}!\idxcode{tagged}}
+
 \begin{itemdecl}
-template <class Other>
-  requires Constructible<Base, Other>()
-tagged(tagged<Other, Tags...> &&that) noexcept(@\seebelow@);
+tagged(Base&& that) noexcept(@\seebelow@)
+  requires MoveConstructible<Base>;
 \end{itemdecl}
 
 \begin{itemdescr}
+\pnum
+\effects Initializes \tcode{Base} with \tcode{std::move(that)}.
+
+\pnum
+\remarks The expression in the \tcode{noexcept} is equivalent to:
+
+\begin{codeblock}
+is_nothrow_move_constructible<Base>::value
+\end{codeblock}
+\end{itemdescr}
+
+\begin{itemdecl}
+tagged(const Base& that) noexcept(@\seebelow@)
+  requires CopyConstructible<Base>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Initializes \tcode{Base} with \tcode{that}.
+
+\pnum
+\remarks The expression in the \tcode{noexcept} is equivalent to:
+
+\begin{codeblock}
+is_nothrow_copy_constructible<Base>::value
+\end{codeblock}
+\end{itemdescr}
+
+\begin{itemdecl}
+template <class Other>
+  requires Constructible<Base, Other>
+constexpr tagged(tagged<Other, Tags...> &&that) noexcept(@\seebelow@);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Initializes \tcode{Base} with \tcode{static_cast<Other\&\&>(that)}.
+
 \pnum
 \remarks The expression in the \tcode{noexcept} is equivalent to:
 
 \begin{codeblock}
 is_nothrow_constructible<Base, Other>::value
 \end{codeblock}
-
-\pnum
-\effects Initializes \tcode{Base} with \tcode{static_cast<Other\&\&>(that)}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{tagged}!\idxcode{tagged}}
 \begin{itemdecl}
 template <class Other>
-  requires Constructible<Base, const Other&>()
-tagged(const tagged<Other, Tags...>& that);
+  requires Constructible<Base, const Other&>
+constexpr tagged(const tagged<Other, Tags...>& that);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -915,31 +969,31 @@ tagged(const tagged<Other, Tags...>& that);
 \indexlibrary{\idxcode{tagged}!\idxcode{operator=}}
 \begin{itemdecl}
 template <class Other>
-  requires Assignable<Base&, Other>()
-tagged& operator=(tagged<Other, Tags...>&& that) noexcept(@\seebelow@);
+  requires Assignable<Base&, Other>
+constexpr tagged& operator=(tagged<Other, Tags...>&& that) noexcept(@\seebelow@);
 \end{itemdecl}
 
 \begin{itemdescr}
+\pnum
+\effects Assigns \tcode{static_cast<Other\&\&>(that)} to \tcode{static_cast<Base\&>(*this)}.
+
+\pnum
+\returns \tcode{*this}.
+
 \pnum
 \remarks The expression in the \tcode{noexcept} is equivalent to:
 
 \begin{codeblock}
 is_nothrow_assignable<Base&, Other>::value
 \end{codeblock}
-
-\pnum
-\effects Assigns \tcode{static_cast<Other\&\&>(that)} to \tcode{static_cast<Base\&>(*this)}.
-
-\pnum
-\returns \tcode{*this}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{operator=}!\idxcode{tagged}}
 \indexlibrary{\idxcode{tagged}!\idxcode{operator=}}
 \begin{itemdecl}
 template <class Other>
-  requires Assignable<Base&, const Other&>()
-tagged& operator=(const tagged<Other, Tags...>& that);
+  requires Assignable<Base&, const Other&>
+constexpr tagged& operator=(const tagged<Other, Tags...>& that);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -954,64 +1008,64 @@ tagged& operator=(const tagged<Other, Tags...>& that);
 \indexlibrary{\idxcode{tagged}!\idxcode{operator=}}
 \begin{itemdecl}
 template <class U>
-  requires Assignable<Base&, U>() && !Same<decay_t<U>, tagged>()
-tagged& operator=(U&& u) noexcept(@\seebelow@);
+  requires Assignable<Base&, U> && !Same<decay_t<U>, tagged>
+constexpr tagged& operator=(U&& u) noexcept(@\seebelow@);
 \end{itemdecl}
 
 \begin{itemdescr}
+\pnum
+\effects Assigns \tcode{std::forward<U>(u)} to \tcode{static_cast<Base\&>(*this)}.
+
+\pnum
+\returns \tcode{*this}.
+
 \pnum
 \remarks The expression in the \tcode{noexcept} is equivalent to:
 
 \begin{codeblock}
 is_nothrow_assignable<Base&, U>::value
 \end{codeblock}
-
-\pnum
-\effects Assigns \tcode{std::forward<U>(u)} to \tcode{static_cast<Base\&>(*this)}.
-
-\pnum
-\returns \tcode{*this}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{swap}!\idxcode{tagged}}
 \indexlibrary{\idxcode{tagged}!\idxcode{swap}}
 \begin{itemdecl}
-void swap(tagged& rhs) noexcept(@\seebelow@)
-  requires Swappable<Base&>();
+constexpr void swap(tagged& rhs) noexcept(@\seebelow@)
+  requires Swappable<Base>;
 \end{itemdecl}
 
 \begin{itemdescr}
-\pnum
-\remarks The expression in the \tcode{noexcept} is equivalent to:
-
-\begin{codeblock}
-noexcept(swap(declval<Base&>(), declval<Base&>()))
-\end{codeblock}
-
 \pnum
 \effects Calls \tcode{swap} on the result of applying \tcode{static_cast} to \tcode{*this} and
 \tcode{that}.
 
 \pnum
 \throws Nothing unless the call to \tcode{swap} on the \tcode{Base} sub-objects throws.
+
+\pnum
+\remarks The expression in the \tcode{noexcept} is equivalent to:
+
+\begin{codeblock}
+noexcept(swap(declval<Base&>(), declval<Base&>()))
+\end{codeblock}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{swap}!\tcode{tagged}}%
 \begin{itemdecl}
-friend void swap(tagged& lhs, tagged& rhs) noexcept(@\seebelow@)
-  requires Swappable<Base&>();
+friend constexpr void swap(tagged& lhs, tagged& rhs) noexcept(@\seebelow@)
+  requires Swappable<Base>;
 \end{itemdecl}
 
 \begin{itemdescr}
+\pnum
+\effects Equivalent to \tcode{lhs.swap(rhs)}.
+
 \pnum
 \remarks The expression in the \tcode{noexcept} is equivalent to:
 
 \begin{codeblock}
 noexcept(lhs.swap(rhs))
 \end{codeblock}
-
-\pnum
-\effects Equivalent to \tcode{lhs.swap(rhs)}.
 \end{itemdescr}
 
 \rSec2[tagged.astuple]{Tuple-like access to \tcode{tagged}}
@@ -1106,20 +1160,6 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 \end{codeblock}
 
 \pnum
-Any entities declared or defined in namespace \tcode{std} in header \tcode{<tuple>}
-that are not already defined in namespace \tcode{std::experimental::ranges} in header
-\tcode{<experimental/ranges/tuple>} are imported with
-\grammarterm{using-declaration}{s}~(\cxxref{namespace.udecl}). \enterexample
-\begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
-  using std::tuple;
-  using std::make_tuple;
-  // ... others
-}}}}
-\end{codeblock}
-\exitexample
-
-\pnum
 \begin{codeblock}
 template <TaggedType... Types>
 using tagged_tuple = tagged<tuple<@\textit{TAGELEM}@(Types)...>,
@@ -1148,7 +1188,7 @@ template <TagSpecifier... Tags, class... Types>
 \begin{itemdescr}
 \pnum
 Let \tcode{T} be the type of \tcode{make_tuple(std::forward<Types>(t)...)}.
-Then the return type is \tcode{tagged<T, Tags...>}.
+Then the return type is \tcode{tagged<\brk{}T, Tags...>}.
 
 \pnum
 \returns \tcode{tagged<T, Tags...>(std::forward<Types>(t)...)}.

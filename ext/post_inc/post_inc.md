@@ -17,6 +17,11 @@ In Issaquah, the problem was discussed and a straw poll taken. The wording of th
 > |----|---|---|---|----|
 > | 13 | 6 | 1 | 0 | 1  |
 
+# Revision History
+## R1
+* Incorporate [the PR for Ranges TS issue #361 "missing semantics for OutputIterator's writable post-increment result"](https://github.com/ericniebler/stl2/issues/361) (per LWG Toronto directive)
+* Incorporate [the PR for Ranges TS issue #386 "basic exception guarantee in counted_iterator's postincrement"](https://github.com/ericniebler/stl2/issues/386) (per LWG Toronto directive)
+
 # Input Iterators
 
 ## The Problem
@@ -146,9 +151,17 @@ Change the definition of `OutputIterator` ([iterators.output]) as follows:
 > <tt>concept bool OutputIterator() {</tt>
 > <tt>&nbsp;&nbsp;return Iterator&lt;I&gt;() &amp;&amp; Writable&lt;I, T&gt;()<del>;</del> <ins>&amp;&amp;</ins></tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>requires(I i, T&amp;&amp; t) {</ins></tt>
-> <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>*i++ = std::forward<T>(t); // not required to be equality preserving</ins></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>*i++ = std::forward&lt;T&gt;(t); // not required to be equality preserving</ins></tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>};</ins></tt>
 > <tt>}</tt>
+
+Add a new paragraph between [iterators.output]/1 and paragraph 2:
+
+> -?- Let `E` be an expression such that `decltype((E))` is `T`, and let `i` be a dereferenceable object of type `I`. Then `OutputIterator<I, T>()` is satisfied only if `*i++ = E;` has effects equivalent to:
+> ```c++
+>     *i = E;
+>     ++i;
+> ```
 
 Change the class synopsis of `insert_iterator` ([insert.iterator]) as follows:
 
@@ -213,7 +226,7 @@ Change the class synopsis of `common_iterator` ([common.iterator]) as follows:
 > <tt>&nbsp;&nbsp;public:</tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;// ... as before</tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<del>common_iterator operator++(int);</del></tt>
-> <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins><i>see below</i> operator++(int);</ins></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>decltype(auto) operator++(int);</ins></tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>common_iterator operator++(int)</ins></tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>requires ForwardIterator&lt;I&gt;();</ins></tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;// ... as before</tt>
@@ -252,7 +265,7 @@ Change the class synopsis of `counted_iterator` ([counted.iterator]) as follows:
 > <tt>&nbsp;&nbsp;public:</tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;// ... as before</tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<del>counted_iterator operator++(int);</del></tt>
-> <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins><i>see below</i> operator++(int);</ins></tt>
+> <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>decltype(auto) operator++(int);</ins></tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;<ins>counted_iterator operator++(int)</ins></tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<ins>requires ForwardIterator&lt;I&gt;();</ins></tt>
 > <tt>&nbsp;&nbsp;&nbsp;&nbsp;// ... as before</tt>
@@ -267,7 +280,7 @@ Change [counted.iter.op.incr] as follows:
 > >
 > > > ```
 > > > ++current;
-> > > --cnt
+> > > --cnt;
 > > > ```
 > >
 > > 3 Returns: `*this.`
@@ -276,18 +289,19 @@ Change [counted.iter.op.incr] as follows:
 > > <ins>4 Requires: `cnt > 0`.</ins>
 > > <ins>5 Effects: Equivalent to:</ins>
 > >
-> > > <tt><ins>-\-cnt</ins></tt>
-> > > <tt><ins>return current++;</ins></tt>
+> > > <tt><ins>-\-cnt;</ins></tt>
+> > > <tt><ins>try { return current++; }</ins></tt>
+> > > <tt><ins>catch(.\..) { ++cnt; throw; }</ins></tt>
 >
 > <tt>counted_iterator operator++(int)<del>;</del></tt>
 > <tt>&nbsp;&nbsp;<ins>requires ForwardIterator&lt;I&gt;();</ins></tt>
-> > 6 Requires: `cnt > 0`.
+> > <del>6 Requires: `cnt > 0`.</del>
 > > 7 Effects: Equivalent to:
 > >
 > > > ```
 > > > counted_iterator tmp = *this;
-> > > ++current;
-> > > --cnt;
+> > > <ins>++*this;</ins><del>++current;</del>
+> > > <del>--cnt;</del>
 > > > return tmp;
 > > > ```
 

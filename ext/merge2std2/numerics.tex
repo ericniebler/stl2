@@ -1,0 +1,55 @@
+\rSec0[std2.numerics]{Numerics library}
+
+\synopsis{Header \tcode{<\changed{experimental/ranges}{std2}/random>} synopsis}
+
+\begin{codeblock}
+namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { inline namespace v1 {
+  template <class G>
+  concept @\removed{bool}@ UniformRandomNumberGenerator = @\seebelow@;
+}}@\removed{\}\}}@
+\end{codeblock}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Uniform Random Number Generator requirements:
+
+\rSec1[std2.rand.req.urng]{Uniform random number generator requirements}%
+\indextext{uniform random number generator!requirements|(}%
+\indextext{requirements!uniform random number generator|(}
+
+\begin{codeblock}
+template <class G>
+concept @\removed{bool}@ UniformRandomNumberGenerator =
+  Invocable<G&> &&
+  UnsignedIntegral<result_of_t<G&()>> &&
+  requires {
+    { G::min() } -> Same<result_of_t<G&()>>&&;
+    { G::max() } -> Same<result_of_t<G&()>>&&;
+  };
+\end{codeblock}
+
+\pnum
+A \techterm{uniform random number generator}
+\tcode{g} of type \tcode{G}
+is a function object
+returning unsigned integer values
+such that each value
+in the range of possible results
+has (ideally) equal probability
+of being returned.
+\enternote
+ The degree to which \tcode{g}'s results
+ approximate the ideal
+ is often determined statistically.
+\exitnote
+
+\pnum
+Let \tcode{g} be any object of type \tcode{G}.
+\tcode{UniformRandomNumberGenerator<G>} is satisfied only if
+
+\begin{itemize}
+\item Both \tcode{G::min()} and \tcode{G::max()} are constant expressions~(\cxxref{expr.const}).
+\item \tcode{G::min() < G::max()}.
+\item \tcode{G::min() <= g()}.
+\item \tcode{g() <= G::max()}.
+\item \tcode{g()} has amortized constant complexity.
+\end{itemize}

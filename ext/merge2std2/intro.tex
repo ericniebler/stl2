@@ -1,0 +1,205 @@
+\rSec0[intro.scope]{Scope}
+
+\begin{quote}
+``Eventually, all things merge into one, and a river runs through it.''
+\begin{flushright}
+\textemdash \textit{Norman Maclean}
+\end{flushright}
+\end{quote}
+
+\pnum
+This document proposes to merge the ISO/IEC TS 21425:2017, aka the Ranges TS,
+into the working draft. This document is intended to be taken in conjunction with
+P0898, a paper which proposes importing the definitions of the Ranges TS's Concepts
+library (Clause 7) into namespace \tcode{std}.
+
+\rSec0[intro.refs]{Normative References}
+
+\pnum
+The following referenced documents are indispensable for the
+application of this document. For dated references, only the
+edition cited applies. For undated references, the latest edition
+of the referenced document (including any amendments) applies.
+
+\begin{itemize}
+\item ISO/IEC 14882, \doccite{Programming Languages - \Cpp}
+\item ISO/IEC TS 21425:2017, \doccite{Technical Specification - \Cpp Extensions for Ranges}
+\end{itemize}
+
+ISO/IEC 14882 is herein called the \defn{C\Rplus\Rplus\xspace Standard} and
+ISO/IEC TS 21425:2017 is called the \defn{Ranges TS}.
+
+\rSec0[intro.defs]{Terms and Definitions}
+
+\ednote{The following definitions are hereby proposed for subclause [definitions]
+of ISO/IEC 14882.}
+
+For the purposes of this document, the terms and definitions given in
+ISO/IEC 14882 and the following apply.
+
+ISO and IEC maintain terminological databases for use in standardization at
+the following addresses:
+\begin{itemize}
+\item
+ISO Online browsing platform: available at http://www.iso.org/obp
+\item
+IEC Electropedia: available at http://www.electropedia.org/
+\end{itemize}
+
+\def\definition{\definitionx{\section}}%
+
+\indexdefn{projection}%
+\definition{projection}{std2.defns.projection}
+\defncontext{function object argument} transformation which an algorithm applies
+before inspecting the values of elements
+
+\enterexample
+\begin{codeblock}
+std::pair<int, const char*> pairs[] = {{2, "foo"}, {1, "bar"}, {0, "baz"}};
+std2::sort(pairs, std::less<>{}, [](auto const& p) { return p.first; });
+\end{codeblock}
+sorts the pairs in increasing order of their \tcode{first} members:
+\begin{codeblock}
+{{0, "baz"}, {1, "bar"}, {2, "foo"}}
+\end{codeblock}
+\exitexample
+
+\rSec0[intro]{General Principles}
+
+\rSec1[intro.goals]{Goals}
+
+\pnum
+The primary goal of this proposal is to deliver high-quality, constrained generic
+Standard Library components at the same time that the language gets support for
+such components. 
+
+\rSec1[intro.rationale]{Rationale}
+
+\pnum
+The best, and arguably only practical way to achieve the goal stated above is by
+incorporating the Ranges TS into the working paper. The sooner we can agree on
+what we want ``\tcode{Iterator}'' and ``\tcode{Range}'' to mean going forward
+(for instance), and the sooner users are able to rely on them, the sooner we can
+start building and delivering functionality on top of those fundamental
+abstractions. (For example, see ``P0789: Range Adaptors and
+Utilities''~(\cite{P0789}).)
+
+\pnum
+The cost of not delivering such a set of Standard Library concepts
+and algorithms is that users will either do without or create a babel of mutually
+incompatible concepts and algorithms, often without the rigour followed by the
+Ranges TS. The experience of the authors and implementors of the Ranges TS is that
+getting concept definitions and algorithm constraints right is \textit{hard}. The
+Standard Library should save its users from needless heartache.
+
+\rSec1[intro.risks]{Risks}
+
+\pnum
+Shipping constrained components from the Ranges TS in the C++20 timeframe is not
+without risk. As of the time of writing (February 1, 2018), no major Standard
+Library vendor has shipped an implementation of the Ranges TS. Two of the three
+major compiler vendors have not even shipped an implementation of the concepts
+language feature. Arguably, we have not yet gotten the usage experience for which
+all Technical Specifications are intended.
+
+\pnum
+On the other hand, the components of Ranges TS have been vetted very thoroughly
+by the range-v3~(\cite{range-v3}) project, on which the Ranges TS is based. There is
+no part of the Ranges TS -- concepts included -- that has not seen extensive use
+via range-v3. (The concepts in range-v3 are emulated with high fidelity through
+the use of generalized SFINAE for expressions.) As an Open Source project, usage
+statistics are hard to come by, but the following may be indicitive:
+
+\begin{itemize}
+\item The range-v3 GitHub project has over 1,400 stars, over 120 watchers, and
+145 forks.
+\item It is cloned on average about 6,000 times a month.
+\item A GitHub search, restricted to C++ files, for the string
+``\tcode{range/v3}'' (a path component of all of range-v3's header files), turns
+up over 7,000 hits.
+\end{itemize}
+
+\pnum
+Lacking true concepts, range-v3 cannot emulate concept-based function
+overloading, or the sorts of constraints-checking short-circuit evaluation
+required by true concepts. For that reason, the authors of the Ranges TS have
+created a reference implementation: CMCSTL2~(\cite{cmcstl2}) using true concepts. To
+this reference implementation, the authors ported all of range-v3's tests. These
+exposed only a handful of concepts-specific bugs in the components of the Ranges
+TS (and a great many more bugs in compilers). Those improvements were back-ported
+to range-v3 where they have been thoroughly vetted over the past 2 years.
+
+\pnum
+In short, concern about lack of implementation experience should not be a reason
+to withhold this important Standard Library advance from users.
+
+\rSec1[intro.methedology]{Methodology}
+
+\pnum
+The contents of the Ranges TS, Clause 7 (``Concepts library'') are proposed
+for namespace \tcode{std} by P0898, ``Standard Library Concepts''~(\cite{P0898}).
+Additionally, P0898 proposes the \tcode{identity} function
+object~(\tsref{func.identity}) and the \tcode{common_reference} type
+trait~(\tsref{meta.trans.other}) for namespace \tcode{std}, and the \tcode{swap}
+customization point object for namespace \tcode{std2}. The changes proposed by
+the Ranges TS to \tcode{common_type} are merged into the working paper (also
+by P0898). The ``\tcode{invoke}'' function and the ``\tcode{swappable}'' type
+traits (e.g., \tcode{is_swappable_with}) already exist in the text of the
+working paper, so they are omitted here.
+
+\pnum
+The salient, high-level features of this proposal are as follows:
+
+\begin{itemize}
+\item The remaining library components in the Ranges TS are proposed for
+namespace \tcode{::std2::}.
+
+\item The text of the Ranges TS is rebased on the latest working draft.
+
+\item Structurally, this paper proposes to relocate the existing library clauses
+of the working draft (20-33) down one level under a new clause 20, provisionally
+titled ``Standard Library, Version 1''. No stable names are changed.
+
+\item The Concepts Library clause, proposed by P0898, is located in that paper
+between the ``Language Support Library'' and the ``Diagnostics library''. In the
+organization proposed by this paper, that places it as subclause 20.3. This paper
+refers to it as such.
+
+\item We additionally propose that a new clause 21 be created, provisionally
+titled ``Standard Library, Version 2'', and the following clauses of the Ranges
+TS should be made subclauses of this clause: 6, 8-12.
+
+\item Where the text of the Ranges TS needs to be updated, the text is presented
+with change markings: \removed{red strikethrough} for removed text and
+\added{blue underline} for added text.
+
+\item The stable names of everything in the Ranges TS, clauses 6, 8-12 are
+changed by preprending ``\tcode{std2.}''. References are updated accordingly.
+
+\item The headers of the Ranges TS are renamed from
+\tcode{<experimental/ranges/\textit{foo}>} to \tcode{<std2/\textit{foo}>}.
+\end{itemize}
+
+\rSec1[intro.compliance]{Implementation compliance}
+
+\pnum
+Conformance requirements for this specification are the same as those
+defined in \cxxref{intro.compliance} in the \Cpp Standard.
+\enternote
+Conformance is defined in terms of the behavior of programs.
+\exitnote
+
+\rSec1[intro.namespaces]{Namespaces, headers, and modifications to standard classes}
+
+\pnum
+Since the library components described in this document are constrained versions
+of facilities already found within namespace \tcode{std}, we propose to define
+everything within namespace \tcode{::std2::v1}, where \tcode{v1} is an inline
+namespace.
+
+\pnum
+Unless otherwise specified, references to entities described in this
+document are assumed to be qualified with \tcode{::std2::}, and
+references to entities described in the current working draft of the
+International Standard, including the entities of the ``Concepts library''
+proposed by P0898, are assumed to be qualified with \tcode{::std::}.

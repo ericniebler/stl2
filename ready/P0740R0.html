@@ -1,0 +1,1870 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title>Ranges TS “Immediate” Issues from the July 2017 (Toronto) meeting</title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+  </style>
+  <style type="text/css">
+  ins {
+    background-color: lime; text-decoration:underline;
+  }
+  
+  del {
+    background-color: #ff8080; text-decoration:line-through;
+  }
+  
+  ednote {
+    color:blue;
+  }
+  
+  table {
+    border-collapse: collapse;
+  }
+  
+  table, th, td {
+    border: 1px solid black;
+  }
+  
+  code.diff > span.st {
+    color: black;
+    background-color: #ff8080; text-decoration:line-through;
+  }
+  code.diff > span.va {
+    color: black;
+    background-color: lightgreen;
+  }
+  
+  </style>
+</head>
+<body>
+<table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="607">
+  <tr>
+    <td width="172" align="left" valign="top">Document number:</td>
+    <td width="435">
+      P0740R0
+    </td>
+  </tr>
+  <tr>
+    <td width="172" align="left" valign="top">Date:</td>
+    <td width="435">2017-07-14</td>
+  </tr>
+  <tr>
+    <td width="172" align="left" valign="top">Project:</td>
+    <td width="435">C++ Extensions for Ranges, Library Working Group</td>
+  </tr>
+  <tr>
+    <td width="172" align="left" valign="top">Reply-to:</td>
+    <td width="435">
+      Casey Carter &lt;<a href="mailto:Casey@Carter.net">Casey@Carter.net</a>&gt;<br>
+    </td>
+  </tr>
+</table>
+<div id="header">
+<h1 class="title">Ranges TS “Immediate” Issues from the July 2017 (Toronto) meeting</h1>
+</div>
+<h2 id="review-stated-complexities-of-algorithms-wrt-the-use-of-projections"><a href="https://github.com/ericniebler/stl2/issues/61">61</a>: Review stated complexities of algorithms wrt the use of projections</h2>
+<p>Many stated complexities involving number of projection invocations are wrong by a factor of two. See <a href="https://github.com/ericniebler/range-v3/issues/148">ericniebler/range-v3#148</a> and <code>min_element</code>, for example.</p>
+<h3 id="proposed-resolution">Proposed Resolution</h3>
+<p>Change [alg.transform]/5 as follows:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> 4 Returns: {first1 + N, result + N} or make_tagged_tuple&lt;tag::in1, tag::in2, [...]
+<span class="st">-5 Complexity: Exactly N applications of op or binary_op.</span>
+<span class="va">+5 Complexity: Exactly N applications of op or binary_op and the corresponding projection(s).</span>
+ 6 Remarks: result may be equal to first1 in case of unary transform, or to first1 [...]</code></pre></div>
+<p>Change [sort]/2 as follows:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> 1 Effects: Sorts the elements in the range [first,last).
+<span class="st">-2 Complexity: O(N log(N)) (where N == last - first) comparisons.</span>
+<span class="va">+2 Complexity: O(N log(N)) (where N == last - first) comparisons, and twice as many applications</span>
+<span class="va">+  of the projection.</span></code></pre></div>
+<p>Change [stable.sort]/2 as follows:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> 1 Effects: Sorts the elements in the range [first,last).
+<span class="st">-2 Complexity: It does at most N log2(N) (where N == last - first) comparisons; if enough extra</span>
+<span class="st">-  memory is available, it is N log(N).</span>
+<span class="va">+2 Complexity: Let N == last - first. If enough extra memory is available, N log(N) comparisons.</span>
+<span class="va">+  Otherwise, at most N log2(N) comparisons. In either case, twice as many applications of the</span>
+<span class="va">+  projection as the number of comparisons.</span>
+ 3 Remarks: Stable (ISO/IEC 14882:2014 §17.6.5.7).</code></pre></div>
+<p>Change [partial.sort]/2 as follows:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> 1 Effects: Places the first middle - first sorted elements from the range [first,last) [...]
+<span class="st">-2 Complexity: It takes approximately (last - first) * log(middle - first) comparisons.</span>
+<span class="va">+2 Complexity: It takes approximately (last - first) * log(middle - first) comparisons, and exactly twice</span>
+<span class="va">+  as many applications of the projection.</span></code></pre></div>
+<p>Change [partial.sort.copy]/3 as follows:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> 2 Returns: The smaller of: result_last or result_first + (last - first).
+<span class="st">-3 Complexity: Approximately (last - first) * log(min(last - first, result_last - result_first))</span>
+<span class="st">-  comparisons.</span>
+<span class="va">+3 Complexity: Approximately (last - first) * log(min(last - first, result_last - result_first))</span>
+<span class="va">+  comparisons, and exactly twice as many applications of the projection.</span></code></pre></div>
+<p>Change [sort.heap]/4 as follows:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> 3 Returns: last
+<span class="st">-4 Complexity: At most N log(N) comparisons (where N == last - first).</span>
+<span class="va">+4 Complexity: At most N log(N) comparisons (where N == last - first), and exactly twice as many</span>
+<span class="va">+  applications of the projection.</span></code></pre></div>
+<h2 id="why-do-neither-reference-types-nor-array-types-satisfy-destructible"><a href="https://github.com/ericniebler/stl2/issues/70">70</a>: Why do neither reference types nor array types satisfy Destructible?</h2>
+<p>I must be missing something: why do we want neither reference types nor array types to satisfy <code>Destructible&lt;&gt;()</code>? Surely variables of such types can be destroyed.</p>
+<p>I understand that <code>Destructible</code> is considered “the base of the hierarchy of object concepts” — but if it’s really needed, why isn’t there a <code>SingleObject&lt;&gt;()</code> concept for this purpose? Or, better yet, just thusly rename the current <code>Destructible</code>?</p>
+<h3 id="proposed-resolution-1">Proposed Resolution</h3>
+<p>Adopt <a href="http://wiki.edg.com/pub/Wg21toronto2017/StrawPolls/p0547r2.html">P0547R2: “Ranges TS: Assorted Object Concept Fixes”</a>.</p>
+<h2 id="raw-pointer-does-not-satisfy-the-requirements-of-randomaccessiterator"><a href="https://github.com/ericniebler/stl2/issues/154">154</a>: Raw pointer does not satisfy the requirements of <code>RandomAccessIterator</code></h2>
+<p>In the requirement of <code>RandomAccessIterator&lt;I&gt;</code> requires that <code>I</code> must satisfy <code>TotallyOrder&lt;I&gt;</code>. From the semantical requirement of 19.3.4 [concepts.lib.compare.totallyordered] p1, this requires that for all objects <code>a</code>, <code>b</code>, <code>c</code> of iterator type one of following is true: <code>a &lt; b</code>, <code>b &lt; a</code>, <code>b == a</code>. Non normative note placed below there requirements, states that this is not required to be true for not well-formed object (default constructed pointers/iterators), but does not exclude compare pointer to different arrays (which are well-formed).</p>
+<h3 id="proposed-resolution-2">Proposed Resolution</h3>
+<p>Modify the synopsis of the header <code>&lt;experimental/ranges/functional&gt;</code> in [function.objects] as follows:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> // 8.3.2, comparisons:
+ template &lt;class T = void&gt;
+<span class="st">-  requires EqualityComparable&lt;T&gt; || Same&lt;T, void&gt;</span>
+<span class="va">+  requires see below</span>
+ struct equal_to;
+
+ template &lt;class T = void&gt;
+<span class="st">-  requires EqualityComparable&lt;T&gt; || Same&lt;T, void&gt;</span>
+<span class="va">+  requires see below</span>
+ struct not_equal_to;
+
+ template &lt;class T = void&gt;
+<span class="st">-  requires StrictTotallyOrdered&lt;T&gt; || Same&lt;T, void&gt;</span>
+<span class="va">+  requires see below</span>
+ struct greater;
+
+ template &lt;class T = void&gt;
+<span class="st">-  requires StrictTotallyOrdered&lt;T&gt; || Same&lt;T, void&gt;</span>
+<span class="va">+  requires see below</span>
+ struct less;
+
+ template &lt;class T = void&gt;
+<span class="st">-  requires StrictTotallyOrdered&lt;T&gt; || Same&lt;T, void&gt;</span>
+<span class="va">+  requires see below</span>
+ struct greater_equal;
+
+ template &lt;class T = void&gt;
+<span class="st">-  requires StrictTotallyOrdered&lt;T&gt; || Same&lt;T, void&gt;</span>
+<span class="va">+  requires see below</span>
+ struct less_equal;
+
+ template &lt;&gt; struct equal_to&lt;void&gt;;
+ template &lt;&gt; struct not_equal_to&lt;void&gt;;
+ [...]</code></pre></div>
+<p>Also modify the detailed specifications of the comparison function objects in [comparisons]:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> 1 The library provides basic function object classes for all of the comparison operators in the
+   language (ISO/IEC 14882:2014 §5.9, ISO/IEC 14882:2014 §5.10).
+
+<span class="va">+? In this section, BUILTIN_PTR_CMP(T, OP, U) for types T and U and where OP is</span>
+<span class="va">+  an equality (\cxxref{expr.eq}) or relational operator (\cxxref{expr.rel}) is</span>
+<span class="va">+  a boolean constant expression. BUILTIN_PTR_CMP(T, OP, U) is true if and only</span>
+<span class="va">+  if OP in the expression declval&lt;T&gt;() OP declval&lt;U&gt;() resolves to a built-in</span>
+<span class="va">+  operator comparing pointers.</span>
+<span class="va">+</span>
+<span class="va">+? There is an implementation-defined strict total ordering over all pointer</span>
+<span class="va">+  values of a given type. This total ordering is consistent with the partial</span>
+<span class="va">+  order imposed by the builtin operators &lt;, &gt;, &lt;=, and &gt;=.</span>
+
+ template &lt;class T = void&gt;
+   requires EqualityComparable&lt;T&gt; || Same&lt;T, void&gt;
+<span class="va">+    || BUILTIN_PTR_CMP(const T&amp;, ==, const T&amp;)</span>
+ struct equal_to {
+   constexpr bool operator()(const T&amp; x, const T&amp; y) const;
+ };
+
+<span class="st">-2 operator() returns x == y.</span>
+<span class="va">+2 operator() has effects equivalent to: return equal_to&lt;&gt;{}(x, y);</span>
+
+ template &lt;class T = void&gt;
+   requires EqualityComparable&lt;T&gt; || Same&lt;T, void&gt;
+<span class="va">+    || BUILTIN_PTR_CMP(const T&amp;, ==, const T&amp;)</span>
+ struct not_equal_to {
+   constexpr bool operator()(const T&amp; x, const T&amp; y) const;
+ };
+
+<span class="st">-3 operator() returns x != y.</span>
+<span class="va">+3 operator() has effects equivalent to: return !equal_to&lt;&gt;{}(x, y);</span>
+
+ template &lt;class T = void&gt;
+   requires StrictTotallyOrdered&lt;T&gt; || Same&lt;T, void&gt;
+<span class="va">+    || BUILTIN_PTR_CMP(const T&amp;, &lt;, const T&amp;)</span>
+ struct greater {
+   constexpr bool operator()(const T&amp; x, const T&amp; y) const;
+ };
+
+<span class="st">-4 operator() returns x &gt; y.</span>
+<span class="va">+4 operator() has effects equivalent to: return less&lt;&gt;{}(y, x);</span>
+
+ template &lt;class T = void&gt;
+   requires StrictTotallyOrdered&lt;T&gt; || Same&lt;T, void&gt;
+<span class="va">+    || BUILTIN_PTR_CMP(const T&amp;, &lt;, const T&amp;)</span>
+ struct less {
+   constexpr bool operator()(const T&amp; x, const T&amp; y) const;
+ };
+
+<span class="st">-5 operator() returns x &lt; y.</span>
+<span class="va">+5 operator() has effects equivalent to return less&lt;&gt;{}(x, y);</span>
+
+ template &lt;class T = void&gt;
+   requires StrictTotallyOrdered&lt;T&gt; || Same&lt;T, void&gt;
+<span class="va">+    || BUILTIN_PTR_CMP(const T&amp;, &lt;, const T&amp;)</span>
+ struct greater_equal {
+   constexpr bool operator()(const T&amp; x, const T&amp; y) const;
+ };
+
+<span class="st">-6 operator() returns x &gt;= y.</span>
+<span class="va">+6 operator() has effects equivalent to return !less&lt;&gt;{}(x, y);.</span>
+
+ template &lt;class T = void&gt;
+   requires StrictTotallyOrdered&lt;T&gt; || Same&lt;T, void&gt;
+<span class="va">+    || BUILTIN_PTR_CMP(const T&amp;, &lt;, const T&amp;)</span>
+ struct less_equal {
+   constexpr bool operator()(const T&amp; x, const T&amp; y) const;
+ };
+
+<span class="st">-7 operator() returns x &lt;= y.</span>
+<span class="va">+7 operator() has effects equivalent to: return !less&lt;&gt;{}(y, x);</span>
+
+ template &lt;&gt; struct equal_to&lt;void&gt; {
+   template &lt;class T, class U&gt;
+<span class="st">-    requires EqualityComparableWith&lt;T, U&gt;</span>
+<span class="st">-  constexpr auto operator()(T&amp;&amp; t, U&amp;&amp; u) const</span>
+<span class="st">-    -&gt; decltype(std::forward&lt;T&gt;(t) == std::forward&lt;U&gt;(u));</span>
+<span class="va">+    requires EqualityComparableWith&lt;T, U&gt; || BUILTIN_PTR_CMP(T, ==, U)</span>
+<span class="va">+  constexpr bool operator()(T&amp;&amp; t, U&amp;&amp; u) const;</span>
+
+   typedef unspecified is_transparent;
+ };
+
+<span class="st">-8 operator() returns std::forward&lt;T&gt;(t) == std::forward&lt;U&gt;(u).</span>
+<span class="va">+8 Requires: If the expression std::forward&lt;T&gt;(t) == std::forward&lt;U&gt;(u) results in a call to a</span>
+<span class="va">+   built-in operator == comparing pointers of type P, the conversion sequences from both</span>
+<span class="va">+   T and U to P shall be equality-preserving (\ref{concepts.lib.general.equality}).</span>
+
+<span class="va">+-?- Effects:</span>
+<span class="va">+(?.1) - If the expression std::forward&lt;T&gt;(t) == std::forward&lt;U&gt;(u) results in a call to a</span>
+<span class="va">+        built-in operator == comparing pointers of type P: returns false if either (the</span>
+<span class="va">+        converted value of) t precedes u or u precedes t in the implementation-defined</span>
+<span class="va">+        strict total order over pointers of type P and otherwise true.</span>
+<span class="va">+(?.2) - Otherwise, equivalent to: return std::forward&lt;T&gt;(t) == std::forward&lt;U&gt;(u);</span>
+
+ template &lt;&gt; struct not_equal_to&lt;void&gt; {
+   template &lt;class T, class U&gt;
+<span class="st">-    requires EqualityComparableWith&lt;T, U&gt;</span>
+<span class="st">-  constexpr auto operator()(T&amp;&amp; t, U&amp;&amp; u) const</span>
+<span class="st">-    -&gt; decltype(std::forward&lt;T&gt;(t) != std::forward&lt;U&gt;(u));</span>
+<span class="va">+    requires EqualityComparableWith&lt;T, U&gt; || BUILTIN_PTR_CMP(T, ==, U)</span>
+<span class="va">+  constexpr bool operator()(T&amp;&amp; t, U&amp;&amp; u) const;</span>
+
+   typedef unspecified is_transparent;
+ };
+
+<span class="st">-9 operator() returns std::forward&lt;T&gt;(t) != std::forward&lt;U&gt;(u).</span>
+<span class="va">+9 operator() has effects equivalent to:</span>
+<span class="va">+    return !equal_to&lt;&gt;{}(std::forward&lt;T&gt;(t), std::forward&lt;U&gt;(u));</span>
+
+ template &lt;&gt; struct greater&lt;void&gt; {
+   template &lt;class T, class U&gt;
+<span class="st">-    requires StrictTotallyOrderedWith&lt;T, U&gt;</span>
+<span class="st">-  constexpr auto operator()(T&amp;&amp; t, U&amp;&amp; u) const</span>
+<span class="st">-    -&gt; decltype(std::forward&lt;T&gt;(t) &gt; std::forward&lt;U&gt;(u));</span>
+<span class="va">+    requires StrictTotallyOrderedWith&lt;T, U&gt; || BUILTIN_PTR_CMP(U, &lt;, T)</span>
+<span class="va">+  constexpr bool operator()(T&amp;&amp; t, U&amp;&amp; u) const;</span>
+
+   typedef unspecified is_transparent;
+ };
+
+<span class="st">-10 operator() returns std::forward&lt;T&gt;(t) &gt; std::forward&lt;U&gt;(u).</span>
+<span class="va">+10 operator() has effects equivalent to:</span>
+<span class="va">+     return less&lt;&gt;{}(std::forward&lt;U&gt;(u), std::forward&lt;T&gt;(t));</span>
+
+ template &lt;&gt; struct less&lt;void&gt; {
+   template &lt;class T, class U&gt;
+<span class="st">-    requires StrictTotallyOrderedWith&lt;T, U&gt;</span>
+<span class="st">-  constexpr auto operator()(T&amp;&amp; t, U&amp;&amp; u) const</span>
+<span class="st">-    -&gt; decltype(std::forward&lt;T&gt;(t) &lt; std::forward&lt;U&gt;(u));</span>
+<span class="va">+    requires StrictTotallyOrderedWith&lt;T, U&gt; || BUILTIN_PTR_CMP(T, &lt;, U)</span>
+<span class="va">+  constexpr bool operator()(T&amp;&amp; t, U&amp;&amp; u) const;</span>
+
+   typedef unspecified is_transparent;
+ };
+
+<span class="st">-11 operator() returns std::forward&lt;T&gt;(t) &lt; std::forward&lt;U&gt;(u).</span>
+<span class="va">+11 Requires: If the expression std::forward&lt;T&gt;(t) &lt; std::forward&lt;U&gt;(u) results in a call to a</span>
+<span class="va">+   built-in operator &lt; comparing pointers of type P, the conversion sequences from both</span>
+<span class="va">+   T and U to P shall be equality-preserving (\ref{concepts.lib.general.equality}). For any</span>
+<span class="va">+   expressions ET and EU such that decltype((ET)) is T and decltype((EU)) is U, exactly one</span>
+<span class="va">+   of less&lt;&gt;{}(ET, EU), less&lt;&gt;{}(EU, ET) or equal_to&lt;&gt;{}(ET, EU) shall be true.</span>
+
+<span class="va">+-?- Effects:</span>
+<span class="va">+(?.1) - If the expression std::forward&lt;T&gt;(t) &lt; std::forward&lt;U&gt;(u) results in a call to a</span>
+<span class="va">+        built-in</span>
+<span class="va">+        operator &lt; comparing pointers of type P: returns true if (the converted value of) t</span>
+<span class="va">+        precedes u in the implementation-defined strict total order over pointers of type P</span>
+<span class="va">+        and otherwise false.</span>
+<span class="va">+(?.2) - Otherwise, equivalent to: return std::forward&lt;T&gt;(t) &lt; std::forward&lt;U&gt;(u);</span>
+
+ template &lt;&gt; struct greater_equal&lt;void&gt; {
+   template &lt;class T, class U&gt;
+<span class="st">-    requires StrictTotallyOrderedWith&lt;T, U&gt;</span>
+<span class="st">-  constexpr auto operator()(T&amp;&amp; t, U&amp;&amp; u) const</span>
+<span class="st">-    -&gt; decltype(std::forward&lt;T&gt;(t) &gt;= std::forward&lt;U&gt;(u));</span>
+<span class="va">+    requires StrictTotallyOrderedWith&lt;T, U&gt; || BUILTIN_PTR_CMP(T, &lt;, U)</span>
+<span class="va">+  constexpr bool operator()(T&amp;&amp; t, U&amp;&amp; u) const;</span>
+
+   typedef unspecified is_transparent;
+ };
+
+<span class="st">-12 operator() returns std::forward&lt;T&gt;(t) &gt;= std::forward&lt;U&gt;(u).</span>
+<span class="va">+12 operator() has effects equivalent to:</span>
+<span class="va">+     return !less&lt;&gt;{}(std::forward&lt;T&gt;(t), std::forward&lt;U&gt;(u));</span>
+
+ template &lt;&gt; struct less_equal&lt;void&gt; {
+   template &lt;class T, class U&gt;
+<span class="st">-    requires StrictTotallyOrderedWith&lt;T, U&gt;</span>
+<span class="st">-  constexpr auto operator()(T&amp;&amp; t, U&amp;&amp; u) const</span>
+<span class="st">-    -&gt; decltype(std::forward&lt;T&gt;(t) &lt;= std::forward&lt;U&gt;(u));</span>
+<span class="va">+    requires StrictTotallyOrderedWith&lt;T, U&gt; || BUILTIN_PTR_CMP(U, &lt;, T)</span>
+<span class="va">+  constexpr bool operator()(T&amp;&amp; t, U&amp;&amp; u) const;</span>
+
+   typedef unspecified is_transparent;
+ };
+
+<span class="st">-13 operator() returns std::forward&lt;T&gt;(t) &lt;= std::forward&lt;U&gt;(u).</span>
+<span class="va">+13 operator() has effects equivalent to:</span>
+<span class="va">+      return !less&lt;&gt;{}(std::forward&lt;U&gt;(u), std::forward&lt;T&gt;(t));</span>
+
+<span class="st">-14 For templates greater, less, greater_equal, and less_equal, the specializations for any</span>
+<span class="st">-   pointer type yield a total order, even if the built-in operators &lt;, &gt;, &lt;=, &gt;= do not.</span></code></pre></div>
+<h2 id="validity-of-references-obtained-from-out-of-lifetime-iterators"><a href="https://github.com/ericniebler/stl2/issues/156">156</a>: Validity of references obtained from out-of-lifetime iterators</h2>
+<h3 id="summary">Summary</h3>
+<p>By removing the requirement in C++14 [forward.iterators]/6:</p>
+<blockquote>
+<p>If <code>a</code> and <code>b</code> are both dereferenceable, then <code>a == b</code> if and only if <code>*a</code> and <code>*b</code> are bound to the same object.</p>
+</blockquote>
+<p>the Ranges TS inadvertently allows “stashing” forward iterators, which notoriously break <code>reverse_iterator</code> and e.g. <code>return *(some_local_iterator + 4)</code>.</p>
+<h3 id="detailed-discussion">Detailed discussion</h3>
+<p>Iterators that return a reference to a member object are known as “stashing” iterators - <code>istream_iterator</code> is the classic example. They famously do not work with <code>reverse_iterator</code>, since they violate [forward.iterators]/6:</p>
+<blockquote>
+<p>If <code>a</code> and <code>b</code> are both dereferenceable, then <code>a == b</code> if and only if <code>*a</code> and <code>*b</code> are bound to the same object.</p>
+</blockquote>
+<p><a href="https://github.com/ericniebler/stl2/commit/3efd5da3271a6778ce54aaa0f766d4191455dec4">“various concept tweaks” committed June 1</a> changed this requirement in the TS to:</p>
+<pre><code>If \tcode{a} and \tcode{b} are both dereferenceable, then \tcode{a == b} if and only if
+\tcode{*a} is equal to \tcode{*b}.</code></pre>
+<p>So that the requirement has well-defined meaning when <code>*a</code> and <code>*b</code> are not objects.</p>
+<p><a href="https://github.com/ericniebler/stl2/commit/5578feee5e6538055e66d42e24afe559be930aa0">“Language for equality-preserving-by-default expressions” committed July 3</a> removed the requirement completely, since</p>
+<ul>
+<li><code>*a == *b</code> if <code>a == b</code> is implied by the equality preservation of <code>*</code> from <code>Readable</code>, and</li>
+<li><code>a == b</code> if <code>*a == *b</code> requires that a value appears at most once in any given range, which was not intended.</li>
+</ul>
+<p>I believe the TS wording now allows “stashing” iterators to satisfy <code>Forward</code>, despite that many reasonable operations simply don’t work with them. Iterators <em>denote</em> elements, they must not <em>own</em> them: the expectation is that the lifetime of denoted object elements is the lifetime of the range, <em>not</em> the lifetime of the iterator. We need to bring back a requirement that forbids “stashing” <code>Forward</code> iterators. This should cause no hardship to TS users since <code>Forward</code> iterators can have prvalue types.</p>
+<p>Proxy reference types make it challenging to develop a simple requirement; the straightforward “If <code>reference_t&lt;I&gt;</code> is a reference type, then <code>&amp;*a == &amp;*b</code> iff <code>a == b</code>” doesn’t work. The high-level wording “If iterator values denote objects, then <code>a == b</code> iff <code>a</code> and <code>b</code> denote the same object.” seems clearer to me, but I’m accustomed to thinking of iterators as either denoting objects or denoting values. I’m not sure someone coming straight to the TS from C++14 would understand. I also don’t think the “If..dereferenceable” qualifier since (a) past-the-end iterators denote the same past-the-end object, and (b) singular iterators won’t be in the domain of <code>==</code> and can therefore do anything they like.</p>
+<h3 id="proposed-resolution-3">Proposed Resolution</h3>
+<p>Add a new paragraph to section “Concept <code>ForwardIterator</code>” ([iterators.forward]) after paragraph 4:</p>
+<blockquote>
+<ol>
+<li>Pointers and references obtained from a forward iterator into a range <code>[i, s)</code> must remain valid while <code>[i, s)</code> continues to denote a range.</li>
+</ol>
+</blockquote>
+<h2 id="convertibleto-should-require-both-implicit-and-explicit-conversion"><a href="https://github.com/ericniebler/stl2/issues/167">167</a>: <code>ConvertibleTo</code> should require both implicit and explicit conversion</h2>
+<p>Currently, <code>ConvertibleTo</code> checks only for <em>implicit</em> convertibility (a-la <code>is_convertible</code>). It would be highly surprising for generic code for an <em>explicit</em> conversion to fail, or to succeed but yield a different result.</p>
+<h3 id="proposed-resolution-4">Proposed Resolution</h3>
+<p>(Also fixes <a href="https://github.com/ericniebler/stl2/issues/314">#314</a>.)</p>
+<p>Replace the contents of [concepts.lib.corelang.convertibleto] with:</p>
+<blockquote>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> From, <span class="kw">class</span> To&gt;
+concept <span class="dt">bool</span> ConvertibleTo() {
+  <span class="cf">return</span> is_convertible&lt;From, To&gt;::value &amp;&amp;
+    requires (From (&amp;f)()) {
+      <span class="kw">static_cast</span>&lt;To&gt;(f());
+    };
+}</code></pre></div>
+<p>1 Let <code>test</code> be the invented function:</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">To test(From (&amp;f)()) {
+  <span class="cf">return</span> f();
+}</code></pre></div>
+<p>and let <code>f</code> be a function with no arguments and return type <code>From</code> such that <code>f()</code> is equality preserving. Then <code>ConvertibleTo&lt;From, To&gt;()</code> is satisfied if and only if:</p>
+<blockquote>
+<p>(1.1) - <code>To</code> is not an object or reference-to-object type, or <code>static_cast&lt;To&gt;(f())</code> is equal to <code>test(f)</code>.<br />
+(1.2) - <code>From</code> is not a reference-to-object type, or</p>
+<blockquote>
+<p>(1.2.1) - If <code>From</code> is an rvalue reference to a non <code>const</code>-qualified type, the resulting state of the object referenced by <code>f()</code> after either above expression is valid but unspecified ([lib.types.movedfrom]).<br />
+(1.2.2) - Otherwise, the object referred to by <code>f()</code> is not modified by either above expression.</p>
+</blockquote>
+</blockquote>
+<p>2 There need not be any subsumption relationship between <code>ConvertibleTo&lt;From, To&gt;()</code><br />
+and <code>is_convertible&lt;From, To&gt;::value</code>.</p>
+</blockquote>
+<h2 id="unique_copy-and-lwg-2439"><a href="https://github.com/ericniebler/stl2/issues/170">170</a>: <code>unique_copy</code> and LWG 2439</h2>
+<p>The declaration of <code>unique_copy</code> is underconstrained when the iterator category of the source range is not forward. It should probably be brought into line with the resolution of <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/lwg-defects.html#2439">LWG2439</a>.</p>
+<h3 id="proposed-resolution-5">Proposed Resolution</h3>
+<p>Update the declarations of <code>unique_copy</code> in the synopsis of <code>&lt;experimental/ranges/algorithm&gt;</code> in [algorithms.general] as follows:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> template &lt;InputIterator I, Sentinel&lt;I&gt; S, WeaklyIncrementable O,
+     class Proj = identity, IndirectRelation&lt;projected&lt;I, Proj&gt;&gt; R = equal_to&lt;&gt;&gt;
+<span class="st">-  requires IndirectlyCopyable&lt;I, O&gt;() &amp;&amp; (ForwardIterator&lt;I&gt;() ||</span>
+<span class="st">-    ForwardIterator&lt;O&gt;() || IndirectlyCopyableStorable&lt;I, O&gt;())</span>
+<span class="va">+  requires IndirectlyCopyable&lt;I, O&gt;() &amp;&amp;</span>
+<span class="va">+    (ForwardIterator&lt;I&gt;() ||</span>
+<span class="va">+     (InputIterator&lt;O&gt;() &amp;&amp; Same&lt;value_type_t&lt;I&gt;, value_type_t&lt;O&gt;&gt;()) ||</span>
+<span class="va">+     IndirectlyCopyableStorable&lt;iterator_t&lt;Rng&gt;, O&gt;())</span>
+   tagged_pair&lt;tag::in(I), tag::out(O)&gt;
+     unique_copy(I first, S last, O result, R comp = R{}, Proj proj = Proj{});
+
+ template &lt;InputRange Rng, WeaklyIncrementable O, class Proj = identity,
+     IndirectRelation&lt;projected&lt;iterator_t&lt;Rng&gt;, Proj&gt;&gt; R = equal_to&lt;&gt;&gt;
+   requires IndirectlyCopyable&lt;iterator_t&lt;Rng&gt;, O&gt;() &amp;&amp;
+<span class="st">-    (ForwardIterator&lt;iterator_t&lt;Rng&gt;&gt;() || ForwardIterator&lt;O&gt;() ||</span>
+<span class="va">+    (ForwardIterator&lt;iterator_t&lt;Rng&gt;&gt;() ||</span>
+<span class="va">+     (InputIterator&lt;O&gt;() &amp;&amp; Same&lt;value_type_t&lt;I&gt;, value_type_t&lt;O&gt;&gt;()) ||</span>
+      IndirectlyCopyableStorable&lt;iterator_t&lt;Rng&gt;, O&gt;())
+   tagged_pair&lt;tag::in(safe_iterator_t&lt;Rng&gt;), tag::out(O)&gt;
+     unique_copy(Rng&amp;&amp; rng, O result, R comp = R{}, Proj proj = Proj{});</code></pre></div>
+<h2 id="swappable-concept-and-p0185-swappable-traits"><a href="https://github.com/ericniebler/stl2/issues/174">174</a>: <code>Swappable</code> concept and P0185 swappable traits</h2>
+<p>…have inconsistent interfaces. Our <code>Swappable&lt;T, U&gt;</code> is roughly equivalent to C++17’s <code>is_swappable_with&lt;T, U&gt;</code>, so <code>is_swappable&lt;T&gt;</code> - which is equivalent to <code>is_swappable_with&lt;T&amp;, T&amp;&gt;</code> - is roughly equivalent to <code>Swappable&lt;T&amp;, T&amp;&gt;</code>. There’s enormous potential for confusion in this disparity.</p>
+<p>We need to bring the concept definitions to parity with the WP traits by renaming <code>Swappable&lt;T, U&gt;</code> to <code>SwappableWith</code>, and defining <code>Swappable&lt;T&gt;</code> to be roughly equivalent to <code>SwappableWith&lt;T&amp;, T&amp;&gt;</code>:</p>
+<h2 id="proposed-resolution-6">Proposed Resolution</h2>
+<p>(Includes the proposed resolution of <a href="https://github.com/ericniebler/stl2/issues/379">#379</a>.)</p>
+<p>Change the definition of concept <code>Swappable</code> ([concepts.lib.corelang.swappable]) to:</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> T&gt;
+concept <span class="dt">bool</span> Swappable =
+  requires(T&amp; a, T&amp; b) {
+    ranges::swap(a, b);
+  };
+
+<span class="kw">template</span> &lt;<span class="kw">class</span> T, <span class="kw">class</span> U&gt;
+concept <span class="dt">bool</span> SwappableWith =
+  CommonReference&lt;
+    <span class="at">const</span> <span class="dt">remove_reference_t</span>&lt;T&gt;&amp;,
+    <span class="at">const</span> <span class="dt">remove_reference_t</span>&lt;U&gt;&amp;&gt; &amp;&amp;
+  requires(T&amp;&amp; t, U&amp;&amp; u) {
+    ranges::swap(<span class="bu">std::</span>forward&lt;T&gt;(t), <span class="bu">std::</span>forward&lt;T&gt;(t));
+    ranges::swap(<span class="bu">std::</span>forward&lt;U&gt;(u), <span class="bu">std::</span>forward&lt;U&gt;(u));
+    ranges::swap(<span class="bu">std::</span>forward&lt;T&gt;(t), <span class="bu">std::</span>forward&lt;U&gt;(u));
+    ranges::swap(<span class="bu">std::</span>forward&lt;U&gt;(u), <span class="bu">std::</span>forward&lt;T&gt;(t));
+  };</code></pre></div>
+<p>Change the definition of <code>Movable</code> ([concepts.lib.object.movable]) as follows (includes changes from <a href="http://wg21.link/P0547R1">P0547R1</a>):</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> template &lt;class T&gt;
+ concept bool Movable =
+   std::is_object&lt;T&gt;::value &amp;&amp; // see below
+   MoveConstructible&lt;T&gt; &amp;&amp;
+   Assignable&lt;T&amp;, T&gt; &amp;&amp;
+<span class="st">-  Swappable&lt;T&amp;&gt;;</span>
+<span class="va">+  Swappable&lt;T&gt;;</span></code></pre></div>
+<p>In the class synopsis of class template <code>tagged</code> ([taggedtup.tagged]/p2), make the following changes:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff">   tagged&amp; operator=(U&amp;&amp; u) noexcept(see below );
+   void swap(tagged&amp; that) noexcept(see below )
+<span class="st">-    requires Swappable&lt;Base&amp;&gt;;</span>
+<span class="va">+    requires Swappable&lt;Base&gt;;</span>
+   friend void swap(tagged&amp;, tagged&amp;) noexcept(see below )
+<span class="st">-    requires Swappable&lt;Base&amp;&gt;;</span>
+<span class="va">+    requires Swappable&lt;Base&gt;;</span>
+};</code></pre></div>
+<p>Make the same changes to the detailed specifications of <code>tagged::swap</code> and the non-member <code>swap(tagged&amp;, tagged&amp;)</code> overload in [taggedtup.tagged]/p20 and p23</p>
+<h2 id="relax-requirements-on-replace-and-replace_if"><a href="https://github.com/ericniebler/stl2/issues/176">176</a>: Relax requirements on <code>replace</code> and <code>replace_if</code></h2>
+<p><code>replace</code> and <code>replace_if</code> are specified to require a forward range. This is necessary to support the effects statement: “Substitutes elements referred by the iterator <code>i</code> in the range <code>[first, last)</code> with <code>new_value</code>”, since weaker iterators might not reference elements.</p>
+<p>I think the requirement can be relaxed to input if we rephrase the effects as “Assigns <code>new_value</code> through each iterator <code>i</code> in the range <code>[first, last)</code> that satisfies the condition …”. (Note that we already separately require <code>Writable&lt;I, const T&amp;&gt;()</code>.)</p>
+<h2 id="proposed-resolution-7">Proposed Resolution</h2>
+<p>In the synopsis of <code>&lt;experimental/ranges/algorithm&gt;</code> ([algorithms.general]/p2), make the following changes:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"><span class="st">-template &lt;ForwardIterator I, Sentinel&lt;I&gt; S, class T1, class T2, class Proj = identity&gt;</span>
+<span class="va">+template &lt;InputIterator I, Sentinel&lt;I&gt; S, class T1, class T2, class Proj = identity&gt;</span>
+   requires Writable&lt;I, const T2&amp;&gt;() &amp;&amp;
+     IndirectRelation&lt;equal_to&lt;&gt;, projected&lt;I, Proj&gt;, const T1*&gt;()
+   I
+     replace(I first, S last, const T1&amp; old_value, const T2&amp; new_value, Proj proj = Proj{});
+
+<span class="st">-template &lt;ForwardRange Rng, class T1, class T2, class Proj = identity&gt;</span>
+<span class="va">+template &lt;InputRange Rng, class T1, class T2, class Proj = identity&gt;</span>
+   requires Writable&lt;iterator_t&lt;Rng&gt;, const T2&amp;&gt;() &amp;&amp;
+     IndirectRelation&lt;equal_to&lt;&gt;, projected&lt;iterator_t&lt;Rng&gt;, Proj&gt;, const T1*&gt;()
+   safe_iterator_t&lt;Rng&gt;
+     replace(Rng&amp;&amp; rng, const T1&amp; old_value, const T2&amp; new_value, Proj proj = Proj{});
+
+<span class="st">-template &lt;ForwardIterator I, Sentinel&lt;I&gt; S, class T, class Proj = identity,</span>
+<span class="va">+template &lt;InputIterator I, Sentinel&lt;I&gt; S, class T, class Proj = identity,</span>
+     IndirectPredicate&lt;projected&lt;I, Proj&gt;&gt; Pred&gt;
+   requires Writable&lt;I, const T&amp;&gt;()
+   I
+     replace_if(I first, S last, Pred pred, const T&amp; new_value, Proj proj = Proj{});
+
+<span class="st">-template &lt;ForwardRange Rng, class T, class Proj = identity,</span>
+<span class="va">+template &lt;InputRange Rng, class T, class Proj = identity,</span>
+     IndirectPredicate&lt;projected&lt;iterator_t&lt;Rng&gt;, Proj&gt;&gt; Pred&gt;
+   requires Writable&lt;iterator_t&lt;Rng&gt;, const T&amp;&gt;()
+   safe_iterator_t&lt;Rng&gt;
+     replace_if(Rng&amp;&amp; rng, Pred pred, const T&amp; new_value, Proj proj = Proj{});</code></pre></div>
+<p>In [alg.replace], change the signatures of <code>replace</code> and <code>replace_if</code> to match the ones above. Also, make the following change to p1:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"><span class="st">-1. Effects: Substitutes elements referred by the iterator i in the range [first,last) with new_value,</span>
+<span class="va">+1. Effects: Assigns new_value through each iterator i in the range [first, last)</span>
+    when the following corresponding conditions hold:
+    invoke(proj, *i) == old_value, invoke(pred, invoke(proj, *i)) != false.</code></pre></div>
+<h2 id="add-new-header-experimentalrangerange"><a href="https://github.com/ericniebler/stl2/issues/211">211</a>: Add new header <code>&lt;experimental/range/range&gt;</code></h2>
+<p>Where do <code>enable_view</code>, <code>disable_sized_range</code>, and <code>view_base</code> live? Or the Range concepts? Do we need a <code>&lt;experimental/ranges/range&gt;</code> header?</p>
+<p>Heck, where do the Iterator concepts live? They don’t appear in the <code>iterator</code> header synopsis.</p>
+<h2 id="solution-description">Solution description</h2>
+<p>The problems with the concepts and iterator synopses have been handled as editorial changes in 1862bd8 and e15540b. This resolution is describes as a diff to those changes. It suggests adding a new header to hold all range-related functionality: <code>&lt;experimental/ranges/range&gt;</code>. This gives us a place to put the range customization points (<code>begin</code>, <code>end</code>, <code>size</code>, etc.), the range concepts, and range utilities.</p>
+<p>It will also give us a place to put future range-related functionality, such as a view facade and adaptors, without further bloating <code>&lt;experimental/ranges/iterator&gt;</code>, which is quite heavy already.</p>
+<p>The following resolution has been implemented in <a href="https://github.com/ericniebler/stl2/issues/328">#328</a>, but not merged pending LWG review.</p>
+<h2 id="proposed-resolution-8">Proposed Resolution</h2>
+<p>To “Table 1 - Ranges TS library headers”, add <code>&lt;experimental/ranges/range&gt;</code>.</p>
+<p>To “Table 2 - Library categories”, add a row for “Ranges library” between the “Iterators library” and the “Algorithms library”.</p>
+<p>After [library.general]/p6, add a new paragraph that reads:</p>
+<blockquote>
+<p>The ranges library (\ref{ranges}) describes components for dealing with ranges of<br />
+elements.</p>
+</blockquote>
+<p>Change [iterators.general]/1 as follows:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff">This Clause describes components that \Cpp programs may use to perform
+iterations over containers (Clause \cxxref{containers}),
+streams~(\cxxref{iostream.format}),
+<span class="st">-stream buffers~(\cxxref{stream.buffers}),</span>
+<span class="st">-and ranges~(\ref{ranges}).</span>
+<span class="va">+and stream buffers~(\cxxref{stream.buffers}).</span></code></pre></div>
+<p>From table “Table 5 — Iterators library summary” [tab:iterators.lib.summary], delete the last line, which reads “Ranges”.</p>
+<p>From [iterator.synopsis], delete the following lines:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"><span class="st">-  // \ref{iterator.range}, range access:</span>
+<span class="st">-  namespace {</span>
+<span class="st">-    constexpr unspecified begin = unspecified;</span>
+<span class="st">-    constexpr unspecified end = unspecified;</span>
+<span class="st">-    constexpr unspecified cbegin = unspecified;</span>
+<span class="st">-    constexpr unspecified cend = unspecified;</span>
+<span class="st">-    constexpr unspecified rbegin = unspecified;</span>
+<span class="st">-    constexpr unspecified rend = unspecified;</span>
+<span class="st">-    constexpr unspecified crbegin = unspecified;</span>
+<span class="st">-    constexpr unspecified crend = unspecified;</span>
+<span class="st">-  }</span>
+<span class="st">-</span>
+<span class="st">-  // \ref{range.primitives}, range primitives:</span>
+<span class="st">-  namespace {</span>
+<span class="st">-    constexpr unspecified size = unspecified;</span>
+<span class="st">-    constexpr unspecified empty = unspecified;</span>
+<span class="st">-    constexpr unspecified data = unspecified;</span>
+<span class="st">-    constexpr unspecified cdata = unspecified;</span>
+<span class="st">-  }</span>
+<span class="st">-  template &lt;Range R&gt;</span>
+<span class="st">-  difference_type_t&lt;iterator_t&lt;R&gt;&gt; distance(R&amp;&amp; r);</span>
+<span class="st">-  template &lt;SizedRange R&gt;</span>
+<span class="st">-  difference_type_t&lt;iterator_t&lt;R&gt;&gt; distance(R&amp;&amp; r);</span></code></pre></div>
+<p>Between Clause 6 (Iterators) and Clause 7 (Algorithms), add a new Clause “Ranges” with stable name [ranges]. Move [ranges.general] from [iterators] into the new [ranges] clause, with the following changes:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"><span class="st">-1 This subclause describes components for dealing with</span>
+<span class="va">+1 This Clause describes components for dealing with</span>
+ ranges of elements.
+ 2 The following subclauses describe range and view
+ requirements, and components for range primitives,
+<span class="st">-predefined ranges, and stream ranges, as summarized in</span>
+<span class="va">+as summarized in</span>
+ Table 7.</code></pre></div>
+<p>In Table 7 - Ranges library summary, move “Requirements” from the first line to the last and change the header from <code>&lt;experimental/ranges/iterator&gt;</code> to <code>&lt;experimental/ranges/range&gt;</code>.</p>
+<p>Add a subclause “Header <code>&lt;experimental/ranges/range&gt;</code> synopsis” with stable name [range.synopsis] with the following content:</p>
+<blockquote>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="pp">#include </span><span class="im">&lt;experimental/ranges/iterator&gt;</span>
+
+<span class="kw">namespace</span> std { <span class="kw">namespace</span> experimental { <span class="kw">namespace</span> ranges { <span class="kw">inline</span> <span class="kw">namespace</span> v1 {
+  <span class="co">// \ref{range.access}, range access:</span>
+  <span class="kw">namespace</span> {
+    <span class="kw">constexpr</span> unspecified begin = unspecified;
+    <span class="kw">constexpr</span> unspecified end = unspecified;
+    <span class="kw">constexpr</span> unspecified cbegin = unspecified;
+    <span class="kw">constexpr</span> unspecified cend = unspecified;
+    <span class="kw">constexpr</span> unspecified rbegin = unspecified;
+    <span class="kw">constexpr</span> unspecified rend = unspecified;
+    <span class="kw">constexpr</span> unspecified crbegin = unspecified;
+    <span class="kw">constexpr</span> unspecified crend = unspecified;
+  }
+
+  <span class="co">// \ref{range.primitives}, range primitives:</span>
+  <span class="kw">namespace</span> {
+    <span class="kw">constexpr</span> unspecified size = unspecified;
+    <span class="kw">constexpr</span> unspecified empty = unspecified;
+    <span class="kw">constexpr</span> unspecified data = unspecified;
+    <span class="kw">constexpr</span> unspecified cdata = unspecified;
+  }
+
+  <span class="kw">template</span> &lt;<span class="kw">class</span> T&gt;
+  <span class="kw">using</span> <span class="dt">iterator_t</span> = <span class="kw">decltype</span>(ranges::begin(declval&lt;T&amp;&gt;()));
+
+  <span class="kw">template</span> &lt;<span class="kw">class</span> T&gt;
+  <span class="kw">using</span> <span class="dt">sentinel_t</span> = <span class="kw">decltype</span>(ranges::end(declval&lt;T&amp;&gt;()));
+
+  <span class="kw">template</span> &lt;<span class="kw">class</span>&gt;
+  <span class="kw">constexpr</span> <span class="dt">bool</span> disable_sized_range = <span class="kw">false</span>;
+
+  <span class="kw">template</span> &lt;<span class="kw">class</span> T&gt;
+  <span class="kw">struct</span> enable_view { };
+
+  <span class="kw">struct</span> view_base { };
+
+  <span class="co">// \ref{ranges.requirements}, range requirements:</span>
+
+  <span class="co">// \ref{ranges.range}, Range:</span>
+  <span class="kw">template</span> &lt;<span class="kw">class</span> T&gt;
+  concept <span class="dt">bool</span> Range() {
+    <span class="cf">return</span> see below;
+  }
+
+  <span class="co">// \ref{ranges.sized}, SizedRange:</span>
+  <span class="kw">template</span> &lt;<span class="kw">class</span> T&gt;
+  concept <span class="dt">bool</span> SizedRange() {
+    <span class="cf">return</span> see below;
+  }
+
+  <span class="co">// \ref{ranges.view}, View:</span>
+  <span class="kw">template</span> &lt;<span class="kw">class</span> T&gt;
+  concept <span class="dt">bool</span> View() {
+    <span class="cf">return</span> see below;
+  }
+
+  <span class="co">// \ref{ranges.bounded}, BoundedRange:</span>
+  <span class="kw">template</span> &lt;<span class="kw">class</span> T&gt;
+  concept <span class="dt">bool</span> BoundedRange() {
+    <span class="cf">return</span> see below;
+  }
+
+  <span class="co">// \ref{ranges.input}, InputRange:</span>
+  <span class="kw">template</span> &lt;<span class="kw">class</span> T&gt;
+  concept <span class="dt">bool</span> InputRange() {
+    <span class="cf">return</span> see below;
+  }
+
+  <span class="co">// \ref{ranges.output}, OutputRange:</span>
+  <span class="kw">template</span> &lt;<span class="kw">class</span> R, <span class="kw">class</span> T&gt;
+  concept <span class="dt">bool</span> OutputRange() {
+    <span class="cf">return</span> see below;
+  }
+
+  <span class="co">// \ref{ranges.forward}, ForwardRange:</span>
+  <span class="kw">template</span> &lt;<span class="kw">class</span> T&gt;
+  concept <span class="dt">bool</span> ForwardRange() {
+    <span class="cf">return</span> see below;
+  }
+
+  <span class="co">// \ref{ranges.bidirectional}, BidirectionalRange:</span>
+  <span class="kw">template</span> &lt;<span class="kw">class</span> T&gt;
+  concept <span class="dt">bool</span> BidirectionalRange() {
+    <span class="cf">return</span> see below;
+  }
+
+  <span class="co">// \ref{ranges.random.access}, RandomAccessRange:</span>
+  <span class="kw">template</span> &lt;<span class="kw">class</span> T&gt;
+  concept <span class="dt">bool</span> RandomAccessRange() {
+    <span class="cf">return</span> see below;
+  }
+
+  <span class="co">// \ref{range.utilities}, range utilities:</span>
+  <span class="kw">template</span> &lt;Range R&gt;
+  <span class="dt">difference_type_t</span>&lt;<span class="dt">iterator_t</span>&lt;R&gt;&gt; distance(R&amp;&amp; r);
+
+  <span class="kw">template</span> &lt;SizedRange R&gt;
+  <span class="dt">difference_type_t</span>&lt;<span class="dt">iterator_t</span>&lt;R&gt;&gt; distance(R&amp;&amp; r);
+}}}}</code></pre></div>
+</blockquote>
+<p>Move [iterator.range] from [iterators] into the new [ranges] clause right after the synopsis. Change its stable name to [range.access] (and fix all references).</p>
+<p>Add a new paragraph to [range.access]:</p>
+<blockquote>
+<p>1 In addition to being available via inclusion of the <code>&lt;experimental/ranges/range&gt;</code><br />
+header, the customization point objects in \ref{range.access} are available when<br />
+<code>&lt;experimental/ranges/iterator&gt;</code> is included.</p>
+</blockquote>
+<p>Change all stable names within [range.access] from [iterator.range.*] to [range.access.*] (e.g. [iterator.range.begin] becomes [range.access.begin]). Fix up all references.</p>
+<p>Move [range.primitives] from [iterators] to the [ranges] clause right after [ranges.access].</p>
+<p>Add a new paragraph to [range.primitives]:</p>
+<blockquote>
+<p>1 In addition to being available via inclusion of the <code>&lt;experimental/ranges/range&gt;</code><br />
+header, the customization point objects in \ref{range.primitives} are available when<br />
+<code>&lt;experimental/ranges/iterator&gt;</code> is included.</p>
+</blockquote>
+<p>Move section “Range requirements” [ranges.requirements] from [iterator] to the [ranges] clause, right after [range.primitives]. Promote it to a subclause; likewise, promote all its (sub)sections up one level.</p>
+<p>From [ranges.range]/p1, remove the definitions of the <code>iterator_t</code> and <code>sentinel_t</code> template aliases. (They now live in the <code>&lt;experimental/ranges/range&gt;</code> synopsis.)</p>
+<p>From [ranges.sized]/p1, remove the definition of <code>disable_sized_range</code>.</p>
+<p>From [ranges.view]/p2, remove the definitions of <code>enable_view</code> and <code>view_base</code>.</p>
+<p>Create a new subclause “Range utilities” ([range.utilities]) after “Range requirements” ([ranges.requirements]). Move the specification of <code>distance</code> from [range.primitives] into a new section “<code>distance</code>” ([range.distance]).</p>
+<h2 id="assignable-concept-looks-wrong"><a href="https://github.com/ericniebler/stl2/issues/229">229</a>: <code>Assignable</code> concept looks wrong</h2>
+<p>For <code>Assignable</code> we have:</p>
+<blockquote>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> T, <span class="kw">class</span> U&gt;
+concept <span class="dt">bool</span> Assignable() {
+  <span class="cf">return</span> Common&lt;T, U&gt;() &amp;&amp; requires(T&amp;&amp; t, U&amp;&amp; u) {
+    { <span class="bu">std::</span>forward&lt;T&gt;(t) = <span class="bu">std::</span>forward&lt;U&gt;(u) } -&gt; Same&lt;T&amp;&gt;;
+  };
+}</code></pre></div>
+<ol>
+<li>Let <code>t</code> be an lvalue of type <code>T</code>,</li>
+</ol>
+</blockquote>
+<p>The <em>“Let <code>t</code> be an lvalue of type <code>T</code>”</em> is at odds with the concept definition. It needs the lvalue/rvalue dance.</p>
+<p>Also, the application of <code>==</code> to entities whose types aren’t constrained to satisfy <code>EqualityComparable</code> is meaningless; <code>uu == v</code> and <code>t == uu</code> should use “is equal to.”</p>
+<h3 id="proposed-resolution-9">Proposed Resolution:</h3>
+<p>Adopt <a href="http://wiki.edg.com/pub/Wg21toronto2017/StrawPolls/p0547r2.html">P0547R2: “Ranges TS: Assorted Object Concept Fixes”</a>.</p>
+<h2 id="do-common_iterators-copymove-ctorsoperators-need-to-be-specified"><a href="https://github.com/ericniebler/stl2/issues/250">250</a>: Do <code>common_iterator</code>’s copy/move ctors/operators need to be specified?</h2>
+<p>The members of <code>common_iterator</code> are worded to permit a union-like implementation. I think we need to say what copying/assigning these things do. Also: what do we say about <code>constexpr</code>/<code>noexcept</code>?</p>
+<h2 id="proposed-resolution-10">Proposed Resolution</h2>
+<p>(Wording relative to N4671. This wording also resolves <a href="https://github.com/ericniebler/stl2/issues/436">#436</a> “common_iterator’s destructor should not be specified in [common.iter.op=]”.)</p>
+<p>Strike the destructor declaration from the synposis of class <code>common_iterator</code> in [common.iterator] as follows:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> [...]
+ common_iterator&amp; operator=(const common_iterator&lt;ConvertibleTo&lt;I&gt;, ConvertibleTo&lt;S&gt;&gt;&amp; u);
+<span class="st">-~common_iterator();</span>
+ see below operator*();
+ [...]</code></pre></div>
+<p>Strike [common.iterator]/1 that begins “Note: It is unspecified whether common_iterator’s members iter and sentinel …”</p>
+<p>Change [common.iter.op.const] as follows:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff">   common_iterator();
+
+ 1 Effects: Constructs a common_iterator, value-initializing is_sentinel
+<span class="va">+  , sentinel,</span>
+   and iter. Iterator operations applied to the resulting iterator have defined behavior if and
+   only if the corresponding operations are defined on a value-initialized iterator of type I.
+<span class="st">-2 Remarks: It is unspecified whether any initialization is performed for sentinel.</span>
+
+   common_iterator(I i);
+
+ 3 Effects: Constructs a common_iterator, initializing is_sentinel with false
+<span class="st">-  and</span>
+<span class="va">+  ,</span>
+   iter with i
+<span class="va">+  , and value-initializing sentinel</span>
+   .
+
+<span class="st">-4 Remarks: It is unspecified whether any initialization is performed for sentinel.</span>
+
+   common_iterator(S s);
+
+ 5 Effects: Constructs a common_iterator, initializing is_sentinel with true and sentinel with s
+<span class="va">+  , and value-initializing iter</span>
+   .
+
+<span class="st">-6 Remarks: It is unspecified whether any initialization is performed for iter.</span>
+
+   common_iterator(const common_iterator&lt;ConvertibleTo&lt;I&gt;, ConvertibleTo&lt;S&gt;&gt;&amp; u);
+
+ 7 Effects: Constructs a common_iterator, initializing is_sentinel with u.is_sentinel
+<span class="va">+  , iter with u.iter, and sentinel with u.sentinel</span>
+   .
+
+<span class="st">-(7.1) — If u.is_sentinel is true, sentinel is initialized with u.sentinel.</span>
+<span class="st">-(7.2) — If u.is_sentinel is false, iter is initialized with u.iter.</span>
+<span class="st">-</span>
+<span class="st">-8 Remarks:</span>
+<span class="st">-(8.1) — If u.is_sentinel is true, it is unspecified whether any initialization is</span>
+<span class="st">-        performed for iter.</span>
+<span class="st">-(8.2) — If u.is_sentinel is false, it is unspecified whether any initialization is</span>
+<span class="st">-        performed for sentinel.</span></code></pre></div>
+<p>Change [common.iter.op=] as follows:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> common_iterator&amp; operator=(const common_iterator&lt;ConvertibleTo&lt;I&gt;, ConvertibleTo&lt;S&gt;&gt;&amp; u);
+
+ 1 Effects: Assigns u.is_sentinel to is_sentinel
+<span class="va">+  , u.iter to iter, and u.sentinel to sentinel</span>
+   .
+
+<span class="st">-(1.1) — If u.is_sentinel is true, assigns u.sentinel to sentinel.</span>
+<span class="st">-</span>
+<span class="st">-(1.2) — If u.is_sentinel is false, assigns u.iter to iter.</span>
+<span class="st">-</span>
+<span class="st">-Remarks:</span>
+<span class="st">-</span>
+<span class="st">-(1.3) — If u.is_sentinel is true, it is unspecified whether any operation is performed on iter.</span>
+<span class="st">-</span>
+<span class="st">-(1.4) — If u.is_sentinel is false, it is unspecified whether any operation is performed on</span>
+<span class="st">-        sentinel.</span>
+
+ 2 Returns: *this
+
+<span class="st">-  ~common_iterator();</span>
+<span class="st">-</span>
+<span class="st">-3 Effects: Destroys all members that are currently initialized.</span></code></pre></div>
+<h2 id="derivedfrom-should-be-publicly-and-unambiguously"><a href="https://github.com/ericniebler/stl2/issues/255">255</a>: <code>DerivedFrom</code> should be “publicly and unambiguously”</h2>
+<h3 id="proposed-resolution-11">Proposed Resolution</h3>
+<p>Change [concepts.lib.corelang.derived] as follows:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> template &lt;class T, class U&gt;
+ concept bool DerivedFrom() {
+<span class="st">-  return see below ;</span>
+<span class="va">+  return is_base_of&lt;U, T&gt;::value &amp;&amp;</span>
+<span class="va">+    is_convertible&lt;remove_cv_t&lt;T&gt;*, remove_cv_t&lt;U&gt;*&gt;::value; // see below</span>
+ }
+
+<span class="st">-1 DerivedFrom&lt;T, U&gt;() is satisfied if and only if is_base_of&lt;U, T&gt;::value is</span>
+<span class="st">-  true.</span>
+<span class="va">+1 There need not be a subsumption relationship between DerivedFrom&lt;T, U&gt;() and either</span>
+<span class="va">+  is_base_of&lt;U, T&gt;::value or is_convertible&lt;remove_cv_t&lt;T&gt;*, remove_cv_t&lt;U&gt;*&gt;::value.</span>
+<span class="va">+</span>
+<span class="va">+2 [Note: DerivedFrom&lt;T, U&gt;() is satisfied if and only if T is publicly and unambiguously</span>
+<span class="va">+  derived from U, or T and U are the same class type ignoring cv qualifiers.-end note]</span></code></pre></div>
+<h2 id="add-constexpr-to-advance-distance-next-and-prev"><a href="https://github.com/ericniebler/stl2/issues/256">256</a>: Add <code>constexpr</code> to <code>advance</code>, <code>distance</code>, <code>next</code>, and <code>prev</code></h2>
+<h3 id="proposed-resolution-12">Proposed Resolution</h3>
+<p>Adopt <a href="http://wiki.edg.com/pub/Wg21toronto2017/StrawPolls/p0579r1.html">P0579R1: “<code>constexpr</code> for <code>&lt;experimental/ranges/iterator&gt;</code>”</a>.</p>
+<h2 id="restrict-alg.general-changes-from-p0370-to-apply-only-to-the-range-and-a-half-algorithms"><a href="https://github.com/ericniebler/stl2/issues/261">261</a>: Restrict alg.general changes from P0370 to apply only to the range-and-a-half algorithms</h2>
+<p>..as directed during LWG review of P0370. LWG is uncomfortable with the uncertainty this wording introduces, and would prefer to “limit the scope of the potential damage” to only the deprecated range-and-a-half algorithms.</p>
+<h2 id="proposed-resolution-13">Proposed resolution</h2>
+<p>(This wording assumes the PRs of <a href="https://github.com/ericniebler/stl2/issues/286">#286</a> and <a href="https://github.com/ericniebler/stl2/issues/379">#379</a> have been applied)</p>
+<p>Strike para [algorithms.general]/10 which begins: “Some algorithms declare both an overload that takes a Range and an Iterator, and an overload that takes two Range parameters.”</p>
+<p>Strike para [algorithms.general]/12 which begins, “Despite that the algorithm declarations nominally accept parameters by value […]”</p>
+<p>Replace the entire content of Annex A.2 [depr.algo.range-and-a-half] with:</p>
+<blockquote>
+<p>1 The following algorithm signatures are deemed unsafe and are deprecated in this document.</p>
+<p>2 Overloads of algorithms that take a <code>Range</code> argument and a forwarding reference parameter <code>first2_</code> behave as if they are implemented by calling <code>begin</code> and <code>end</code> on the <code>Range</code> and dispatching to the overload that takes separate iterator and sentinel arguments, perfectly forwarding <code>first2_</code>.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;InputIterator I1, Sentinel&lt;I1&gt; S1, <span class="kw">class</span> I2, <span class="kw">class</span> Pred = equal_to&lt;&gt;,
+    <span class="kw">class</span> Proj1 = identity, <span class="kw">class</span> Proj2 = identity&gt;
+  requires InputIterator&lt;<span class="dt">decay_t</span>&lt;I2&gt;&gt; &amp;&amp; !Range&lt;I2&gt; &amp;&amp;
+    IndirectPredicate&lt;Pred, projected&lt;I1, Proj1&gt;, projected&lt;<span class="dt">decay_t</span>&lt;I2&gt;, Proj2&gt;&gt;
+  tagged_pair&lt;tag::in1(I1), tag::in2(<span class="dt">decay_t</span>&lt;I2&gt;)&gt;
+    mismatch(I1 first1, S1 last1, I2&amp;&amp; <span class="va">first2_</span>, Pred pred = Pred{},
+             Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+
+<span class="kw">template</span> &lt;InputRange Rng1, <span class="kw">class</span> I2, <span class="kw">class</span> Pred = equal_to&lt;&gt;,
+    <span class="kw">class</span> Proj1 = identity, <span class="kw">class</span> Proj2 = identity&gt;
+  requires InputIterator&lt;<span class="dt">decay_t</span>&lt;I2&gt;&gt; &amp;&amp; !Range&lt;I2&gt; &amp;&amp;
+    IndirectPredicate&lt;Pred, projected&lt;<span class="dt">iterator_t</span>&lt;Rng1&gt;, Proj1&gt;,
+        projected&lt;<span class="dt">decay_t</span>&lt;I2&gt;, Proj2&gt;&gt;
+  tagged_pair&lt;tag::in1(<span class="dt">safe_iterator_t</span>&lt;Rng1&gt;), tag::in2(<span class="dt">decay_t</span>&lt;I2&gt;)&gt;
+    mismatch(Rng1&amp;&amp; rng1, I2&amp;&amp; <span class="va">first2_</span>, Pred pred = Pred{},
+             Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});</code></pre></div>
+<p>3 <em>Effects:</em> Equivalent to: <code>return mismatch(first1, last1, std::forward&lt;I2&gt;(first2_), unreachable{}, pred, proj1, proj2);</code>, except that the underlying algorithm never increments <code>first2</code> more than <code>last1 - first1</code> times.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;InputIterator I1, Sentinel&lt;I1&gt; S1, <span class="kw">class</span> I2,
+    <span class="kw">class</span> Pred = equal_to&lt;&gt;, <span class="kw">class</span> Proj1 = identity, <span class="kw">class</span> Proj2 = identity&gt;
+  requires InputIterator&lt;<span class="dt">decay_t</span>&lt;I2&gt;&gt; &amp;&amp; !Range&lt;I2&gt; &amp;&amp;
+    IndirectlyComparable&lt;I1, <span class="dt">decay_t</span>&lt;I2&gt;, Pred, Proj1, Proj2&gt;
+  <span class="dt">bool</span> equal(I1 first1, S1 last1,
+             I2&amp;&amp; <span class="va">first2_</span>, Pred pred = Pred{},
+             Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+
+<span class="kw">template</span> &lt;InputRange Rng1, <span class="kw">class</span> I2, <span class="kw">class</span> Pred = equal_to&lt;&gt;,
+    <span class="kw">class</span> Proj1 = identity, <span class="kw">class</span> Proj2 = identity&gt;
+  requires InputIterator&lt;<span class="dt">decay_t</span>&lt;I2&gt;&gt; &amp;&amp; !Range&lt;I2&gt; &amp;&amp;
+    IndirectlyComparable&lt;<span class="dt">iterator_t</span>&lt;Rng1&gt;, <span class="dt">decay_t</span>&lt;I2&gt;, Pred, Proj1, Proj2&gt;
+  <span class="dt">bool</span> equal(Rng1&amp;&amp; rng1, I2&amp;&amp; <span class="va">first2_</span>, Pred pred = Pred{},
+             Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});</code></pre></div>
+<p>4 <em>Effects:</em> Equivalent to: <code>return first1 == mismatch(first1, last1, std::forward&lt;I2&gt;(first2_), pred, proj1, proj2).in1();</code></p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;ForwardIterator I1, Sentinel&lt;I1&gt; S1, <span class="kw">class</span> I2,
+    <span class="kw">class</span> Pred = equal_to&lt;&gt;, <span class="kw">class</span> Proj1 = identity, <span class="kw">class</span> Proj2 = identity&gt;
+  requires ForwardIterator&lt;<span class="dt">decay_t</span>&lt;I2&gt;&gt; &amp;&amp; !Range&lt;I2&gt; &amp;&amp;
+    IndirectlyComparable&lt;I1, <span class="dt">decay_t</span>&lt;I2&gt;, Pred, Proj1, Proj2&gt;
+  <span class="dt">bool</span> is_permutation(I1 first1, S1 last1, I2&amp;&amp; <span class="va">first2_</span>, Pred pred = Pred{},
+                      Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+
+<span class="kw">template</span> &lt;ForwardRange Rng1, <span class="kw">class</span> I2, <span class="kw">class</span> Pred = equal_to&lt;&gt;,
+    <span class="kw">class</span> Proj1 = identity, <span class="kw">class</span> Proj2 = identity&gt;
+  requires ForwardIterator&lt;<span class="dt">decay_t</span>&lt;I2&gt;&gt; &amp;&amp; !Range&lt;I2&gt; &amp;&amp;
+    IndirectlyComparable&lt;<span class="dt">iterator_t</span>&lt;Rng1&gt;, <span class="dt">decay_t</span>&lt;I2&gt;, Pred, Proj1, Proj2&gt;
+  <span class="dt">bool</span> is_permutation(Rng1&amp;&amp; rng1, I2&amp;&amp; <span class="va">first2_</span>, Pred pred = Pred{},
+                      Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});</code></pre></div>
+<p>5 <em>Effects:</em> Equivalent to:</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">  <span class="kw">auto</span> first2 = <span class="bu">std::</span>forward&lt;I2&gt;(<span class="va">first2_</span>);
+  <span class="cf">return</span> is_permutation(first1, last1, first2, next(first2, distance(first1, last1)),
+                        pred, proj1, proj2);</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;ForwardIterator I1, Sentinel&lt;I1&gt; S1, <span class="kw">class</span> I2&gt;
+  requires ForwardIterator&lt;<span class="dt">decay_t</span>&lt;I2&gt;&gt; &amp;&amp; !Range&lt;I2&gt; &amp;&amp;
+    IndirectlySwappable&lt;I1, <span class="dt">decay_t</span>&lt;I2&gt;&gt;
+  tagged_pair&lt;tag::in1(I1), tag::in2(<span class="dt">decay_t</span>&lt;I2&gt;)&gt;
+    swap_ranges(I1 first1, S1 last1, I2&amp;&amp; <span class="va">first2_</span>);
+
+<span class="kw">template</span> &lt;ForwardRange Rng, <span class="kw">class</span> I&gt;
+  requires ForwardIterator&lt;<span class="dt">decay_t</span>&lt;I&gt;&gt; &amp;&amp; !Range&lt;I&gt; &amp;&amp;
+    IndirectlySwappable&lt;<span class="dt">iterator_t</span>&lt;Rng&gt;, <span class="dt">decay_t</span>&lt;I&gt;&gt;
+  tagged_pair&lt;tag::in1(<span class="dt">safe_iterator_t</span>&lt;Rng&gt;), tag::in2(<span class="dt">decay_t</span>&lt;I&gt;)&gt;
+    swap_ranges(Rng&amp;&amp; rng1, I&amp;&amp; <span class="va">first2_</span>);</code></pre></div>
+<p>6 <em>Effects:</em> Equivalent to:</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">  <span class="kw">auto</span> first2 = <span class="bu">std::</span>forward&lt;I2&gt;(<span class="va">first2_</span>);
+  <span class="cf">return</span> swap_ranges(first1, last1, first2, next(first2, distance(first1, last1)),
+                     pred, proj1, proj2);</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;InputIterator I1, Sentinel&lt;I1&gt; S1, <span class="kw">class</span> I2, WeaklyIncrementable O,
+    <span class="kw">class</span> F, <span class="kw">class</span> Proj1 = identity, <span class="kw">class</span> Proj2 = identity&gt;
+  requires InputIterator&lt;<span class="dt">decay_t</span>&lt;I2&gt;&gt; &amp;&amp; !Range&lt;I2&gt; &amp;&amp;
+    Writable&lt;O, <span class="dt">indirect_result_of_t</span>&lt;F&amp;(projected&lt;I1, Proj1&gt;,
+        projected&lt;<span class="dt">decay_t</span>&lt;I2&gt;, Proj2&gt;)&gt;&gt;
+  tagged_tuple&lt;tag::in1(I1), tag::in2(<span class="dt">decay_t</span>&lt;I2&gt;), tag::out(O)&gt;
+    transform(I1 first1, S1 last1, I2&amp;&amp; <span class="va">first2_</span>, O result,
+              F binary_op, Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+
+<span class="kw">template</span> &lt;InputRange Rng, <span class="kw">class</span> I, WeaklyIncrementable O, <span class="kw">class</span> F,
+    <span class="kw">class</span> Proj1 = identity, <span class="kw">class</span> Proj2 = identity&gt;
+  requires InputIterator&lt;<span class="dt">decay_t</span>&lt;I&gt;&gt; &amp;&amp; !Range&lt;I&gt; &amp;&amp;
+    Writable&lt;O, <span class="dt">indirect_result_of_t</span>&lt;F&amp;(
+        projected&lt;<span class="dt">iterator_t</span>&lt;Rng&gt;, Proj1&gt;, projected&lt;<span class="dt">decay_t</span>&lt;I&gt;, Proj2&gt;&gt;)&gt;
+  tagged_tuple&lt;tag::in1(<span class="dt">safe_iterator_t</span>&lt;Rng&gt;), tag::in2(<span class="dt">decay_t</span>&lt;I&gt;), tag::out(O)&gt;
+    transform(Rng&amp;&amp; rng1, I&amp;&amp; <span class="va">first2_</span>, O result,
+              F binary_op, Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});</code></pre></div>
+<p>7 <em>Effects:</em> Equivalent to: <code>return transform(first1, last1, std::forward&lt;I2&gt;(first2_), unreachable{}, pred, proj1, proj2);</code>, except that the underlying algorithm never increments <code>first2</code> more than <code>last1 - first1</code> times.</p>
+</blockquote>
+<h2 id="use-expression-equivalent-in-definitions-of-cpos"><a href="https://github.com/ericniebler/stl2/issues/262">262</a>: Use expression-equivalent in definitions of CPOs</h2>
+<p>…which is not part of the general library meaning of “Effects: Equivalent to.” We need to document this explicitly at each occurrence, or introduce blanket wording that covers the different usage in<br />
+CPO descriptions, or introduce a new term (e.g. “expression-equivalent-to”).</p>
+<p>[<em>NOTE:</em> C++14’s <em><code>DECAY_COPY</code></em> pseudo-macro is defined in terms of a <code>decay_copy</code> function which is <em>not</em> <code>constexpr</code> or <code>noexcept</code>, so nowhere can we say that something is <em>expression-equivalent to</em> an expression involving <em><code>DECAY_COPY</code></em> if we want to retain <code>constexpr</code>- and <code>noexcept</code>-ness … unless we define our own <em><code>DECAY_COPY</code></em> that preserves <code>constexpr</code>- and <code>noexcept</code>-ness. – <em>end note</em>]</p>
+<h2 id="proposed-resolution-14">Proposed Resolution</h2>
+<p>After [iterator.requirements.general], add a new subsection “decay_copy” (stable name [iterator.decaycopy]), with the following contents:</p>
+<blockquote>
+<p><strong><code>decay_copy</code></strong> [iterator.decaycopy]<br />
+1 Several places in this Clause use the expression <tt><i>DECAY_COPY</i>(x)</tt>, which is equivalent<br />
+to <code>decay_t&lt;decltype((x))&gt;(x)</code>.</p>
+</blockquote>
+<p>Change [iterator.range.begin]/p1 to read:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> The name begin denotes a customization point object ([customization.point.object]).
+ The effect of the expression ranges::begin(E) for some expression E is
+<span class="st">-equivalent to:</span>
+<span class="va">+expression-equivalent to:</span></code></pre></div>
+<p>Change [iterator.range.end]/p1 to read:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> The name end denotes a customization point object ([customization.point.object]).
+ The effect of the expression ranges::end(E) for some expression E is
+<span class="st">-equivalent to:</span>
+<span class="va">+expression-equivalent to:</span></code></pre></div>
+<p>Change [iterator.range.cbegin]/p1 to read:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> The name cbegin denotes a customization point object ([customization.point.object]).
+ The effect of the expression ranges::cbegin(E) for some expression E of type T is
+<span class="st">-equivalent to ranges::begin(static_const&lt;const T&amp;&gt;(E)).</span>
+<span class="va">+expression-equivalent to ranges::begin(static_const&lt;const T&amp;&gt;(E)).</span></code></pre></div>
+<p>Change [iterator.range.cend]/p1 to read:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> The name cend denotes a customization point object ([customization.point.object]).
+ The effect of the expression ranges::cend(E) for some expression E of type T is
+<span class="st">-equivalent to ranges::end(static_const&lt;const T&amp;&gt;(E)).</span>
+<span class="va">+expression-equivalent to ranges::end(static_const&lt;const T&amp;&gt;(E)).</span></code></pre></div>
+<p>Change [iterator.range.rbegin]/p1 to read:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> The name rbegin denotes a customization point object ([customization.point.object]).
+ The effect of the expression ranges::rbegin(E) for some expression E is
+<span class="st">-equivalent to:</span>
+<span class="va">+expression-equivalent to:</span></code></pre></div>
+<p>Change [iterator.range.rend]/p1 to read:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> The name rend denotes a customization point object ([customization.point.object]).
+ The effect of the expression ranges::rend(E) for some expression E is
+<span class="st">-equivalent to:</span>
+<span class="va">+expression-equivalent to:</span></code></pre></div>
+<p>Change [iterator.range.crbegin]/p1 to read:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> The name crbegin denotes a customization point object ([customization.point.object]).
+ The effect of the expression ranges::crbegin(E) for some expression E of type T is
+<span class="st">-equivalent to ranges::rbegin(static_cast&lt;const T&amp;&gt;(E)).</span>
+<span class="va">+expession-equivalent to ranges::rbegin(static_cast&lt;const T&amp;&gt;(E)).</span></code></pre></div>
+<p>Change [iterator.range.crend]/p1 to read:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> The name crend denotes a customization point object ([customization.point.object]).
+ The effect of the expression ranges::crend(E) for some expression E of type T is
+<span class="st">-equivalent to ranges::rend(static_cast&lt;const T&amp;&gt;(E)).</span>
+<span class="va">+expession-equivalent to ranges::rend(static_cast&lt;const T&amp;&gt;(E)).</span></code></pre></div>
+<p>Change [range.primitives.size]/p1 to read:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> The name size denotes a customization point object ([customization.point.object]).
+ The effect of the expression ranges::size(E) for some expression E with type T is
+<span class="st">-equivalent to:</span>
+<span class="va">+expression-equivalent to:</span>
+<span class="st">-(1.1) - extent&lt;T&gt;::value if T is an array type (ISO/IEC 14882:2014 §3.9.2).</span>
+<span class="va">+(1.1) - DECAY_COPY(extent&lt;T&gt;::value) if T is an array type (ISO/IEC 14882:2014 §3.9.2).</span></code></pre></div>
+<p>Change [range.primitives.empty]/p1 to read:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> The name empty denotes a customization point object ([customization.point.object]).
+ The effect of the expression ranges::empty(E) for some expression E is
+<span class="st">-equivalent to:</span>
+<span class="va">+expression-equivalent to:</span></code></pre></div>
+<p>Change [range.primitives.data]/p1 to read:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> The name data denotes a customization point object ([customization.point.object]).
+ The effect of the expression ranges::data(E) for some expression E is
+<span class="st">-equivalent to:</span>
+<span class="va">+expression-equivalent to:</span></code></pre></div>
+<p>Change [range.primitives.cdata]/p1 to read:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> The name cdata denotes a customization point object ([customization.point.object]).
+ The effect of the expression ranges::cdata(E) for some expression E of type T is
+<span class="st">-equivalent to ranges::data(static_cast&lt;const T&amp;&gt;(E)).</span>
+<span class="va">+expression-equivalent to ranges::data(static_cast&lt;const T&amp;&gt;(E)).</span></code></pre></div>
+<h2 id="iter_move-and-iter_swap-need-to-say-when-they-are-noexcept-and-constexpr"><a href="https://github.com/ericniebler/stl2/issues/284">284</a>: <code>iter_move</code> and <code>iter_swap</code> need to say when they are <code>noexcept</code> and <code>constexpr</code></h2>
+<p>The proposed wording of <a href="https://github.com/ericniebler/stl2/issues/242">#242</a> takes a stab at it but gets it wrong.</p>
+<h2 id="proposed-resolution-15">Proposed Resolution</h2>
+<p>Add two new paragraphs to [intro.defs] that read:</p>
+<blockquote>
+<p>-?-<br />
+<strong>constant subexpression</strong><br />
+expression whose evaluation as subexpression of a conditional-expression <code>CE</code> (ISO/IEC 14882:2014 §5.16) would not prevent <code>CE</code> from being a core constant expression (ISO/IEC 14882:2014 §5.19)</p>
+<p>-?-<br />
+<strong>expression-equivalent</strong><br />
+relationship that exists between two expressions <code>E1</code> and <code>E2</code> such that</p>
+<ul>
+<li><code>E1</code> and <code>E2</code> have the same effects,</li>
+<li><code>noexcept(E1) == noexcept(E2)</code>, and</li>
+<li><code>E1</code> is a constant subexpression if and only if <code>E2</code> is a constant subexpression</li>
+</ul>
+</blockquote>
+<p>[<em>Editor’s note:</em> the definition of “constant subexpression” is taken from the latest C++17 draft.]</p>
+<p>Change [iterator.utils.iter_move]/1 as follows:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> 1 The name iter_move denotes a customization point
+<span class="st">-  object (3.3.2.3). The effect of the expression</span>
+<span class="va">+  object (3.3.2.3). The expression</span>
+   ranges::iter_move(E) for some expression E is
+<span class="st">-  equivalent to the following:</span>
+<span class="va">+  expression-equivalent to the following:</span>
+<span class="st">-(1.1) — iter_move(E), if that expression is well-formed</span>
+<span class="va">+(1.1) — static_cast&lt;decltype(iter_move(E))&gt;(iter_move(E)),</span>
+<span class="va">+      if that expression is well-formed</span>
+       when evaluated in a context that does not include
+       ranges::iter_move but does include the lookup set
+       produced by argument-dependent lookup (ISO/IEC
+       14882:2014 §3.4.2).
+<span class="st">-(1.2) — Otherwise, if the expression *E is well-formed</span>
+<span class="st">-(1.2.1) — If *E is an lvalue, std::move(*E).</span>
+<span class="st">-(1.2.2) — Otherwise, *E.</span>
+<span class="va">+(1.2) — Otherwise, if the expression *E is well-formed:</span>
+<span class="va">+(1.2.1) — if *E is an lvalue, std::move(*E);</span>
+<span class="va">+(1.2.2) — otherwise, static_cast&lt;decltype(*E)&gt;(*E).</span>
+ (1.3) — Otherwise, ranges::iter_move(E) is ill-formed.</code></pre></div>
+<p>Change [iterator.utils.iter_swap]/1 as follows:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> 1 The name iter_swap denotes a customization point
+<span class="st">-  object (3.3.2.3). The effect of the expression</span>
+<span class="va">+  object (3.3.2.3). The expression</span>
+   ranges::iter_swap(E1, E2) for some expressions E1
+<span class="st">-  and E2 is equivalent to the following:</span>
+<span class="va">+  and E2 is expression-equivalent to the following:</span>
+ (1.1) - (void)iter_swap(E1, E2), if that expression is well-
+       formed when evaluated in a context that does not
+       include ranges::iter_swap but does include the
+       lookup set produced by argument-dependent lookup
+       (ISO/IEC 14882:2014 §3.4.2) and the following
+       declaration:
+         void iter_swap(auto, auto) = delete;
+ (1.2) - Otherwise, if the types of E1 and E2 both satisfy
+       Readable, and if the reference type of E1 is swappable
+       with (4.2.11) the reference type of E2, then
+       ranges::swap(*E1, *E2).
+ (1.3) - Otherwise, if the types T1 and T2 of E1 and E2
+       satisfy IndirectlyMovableStorable&lt;T1, T2&gt;() &amp;&amp;
+       IndirectlyMovableStorable&lt;T2, T1&gt;(),
+<span class="st">-      exchanges the values denoted by E1 and E2.</span>
+<span class="va">+      (void)(*E1 = iter_exchange_move(E2, E1)), except</span>
+<span class="va">+      that E1 is evaluated only once.</span>
+<span class="va">+</span>
+<span class="va">+2 iter_exchange_move is an exposition-only function specified as:</span>
+<span class="va">+</span>
+<span class="va">+    template &lt;class X, class Y&gt;</span>
+<span class="va">+      constexpr value_type_t&lt;remove_reference_t&lt;X&gt;&gt; iter_exchange_move(X&amp;&amp; x, Y&amp;&amp; y)</span>
+<span class="va">+        noexcept(see below);</span>
+<span class="va">+</span>
+<span class="va">+(2.1) Effects: Equivalent to:</span>
+<span class="va">+</span>
+<span class="va">+        value_type_t&lt;remove_reference_t&lt;X&gt;&gt; old_value(iter_move(x));</span>
+<span class="va">+        *x = iter_move(y);</span>
+<span class="va">+        return old_value;</span>
+<span class="va">+</span>
+<span class="va">+(2.2) The expression in the noexcept is equivalent to:</span>
+<span class="va">+</span>
+<span class="va">+        NE(remove_reference_t&lt;X&gt;, remove_reference_t&lt;Y&gt;) &amp;&amp;</span>
+<span class="va">+        NE(remove_reference_t&lt;Y&gt;, remove_reference_t&lt;X&gt;)</span>
+<span class="va">+</span>
+<span class="va">+      Where NE(T1, T2) is the expression:</span>
+<span class="va">+</span>
+<span class="va">+        is_nothrow_constructible&lt;value_type_t&lt;T1&gt;, rvalue_reference_t&lt;T1&gt;&gt;::value &amp;&amp;</span>
+<span class="va">+        is_nothrow_assignable&lt;value_type_t&lt;T1&gt;&amp;, rvalue_reference_t&lt;T1&gt;&gt;::value &amp;&amp;</span>
+<span class="va">+        is_nothrow_assignable&lt;reference_t&lt;T1&gt;, rvalue_reference_t&lt;T2&gt;&gt;::value &amp;&amp;</span>
+<span class="va">+        is_nothrow_assignable&lt;reference_t&lt;T1&gt;, value_type_t&lt;T2&gt;&gt;::value&gt; &amp;&amp;</span>
+<span class="va">+        is_nothrow_move_constructible&lt;value_type_t&lt;T1&gt;&gt;::value &amp;&amp;</span>
+<span class="va">+        noexcept(ranges::iter_move(declval&lt;T1&amp;&gt;()))</span></code></pre></div>
+<h2 id="iterator-count-ranges"><a href="https://github.com/ericniebler/stl2/issues/289">289</a>: <code>[iterator, count)</code> ranges</h2>
+<blockquote>
+<ul>
+<li><p>[alg.copy] Does copy_n need a “Requires:” element stating that [result, result + n) is a valid range?</p></li>
+<li><p>same concern for fill_n and generate_n.</p></li>
+</ul>
+</blockquote>
+<p>We have “The result of the application of functions in the library to invalid ranges is undefined.” in [iterator.requirements.general]/10 where “range” is defined: “A range is an iterator and a sentinel that designate the beginning and end of the computation.” Instead of adding a requirement to every <code>_n</code> algorithm, we should expand the blanket wording to cover <code>[iterator, count)</code> ranges as well.</p>
+<h2 id="proposed-resolution-16">Proposed Resolution</h2>
+<p>Change [iterator.requirements.general] as follows:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff">  7 Most of the library’s algorithmic templates that operate on data structures have interfaces
+    that use ranges. A range is an iterator and a sentinel that designate the beginning and end
+    of the computation
+<span class="va">+   , or an iterator and a count that designate the beginning and the number of elements to which</span>
+<span class="va">+   the computation is to be applied.</span>
+
+  8 An iterator and a sentinel denoting a range are comparable.
+<span class="st">-   A sentinel denotes an element when it compares equal to an iterator i, and i points to that</span>
+<span class="st">-   element.</span>
+    The types of a sentinel and an iterator that denote a range must satisfy Sentinel (9.3.9). A
+    range [i,s) is empty if i == s; otherwise, [i,s) refers to the elements in the data
+    structure starting with the element pointed to by i and up to but not including the element
+    pointed to by the first iterator j such that j == s.
+
+  9 A sentinel s is called reachable from an iterator i if and only if there is a finite sequence
+    of applications of the expression ++i that makes i == s. If s is reachable from i,
+<span class="st">-   they denote a range.</span>
+<span class="va">+   [i,s) denotes a range.</span>
+
+<span class="va">+ ? A counted range [i,n) is empty if n == 0; otherwise, [i,n) refers to the n elements in the</span>
+<span class="va">+   data structure starting with the element pointed to by i and up to but not including the</span>
+<span class="va">+   element pointed to by the result of incrementing i n times.</span>
+
+ 10 A range [i,s) is valid if and only if s is reachable from i.
+<span class="va">+   A counted range [i,n) is valid if and only if n == 0; or n is positive, i is</span>
+<span class="va">+   dereferenceable, and [++i,--n) is valid.</span>
+    The result of the application of functions in the library to invalid ranges is unspecified.</code></pre></div>
+<p>Change [alg.fill]/p1 as follows:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> 1. Effects: fill assigns value through all the iterators in the range [first,last).
+<span class="st">-   fill_n assigns value through all the iterators in the range [first,first + n) if n is</span>
+<span class="va">+   fill_n assigns value through all the iterators in the counted range [first,n) if n is</span>
+    positive, otherwise it does nothing.</code></pre></div>
+<p>Change [alg.generate]/p1-2 as follows:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff">
+<span class="st">-1. Effects: Assigns the value of invoke(gen) through successive iterators in the</span>
+<span class="st">-   range [first,last), where last is first + max(n, 0) for generate_n.</span>
+<span class="va">+1. Effects: The generate algorithms invoke the function object gen and assign the return value</span>
+<span class="va">+   of gen through all the iterators in the range [first, last). The generate_n algorithm invokes</span>
+<span class="va">+   the function object gen and assigns the return value of gen through all the iterators in</span>
+<span class="va">+   the counted range [first, n) if n is positive, otherwise it does nothing.</span>
+
+<span class="st">-2. Returns: last</span>
+<span class="va">+2. Returns: last, where last is first + max(n, 0) for generate_n</span>
+
+<span class="st">-3. Complexity: Exactly last - first evaluations of invoke(gen) and assignments.</span>
+<span class="va">+3. Complexity: Exactly last - first or n evaluations of invoke(gen) and assignments,</span>
+<span class="va">+   respectively.</span></code></pre></div>
+<h2 id="common_iteratoroperator--with-xvalue-operator"><a href="https://github.com/ericniebler/stl2/issues/298">298</a>: <code>common_iterator::operator-&gt;</code> with xvalue <code>operator*</code></h2>
+<p>The specification states:</p>
+<blockquote>
+<p>4 <em>Effects:</em> Given an object <code>i</code> of type <code>I</code></p>
+<p>(4.1) — if <code>I</code> is a pointer type or if the expression <code>i.operator-&gt;()</code> is well-formed, this function returns <code>iter</code>.</p>
+<p>(4.2) — Otherwise, if the expression <code>*iter</code> is a glvalue, this function is equivalent to <code>return addressof(*iter);</code></p>
+<p>(4.3) — Otherwise, …</p>
+</blockquote>
+<p><code>std::addressof</code> requires lvalue arguments, so the effects of 4.2 are ill-formed when <code>*iter</code> is an xvalue.</p>
+<h3 id="proposed-resolution-17">Proposed Resolution:</h3>
+<p>Change [common.iter.op.star]/4.2 as follows:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> 4 Effects: Given an object i of type I
+ (4.1) — if I is a pointer type or if the expression i.operator-&gt;() is well-formed, this function
+         returns iter.
+<span class="st">-(4.2) — Otherwise, if the expression *iter is a glvalue, this function is equivalent to return</span>
+<span class="st">-        addressof(*iter);</span>
+<span class="va">+(4.2) — Otherwise, if the expression *iter is a glvalue, this function is equivalent to:</span>
+<span class="va">+    auto&amp;&amp; tmp = *iter;</span>
+<span class="va">+    return addressof(tmp);</span>
+ (4.3) — Otherwise, [...]</code></pre></div>
+<h2 id="is-it-intended-that-an-aggregate-with-a-deleted-or-nonexistent-default-constructor-satisfy-defaultconstructible"><a href="https://github.com/ericniebler/stl2/issues/300">300</a>: Is it intended that an aggregate with a deleted or nonexistent default constructor satisfy <code>DefaultConstructible</code>?</h2>
+<p>For example, given</p>
+<pre><code>struct A{
+    A(const A&amp;) = default;
+};</code></pre>
+<p>The following expressions are all valid:</p>
+<pre><code>    A{};
+    new A{};
+    new A[5]{};</code></pre>
+<p>which would seem to mean that <code>A</code> meets <code>DefaultConstructible</code> as defined in [concepts.lib.object.defaultconstructible], unless I missed something.</p>
+<p>If this is intended, then the note in [concepts.lib.object.defaultconstructible] is incorrect.</p>
+<h2 id="proposed-resolution-18">Proposed Resolution</h2>
+<p>Adopt <a href="http://wiki.edg.com/pub/Wg21toronto2017/StrawPolls/p0547r2.html">P0547R2: “Ranges TS: Assorted Object Concept Fixes”</a>.</p>
+<h2 id="is-it-intended-that-constructibleint-long-is-true"><a href="https://github.com/ericniebler/stl2/issues/301">301</a>: Is it intended that <code>Constructible&lt;int&amp;, long&amp;&gt;()</code> is <code>true</code>?</h2>
+<p><code>__BindableReference</code> is defined with a function-style cast expression, which is equivalent to a C-style cast in the single-argument case, which means it can degenerate to a <code>reinterpret_cast</code> or an access-bypassing <code>static_cast</code>.</p>
+<h2 id="proposed-resolution-19">Proposed Resolution</h2>
+<p>Adopt <a href="http://wiki.edg.com/pub/Wg21toronto2017/StrawPolls/p0547r2.html">P0547R2: “Ranges TS: Assorted Object Concept Fixes”</a>.</p>
+<h2 id="movableint-is-true-and-it-should-probably-be-false"><a href="https://github.com/ericniebler/stl2/issues/301">310</a>: <code>Movable&lt;int&amp;&amp;&gt;()</code> is true and it should probably be false</h2>
+<p>Also see <a href="https://github.com/ericniebler/stl2/issues/301">#301</a></p>
+<h2 id="proposed-resolution-20">Proposed Resolution</h2>
+<p>Adopt <a href="http://wiki.edg.com/pub/Wg21toronto2017/StrawPolls/p0547r2.html">P0547R2: “Ranges TS: Assorted Object Concept Fixes”</a>.</p>
+<h2 id="moveconstructiblet-stdis_move_constructiblet"><a href="https://github.com/ericniebler/stl2/issues/313">313</a>: <code>MoveConstructible&lt;T&gt;() != std::is_move_constructible&lt;T&gt;()</code></h2>
+<p>…when <code>T</code> is <code>const some_move_only_type</code> due to the use of <code>remove_cv_t</code> in the definition of <code>MoveConstructible</code>. This is sensible if <code>MoveConstructible</code> means “Can I construct a <code>T</code> object from an rvalue expression with <code>T</code>’s value type?” but becomes <em>very</em> surprising if we align the other `structibles with the meaning of the standard type traits.</p>
+<p><code>CopyConstructible</code> needs to change similarly for consistency.</p>
+<h2 id="proposed-resolution-21">Proposed Resolution</h2>
+<p>Adopt <a href="http://wiki.edg.com/pub/Wg21toronto2017/StrawPolls/p0547r2.html">P0547R2: “Ranges TS: Assorted Object Concept Fixes”</a>.</p>
+<h2 id="convertibletot-u-should-say-something-about-the-final-state-of-the-source-object"><a href="https://github.com/ericniebler/stl2/issues/314">314</a>: <code>ConvertibleTo&lt;T&amp;&amp;, U&gt;</code> should say something about the final state of the source object</h2>
+<p><code>Assignable</code> and <code>MoveConstructible</code> explicitly say that the source object may end up in a moved-from state as a result of the operation. I think <code>ConvertibleTo</code> should also.</p>
+<h2 id="proposed-resolution-22">Proposed resolution</h2>
+<p>Fixed by the proposed resolution of <a href="https://github.com/ericniebler/stl2/issues/167">#167</a>.</p>
+<h2 id="rangesexchange-should-be-constexpr-and-conditionally-noexcept"><a href="https://github.com/ericniebler/stl2/issues/322">322</a>: <code>ranges::exchange</code> should be <code>constexpr</code> and conditionally <code>noexcept</code></h2>
+<h3 id="proposed-resolution-23">Proposed Resolution</h3>
+<p>Adopt <a href="http://wiki.edg.com/pub/Wg21toronto2017/StrawPolls/p0579r1.html">P0579R1: “<code>constexpr</code> for <code>&lt;experimental/ranges/iterator&gt;</code>”</a>.</p>
+<h2 id="common_reference-doesnt-work-with-some-proxy-references"><a href="https://github.com/ericniebler/stl2/issues/338">338</a>: <code>common_reference</code> doesn’t work with some proxy references</h2>
+<p>Consider:</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">namespace</span> ranges = <span class="bu">std::</span>experimental<span class="bu">::</span>ranges;
+
+<span class="kw">struct</span> MyIntRef {
+  MyIntRef(<span class="dt">int</span> &amp;);
+};
+
+<span class="kw">using</span> T = ranges::<span class="dt">common_reference_t</span>&lt;<span class="dt">int</span> &amp;, MyIntRef&gt;; <span class="co">// doesn&#39;t work</span>
+<span class="kw">using</span> U = ranges::<span class="dt">common_type_t</span>&lt;<span class="dt">int</span> &amp;, MyIntRef&gt;; <span class="co">// also doesn&#39;t work</span></code></pre></div>
+<p><del>I haven’t decided yet if this is a bug or not.</del> It’s a bug. At least, it’s a bug for <code>common_reference</code>, not for <code>common_type</code>.</p>
+<p>[ <em>Note:</em> As of C++14 (IIRC), <code>std::common_type&lt;int &amp;, MyIntRef&gt;::type</code> is <code>MyIntRef</code> because it doesn’t decay types before the ternary conditional test, so this is a regression wrt C++14. However, with C++17, <code>std::common_type</code> first decays types before the ternary conditional test, so we won’t be regressing behavior relative to C++17 if we don’t accommodate this case.–<em>end note</em>]</p>
+<h2 id="discussion">Discussion</h2>
+<p>Stepping through the specification of <code>common_reference</code> with the types <code>int&amp;</code> and <code>MyIntRef</code>:</p>
+<blockquote>
+<p>(3.3.1) — If <code>COMMON_REF(T1, T2)</code> is well-formed and denotes a reference<br />
+type then the member typedef <code>type</code> denotes that type</p>
+</blockquote>
+<p>This bullet is meant to handle reference types for which the built-in ternary operator yields another reference type (after some argument munging to avoid some weirdness with the ternary operator that causes premature type decay). The intention is to prevent the next bullet from firing, thereby preventing users from overriding the language rules regarding reference binding via the <code>basic_common_reference</code> customization point.</p>
+<p>This rule doesn’t fire for <code>int&amp;</code> and <code>MyIntRef</code> because the logical common reference in this case is <code>MyIntRef</code>, which is not a reference type.</p>
+<p>(Besides, this bullet should only be considered when <code>T1</code> and <code>T2</code> are reference types. We can tighten up the spec by requiring that condition. The issue under discussion doesn’t require that change, but we propose it anyway.)</p>
+<blockquote>
+<p>(3.3.2) — Otherwise, if <code>basic_common_reference&lt;UNCVREF(T1), UNCVREF(T2),</code><br />
+<code>XREF(T1), XREF(T2)&gt;::type</code> is well-formed, then the member typedef<br />
+<code>type</code> denotes that type.</p>
+</blockquote>
+<p>This bullet only fires when the user has specialized <code>basic_common_reference</code> on their argument types. Not relevant here.</p>
+<blockquote>
+<p>(3.3.3) — Otherwise, if <code>common_type_t&lt;T1, T2&gt;</code> is well-formed, then the<br />
+member typedef <code>type</code> denotes that type.</p>
+</blockquote>
+<p>By dispatching to <code>common_type</code> we pick up any user specializations of that type trait. Trouble is, it decays types before looking for a common type. By decaying <code>int&amp;</code> to <code>int</code>, it now becomes impossible to find the common type.</p>
+<blockquote>
+<p>(3.3.4) — Otherwise, there shall be no member <code>type</code>.</p>
+</blockquote>
+<p>Therefore, there is no common reference.</p>
+<p>The fix is to, before testing for <code>common_type</code>, first put the two types in a ternary conditional <em>without</em> decaying and see if that results in a well-formed type. Only if it doesn’t do we fall back to <code>common_type</code>.</p>
+<p>The proposed resolution is expressed in terms of the <code>COND_RES(X, Y)</code> pseudo-macro, which was defined as <code>decltype(declval&lt;bool&gt;() ? declval&lt;X&gt;() : declval&lt;Y&gt;())</code>. This macro is buggy because <code>COND_RES(int, int)</code> comes out as <code>int&amp;&amp;</code> instead of <code>int</code>. That’s because the type of <code>declval&lt;int&gt;()</code> is <code>int&amp;&amp;</code>. To make it work, <code>COND_RES(X, Y)</code> needs to be redefined as the somewhat cryptic <code>decltype(declval&lt;bool&gt;() ? declval&lt;X(&amp;)()&gt;()() : declval&lt;Y(&amp;)()&gt;()())</code>. This formulation perfectly preserves the value category of the arguments.</p>
+<h2 id="proposed-resolution-24">Proposed Resolution</h2>
+<p>Change [meta.trans.other]/p1 as follows:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> 1.
+ Let CREF(A) be add_lvalue_reference_t&lt;const remove_reference_t&lt;A&gt;&gt;.
+ Let UNCVREF(A) be remove_cv_t&lt;remove_reference_t&lt;A&gt;&gt;. Let XREF(A)
+ denote a unary template T such that T&lt;UNCVREF(A)&gt; denotes the same
+ type as A. Let COPYCV(FROM, TO) be an alias for type TO with the addition
+ of FROM’s top-level cv-qualifiers. [ Example: COPYCV(const int, volatile
+ short) is an alias for const volatile short. —end example ] Let RREF_RES(Z)
+ be remove_reference_t&lt;Z&gt;&amp;&amp; if Z is a reference type or Z otherwise. Let
+ COND_RES(X, Y) be
+<span class="st">-decltype(declval&lt;bool&gt;() ? declval&lt;X&gt;() : declval&lt;Y&gt;()).</span>
+<span class="va">+decltype(declval&lt;bool&gt;() ? declval&lt;X(&amp;)()&gt;()() : declval&lt;Y(&amp;)()&gt;()()).</span>
+ Given types A and B, let X be remove_reference_t&lt;A&gt;, let Y be
+ remove_reference_t&lt;B&gt;, and let COMMON_REF(A, B) be:</code></pre></div>
+<p>Change the description of <code>common_reference</code> [meta.trans.other]/p3 as follows:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> 3
+ For the common_reference trait applied to a parameter pack T of types,
+ the member type shall be either defined or not present as follows:
+ (3.1) — If sizeof...(T) is zero, there shall be no member type.
+ (3.2) — Otherwise, if sizeof...(T) is one, let T1 denote the sole type in the
+         pack T. The member typedef type shall denote the same type as T1.
+ (3.3) — Otherwise, if sizeof...(T) is two, let T1 and T2 denote the two types
+         in the pack T. Then
+<span class="st">-(3.3.1) — If COMMON_REF(T1, T2) is well-formed and denotes a reference</span>
+<span class="va">+(3.3.1) — If T1 and T2 are reference types and COMMON_REF(T1, T2) is</span>
+<span class="va">+          well-formed and denotes a reference</span>
+           type then the member typedef type denotes that type.
+ (3.3.2) — Otherwise, if basic_common_reference&lt;UNCVREF(T1), UNCVREF(T2),
+           XREF(T1), XREF(T2)&gt;::type is well-formed, then the member typedef
+           type denotes that type.
+<span class="va">+(3.3.x) — Otherwise, if COND_RES(T1, T2) is well-formed, then the</span>
+<span class="va">+          member typedef type denotes that type.</span>
+ (3.3.3) — Otherwise, if common_type_t&lt;T1, T2&gt; is well-formed, then the
+           member typedef type denotes that type.
+ (3.3.4) — Otherwise, there shall be no member type.</code></pre></div>
+<h2 id="after-p0547r0-const-qualified-iterator-types-are-not-readable-or-writable"><a href="https://github.com/ericniebler/stl2/issues/339">339</a>: After P0547R0, const-qualified iterator types are not <code>Readable</code> or <code>Writable</code></h2>
+<p><code>Readable</code> requires <code>Movable</code>. <code>const</code>-qualified types are not <code>Movable</code> after P0547R0. Ouch.</p>
+<h2 id="proposed-resolution-25">Proposed Resolution</h2>
+<p>Adopt <a href="http://wiki.edg.com/pub/Wg21toronto2017/StrawPolls/p0547r2.html">P0547R2: “Ranges TS: Assorted Object Concept Fixes”</a>.</p>
+<h2 id="gb-1-001-consider-all-outstanding-issues-before-the-final-ts-is-produced"><a href="https://github.com/ericniebler/stl2/issues/340">340</a>: GB 1 (001): Consider all outstanding issues before the final TS is produced</h2>
+<h3 id="general-comment">General Comment</h3>
+<p>Consider all outstanding issues before the final TS is produced.</p>
+<h3 id="proposed-resolution-26">Proposed Resolution</h3>
+<p>All outstanding issues have been so considered, and all priority 1 and priority 2 issues resolved.</p>
+<h2 id="p0541-is-missing-semantics-for-outputiterators-writable-post-increment-result"><a href="https://github.com/ericniebler/stl2/issues/361">361</a>: P0541 is missing semantics for <code>OutputIterator</code>’s writable post-increment result</h2>
+<p><a href="http://wg21.link/P0541">P0541</a> changes the definition of <code>OutputIterator</code> to:</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> I, <span class="kw">class</span> T&gt;
+concept <span class="dt">bool</span> OutputIterator() {
+  <span class="cf">return</span> Iterator&lt;I&gt;() &amp;&amp; Writable&lt;I, T&gt;() &amp;&amp;
+    requires(I i, T&amp;&amp; t) {
+      *i++ = <span class="bu">std::</span>forward&lt;T&gt;(t); <span class="co">// not required to be equality preserving</span>
+    };
+}</code></pre></div>
+<p>It notably fails to add any semantic constraints on the expression <code>*i++ = std::forward&lt;T&gt;(t)</code>. What does it do? Who knows?</p>
+<h2 id="proposed-resolution-27">Proposed Resolution</h2>
+<p>After [iterators.output]/p1 and before p2, add the following:</p>
+<blockquote>
+<p>x. Let <code>E</code> be an expression such that <code>decltype((E))</code> is <code>T</code>, and let <code>i</code> be a dereferenceable object of type <code>I</code>. Then <code>OutputIterator&lt;I, T&gt;()</code> is satisfied only if <code>*i++ = E;</code> has effects equivalent to:</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">*i = E;
+++i;</code></pre></div>
+</blockquote>
+<h2 id="common_iteratoroperator--is-underconstrained"><a href="https://github.com/ericniebler/stl2/issues/366">366</a>: <code>common_iterator::operator-&gt;</code> is underconstrained</h2>
+<p>As specified in <a href="https://github.com/ericniebler/stl2/issues/318">#318</a>. The “proxy case” constructs an object of type <code>value_type_t&lt;I&gt;</code> from <code>reference_t&lt;I&gt;</code> but does not require <code>Constructible&lt;value_type_t&lt;I&gt;, reference_t&lt;I&gt;&gt;()</code>.</p>
+<h2 id="proposed-resolution-28">Proposed Resolution</h2>
+<p>Change the class synopsis of <code>common_iterator</code> ([common.iterator]) as follows (includes part of the resolution of #368):</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> see below operator*();
+ see below operator*() const requires dereferenceable&lt;I const&gt;;
+<span class="st">-see below operator-&gt;() const requires Readable&lt;I const&gt;();</span>
+<span class="va">+see below operator-&gt;() const requires see below;</span></code></pre></div>
+<p>To [common.iter.op.ref], add a p3 that reads:</p>
+<blockquote>
+<ol>
+<li><p>The expression in the <code>requires</code> clause is equivalent to:</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp">Readable&lt;I <span class="at">const</span>&gt;() &amp;&amp;
+  (requires (<span class="at">const</span> I&amp; i) { i.<span class="kw">operator</span>-&gt;(); } ||
+   is_reference&lt;<span class="dt">reference_t</span>&lt;I&gt;&gt;::value ||
+   Constructible&lt;<span class="dt">value_type_t</span>&lt;I&gt;, <span class="dt">reference_t</span>&lt;I&gt;&gt;())</code></pre></div></li>
+</ol>
+</blockquote>
+<h2 id="advance-distance-next-and-prev-should-be-customization-point-objects"><a href="https://github.com/ericniebler/stl2/issues/367">367</a>: <code>advance</code>, <code>distance</code>, <code>next</code>, and <code>prev</code> should be customization point objects</h2>
+<p>Imagine passing a new-style RandomAccessIterator <code>I</code> for which <code>reference_t&lt;I&gt;</code> is not a reference type to (unqualified) <code>advance</code>. Further imagine that <code>I</code> has namespace <code>std</code> as an associated namespace (by wrapping a <code>std</code> iterator, for instance). Then <code>std::advance</code> might get called, which will treat the iterator as an InputIterator (due to category demotion), doing <em>N</em> increments instead of just one <code>+=</code>.</p>
+<p>Making <code>ranges::advance</code> a CPO could help in some scenarios. Ditto for <code>distance</code>, <code>next</code>, and <code>prev</code>.</p>
+<h2 id="proposed-resolution-29">Proposed Resolution</h2>
+<p>[<em>Editor’s note</em>: this wording assumes that the resolution of <a href="https://github.com/ericniebler/stl2/issues/256">#256</a> has been applied. It depicts distinct overloads for <code>next(i)</code> and <code>next(i, n)</code> instead of the semantically equivalent <code>next(i, n = 1)</code> to allow implementations that strengthen <code>noexcept</code> to conformingly reflect <code>noexcept(++i)</code> for the <code>next(i)</code> case. Otherwise, the “new” wording is as close as possible to the “old” wording to minimize review costs: it simply turns function template overload sets into member function template overload sets.]</p>
+<p>Change the synopsis of <code>&lt;experimental/ranges/iterator&gt;</code> in [iterator.synopsis] as follows:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> // 9.6.4, iterator operations:
+<span class="st">-template &lt;Iterator I&gt;</span>
+<span class="st">-  void advance(I&amp; i, difference_type_t&lt;I&gt; n);</span>
+<span class="st">-template &lt;Iterator I, Sentinel&lt;I&gt; S&gt;</span>
+<span class="st">-  void advance(I&amp; i, S bound);</span>
+<span class="st">-template &lt;Iterator I, Sentinel&lt;I&gt; S&gt;</span>
+<span class="st">-  difference_type_t&lt;I&gt; advance(I&amp; i, difference_type_t&lt;I&gt; n, S bound);</span>
+<span class="st">-template &lt;Iterator I, Sentinel&lt;I&gt; S&gt;</span>
+<span class="st">-  difference_type_t&lt;I&gt; distance(I first, S last);</span>
+<span class="st">-template &lt;Iterator I&gt;</span>
+<span class="st">-  I next(I x, difference_type_t&lt;I&gt; n = 1);</span>
+<span class="st">-template &lt;Iterator I, Sentinel&lt;I&gt; S&gt;</span>
+<span class="st">-  I next(I x, S bound);</span>
+<span class="st">-template &lt;Iterator I, Sentinel&lt;I&gt; S&gt;</span>
+<span class="st">-  I next(I x, difference_type_t&lt;I&gt; n, S bound);</span>
+<span class="st">-template &lt;BidirectionalIterator I&gt;</span>
+<span class="st">-  I prev(I x, difference_type_t&lt;I&gt; n = 1);</span>
+<span class="st">-template &lt;BidirectionalIterator I&gt;</span>
+<span class="st">-  I prev(I x, difference_type_t&lt;I&gt; n, I bound);</span>
+<span class="va">+namespace {</span>
+<span class="va">+  constexpr unspecified advance = unspecified;</span>
+<span class="va">+  constexpr unspecified distance = unspecified;</span>
+<span class="va">+  constexpr unspecified next = unspecified;</span>
+<span class="va">+  constexpr unspecified prev = unspecified;</span>
+<span class="va">+}</span>
+
+ [...]
+
+ template &lt;Iterator I&gt;
+   counted_iterator&lt;I&gt; make_counted_iterator(I i, difference_type_t&lt;I&gt; n);
+
+<span class="st">-template &lt;Iterator I&gt;</span>
+<span class="st">-   void advance(counted_iterator&lt;I&gt;&amp; i, difference_type_t&lt;I&gt; n);</span>
+
+ // 9.7.8, unreachable sentinels:
+
+ [...]
+
+ // 9.11, range primitives:
+ namespace {
+   constexpr unspecified size = unspecified ;
+   constexpr unspecified empty = unspecified ;
+   constexpr unspecified data = unspecified ;
+   constexpr unspecified cdata = unspecified ;
+ }
+<span class="st">-template &lt;Range R&gt;</span>
+<span class="st">-difference_type_t&lt;iterator_t&lt;R&gt;&gt; distance(R&amp;&amp; r);</span>
+<span class="st">-template &lt;SizedRange R&gt;</span>
+<span class="st">-difference_type_t&lt;iterator_t&lt;R&gt;&gt; distance(R&amp;&amp; r);</span></code></pre></div>
+<p>In [iterator.operations], change paragraph 1 as follows:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> 1 Since only types that satisfy RandomAccessIterator provide the + operator, and types that
+  satisfy SizedSentinel provide the - operator, the library provides four
+<span class="st">- function templates</span>
+<span class="va">+ customization point objects</span>
+  advance, distance, next, and prev. These
+<span class="st">- function templates</span>
+<span class="va">+ customization point objects</span>
+  use + and - for random access iterators and ranges that satisfy SizedSentinel
+<span class="st">- , respectively</span>
+  (and are, therefore, constant time for them); for output, input, forward and bidirectional
+  iterators they use ++ to provide linear time implementations.</code></pre></div>
+<p>and replace the remainder of [iterator.operations] entirely with:</p>
+<blockquote>
+<p>2 The name <code>advance</code> denotes a customization point object (\ref{customization.point.object}). It has the following function call operators:</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;Iterator I&gt;
+  <span class="kw">constexpr</span> <span class="dt">void</span> <span class="kw">operator</span>()(I&amp; i, <span class="dt">difference_type_t</span>&lt;I&gt; n) <span class="at">const</span>;</code></pre></div>
+<p>3 <em>Requires:</em> <code>n</code> shall be negative only for bidirectional iterators.</p>
+<p>4 <em>Effects:</em> For random access iterators, equivalent to <code>i += n</code>. Otherwise, increments (or decrements for negative <code>n</code>) iterator <code>i</code> by <code>n</code>.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;Iterator I, Sentinel&lt;I&gt; S&gt;
+  <span class="kw">constexpr</span> <span class="dt">void</span> <span class="kw">operator</span>()(I&amp; i, S bound) <span class="at">const</span>;</code></pre></div>
+<p>5 <em>Requires:</em> If <code>Assignable&lt;I&amp;, S&gt;()</code> is not satisfied, <code>[i,bound)</code> shall denote a range.</p>
+<p>6 <em>Effects:</em></p>
+<p>(6.1) — If <code>Assignable&lt;I&amp;, S&gt;()</code> is satisfied, equivalent to <code>i = std::move(bound)</code>.</p>
+<p>(6.2) — Otherwise, if <code>SizedSentinel&lt;S, I&gt;()</code> is satisfied, equivalent to <code>advance(i, bound - i)</code>.</p>
+<p>(6.3) — Otherwise, increments <code>i</code> until <code>i == bound</code>.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;Iterator I, Sentinel&lt;I&gt; S&gt;
+  <span class="kw">constexpr</span> <span class="dt">difference_type_t</span>&lt;I&gt; <span class="kw">operator</span>()(I&amp; i, <span class="dt">difference_type_t</span>&lt;I&gt; n, S bound) <span class="at">const</span>;</code></pre></div>
+<p>7 <em>Requires:</em> If <code>n &gt; 0</code>, <code>[i,bound)</code> shall denote a range. If <code>n == 0</code>, <code>[i,bound)</code> or <code>[bound,i)</code> shall denote a range. If <code>n &lt; 0</code>, <code>[bound,i)</code> shall denote a range and <code>(BidirectionalIterator&lt;I&gt;() &amp;&amp; Same&lt;I, S&gt;())</code> shall be satisfied.</p>
+<p>8 <em>Effects:</em></p>
+<p>(8.1) — If <code>SizedSentinel&lt;S, I&gt;()</code> is satisfied:</p>
+<p>(8.1.1) — If <code>|n| &gt;= |bound - i|</code>, equivalent to <code>advance(i, bound)</code>.</p>
+<p>(8.1.2) — Otherwise, equivalent to <code>advance(i, n)</code>.</p>
+<p>(8.2) — Otherwise, increments (or decrements for negative <code>n</code>) iterator <code>i</code> either <code>n</code> times or until <code>i == bound</code>, whichever comes first.</p>
+<p>9 <em>Returns:</em> <code>n - M</code>, where <code>M</code> is the distance from the starting position of <code>i</code> to the ending position.</p>
+<p>10 The name <code>distance</code> denotes a customization point object. It has the following function call operators:</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;Iterator I, Sentinel&lt;I&gt; S&gt;
+  <span class="kw">constexpr</span> <span class="dt">difference_type_t</span>&lt;I&gt; <span class="kw">operator</span>()(I first, S last) <span class="at">const</span>;</code></pre></div>
+<p>9 <em>Requires:</em> <code>[first,last)</code> shall denote a range, or <code>(Same&lt;S, I&gt;() &amp;&amp; SizedSentinel&lt;S, I&gt;())</code> shall be satisfied and <code>[last,first)</code> shall denote a range.</p>
+<p>10 <em>Effects:</em> If <code>SizedSentinel&lt;S, I&gt;()</code> is satisfied, returns <code>(last - first)</code>; otherwise, returns the number of increments needed to get from <code>first</code> to <code>last</code>.</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;Range R&gt;
+  <span class="kw">constexpr</span> <span class="dt">difference_type_t</span>&lt;<span class="dt">iterator_t</span>&lt;R&gt;&gt; <span class="kw">operator</span>()(R&amp;&amp; r) <span class="at">const</span>;</code></pre></div>
+<p>11 <em>Effects:</em> Equivalent to: <code>return distance(ranges::begin(r), ranges::end(r));</code> (\ref{iterator.range})</p>
+<p>[<em>Editor’s note:</em> Include the following paragraph only if the PR of <a href="https://github.com/ericniebler/stl2/issues/211">#211</a> has been applied.]</p>
+<p>12 <em>Remarks:</em> Instantiations of this function template may be ill-formed if the declarations in <code>&lt;experimental/range/range&gt;</code> are not in scope at the point of instantiation (\cxxref{temp.point}).</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;SizedRange R&gt;
+  <span class="kw">constexpr</span> <span class="dt">difference_type_t</span>&lt;<span class="dt">iterator_t</span>&lt;R&gt;&gt; <span class="kw">operator</span>()(R&amp;&amp; r) <span class="at">const</span>;</code></pre></div>
+<p>13 <em>Effects:</em> Equivalent to: <code>return ranges::size(r);</code> (\ref{range.primitives.size})</p>
+<p>[<em>Editor’s note:</em> Include the following paragraph only if the PR of <a href="https://github.com/ericniebler/stl2/issues/211">#211</a> has been applied.]</p>
+<p>14 <em>Remarks:</em> Instantiations of this function template may be ill-formed if the declarations in <code>&lt;experimental/range/range&gt;</code> are not in scope at the point of instantiation (\cxxref{temp.point}).</p>
+<p>15 The name <code>next</code> denotes a customization point object. It has the following function call operators:</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;Iterator I&gt;
+  <span class="kw">constexpr</span> I <span class="kw">operator</span>()(I x) <span class="at">const</span>;</code></pre></div>
+<p>16 <em>Effects:</em> Equivalent to: <code>++x; return x;</code></p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;Iterator I&gt;
+  <span class="kw">constexpr</span> I <span class="kw">operator</span>()(I x, <span class="dt">difference_type_t</span>&lt;I&gt; n) <span class="at">const</span>;</code></pre></div>
+<p>17 <em>Effects:</em> Equivalent to: <code>advance(x, n); return x;</code></p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;Iterator I, Sentinel&lt;I&gt; S&gt;
+  <span class="kw">constexpr</span> I <span class="kw">operator</span>()(I x, S bound) <span class="at">const</span>;</code></pre></div>
+<p>18 <em>Effects:</em> Equivalent to: <code>advance(x, bound); return x;</code></p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;Iterator I, Sentinel&lt;I&gt; S&gt;
+  <span class="kw">constexpr</span> I <span class="kw">operator</span>()(I x, <span class="dt">difference_type_t</span>&lt;I&gt; n, S bound) <span class="at">const</span>;</code></pre></div>
+<p>19 <em>Effects:</em> Equivalent to: <code>advance(x, n, bound); return x;</code></p>
+<p>20 The name <code>prev</code> denotes a customization point object. It has the following function call operators:</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;BidirectionalIterator I&gt;
+  <span class="kw">constexpr</span> I <span class="kw">operator</span>()(I x) <span class="at">const</span>;</code></pre></div>
+<p>21 <em>Effects:</em> Equivalent to: <code>--x; return x;</code></p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;BidirectionalIterator I&gt;
+  <span class="kw">constexpr</span> I <span class="kw">operator</span>()(I x, <span class="dt">difference_type_t</span>&lt;I&gt; n) <span class="at">const</span>;</code></pre></div>
+<p>22 <em>Effects:</em> Equivalent to: <code>advance(x, -n); return x;</code></p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;BidirectionalIterator I, Sentinel&lt;I&gt; S&gt;
+  <span class="kw">constexpr</span> I <span class="kw">operator</span>()(I x, <span class="dt">difference_type_t</span>&lt;I&gt; n, S bound) <span class="at">const</span>;</code></pre></div>
+<p>23 <em>Effects:</em> Equivalent to: <code>advance(x, -n, bound); return x;</code></p>
+</blockquote>
+<p>Also strike the declaration of the <code>advance</code> overload from the <code>counted_iterator</code> synopsis in [counted.iterator], and strike its specification: paragraphs 9 and 10 in [counted.iter.nonmember].</p>
+<p>Strike paragraphs 1 &amp; 2 from [range.primitives]:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"><span class="st">-template &lt;Range R&gt;</span>
+<span class="st">-difference_type_t&lt;iterator_t&lt;R&gt;&gt; distance(R&amp;&amp; r);</span>
+<span class="st">-</span>
+<span class="st">-1 Effects: Equivalent to: return ranges::distance(ranges::begin(r), ranges::end(r));</span>
+<span class="st">-</span>
+<span class="st">-template &lt;SizedRange R&gt;</span>
+<span class="st">-difference_type_t&lt;iterator_t&lt;R&gt;&gt; distance(R&amp;&amp; r);</span>
+<span class="st">-</span>
+<span class="st">-2 Effects: Equivalent to: return ranges::size(r);</span></code></pre></div>
+<h2 id="common_iterators-and-counted_iterators-const-operator-need-to-be-constrained"><a href="https://github.com/ericniebler/stl2/issues/368">368</a>: <code>common_iterator</code>’s and <code>counted_iterator</code>’s const <code>operator*</code> need to be constrained</h2>
+<p>Some iterators (e.g., <code>insert_iterator</code>) don’t have a <code>const</code>-qualified <code>operator*</code>. When wrapping such an iterator, <code>counted_iterator</code> and <code>common_iterator</code> also should not have such an overload of <code>operator*</code>.</p>
+<h2 id="proposed-resolution-30">Proposed Resolution</h2>
+<ol>
+<li>Change the <code>common_iterator</code> class synopsis [common.iterator] as follows:</li>
+</ol>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> see below operator*();
+<span class="st">-see below operator*() const;</span>
+<span class="st">-see below operator-&gt;() const requires Readable&lt;I&gt;();</span>
+<span class="va">+see below operator*() const requires dereferenceable&lt;I const&gt;;</span>
+<span class="va">+see below operator-&gt;() const requires Readable&lt;I const&gt;();</span>
+
+common_iterator&amp; operator++();
+common_iterator operator++(int);</code></pre></div>
+<ol>
+<li>Change <code>common_iterator::operator*</code> [common.iter.op.star] as follows:</li>
+</ol>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> decltype(auto) operator*();
+<span class="st">-decltype(auto) operator*() const;</span>
+<span class="va">+decltype(auto) operator*() const requires dereferenceable&lt;I const&gt;;</span>
+ 1 Requires: !is_sentinel
+ 2 Effects: Equivalent to: return *iter;</code></pre></div>
+<ol>
+<li>Change <code>common_iterator::operator-&gt;</code> [common.iter.op.ref] as follows:</li>
+</ol>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"><span class="st">-see below operator-&gt;() const requires Readable&lt;I&gt;();</span>
+<span class="va">+see below operator-&gt;() const requires Readable&lt;I const&gt;();</span>
+ 1 Requires: !is_sentinel
+ 2 Effects: Given an object i of type I
+...</code></pre></div>
+<ol>
+<li>Change the <code>counted_iterator</code> class synopsis [counted.iterator] as follows:</li>
+</ol>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> see below operator*();
+<span class="st">-see below operator*() const;</span>
+<span class="va">+see below operator*() const requires dereferenceable&lt;I const&gt;;</span>
+
+counted_iterator&amp; operator++();
+counted_iterator operator++(int);</code></pre></div>
+<ol>
+<li>Change <code>counted_iterator::operator*</code> [counted.iter.op.star] as follows:</li>
+</ol>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> decltype(auto) operator*();
+<span class="st">-decltype(auto) operator*() const;</span>
+<span class="va">+decltype(auto) operator*() const requires dereferenceable&lt;I const&gt;;</span>
+ 1 Effects: Equivalent to: return *current;</code></pre></div>
+<h2 id="switch-to-variable-concepts"><a href="https://github.com/ericniebler/stl2/issues/379">379</a>: Switch to variable concepts</h2>
+<p>I’m getting tired of typing and looking at <code>()</code> everywhere. I suggest switching whole hog to variable templates. I threatened to do that in the committee and nobody objected.</p>
+<p><em>Bike Shedding!</em></p>
+<p>The change would involve renaming concept “overloads” like the cross-type <code>EqualityComparable</code>. Following the existing practice of <code>is_swappable</code>/<code>is_swappable_with</code>, the sensible choice is <code>EqualityComparableWith</code>. Another satisfactory choice would be <code>EqualityComparableTo</code>.</p>
+<p>I suggest the suffix <code>With</code> for cross-type concepts that are inherently symmetric in nature. The suffix <code>To</code> or <code>Of</code> could be used for asymmetric cross-type concepts like <code>ConvertibleTo</code>.</p>
+<p><em>Possibly Related</em></p>
+<p>Along that vein, should we consider renaming <code>Sentinel</code> to <code>SentinelOf</code>? This reads nicer:</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;InputIterator I, SentinelOf&lt;I&gt; S&gt;
+<span class="dt">void</span> algorithm( I, S );</code></pre></div>
+<h2 id="proposed-resolution-31">Proposed Resolution</h2>
+<p>Adopt <a href="http://wiki.edg.com/pub/Wg21toronto2017/StrawPolls/p0651r1.html">P0651R1: “Ranges TS: Switch the Ranges TS to Use Variable Concepts”</a>.</p>
+<h2 id="readable-types-with-prvalue-reference-types-erroneously-model-writable"><a href="https://github.com/ericniebler/stl2/issues/381">381</a>: <code>Readable</code> types with prvalue reference types erroneously model <code>Writable</code></h2>
+<p>Consider:</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">struct</span> MakeString
+{
+    <span class="kw">using</span> <span class="dt">value_type</span> = <span class="bu">std::</span>string;
+    <span class="bu">std::</span>string <span class="kw">operator</span>*() <span class="at">const</span>
+    {
+        <span class="cf">return</span> <span class="bu">std::</span>string();
+    }
+};
+
+<span class="kw">static_assert</span>(!Writable&lt;MakeString, <span class="bu">std::</span>string&gt;()); <span class="co">// FAILS</span></code></pre></div>
+<p>This is a huge usability problem, since it permits users to, e.g., pass a range to <code>sort</code> that is not, in fact, sortable. The Ranges TS inherited this problem from the Palo Alto Report (<a href="http://wg21.link/N3351">N3351</a>), which also has this bug. Fixing this will be <del>tricky</del> <em>easy</em> :-) without messing up proxy iterators.</p>
+<p>EDIT: See <a href="https://github.com/ericniebler/range-v3/issues/573">ericniebler/range-v3#573</a>.</p>
+<p><strong>Resolution Discussion:</strong></p>
+<p>One fix would be to require that <code>*o</code> return a true reference, but that breaks when <code>*o</code> returns a proxy reference. The trick is in distinguishing between a prvalue that is a proxy from a prvalue that is just a value. The trick lies in recognizing that a proxy always represents a (logical, if not physical) indirection. As such, adding a const to the proxy should not effect the mutability of the thing being proxied. Further, if <code>decltype(*o)</code> <em>is</em> a true reference, then adding <code>const</code> to it has no effect, which also does not effect the mutability. So the fix is to add <code>const</code> to <code>decltype(*o)</code>, <code>const_cast</code> <code>*o</code> to that, and <em>then</em> test for writability.</p>
+<h2 id="proposed-resolution-32">Proposed Resolution</h2>
+<p>Adopt <a href="http://wiki.edg.com/pub/Wg21toronto2017/StrawPolls/p0547r2.html">P0547R2: “Ranges TS: Assorted Object Concept Fixes”</a>.</p>
+<h2 id="dont-try-to-forbid-overloaded-in-destructible"><a href="https://github.com/ericniebler/stl2/issues/382">382</a>: Don’t try to forbid overloaded <code>&amp;</code> in <code>Destructible</code></h2>
+<p>Per LWG Kona consensus.</p>
+<h2 id="proposed-resolution-33">Proposed Resolution</h2>
+<p>(Relative to P0547R0) Change [concepts.lib.object.destructible] as follows:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff">template &lt;class T&gt;
+concept bool Destructible() {
+<span class="va">+ return is_nothrow_destructible&lt;T&gt;::value; // see below</span>
+<span class="st">- return is_nothrow_destructible&lt;T&gt;::value &amp;&amp; // see below</span>
+<span class="st">-   requires(T&amp; t, const remove_reference_t&lt;T&gt;&amp; ct) {</span>
+<span class="st">-     { &amp;t } -&gt; Same&lt;remove_reference_t&lt;T&gt;*&gt;&amp;&amp;; // not required to be equality preserving</span>
+<span class="st">-     { &amp;ct } -&gt; Same&lt;const remove_reference_t&lt;T&gt;*&gt;&amp;&amp;; // not required to be equality preserving</span>
+<span class="st">-   };</span>
+}</code></pre></div>
+<p>Strike [concepts.lib.object.destructible]/p2 (“The expression requirement <code>&amp;ct</code> …”) and [concepts.lib.object.destructible]/p3 (“n a (possibly <code>const</code>) lvalue <code>t</code> of type…”).</p>
+<h2 id="p0541-basic-exception-guarantee-in-counted_iterators-postincrement"><a href="https://github.com/ericniebler/stl2/issues/386">386</a>: P0541: basic exception guarantee in <code>counted_iterator</code>’s postincrement</h2>
+<p>Comment from LWG Kona review:</p>
+<blockquote>
+<p>basic guarantee in <code>counted_iterator</code>’s postincrement and postdecrement. (If that results in inconsistently ordered operations, STL wants a note to explain why.)</p>
+</blockquote>
+<p>These operators are specified to update the count member and then directly return the result of postincrementing/postdecrementing the iterator member. My concern was that the count and iterator members could become desynchronized of the iterator operation throws. We’ve avoided the issue in the past by updating the count after updating the iterator.</p>
+<p>The real issue here is that we would like for adaptors to preserve whatever exception guarantee the adapted type provides. This is trivially the case for <code>reverse_iterator</code>, <code>move_iterator</code>, and I think <code>common_iterator</code>, but <code>counted_iterator</code> needs to try a little harder or explicitly warn users that <code>counted_iterator</code>’s postincrement operation for single-pass iterators doesn’t maintain the guarantee of the adapted iterator.</p>
+<h3 id="proposed-resolution-34">Proposed Resolution</h3>
+<p>Wording relative to D0541R1. Change the specification of <code>operator++(int)</code>:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> decltype(auto) operator++(int);
+
+ 4 Requires: cnt &gt; 0.
+ 5 Effects: Equivalent to:
+
+ --cnt
+<span class="st">-return current++;</span>
+<span class="va">+try { return current++; }</span>
+<span class="va">+catch(...) { ++cnt; throw; }</span></code></pre></div>
+<h2 id="writable-should-work-with-rvalues"><a href="https://github.com/ericniebler/stl2/issues/387">387</a>: <code>Writable</code> should work with rvalues</h2>
+<p>During LWG Kona review of D0547R1. <code>Writable</code> is defined therein as:</p>
+<div class="sourceCode"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span class="kw">template</span> &lt;<span class="kw">class</span> Out, <span class="kw">class</span> T&gt;
+concept <span class="dt">bool</span> Writable() {
+  <span class="cf">return</span> requires(Out&amp; o, T&amp;&amp; t) {
+    *o = <span class="bu">std::</span>forward&lt;T&gt;(t);
+  };
+}</code></pre></div>
+<p>The concept only requires writability for lvalues, but it seems reasonable to require that writability is oblivious to value category.</p>
+<h3 id="proposed-resolution-35">Proposed Resolution</h3>
+<p>Adopt <a href="http://wiki.edg.com/pub/Wg21toronto2017/StrawPolls/p0547r2.html">P0547R2: “Ranges TS: Assorted Object Concept Fixes”</a>.</p>
+<h2 id="sizedrange-should-not-require-size-to-be-callable-on-a-const-qualified-object"><a href="https://github.com/ericniebler/stl2/issues/396">396</a>: <code>SizedRange</code> should not require <code>size()</code> to be callable on a const qualified object</h2>
+<p>See discussion of <a href="https://github.com/ericniebler/range-v3/issues/385">ericniebler/range-v3#385</a> and <a href="https://cpplang.slack.com/archives/C4Q3A3XB8/p1490824988630435">discussion on Slack</a>.</p>
+<p>Motivating example: range-v3 <code>drop_while</code>. <code>begin</code> must determine and cache the initial iterator value to satisfy the amortized O(1) complexity requirement, and so needs to mutate non-observable state inside the view object. If the adapted view has iterators that satisfy <code>SizedSentinel</code>, <code>drop_while</code> could implement <code>size</code> by calling <code>begin</code> and <code>end</code> and returning their difference. Transitively, doing so would require <code>size</code> to be a non-<code>const</code> member as well.</p>
+<h3 id="proposed-resolution-36">Proposed Resolution</h3>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> template &lt;class T&gt;
+ concept bool SizedRange() {
+   return Range&lt;T&gt;() &amp;&amp;
+     !disable_sized_range&lt;remove_cv_t&lt;remove_reference_t&lt;T&gt;&gt;&gt; &amp;&amp;
+<span class="st">-    requires(const remove_reference_t&lt;T&gt;&amp; t) {</span>
+<span class="va">+    requires(T&amp; t) {</span>
+       { ranges::size(t) } -&gt; ConvertibleTo&lt;difference_type_t&lt;iterator_t&lt;T&gt;&gt;&gt;;
+     };
+ }
+
+    2    Given an lvalue t of type remove_reference_t&lt;T&gt;, SizedRange&lt;T&gt;() is satisfied if and
+         only if:
+<span class="st">-(2.1) — size(t) returns the number of elements in t.</span>
+<span class="va">+(2.1) — ranges::size(t) is O(1), does not modify t, and is equal to ranges::distance(t).</span></code></pre></div>
+<h2 id="assignable-semantic-constraints-contradict-each-other-for-self-assign"><a href="https://github.com/ericniebler/stl2/issues/398">398</a>: <code>Assignable</code> semantic constraints contradict each other for self-assign</h2>
+<p>As of P0547, we have this for the post-conditions on <code>Assignable</code>’s <code>t = std::forward&lt;U&gt;(u)</code> expression:</p>
+<blockquote>
+<p>(1.2.1) – <code>t</code> is equal to <code>u2</code>.<br />
+(1.2.2) – If <code>u</code> is a non-const xvalue, the resulting state of the object to which it refers is unspecified.</p>
+</blockquote>
+<p>If <code>&amp;t == &amp;u</code> and <code>u</code> is a non-const xvalue, is the resulting state <code>u2</code> or unspecified?</p>
+<h2 id="proposed-resolution-37">Proposed Resolution</h2>
+<p>This wording is relative to <a href="http://wiki.edg.com/pub/Wg21kona2017/LibraryWorkingGroup/D0547R1.html">D0547R1</a>.</p>
+<p>Change paragraph 1 of [concepts.lib.corelang.assignable] (7.3.10) as follows:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> 1. Let t be an lvalue
+<span class="st">-   which</span>
+<span class="va">+   that</span>
+    refers to an object o such that decltype((t)) is T, and u an expression
+    such that decltype((u)) is U. Let u2 be a distinct object that is equal to
+    u. Then Assignable&lt;T, U&gt;() is satisfied if and only if
+ (1.1) – std::addressof(t = u) == std::addressof(o).
+ (1.2) – After evaluating t = u:
+<span class="st">-(1.2.1)   – t is equal to u2.</span>
+<span class="va">+(1.2.1)   – t is equal to u2, unless u is a non-const xvalue that refers to o.</span>
+ (1.2.2)   – If u is a non-const xvalue, the resulting state of the object to which it
+<span class="st">-            refers is unspecified. [ Note: the object must still meet the requirements of</span>
+<span class="st">-            the library component that is using it. The operations listed in those</span>
+<span class="st">-            requirements must work as specified. – end note ]</span>
+<span class="va">+            refers is valid but unspecified ([lib.types.movedfrom]).</span>
+ (1.2.3)   – Otherwise, if u is a glvalue, the object to which it refers is not modified.
+
+<span class="st">-2. There is no</span>
+<span class="va">+2. There need not be a</span>
+    subsumption relationship between Assignable&lt;T, U&gt;() and is_lvalue_reference&lt;T&gt;::value.
+
+<span class="va">+3. [Note: Assignment need not be a total function ([structure.requirements]); in particular,</span>
+<span class="va">+   if assignment to an object x can result in a modification of some other object y, then</span>
+<span class="va">+   x = y is likely not in the domain of =. -- end note]</span></code></pre></div>
+<h2 id="iterators-that-return-move-only-types-by-value-do-not-satisfy-readable"><a href="https://github.com/ericniebler/stl2/issues/399">399</a>: iterators that return move-only types by value do not satisfy <code>Readable</code></h2>
+<p>The problem is with <code>CommonReference&lt;reference_t&lt;I&gt;, value_type_t&lt;I&gt;&amp;&gt;()</code>. Imagine an iterator <code>I</code> such that <code>reference_t&lt;I&gt;</code> is <code>std::unique_ptr&lt;int&gt;</code>. The <code>CommonReference</code> first computes the common reference type to be <code>std::unique_ptr&lt;int&gt;</code>, then it tests that <code>std::unique_ptr&lt;int&gt;&amp;</code> is <code>ConvertibleTo</code> <code>std::unique_ptr&lt;int&gt;</code>, which is of course false.</p>
+<p>The fix is to instead be testing <code>CommonReference&lt;reference_t&lt;I&gt;&amp;&amp;, value_type_t&lt;I&gt;&amp;&gt;()</code>. That causes the common reference to be computed as <code>const std::unique_ptr&lt;int&gt;&amp;</code>, and <code>std::unique_ptr&lt;int&gt;&amp;</code> is indeed convertible to that.</p>
+<h2 id="proposed-resolution-38">Proposed Resolution</h2>
+<p>(Includes the resolution for <a href="https://github.com/ericniebler/stl2/issues/339" class="uri">https://github.com/ericniebler/stl2/issues/339</a>, accepted by LWG in Kona but not yet moved in full committee).</p>
+<p>Change the <code>Readable</code> concept [iterators.readable] as follows:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff">template &lt;class I&gt;
+concept bool Readable() {
+  return requires {
+      typename value_type_t&lt;I&gt;;
+      typename reference_t&lt;I&gt;;
+      typename rvalue_reference_t&lt;I&gt;;
+    } &amp;&amp;
+<span class="st">-   CommonReference&lt;reference_t&lt;I&gt;, value_type_t&lt;I&gt;&amp;&gt;() &amp;&amp;</span>
+<span class="st">-   CommonReference&lt;reference_t&lt;I&gt;, rvalue_reference_t&lt;I&gt;&gt;() &amp;&amp;</span>
+<span class="st">-   CommonReference&lt;rvalue_reference_t&lt;I&gt;, const value_type_t&lt;I&gt;&amp;&gt;();</span>
+<span class="va">+   CommonReference&lt;reference_t&lt;I&gt;&amp;&amp;, value_type_t&lt;I&gt;&amp;&gt;() &amp;&amp;</span>
+<span class="va">+   CommonReference&lt;reference_t&lt;I&gt;&amp;&amp;, rvalue_reference_t&lt;I&gt;&amp;&amp;&gt;() &amp;&amp;</span>
+<span class="va">+   CommonReference&lt;rvalue_reference_t&lt;I&gt;&amp;&amp;, const value_type_t&lt;I&gt;&amp;&gt;();</span>
+}</code></pre></div>
+<h2 id="normative-content-in-informative-subclause"><a href="https://github.com/ericniebler/stl2/issues/404">404</a>: Normative content in informative subclause</h2>
+<p>The entire subclause 6.2 [description] is informative, but it contains things like <code>[customization.point.object]</code> and the last few paragraphs of <code>[structure.requirements]</code> that are clearly intended to be normative rather than informative.</p>
+<h2 id="proposed-resolution-39">Proposed Resolution</h2>
+<p>Strike [structure.requirements]/p8, which states “If the semantic requirements of a declaration are not satisfied at the point of use, the program is ill-formed, no diagnostic required.”</p>
+<p>Add a new subsubsection after “Requires paragraph” ([res.on.required]) called “Semantic requirements” (stable name [res.on.requirements]) with the following:</p>
+<blockquote>
+<p>6.3.4.7 <strong>Semantic requirements</strong> [res.on.requirements]<br />
+1 If the semantic requirements of a declaration’s constraints~(\ref{structure.requirements}) are not satisfied at the point of use, the program is ill-formed, no diagnostic required.</p>
+</blockquote>
+<p>Move subsubsection “Customization Point Objects” ([customization.point.object]) to a new subsubsection under “Conforming implementations” ([conforming]).</p>
+<h2 id="istreambuf_iteratoroperator-"><a href="https://github.com/ericniebler/stl2/issues/407">407</a>: <code>istreambuf_iterator::operator-&gt;</code></h2>
+<p><a href="http://cplusplus.github.io/LWG/lwg-defects.html#2790">LWG 2790</a> recently removed <code>istreambuf_iterator::operator-&gt;</code> from C++17. Should it be removed here as well?</p>
+<h2 id="proposed-resolution-40">Proposed Resolution</h2>
+<ol>
+<li>Remove the note in paragraph 1 of 9.8.3 [istreambuf.iterator]:</li>
+</ol>
+<blockquote>
+<p>The class template <code>istreambuf_iterator</code> defines an input iterator (9.3.11) that reads successive <em>characters</em> from the streambuf for which it was constructed. <code>operator*</code> provides access to the current input character, if any. <del>[Note: operator-&gt; may return a proxy. — end note]</del> Each time <code>operator++</code> is evaluated, the iterator advances to the next input character. […]</p>
+</blockquote>
+<ol>
+<li>Remove the member from the class synopsis in 9.8.3 [istreambuf.iterator]:</li>
+</ol>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> charT operator*() const;
+<span class="st">-pointer operator-&gt;() const;</span>
+ istreambuf_iterator&amp; operator++();
+ proxy operator++(int);</code></pre></div>
+<h2 id="find_first_of-and-mismatch-should-use-indirectrelation-instead-of-indirectbinarypredicate"><a href="https://github.com/ericniebler/stl2/issues/411">411</a>: <code>find_first_of</code> and <code>mismatch</code> should use <code>IndirectRelation</code> instead of <code>Indirect(Binary)Predicate</code></h2>
+<p>Why do <code>find_first_of</code> and <code>mismatch</code> use <code>Indirect(Binary)Predicate</code> instead of <code>IndirectRelation</code>?</p>
+<p>According to <a href="http://en.cppreference.com/w/cpp/concept/BinaryPredicate">cppreference.com</a>, there are many algorithms that merely expect a BinaryPredicate and not a so-called Compare … which is the current standard’s name for Relation. In the Ranges TS, only <code>find_first_of</code> and <code>mismatch</code> expect Predicates; all the others expect Relations. Why?</p>
+<p>I believe we picked this up from the Palo Alto report. Was the change intentional? Are the changed algorithms now over-constrained by requiring Relations whereas they could make do with Predicates?</p>
+<p>Perhaps the authors of N3351 can give us the backstory on why that paper strengthened the requirements of some algorithms, but mysteriously not <code>find_first_of</code> and <code>mismatch</code>.</p>
+<h2 id="proposed-resolution-41">Proposed Resolution</h2>
+<p>Change <code>&lt;experimental/ranges/algorithm&gt;</code> synopsis ([algorithms.general]) as follows:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> template &lt;InputIterator I1, Sentinel&lt;I1&gt; S1, ForwardIterator I2, Sentinel&lt;I2&gt; S2,
+     class Proj1 = identity, class Proj2 = identity,
+<span class="st">-    IndirectPredicate&lt;projected&lt;I1, Proj1&gt;, projected&lt;I2, Proj2&gt;&gt; Pred = equal_to&lt;&gt;&gt;</span>
+<span class="va">+    IndirectRelation&lt;projected&lt;I1, Proj1&gt;, projected&lt;I2, Proj2&gt;&gt; Pred = equal_to&lt;&gt;&gt;</span>
+   I1
+     find_first_of(I1 first1, S1 last1, I2 first2, S2 last2,
+                   Pred pred = Pred{},
+                   Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+
+ template &lt;InputRange Rng1, ForwardRange Rng2, class Proj1 = identity,
+     class Proj2 = identity,
+<span class="st">-    IndirectPredicate&lt;projected&lt;iterator_t&lt;Rng1&gt;, Proj1&gt;,</span>
+<span class="va">+    IndirectRelation&lt;projected&lt;iterator_t&lt;Rng1&gt;, Proj1&gt;,</span>
+       projected&lt;iterator_t&lt;Rng2&gt;, Proj2&gt;&gt; Pred = equal_to&lt;&gt;&gt;
+   safe_iterator_t&lt;Rng1&gt;
+     find_first_of(Rng1&amp;&amp; rng1, Rng2&amp;&amp; rng2,
+                   Pred pred = Pred{},
+                   Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+
+[...]
+
+ template &lt;InputIterator I1, Sentinel&lt;I1&gt; S1, InputIterator I2, Sentinel&lt;I2&gt; S2,
+     class Proj1 = identity, class Proj2 = identity,
+<span class="st">-    IndirectPredicate&lt;projected&lt;I1, Proj1&gt;, projected&lt;I2, Proj2&gt;&gt; Pred = equal_to&lt;&gt;&gt;</span>
+<span class="va">+    IndirectRelation&lt;projected&lt;I1, Proj1&gt;, projected&lt;I2, Proj2&gt;&gt; Pred = equal_to&lt;&gt;&gt;</span>
+   tagged_pair&lt;tag::in1(I1), tag::in2(I2)&gt;
+     mismatch(I1 first1, S1 last1, I2 first2, S2 last2, Pred pred = Pred{},
+              Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+
+ template &lt;InputRange Rng1, InputRange Rng2,
+     class Proj1 = identity, class Proj2 = identity,
+<span class="st">-    IndirectPredicate&lt;projected&lt;iterator_t&lt;Rng1&gt;, Proj1&gt;,</span>
+<span class="va">+    IndirectRelation&lt;projected&lt;iterator_t&lt;Rng1&gt;, Proj1&gt;,</span>
+       projected&lt;iterator_t&lt;Rng2&gt;, Proj2&gt;&gt; Pred = equal_to&lt;&gt;&gt;
+   tagged_pair&lt;tag::in1(safe_iterator_t&lt;Rng1&gt;),
+               tag::in2(safe_iterator_t&lt;Rng2&gt;)&gt;
+     mismatch(Rng1&amp;&amp; rng1, Rng2&amp;&amp; rng2, Pred pred = Pred{},
+              Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});</code></pre></div>
+<p>Make the same changes to the signatures of <code>find_first_of</code> and <code>mismatch</code> in sections “Find first of” ([alg.find.first.of]) and “Mismatch” ([mismatch]).</p>
+<p>Make the following change to section “Range-and-a-half algorithms” ([depr.algo.range-and-a-half]) in Annex A:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> template &lt;InputIterator I1, Sentinel&lt;I1&gt; S1, InputIterator I2,
+     class Proj1 = identity, class Proj2 = identity,
+<span class="st">-    IndirectPredicate&lt;projected&lt;I1, Proj1&gt;, projected&lt;I2, Proj2&gt;&gt; Pred = equal_to&lt;&gt;&gt;</span>
+<span class="va">+    IndirectRelation&lt;projected&lt;I1, Proj1&gt;, projected&lt;I2, Proj2&gt;&gt; Pred = equal_to&lt;&gt;&gt;</span>
+   tagged_pair&lt;tag::in1(I1), tag::in2(I2)&gt;
+     mismatch(I1 first1, S1 last1, I2 first2, Pred pred = Pred{},
+              Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+
+ template &lt;InputRange Rng1, InputIterator I2,
+     class Proj1 = identity, class Proj2 = identity,
+<span class="st">-    IndirectPredicate&lt;projected&lt;iterator_t&lt;Rng1&gt;, Proj1&gt;,</span>
+<span class="va">+    IndirectRelation&lt;projected&lt;iterator_t&lt;Rng1&gt;, Proj1&gt;,</span>
+       projected&lt;I2, Proj2&gt;&gt; Pred = equal_to&lt;&gt;&gt;
+   tagged_pair&lt;tag::in1(safe_iterator_t&lt;Rng1&gt;), tag::in2(I2)&gt;
+     mismatch(Rng1&amp;&amp; rng1, I2 first2, Pred pred = Pred{},
+              Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});</code></pre></div>
+<h2 id="remove-is_nothrow_indirectly_movableswappable"><a href="https://github.com/ericniebler/stl2/issues/414">414</a>: Remove <code>is_[nothrow]_indirectly_(movable|swappable)</code></h2>
+<p>They are unused, after <code>iter_exchange</code> in <a href="https://github.com/ericniebler/stl2/issues/284">#284</a> is rewritten to be exposition-only.</p>
+<h2 id="proposed-resolution-42">Proposed Resolution</h2>
+<p>Presumes that the resolution of <a href="https://github.com/ericniebler/stl2/issues/284">#284</a> has been applied.</p>
+<p>Modify the synopsis of <code>&lt;experimental/ranges/iterator&gt;</code> in [iterator.synopsis] as follows:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> // 9.6, primitives:
+ // 9.6.1, traits:
+<span class="st">-template &lt;class I1, class I2&gt; struct is_indirectly_movable;</span>
+<span class="st">-template &lt;class I1, class I2 = I1&gt; struct is_indirectly_swappable;</span>
+<span class="st">-template &lt;class I1, class I2&gt; struct is_nothrow_indirectly_movable;</span>
+<span class="st">-template &lt;class I1, class I2 = I1&gt; struct is_nothrow_indirectly_swappable;</span>
+<span class="st">-</span>
+<span class="st">-template &lt;class I1, class I2&gt; constexpr bool is_indirectly_movable_v</span>
+<span class="st">-  = is_indirectly_movable&lt;I1, I2&gt;::value;</span>
+<span class="st">-template &lt;class I1, class I2&gt; constexpr bool is_indirectly_swappable_v</span>
+<span class="st">-  = is_indirectly_swappable&lt;I1, I2&gt;::value;</span>
+<span class="st">-template &lt;class I1, class I2&gt; constexpr bool is_nothrow_indirectly_movable_v</span>
+<span class="st">-  = is_nothrow_indirectly_movable&lt;I1, I2&gt;::value;</span>
+<span class="st">-template &lt;class I1, class I2&gt; constexpr bool is_nothrow_indirectly_swappable_v</span>
+<span class="st">-  = is_nothrow_indirectly_swappable&lt;I1, I2&gt;::value;</span>
+
+ template &lt;class Iterator&gt; using iterator_traits = see below;
+
+ template &lt;Readable T&gt; using iter_common_reference_t
+   = common_reference_t&lt;reference_t&lt;T&gt;, value_type_t&lt;T&gt;&amp;&gt;;</code></pre></div>
+<p>Strike paragraph [iterator.traits]/1 that begins: “The class templates <code>is_indirectly_movable</code>, <code>is_nothrow_indirectly_movable</code>, <code>is_indirectly_swappable</code>, and <code>is_nothrow_indirectly_swappable</code> shall be defined as follows” including the definitions of the named traits.</p>
+<h2 id="harmonize-common_type-with-c17s-meta.trans.otherp4"><a href="https://github.com/ericniebler/stl2/issues/420">420</a>: Harmonize <code>common_type</code> with C++17’s [meta.trans.other]/p4</h2>
+<p>Looks like the language drifted since we lifted it for the PR of <a href="https://github.com/ericniebler/stl2/issues/235">#235</a>. C++17’s [meta.trans.other]/p4 now reads:</p>
+<blockquote>
+<p>Note B: Notwithstanding the provisions of (\cxxref{meta.type.synop}), and pursuant to \cxxref{namespace.std}, a program may specialize <code>common_type&lt;T1, T2&gt;</code> for types <code>T1</code> and <code>T2</code> such that <code>is_same_v&lt;T1, decay_t&lt;T1&gt;&gt;</code> and <code>is_same_v&lt;T2, decay_t&lt;T2&gt;&gt;</code> are each <code>true</code>. [ <em>Note:</em> Such specializations are needed when only explicit conversions are desired between the template arguments. —<em>end note</em> ] Such a specialization need not have a member named <code>type</code>, but if it does, that member shall be a <em>typedef-name</em> for an accessible and unambiguous cv-unqualified non-reference type <code>C</code> to which each of the types <code>T1</code> and <code>T2</code> is explicitly convertible. Moreover, <code>common_type_t&lt;T1, T2&gt;</code> shall denote the same type, if any, as does <code>common_type_t&lt;T2, T1&gt;</code>. No diagnostic is required for a violation of this Note’s rules.</p>
+</blockquote>
+<p>This is much better, IMO.</p>
+<h2 id="proposed-resolution-43">Proposed Resolution</h2>
+<p>Replace our Note B (see <a href="https://github.com/ericniebler/stl2/issues/235">#235</a>) with the one in the current IS draft, quoted above.</p>
+<p>In addition, make the following change to the (newly added) paragraph about <code>basic_common_reference</code> (see <a href="https://github.com/ericniebler/stl2/issues/235">#235</a>):</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"><span class="st">-A program may specialize the basic_common_reference trait for</span>
+<span class="st">-two cv-unqualified non-reference types if at least one of them depends on a</span>
+<span class="st">-user-defined type. Such a specialization need not have a member named</span>
+<span class="st">-type.</span>
+<span class="va">+Notwithstanding the provisions of \cxxref{meta.type.synop}, and pursuant to</span>
+<span class="va">+\cxxref{namespace.std}, a program may specialize</span>
+<span class="va">+basic_common_reference&lt;T, U, TQual, UQual&gt; for types T and U such that</span>
+<span class="va">+is_same_v&lt;T, decay_t&lt;T&gt;&gt; and is_same_v&lt;U, decay_t&lt;U&gt;&gt; are each true.</span>
+<span class="va">+[ Note: Such specializations are needed when only explicit conversions are</span>
+<span class="va">+desired between the template arguments. —end note ] Such a specialization</span>
+<span class="va">+need not have a member named type, but if it does, that member shall be a</span>
+<span class="va">+typedef-name for an accessible and unambiguous type C to which each of the</span>
+<span class="va">+types TQual&lt;T&gt; and UQual&lt;U&gt; is convertible. Moreover,</span>
+<span class="va">+basic_common_reference&lt;T, U, TQual, UQual&gt;::type shall denote the same type,</span>
+<span class="va">+if any, as does basic_common_reference&lt;U, T, UQual, TQual&gt;::type. A program</span>
+<span class="va">+may not specialize basic_common_reference on the third or fourth parameters,</span>
+<span class="va">+TQual or UQual. No diagnostic is required for a violation of these rules.</span></code></pre></div>
+<h2 id="with-common_type-the-ranges-ts-requires-vendors-to-break-conformance"><a href="https://github.com/ericniebler/stl2/issues/421">421</a>: With <code>common_type</code>, the Ranges TS requires vendors to break conformance</h2>
+<p>The Ranges TS requires changes to <code>common_type</code> <em>in namespace <code>std</code></em>. This is a bad idea. It requires vendors to break conformance in order to support the Ranges TS. Reformulate things so that we can move the <code>Common[Reference]</code> machinery out of namespace <code>std</code> and into namespace <code>std::experimental::ranges</code>.</p>
+<p>This moves the last piece of the Ranges TS out of namespace <code>std</code>, making the TS a pure extension.</p>
+<h2 id="proposed-resolution-44">Proposed Resolution</h2>
+<p>[<em>Editorial:</em> Issue <a href="https://github.com/ericniebler/stl2/issues/259">#259</a> moves the <code>is_swappable</code> traits out of namespace <code>std</code> and into namespace <code>std::experimental::ranges</code>. This PR does the same for the <code>common_type</code> traits, leaving nothing left in [meta.type.synop]. This wording assumes the wording in (ready) issue <a href="https://github.com/ericniebler/stl2/issues/259">#259</a>.]</p>
+<p>Remove section “Header <code>&lt;type_traits&gt;</code> synopsis” ([meta.type.synop]).</p>
+<p>Give section “Header <code>&lt;experimental/ranges/type_traits&gt;</code> synopsis ([meta.type.synop.rng]) the stable name [meta.type.synop] and make the following change to the synopsis:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+ // (REF), type properties:
+ template &lt;class T, class U&gt; struct is_swappable_with;
+ template &lt;class T&gt; struct is_swappable;
+
+ template &lt;class T, class U&gt; struct is_nothrow_swappable_with;
+ template &lt;class T&gt; struct is_nothrow_swappable;
+
+<span class="va">+// (REF), other transformations</span>
+<span class="va">+template &lt;class... T&gt; struct common_type;</span>
+<span class="va">+template &lt;class T, class U, template &lt;class&gt; class TQual, template &lt;class&gt; class UQual&gt;</span>
+<span class="va">+  struct basic_common_reference { };</span>
+<span class="va">+template &lt;class... T&gt; struct common_reference;</span>
+
+<span class="va">+template &lt;class... T&gt;</span>
+<span class="va">+  using common_type_t = typename common_type&lt;T...&gt;::type;</span>
+<span class="va">+template &lt;class... T&gt;</span>
+<span class="va">+  using common_reference_t = typename common_reference&lt;T...&gt;::type;</span>
+
+ template &lt;class T, class U&gt; constexpr bool is_swappable_with_v
+     = is_swappable_with&lt;T, U&gt;::value;
+ template &lt;class T&gt; constexpr bool is_swappable_v
+     = is_swappable&lt;T&gt;::value;
+
+ template &lt;class T, class U&gt; constexpr bool is_nothrow_swappable_with_v
+     = is_nothrow_swappable_with&lt;T, U&gt;::value;
+ template &lt;class T&gt; constexpr bool is_nothrow_swappable_v
+     = is_nothrow_swappable&lt;T&gt;::value;
+ }}}}</code></pre></div>
+<p>Rename section “Additional type properties” ([meta.unary.prop.rng], <a href="https://github.com/ericniebler/stl2/issues/259">#259</a>) to “Type properties” with the stable name [meta.unary.prop].</p>
+<p>Move section “Other transformations” ([meta.trans.other]) after “Type properties”.</p>
+<p>Strike the editorial notes in [meta.trans.other] that read “Change Table 57 – “Other Transformations” in ISO/IEC 14882:2014 as follows”, and “Delete [meta.trans.other]/p3 from ISO/IEC 14882:2014 and replace it with the following.”</p>
+<p>Remove all the diff markings from [meta.trans.other].</p>
+<p>Renumber Table 57 (since it is no longer referring to a table in another document).</p>
+<p>Change the description of <code>common_type</code> in [meta.trans.other] as follows (includes resolutions of <a href="https://github.com/ericniebler/stl2/issues/235">#235</a> and <a href="https://github.com/ericniebler/stl2/issues/420">#420</a>):</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff">   2. Note A: For the common_type trait applied to a parameter pack [...]
+   [...]
+   (2.3)     — Otherwise, if sizeof...(T) is two, let T1 and T2 denote the
+               two types in the pack T, and let D1 and D2 be decay_t&lt;T1&gt; and
+               decay_t&lt;T2&gt; respectively. Then
+   (2.3.1)        — If D1 and T1 denote the same type and D2 and T2 denote
+                    the same type, then
+<span class="st">- (2.3.1.-?-)             — If COND_RES(T1, T2) is well-formed, then the</span>
+<span class="va">+ (2.3.1.-?-)             — If std::common_type_t&lt;T1, T2&gt; is well-formed, then the</span>
+                             member typedef type denotes
+<span class="st">-                           decay_t&lt;COND_RES(T1, T2)&gt;.</span>
+<span class="va">+                           std::common_type_t&lt;T1, T2&gt;.</span>
+   (2.3.1.1)               — If COMMON_REF(T1, T2) is well-formed, then the
+                             member typedef type denotes that type.
+   (2.3.1.2)               — Otherwise, there shall be no member type
+   [...]
+   (2.4.2)        — Otherwise, there shall be no member type.
+  -?-. Note B: Notwithstanding the provisions of (\cxxref{meta.type.synop}),
+       and pursuant to [...].</code></pre></div>
+<h2 id="constrain-return-types-in-indirectinvocable"><a href="https://github.com/ericniebler/stl2/issues/424">424</a>: Constrain return types in <code>IndirectInvocable</code></h2>
+<p>Both range-v3 and cmcstl2 constrain the return types of the required expressions of the <code>IndirectInvocable</code> concepts to share a common reference. The concepts in STL2 don’t seem to do that. Was this just an oversight?</p>
+<p>A polymorphic function <code>F</code> that has wildly unrelated return types when invoked with a <code>value_type_t&lt;I&gt;&amp;</code> vs. a <code>reference_t&lt;I&gt;</code> should not be accepted by the STL algorithms because of the havoc it would cause.</p>
+<h2 id="proposed-resolution-45">Proposed Resolution</h2>
+<p>This resolution assumes the switch to variable-style concepts suggested by <a href="http://wg21.link/P0651">P0651</a>.</p>
+<p>Change <code>IndirectUnaryInvocable</code> ([indirectcallable.indirectinvocable]) as follows:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> template &lt;class F, class I&gt;
+ concept bool IndirectUnaryInvocable =
+   Readable&lt;I&gt; &amp;&amp;
+   CopyConstructible&lt;F&gt; &amp;&amp;
+   Invocable&lt;F&amp;, value_type_t&lt;I&gt;&amp;&gt; &amp;&amp;
+   Invocable&lt;F&amp;, reference_t&lt;I&gt;&gt; &amp;&amp;
+<span class="st">-  Invocable&lt;F&amp;, iter_common_reference_t&lt;I&gt;&gt;;</span>
+<span class="va">+  Invocable&lt;F&amp;, iter_common_reference_t&lt;I&gt;&gt; &amp;&amp;</span>
+<span class="va">+  CommonReference&lt;</span>
+<span class="va">+    result_of_t&lt;F&amp;(value_type_t&lt;I&gt;&amp;)&gt;,</span>
+<span class="va">+    result_of_t&lt;F&amp;(reference_t&lt;I&gt;&amp;&amp;)&gt;&gt;;</span></code></pre></div>
+<p>Change <code>IndirectRegularUnaryInvocable</code> ([indirectcallable.indirectinvocable]) as follows:</p>
+<div class="sourceCode"><pre class="sourceCode diff"><code class="sourceCode diff"> template &lt;class F, class I&gt;
+ concept bool IndirectRegularUnaryInvocable =
+   Readable&lt;I&gt; &amp;&amp;
+   CopyConstructible&lt;F&gt; &amp;&amp;
+   RegularInvocable&lt;F&amp;, value_type_t&lt;I&gt;&amp;&gt; &amp;&amp;
+   RegularInvocable&lt;F&amp;, reference_t&lt;I&gt;&gt; &amp;&amp;
+<span class="st">-  RegularInvocable&lt;F&amp;, iter_common_reference_t&lt;I&gt;&gt;;</span>
+<span class="va">+  RegularInvocable&lt;F&amp;, iter_common_reference_t&lt;I&gt;&gt; &amp;&amp;</span>
+<span class="va">+  CommonReference&lt;</span>
+<span class="va">+    result_of_t&lt;F&amp;(value_type_t&lt;I&gt;&amp;)&gt;,</span>
+<span class="va">+    result_of_t&lt;F&amp;(reference_t&lt;I&gt;&amp;&amp;)&gt;&gt;;</span></code></pre></div>
+<h2 id="common_iterators-destructor-should-not-be-specified-in-common.iter.op"><a href="https://github.com/ericniebler/stl2/issues/436">436</a>: <code>common_iterator</code>’s destructor should not be specified in [common.iter.op=]</h2>
+<p>Resolved by the proposed resolution of <a href="https://github.com/ericniebler/stl2/issues/250">#250</a>.</p>
+</body>
+</html>
