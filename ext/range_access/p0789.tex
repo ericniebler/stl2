@@ -1,17 +1,17 @@
-%!TEX root = D0970.tex
+%!TEX root = D0970R1.tex
 
-\part[Changes to P0789 R2]{Changes to P0789 R2\hfill[P0789]}\label{P0789}
+\part[Changes to P0789 R3]{Changes to P0789 R3\hfill[P0789]}\label{P0789}
 
-\setcounter{chapter}{9}
+\setcounter{chapter}{27}
 \rSec0[ranges]{Ranges library}
 
 \ednote{The following changes are suggested for P0789.}
 
-\ednote{Change section ``Header \tcode{<experimental/ranges/range>} synopsis''
+\ednote{Change section ``Header \tcode{<range>} synopsis''
 [range.synopsis], as follows:}
 
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+namespace std { namespace ranges {
   // ... as before
 
   enum class subrange_kind : bool { unsized, sized };
@@ -27,14 +27,14 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     @\added{constexpr S end(subrange<I, S, K>\&\& r);}@
 
   // ... as before
-}}}}
+}}
 \end{codeblock}
 
 \setcounter{section}{5}
 \rSec1[ranges.requirements]{Range requirements}
 
 \setcounter{subsection}{1}
-\rSec2[std2.ranges.range]{Ranges}
+\rSec2[ranges.range]{Ranges}
 \ednote{The equivalent change should be made in P0896 also.}
 
 \pnum
@@ -46,18 +46,18 @@ iteration over its elements by providing a \tcode{begin} iterator and an
 
 \begin{itemdecl}
 template <class T>
-concept bool @\changed{Range}{\textit{range-impl}}@ = @\added{// \expos}@
+concept @\changed{Range}{\textit{range-impl}}@ = @\added{// \expos}@
   requires(T&& t) {
-    ranges::begin(@\added{std::forward<T>(}@t@\added{)}@); // not necessarily equality-preserving (see below)
-    ranges::end(@\added{std::forward<T>(}@t@\added{)}@);
+    @\newtxt{std::}@ranges::begin(@\added{std::forward<T>(}@t@\added{)}@); // not necessarily equality-preserving (see below)
+    @\newtxt{std::}@ranges::end(@\added{std::forward<T>(}@t@\added{)}@);
   };
 
 @\added{template <class T>}@
-@\added{concept bool Range =}@
+@\added{concept Range =}@
   @\added{\textit{range-impl}<T\&>;}@
 
 @\added{template <class T>}@
-@\added{concept bool \textit{forwarding-range} = // \expos}@
+@\added{concept \textit{forwarding-range} = // \expos}@
   @\added{Range<T> \&\& \textit{range-impl}<T>;}@
 \end{itemdecl}
 
@@ -68,14 +68,14 @@ Given an \changed{lvalue \tcode{t} of type \tcode{remove_reference_t<T>},
 \tcode{\textit{range-impl}<T>}} is satisfied only if
 
 \begin{itemize}
-\item \range{\added{ranges::}begin(\changed{t}{E})}{\added{ranges::}end(\changed{t}{E})} denotes a range.
+\item \range{\newtxt{std::}\added{ranges::}begin(\changed{t}{E})}{\newtxt{std::}\added{ranges::}end(\changed{t}{E})} denotes a range.
 
-\item Both \tcode{\added{ranges::}begin(\changed{t}{E})} and \tcode{\added{ranges::}end(\changed{t}{E})} are amortized constant time
-and non-modifying. \enternote \tcode{\added{ranges::}begin(\changed{t}{E})} and \tcode{\added{ranges::}end(\changed{t}{E})} do not require
+\item Both \tcode{\newtxt{std::}\added{ranges::}begin(\changed{t}{E})} and \tcode{\newtxt{std::}\added{ranges::}end(\changed{t}{E})} are amortized constant time
+and non-modifying. \enternote \tcode{\newtxt{std::}\added{ranges::}begin(\changed{t}{E})} and \tcode{\newtxt{std::}\added{ranges::}end(\changed{t}{E})} do not require
 implicit expression variations~(\cxxref{concepts.lib.general.equality}). \exitnote
 
-\item If \changed{\tcode{iterator_t<T>}}{the type of \tcode{ranges::begin(E)}} satisfies \tcode{ForwardIterator},
-\tcode{\added{ranges::}begin(\changed{t}{E})} is equality preserving.
+\item If \changed{\tcode{iterator_t<T>}}{the type of \tcode{\newtxt{std::}ranges::begin(E)}} satisfies \tcode{ForwardIterator},
+\tcode{\newtxt{std::}\added{ranges::}\brk{}begin(\changed{t}{E})} is equality preserving.
 \end{itemize}
 
 \begin{addedblock}
@@ -84,11 +84,11 @@ Given an expression \tcode{E} such that \tcode{decltype((E))} is \tcode{T},
 \tcode{\textit{forwarding-range}<T>} is satisfied only if
 \begin{itemize}
 \item
-  The expressions \tcode{ranges::begin(E)} and \tcode{ranges::begin(static_cast<T\&>(E))}
+  The expressions \tcode{\newtxt{std::}ranges::begin(E)} and \tcode{\newtxt{std::}ranges::begin(static_cast<T\&>(E))}
   are expression-equivalent.
 
 \item
-  The expressions \tcode{ranges::end(E)} and \tcode{ranges::end(static_cast<T\&>(E))}
+  The expressions \tcode{\newtxt{std::}ranges::end(E)} and \tcode{\newtxt{std::}ranges::end(static_cast<T\&>(E))}
   are expression-equivalent.
 \end{itemize}
 
@@ -113,7 +113,7 @@ type that can be converted to a \tcode{View} safely.
 
 \begin{codeblock}
 template <class T>
-concept bool ViewableRange =
+concept ViewableRange =
   Range<T> && (@\changed{is_lvalue_reference_v<T>}{\textit{forwarding-range}<T>}@ || View<decay_t<T>>); @\removed{// \seebelow}@
 \end{codeblock}
 
@@ -131,12 +131,8 @@ and \tcode{is_lvalue_reference_v<T>}.
 \rSec3[ranges.subrange]{\tcode{subrange}}
 
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+namespace std { namespace ranges {
   // ... as before
-
-  @\added{template <class T, class U>}@
-  @\added{concept bool \textit{not-same-as} = // \expos}@
-    @\added{!Same<remove_cvref_t<T>, remove_cvref_t<U>{>};}@
 
   template <Iterator I, Sentinel<I> S = I, subrange_kind K = @\seebelow@>
     requires K == subrange_kind::sized || !SizedSentinel<S, I>
@@ -176,20 +172,20 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     @\added{constexpr subrange(R\&\& r, difference_type_t<I> n)}@
       @\added{requires K == subrange_kind::sized;}@
 
-    template <@\changed{\textit{pair-like-convertible-to}<I, S>}{\textit{not-same-as}<subrange>}@ PairLike>
-      @\added{requires \textit{pair-like-convertible-to}<PairLike, I, S>}@
+    template <@\textit{not-same-as}@<subrange> PairLike>
+      requires @\textit{pair-like-convertible-to}@<PairLike, I, S>
     constexpr subrange(PairLike&& r) requires !StoreSize;
 
     template <@\textit{pair-like-convertible-to}@<I, S> PairLike>
     constexpr subrange(PairLike&& r, difference_type_t<I> n)
       requires K == subrange_kind::sized;
 
-    @\removed{template <Range R>}@
-      @\removed{requires ConvertibleTo<iterator_t<R>, I> \&\& ConvertibleTo<sentinel_t<R>, S>}@
+    @\removed{template <\textit{not-name-as}<subrange> R>}@
+      @\removed{requires Range<R> \&\& ConvertibleTo<iterator_t<R>, I> \&\& ConvertibleTo<sentinel_t<R>, S>}@
     @\removed{constexpr subrange(R\& r) requires !StoreSize || SizedRange<R>;}@
 
-    template <@\changed{\textit{pair-like-convertible-from}<const I\&, const S\&>}{\textit{not-same-as}<subrange>}@ PairLike>
-      @\added{requires \textit{pair-like-convertible-from}<PairLike, const I\&, const S\&>}@
+    template <@\textit{not-same-as}@<subrange> PairLike>
+      requires @\textit{pair-like-convertible-from}@<PairLike, const I&, const S&>
     constexpr operator PairLike() const;
 
     constexpr I begin() const;
@@ -248,7 +244,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
       @\added{conditional_t<\textit{forwarding-range}<R>,}@
         @\added{subrange<iterator_t<R>{>},}@
         @\added{dangling<subrange<iterator_t<R>{>}>{>};}@
-}}}}
+}}
 \end{codeblock}
 
 \pnum
@@ -351,8 +347,8 @@ constexpr subrange(R&& r, difference_type_t<I> n)
 
 \indexlibrary{\idxcode{subrange}!\idxcode{subrange}}%
 \begin{itemdecl}
-template <@\changed{\textit{pair-like-convertible-to}<I, S>}{\textit{not-same-as}<subrange>}@ PairLike>
-  @\added{requires \textit{pair-like-convertible-to}<PairLike, I, S>}@
+template <@\textit{not-same-as}@<subrange> PairLike>
+  requires @\textit{pair-like-convertible-to}@<PairLike, I, S>
 constexpr subrange(PairLike&& r) requires !StoreSize;
 \end{itemdecl}
 
@@ -381,8 +377,8 @@ subrange{get<0>(std::forward<PairLike>(r)), get<1>(std::forward<PairLike>(r)), n
 
 \begin{removedblock}
 \begin{itemdecl}
-template <Range R>
-  requires ConvertibleTo<iterator_t<R>, I> && ConvertibleTo<sentinel_t<R>, S>
+template <@\textit{not-name-as}@<subrange> R>
+  requires Range<R> && ConvertibleTo<iterator_t<R>, I> && ConvertibleTo<sentinel_t<R>, S>
 constexpr subrange(R& r) requires !StoreSize || SizedRange<R>;
 \end{itemdecl}
 
@@ -402,8 +398,8 @@ constexpr subrange(R& r) requires !StoreSize || SizedRange<R>;
 
 \indexlibrary{\idxcode{operator \textit{PairLike}}!\idxcode{subrange}}%
 \begin{itemdecl}
-template <@\changed{\textit{pair-like-convertible-from}<const I\&, const S\&>}{\textit{not-same-as}<subrange>}@ PairLike>
-  @\added{requires \textit{pair-like-convertible-from}<PairLike, const I\&, const S\&>}@
+template <@\textit{not-same-as}@<subrange> PairLike>
+  requires @\textit{pair-like-convertible-from}@<PairLike, const I&, const S&>
 constexpr operator PairLike() const;
 \end{itemdecl}
 
@@ -602,12 +598,12 @@ of a proper \tcode{subrange} type, we suggest changing these algorithms to retur
 
 \rSec1[algorithms.general]{General}
 
-\ednote{Change the \tcode{<experimental/ranges/algorithm>} synopsis as follows:}
+\ednote{Change the \tcode{<algorithm>} synopsis as follows:}
 
 \begin{codeblock}
 #include <initializer_list>
 
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+namespace std { namespace ranges {
   // ... as before
 
   template <ForwardIterator I, Sentinel<I> S>
@@ -639,7 +635,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
       equal_range(Rng&& rng, const T& value, Comp comp = Comp{}, Proj proj = Proj{});
 
   // ... as before
-}}}}
+}}
 \end{codeblock}
 
 \setcounter{section}{3}
