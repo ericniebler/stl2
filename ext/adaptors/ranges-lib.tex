@@ -1,24 +1,24 @@
 %!TEX root = D0789R3.tex
 
-\setcounter{chapter}{9}
+\setcounter{chapter}{27}
 \rSec0[ranges]{Ranges library}
 
-\ednote{To the section ``Header \tcode{<experimental/ranges/range>} synopsis''
-10.3 [range.synopsis], add the following:}
+\ednote{To the section ``Header \tcode{<\removed{experimental/ranges/}range>} synopsis''
+28.3 [range.synopsis], add the following:}
 
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
   // ...
 
-  // 10.6.5, CommonRange
+  // 28.6.5, CommonRange
   template <class T>
-  concept bool CommonRange = // as before
+  concept @\removed{bool}@ CommonRange = // as before
   
   // ...
 
   // \ref{ranges.viewable}:
   template <class T>
-  concept bool ViewableRange = @\seebelow@;
+  concept @\removed{bool}@ ViewableRange = @\seebelow@;
 
   // \ref{ranges.view_interface}:
   template <class D>
@@ -86,7 +86,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 
   // \expos
   template <class R>
-  concept bool @\textit{tiny-range}@ = @\seebelow@;
+  concept @\removed{bool}@ @\textit{tiny-range}@ = @\seebelow@;
 
   // \ref{ranges.adaptors.split_view}:
   template <InputRange Rng, ForwardRange Pattern>
@@ -113,9 +113,11 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   class reverse_view;
 
   namespace view { inline constexpr @\unspec@ reverse = @\unspec@; }
-}}}}
+}}@\removed{\}\}}@
 
 namespace std {
+  @\added{namespace view = ranges::view;}@
+
   template <class I, class S, ranges::subrange_kind K>
     struct tuple_size<ranges::subrange<I, S, K>>
       : integral_constant<size_t, 2> {};
@@ -130,10 +132,10 @@ namespace std {
 }
 \end{codeblock}
 
-\ednote{After Ranges TS subclause 10.6 [ranges.requirements], insert a new subclause
-10.7, ``Range utilities'' with stable name [ranges.utilities]}
-
-\setcounter{section}{6}
+\setcounter{section}{5}
+\rSec1[ranges.requirements]{Range requirements}
+\ednote{After subsection [ranges.random.access] ``Random access ranges'' add
+the following:}
 \setcounter{subsection}{10}
 \rSec2[ranges.viewable]{Viewable ranges}
 \pnum The \tcode{ViewableRange} concept specifies the requirements of a \tcode{Range}
@@ -141,13 +143,16 @@ type that can be converted to a \tcode{View} safely.
 
 \begin{codeblock}
 template <class T>
-concept bool ViewableRange =
+concept @\removed{bool}@ ViewableRange =
   Range<T> && (is_lvalue_reference_v<T> || View<decay_t<T>>); // \seebelow
 \end{codeblock}
 
 \pnum
 There need not be any subsumption relationship between \tcode{ViewableRange<T>}
 and \tcode{is_lvalue_reference_v<T>}.
+
+\ednote{After subclause 28.6 [ranges.requirements], insert a new subclause
+28.7, ``Range utilities'' with stable name [ranges.utilities]}
 
 \rSec1[ranges.utilities]{Range utilities}
 
@@ -163,8 +168,7 @@ container-like interface. It is parameterized with the type that inherits from i
 
 \indexlibrary{\idxcode{view_interface}}%
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1
-{
+namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
   // \expos
   template <Range R>
   struct @\textit{range-common-iterator-impl}@ {
@@ -226,7 +230,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1
           Constructible<C, @\textit{range-common-iterator}@<const D>, @\textit{range-common-iterator}@<const D>>
       operator C () const;
   };
-}}}}
+}}@\removed{\}\}}@
 \end{codeblock}
 
 \pnum
@@ -295,9 +299,9 @@ constexpr decltype(auto) front() const requires ForwardRange<const D>;
 \indexlibrary{\idxcode{back}!\idxcode{view_interface}}%
 \begin{itemdecl}
 constexpr decltype(auto) back()
-requires BidirectionalRange<D> && CommonRange<D>;
+  requires BidirectionalRange<D> && CommonRange<D>;
 constexpr decltype(auto) back() const
-requires BidirectionalRange<const D> && CommonRange<const D>;
+  requires BidirectionalRange<const D> && CommonRange<const D>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -372,9 +376,9 @@ it satisfies the \tcode{SizedRange} concept when the final template parameter is
 
 \indexlibrary{\idxcode{subrange}}%
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
   template <class T>
-  concept bool @\textit{pair-like}@ = // \expos
+  concept @\removed{bool}@ @\textit{pair-like}@ = // \expos
     requires(T t) {
       { tuple_size<T>::value } -> Integral;
       requires tuple_size<T>::value == 2;
@@ -385,7 +389,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     };
 
   template <class T, class U, class V>
-  concept bool @\textit{pair-like-convertible-to}@ = // \expos
+  concept @\removed{bool}@ @\textit{pair-like-convertible-to}@ = // \expos
     !Range<T> && @\textit{pair-like}@<decay_t<T>> &&
     requires(T&& t) {
       { get<0>(std::forward<T>(t)) } -> ConvertibleTo<U>;
@@ -393,14 +397,18 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     };
 
   template <class T, class U, class V>
-  concept bool @\textit{pair-like-convertible-from}@ = // \expos
+  concept @\removed{bool}@ @\textit{pair-like-convertible-from}@ = // \expos
     !Range<T> && Same<T, decay_t<T>> && @\textit{pair-like}@<T> &&
     Constructible<T, U, V>;
 
   template <class T>
-  concept bool @\textit{iterator-sentinel-pair}@ = // \expos
+  concept @\removed{bool}@ @\textit{iterator-sentinel-pair}@ = // \expos
     !Range<T> && Same<T, decay_t<T>> && @\textit{pair-like}@<T> &&
     Sentinel<tuple_element_t<1, T>, tuple_element_t<0, T>>;
+
+  @\added{template <class T, class U>}@
+  @\added{concept \textit{not-same-as} = // \expos}@
+    @\added{!Same<remove_cvref_t<T>, remove_cvref_t<U>{>};}@
 
   template <Iterator I, Sentinel<I> S = I, subrange_kind K = @\seebelow@>
     requires K == subrange_kind::sized || !SizedSentinel<S, I>
@@ -430,18 +438,20 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     constexpr subrange(subrange<X, Y, Z> r, difference_type_t<I> n)
       requires K == subrange_kind::sized;
 
-    template <@\textit{pair-like-convertible-to}@<I, S> PairLike>
+    template <@\removed{\textit{pair-like-convertible-to}<I, S>}\added{\textit{not-same-as}<subrange>}@ PairLike>
+      @\added{requires \textit{pair-like-convertible-to}<PairLike, I, S>}@
     constexpr subrange(PairLike&& r) requires !StoreSize;
 
     template <@\textit{pair-like-convertible-to}@<I, S> PairLike>
     constexpr subrange(PairLike&& r, difference_type_t<I> n)
       requires K == subrange_kind::sized;
 
-    template <Range R>
-      requires ConvertibleTo<iterator_t<R>, I> && ConvertibleTo<sentinel_t<R>, S>
+    template <@\removed{Range}\added{\textit{not-name-as}<subrange>}@ R>
+      requires @\added{Range<R> \&\&}@ ConvertibleTo<iterator_t<R>, I> && ConvertibleTo<sentinel_t<R>, S>
     constexpr subrange(R& r) requires !StoreSize || SizedRange<R>;
 
-    template <@\textit{pair-like-convertible-from}@<const I&, const S&> PairLike>
+    template <@\removed{\textit{pair-like-convertible-from}<const I\&, const S\&>}\added{\textit{not-same-as}<subrange>}@ PairLike>
+      @\added{requires \textit{pair-like-convertible-from}<PairLike, const I\&, const S\&>}@
     constexpr operator PairLike() const;
 
     constexpr I begin() const;
@@ -479,7 +489,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   template <std::size_t N, class I, class S, subrange_kind K>
     requires N < 2
   constexpr auto get(const subrange<I, S, K>& r);
-}}}}
+}}@\removed{\}\}}@
 \end{codeblock}
 
 \pnum
@@ -549,7 +559,8 @@ constexpr subrange(subrange<X, Y, Z> r, difference_type_t<I> n)
 
 \indexlibrary{\idxcode{subrange}!\idxcode{subrange}}%
 \begin{itemdecl}
-template <@\textit{pair-like-convertible-to}@<I, S> PairLike>
+template <@\removed{\textit{pair-like-convertible-to}<I, S>}\added{\textit{not-same-as}<subrange>}@ PairLike>
+  @\added{requires \textit{pair-like-convertible-to}<PairLike, I, S>}@
 constexpr subrange(PairLike&& r) requires !StoreSize;
 \end{itemdecl}
 
@@ -578,8 +589,8 @@ subrange{get<0>(std::forward<PairLike>(r)), get<1>(std::forward<PairLike>(r)), n
 
 \indexlibrary{\idxcode{subrange}!\idxcode{subrange}}%
 \begin{itemdecl}
-template <Range R>
-  requires ConvertibleTo<iterator_t<R>, I> && ConvertibleTo<sentinel_t<R>, S>
+template <@\removed{Range}\added{\textit{not-name-as}<subrange>}@ R>
+  requires @\added{Range<R> \&\&}@ ConvertibleTo<iterator_t<R>, I> && ConvertibleTo<sentinel_t<R>, S>
 constexpr subrange(R& r) requires !StoreSize || SizedRange<R>;
 \end{itemdecl}
 
@@ -598,7 +609,8 @@ constexpr subrange(R& r) requires !StoreSize || SizedRange<R>;
 
 \indexlibrary{\idxcode{operator \textit{PairLike}}!\idxcode{subrange}}%
 \begin{itemdecl}
-template <@\textit{pair-like-convertible-from}@<const I&, const S&> PairLike>
+template <@\removed{\textit{pair-like-convertible-from}<const I\&, const S\&>}\added{\textit{not-same-as}<subrange>}@ PairLike>
+  @\added{requires \textit{pair-like-convertible-from}<PairLike, const I\&, const S\&>}@
 constexpr operator PairLike() const;
 \end{itemdecl}
 
@@ -738,7 +750,7 @@ into a \tcode{View} with custom behaviors. These adaptors can be chained to crea
 range transformations that evaluate lazily as the resulting view is iterated.
 
 \pnum
-Range adaptors are declared in namespace \tcode{std::experimental::ranges::v1::view}.
+Range adaptors are declared in namespace \tcode{std::\removed{experimental::}ranges::\removed{v1::}view}.
 
 \pnum
 The bitwise or operator is overloaded for the purpose of creating adaptor chain pipelines. The
@@ -845,7 +857,7 @@ Boolean variable template called \tcode{\textit{simple-view}<T>}, defined as fol
 
 \begin{codeblock}
 template <class R>
-concept bool @\textit{\xname{simple-view}}@ =
+concept @\removed{bool}@ @\textit{\xname{simple-view}}@ =
   View<R> && View<const R> &&
   Same<iterator_t<R>, iterator_t<const R>> &&
   Same<sentinel_t<R>, sentinel_t<const R>>;
@@ -896,7 +908,7 @@ for (int i : evens)
 \exitexample
 
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
   template <InputRange R, IndirectUnaryPredicate<iterator_t<R>> Pred>
     requires View<R>
   class filter_view : public view_interface<filter_view<R, Pred>> {
@@ -923,7 +935,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   template <InputRange R, CopyConstructible Pred>
     requires IndirectUnaryPredicate<Pred, iterator_t<R>> && ViewableRange<R>
   filter_view(R&&, Pred) -> filter_view<all_view<R>, Pred>;
-}}}}
+}}@\removed{\}\}}@
 \end{codeblock}
 
 \rSec3[ranges.adaptors.filter_view.ops]{\tcode{filter_view} operations}
@@ -943,7 +955,7 @@ constexpr filter_view(R base, Pred pred);
 \indexlibrary{\idxcode{filter_view}!\idxcode{filter_view}}%
 \begin{itemdecl}
 template <InputRange O>
-requires ViewableRange<O> && Constructible<R, all_view<O>>
+  requires ViewableRange<O> && Constructible<R, all_view<O>>
 constexpr filter_view(O&& o, Pred pred);
 \end{itemdecl}
 
@@ -1010,7 +1022,7 @@ constexpr iterator end() requires CommonRange<R>;
 
 \indexlibrary{\idxcode{iterator}!\idxcode{filter_view}}%
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
   template <class R, class Pred>
   class filter_view<R, Pred>::iterator {
   private:
@@ -1044,7 +1056,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     friend constexpr void iter_swap(const iterator& x, const iterator& y)
       noexcept(@\seebelow@) requires IndirectlySwappable<iterator_t<R>>;
   };
-}}}}
+}}@\removed{\}\}}@
 \end{codeblock}
 
 \pnum
@@ -1175,7 +1187,7 @@ return tmp;
 \indexlibrary{\idxcode{operator==}!\idxcode{filter_view::iterator}}%
 \begin{itemdecl}
 friend constexpr bool operator==(const iterator& x, const iterator& y)
-requires EqualityComparable<iterator_t<R>>;
+  requires EqualityComparable<iterator_t<R>>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -1186,7 +1198,7 @@ requires EqualityComparable<iterator_t<R>>;
 \indexlibrary{\idxcode{operator!=}!\idxcode{filter_view::iterator}}%
 \begin{itemdecl}
 friend constexpr bool operator!=(const iterator& x, const iterator& y)
-requires EqualityComparable<iterator_t<R>>;
+  requires EqualityComparable<iterator_t<R>>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -1234,7 +1246,7 @@ noexcept(ranges::iter_swap(x.current_, y.current_))
 
 \indexlibrary{\idxcode{sentinel}!\idxcode{filter_view}}%
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
   template <class R, class Pred>
   class filter_view<R, Pred>::sentinel {
   private:
@@ -1250,7 +1262,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     friend constexpr bool operator!=(const iterator& x, const sentinel& y);
     friend constexpr bool operator!=(const sentinel& x, const iterator& y);
   };
-}}}}
+}}@\removed{\}\}}@
 \end{codeblock}
 
 \rSec4[ranges.adaptors.filter_view.sentinel.ctor]{\tcode{filter_view::sentinel} constructors}
@@ -1352,7 +1364,7 @@ for (int i : squares)
 \exitexample
 
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
   template <InputRange R, CopyConstructible F>
     requires View<R> && Invocable<F&, reference_t<iterator_t<R>>>
   class transform_view : public view_interface<transform_view<R, F>> {
@@ -1389,7 +1401,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
 
   template <class R, class F>
   transform_view(R&& r, F fun) -> transform_view<all_view<R>, F>;
-}}}}
+}}@\removed{\}\}}@
 \end{codeblock}
 
 \rSec3[ranges.adaptors.transform_view.ops]{\tcode{transform_view} operations}
@@ -1409,7 +1421,7 @@ constexpr transform_view(R base, F fun);
 \indexlibrary{\idxcode{transform_view}!\idxcode{transform_view}}%
 \begin{itemdecl}
 template <InputRange O>
-requires ViewableRange<O> && Constructible<R, all_view<O>>
+  requires ViewableRange<O> && Constructible<R, all_view<O>>
 constexpr transform_view(O&& o, F fun);
 \end{itemdecl}
 
@@ -1514,7 +1526,7 @@ constexpr auto size() const requires SizedRange<const R>;
 \tcode{transform_view<R, F>::\xname{iterator}} is an exposition-only type.
 
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
   template <class R, class F>
   template <bool Const>
   class transform_view<R, F>::@\xname{iterator}@ { // \expos
@@ -1580,7 +1592,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     friend constexpr void iter_swap(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
       noexcept(@\seebelow@) requires IndirectlySwappable<iterator_t<Base>>;
   };
-}}}}
+}}@\removed{\}\}}@
 \end{codeblock}
 
 \rSec4[ranges.adaptors.transform_view.iterator.ops]{\tcode{transform_view::\xname{iterator}} operations}
@@ -1600,7 +1612,7 @@ initializes \tcode{parent_} with \tcode{\&parent}.
 \indexlibrary{\idxcode{\xname{iterator}}!\idxcode{transform_view::\xname{iterator}}}%
 \begin{itemdecl}
 constexpr @\xname{iterator}@(@\xname{iterator}@<!Const> i)
-requires Const && ConvertibleTo<iterator_t<R>, iterator_t<Base>>;
+  requires Const && ConvertibleTo<iterator_t<R>, iterator_t<Base>>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -1713,7 +1725,7 @@ return tmp;
 \indexlibrary{\idxcode{operator+=}!\idxcode{transform_view::\xname{iterator}}}
 \begin{itemdecl}
 constexpr @\xname{iterator}@& operator+=(difference_type n)
-requires RandomAccessRange<Base>;
+  requires RandomAccessRange<Base>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -1728,7 +1740,7 @@ return *this;
 \indexlibrary{\idxcode{operator-=}!\idxcode{transform_view::\xname{iterator}}}%
 \begin{itemdecl}
 constexpr @\xname{iterator}@& operator-=(difference_type n)
-requires RandomAccessRange<Base>;
+  requires RandomAccessRange<Base>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -1745,7 +1757,7 @@ return *this;
 \indexlibrary{\idxcode{operator[]}!\idxcode{transform_view::\xname{iterator}}}
 \begin{itemdecl}
 constexpr decltype(auto) operator[](difference_type n) const
-requires RandomAccessRange<Base>;
+  requires RandomAccessRange<Base>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -1761,7 +1773,7 @@ return invoke(*parent_->fun_, current_[n]);
 \indexlibrary{\idxcode{operator==}!\idxcode{transform_view::\xname{iterator}}}
 \begin{itemdecl}
 friend constexpr bool operator==(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
-requires EqualityComparable<iterator_t<Base>>;
+  requires EqualityComparable<iterator_t<Base>>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -1772,7 +1784,7 @@ requires EqualityComparable<iterator_t<Base>>;
 \indexlibrary{\idxcode{operator!=}!\idxcode{transform_view::\xname{iterator}}}%
 \begin{itemdecl}
 friend constexpr bool operator!=(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
-requires EqualityComparable<iterator_t<Base>>;
+  requires EqualityComparable<iterator_t<Base>>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -1783,7 +1795,7 @@ requires EqualityComparable<iterator_t<Base>>;
 \indexlibrary{\idxcode{operator<}!\idxcode{transform_view::\xname{iterator}}}%
 \begin{itemdecl}
 friend constexpr bool operator<(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
-requires RandomAccessRange<Base>;
+  requires RandomAccessRange<Base>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -1794,7 +1806,7 @@ requires RandomAccessRange<Base>;
 \indexlibrary{\idxcode{operator>}!\idxcode{transform_view::\xname{iterator}}}%
 \begin{itemdecl}
 friend constexpr bool operator>(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
-requires RandomAccessRange<Base>;
+  requires RandomAccessRange<Base>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -1805,7 +1817,7 @@ requires RandomAccessRange<Base>;
 \indexlibrary{\idxcode{operator<=}!\idxcode{transform_view::\xname{iterator}}}%
 \begin{itemdecl}
 friend constexpr bool operator<=(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
-requires RandomAccessRange<Base>;
+  requires RandomAccessRange<Base>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -1816,7 +1828,7 @@ requires RandomAccessRange<Base>;
 \indexlibrary{\idxcode{operator>=}!\idxcode{transform_view::\xname{iterator}}}%
 \begin{itemdecl}
 friend constexpr bool operator>=(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
-requires RandomAccessRange<Base>;
+  requires RandomAccessRange<Base>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -1829,9 +1841,9 @@ requires RandomAccessRange<Base>;
 \indexlibrary{\idxcode{operator+}!\idxcode{transform_view::\xname{iterator}}}
 \begin{itemdecl}
 friend constexpr @\xname{iterator}@ operator+(@\xname{iterator}@ i, difference_type n)
-requires RandomAccessRange<Base>;
+  requires RandomAccessRange<Base>;
 friend constexpr @\xname{iterator}@ operator+(difference_type n, @\xname{iterator}@ i)
-requires RandomAccessRange<Base>;
+  requires RandomAccessRange<Base>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -1842,7 +1854,7 @@ requires RandomAccessRange<Base>;
 \indexlibrary{\idxcode{operator-}!\idxcode{transform_view::\xname{iterator}}}%
 \begin{itemdecl}
 friend constexpr @\xname{iterator}@ operator-(@\xname{iterator}@ i, difference_type n)
-requires RandomAccessRange<Base>;
+  requires RandomAccessRange<Base>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -1853,7 +1865,7 @@ requires RandomAccessRange<Base>;
 \indexlibrary{\idxcode{operator-}!\idxcode{transform_view::\xname{iterator}}}%
 \begin{itemdecl}
 friend constexpr difference_type operator-(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
-requires RandomAccessRange<Base>;
+  requires RandomAccessRange<Base>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -1907,7 +1919,7 @@ noexcept(ranges::iter_swap(x.current_, y.current_))
 \tcode{transform_view<R, F>::\xname{sentinel}} is an exposition-only type.
 
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
   template <class R, class F>
   template <bool Const>
   class transform_view<R, F>::@\xname{sentinel}@ {
@@ -1935,7 +1947,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
       operator-(const @\xname{sentinel}@& y, const @\xname{iterator}@<Const>& x)
         requires SizedSentinel<sentinel_t<Base>, iterator_t<Base>>;
   };
-}}}}
+}}@\removed{\}\}}@
 \end{codeblock}
 
 \rSec3[ranges.adaptors.transform_view.sentinel.ctor]{\tcode{transform_view::\xname{sentinel} constructors}}
@@ -1953,7 +1965,7 @@ explicit constexpr @\xname{sentinel}@(sentinel_t<Base> end);
 \indexlibrary{\idxcode{\xname{sentinel}}!\idxcode{transform_view::\xname{sentinel}}}
 \begin{itemdecl}
 constexpr @\xname{sentinel}@(@\xname{sentinel}@<!Const> i)
-requires Const && ConvertibleTo<sentinel_t<R>, sentinel_t<Base>>;
+  requires Const && ConvertibleTo<sentinel_t<R>, sentinel_t<Base>>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2060,7 +2072,7 @@ is satisfied.
 
 \pnum
 The purpose of \tcode{iota_view} is to generate a sequence of elements by
-monotonically incrementing an initial value.
+\changed{monotonically}{repeatedly} incrementing an initial value.
 
 \ednote{The following definition of \tcode{iota_view} presumes the resolution of
 stl2\#507 (\url{https://github.com/ericniebler/stl2/issues/507}).}
@@ -2075,16 +2087,16 @@ for (int i : indices)
 \exitexample
 
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
   // \expos
   template <class I>
-  concept bool @\textit{decrementable}@ = @\seebelow@;
+  concept @\removed{bool}@ @\textit{Decrementable}@ = @\seebelow@;
   // \expos
   template <class I>
-  concept bool @\textit{advanceable}@ = @\seebelow@;
+  concept @\removed{bool}@ @\textit{Advanceable}@ = @\seebelow@;
 
   template <WeaklyIncrementable I, class Bound = unreachable>
-    requires WeaklyEqualityComparableWith<I, Bound>
+    requires @\xname{WeaklyEqualityComparableWith}@<I, Bound>
   class iota_view : public view_interface<iota_view<I, Bound>> {
   private:
     I value_ {}; // \expos
@@ -2105,76 +2117,88 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   };
 
   template <WeaklyIncrementable I>
-  iota_view(I) -> iota_view<I>;
+  @\added{explicit}@ iota_view(I) -> iota_view<I>;
 
   template <WeaklyIncrementable I, Semiregular Bound>
-    requires WeaklyEqualityComparableWith<I, Bound> &&
+    requires @\removed{WeaklyEqualityComparableWith<I, Bound> \&\&}@
       (!Integral<I> || !Integral<Bound> || is_signed_v<I> == is_signed_v<Bound>)
   iota_view(I, Bound) -> iota_view<I, Bound>;
-}}}}
+}}@\removed{\}\}}@
 \end{codeblock}
 
 \pnum
-The exposition-only \tcode{\textit{decrementable}} concept is equivalent to:
+The exposition-only \tcode{\textit{Decrementable}} concept is equivalent to:
 \begin{codeblock}
 template <class I>
-concept bool @\textit{decrementable}@ =
+concept @\removed{bool}@ @\textit{Decrementable}@ =
 Incrementable<I> && requires(I i) {
   { --i } -> Same<I>&;
-  { i-- } -> Same<I>&&;
+  @\removed{\{ i\dcr \} -> Same<I>\&\&;}@
+  @\added{i\dcr;}@
+  @\added{requires Same<I, decltype(i\dcr)>;}@
 };
 \end{codeblock}
 
 \pnum
 When an object is in the domain of both pre- and post-decrement,
-the object is said to be \techterm{decrementable}.
+the object is said to be \techterm{Decrementable}.
 
 \pnum
 Let \tcode{a} and \tcode{b} be incrementable and decrementable objects of type
-\tcode{I}. \tcode{\textit{decrementable}<I>} is satisfied only if
+\tcode{I}. \tcode{\textit{Decrementable}<I>} is satisfied only if
 \begin{itemize}
-\item \tcode{\&(--a) == \&a};
-\item If \tcode{bool(a == b)} then \tcode{bool(a-- == b)}.
-\item If \tcode{bool(a == b)} then \tcode{bool((a--, a) == --b)}.
-\item If \tcode{bool(a == b)} then \tcode{bool(--(++a) == b)} and
-\tcode{bool(++(--a) == b)}.
+\item \tcode{\changed{\&}{addressof}(\dcr{}a) == \changed{\&}{addressof(}a\added{)}};
+\item If \tcode{bool(a == b)} then \tcode{bool(a\dcr{} == b)}.
+\item If \tcode{bool(a == b)} then \tcode{bool((a\dcr, a) == \dcr{}b)}.
+\item If \tcode{bool(a == b)} then \tcode{bool(\dcr(++a) == b)} and
+\tcode{bool(++(\dcr{}a) == b)}.
 \end{itemize}
 
 \pnum
-The exposition-only \tcode{\textit{advanceable}} concept is equivalent to:
+The exposition-only \tcode{\textit{Advanceable}} concept is equivalent to:
 \begin{codeblock}
 template <class I>
-concept bool @\textit{advanceable}@ =
-@\textit{decrementable}@<I> && StrictTotallyOrdered<I> &&
+concept @\removed{bool}@ @\textit{Advanceable}@ =
+  @\textit{Decrementable}@<I> && StrictTotallyOrdered<I> &&
   requires { typename difference_type_t<I>; } &&
-  requires(I a, const I b, const difference_type_t<I> n) {
-    { a += n } -> Same<I>&;
-    { b + n } -> Same<I>&&;
-    { n + b } -> Same<I>&&;
-    { a -= n } -> Same<I>&;
-    { b - n } -> Same<I>&&;
-    { b - b } -> Same<difference_type_t<I>>&&;
+  requires(I i, const I j, const difference_type_t<I> n) {
+    { i += n } -> Same<I>&;
+    { i -= n } -> Same<I>&;
+    @\removed{\{ j + n \} -> Same<I>\&\&;}@
+    @\removed{\{ n + j \} -> Same<I>\&\&;}@
+    @\removed{\{ j - n \} -> Same<I>\&\&;}@
+    @\removed{\{ j - j \} -> Same<difference_type_t<I>>\&\&;}@
+    @\added{j + n;}@
+    @\added{n + j;}@
+    @\added{j - n;}@
+    @\added{j - j;}@
+    @\added{requires Same<I, decltype(j + n)>;}@
+    @\added{requires Same<I, decltype(n + j)>;}@
+    @\added{requires Same<I, decltype(j - n)>;}@
+    @\added{requires Same<difference_type_t<I>, decltype(j - j)>;}@
   };
 \end{codeblock}
 
 Let \tcode{a} and \tcode{b} be objects of type \tcode{I} such that \tcode{b} is
-reachable from \tcode{a}. Let \tcode{n} be the smallest number of applications
-of \tcode{++a} necessary to make \tcode{bool(a == b)} be \tcode{true}. Then if
-\tcode{n} is representable by \tcode{difference_type_t<I>},
-\tcode{\textit{advanceable}<I>} is satisfied only if:
+reachable from \tcode{a}. Let \tcode{\changed{n}{\textit{M}}} be the smallest number of applications
+of \tcode{++a} necessary to make \tcode{bool(a == b)} be \tcode{true}. \added{Let
+\tcode{n}, \tcode{zero}, and \tcode{one} be objects of type \tcode{difference_type_t<I>}
+initialized with \tcode{\textit{M}}, \tcode{0}, and \tcode{1}, respectively.} Then if
+\tcode{\changed{n}{\textit{M}}} is representable by \tcode{difference_type_t<I>},
+\tcode{\textit{Advanceable}<I>} is satisfied only if:
 \begin{itemize}
 \item \tcode{(a += n)} is equal to \tcode{b}.
-\item \tcode{\&(a += n)} is equal to \tcode{\&a}.
+\item \tcode{\changed{\&}{addressof}(a += n)} is equal to \tcode{\changed{\&}{addressof(}a\added{)}}.
 \item \tcode{(a + n)} is equal to \tcode{(a += n)}.
 \item For any two positive integers \tcode{x} and \tcode{y}, if
 \tcode{a + (x + y)} is valid, then \tcode{a + (x + y)} is equal to
 \tcode{(a + x) + y}.
-\item \tcode{a + 0} is equal to \tcode{a}.
-\item If \tcode{(a + (n - 1))} is valid, then \tcode{a + n} is equal to
-\tcode{++(a + (n - 1))}.
+\item \tcode{a + \changed{0}{zero}} is equal to \tcode{a}.
+\item If \tcode{(a + (n - \changed{1}{one}))} is valid, then \tcode{a + n} is equal to
+\tcode{++(a + (n - \changed{1}{one}))}.
 \item \tcode{(b += -n)} is equal to \tcode{a}.
 \item \tcode{(b -= n)} is equal to \tcode{a}.
-\item \tcode{\&(b -= n)} is equal to \tcode{\&b}.
+\item \tcode{\changed{\&}{addressof}(b -= n)} is equal to \tcode{\changed{\&}{addressof(}b\added{)}}.
 \item \tcode{(b - n)} is equal to \tcode{(b -= n)}.
 \item \tcode{b - a} is equal to \tcode{n}.
 \item \tcode{a - b} is equal to \tcode{-n}.
@@ -2264,7 +2288,7 @@ constexpr auto size() const requires @\seebelow@;
 \pnum
 \remarks The expression in the \tcode{requires} clause is equivalent to:
 \begin{codeblock}
-(Same<I, Bound> && @\textit{advanceable}@<I>) ||
+(Same<I, Bound> && @\textit{Advanceable}@<I>) ||
 (Integral<I> && Integral<Bound>) ||
 SizedSentinel<Bound, I>
 \end{codeblock}
@@ -2273,7 +2297,7 @@ SizedSentinel<Bound, I>
 \rSec3[ranges.adaptors.iota_view.iterator]{Class \tcode{iota_view::iterator}}
 
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
   template <class I, class Bound>
   struct iota_view<I, Bound>::iterator {
   private:
@@ -2292,15 +2316,15 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     constexpr void operator++(int);
     constexpr iterator operator++(int) requires Incrementable<I>;
 
-    constexpr iterator& operator--() requires @\textit{decrementable}@<I>;
-    constexpr iterator operator--(int) requires @\textit{decrementable}@<I>;
+    constexpr iterator& operator--() requires @\textit{Decrementable}@<I>;
+    constexpr iterator operator--(int) requires @\textit{Decrementable}@<I>;
 
     constexpr iterator& operator+=(difference_type n)
-      requires @\textit{advanceable}@<I>;
+      requires @\textit{Advanceable}@<I>;
     constexpr iterator& operator-=(difference_type n)
-      requires @\textit{advanceable}@<I>;
+      requires @\textit{Advanceable}@<I>;
     constexpr I operator[](difference_type n) const
-      requires @\textit{advanceable}@<I>;
+      requires @\textit{Advanceable}@<I>;
 
     friend constexpr bool operator==(const iterator& x, const iterator& y)
       requires EqualityComparable<I>;
@@ -2317,24 +2341,24 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
       requires StrictTotallyOrdered<I>;
 
     friend constexpr iterator operator+(iterator i, difference_type n)
-      requires @\textit{advanceable}@<I>;
+      requires @\textit{Advanceable}@<I>;
     friend constexpr iterator operator+(difference_type n, iterator i)
-      requires @\textit{advanceable}@<I>;
+      requires @\textit{Advanceable}@<I>;
 
     friend constexpr iterator operator-(iterator i, difference_type n)
-      requires @\textit{advanceable}@<I>;
+      requires @\textit{Advanceable}@<I>;
     friend constexpr difference_type operator-(const iterator& x, const iterator& y)
-      requires @\textit{advanceable}@<I>;
+      requires @\textit{Advanceable}@<I>;
   };
-}}}}
+}}@\removed{\}\}}@
 \end{codeblock}
 
 \pnum
 \tcode{iota_view<I, Bound>::iterator::iterator_category} is defined as follows:
 \begin{itemize}
-\item If \tcode{I} satisfies \tcode{\textit{advanceable}}, then
+\item If \tcode{I} satisfies \tcode{\textit{Advanceable}}, then
 \tcode{iterator_category} is \tcode{ranges::random_access_iterator_tag}.
-\item Otherwise, if \tcode{I} satisfies \tcode{\textit{decrementable}}, then
+\item Otherwise, if \tcode{I} satisfies \tcode{\textit{Decrementable}}, then
 \tcode{iterator_category} is \tcode{ranges::bidirectional_iterator_tag}.
 \item Otherwise, if \tcode{I} satisfies \tcode{Incrementable}, then
 \tcode{iterator_category} is \tcode{ranges::forward_iterator_tag}.
@@ -2419,7 +2443,7 @@ return tmp;
 
 \indexlibrary{\idxcode{operator\dcr}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
-constexpr iterator& operator--() requires @\textit{decrementable}@<I>;
+constexpr iterator& operator--() requires @\textit{Decrementable}@<I>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2433,7 +2457,7 @@ return *this;
 
 \indexlibrary{\idxcode{operator\dcr}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
-constexpr iterator operator--(int) requires @\textit{decrementable}@<I>;
+constexpr iterator operator--(int) requires @\textit{Decrementable}@<I>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2451,7 +2475,7 @@ return tmp;
 \indexlibrary{\idxcode{operator+=}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
 constexpr iterator& operator+=(difference_type n)
-requires @\textit{advanceable}@<I>;
+  requires @\textit{Advanceable}@<I>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2466,7 +2490,7 @@ return *this;
 \indexlibrary{\idxcode{operator-=}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
 constexpr iterator& operator-=(difference_type n)
-requires @\textit{advanceable}@<I>;
+  requires @\textit{Advanceable}@<I>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2483,7 +2507,7 @@ return *this;
 \indexlibrary{\idxcode{operator[]}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
 constexpr I operator[](difference_type n) const
-requires @\textit{advanceable}@<I>;
+  requires @\textit{Advanceable}@<I>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2496,7 +2520,7 @@ requires @\textit{advanceable}@<I>;
 \indexlibrary{\idxcode{operator==}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
 friend constexpr bool operator==(const iterator& x, const iterator& y)
-requires EqualityComparable<I>;
+  requires EqualityComparable<I>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2507,7 +2531,7 @@ requires EqualityComparable<I>;
 \indexlibrary{\idxcode{operator!=}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
 friend constexpr bool operator!=(const iterator& x, const iterator& y)
-requires EqualityComparable<I>;
+  requires EqualityComparable<I>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2518,7 +2542,7 @@ requires EqualityComparable<I>;
 \indexlibrary{\idxcode{operator<}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
 friend constexpr bool operator<(const iterator& x, const iterator& y)
-requires StrictTotallyOrdered<I>;
+  requires StrictTotallyOrdered<I>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2529,7 +2553,7 @@ requires StrictTotallyOrdered<I>;
 \indexlibrary{\idxcode{operator>}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
 friend constexpr bool operator>(const iterator& x, const iterator& y)
-requires StrictTotallyOrdered<I>;
+  requires StrictTotallyOrdered<I>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2540,7 +2564,7 @@ requires StrictTotallyOrdered<I>;
 \indexlibrary{\idxcode{operator<=}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
 friend constexpr bool operator<=(const iterator& x, const iterator& y)
-requires StrictTotallyOrdered<I>;
+  requires StrictTotallyOrdered<I>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2551,7 +2575,7 @@ requires StrictTotallyOrdered<I>;
 \indexlibrary{\idxcode{operator>=}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
 friend constexpr bool operator>=(const iterator& x, const iterator& y)
-requires StrictTotallyOrdered<I>;
+  requires StrictTotallyOrdered<I>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2564,7 +2588,7 @@ requires StrictTotallyOrdered<I>;
 \indexlibrary{\idxcode{operator+}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
 friend constexpr iterator operator+(iterator i, difference_type n)
-requires @\textit{advanceable}@<I>;
+  requires @\textit{Advanceable}@<I>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2575,7 +2599,7 @@ requires @\textit{advanceable}@<I>;
 \indexlibrary{\idxcode{operator+}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
 friend constexpr iterator operator+(difference_type n, iterator i)
-requires @\textit{advanceable}@<I>;
+  requires @\textit{Advanceable}@<I>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2586,7 +2610,7 @@ requires @\textit{advanceable}@<I>;
 \indexlibrary{\idxcode{operator-}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
 friend constexpr iterator operator-(iterator i, difference_type n)
-requires @\textit{advanceable}@<I>;
+  requires @\textit{Advanceable}@<I>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2597,7 +2621,7 @@ requires @\textit{advanceable}@<I>;
 \indexlibrary{\idxcode{operator-}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
 friend constexpr difference_type operator-(const iterator& x, const iterator& y)
-requires @\textit{advanceable}@<I>;
+  requires @\textit{Advanceable}@<I>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2608,7 +2632,7 @@ requires @\textit{advanceable}@<I>;
 \rSec3[ranges.adaptors.iota_view.sentinel]{Class \tcode{iota_view::sentinel}}
 
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
   template <class I, class Bound>
   struct iota_view<I, Bound>::sentinel {
   private:
@@ -2622,7 +2646,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     friend constexpr bool operator!=(const iterator& x, const sentinel& y);
     friend constexpr bool operator!=(const sentinel& x, const iterator& y);
   };
-}}}}
+}}@\removed{\}\}}@
 \end{codeblock}
 
 \rSec4[ranges.adaptors.iota_view.sentinel.ctor]{\tcode{iota_view::sentinel} constructors}
@@ -2725,7 +2749,7 @@ for (int i : few)
 \exitexample
 
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
   template <InputRange R>
     requires View<R>
   class take_view : public view_interface<take_view<R>> {
@@ -2762,7 +2786,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   template <InputRange R>
   take_view(R&& base, difference_type_t<iterator_t<R>> n)
     -> take_view<all_view<R>>;
-}}}}
+}}@\removed{\}\}}@
 \end{codeblock}
 
 \rSec3[ranges.adaptors.take_view.ops]{\tcode{take_view} operations}
@@ -2782,7 +2806,7 @@ constexpr take_view(R base, difference_type_t<iterator_t<R>> count);
 \indexlibrary{\idxcode{take_view}!\idxcode{take_view}}%
 \begin{itemdecl}
 template <InputRange O>
-requires ViewableRange<O> && Constructible<R, all_view<O>>
+  requires ViewableRange<O> && Constructible<R, all_view<O>>
 constexpr take_view(O&& o, difference_type_t<iterator_t<R>> count);
 \end{itemdecl}
 
@@ -2824,7 +2848,7 @@ return make_counted_iterator(ranges::begin(base_), count_);
 \begin{itemdecl}
 constexpr auto begin() requires RandomAccessRange<R> && SizedRange<R>;
 constexpr auto begin() const
-requires RandomAccessRange<const R> && SizedRange<const R>;
+  requires RandomAccessRange<const R> && SizedRange<const R>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2846,7 +2870,7 @@ constexpr auto end() const requires Range<const R>;
 \begin{itemdescr}
 \pnum
 \effects Equivalent to \tcode{\xname{sentinel}<\textit{simple-view}<R{>}>\{ranges::end(base_)\}} and
-\tcode{\xname{sentinel}<true>\{ranges::end(base_)\}} for the first and second
+\tcode{\xname{sentinel}<true>\{\ ranges::end(base_)\}} for the first and second
 overload, respectively.
 \end{itemdescr}
 
@@ -2854,7 +2878,7 @@ overload, respectively.
 \begin{itemdecl}
 constexpr auto end() requires RandomAccessRange<R> && SizedRange<R>;
 constexpr auto end() const
-requires RandomAccessRange<const R> && SizedRange<const R>;
+  requires RandomAccessRange<const R> && SizedRange<const R>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2886,7 +2910,7 @@ only one call to \tcode{ranges::size(base_)}.
 \tcode{take_view<R>::\xname{sentinel}} is an exposition-only type.
 
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
   template <class R>
   template <bool Const>
   class take_view<R>::@\xname{sentinel}@ { // \expos
@@ -2912,7 +2936,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     friend constexpr bool operator!=(const CI& x, const @\xname{sentinel}@& y)
       requires EqualityComparable<iterator_t<Base>>;
   };
-}}}}
+}}@\removed{\}\}}@
 \end{codeblock}
 
 \rSec4[ranges.adaptors.take_view.sentinel.ops]{\tcode{take_view::\xname{sentinel}} operations}
@@ -2931,7 +2955,7 @@ constexpr explicit @\xname{sentinel}@(sentinel_t<Base> end);
 \indexlibrary{\idxcode{\xname{sentinel}}!\idxcode{take_view::\xname{sentinel}}}%
 \begin{itemdecl}
 constexpr @\xname{sentinel}@(@\xname{sentinel}@<!Const> s)
-requires Const && ConvertibleTo<sentinel_t<R>, sentinel_t<Base>>;
+  requires Const && ConvertibleTo<sentinel_t<R>, sentinel_t<Base>>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2956,7 +2980,7 @@ constexpr sentinel_t<Base> base() const;
 \indexlibrary{\idxcode{operator==}!\idxcode{take_view::\xname{sentinel}}}
 \begin{itemdecl}
 friend constexpr bool operator==(const @\xname{sentinel}@& x, const CI& y)
-requires EqualityComparable<iterator_t<Base>>;
+  requires EqualityComparable<iterator_t<Base>>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2966,7 +2990,7 @@ requires EqualityComparable<iterator_t<Base>>;
 
 \begin{itemdecl}
 friend constexpr bool operator==(const CI& x, const @\xname{sentinel}@& y)
-requires EqualityComparable<iterator_t<Base>>;
+  requires EqualityComparable<iterator_t<Base>>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2977,7 +3001,7 @@ requires EqualityComparable<iterator_t<Base>>;
 \indexlibrary{\idxcode{operator!=}!\idxcode{take_view::\xname{iterator}}}%
 \begin{itemdecl}
 friend constexpr bool operator!=(const @\xname{sentinel}@& x, const CI& y)
-requires EqualityComparable<iterator_t<Base>>;
+  requires EqualityComparable<iterator_t<Base>>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2987,7 +3011,7 @@ requires EqualityComparable<iterator_t<Base>>;
 
 \begin{itemdecl}
 friend constexpr bool operator!=(const CI& x, const @\xname{sentinel}@& y)
-requires EqualityComparable<iterator_t<Base>>;
+  requires EqualityComparable<iterator_t<Base>>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3026,7 +3050,7 @@ for (char ch : greeting)
 \exitexample
 
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
   template <InputRange R>
       requires View<R> && InputRange<reference_t<iterator_t<R>>> &&
           (is_reference_v<reference_t<iterator_t<R>>> ||
@@ -3074,7 +3098,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
           (is_reference_v<reference_t<iterator_t<R>>> ||
           View<value_type_t<iterator_t<R>>>)
     explicit join_view(R&&) -> join_view<all_view<R>>;
-}}}}
+}}@\removed{\}\}}@
 \end{codeblock}
 
 \rSec3[ranges.adaptors.join_view.ops]{\tcode{join_view} operations}
@@ -3137,7 +3161,7 @@ constexpr auto end() const requires InputRange<const R> &&
 \pnum
 \effects Equivalent to:
 \begin{codeblock}
-return @\xname{sentinel}<\textit{simple-view}@<R>{>}{*this};
+return @\xname{sentinel}<\textit{simple-view}@<R>>{*this};
 \end{codeblock}
   and
 \begin{codeblock}
@@ -3176,7 +3200,7 @@ for the first and second overloads, respectively.
 \tcode{join_view::\xname{iterator}} is an exposition-only type.
 
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
 template <class R>
   template <bool Const>
   struct join_view<R>::@\xname{iterator}@ {
@@ -3236,7 +3260,7 @@ template <class R>
     friend constexpr void iter_swap(const @\xname{iterator}@& x, const @\xname{iterator}@& y)
         noexcept(@\seebelow@);
   };
-}}}}
+}}@\removed{\}\}}@
 \end{codeblock}
 
 \pnum
@@ -3257,8 +3281,8 @@ template <class R>
 \tcode{join_view<R>::iterator::difference_type} is an alias for:
 \begin{codeblock}
 common_type_t<
-difference_type_t<iterator_t<Base>>,
-difference_type_t<iterator_t<reference_t<iterator_t<Base>>>>>
+  difference_type_t<iterator_t<Base>>,
+  difference_type_t<iterator_t<reference_t<iterator_t<Base>>>>>
 \end{codeblock}
 
 \pnum
@@ -3281,7 +3305,7 @@ where \tcode{\textit{inner-range-update}} is equivalent to:
 \item Otherwise,
 \begin{codeblock}
 [this](auto&& x) -> decltype(auto) {
-return (parent_->inner_ = view::all(x));
+  return (parent_->inner_ = view::all(x));
 }(*outer_)
 \end{codeblock}
 \end{itemize}
@@ -3494,7 +3518,7 @@ noexcept(ranges::iter_swap(x.inner_, y.inner_))
 \tcode{join_view::\xname{sentinel}} is an exposition-only type.
 
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
   template <class R>
   template <bool Const>
   struct join_view<R>::@\xname{sentinel}@ {
@@ -3514,7 +3538,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     friend constexpr bool operator!=(const @\xname{iterator}@<Const>& x, const @\xname{sentinel}@& y);
     friend constexpr bool operator!=(const @\xname{sentinel}@& x, const @\xname{iterator}@<Const>& y);
   };
-}}}}
+}}@\removed{\}\}}@
 \end{codeblock}
 
 \rSec4[ranges.adaptors.join_view.sentinel.ops]{\tcode{join_view::\xname{sentinel}} operations}
@@ -3597,7 +3621,7 @@ that type \tcode{T} is \tcode{decltype((E))}. Then the expression
 InputRange<T> &&
 InputRange<reference_t<iterator_t<T>>> &&
 (is_reference_v<reference_t<iterator_t<T>>> ||
-View<value_type_t<iterator_t<T>>)
+ View<value_type_t<iterator_t<T>>)
 \end{codeblock}
 \item Otherwise, \tcode{view::join(E)} is ill-formed.
 \end{itemize}
@@ -3618,7 +3642,7 @@ static_assert(0 == e.size());
 \exitexample
 
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
   template <class T>
     requires is_object_v<T>
   class empty_view : public view_interface<empty_view<T>> {
@@ -3628,7 +3652,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     constexpr static ptrdiff_t size() noexcept;
     constexpr static T* data() noexcept;
   };
-}}}}
+}}@\removed{\}\}}@
 \end{codeblock}
 
 \rSec3[ranges.adaptors.empty_view.ops]{\tcode{empty_view} operations}
@@ -3696,7 +3720,7 @@ for (int i : s)
 \exitexample
 
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
   template <CopyConstructible T>
   class single_view : public view_interface<single_view<T>> {
   private:
@@ -3716,9 +3740,9 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   };
 
   template <class T>
-  requires CopyConstructible<decay_t<T>>
+    requires CopyConstructible<decay_t<T>>
   explicit single_view(T&&) -> single_view<decay_t<T>>;
-}}}}
+}}@\removed{\}\}}@
 \end{codeblock}
 
 \rSec3[ranges.adaptors.single_view.ops]{\tcode{single_view} operations}
@@ -3851,10 +3875,10 @@ for (auto word : sentence) {
 \exitexample
 
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
   // \expos
   template <class R>
-  concept bool @\textit{tiny-range}@ =
+  concept @\removed{bool}@ @\textit{tiny-range}@ =
     SizedRange<R> && requires {
       requires remove_reference_t<R>::size() <= 1;
     };
@@ -3913,7 +3937,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
       CopyConstructible<value_type_t<iterator_t<O>>>
   split_view(O&&, value_type_t<iterator_t<O>>)
     -> split_view<all_view<O>, single_view<value_type_t<iterator_t<O>>>>;
-}}}}
+}}@\removed{\}\}}@
 \end{codeblock}
 
 \rSec3[ranges.adaptors.split_view.ops]{\tcode{split_view} operations}
@@ -3933,7 +3957,7 @@ constexpr split_view(Rng base, Pattern pattern);
 \indexlibrary{\idxcode{split_view}!\idxcode{split_view}}%
 \begin{itemdecl}
 template <InputRange O, ForwardRange P>
-requires ViewableRange<O> && ViewableRange<P> &&
+  requires ViewableRange<O> && ViewableRange<P> &&
     Constructible<Rng, all_view<O>> &&
     Constructible<Pattern, all_view<P>>
 constexpr split_view(O&& o, P&& p);
@@ -3948,7 +3972,7 @@ constexpr split_view(O&& o, P&& p);
 \indexlibrary{\idxcode{split_view}!\idxcode{split_view}}%
 \begin{itemdecl}
 template <InputRange O>
-requires ViewableRange<O> &&
+  requires ViewableRange<O> &&
     Constructible<Rng, all_view<O>> &&
     Constructible<Pattern, single_view<value_type_t<iterator_t<O>>>>
 constexpr split_view(O&& o, value_type_t<iterator_t<O>> e);
@@ -4018,9 +4042,9 @@ for the first and second overloads, respectively.
 \indexlibrary{\idxcode{end}!\idxcode{split_view}}%
 \begin{itemdecl}
 constexpr auto end()
-requires ForwardRange<Rng> && CommonRange<Rng>;
+  requires ForwardRange<Rng> && CommonRange<Rng>;
 constexpr auto end() const
-requires ForwardRange<Rng> && CommonRange<Rng>;
+  requires ForwardRange<Rng> && CommonRange<Rng>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4041,7 +4065,7 @@ return @\xname{outer_iterator}@<true>{*this, ranges::end(base_)};
 \enternote \tcode{split_view::\xname{outer_iterator}} is an exposition-only type.\exitnote
 
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
   template <class Rng, class Pattern>
   template <bool Const>
   struct split_view<Rng, Pattern>::@\xname{outer_iterator}@ {
@@ -4073,7 +4097,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     friend constexpr bool operator!=(const @\xname{outer_iterator}@& x, const @\xname{outer_iterator}@& y)
       requires ForwardRange<Base>;
   };
-}}}}
+}}@\removed{\}\}}@
 \end{codeblock}
 
 \pnum
@@ -4101,7 +4125,7 @@ constexpr explicit @\xname{outer_iterator}@(Parent& parent);
 \indexlibrary{\idxcode{\xname{outer_iterator}}!\idxcode{split_view::\xname{outer_iterator}}}%
 \begin{itemdecl}
 constexpr @\xname{outer_iterator}@(Parent& parent, iterator_t<Base> current)
-requires ForwardRange<Base>;
+  requires ForwardRange<Base>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4200,7 +4224,7 @@ return tmp;
 \indexlibrary{\idxcode{operator==}!\idxcode{split_view::\xname{outer_iterator}}}%
 \begin{itemdecl}
 friend constexpr bool operator==(const @\xname{outer_iterator}@& x, const @\xname{outer_iterator}@& y)
-requires ForwardRange<Base>;
+  requires ForwardRange<Base>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4214,7 +4238,7 @@ return x.current_ == y.current_;
 \indexlibrary{\idxcode{operator!=}!\idxcode{split_view::\xname{outer_iterator}}}%
 \begin{itemdecl}
 friend constexpr bool operator!=(const @\xname{outer_iterator}@& x, const @\xname{outer_iterator}@& y)
-requires ForwardRange<Base>;
+  requires ForwardRange<Base>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4231,7 +4255,7 @@ return !(x == y);
 \enternote \tcode{split_view::\xname{outer_sentinel}} is an exposition-only type.\exitnote
 
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
   template <class Rng, class Pattern>
   template <bool Const>
   struct split_view<Rng, Pattern>::@\xname{outer_sentinel}@ {
@@ -4248,7 +4272,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     friend constexpr bool operator!=(const @\xname{outer_iterator}@<Const>& x, const @\xname{outer_sentinel}@& y);
     friend constexpr bool operator!=(const @\xname{outer_sentinel}@& x, const @\xname{outer_iterator}@<Const>& y);
   };
-}}}}
+}}@\removed{\}\}}@
 \end{codeblock}
 
 \rSec4[ranges.adaptors.split_view.outer_sentinel.ctor]{\tcode{split_view::\xname{outer_sentinel}} constructors}
@@ -4329,7 +4353,7 @@ return !(y == x);
 \enternote \tcode{split_view::\xname{outer_iterator}::value_type} is an exposition-only type.\exitnote
 
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
   template <class Rng, class Pattern>
   template <bool Const>
   struct split_view<Rng, Pattern>::@\xname{outer_iterator}@<Const>::value_type {
@@ -4342,7 +4366,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     constexpr auto begin() const;
     constexpr auto end() const;
   };
-}}}}
+}}@\removed{\}\}}@
 \end{codeblock}
 
 \rSec4[ranges.adaptors.split_view.outer_iterator.value_type.ctor]{\tcode{split_view::\xname{outer_iterator}::value_type} constructors}
@@ -4383,7 +4407,7 @@ constexpr auto end() const;
 \pnum
 \effects Equivalent to:
 \begin{codeblock}
-return \xname{inner_sentinel}@<Const>{};
+return @\xname{inner_sentinel}@<Const>{};
 \end{codeblock}
 \end{itemdescr}
 
@@ -4401,7 +4425,7 @@ In the definition of \tcode{split_view<Rng, Pattern>::\xname{inner_iterator}} be
 \end{itemize}
 
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
   template <class Rng, class Pattern>
   template <bool Const>
   struct split_view<Rng, Pattern>::@\xname{inner_iterator}@ {
@@ -4433,7 +4457,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     friend constexpr void iter_swap(const @\xname{inner_iterator}@& x, const @\xname{inner_iterator}@& y)
       noexcept(@\seebelow@) requires IndirectlySwappable<iterator_t<Base>>;
   };
-}}}}
+}}@\removed{\}\}}@
 \end{codeblock}
 
 \rSec4[ranges.adaptors.split_view.inner_iterator.ctor]{\tcode{split_view::\xname{inner_iterator}} constructors}
@@ -4507,7 +4531,7 @@ return tmp;
 \indexlibrary{\idxcode{operator==}!\idxcode{split_view::\xname{inner_iterator}}}%
 \begin{itemdecl}
 friend constexpr bool operator==(const @\xname{inner_iterator}@& x, const @\xname{inner_iterator}@& y)
-requires ForwardRange<Base>;
+  requires ForwardRange<Base>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4521,7 +4545,7 @@ return x.i_.current_ == y.i_.current_;
 \indexlibrary{\idxcode{operator!=}!\idxcode{split_view::\xname{inner_iterator}}}%
 \begin{itemdecl}
 friend constexpr bool operator!=(const @\xname{inner_iterator}@& x, const @\xname{inner_iterator}@& y)
-requires ForwardRange<Base>;
+  requires ForwardRange<Base>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4574,7 +4598,7 @@ noexcept(ranges::iter_swap(@\textit{current}@(x.i_), @\textit{current}@(y.i_)))
 \enternote \tcode{split_view::\xname{inner_sentinel}} is an exposition-only type.\exitnote
 
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
   template <class Rng, class Pattern>
   template <bool Const>
   struct split_view<Rng, Pattern>::@\xname{inner_sentinel}@ {
@@ -4583,7 +4607,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
     friend constexpr bool operator!=(const @\xname{inner_iterator}@<Const>& x, @\xname{inner_sentinel}@ y);
     friend constexpr bool operator!=(@\xname{inner_sentinel}@ x, const @\xname{inner_iterator}@<Const>& y);
   };
-}}}}
+}}@\removed{\}\}}@
 \end{codeblock}
 
 \rSec4[ranges.adaptors.split_view.inner_sentinel.comp]{\tcode{split_view::\xname{inner_sentinel}} comparisons}
@@ -4724,7 +4748,7 @@ void my_algo(R&& r) {
 \exitexample
 
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
   template <View Rng>
     requires !CommonRange<Rng>
   class common_view : public view_interface<common_view<Rng>> {
@@ -4763,7 +4787,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   template <ViewableRange O>
     requires !CommonRange<O>
   common_view(O&&) -> common_view<all_view<O>>;
-}}}}
+}}@\removed{\}\}}@
 \end{codeblock}
 
 \rSec3[ranges.adaptors.common_view.ops]{\tcode{common_view} operations}
@@ -4923,7 +4947,7 @@ for (int i : rv)
 \exitexample
 
 \begin{codeblock}
-namespace std { namespace experimental { namespace ranges { inline namespace v1 {
+namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
   template <View Rng>
     requires BidirectionalRange<Rng>
   class reverse_view : public view_interface<reverse_view<Rng>> {
@@ -4953,7 +4977,7 @@ namespace std { namespace experimental { namespace ranges { inline namespace v1 
   template <ViewableRange O>
     requires BidirectionalRange<O>
   reverse_view(O&&) -> reverse_view<all_view<O>>;
-}}}}
+}}@\removed{\}\}}@
 \end{codeblock}
 
 \rSec3[ranges.adaptors.reverse_view.ops]{\tcode{reverse_view} operations}
