@@ -13,56 +13,27 @@ into the working draft. This document is intended to be taken in conjunction wit
 P0898, a paper which proposes importing the definitions of the Ranges TS's Concepts
 library (Clause 7) into namespace \tcode{std}.
 
-\rSec0[intro.refs]{Normative References}
-
-\pnum
-The following referenced documents are indispensable for the
-application of this document. For dated references, only the
-edition cited applies. For undated references, the latest edition
-of the referenced document (including any amendments) applies.
-
+\rSec1[intro.history]{Revision History}
+\rSec2[intro.history.r1]{Revision 1}
 \begin{itemize}
-\item ISO/IEC 14882, \doccite{Programming Languages - \Cpp}
-\item ISO/IEC TS 21425:2017, \doccite{Technical Specification - \Cpp Extensions for Ranges}
+\item Remove section [std2.numerics] which is incorporated into P0898.
+
+\item Do not propose \tcode{ranges::exchange}: it is not used in the Ranges TS.
+
+\item Rewrite nearly everything to merge into \tcode{std::ranges} rather than
+  into \tcode{std2}:
+  \begin{itemize}
+  \item Occurrences of "std2." in stable names are either removed, or replaced with
+    "range" when the name resulting from removal would conflict with an existing
+    stable name.
+  \end{itemize}
+
+\item Incorporate the \tcode{std2::swap} customization point from P0898R0 as
+\tcode{ranges::swap}. (This was necessarily dropped from P0898R1.) Perform the
+necessary surgery on the \tcode{Swappable} concept from P0898R1 to restore the
+intended design that uses the renamed customization point.
+
 \end{itemize}
-
-ISO/IEC 14882 is herein called the \defn{C\Rplus\Rplus\xspace Standard} and
-ISO/IEC TS 21425:2017 is called the \defn{Ranges TS}.
-
-\rSec0[intro.defs]{Terms and Definitions}
-
-\ednote{The following definitions are hereby proposed for subclause [definitions]
-of ISO/IEC 14882.}
-
-For the purposes of this document, the terms and definitions given in
-ISO/IEC 14882 and the following apply.
-
-ISO and IEC maintain terminological databases for use in standardization at
-the following addresses:
-\begin{itemize}
-\item
-ISO Online browsing platform: available at http://www.iso.org/obp
-\item
-IEC Electropedia: available at http://www.electropedia.org/
-\end{itemize}
-
-\def\definition{\definitionx{\section}}%
-
-\indexdefn{projection}%
-\definition{projection}{std2.defns.projection}
-\defncontext{function object argument} transformation which an algorithm applies
-before inspecting the values of elements
-
-\enterexample
-\begin{codeblock}
-std::pair<int, const char*> pairs[] = {{2, "foo"}, {1, "bar"}, {0, "baz"}};
-std2::sort(pairs, std::less<>{}, [](auto const& p) { return p.first; });
-\end{codeblock}
-sorts the pairs in increasing order of their \tcode{first} members:
-\begin{codeblock}
-{{0, "baz"}, {1, "bar"}, {2, "foo"}}
-\end{codeblock}
-\exitexample
 
 \rSec0[intro]{General Principles}
 
@@ -71,7 +42,7 @@ sorts the pairs in increasing order of their \tcode{first} members:
 \pnum
 The primary goal of this proposal is to deliver high-quality, constrained generic
 Standard Library components at the same time that the language gets support for
-such components. 
+such components.
 
 \rSec1[intro.rationale]{Rationale}
 
@@ -133,15 +104,14 @@ to range-v3 where they have been thoroughly vetted over the past 2 years.
 In short, concern about lack of implementation experience should not be a reason
 to withhold this important Standard Library advance from users.
 
-\rSec1[intro.methedology]{Methodology}
+\rSec1[intro.methedology]{Methodology} %FIXME
 
 \pnum
 The contents of the Ranges TS, Clause 7 (``Concepts library'') are proposed
 for namespace \tcode{std} by P0898, ``Standard Library Concepts''~(\cite{P0898}).
 Additionally, P0898 proposes the \tcode{identity} function
 object~(\tsref{func.identity}) and the \tcode{common_reference} type
-trait~(\tsref{meta.trans.other}) for namespace \tcode{std}, and the \tcode{swap}
-customization point object for namespace \tcode{std2}. The changes proposed by
+trait~(\tsref{meta.trans.other}) for namespace \tcode{std}. The changes proposed by
 the Ranges TS to \tcode{common_type} are merged into the working paper (also
 by P0898). The ``\tcode{invoke}'' function and the ``\tcode{swappable}'' type
 traits (e.g., \tcode{is_swappable_with}) already exist in the text of the
@@ -152,54 +122,62 @@ The salient, high-level features of this proposal are as follows:
 
 \begin{itemize}
 \item The remaining library components in the Ranges TS are proposed for
-namespace \tcode{::std2::}.
+namespace \tcode{::std::ranges}.
 
 \item The text of the Ranges TS is rebased on the latest working draft.
 
-\item Structurally, this paper proposes to relocate the existing library clauses
-of the working draft (20-33) down one level under a new clause 20, provisionally
-titled ``Standard Library, Version 1''. No stable names are changed.
+\item Structurally, this paper proposes to specify each piece of \tcode{std::ranges}
+alongside the content of \tcode{std} from the same header. Since some Ranges
+TS components reuse names that previously had meaning in the C++ Standard, we
+sometimes rename old content to avoid name collisions.
+
+\item The content of headers from the Ranges TS with the same base name as a
+standard header are merged into that standard header. For example, the content
+of \tcode{<experimental/ranges/iterator>} will be merged into \tcode{<iterator>}.
+The new header \tcode{<experimental/ranges/range>} will be added under the name
+\tcode{<range>}.
 
 \item The Concepts Library clause, proposed by P0898, is located in that paper
 between the ``Language Support Library'' and the ``Diagnostics library''. In the
 organization proposed by this paper, that places it as subclause 20.3. This paper
-refers to it as such.
-
-\item We additionally propose that a new clause 21 be created, provisionally
-titled ``Standard Library, Version 2'', and the following clauses of the Ranges
-TS should be made subclauses of this clause: 6, 8-12.
+refers to it as such. FIXME
 
 \item Where the text of the Ranges TS needs to be updated, the text is presented
 with change markings: \removed{red strikethrough} for removed text and
-\added{blue underline} for added text.
+\added{blue underline} for added text. FIXME
 
 \item The stable names of everything in the Ranges TS, clauses 6, 8-12 are
-changed by preprending ``\tcode{std2.}''. References are updated accordingly.
-
-\item The headers of the Ranges TS are renamed from
-\tcode{<experimental/ranges/\textit{foo}>} to \tcode{<std2/\textit{foo}>}.
+changed by preprending ``\tcode{range.}''. References are updated accordingly.
 \end{itemize}
 
-\rSec1[intro.compliance]{Implementation compliance}
+\rSec1[intro.style]{Style of presentation}
 
 \pnum
-Conformance requirements for this specification are the same as those
-defined in \cxxref{intro.compliance} in the \Cpp Standard.
-\enternote
-Conformance is defined in terms of the behavior of programs.
-\exitnote
+The remainder of this document is a technical specification in the form of
+editorial instructions directing that changes be made to the text of the C++
+working draft. The formatting of the text suggests the origin of each portion of
+the wording.
 
-\rSec1[intro.namespaces]{Namespaces, headers, and modifications to standard classes}
+Existing wording from the C++ working draft - included to provide context - is
+presented without decoration.
 
-\pnum
-Since the library components described in this document are constrained versions
-of facilities already found within namespace \tcode{std}, we propose to define
-everything within namespace \tcode{::std2::v1}, where \tcode{v1} is an inline
-namespace.
+\begin{addedblock}
+Entire clauses / subclauses / paragraphs incorporated from the Ranges TS are
+presented in a distinct cyan color.
+\end{addedblock}
 
-\pnum
-Unless otherwise specified, references to entities described in this
-document are assumed to be qualified with \tcode{::std2::}, and
-references to entities described in the current working draft of the
-International Standard, including the entities of the ``Concepts library''
-proposed by P0898, are assumed to be qualified with \tcode{::std::}.
+\added{In-line additions of wording from the Ranges TS to the C++ working draft
+are presented in cyan with underline.}
+
+\removed{In-line bits of wording that the Ranges TS strikes from the C++ working
+draft are presented in red with strike-through.}
+
+\newtxt{Wording to be added which is original to this document appears in gold
+with underline.}
+
+\oldtxt{Wording which this document strikes is presented in magenta with
+strikethrough. (Hopefully context makes it clear whether the wording is currently
+in the C++ working draft, or wording that is not being added from the Ranges TS.)}
+
+Ideally, these formatting conventions make it clear which wording comes from
+which document in this three-way merge.

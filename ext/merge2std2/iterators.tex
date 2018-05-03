@@ -1,11 +1,12 @@
-%!TEX root = std.tex
-\rSec0[std2.iterators]{Iterators library}
+%!TEX root = P0896.tex
 
-\rSec1[std2.iterators.general]{General}
+\rSec1[range.iterators]{Iterators library}
+
+\rSec2[range.iterators.general]{General}
 
 \pnum
-This \changed{C}{Subc}lause describes components that \Cpp programs may use to perform
-iterations over containers (\changed{C}{Subc}lause \cxxref{containers}),
+This subclause describes components that \Cpp programs may use to perform
+iterations over containers (Clause \cxxref{containers}),
 streams~(\cxxref{iostream.format}),
 and stream buffers~(\cxxref{stream.buffers}).
 
@@ -16,494 +17,20 @@ components for
 iterator primitives,
 predefined iterators,
 and stream iterators,
-as summarized in Table~\ref{tab:iterators.lib.summary}.
+as summarized in Table~\ref{tab:range.iterators.lib.summary}.
 
-\begin{libsumtab}{Iterators library summary}{tab:iterators.lib.summary}
-\ref{std2.iterator.requirements} & Iterator requirements          &                           \\
-\ref{std2.indirectcallable}      & Indirect callable requirements &                           \\
-\ref{std2.commonalgoreq}         & Common algorithm requirements  &                           \\ \rowsep
-\ref{std2.iterator.primitives}   & Iterator primitives            & \tcode{<\changed{experimental/ranges}{std2}/iterator>} \\
-\ref{std2.iterators.predef}      & Predefined iterators           &                           \\
-\ref{std2.iterators.stream}      & Stream iterators               &                           \\
+\begin{libsumtab}{Iterators library summary}{tab:range.iterators.lib.summary}
+\ref{range.iterator.requirements} & Iterator requirements          & \tcode{<\oldtxt{experimental/ranges/iterator}\newtxt{range}>} \\
+\ref{range.indirectcallable}      & Indirect callable requirements &                           \\
+\ref{range.commonalgoreq}         & Common algorithm requirements  &                           \\
+\ref{range.iterator.primitives}   & Iterator primitives            &                           \\
+\ref{range.iterators.predef}      & Predefined iterators           &                           \\
+\ref{range.iterators.stream}      & Stream iterators               &                           \\
 \end{libsumtab}
 
-\rSec1[std2.iterator.synopsis]{Header \tcode{<std2/iterator>} synopsis}
+\rSec2[range.iterator.requirements]{Iterator requirements}
 
-\indexlibrary{\idxhdr{std2/iterator}}%
-\begin{codeblock}
-namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { inline namespace v1 {
-  template <class T> concept @\removed{bool}@ @\placeholder{dereferenceable}@ // \expos
-    = requires(T& t) { {*t} -> auto&&; };
-
-  // \ref{std2.iterator.requirements}, iterator requirements:
-  // \ref{std2.iterator.custpoints}, customization points:
-  @\removed{namespace \{}@
-    // \ref{std2.iterator.custpoints.iter_move}, iter_move:
-    @\added{inline}@ constexpr @\unspec@ iter_move = @\unspec@;
-
-    // \ref{std2.iterator.custpoints.iter_swap}, iter_swap:
-    @\added{inline}@ constexpr @\unspec@ iter_swap = @\unspec@;
-  @\removed{\}}@
-
-  // \ref{std2.iterator.assoc.types}, associated types:
-  // \ref{std2.iterator.assoc.types.difference_type}, difference_type:
-  template <class> struct difference_type;
-  template <class T> using difference_type_t
-    = typename difference_type<T>::type;
-
-  // \ref{std2.iterator.assoc.types.value_type}, value_type:
-  template <class> struct value_type;
-  template <class T> using value_type_t
-    = typename value_type<T>::type;
-
-  // \ref{std2.iterator.assoc.types.iterator_category}, iterator_category:
-  template <class> struct iterator_category;
-  template <class T> using iterator_category_t
-    = typename iterator_category<T>::type;
-
-  template <@\placeholder{dereferenceable}@ T> using reference_t
-    = decltype(*declval<T&>());
-
-  template <@\placeholder{dereferenceable}@ T>
-      requires @\seebelow@ using rvalue_reference_t
-    = decltype(@\changed{ranges}{::std2}@::iter_move(declval<T&>()));
-
-  // \ref{std2.iterators.readable}, Readable:
-  template <class In>
-  concept @\removed{bool}@ Readable = @\seebelow@;
-
-  // \ref{std2.iterators.writable}, Writable:
-  template <class Out, class T>
-  concept @\removed{bool}@ Writable = @\seebelow@;
-
-  // \ref{std2.iterators.weaklyincrementable}, WeaklyIncrementable:
-  template <class I>
-  concept @\removed{bool}@ WeaklyIncrementable = @\seebelow@;
-
-  // \ref{std2.iterators.incrementable}, Incrementable:
-  template <class I>
-  concept @\removed{bool}@ Incrementable = @\seebelow@;
-
-  // \ref{std2.iterators.iterator}, Iterator:
-  template <class I>
-  concept @\removed{bool}@ Iterator = @\seebelow@;
-
-  // \ref{std2.iterators.sentinel}, Sentinel:
-  template <class S, class I>
-  concept @\removed{bool}@ Sentinel = @\seebelow@;
-
-  // \ref{std2.iterators.sizedsentinel}, SizedSentinel:
-  template <class S, class I>
-    constexpr bool disable_sized_sentinel = false;
-
-  template <class S, class I>
-  concept @\removed{bool}@ SizedSentinel = @\seebelow@;
-
-  // \ref{std2.iterators.input}, InputIterator:
-  template <class I>
-  concept @\removed{bool}@ InputIterator = @\seebelow@;
-
-  // \ref{std2.iterators.output}, OutputIterator:
-  template <class I>
-  concept @\removed{bool}@ OutputIterator = @\seebelow@;
-
-  // \ref{std2.iterators.forward}, ForwardIterator:
-  template <class I>
-  concept @\removed{bool}@ ForwardIterator = @\seebelow@;
-
-  // \ref{std2.iterators.bidirectional}, BidirectionalIterator:
-  template <class I>
-  concept @\removed{bool}@ BidirectionalIterator = @\seebelow@;
-
-  // \ref{std2.iterators.random.access}, RandomAccessIterator:
-  template <class I>
-  concept @\removed{bool}@ RandomAccessIterator = @\seebelow@;
-
-  // \ref{std2.indirectcallable}, indirect callable requirements:
-  // \ref{std2.indirectcallable.indirectinvocable}, indirect callables:
-  template <class F, class I>
-  concept @\removed{bool}@ IndirectUnaryInvocable = @\seebelow@;
-
-  template <class F, class I>
-  concept @\removed{bool}@ IndirectRegularUnaryInvocable = @\seebelow@;
-
-  template <class F, class I>
-  concept @\removed{bool}@ IndirectUnaryPredicate = @\seebelow@;
-
-  template <class F, class I1, class I2 = I1>
-  concept @\removed{bool}@ IndirectRelation = @\seebelow@;
-
-  template <class F, class I1, class I2 = I1>
-  concept @\removed{bool}@ IndirectStrictWeakOrder = @\seebelow@;
-
-  template <class> struct indirect_result_of;
-
-  template <class F, class... Is>
-    requires Invocable<F, reference_t<Is>...>
-  struct indirect_result_of<F(Is...)>;
-
-  template <class F>
-  using indirect_result_of_t
-    = typename indirect_result_of<F>::type;
-
-  // \ref{std2.projected}, projected:
-  template <Readable I, IndirectRegularUnaryInvocable<I> Proj>
-  struct projected;
-
-  template <WeaklyIncrementable I, class Proj>
-  struct difference_type<projected<I, Proj>>;
-
-  // \ref{std2.commonalgoreq}, common algorithm requirements:
-  // \ref{std2.commonalgoreq.indirectlymovable} IndirectlyMovable:
-  template <class In, class Out>
-  concept @\removed{bool}@ IndirectlyMovable = @\seebelow@;
-
-  template <class In, class Out>
-  concept @\removed{bool}@ IndirectlyMovableStorable = @\seebelow@;
-
-  // \ref{std2.commonalgoreq.indirectlycopyable} IndirectlyCopyable:
-  template <class In, class Out>
-  concept @\removed{bool}@ IndirectlyCopyable = @\seebelow@;
-
-  template <class In, class Out>
-  concept @\removed{bool}@ IndirectlyCopyableStorable = @\seebelow@;
-
-  // \ref{std2.commonalgoreq.indirectlyswappable} IndirectlySwappable:
-  template <class I1, class I2 = I1>
-  concept @\removed{bool}@ IndirectlySwappable = @\seebelow@;
-
-  // \ref{std2.commonalgoreq.indirectlycomparable} IndirectlyComparable:
-  template <class I1, class I2, class R = equal_to<>, class P1 = identity,
-      class P2 = identity>
-  concept @\removed{bool}@ IndirectlyComparable = @\seebelow@;
-
-  // \ref{std2.commonalgoreq.permutable} Permutable:
-  template <class I>
-  concept @\removed{bool}@ Permutable = @\seebelow@;
-
-  // \ref{std2.commonalgoreq.mergeable} Mergeable:
-  template <class I1, class I2, class Out,
-      class R = less<>, class P1 = identity, class P2 = identity>
-  concept @\removed{bool}@ Mergeable = @\seebelow@;
-
-  template <class I, class R = less<>, class P = identity>
-  concept @\removed{bool}@ Sortable = @\seebelow@;
-
-  // \ref{std2.iterator.primitives}, primitives:
-  // \ref{std2.iterator.traits}, traits:
-  template <class Iterator> using iterator_traits = @\seebelow@;
-
-  template <Readable T> using iter_common_reference_t
-    = common_reference_t<reference_t<T>, value_type_t<T>&>;
-
-  // \ref{std2.iterator.tags}, iterator tags:
-  struct output_iterator_tag { };
-  struct input_iterator_tag { };
-  struct forward_iterator_tag : input_iterator_tag { };
-  struct bidirectional_iterator_tag : forward_iterator_tag { };
-  struct random_access_iterator_tag : bidirectional_iterator_tag { };
-
-  // \ref{std2.iterator.operations}, iterator operations:
-  @\removed{namespace \{}@
-    @\added{inline}@ constexpr @\unspec@ advance = @\unspec@;
-    @\added{inline}@ constexpr @\unspec@ distance = @\unspec@;
-    @\added{inline}@ constexpr @\unspec@ next = @\unspec@;
-    @\added{inline}@ constexpr @\unspec@ prev = @\unspec@;
-  @\removed{\}}@
-
-  // \ref{std2.iterators.predef}, predefined iterators and sentinels:
-
-  // \ref{std2.iterators.reverse}, reverse iterators:
-  template <BidirectionalIterator I> class reverse_iterator;
-
-  template <class I1, class I2>
-      requires EqualityComparableWith<I1, I2>
-    constexpr bool operator==(
-      const reverse_iterator<I1>& x,
-      const reverse_iterator<I2>& y);
-  template <class I1, class I2>
-      requires EqualityComparableWith<I1, I2>
-    constexpr bool operator!=(
-      const reverse_iterator<I1>& x,
-      const reverse_iterator<I2>& y);
-  template <class I1, class I2>
-      requires StrictTotallyOrderedWith<I1, I2>
-    constexpr bool operator<(
-      const reverse_iterator<I1>& x,
-      const reverse_iterator<I2>& y);
-  template <class I1, class I2>
-      requires StrictTotallyOrderedWith<I1, I2>
-    constexpr bool operator>(
-      const reverse_iterator<I1>& x,
-      const reverse_iterator<I2>& y);
-  template <class I1, class I2>
-      requires StrictTotallyOrderedWith<I1, I2>
-    constexpr bool operator>=(
-      const reverse_iterator<I1>& x,
-      const reverse_iterator<I2>& y);
-  template <class I1, class I2>
-      requires StrictTotallyOrderedWith<I1, I2>
-    constexpr bool operator<=(
-      const reverse_iterator<I1>& x,
-      const reverse_iterator<I2>& y);
-
-  template <class I1, class I2>
-      requires SizedSentinel<I1, I2>
-    constexpr difference_type_t<I2> operator-(
-      const reverse_iterator<I1>& x,
-      const reverse_iterator<I2>& y);
-  template <RandomAccessIterator I>
-    constexpr reverse_iterator<I> operator+(
-      difference_type_t<I> n,
-      const reverse_iterator<I>& x);
-
-  template <BidirectionalIterator I>
-    constexpr reverse_iterator<I> make_reverse_iterator(I i);
-
-  // \ref{std2.iterators.insert}, insert iterators:
-  template <class Container> class back_insert_iterator;
-  template <class Container>
-    back_insert_iterator<Container> back_inserter(Container& x);
-
-  template <class Container> class front_insert_iterator;
-  template <class Container>
-    front_insert_iterator<Container> front_inserter(Container& x);
-
-  template <class Container> class insert_iterator;
-  template <class Container>
-    insert_iterator<Container> inserter(Container& x, iterator_t<Container> i);
-
-  // \ref{std2.iterators.move}, move iterators and sentinels:
-  template <InputIterator I> class move_iterator;
-  template <class I1, class I2>
-      requires EqualityComparableWith<I1, I2>
-    constexpr bool operator==(
-      const move_iterator<I1>& x, const move_iterator<I2>& y);
-  template <class I1, class I2>
-      requires EqualityComparableWith<I1, I2>
-    constexpr bool operator!=(
-      const move_iterator<I1>& x, const move_iterator<I2>& y);
-  template <class I1, class I2>
-      requires StrictTotallyOrderedWith<I1, I2>
-    constexpr bool operator<(
-      const move_iterator<I1>& x, const move_iterator<I2>& y);
-  template <class I1, class I2>
-      requires StrictTotallyOrderedWith<I1, I2>
-    constexpr bool operator<=(
-      const move_iterator<I1>& x, const move_iterator<I2>& y);
-  template <class I1, class I2>
-      requires StrictTotallyOrderedWith<I1, I2>
-    constexpr bool operator>(
-      const move_iterator<I1>& x, const move_iterator<I2>& y);
-  template <class I1, class I2>
-      requires StrictTotallyOrderedWith<I1, I2>
-    constexpr bool operator>=(
-      const move_iterator<I1>& x, const move_iterator<I2>& y);
-
-  template <class I1, class I2>
-      requires SizedSentinel<I1, I2>
-    constexpr difference_type_t<I2> operator-(
-      const move_iterator<I1>& x,
-      const move_iterator<I2>& y);
-  template <RandomAccessIterator I>
-    constexpr move_iterator<I> operator+(
-      difference_type_t<I> n,
-      const move_iterator<I>& x);
-  template <InputIterator I>
-    constexpr move_iterator<I> make_move_iterator(I i);
-
-  template <Semiregular S> class move_sentinel;
-
-  template <class I, Sentinel<I> S>
-    constexpr bool operator==(
-      const move_iterator<I>& i, const move_sentinel<S>& s);
-  template <class I, Sentinel<I> S>
-    constexpr bool operator==(
-      const move_sentinel<S>& s, const move_iterator<I>& i);
-  template <class I, Sentinel<I> S>
-    constexpr bool operator!=(
-      const move_iterator<I>& i, const move_sentinel<S>& s);
-  template <class I, Sentinel<I> S>
-    constexpr bool operator!=(
-      const move_sentinel<S>& s, const move_iterator<I>& i);
-
-  template <class I, SizedSentinel<I> S>
-    constexpr difference_type_t<I> operator-(
-      const move_sentinel<S>& s, const move_iterator<I>& i);
-  template <class I, SizedSentinel<I> S>
-    constexpr difference_type_t<I> operator-(
-      const move_iterator<I>& i, const move_sentinel<S>& s);
-
-  template <Semiregular S>
-    constexpr move_sentinel<S> make_move_sentinel(S s);
-
-  // \ref{std2.iterators.common}, common iterators:
-  template <Iterator I, Sentinel<I> S>
-    requires !Same<I, S>
-  class common_iterator;
-
-  template <Readable I, class S>
-  struct value_type<common_iterator<I, S>>;
-
-  template <InputIterator I, class S>
-  struct iterator_category<common_iterator<I, S>>;
-
-  template <ForwardIterator I, class S>
-  struct iterator_category<common_iterator<I, S>>;
-
-  template <class I1, class I2, Sentinel<I2> S1, Sentinel<I1> S2>
-  bool operator==(
-    const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
-  template <class I1, class I2, Sentinel<I2> S1, Sentinel<I1> S2>
-    requires EqualityComparableWith<I1, I2>
-  bool operator==(
-    const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
-  template <class I1, class I2, Sentinel<I2> S1, Sentinel<I1> S2>
-  bool operator!=(
-    const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
-
-  template <class I2, SizedSentinel<I2> I1, SizedSentinel<I2> S1, SizedSentinel<I1> S2>
-  difference_type_t<I2> operator-(
-    const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
-
-  // \ref{std2.default.sentinels}, default sentinels:
-  class default_sentinel;
-
-  // \ref{std2.iterators.counted}, counted iterators:
-  template <Iterator I> class counted_iterator;
-
-  template <class I1, class I2>
-      requires Common<I1, I2>
-    constexpr bool operator==(
-      const counted_iterator<I1>& x, const counted_iterator<I2>& y);
-  @\added{template <class I>}@
-    constexpr bool operator==(
-      const counted_iterator<@\changed{auto}{I}@>& x, default_sentinel);
-  @\added{template <class I>}@
-    constexpr bool operator==(
-      default_sentinel, const counted_iterator<@\changed{auto}{I}@>& x);
-  template <class I1, class I2>
-      requires Common<I1, I2>
-    constexpr bool operator!=(
-      const counted_iterator<I1>& x, const counted_iterator<I2>& y);
-  @\added{template <class I>}@
-    constexpr bool operator!=(
-      const counted_iterator<@\changed{auto}{I}@>& x, default_sentinel y);
-  @\added{template <class I>}@
-    constexpr bool operator!=(
-      default_sentinel x, const counted_iterator<@\changed{auto}{I}@>& y);
-  template <class I1, class I2>
-      requires Common<I1, I2>
-    constexpr bool operator<(
-      const counted_iterator<I1>& x, const counted_iterator<I2>& y);
-  template <class I1, class I2>
-      requires Common<I1, I2>
-    constexpr bool operator<=(
-      const counted_iterator<I1>& x, const counted_iterator<I2>& y);
-  template <class I1, class I2>
-      requires Common<I1, I2>
-    constexpr bool operator>(
-      const counted_iterator<I1>& x, const counted_iterator<I2>& y);
-  template <class I1, class I2>
-      requires Common<I1, I2>
-    constexpr bool operator>=(
-      const counted_iterator<I1>& x, const counted_iterator<I2>& y);
-  template <class I1, class I2>
-      requires Common<I1, I2>
-    constexpr difference_type_t<I2> operator-(
-      const counted_iterator<I1>& x, const counted_iterator<I2>& y);
-  template <class I>
-    constexpr difference_type_t<I> operator-(
-      const counted_iterator<I>& x, default_sentinel y);
-  template <class I>
-    constexpr difference_type_t<I> operator-(
-      default_sentinel x, const counted_iterator<I>& y);
-  template <RandomAccessIterator I>
-    constexpr counted_iterator<I>
-      operator+(difference_type_t<I> n, const counted_iterator<I>& x);
-  template <Iterator I>
-    constexpr counted_iterator<I> make_counted_iterator(I i, difference_type_t<I> n);
-
-  // \ref{std2.unreachable.sentinels}, unreachable sentinels:
-  class unreachable;
-  template <Iterator I>
-    constexpr bool operator==(const I&, unreachable) noexcept;
-  template <Iterator I>
-    constexpr bool operator==(unreachable, const I&) noexcept;
-  template <Iterator I>
-    constexpr bool operator!=(const I&, unreachable) noexcept;
-  template <Iterator I>
-    constexpr bool operator!=(unreachable, const I&) noexcept;
-
-  // \ref{std2.dangling.wrappers}, dangling wrapper:
-  template <class T> class dangling;
-
-  // \ref{std2.iterators.stream}, stream iterators:
-  template <class T, class charT = char, class traits = char_traits<charT>,
-      class Distance = ptrdiff_t>
-  class istream_iterator;
-  template <class T, class charT, class traits, class Distance>
-    bool operator==(const istream_iterator<T, charT, traits, Distance>& x,
-            const istream_iterator<T, charT, traits, Distance>& y);
-  template <class T, class charT, class traits, class Distance>
-    bool operator==(default_sentinel x,
-            const istream_iterator<T, charT, traits, Distance>& y);
-  template <class T, class charT, class traits, class Distance>
-    bool operator==(const istream_iterator<T, charT, traits, Distance>& x,
-            default_sentinel y);
-  template <class T, class charT, class traits, class Distance>
-    bool operator!=(const istream_iterator<T, charT, traits, Distance>& x,
-            const istream_iterator<T, charT, traits, Distance>& y);
-  template <class T, class charT, class traits, class Distance>
-   bool operator!=(default_sentinel x,
-            const istream_iterator<T, charT, traits, Distance>& y);
-  template <class T, class charT, class traits, class Distance>
-    bool operator!=(const istream_iterator<T, charT, traits, Distance>& x,
-            default_sentinel y);
-
-  template <class T, class charT = char, class traits = char_traits<charT>>
-      class ostream_iterator;
-
-  template <class charT, class traits = char_traits<charT> >
-    class istreambuf_iterator;
-  template <class charT, class traits>
-    bool operator==(const istreambuf_iterator<charT, traits>& a,
-            const istreambuf_iterator<charT, traits>& b);
-  template <class charT, class traits>
-    bool operator==(default_sentinel a,
-            const istreambuf_iterator<charT, traits>& b);
-  template <class charT, class traits>
-    bool operator==(const istreambuf_iterator<charT, traits>& a,
-            default_sentinel b);
-  template <class charT, class traits>
-    bool operator!=(const istreambuf_iterator<charT, traits>& a,
-            const istreambuf_iterator<charT, traits>& b);
-  template <class charT, class traits>
-    bool operator!=(default_sentinel a,
-            const istreambuf_iterator<charT, traits>& b);
-  template <class charT, class traits>
-    bool operator!=(const istreambuf_iterator<charT, traits>& a,
-            default_sentinel b);
-
-  template <class charT, class traits = char_traits<charT> >
-    class ostreambuf_iterator;
-}}@\removed{\}\}}@
-
-namespace std {
-  // \ref{std2.iterator.stdtraits}, iterator traits:
-  template <@\changed{experimental::ranges}{::std2}@::Iterator Out>
-    struct iterator_traits<Out>;
-  template <@\changed{experimental::ranges}{::std2}@::InputIterator In>
-    struct iterator_traits<In>;
-  template <@\changed{experimental::ranges}{::std2}@::InputIterator In>
-      requires @\changed{experimental::ranges}{::std2}@::Sentinel<In, In>
-    struct iterator_traits;
-}
-\end{codeblock}
-
-\rSec1[std2.iterator.requirements]{Iterator requirements}
-
-\rSec2[std2.iterator.requirements.general]{General}
+\rSec3[range.iterator.requirements.general]{General}
 
 \pnum
 \indextext{requirements!iterator}%
@@ -551,9 +78,9 @@ defined on them:
 \techterm{bidirectional iterators}
 and
 \techterm{random access iterators},
-as shown in Table~\ref{tab:iterators.relations}.
+as shown in Table~\ref{tab:range.iterators.relations}.
 
-\begin{floattable}{Relations among iterator categories}{tab:iterators.relations}
+\begin{floattable}{Relations among iterator categories}{tab:range.iterators.relations}
 {llll}
 \topline
 \textbf{Random Access}          &   $\rightarrow$ \textbf{Bidirectional}    &
@@ -629,7 +156,7 @@ the beginning and the number of elements to which the computation is to be appli
 \pnum
 An iterator and a sentinel denoting a range are comparable. The types of a sentinel
 and an iterator that denote a range must satisfy
-\tcode{Sentinel}~(\ref{std2.iterators.sentinel}).
+\tcode{Sentinel}~(\ref{range.iterators.sentinel}).
 A range \range{i}{s}
 is empty if \tcode{i == s};
 otherwise, \range{i}{s}
@@ -690,19 +217,19 @@ The effect of dereferencing an iterator that has been invalidated
 is undefined.
 }
 
-\rSec2[std2.iterator.custpoints]{Customization points}
+\rSec3[range.iterator.custpoints]{Customization points}
 
-\rSec3[std2.iterator.custpoints.iter_move]{\tcode{iter_move}}
+\rSec4[range.iterator.custpoints.iter_move]{\tcode{iter_move}}
 
 \pnum
 The name \tcode{iter_move} denotes a \techterm{customization point
 object}~(\cxxref{customization.point.object}). The expression
-\tcode{\changed{ranges}{::std2}::iter_move(E)} for some subexpression \tcode{E} is expression-equivalent to the
+\tcode{ranges::iter_move(E)} for some subexpression \tcode{E} is expression-equivalent to the
 following:
 
 \begin{itemize}
 \item \tcode{static_cast<decltype(iter_move(E))>(iter_move(E))}, if that expression is well-formed when evaluated in
-a context that does not include \tcode{\changed{ranges}{::std2}::iter_move} but does include the
+a context that does not include \tcode{ranges::iter_move} but does include the
 lookup set produced by argument-dependent lookup~(\cxxref{basic.lookup.argdep}).
 
 \item Otherwise, if the expression \tcode{*E} is well-formed:
@@ -712,46 +239,46 @@ lookup set produced by argument-dependent lookup~(\cxxref{basic.lookup.argdep}).
 \item otherwise, \tcode{static_cast<decltype(*E)>(*E)}.
 \end{itemize}
 
-\item Otherwise, \tcode{\changed{ranges}{::std2}::iter_move(E)} is ill-formed.
+\item Otherwise, \tcode{ranges::iter_move(E)} is ill-formed.
 \end{itemize}
 
 \pnum
-If \tcode{\changed{ranges}{::std2}::iter_move(E)} does not equal \tcode{*E}, the program is
+If \tcode{ranges::iter_move(E)} does not equal \tcode{*E}, the program is
 ill-formed with no diagnostic required.
 
-\rSec3[std2.iterator.custpoints.iter_swap]{\tcode{iter_swap}}
+\rSec4[range.iterator.custpoints.iter_swap]{\tcode{iter_swap}}
 
 \pnum
 The name \tcode{iter_swap} denotes a \techterm{customization point
 object}~(\cxxref{customization.point.object}). The expression
-\tcode{\changed{ranges}{::std2}::iter_swap(E1, E2)} for some subexpressions \tcode{E1} and \tcode{E2}
+\tcode{ranges::iter_swap(E1, E2)} for some subexpressions \tcode{E1} and \tcode{E2}
 is expression-equivalent to the following:
 
 \begin{itemize}
 \item \tcode{(void)iter_swap(E1, E2)}, if that expression is well-formed when
-evaluated in a context that does not include \tcode{\changed{ranges}{::std2}::iter_swap} but does
+evaluated in a context that does not include \tcode{ranges::iter_swap} but does
 include the lookup set produced by argument-dependent
 lookup~(\cxxref{basic.lookup.argdep}) and the following declaration:
 \begin{codeblock}
-@\added{template <class I1, class I2>}@
-void iter_swap(@\changed{auto, auto}{I1, I2}@) = delete;
+@\newtxt{template <class I1, class I2>}@
+void iter_swap(@\oldtxt{auto, auto}\newtxt{I1, I2}@) = delete;
 \end{codeblock}
 
 \item Otherwise, if the types of \tcode{E1} and \tcode{E2} both satisfy
 \tcode{Readable}, and if the reference type of \tcode{E1} is swappable
 with~(\cxxref{concepts.lib.corelang.swappable}) the reference type of \tcode{E2},
-then \tcode{\changed{ranges}{::std2}::swap(*E1, *E2)}
+then \tcode{ranges::swap(*E1, *E2)}
 
 \item Otherwise, if the types \tcode{T1} and \tcode{T2} of \tcode{E1} and
 \tcode{E2} satisfy \tcode{IndirectlyMovableStorable<T1, T2> \&\&
 IndirectlyMovableStorable<T2, T1>}, \tcode{(void)(*E1 = iter_exchange_move(E2, E1))},
 except that \tcode{E1} is evaluated only once.
 
-\item Otherwise, \tcode{\changed{ranges}{::std2}::iter_swap(E1, E2)} is ill-formed.
+\item Otherwise, \tcode{ranges::iter_swap(E1, E2)} is ill-formed.
 \end{itemize}
 
 \pnum
-If \tcode{\changed{ranges}{::std2}::iter_swap(E1, E2)} does not swap the values denoted by the
+If \tcode{ranges::iter_swap(E1, E2)} does not swap the values denoted by the
 expressions \tcode{E1} and \tcode{E2}, the program is ill-formed with no
 diagnostic required.
 
@@ -780,16 +307,16 @@ NE(remove_reference_t<Y>, remove_reference_t<X>)
 \end{codeblock}
 Where \tcode{NE(T1, T2)} is the expression:
 \begin{codeblock}
-is_nothrow_constructible@\added{_v}@<value_type_t<T1>, rvalue_reference_t<T1>>@\removed{::value}@ &&
-is_nothrow_assignable@\added{_v}@<value_type_t<T1>&, rvalue_reference_t<T1>>@\removed{::value}@ &&
-is_nothrow_assignable@\added{_v}@<reference_t<T1>, rvalue_reference_t<T2>>@\removed{::value}@ &&
-is_nothrow_assignable@\added{_v}@<reference_t<T1>, value_type_t<T2>>@\removed{::value}@> &&
-is_nothrow_move_constructible@\added{_v}@<value_type_t<T1>>@\removed{::value}@ &&
-noexcept(@\changed{ranges}{::std2}@::iter_move(declval<T1&>()))
+is_nothrow_constructible@\newtxt{_v}@<value_type_t<T1>, rvalue_reference_t<T1>>@\oldtxt{::value}@ &&
+is_nothrow_assignable@\newtxt{_v}@<value_type_t<T1>&, rvalue_reference_t<T1>>@\oldtxt{::value}@ &&
+is_nothrow_assignable@\newtxt{_v}@<reference_t<T1>, rvalue_reference_t<T2>>@\oldtxt{::value}@ &&
+is_nothrow_assignable@\newtxt{_v}@<reference_t<T1>, value_type_t<T2>>@\oldtxt{::value}@> &&
+is_nothrow_move_constructible@\newtxt{_v}@<value_type_t<T1>>@\oldtxt{::value}@ &&
+noexcept(ranges::iter_move(declval<T1&>()))
 \end{codeblock}
 \end{itemdescr}
 
-\rSec2[std2.iterator.assoc.types]{Iterator associated types}
+\rSec3[range.iterator.assoc.types]{Iterator associated types}
 
 \pnum
 To implement algorithms only in terms of iterators, it is often necessary to
@@ -797,11 +324,11 @@ determine the value and
 difference types that correspond to a particular iterator type.
 Accordingly, it is required that if
 \tcode{WI} is the name of a type that
-satisfies the \tcode{WeaklyIncrementable} concept~(\ref{std2.iterators.weaklyincrementable}),
+satisfies the \tcode{WeaklyIncrementable} concept~(\ref{range.iterators.weaklyincrementable}),
 \tcode{R} is the name of a type that
-satisfies the \tcode{Readable} concept~(\ref{std2.iterators.readable}), and
+satisfies the \tcode{Readable} concept~(\ref{range.iterators.readable}), and
 \tcode{II} is the name of a type that satisfies the
-\tcode{InputIterator} concept~(\ref{std2.iterators.input}) concept, the types
+\tcode{InputIterator} concept~(\ref{range.iterators.input}) concept, the types
 
 \begin{codeblock}
 difference_type_t<WI>
@@ -811,7 +338,7 @@ iterator_category_t<II>
 
 be defined as the iterator's difference type, value type and iterator category, respectively.
 
-\rSec3[std2.iterator.assoc.types.difference_type]{\tcode{difference_type}}
+\rSec4[range.iterator.assoc.types.difference_type]{\tcode{difference_type}}
 
 \pnum
 \indexlibrary{\idxcode{difference_type_t}}%
@@ -823,7 +350,7 @@ be defined as the iterator's difference type, value type and iterator category, 
 
   template <class T>
   struct difference_type<T*>
-    : enable_if<is_object@\added{_v}@<T>@\removed{::value}@, ptrdiff_t> { };
+    : enable_if<is_object@\newtxt{_v}@<T>@\oldtxt{::value}@, ptrdiff_t> { };
 
   template <class I>
   struct difference_type<const I> : difference_type<decay_t<I>> { };
@@ -848,7 +375,7 @@ be defined as the iterator's difference type, value type and iterator category, 
 \pnum
 Users may specialize \tcode{difference_type} on user-defined types.
 
-\rSec3[std2.iterator.assoc.types.value_type]{\tcode{value_type}}
+\rSec4[range.iterator.assoc.types.value_type]{\tcode{value_type}}
 
 \pnum
 A \tcode{Readable} type has an associated value type that can be accessed with the
@@ -860,10 +387,10 @@ A \tcode{Readable} type has an associated value type that can be accessed with t
 
   template <class T>
   struct value_type<T*>
-    : enable_if<is_object<T>@\removed{::value}@, remove_cv_t<T>> { };
+    : enable_if<is_object@\newtxt{_v}@<T>@\oldtxt{::value}@, remove_cv_t<T>> { };
 
   template <class I>
-    requires is_array@\added{_v}@<I>@\removed{::value}@
+    requires is_array@\newtxt{_v}@<I>@\oldtxt{::value}@
   struct value_type<I> : value_type<decay_t<I>> { };
 
   template <class I>
@@ -872,13 +399,13 @@ A \tcode{Readable} type has an associated value type that can be accessed with t
   template <class T>
     requires requires { typename T::value_type; }
   struct value_type<T>
-    : enable_if<is_object@\added{_v}@<typename T::value_type>@\removed{::value}@, typename T::value_type> { };
+    : enable_if<is_object@\newtxt{_v}@<typename T::value_type>@\oldtxt{::value}@, typename T::value_type> { };
 
   template <class T>
     requires requires { typename T::element_type; }
   struct value_type<T>
     : enable_if<
-        is_object@\added{_v}@<typename T::element_type>@\removed{::value}@,
+        is_object@\newtxt{_v}@<typename T::element_type>@\oldtxt{::value}@,
         remove_cv_t<typename T::element_type>>
     { };
 
@@ -910,7 +437,7 @@ not an object type~(\cxxref{basic.types}) in which case
 \tcode{shared_ptr<int>} are \tcode{Readable} and have an associated value type. But a smart pointer
 like \tcode{shared_ptr<void>} is not \tcode{Readable} and has no associated value type.\exitnote
 
-\rSec3[std2.iterator.assoc.types.iterator_category]{\tcode{iterator_category}}
+\rSec4[range.iterator.assoc.types.iterator_category]{\tcode{iterator_category}}
 
 \pnum
 \indexlibrary{\idxcode{iterator_category_t}}%
@@ -923,7 +450,7 @@ is implemented as if:
 
   template <class T>
   struct iterator_category<T*>
-    : enable_if<is_object@\added{_v}@<T>@\removed{::value}@, random_access_iterator_tag> { };
+    : enable_if<is_object@\newtxt{_v}@<T>@\oldtxt{::value}@, random_access_iterator_tag> { };
 
   template <class T>
   struct iterator_category<T const> : iterator_category<T> { };
@@ -947,13 +474,13 @@ If
 type \tcode{iterator_category<T>::type} is computed as follows:
 \begin{itemize}
 \item If \tcode{T::iterator_category} is the same as or derives from \tcode{std::random_access_iterator_tag},
-      \tcode{iter\-ator_category<T>::type} is \tcode{\changed{ranges}{::std2}::random_access_iterator_tag}.
+      \tcode{iter\-ator_category<T>::type} is \tcode{ranges::random_access_iterator_tag}.
 \item Otherwise, if \tcode{T::iterator_category} is the same as or derives from \tcode{std::bidirectional_iterator_tag},
-      \tcode{iterator_category<T>::type} is \tcode{\changed{ranges}{::std2}::bidirectional_iterator_tag}.
+      \tcode{iterator_category<T>::type} is \tcode{ranges::bidirectional_iterator_tag}.
 \item Otherwise, if \tcode{T::iterator_category} is the same as or derives from \tcode{std::forward_iterator_tag},
-      \tcode{iterator_category<T>::type} is \tcode{\changed{ranges}{::std2}::forward_iterator_tag}.
+      \tcode{iterator_category<T>::type} is \tcode{ranges::forward_iterator_tag}.
 \item Otherwise, if \tcode{T::iterator_category} is the same as or derives from \tcode{std::input_iterator_tag},
-      \tcode{iterator_category<T>::type} is \tcode{\changed{ranges}{::std2}::input_iterator_tag}.
+      \tcode{iterator_category<T>::type} is \tcode{ranges::input_iterator_tag}.
 \item Otherwise, if \tcode{T::iterator_category} is the same as or derives from \tcode{std::output_iterator_tag},
       \tcode{iterator_category<T>} has no nested \tcode{type}.
 \item Otherwise, \tcode{iterator_category<T>::type} is \tcode{T::iterator_category}
@@ -966,18 +493,18 @@ type \tcode{iterator_category<T>::type} is computed as follows:
 \begin{itemdecl}
   template <@\placeholder{dereferenceable}@ T>
       requires @\seebelow{ }@using rvalue_reference_t
-    = decltype(@\changed{ranges}{::std2}@::iter_move(declval<T&>()));
+    = decltype(ranges::iter_move(declval<T&>()));
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
 The expression in the \tcode{requires} clause is equivalent to:
 \begin{codeblock}
-requires(T& t) { { @\changed{ranges}{::std2}@::iter_move(t) } -> auto&&; }
+requires(T& t) { { ranges::iter_move(t) } -> auto&&; }
 \end{codeblock}
 \end{itemdescr}
 
-\rSec2[std2.iterators.readable]{Concept \tcode{Readable}}
+\rSec3[range.iterators.readable]{Concept \tcode{Readable}}
 
 \pnum
 The \tcode{Readable} concept is satisfied by types that are readable by
@@ -986,7 +513,7 @@ applying \tcode{operator*} including pointers, smart pointers, and iterators.
 \indexlibrary{\idxcode{Readable}}%
 \begin{codeblock}
   template <class In>
-  concept @\removed{bool}@ Readable =
+  concept @\oldtxt{bool}@ Readable =
     requires {
       typename value_type_t<In>;
       typename reference_t<In>;
@@ -997,7 +524,7 @@ applying \tcode{operator*} including pointers, smart pointers, and iterators.
     CommonReference<rvalue_reference_t<In>&&, const value_type_t<In>&>;
 \end{codeblock}
 
-\rSec2[std2.iterators.writable]{Concept \tcode{Writable}}
+\rSec3[range.iterators.writable]{Concept \tcode{Writable}}
 
 \pnum
 The \tcode{Writable} concept specifies the requirements for writing a value into an iterator's
@@ -1006,7 +533,7 @@ referenced object.
 \indexlibrary{\idxcode{Writable}}%
 \begin{codeblock}
   template <class Out, class T>
-  concept @\removed{bool}@ Writable =
+  concept @\oldtxt{bool}@ Writable =
     requires(Out&& o, T&& t) {
       *o = std::forward<T>(t); // not required to be equality preserving
       *std::forward<Out>(o) = std::forward<T>(t); // not required to be equality preserving
@@ -1040,7 +567,7 @@ The only valid use of an \tcode{operator*} is on the left side of the assignment
 \textit{Assignment through the same value of the writable type happens only once.}
 \exitnote
 
-\rSec2[std2.iterators.weaklyincrementable]{Concept \tcode{WeaklyIncrementable}}
+\rSec3[range.iterators.weaklyincrementable]{Concept \tcode{WeaklyIncrementable}}
 
 \pnum
 The \tcode{WeaklyIncrementable} concept specifies the requirements on
@@ -1051,7 +578,7 @@ nor is the type required to be \tcode{EqualityComparable}.
 \indexlibrary{\idxcode{WeaklyIncrementable}}%
 \begin{codeblock}
   template <class I>
-  concept @\removed{bool}@ WeaklyIncrementable =
+  concept @\oldtxt{bool}@ WeaklyIncrementable =
     Semiregular<I> &&
     requires(I i) {
       typename difference_type_t<I>;
@@ -1081,7 +608,7 @@ through the same incrementable value twice. They should be single pass algorithm
 can be used with istreams as the source of the input data through the \tcode{istream_iterator} class
 template.\exitnote
 
-\rSec2[std2.iterators.incrementable]{Concept \tcode{Incrementable}}
+\rSec3[range.iterators.incrementable]{Concept \tcode{Incrementable}}
 
 \pnum
 The \tcode{Incrementable} concept specifies requirements on types that can be incremented with the pre-
@@ -1093,7 +620,7 @@ supersedes the annotations on the increment expressions in the definition of
 \indexlibrary{\idxcode{Incrementable}}%
 \begin{codeblock}
   template <class I>
-  concept @\removed{bool}@ Incrementable =
+  concept @\oldtxt{bool}@ Incrementable =
     Regular<I> &&
     WeaklyIncrementable<I> &&
     requires(I i) {
@@ -1115,7 +642,7 @@ Let \tcode{a} and \tcode{b} be incrementable objects of type \tcode{I}.
 (which is not true for weakly incrementable types) allows the use of multi-pass one-directional
 algorithms with types that satisfy \tcode{Increment\-able}.\exitnote
 
-\rSec2[std2.iterators.iterator]{Concept \tcode{Iterator}}
+\rSec3[range.iterators.iterator]{Concept \tcode{Iterator}}
 
 \pnum
 The \tcode{Iterator} concept forms
@@ -1123,15 +650,15 @@ the basis of the iterator concept taxonomy; every iterator satisfies the
 \tcode{Iterator} requirements. This
 concept specifies operations for dereferencing and incrementing
 an iterator. Most algorithms will require additional operations
-to compare iterators with sentinels~(\ref{std2.iterators.sentinel}), to
-read~(\ref{std2.iterators.input}) or write~(\ref{std2.iterators.output}) values, or
-to provide a richer set of iterator movements~(\ref{std2.iterators.forward},
-\ref{std2.iterators.bidirectional}, \ref{std2.iterators.random.access}).)
+to compare iterators with sentinels~(\ref{range.iterators.sentinel}), to
+read~(\ref{range.iterators.input}) or write~(\ref{range.iterators.output}) values, or
+to provide a richer set of iterator movements~(\ref{range.iterators.forward},
+\ref{range.iterators.bidirectional}, \ref{range.iterators.random.access}).)
 
 \indexlibrary{\idxcode{Iterator}}%
 \begin{codeblock}
   template <class I>
-  concept @\removed{bool}@ Iterator =
+  concept @\oldtxt{bool}@ Iterator =
     requires(I i) {
       { *i } -> auto&&; // Requires: i is dereferenceable
     } &&
@@ -1142,7 +669,7 @@ to provide a richer set of iterator movements~(\ref{std2.iterators.forward},
 \enternote The requirement that the result of dereferencing the iterator is deducible from
 \tcode{auto\&\&} means that it cannot be \tcode{void}.\exitnote
 
-\rSec2[std2.iterators.sentinel]{Concept \tcode{Sentinel}}
+\rSec3[range.iterators.sentinel]{Concept \tcode{Sentinel}}
 \pnum
 The \tcode{Sentinel} concept
 specifies the relationship
@@ -1152,7 +679,7 @@ denote a range.
 \indexlibrary{\idxcode{Sentinel}}%
 \begin{itemdecl}
   template <class S, class I>
-  concept @\removed{bool}@ Sentinel =
+  concept @\oldtxt{bool}@ Sentinel =
     Semiregular<S> &&
     Iterator<I> &&
     WeaklyEqualityComparableWith<S, I>;
@@ -1179,7 +706,7 @@ denotes a range and \tcode{i != s}, \range{i}{s} is not required to continue to
 denote a range after incrementing any iterator equal to \tcode{i}. Consequently,
 \tcode{i == s} is no longer required to be well-defined.
 
-\rSec2[std2.iterators.sizedsentinel]{Concept \tcode{SizedSentinel}}
+\rSec3[range.iterators.sizedsentinel]{Concept \tcode{SizedSentinel}}
 \pnum
 The \tcode{SizedSentinel} concept specifies
 requirements on an \tcode{Iterator} and a \tcode{Sentinel}
@@ -1190,7 +717,7 @@ between them in constant time.
 
 \begin{itemdecl}
   template <class S, class I>
-  concept @\removed{bool}@ SizedSentinel =
+  concept @\oldtxt{bool}@ SizedSentinel =
     Sentinel<S, I> &&
     !disable_sized_sentinel<remove_cv_t<S>, remove_cv_t<I>> &&
     requires(const I& i, const S& s) {
@@ -1225,48 +752,52 @@ A program that instantiates a library template that requires
 \tcode{S} that meet the syntactic requirements of \tcode{SizedSentinel<S, I>}
 but do not satisfy \tcode{SizedSentinel} is ill-formed with no diagnostic required
 unless \tcode{disable_sized_sentinel<S, I>} evaluates to
-\tcode{true}~(\ref{std2.structure.requirements}). \exitnote
+\tcode{true}~(\cxxref{structure.requirements}). \exitnote
 
 \pnum
 \enternote The \tcode{SizedSentinel}
 concept is satisfied by pairs of
-\tcode{RandomAccessIterator}s~(\ref{std2.iterators.random.access}) and by
-counted iterators and their sentinels~(\ref{std2.counted.iterator}).\exitnote
+\tcode{RandomAccessIterator}s~(\ref{range.iterators.random.access}) and by
+counted iterators and their sentinels~(\ref{range.counted.iterator}).\exitnote
 
-\rSec2[std2.iterators.input]{Concept \tcode{InputIterator}}
+\rSec3[range.iterators.input]{Concept \tcode{InputIterator}}
 
 \pnum
 The \tcode{InputIterator} concept is a refinement of
-\tcode{Iterator}~(\ref{std2.iterators.iterator}). It
+\tcode{Iterator}~(\ref{range.iterators.iterator}). It
 defines requirements for a type whose referenced values can be read (from the requirement for
-\tcode{Readable}~(\ref{std2.iterators.readable})) and which can be both pre- and post-incremented.
-\enternote Unlike in ISO/IEC 14882, input iterators are not required to satisfy
-\tcode{EqualityComparable}~(\cxxref{concepts.lib.compare.equalitycomparable}).\exitnote
+\tcode{Readable}~(\ref{range.iterators.readable})) and which can be both pre- and post-incremented.
+\enternote
+\oldtxt{Unlike in ISO/IEC 14882, input iterators are not required to satisfy
+\tcode{EqualityComparable}~(\cxxref{concepts.lib.compare.equalitycomparable}).}
+\newtxt{Unlike the input iterator requirements in \cxxref{iterators.input},
+the \tcode{InputIterator} concept does not require equality comparison}.
+\exitnote
 
 \indexlibrary{\idxcode{InputIterator}}%
 \begin{codeblock}
   template <class I>
-  concept @\removed{bool}@ InputIterator =
+  concept @\oldtxt{bool}@ InputIterator =
     Iterator<I> &&
     Readable<I> &&
     requires { typename iterator_category_t<I>; } &&
     DerivedFrom<iterator_category_t<I>, input_iterator_tag>;
 \end{codeblock}
 
-\rSec2[std2.iterators.output]{Concept \tcode{OutputIterator}}
+\rSec3[range.iterators.output]{Concept \tcode{OutputIterator}}
 
 \pnum
 The \tcode{OutputIterator} concept is a refinement of
-\tcode{Iterator}~(\ref{std2.iterators.iterator}). It defines requirements for a type that
+\tcode{Iterator}~(\ref{range.iterators.iterator}). It defines requirements for a type that
 can be used to write values (from the requirement for
-\tcode{Writable}~(\ref{std2.iterators.writable})) and which can be both pre- and post-incremented.
+\tcode{Writable}~(\ref{range.iterators.writable})) and which can be both pre- and post-incremented.
 However, output iterators are not required to
 satisfy \tcode{EqualityComparable}.
 
 \indexlibrary{\idxcode{OutputIterator}}%
 \begin{codeblock}
   template <class I, class T>
-  concept @\removed{bool}@ OutputIterator =
+  concept @\oldtxt{bool}@ OutputIterator =
     Iterator<I> &&
     Writable<I, T> &&
     requires(I i, T&& t) {
@@ -1295,16 +826,16 @@ for placing data through the
 class as well as with insert iterators and insert pointers.
 \exitnote
 
-\rSec2[std2.iterators.forward]{Concept \tcode{ForwardIterator}}
+\rSec3[range.iterators.forward]{Concept \tcode{ForwardIterator}}
 
 \pnum
-The \tcode{ForwardIterator} concept refines \tcode{InputIterator}~(\ref{std2.iterators.input}),
+The \tcode{ForwardIterator} concept refines \tcode{InputIterator}~(\ref{range.iterators.input}),
 adding equality comparison and the multi-pass guarantee, specified below.
 
 \indexlibrary{\idxcode{ForwardIterator}}%
 \begin{codeblock}
   template <class I>
-  concept @\removed{bool}@ ForwardIterator =
+  concept @\oldtxt{bool}@ ForwardIterator =
     InputIterator<I> &&
     DerivedFrom<iterator_category_t<I>, forward_iterator_tag> &&
     Incrementable<I> &&
@@ -1345,16 +876,16 @@ a mutable iterator
 allow the use of multi-pass one-directional algorithms with forward iterators.
 \exitnote
 
-\rSec2[std2.iterators.bidirectional]{Concept \tcode{BidirectionalIterator}}
+\rSec3[range.iterators.bidirectional]{Concept \tcode{BidirectionalIterator}}
 
 \pnum
-The \tcode{BidirectionalIterator} concept refines \tcode{ForwardIterator}~(\ref{std2.iterators.forward}),
+The \tcode{BidirectionalIterator} concept refines \tcode{ForwardIterator}~(\ref{range.iterators.forward}),
 and adds the ability to move an iterator backward as well as forward.
 
 \indexlibrary{\idxcode{BidirectionalIterator}}%
 \begin{codeblock}
   template <class I>
-  concept @\removed{bool}@ BidirectionalIterator =
+  concept @\oldtxt{bool}@ BidirectionalIterator =
     ForwardIterator<I> &&
     DerivedFrom<iterator_category_t<I>, bidirectional_iterator_tag> &&
     requires(I i) {
@@ -1382,10 +913,10 @@ Let \tcode{a} and \tcode{b} be decrementable objects of type \tcode{I}.
 \item If \tcode{bool(a == b)}, then \tcode{bool(++(\dcr{}a) == b)}.
 \end{itemize}
 
-\rSec2[std2.iterators.random.access]{Concept \tcode{RandomAccessIterator}}
+\rSec3[range.iterators.random.access]{Concept \tcode{RandomAccessIterator}}
 
 \pnum
-The \tcode{RandomAccessIterator} concept refines \tcode{BidirectionalIterator}~(\ref{std2.iterators.bidirectional})
+The \tcode{RandomAccessIterator} concept refines \tcode{BidirectionalIterator}~(\ref{range.iterators.bidirectional})
 and adds support for constant-time advancement with \tcode{+=}, \tcode{+},  \tcode{-=}, and \tcode{-}, and the
 computation of distance in constant time with \tcode{-}. Random access iterators also support array
 notation via subscripting.
@@ -1393,7 +924,7 @@ notation via subscripting.
 \indexlibrary{\idxcode{RandomAccessIterator}}%
 \begin{codeblock}
   template <class I>
-  concept @\removed{bool}@ RandomAccessIterator =
+  concept @\oldtxt{bool}@ RandomAccessIterator =
     BidirectionalIterator<I> &&
     DerivedFrom<iterator_category_t<I>, random_access_iterator_tag> &&
     StrictTotallyOrdered<I> &&
@@ -1429,23 +960,24 @@ from \tcode{a}. Let \tcode{n} be the smallest value of type
 \item \tcode{\&(b -= n)} is equal to \tcode{\&b}.
 \item \tcode{(b - n)} is equal to \tcode{(b -= n)}.
 \item If \tcode{b} is dereferenceable, then \tcode{a[n]} is valid and is equal to \tcode{*b}.
+\item \tcode{a <= b}
 \end{itemize}
 
-\rSec1[std2.indirectcallable]{Indirect callable requirements}
+\rSec2[range.indirectcallable]{Indirect callable requirements}
 
-\rSec2[std2.indirectcallable.general]{General}
+\rSec3[range.indirectcallable.general]{General}
 
 \pnum
 There are several concepts that group requirements of algorithms that take callable
 objects~(\cxxref{func.require}) as arguments.
 
-\rSec2[std2.indirectcallable.indirectinvocable]{Indirect callables}
+\rSec3[range.indirectcallable.indirectinvocable]{Indirect callables}
 
 \pnum
 The indirect callable concepts are used to constrain those algorithms that accept
 callable objects~(\cxxref{func.def}) as arguments.
 
-\indexlibrary{\idxcode{indirect_result_of}}%
+\indexlibrary{\idxcode{indirect_result}}%
 \indexlibrary{\idxcode{IndirectUnaryInvocable}}%
 \indexlibrary{\idxcode{IndirectRegularUnaryInvocable}}%
 \indexlibrary{\idxcode{IndirectUnaryPredicate}}%
@@ -1453,29 +985,29 @@ callable objects~(\cxxref{func.def}) as arguments.
 \indexlibrary{\idxcode{IndirectStrictWeakOrder}}%
 \begin{codeblock}
   template <class F, class I>
-  concept @\removed{bool}@ IndirectUnaryInvocable =
+  concept @\oldtxt{bool}@ IndirectUnaryInvocable =
     Readable<I> &&
     CopyConstructible<F> &&
     Invocable<F&, value_type_t<I>&> &&
     Invocable<F&, reference_t<I>> &&
     Invocable<F&, iter_common_reference_t<I>> &&
     CommonReference<
-      result_of_t<F&(value_type_t<I>&)>,
-      result_of_t<F&(reference_t<I>&&)>>;
+      @\oldtxt{result_of_t<F\&(value_type_t<I>\&)>}\newtxt{invoke_result_t<F\&, value_type_t<I>\&>}@,
+      @\oldtxt{result_of_t<F\&(reference_t<I>\&\&)>}\newtxt{invoke_result_t<F\&, reference_t<I>{}>}@>;
 
   template <class F, class I>
-  concept @\removed{bool}@ IndirectRegularUnaryInvocable =
+  concept @\oldtxt{bool}@ IndirectRegularUnaryInvocable =
     Readable<I> &&
     CopyConstructible<F> &&
     RegularInvocable<F&, value_type_t<I>&> &&
     RegularInvocable<F&, reference_t<I>> &&
     RegularInvocable<F&, iter_common_reference_t<I>> &&
     CommonReference<
-      result_of_t<F&(value_type_t<I>&)>,
-      result_of_t<F&(reference_t<I>&&)>>;
+      @\oldtxt{result_of_t<F\&(value_type_t<I>\&)>}\newtxt{invoke_result_t<F\&, value_type_t<I>\&>}@,
+      @\oldtxt{result_of_t<F\&(reference_t<I>\&\&)>}\newtxt{invoke_result_t<F\&, reference_t<I>{}>}@>;
 
   template <class F, class I>
-  concept @\removed{bool}@ IndirectUnaryPredicate =
+  concept @\oldtxt{bool}@ IndirectUnaryPredicate =
     Readable<I> &&
     CopyConstructible<F> &&
     Predicate<F&, value_type_t<I>&> &&
@@ -1483,7 +1015,7 @@ callable objects~(\cxxref{func.def}) as arguments.
     Predicate<F&, iter_common_reference_t<I>>;
 
   template <class F, class I1, class I2 = I1>
-  concept @\removed{bool}@ IndirectRelation =
+  concept @\oldtxt{bool}@ IndirectRelation =
     Readable<I1> && Readable<I2> &&
     CopyConstructible<F> &&
     Relation<F&, value_type_t<I1>&, value_type_t<I2>&> &&
@@ -1493,7 +1025,7 @@ callable objects~(\cxxref{func.def}) as arguments.
     Relation<F&, iter_common_reference_t<I1>, iter_common_reference_t<I2>>;
 
   template <class F, class I1, class I2 = I1>
-  concept @\removed{bool}@ IndirectStrictWeakOrder =
+  concept @\oldtxt{bool}@ IndirectStrictWeakOrder =
     Readable<I1> && Readable<I2> &&
     CopyConstructible<F> &&
     StrictWeakOrder<F&, value_type_t<I1>&, value_type_t<I2>&> &&
@@ -1502,19 +1034,19 @@ callable objects~(\cxxref{func.def}) as arguments.
     StrictWeakOrder<F&, reference_t<I1>, reference_t<I2>> &&
     StrictWeakOrder<F&, iter_common_reference_t<I1>, iter_common_reference_t<I2>>;
 
-  template <class> struct indirect_result_of { };
+  template <class> struct indirect_result@\oldtxt{_of}@ { };
 
   template <class F, class... Is>
     requires Invocable<F, reference_t<Is>...>
-  struct indirect_result_of<F(Is...)> :
-    result_of<F(reference_t<Is>&&...)> { };
+  struct indirect_result@\oldtxt{_of}@<F(Is...)> :
+    @\oldtxt{result_of<F(reference_t<Is>\&\&...)>}\newtxt{invoke_result<F, reference_t<Is>...>}@ { };
 \end{codeblock}
 
-\rSec2[std2.projected]{Class template \tcode{projected}}
+\rSec3[range.projected]{Class template \tcode{projected}}
 
 \pnum
 The \tcode{projected} class template is intended for use when specifying the constraints of
-algorithms that accept callable objects and projections~(\ref{std2.defns.projection}). It bundles a \tcode{Readable} type
+algorithms that accept callable objects and projections~(\ref{defns.projection}). It bundles a \tcode{Readable} type
 \tcode{I} and a function \tcode{Proj} into a new \tcode{Readable} type whose
 \tcode{reference} type is the result of applying \tcode{Proj} to the
 \tcode{reference_t} of \tcode{I}.
@@ -1523,8 +1055,8 @@ algorithms that accept callable objects and projections~(\ref{std2.defns.project
 \begin{codeblock}
   template <Readable I, IndirectRegularUnaryInvocable<I> Proj>
   struct projected {
-    using value_type = remove_cv_t<remove_reference_t<indirect_result_of_t<Proj&(I)>>>;
-    indirect_result_of_t<Proj&(I)> operator*() const;
+    using value_type = remove_cv_t<remove_reference_t<indirect_result@\oldtxt{_of}@_t<Proj&@\oldtxt{(}\newtxt{, }@I@\oldtxt{)}@>>>;
+    indirect_result@\oldtxt{_of}@_t<Proj&@\oldtxt{(}\newtxt{, }@I@\oldtxt{)}@> operator*() const;
   };
 
   template <WeaklyIncrementable I, class Proj>
@@ -1537,9 +1069,9 @@ algorithms that accept callable objects and projections~(\ref{std2.defns.project
 \enternote \tcode{projected} is only used to ease constraints specification. Its
 member function need not be defined.\exitnote
 
-\rSec1[std2.commonalgoreq]{Common algorithm requirements}
+\rSec2[range.commonalgoreq]{Common algorithm requirements}
 
-\rSec2[std2.commonalgoreq.general]{General}
+\rSec3[range.commonalgoreq.general]{General}
 
 \pnum
 There are several additional iterator concepts that are commonly applied to families of algorithms.
@@ -1550,12 +1082,12 @@ for rearrangements: \tcode{Permut\-able}, \tcode{Mergeable}, and \tcode{Sortable
 There is one relational concept for comparing values from different sequences: \tcode{IndirectlyComparable}.
 
 \pnum
-\enternote The \tcode{equal_to<>} and \tcode{less<>}~(\ref{std2.comparisons}) function types used in the
+\enternote The \tcode{equal_to<>} and \tcode{less<>}~(\ref{range.comparisons}) function types used in the
 concepts below impose additional constraints on their arguments beyond those that appear explicitly in the
 concepts' bodies. \tcode{equal_to<>} requires its arguments satisfy \tcode{EqualityComparableWith}~(\cxxref{concepts.lib.compare.equalitycomparable}),
 and \tcode{less<>} requires its arguments satisfy \tcode{StrictTotallyOrderedWith}~(\cxxref{concepts.lib.compare.stricttotallyordered}).\exitnote
 
-\rSec2[std2.commonalgoreq.indirectlymovable]{Concept \tcode{IndirectlyMovable}}
+\rSec3[range.commonalgoreq.indirectlymovable]{Concept \tcode{IndirectlyMovable}}
 
 \pnum
 The \tcode{IndirectlyMovable} concept specifies the relationship between a \tcode{Readable}
@@ -1564,7 +1096,7 @@ type and a \tcode{Writable} type between which values may be moved.
 \indexlibrary{\idxcode{IndirectlyMovable}}%
 \begin{codeblock}
   template <class In, class Out>
-  concept @\removed{bool}@ IndirectlyMovable =
+  concept @\oldtxt{bool}@ IndirectlyMovable =
     Readable<In> &&
     Writable<Out, rvalue_reference_t<In>>;
 \end{codeblock}
@@ -1577,7 +1109,7 @@ requirements enabling the transfer to be performed through an intermediate objec
 \indexlibrary{\idxcode{IndirectlyMovableStorable}}%
 \begin{codeblock}
   template <class In, class Out>
-  concept @\removed{bool}@ IndirectlyMovableStorable =
+  concept @\oldtxt{bool}@ IndirectlyMovableStorable =
     IndirectlyMovable<In, Out> &&
     Writable<Out, value_type_t<In>> &&
     Movable<value_type_t<In>> &&
@@ -1585,7 +1117,7 @@ requirements enabling the transfer to be performed through an intermediate objec
     Assignable<value_type_t<In>&, rvalue_reference_t<In>>;
 \end{codeblock}
 
-\rSec2[std2.commonalgoreq.indirectlycopyable]{Concept \tcode{IndirectlyCopyable}}
+\rSec3[range.commonalgoreq.indirectlycopyable]{Concept \tcode{IndirectlyCopyable}}
 
 \pnum
 The \tcode{IndirectlyCopyable} concept specifies the relationship between a \tcode{Readable}
@@ -1594,7 +1126,7 @@ type and a \tcode{Writable} type between which values may be copied.
 \indexlibrary{\idxcode{IndirectlyCopyable}}%
 \begin{codeblock}
   template <class In, class Out>
-  concept @\removed{bool}@ IndirectlyCopyable =
+  concept @\oldtxt{bool}@ IndirectlyCopyable =
     Readable<In> &&
     Writable<Out, reference_t<In>>;
 \end{codeblock}
@@ -1607,7 +1139,7 @@ requirements enabling the transfer to be performed through an intermediate objec
 \indexlibrary{\idxcode{IndirectlyCopyableStorable}}%
 \begin{codeblock}
   template <class In, class Out>
-  concept @\removed{bool}@ IndirectlyCopyableStorable =
+  concept @\oldtxt{bool}@ IndirectlyCopyableStorable =
     IndirectlyCopyable<In, Out> &&
     Writable<Out, const value_type_t<In>&> &&
     Copyable<value_type_t<In>> &&
@@ -1615,7 +1147,7 @@ requirements enabling the transfer to be performed through an intermediate objec
     Assignable<value_type_t<In>&, reference_t<In>>;
 \end{codeblock}
 
-\rSec2[std2.commonalgoreq.indirectlyswappable]{Concept \tcode{IndirectlySwappable}}
+\rSec3[range.commonalgoreq.indirectlyswappable]{Concept \tcode{IndirectlySwappable}}
 
 \pnum
 The \tcode{IndirectlySwappable} concept specifies a swappable relationship between the
@@ -1624,23 +1156,23 @@ values referenced by two \tcode{Readable} types.
 \indexlibrary{\idxcode{IndirectlySwappable}}%
 \begin{codeblock}
   template <class I1, class I2 = I1>
-  concept @\removed{bool}@ IndirectlySwappable =
+  concept @\oldtxt{bool}@ IndirectlySwappable =
     Readable<I1> && Readable<I2> &&
     requires(I1&& i1, I2&& i2) {
-      @\changed{ranges}{::std2}@::iter_swap(std::forward<I1>(i1), std::forward<I2>(i2));
-      @\changed{ranges}{::std2}@::iter_swap(std::forward<I2>(i2), std::forward<I1>(i1));
-      @\changed{ranges}{::std2}@::iter_swap(std::forward<I1>(i1), std::forward<I1>(i1));
-      @\changed{ranges}{::std2}@::iter_swap(std::forward<I2>(i2), std::forward<I2>(i2));
+      ranges::iter_swap(std::forward<I1>(i1), std::forward<I2>(i2));
+      ranges::iter_swap(std::forward<I2>(i2), std::forward<I1>(i1));
+      ranges::iter_swap(std::forward<I1>(i1), std::forward<I1>(i1));
+      ranges::iter_swap(std::forward<I2>(i2), std::forward<I2>(i2));
     };
 \end{codeblock}
 
 \pnum
 Given an object \tcode{i1} of type \tcode{I1} and an object \tcode{i2} of
 type \tcode{I2}, \tcode{IndirectlySwappable<I1, I2>} is satisfied if after
-\tcode{\changed{ranges}{::std2}::iter_swap(i1, i2)}, the value of \tcode{*i1} is equal to the
+\tcode{ranges::iter_swap(i1, i2)}, the value of \tcode{*i1} is equal to the
 value of \tcode{*i2} before the call, and \textit{vice versa}.
 
-\rSec2[std2.commonalgoreq.indirectlycomparable]{Concept \tcode{IndirectlyComparable}}
+\rSec3[range.commonalgoreq.indirectlycomparable]{Concept \tcode{IndirectlyComparable}}
 
 \pnum
 The \tcode{IndirectlyComparable} concept specifies the common requirements of algorithms that
@@ -1650,11 +1182,11 @@ compare values from two different sequences.
 \begin{codeblock}
   template <class I1, class I2, class R = equal_to<>, class P1 = identity,
     class P2 = identity>
-  concept @\removed{bool}@ IndirectlyComparable =
+  concept @\oldtxt{bool}@ IndirectlyComparable =
     IndirectRelation<R, projected<I1, P1>, projected<I2, P2>>;
 \end{codeblock}
 
-\rSec2[std2.commonalgoreq.permutable]{Concept \tcode{Permutable}}
+\rSec3[range.commonalgoreq.permutable]{Concept \tcode{Permutable}}
 
 \pnum
 The \tcode{Permutable} concept specifies the common requirements of algorithms that reorder
@@ -1663,13 +1195,13 @@ elements in place by moving or swapping them.
 \indexlibrary{\idxcode{Permutable}}%
 \begin{codeblock}
   template <class I>
-  concept @\removed{bool}@ Permutable =
+  concept @\oldtxt{bool}@ Permutable =
     ForwardIterator<I> &&
     IndirectlyMovableStorable<I, I> &&
     IndirectlySwappable<I, I>;
 \end{codeblock}
 
-\rSec2[std2.commonalgoreq.mergeable]{Concept \tcode{Mergeable}}
+\rSec3[range.commonalgoreq.mergeable]{Concept \tcode{Mergeable}}
 
 \pnum
 The \tcode{Mergeable} concept specifies the requirements of
@@ -1679,7 +1211,7 @@ algorithms that merge sorted sequences into an output sequence by copying elemen
 \begin{codeblock}
   template <class I1, class I2, class Out,
       class R = less<>, class P1 = identity, class P2 = identity>
-  concept @\removed{bool}@ Mergeable =
+  concept @\oldtxt{bool}@ Mergeable =
     InputIterator<I1> &&
     InputIterator<I2> &&
     WeaklyIncrementable<Out> &&
@@ -1688,7 +1220,7 @@ algorithms that merge sorted sequences into an output sequence by copying elemen
     IndirectStrictWeakOrder<R, projected<I1, P1>, projected<I2, P2>>;
 \end{codeblock}
 
-\rSec2[std2.commonalgoreq.sortable]{Concept \tcode{Sortable}}
+\rSec3[range.commonalgoreq.sortable]{Concept \tcode{Sortable}}
 
 \pnum
 The \tcode{Sortable} concept specifies the common requirements of algorithms that permute
@@ -1697,18 +1229,18 @@ sequences into ordered sequences (e.g., \tcode{sort}).
 \indexlibrary{\idxcode{Sortable}}%
 \begin{codeblock}
   template <class I, class R = less<>, class P = identity>
-  concept @\removed{bool}@ Sortable =
+  concept @\oldtxt{bool}@ Sortable =
     Permutable<I> &&
     IndirectStrictWeakOrder<R, projected<I, P>>;
 \end{codeblock}
 
-\rSec1[std2.iterator.primitives]{Iterator primitives}
+\rSec2[range.iterator.primitives]{Iterator primitives}
 
 \pnum
 To simplify the task of defining iterators, the library provides
 several classes and functions:
 
-\rSec2[std2.iterator.traits]{Iterator traits}
+\rSec3[range.iterator.traits]{Iterator traits}
 
 \pnum
 For the sake of backwards compatibility, this document specifies the existence of an \tcode{iterator_traits}
@@ -1726,17 +1258,17 @@ alias that collects an iterator's associated types. It is defined as if:
   };
   template <class> struct @\xname{iterator_traits}@ { };                // \expos
   template <Iterator I> struct @\xname{iterator_traits}@<I> {
-    using difference_type = difference_type_t<I>;
-    using value_type = void;
-    using reference = void;
-    using pointer = void;
+    using difference_type   = difference_type_t<I>;
+    using value_type        = void;
+    using reference         = void;
+    using pointer           = void;
     using iterator_category = output_iterator_tag;
   };
   template <InputIterator I> struct @\xname{iterator_traits}@<I> {  // \expos
-    using difference_type = difference_type_t<I>;
-    using value_type = value_type_t<I>;
-    using reference = reference_t<I>;
-    using pointer = typename @\xname{pointer_type}@<I>::type;
+    using difference_type   = difference_type_t<I>;
+    using value_type        = value_type_t<I>;
+    using reference         = reference_t<I>;
+    using pointer           = typename @\xname{pointer_type}@<I>::type;
     using iterator_category = iterator_category_t<I>;
   };
   template <class I>
@@ -1770,19 +1302,21 @@ void reverse(I first, I last) {
 \end{codeblock}
 \exitexample
 
-\rSec2[std2.iterator.stdtraits]{Standard iterator traits}
+\rSec3[range.iterator.stdtraits]{Standard iterator traits}
 
 \pnum
-To facilitate interoperability between new code using iterators conforming to this document
+To facilitate interoperability between new code using iterators conforming to
+\oldtxt{this document}\newtxt{the concepts defined in this clause}
 and older code using iterators that conform to the iterator
-requirements specified in ISO/IEC 14882, three specializations of \tcode{std::iterator_traits}
+requirements specified in \oldtxt{ISO/IEC 14882} \newtxt{\cxxref{iterator.requirements}},
+three specializations of \tcode{std::iterator_traits}
 are provided to map the newer iterator categories and associated types to the older ones.
 
 \begin{codeblock}
 namespace std {
-  template <@\changed{experimental::ranges}{::std2}@::Iterator Out>
+  template <@\oldtxt{experimental::}@ranges::Iterator Out>
   struct iterator_traits<Out> {
-    using difference_type   = @\changed{experimental::ranges}{::std2}@::difference_type_t<Out>;
+    using difference_type   = @\oldtxt{experimental::}@ranges::difference_type_t<Out>;
     using value_type        = @\seebelow@;
     using reference         = @\seebelow@;
     using pointer           = @\seebelow@;
@@ -1818,14 +1352,14 @@ The nested type \tcode{pointer} is computed as follows:
 \end{itemize}
 
 \begin{codeblock}
-  template <@\changed{experimental::ranges}{::std2}@::InputIterator In>
+  template <@\oldtxt{experimental::}@ranges::InputIterator In>
   struct iterator_traits<In> { };
 
-  template <@\changed{experimental::ranges}{::std2}@::InputIterator In>
-    requires @\changed{experimental::ranges}{::std2}@::Sentinel<In, In>
+  template <@\oldtxt{experimental::}@ranges::InputIterator In>
+    requires @\oldtxt{experimental::}@ranges::Sentinel<In, In>
   struct iterator_traits<In> {
-    using difference_type   = @\changed{experimental::ranges}{::std2}@::difference_type_t<In>;
-    using value_type        = @\changed{experimental::ranges}{::std2}@::value_type_t<In>;
+    using difference_type   = @\oldtxt{experimental::}@ranges::difference_type_t<In>;
+    using value_type        = @\oldtxt{experimental::}@ranges::value_type_t<In>;
     using reference         = @\seebelow@;
     using pointer           = @\seebelow@;
     using iterator_category = @\seebelow@;
@@ -1840,7 +1374,7 @@ The nested type \tcode{reference} is computed as follows:
       \tcode{In::reference} is valid and denotes a type, then
       \tcode{std::iterator_traits<In>::reference} is \tcode{In::reference}.
 \item Otherwise, \tcode{std::iterator_traits<In>::reference} is
-      \changed{\tcode{experimental::\-ranges}}{\tcode{::std2}}\tcode{::\-\-reference_t<In>}.
+      \tcode{\oldtxt{experimental::}}\-\tcode{ranges::\-reference_t<In>}.
 \end{itemize}
 
 \pnum
@@ -1850,34 +1384,37 @@ The nested type \tcode{pointer} is computed as follows:
       \tcode{In::pointer} is valid and denotes a type, then
       \tcode{std::iterator_traits<In>::pointer} is \tcode{In::\brk{}pointer}.
 \item Otherwise, \tcode{std::iterator_traits<In>::pointer} is
-      \tcode{\changed{experimental::ranges}{::std2}::\brk{}iterator_\-traits<\brk{}In\brk{}>::\brk{}pointer}.
+      \tcode{\oldtxt{experimental::}ranges::\brk{}iterator_\-traits<\brk{}In\brk{}>::\brk{}pointer}.
 \end{itemize}
 
 \pnum
-Let type \tcode{C} be \tcode{\changed{experimental::ranges}{::std2}::}\tcode{iterator_category_t}\tcode{<In>}.
+Let type \tcode{C} be \tcode{\oldtxt{experimental::}ranges::iterator_category_t<In>}.
 The nested type \tcode{std::\brk{}iterator_traits<In>::\brk{}iterator_category} is computed as
 follows:
 \begin{itemize}
 \item If \tcode{C} is the same as or inherits from \tcode{std::input_iterator_tag} or
       \tcode{std::output_iterator_tag}, \tcode{std::\brk{}iterator_traits<In>::\brk{}iterator_category}
       is \tcode{C}.
-\item Otherwise, if \tcode{\changed{experimental::ranges}{::std2}::reference_t<In>} is not a reference type,
+\item Otherwise, if \tcode{\oldtxt{experimental::}ranges::reference_t<In>} is not a reference type,
       \tcode{std::\brk{}iterator_traits<In>::\brk{}iterator_category} is \tcode{std::input_iterator_tag}.
-\item Otherwise, if \tcode{C} is the same as or inherits from \changed{\tcode{experimental::\brk{}ranges}}{\tcode{::std2}}\tcode{::\brk{}random_access_iter\-at\-or_tag},
+\item Otherwise, if \tcode{C} is the same as or inherits from \tcode{\oldtxt{experimental::}ranges::\brk{}random_access_iter\-at\-or_tag},
       \tcode{std::\brk{}iterator_traits<In>::\brk{}iterator_category} is \tcode{std::random_access_iterator_tag}.
-\item Otherwise, if \tcode{C} is the same as or inherits from \changed{\tcode{experimental::\brk{}ranges}}{\tcode{::std2}}\tcode{::\brk{}bidirectional_iter\-at\-or_tag},
+\item Otherwise, if \tcode{C} is the same as or inherits from \tcode{\oldtxt{experimental::}ranges::\brk{}bidirectional_iter\-at\-or_tag},
       \tcode{std::\brk{}iterator_traits<In>::\brk{}iterator_category} is \tcode{std::bidirectional_iterator_tag}.
-\item Otherwise, if \tcode{C} is the same as or inherits from \changed{\tcode{experimental::\brk{}ranges}}{\tcode{::std2}}\tcode{::\brk{}forward_iter\-at\-or_tag},
+\item Otherwise, if \tcode{C} is the same as or inherits from \tcode{\oldtxt{experimental::}ranges::\brk{}forward_iter\-at\-or_tag},
       \tcode{std::\brk{}iterator_traits<In>::\brk{}iterator_category} is \tcode{std::forward_iterator_tag}.
 \item Otherwise, \tcode{std::iterator_traits<In>::iterator_category} is \tcode{std::input_iterator_tag}.
 \end{itemize}
 
 \pnum
-\enternote Some implementations may find it necessary to add additional constraints to
+\enternote
+Some implementations may find it necessary to add additional constraints to
 these partial specializations to prevent them from being considered for types that
-conform to the iterator requirements specified in ISO/IEC 14882.\exitnote
+conform to the iterator requirements specified in \oldtxt{ISO/IEC 14882}
+\newtxt{\cxxref{iterator.requirements}}.
+\exitnote
 
-\rSec2[std2.iterator.tags]{Standard iterator tags}
+\rSec3[range.iterator.tags]{Standard iterator tags}
 
 \pnum
 \indexlibrary{\idxcode{output_iterator_tag}}%
@@ -1909,13 +1446,13 @@ shall be defined to be the most specific category tag that describes the
 iterator's behavior.
 
 \begin{codeblock}
-namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { inline namespace v1 {
+namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace experimental \{ namespace ranges \{ inline namespace v1 \{}@
   struct output_iterator_tag { };
   struct input_iterator_tag { };
   struct forward_iterator_tag : input_iterator_tag { };
   struct bidirectional_iterator_tag : forward_iterator_tag { };
   struct random_access_iterator_tag : bidirectional_iterator_tag { };
-}}@\removed{\}\}}@
+}@\oldtxt{\}\}\}}@
 \end{codeblock}
 
 \pnum
@@ -1951,16 +1488,17 @@ template <class T> struct iterator_category<BinaryTreeIterator<T>> {
 \end{codeblock}
 \exitexample
 
-\rSec2[std2.iterator.operations]{Iterator operations}
+\rSec3[range.iterator.operations]{Iterator operations}
 
 \pnum
 Since only types that satisfy
 \tcode{RandomAccessIterator} provide the \tcode{+} operator, and
 types that satisfy \tcode{Sized\-Sent\-inel} provide the \tcode{-}
-operator, the library provides customization point objects~(\cxxref{customization.point.object})
+operator, the library provides \oldtxt{customization point objects~(\cxxref{customization.point.object})}
+\newtxt{function templates}
 \tcode{advance}, \tcode{dist\-ance}, \tcode{next}, and \tcode{prev}.
 These
-customization point objects
+\oldtxt{customization point objects} \newtxt{function templates}
 use
 \tcode{+}
 and
@@ -1971,15 +1509,40 @@ time for them); for output, input, forward and bidirectional iterators they use
 to provide linear time
 implementations.
 
+{\color{newclr}
+\pnum
+The function templates defined in this subclause are not found by argument-dependent
+name lookup~(\cxxref{basic.lookup.argdep}). When found by
+unqualified~(\cxxref{basic.lookup.unqual}) name lookup for the
+\grammarterm{postfix-expression} in a function call~(\cxxref{expr.call}), they
+inhibit argument-dependent name lookup.
+
+\begin{example}
+\begin{codeblock}
+void foo() {
+    using namespace std::ranges;
+    std::vector<int> vec{1,2,3};
+    distance(begin(vec), end(vec)); // \#1
+}
+\end{codeblock}
+The function call expression at \tcode{\#1} invokes \tcode{std::ranges::distance},
+not \tcode{std::distance}, despite that (a) the iterator type returned from \tcode{begin(vec)}
+and \tcode{end(vec)} may be associated with namespace \tcode{std} and (b)
+\tcode{std::distance} is more specialized~(\cxxref{temp.func.order}) than
+\tcode{std::ranges::distance} since the former requires its first two parameters
+to have the same type.
+\end{example}
+} % \color{newclr}
+
 \indexlibrary{\idxcode{advance}}%
 \pnum
-The name \tcode{advance} denotes a
+\oldtxt{The name \tcode{advance} denotes a
 customization point object~(\cxxref{customization.point.object}).
-It has the following function call operators:
+It has the following function call operators:}
 
 \begin{itemdecl}
 template <Iterator I>
-  constexpr void operator()(I& i, difference_type_t<I> n) const;
+  constexpr void @\oldtxt{operator()}\newtxt{advance}@(I& i, difference_type_t<I> n) const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2001,7 +1564,7 @@ by
 
 \begin{itemdecl}
 template <Iterator I, Sentinel<I> S>
-  constexpr void operator()(I& i, S bound) const;
+  constexpr void @\oldtxt{operator()}\newtxt{advance}@(I& i, S bound) const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2026,7 +1589,7 @@ shall denote a range.
 
 \begin{itemdecl}
 template <Iterator I, Sentinel<I> S>
-  constexpr difference_type_t<I> operator()(I& i, difference_type_t<I> n, S bound) const;
+  constexpr difference_type_t<I> @\oldtxt{operator()}\newtxt{advance}@(I& i, difference_type_t<I> n, S bound) const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2060,12 +1623,12 @@ shall be satisfied.
 
 \indexlibrary{\idxcode{distance}}%
 \pnum
-The name \tcode{distance} denotes a customization point object.
-It has the following function call operators:
+\oldtxt{The name \tcode{distance} denotes a customization point object.
+It has the following function call operators:}
 
 \begin{itemdecl}
 template <Iterator I, Sentinel<I> S>
-  constexpr difference_type_t<I> operator()(I first, S last) const;
+  constexpr difference_type_t<I> @\oldtxt{operator()}\newtxt{distance}@(I first, S last) const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2085,45 +1648,45 @@ to
 
 \begin{itemdecl}
 template <Range R>
-  constexpr difference_type_t<iterator_t<R>> operator()(R&& r) const;
+  constexpr difference_type_t<iterator_t<R>> @\oldtxt{operator()}\newtxt{distance}@(R&& r) const;
 \end{itemdecl}
 
 \begin{itemdescr}
 \effects
 Equivalent to:
-\tcode{return distance(\changed{ranges}{::std2}::begin(r), \changed{ranges}{::std2}::end(r));}~(\ref{std2.range.access})
+\tcode{return distance(ranges::begin(r), ranges::end(r));}~(\ref{range.access})
 
 \remarks
-Instantiations of this member function template may be ill-formed if the
-declarations in \tcode{<\changed{experimental/ranges}{std2}/range>} are not in scope at the
-point of instantiation~(\cxxref{temp.point}).
+\oldtxt{Instantiations of this member function template may be ill-formed if the
+declarations in \tcode{<experimental/ranges/range>} are not in scope at the
+point of instantiation~(\cxxref{temp.point}).}
 \end{itemdescr}
 
 
 \begin{itemdecl}
 template <SizedRange R>
-  constexpr difference_type_t<iterator_t<R>> operator()(R&& r) const;
+  constexpr difference_type_t<iterator_t<R>> @\oldtxt{operator()}\newtxt{distance}@(R&& r) const;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
 \effects
-Equivalent to: \tcode{return \changed{ranges}{::std2}::size(r);}~(\ref{std2.range.primitives.size})
+Equivalent to: \tcode{return ranges::size(r);}~(\ref{range.primitives.size})
 
 \pnum
 \remarks
-Instantiations of this member function template may be ill-formed if the
-declarations in \tcode{<\changed{experimental/ranges}{std2}/range>} are not in scope at the
-point of instantiation~(\cxxref{temp.point}).
+\oldtxt{Instantiations of this member function template may be ill-formed if the
+declarations in \tcode{<experimental/ranges/range>} are not in scope at the
+point of instantiation~(\cxxref{temp.point}).}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{next}}%
 \pnum
-The name \tcode{next} denotes a customization point object. It has the following function call operators:
+\oldtxt{The name \tcode{next} denotes a customization point object. It has the following function call operators:}
 
 \begin{itemdecl}
 template <Iterator I>
-  constexpr I operator()(I x) const;
+  constexpr I @\oldtxt{operator()}\newtxt{next}@(I x) const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2133,7 +1696,7 @@ template <Iterator I>
 
 \begin{itemdecl}
 template <Iterator I>
-  constexpr I operator()(I x, difference_type_t<I> n) const;
+  constexpr I @\oldtxt{operator()}\newtxt{next}@(I x, difference_type_t<I> n) const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2143,7 +1706,7 @@ template <Iterator I>
 
 \begin{itemdecl}
 template <Iterator I, Sentinel<I> S>
-  constexpr I operator()(I x, S bound) const;
+  constexpr I @\oldtxt{operator()}\newtxt{next}@(I x, S bound) const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2153,7 +1716,7 @@ template <Iterator I, Sentinel<I> S>
 
 \begin{itemdecl}
 template <Iterator I, Sentinel<I> S>
-  constexpr I operator()(I x, difference_type_t<I> n, S bound) const;
+  constexpr I @\oldtxt{operator()}\newtxt{next}@(I x, difference_type_t<I> n, S bound) const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2163,11 +1726,11 @@ template <Iterator I, Sentinel<I> S>
 
 \indexlibrary{\idxcode{prev}}%
 \pnum
-The name \tcode{prev} denotes a customization point object. It has the following function call operators:
+\oldtxt{The name \tcode{prev} denotes a customization point object. It has the following function call operators:}
 
 \begin{itemdecl}
 template <BidirectionalIterator I>
-  constexpr I operator()(I x) const;
+  constexpr I @\oldtxt{operator()}\newtxt{prev}@(I x) const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2177,7 +1740,7 @@ template <BidirectionalIterator I>
 
 \begin{itemdecl}
 template <BidirectionalIterator I>
-  constexpr I operator()(I x, difference_type_t<I> n) const;
+  constexpr I @\oldtxt{operator()}\newtxt{prev}@(I x, difference_type_t<I> n) const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2187,7 +1750,7 @@ template <BidirectionalIterator I>
 
 \begin{itemdecl}
 template <BidirectionalIterator I>
-  constexpr I operator()(I x, difference_type_t<I> n, I bound) const;
+  constexpr I @\oldtxt{operator()}\newtxt{prev}@(I x, difference_type_t<I> n, I bound) const;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2195,9 +1758,9 @@ template <BidirectionalIterator I>
 \effects Equivalent to: \tcode{advance(x, -n, bound); return x;}
 \end{itemdescr}
 
-\rSec1[std2.iterators.predef]{Iterator adaptors}
+\rSec2[range.iterators.predef]{Iterator adaptors}
 
-\rSec2[std2.iterators.reverse]{Reverse iterators}
+\rSec3[range.iterators.reverse]{Reverse iterators}
 
 \pnum
 Class template \tcode{reverse_iterator} is an iterator adaptor that iterates from the end of the sequence defined by its underlying iterator to the beginning of that sequence.
@@ -2206,27 +1769,27 @@ The fundamental relation between a reverse iterator and its corresponding underl
 is established by the identity:
 \tcode{*make_reverse_iterator(i) == *prev(i)}.
 
-\rSec3[std2.reverse.iterator]{Class template \tcode{reverse_iterator}}
+\rSec4[range.reverse.iterator]{Class template \tcode{reverse_iterator}}
 
 \indexlibrary{\idxcode{reverse_iterator}}%
 \begin{codeblock}
-namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { inline namespace v1 {
+namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace experimental \{ namespace ranges \{ inline namespace v1 \{}@
   template <BidirectionalIterator I>
   class reverse_iterator {
   public:
-    using iterator_type = I;
-    using difference_type = difference_type_t<I>;
-    using value_type = value_type_t<I>;
+    using iterator_type     = I;
+    using difference_type   = difference_type_t<I>;
+    using value_type        = value_type_t<I>;
     using iterator_category = iterator_category_t<I>;
-    using reference = reference_t<I>;
-    using pointer = I;
+    using reference         = reference_t<I>;
+    using pointer           = I;
 
     constexpr reverse_iterator();
     explicit constexpr reverse_iterator(I x);
-    @\added{template <ConvertibleTo<I> U>}@
-      constexpr reverse_iterator(const reverse_iterator<@\changed{ConvertibleTo<I>}{U}@>& i);
-    @\added{template <ConvertibleTo<I> U>}@
-      constexpr reverse_iterator& operator=(const reverse_iterator<@\changed{ConvertibleTo<I>}{U}@>& i);
+    @\newtxt{template <ConvertibleTo<I> U>}@
+      constexpr reverse_iterator(const reverse_iterator<@\oldtxt{ConvertibleTo<I>}\newtxt{U}@>& i);
+    @\newtxt{template <ConvertibleTo<I> U>}@
+      constexpr reverse_iterator& operator=(const reverse_iterator<@\oldtxt{ConvertibleTo<I>}\newtxt{U}@>& i);
 
     constexpr I base() const;
     constexpr reference operator*() const;
@@ -2300,12 +1863,12 @@ namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { 
 
   template <BidirectionalIterator I>
     constexpr reverse_iterator<I> make_reverse_iterator(I i);
-}}@\removed{\}\}}@
+}@\oldtxt{\}\}\}}@
 \end{codeblock}
 
-\rSec3[std2.reverse.iter.ops]{\tcode{reverse_iterator} operations}
+\rSec4[range.reverse.iter.ops]{\tcode{reverse_iterator} operations}
 
-\rSec4[std2.reverse.iter.cons]{\tcode{reverse_iterator} constructor}
+\rSec5[range.reverse.iter.cons]{\tcode{reverse_iterator} constructor}
 
 \indexlibrary{\idxcode{reverse_iterator}!\tcode{reverse_iterator}}%
 \begin{itemdecl}
@@ -2338,8 +1901,8 @@ with \tcode{x}.
 
 \indexlibrary{\idxcode{reverse_iterator}!constructor}%
 \begin{itemdecl}
-@\added{template<ConvertibleTo<I> U>}@
-  constexpr reverse_iterator(const reverse_iterator<@\changed{ConvertibleTo<I>}{U}@>& i);
+@\newtxt{template<ConvertibleTo<I> U>}@
+  constexpr reverse_iterator(const reverse_iterator<@\oldtxt{ConvertibleTo<I>}\newtxt{U}@>& i);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2351,13 +1914,13 @@ with
 \tcode{i.current}.
 \end{itemdescr}
 
-\rSec4[std2.reverse.iter.op=]{\tcode{reverse_iterator::operator=}}
+\rSec5[range.reverse.iter.op=]{\tcode{reverse_iterator::operator=}}
 
 \indexlibrary{\idxcode{operator=}!\tcode{reverse_iterator}}%
 \begin{itemdecl}
-@\added{template<ConvertibleTo<I> U>}@
+@\newtxt{template<ConvertibleTo<I> U>}@
   constexpr reverse_iterator&
-    operator=(const reverse_iterator<@\changed{ConvertibleTo<I>}{U}@>& i);
+    operator=(const reverse_iterator<@\oldtxt{ConvertibleTo<I>}\newtxt{U}@>& i);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2370,7 +1933,7 @@ Assigns \tcode{i.current} to \tcode{current}.
 \tcode{*this}.
 \end{itemdescr}
 
-\rSec4[std2.reverse.iter.conv]{Conversion}
+\rSec5[range.reverse.iter.conv]{Conversion}
 
 \indexlibrary{\idxcode{base}!\idxcode{reverse_iterator}}%
 \indexlibrary{\idxcode{reverse_iterator}!\idxcode{base}}%
@@ -2384,7 +1947,7 @@ constexpr I base() const;
 \tcode{current}.
 \end{itemdescr}
 
-\rSec4[std2.reverse.iter.op.star]{\tcode{operator*}}
+\rSec5[range.reverse.iter.op.star]{\tcode{operator*}}
 
 \indexlibrary{\idxcode{operator*}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
@@ -2396,7 +1959,7 @@ constexpr reference operator*() const;
 \effects Equivalent to: \tcode{return *prev(current);}
 \end{itemdescr}
 
-\rSec4[std2.reverse.iter.opref]{\tcode{operator->}}
+\rSec5[range.reverse.iter.opref]{\tcode{operator->}}
 
 \indexlibrary{\idxcode{operator->}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
@@ -2408,7 +1971,7 @@ constexpr pointer operator->() const;
 \effects Equivalent to: \tcode{return prev(current);}
 \end{itemdescr}
 
-\rSec4[std2.reverse.iter.op++]{\tcode{operator++}}
+\rSec5[range.reverse.iter.op++]{\tcode{operator++}}
 
 \indexlibrary{\idxcode{operator++}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
@@ -2441,7 +2004,7 @@ return tmp;
 \end{codeblock}
 \end{itemdescr}
 
-\rSec4[std2.reverse.iter.op\dcr]{\tcode{operator\dcr}}
+\rSec5[range.reverse.iter.op\dcr]{\tcode{operator\dcr}}
 
 \indexlibrary{\idxcode{operator\dcr}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
@@ -2474,7 +2037,7 @@ return tmp;
 \end{codeblock}
 \end{itemdescr}
 
-\rSec4[std2.reverse.iter.op+]{\tcode{operator+}}
+\rSec5[range.reverse.iter.op+]{\tcode{operator+}}
 
 \indexlibrary{\idxcode{operator+}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
@@ -2489,7 +2052,7 @@ constexpr reverse_iterator
 \tcode{reverse_iterator(current-n)}.
 \end{itemdescr}
 
-\rSec4[std2.reverse.iter.op+=]{\tcode{operator+=}}
+\rSec5[range.reverse.iter.op+=]{\tcode{operator+=}}
 
 \indexlibrary{\idxcode{operator+=}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
@@ -2508,7 +2071,7 @@ constexpr reverse_iterator&
 \tcode{*this}.
 \end{itemdescr}
 
-\rSec4[std2.reverse.iter.op-]{\tcode{operator-}}
+\rSec5[range.reverse.iter.op-]{\tcode{operator-}}
 
 \indexlibrary{\idxcode{operator-}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
@@ -2523,7 +2086,7 @@ constexpr reverse_iterator
 \tcode{reverse_iterator(current+n)}.
 \end{itemdescr}
 
-\rSec4[std2.reverse.iter.op-=]{\tcode{operator-=}}
+\rSec5[range.reverse.iter.op-=]{\tcode{operator-=}}
 
 \indexlibrary{\idxcode{operator-=}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
@@ -2542,7 +2105,7 @@ constexpr reverse_iterator&
 \tcode{*this}.
 \end{itemdescr}
 
-\rSec4[std2.reverse.iter.opindex]{\tcode{operator[]}}
+\rSec5[range.reverse.iter.opindex]{\tcode{operator[]}}
 
 \indexlibrary{\idxcode{operator[]}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
@@ -2557,7 +2120,7 @@ constexpr reference operator[](
 \tcode{current[-n-1]}.
 \end{itemdescr}
 
-\rSec4[std2.reverse.iter.op==]{\tcode{operator==}}
+\rSec5[range.reverse.iter.op==]{\tcode{operator==}}
 
 \indexlibrary{\idxcode{operator==}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
@@ -2574,7 +2137,7 @@ template <class I1, class I2>
 \tcode{return x.current == y.current;}
 \end{itemdescr}
 
-\rSec4[std2.reverse.iter.op!=]{\tcode{operator!=}}
+\rSec5[range.reverse.iter.op!=]{\tcode{operator!=}}
 
 \indexlibrary{\idxcode{operator"!=}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
@@ -2591,7 +2154,7 @@ template <class I1, class I2>
 \tcode{return x.current != y.current;}
 \end{itemdescr}
 
-\rSec4[std2.reverse.iter.op<]{\tcode{operator<}}
+\rSec5[range.reverse.iter.op<]{\tcode{operator<}}
 
 \indexlibrary{\idxcode{operator<}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
@@ -2608,7 +2171,7 @@ template <class I1, class I2>
 \tcode{return x.current > y.current;}
 \end{itemdescr}
 
-\rSec4[std2.reverse.iter.op>]{\tcode{operator>}}
+\rSec5[range.reverse.iter.op>]{\tcode{operator>}}
 
 \indexlibrary{\idxcode{operator>}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
@@ -2625,7 +2188,7 @@ template <class I1, class I2>
 \tcode{return x.current < y.current;}
 \end{itemdescr}
 
-\rSec4[std2.reverse.iter.op>=]{\tcode{operator>=}}
+\rSec5[range.reverse.iter.op>=]{\tcode{operator>=}}
 
 \indexlibrary{\idxcode{operator>=}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
@@ -2642,7 +2205,7 @@ template <class I1, class I2>
 \tcode{return x.current <= y.current;}
 \end{itemdescr}
 
-\rSec4[std2.reverse.iter.op<=]{\tcode{operator<=}}
+\rSec5[range.reverse.iter.op<=]{\tcode{operator<=}}
 
 \indexlibrary{\idxcode{operator<=}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
@@ -2659,7 +2222,7 @@ template <class I1, class I2>
 \tcode{return x.current >= y.current;}
 \end{itemdescr}
 
-\rSec4[std2.reverse.iter.opdiff]{\tcode{operator-}}
+\rSec5[range.reverse.iter.opdiff]{\tcode{operator-}}
 
 \indexlibrary{\idxcode{operator-}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
@@ -2676,7 +2239,7 @@ template <class I1, class I2>
 \tcode{return y.current - x.current;}
 \end{itemdescr}
 
-\rSec4[std2.reverse.iter.opsum]{\tcode{operator+}}
+\rSec5[range.reverse.iter.opsum]{\tcode{operator+}}
 
 \indexlibrary{\idxcode{operator+}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
@@ -2692,7 +2255,7 @@ template <RandomAccessIterator I>
 \tcode{return reverse_iterator<I>(x.current - n);}
 \end{itemdescr}
 
-\rSec4[std2.reverse.iter.iter_move]{\tcode{iter_move}}
+\rSec5[range.reverse.iter.iter_move]{\tcode{iter_move}}
 \indexlibrary{\idxcode{reverse_iterator}!\idxcode{iter_move}}%
 \indexlibrary{\idxcode{iter_move}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
@@ -2702,17 +2265,17 @@ friend constexpr rvalue_reference_t<I> iter_move(const reverse_iterator& i)
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to: \tcode{return \changed{ranges}{::std2}::iter_move(prev(i.current));}
+\effects Equivalent to: \tcode{return ranges::iter_move(prev(i.current));}
 
 \pnum
 \remarks The expression in \tcode{noexcept} is equivalent to:
 \begin{codeblock}
-   noexcept(@\changed{ranges}{::std2}@::iter_move(declval<I&>())) && noexcept(--declval<I&>()) &&
-     is_nothrow_copy_constructible@\added{_v}@<I>@\removed{::value}@
+   noexcept(ranges::iter_move(declval<I&>())) && noexcept(--declval<I&>()) &&
+     is_nothrow_copy_constructible@\newtxt{_v}@<I>@\oldtxt{::value}@
 \end{codeblock}
 \end{itemdescr}
 
-\rSec4[std2.reverse.iter.iter_swap]{\tcode{iter_swap}}
+\rSec5[range.reverse.iter.iter_swap]{\tcode{iter_swap}}
 \indexlibrary{\idxcode{reverse_iterator}!\idxcode{iter_swap}}%
 \indexlibrary{\idxcode{iter_swap}!\idxcode{reverse_iterator}}%
 \begin{itemdecl}
@@ -2723,16 +2286,16 @@ template <IndirectlySwappable<I> I2>
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to \tcode{\changed{ranges}{::std2}::iter_swap(prev(x.current), prev(y.current))}.
+\effects Equivalent to \tcode{ranges::iter_swap(prev(x.current), prev(y.current))}.
 
 \pnum
 \remarks The expression in \tcode{noexcept} is equivalent to:
 \begin{codeblock}
-  noexcept(@\changed{ranges}{::std2}@::iter_swap(declval<I>(), declval<I>())) && noexcept(--declval<I&>())
+  noexcept(ranges::iter_swap(declval<I>(), declval<I>())) && noexcept(--declval<I&>())
 \end{codeblock}
 \end{itemdescr}
 
-\rSec4[std2.reverse.iter.make]{Non-member function \tcode{make_reverse_iterator()}}
+\rSec5[range.reverse.iter.make]{Non-member function \tcode{make_reverse_iterator()}}
 
 \indexlibrary{\idxcode{reverse_iterator}!\idxcode{make_reverse_iterator}~non-member~function}
 \indexlibrary{\idxcode{make_reverse_iterator}}%
@@ -2747,7 +2310,7 @@ template <BidirectionalIterator I>
 \tcode{reverse_iterator<I>(i)}.
 \end{itemdescr}
 
-\rSec2[std2.iterators.insert]{Insert iterators}
+\rSec3[range.iterators.insert]{Insert iterators}
 
 \pnum
 To make it possible to deal with insertion in the same way as writing into an array, a special kind of iterator
@@ -2796,15 +2359,15 @@ and
 are three
 functions making the insert iterators out of a container.
 
-\rSec3[std2.back.insert.iterator]{Class template \tcode{back_insert_iterator}}
+\rSec4[range.back.insert.iterator]{Class template \tcode{back_insert_iterator}}
 
 \indexlibrary{\idxcode{back_insert_iterator}}%
 \begin{codeblock}
-namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { inline namespace v1 {
+namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace experimental \{ namespace ranges \{ inline namespace v1 \{}@
   template <class Container>
   class back_insert_iterator {
   public:
-    using container_type = Container;
+    using container_type  = Container;
     using difference_type = ptrdiff_t;
 
     constexpr back_insert_iterator();
@@ -2824,12 +2387,12 @@ namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { 
 
   template <class Container>
     back_insert_iterator<Container> back_inserter(Container& x);
-}}@\removed{\}\}}@
+}@\oldtxt{\}\}\}}@
 \end{codeblock}
 
-\rSec3[std2.back.insert.iter.ops]{\tcode{back_insert_iterator} operations}
+\rSec4[range.back.insert.iter.ops]{\tcode{back_insert_iterator} operations}
 
-\rSec4[std2.back.insert.iter.cons]{\tcode{back_insert_iterator} constructor}
+\rSec5[range.back.insert.iter.cons]{\tcode{back_insert_iterator} constructor}
 
 \indexlibrary{\idxcode{back_insert_iterator}!\idxcode{back_insert_iterator}}%
 \begin{itemdecl}
@@ -2857,7 +2420,7 @@ Initializes
 with \tcode{addressof(x)}.
 \end{itemdescr}
 
-\rSec4[std2.back.insert.iter.op=]{\tcode{back_insert_iterator::operator=}}
+\rSec5[range.back.insert.iter.op=]{\tcode{back_insert_iterator::operator=}}
 
 \indexlibrary{\idxcode{operator=}!\idxcode{back_insert_iterator}}%
 \begin{itemdecl}
@@ -2891,7 +2454,7 @@ back_insert_iterator&
 \tcode{*this}.
 \end{itemdescr}
 
-\rSec4[std2.back.insert.iter.op*]{\tcode{back_insert_iterator::operator*}}
+\rSec5[range.back.insert.iter.op*]{\tcode{back_insert_iterator::operator*}}
 
 \indexlibrary{\idxcode{operator*}!\idxcode{back_insert_iterator}}%
 \begin{itemdecl}
@@ -2904,7 +2467,7 @@ back_insert_iterator& operator*();
 \tcode{*this}.
 \end{itemdescr}
 
-\rSec4[std2.back.insert.iter.op++]{\tcode{back_insert_iterator::operator++}}
+\rSec5[range.back.insert.iter.op++]{\tcode{back_insert_iterator::operator++}}
 
 \indexlibrary{\idxcode{operator++}!\idxcode{back_insert_iterator}}%
 \begin{itemdecl}
@@ -2918,7 +2481,7 @@ back_insert_iterator operator++(int);
 \tcode{*this}.
 \end{itemdescr}
 
-\rSec4[std2.back.inserter]{ \tcode{back_inserter}}
+\rSec5[range.back.inserter]{ \tcode{back_inserter}}
 
 \indexlibrary{\idxcode{back_inserter}}%
 \begin{itemdecl}
@@ -2932,15 +2495,15 @@ template <class Container>
 \tcode{back_insert_iterator<Container>(x)}.
 \end{itemdescr}
 
-\rSec3[std2.front.insert.iterator]{Class template \tcode{front_insert_iterator}}
+\rSec4[range.front.insert.iterator]{Class template \tcode{front_insert_iterator}}
 
 \indexlibrary{\idxcode{front_insert_iterator}}%
 \begin{codeblock}
-namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { inline namespace v1 {
+namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace experimental \{ namespace ranges \{ inline namespace v1 \{}@
   template <class Container>
   class front_insert_iterator {
   public:
-    using container_type = Container;
+    using container_type  = Container;
     using difference_type = ptrdiff_t;
 
     constexpr front_insert_iterator();
@@ -2960,12 +2523,12 @@ namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { 
 
   template <class Container>
     front_insert_iterator<Container> front_inserter(Container& x);
-}}@\removed{\}\}}@
+}@\oldtxt{\}\}\}}@
 \end{codeblock}
 
-\rSec3[std2.front.insert.iter.ops]{\tcode{front_insert_iterator} operations}
+\rSec4[range.front.insert.iter.ops]{\tcode{front_insert_iterator} operations}
 
-\rSec4[std2.front.insert.iter.cons]{\tcode{front_insert_iterator} constructor}
+\rSec5[range.front.insert.iter.cons]{\tcode{front_insert_iterator} constructor}
 
 \indexlibrary{\idxcode{front_insert_iterator}!\idxcode{front_insert_iterator}}%
 \begin{itemdecl}
@@ -2992,7 +2555,7 @@ Initializes
 with \tcode{addressof(x)}.
 \end{itemdescr}
 
-\rSec4[std2.front.insert.iter.op=]{\tcode{front_insert_iterator::operator=}}
+\rSec5[range.front.insert.iter.op=]{\tcode{front_insert_iterator::operator=}}
 
 \indexlibrary{\idxcode{operator=}!\idxcode{front_insert_iterator}}%
 \begin{itemdecl}
@@ -3026,7 +2589,7 @@ front_insert_iterator&
 \tcode{*this}.
 \end{itemdescr}
 
-\rSec4[std2.front.insert.iter.op*]{\tcode{front_insert_iterator::operator*}}
+\rSec5[range.front.insert.iter.op*]{\tcode{front_insert_iterator::operator*}}
 
 \indexlibrary{\idxcode{operator*}!\idxcode{front_insert_iterator}}%
 \begin{itemdecl}
@@ -3039,7 +2602,7 @@ front_insert_iterator& operator*();
 \tcode{*this}.
 \end{itemdescr}
 
-\rSec4[std2.front.insert.iter.op++]{\tcode{front_insert_iterator::operator++}}
+\rSec5[range.front.insert.iter.op++]{\tcode{front_insert_iterator::operator++}}
 
 \indexlibrary{\idxcode{operator++}!\idxcode{front_insert_iterator}}%
 \begin{itemdecl}
@@ -3053,7 +2616,7 @@ front_insert_iterator operator++(int);
 \tcode{*this}.
 \end{itemdescr}
 
-\rSec4[std2.front.inserter]{\tcode{front_inserter}}
+\rSec5[range.front.inserter]{\tcode{front_inserter}}
 
 \indexlibrary{\idxcode{front_inserter}}%
 \begin{itemdecl}
@@ -3067,15 +2630,15 @@ template <class Container>
 \tcode{front_insert_iterator<Container>(x)}.
 \end{itemdescr}
 
-\rSec3[std2.insert.iterator]{Class template \tcode{insert_iterator}}
+\rSec4[range.insert.iterator]{Class template \tcode{insert_iterator}}
 
 \indexlibrary{\idxcode{insert_iterator}}%
 \begin{codeblock}
-namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { inline namespace v1 {
+namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace experimental \{ namespace ranges \{ inline namespace v1 \{}@
   template <class Container>
   class insert_iterator {
   public:
-    using container_type = Container;
+    using container_type  = Container;
     using difference_type = ptrdiff_t;
 
     insert_iterator();
@@ -3096,12 +2659,12 @@ namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { 
 
   template <class Container>
     insert_iterator<Container> inserter(Container& x, iterator_t<Container> i);
-}}@\removed{\}\}}@
+}@\oldtxt{\}\}\}}@
 \end{codeblock}
 
-\rSec3[std2.insert.iter.ops]{\tcode{insert_iterator} operations}
+\rSec4[range.insert.iter.ops]{\tcode{insert_iterator} operations}
 
-\rSec4[std2.insert.iter.cons]{\tcode{insert_iterator} constructor}
+\rSec5[range.insert.iter.cons]{\tcode{insert_iterator} constructor}
 
 \indexlibrary{\idxcode{insert_iterator}!\idxcode{insert_iterator}}%
 \begin{itemdecl}
@@ -3134,7 +2697,7 @@ with \tcode{addressof(x)} and
 with \tcode{i}.
 \end{itemdescr}
 
-\rSec4[std2.insert.iter.op=]{\tcode{insert_iterator::operator=}}
+\rSec5[range.insert.iter.op=]{\tcode{insert_iterator::operator=}}
 
 \indexlibrary{\idxcode{operator=}!\idxcode{insert_iterator}}%
 \begin{itemdecl}
@@ -3174,7 +2737,7 @@ iter = container->insert(iter, std::move(value));
 \tcode{*this}.
 \end{itemdescr}
 
-\rSec4[std2.insert.iter.op*]{\tcode{insert_iterator::operator*}}
+\rSec5[range.insert.iter.op*]{\tcode{insert_iterator::operator*}}
 
 \indexlibrary{\idxcode{operator*}!\idxcode{insert_iterator}}%
 \begin{itemdecl}
@@ -3187,7 +2750,7 @@ insert_iterator& operator*();
 \tcode{*this}.
 \end{itemdescr}
 
-\rSec4[std2.insert.iter.op++]{\tcode{insert_iterator::operator++}}
+\rSec5[range.insert.iter.op++]{\tcode{insert_iterator::operator++}}
 
 \indexlibrary{\idxcode{operator++}!\idxcode{insert_iterator}}%
 \begin{itemdecl}
@@ -3201,7 +2764,7 @@ insert_iterator& operator++(int);
 \tcode{*this}.
 \end{itemdescr}
 
-\rSec4[std2.inserter]{\tcode{inserter}}
+\rSec5[range.inserter]{\tcode{inserter}}
 
 \indexlibrary{\idxcode{inserter}}%
 \begin{itemdecl}
@@ -3215,9 +2778,9 @@ template <class Container>
 \tcode{insert_iterator<Container>(x, i)}.
 \end{itemdescr}
 
-\rSec2[std2.iterators.move]{Move iterators and sentinels}
+\rSec3[range.iterators.move]{Move iterators and sentinels}
 
-\rSec3[std2.move.iterator]{Class template \tcode{move_iterator}}
+\rSec4[range.move.iterator]{Class template \tcode{move_iterator}}
 
 \pnum
 Class template \tcode{move_iterator} is an iterator adaptor
@@ -3243,7 +2806,7 @@ vector<string> v2(make_move_iterator(s.begin()),
 
 \indexlibrary{\idxcode{move_iterator}}%
 \begin{codeblock}
-namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { inline namespace v1 {
+namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace experimental \{ namespace ranges \{ inline namespace v1 \{}@
   template <InputIterator I>
   class move_iterator {
   public:
@@ -3255,10 +2818,10 @@ namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { 
 
     constexpr move_iterator();
     explicit constexpr move_iterator(I i);
-    @\added{template <ConvertibleTo<I> U>}@
-      constexpr move_iterator(const move_iterator<@\changed{ConvertibleTo<I>}{U}@>& i);
-    @\added{template <ConvertibleTo<I> U>}@
-      constexpr move_iterator& operator=(const move_iterator<@\changed{ConvertibleTo<I>}{U}@>& i);
+    @\newtxt{template <ConvertibleTo<I> U>}@
+      constexpr move_iterator(const move_iterator<@\oldtxt{ConvertibleTo<I>}\newtxt{U}@>& i);
+    @\newtxt{template <ConvertibleTo<I> U>}@
+      constexpr move_iterator& operator=(const move_iterator<@\oldtxt{ConvertibleTo<I>}\newtxt{U}@>& i);
 
     constexpr I base() const;
     constexpr reference operator*() const;
@@ -3329,7 +2892,7 @@ namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { 
       const move_iterator<I>& x);
   template <InputIterator I>
     constexpr move_iterator<I> make_move_iterator(I i);
-}}@\removed{\}\}}@
+}@\oldtxt{\}\}\}}@
 \end{codeblock}
 
 \pnum
@@ -3337,9 +2900,9 @@ namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { 
 expression \tcode{\textit{i}->\textit{m}} may have different semantics than the expression
 \tcode{(*\textit{i}).\textit{m}} when the expression \tcode{*\textit{i}} is an rvalue.\exitnote
 
-\rSec3[std2.move.iter.ops]{\tcode{move_iterator} operations}
+\rSec4[range.move.iter.ops]{\tcode{move_iterator} operations}
 
-\rSec4[std2.move.iter.op.const]{\tcode{move_iterator} constructors}
+\rSec5[range.move.iter.op.const]{\tcode{move_iterator} constructors}
 
 \indexlibrary{\idxcode{move_iterator}!\idxcode{move_iterator}}%
 \begin{itemdecl}
@@ -3369,8 +2932,8 @@ explicit constexpr move_iterator(I i);
 
 \indexlibrary{\idxcode{move_iterator}!constructor}%
 \begin{itemdecl}
-@\added{template <ConvertibleTo<I> U>}@
-  constexpr move_iterator(const move_iterator<@\changed{ConvertibleTo<I>}{U}@>& i);
+@\newtxt{template <ConvertibleTo<I> U>}@
+  constexpr move_iterator(const move_iterator<@\oldtxt{ConvertibleTo<I>}\newtxt{U}@>& i);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3379,13 +2942,13 @@ explicit constexpr move_iterator(I i);
 \tcode{current} with \tcode{i.current}.
 \end{itemdescr}
 
-\rSec4[std2.move.iter.op=]{\tcode{move_iterator::operator=}}
+\rSec5[range.move.iter.op=]{\tcode{move_iterator::operator=}}
 
 \indexlibrary{\idxcode{operator=}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator=}}%
 \begin{itemdecl}
-@\added{template <ConvertibleTo<I> U>}@
-  constexpr move_iterator& operator=(const move_iterator<@\changed{ConvertibleTo<I>}{U}@>& i);
+@\newtxt{template <ConvertibleTo<I> U>}@
+  constexpr move_iterator& operator=(const move_iterator<@\oldtxt{ConvertibleTo<I>}\newtxt{U}@>& i);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3394,7 +2957,7 @@ explicit constexpr move_iterator(I i);
 \tcode{current}.
 \end{itemdescr}
 
-\rSec4[std2.move.iter.op.conv]{\tcode{move_iterator} conversion}
+\rSec5[range.move.iter.op.conv]{\tcode{move_iterator} conversion}
 
 \indexlibrary{\idxcode{base}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{base}}%
@@ -3407,7 +2970,7 @@ constexpr I base() const;
 \returns \tcode{current}.
 \end{itemdescr}
 
-\rSec4[std2.move.iter.op.star]{\tcode{move_iterator::operator*}}
+\rSec5[range.move.iter.op.star]{\tcode{move_iterator::operator*}}
 
 \indexlibrary{\idxcode{operator*}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator*}}%
@@ -3421,7 +2984,7 @@ constexpr reference operator*() const;
 \tcode{return iter_move(current);}
 \end{itemdescr}
 
-\rSec4[std2.move.iter.op.incr]{\tcode{move_iterator::operator++}}
+\rSec5[range.move.iter.op.incr]{\tcode{move_iterator::operator++}}
 
 \indexlibrary{\idxcode{operator++}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator++}}%
@@ -3463,7 +3026,7 @@ return tmp;
 \end{codeblock}
 \end{itemdescr}
 
-\rSec4[std2.move.iter.op.decr]{\tcode{move_iterator::operator-{-}}}
+\rSec5[range.move.iter.op.decr]{\tcode{move_iterator::operator-{-}}}
 
 \indexlibrary{\idxcode{operator\dcr}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator\dcr}}%
@@ -3497,7 +3060,7 @@ return tmp;
 \end{codeblock}
 \end{itemdescr}
 
-\rSec4[std2.move.iter.op.+]{\tcode{move_iterator::operator+}}
+\rSec5[range.move.iter.op.+]{\tcode{move_iterator::operator+}}
 
 \indexlibrary{\idxcode{operator+}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator+}}%
@@ -3512,7 +3075,7 @@ constexpr move_iterator operator+(difference_type n) const
 \tcode{return move_iterator(current + n);}
 \end{itemdescr}
 
-\rSec4[std2.move.iter.op.+=]{\tcode{move_iterator::operator+=}}
+\rSec5[range.move.iter.op.+=]{\tcode{move_iterator::operator+=}}
 
 \indexlibrary{\idxcode{operator+=}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator+=}}%
@@ -3529,7 +3092,7 @@ constexpr move_iterator& operator+=(difference_type n)
 \returns \tcode{*this}.
 \end{itemdescr}
 
-\rSec4[std2.move.iter.op.-]{\tcode{move_iterator::operator-}}
+\rSec5[range.move.iter.op.-]{\tcode{move_iterator::operator-}}
 
 \indexlibrary{\idxcode{operator-}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator-}}%
@@ -3544,7 +3107,7 @@ constexpr move_iterator operator-(difference_type n) const
 \tcode{return move_iterator(current - n);}
 \end{itemdescr}
 
-\rSec4[std2.move.iter.op.-=]{\tcode{move_iterator::operator-=}}
+\rSec5[range.move.iter.op.-=]{\tcode{move_iterator::operator-=}}
 
 \indexlibrary{\idxcode{operator-=}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator-=}}%
@@ -3561,7 +3124,7 @@ constexpr move_iterator& operator-=(difference_type n)
 \returns \tcode{*this}.
 \end{itemdescr}
 
-\rSec4[std2.move.iter.op.index]{\tcode{move_iterator::operator[]}}
+\rSec5[range.move.iter.op.index]{\tcode{move_iterator::operator[]}}
 
 \indexlibrary{\idxcode{operator[]}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator[]}}%
@@ -3576,7 +3139,7 @@ constexpr reference operator[](difference_type n) const
 \tcode{return iter_move(current + n);}
 \end{itemdescr}
 
-\rSec4[std2.move.iter.op.comp]{\tcode{move_iterator} comparisons}
+\rSec5[range.move.iter.op.comp]{\tcode{move_iterator} comparisons}
 
 \indexlibrary{\idxcode{operator==}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator==}}%
@@ -3668,7 +3231,7 @@ template <class I1, class I2>
 \tcode{return !(x < y);}.
 \end{itemdescr}
 
-\rSec4[std2.move.iter.nonmember]{\tcode{move_iterator} non-member functions}
+\rSec5[range.move.iter.nonmember]{\tcode{move_iterator} non-member functions}
 
 \indexlibrary{\idxcode{operator-}!\idxcode{move_iterator}}%
 \indexlibrary{\idxcode{move_iterator}!\idxcode{operator-}}%
@@ -3710,12 +3273,12 @@ friend constexpr rvalue_reference_t<I> iter_move(const move_iterator& i)
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to: \tcode{return \changed{ranges}{::std2}::iter_move(i.current);}
+\effects Equivalent to: \tcode{return ranges::iter_move(i.current);}
 
 \pnum
 \remarks The expression in \tcode{noexcept} is equivalent to:
 \begin{codeblock}
-noexcept(@\changed{ranges}{::std2}@::iter_move(i.current))
+noexcept(ranges::iter_move(i.current))
 \end{codeblock}
 \end{itemdescr}
 
@@ -3729,12 +3292,12 @@ template <IndirectlySwappable<I> I2>
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to: \tcode{\changed{ranges}{::std2}::iter_swap(x.current, y.current)}.
+\effects Equivalent to: \tcode{ranges::iter_swap(x.current, y.current)}.
 
 \pnum
 \remarks The expression in \tcode{noexcept} is equivalent to:
 \begin{codeblock}
-noexcept(@\changed{ranges}{::std2}@::iter_swap(x.current, y.current))
+noexcept(ranges::iter_swap(x.current, y.current))
 \end{codeblock}
 \end{itemdescr}
 
@@ -3749,7 +3312,7 @@ template <InputIterator I>
 \returns \tcode{move_iterator<I>(i)}.
 \end{itemdescr}
 
-\rSec3[std2.move.sentinel]{Class template \tcode{move_sentinel}}
+\rSec4[range.move.sentinel]{Class template \tcode{move_sentinel}}
 
 \pnum
 Class template \tcode{move_sentinel} is a sentinel adaptor useful for denoting
@@ -3775,16 +3338,16 @@ void move_if(I first, S last, O out, Pred pred)
 
 \indexlibrary{\idxcode{move_sentinel}}%
 \begin{codeblock}
-namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { inline namespace v1 {
+namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace experimental \{ namespace ranges \{ inline namespace v1 \{}@
   template <Semiregular S>
   class move_sentinel {
   public:
     constexpr move_sentinel();
     explicit move_sentinel(S s);
-    @\added{template <ConvertibleTo<S> U>}@
-      move_sentinel(const move_sentinel<@\changed{ConvertibleTo<S>}{U}@>& s);
-    @\added{template <ConvertibleTo<S> U>}@
-      move_sentinel& operator=(const move_sentinel<@\changed{ConvertibleTo<S>}{U}@>& s);
+    @\newtxt{template <ConvertibleTo<S> U>}@
+      move_sentinel(const move_sentinel<@\oldtxt{ConvertibleTo<S>}\newtxt{U}@>& s);
+    @\newtxt{template <ConvertibleTo<S> U>}@
+      move_sentinel& operator=(const move_sentinel<@\oldtxt{ConvertibleTo<S>}\newtxt{U}@>& s);
 
     S base() const;
 
@@ -3814,12 +3377,12 @@ namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { 
 
   template <Semiregular S>
     constexpr move_sentinel<S> make_move_sentinel(S s);
-}}@\removed{\}\}}@
+}@\oldtxt{\}\}\}}@
 \end{codeblock}
 
-\rSec3[std2.move.sent.ops]{\tcode{move_sentinel} operations}
+\rSec4[range.move.sent.ops]{\tcode{move_sentinel} operations}
 
-\rSec4[std2.move.sent.op.const]{\tcode{move_sentinel} constructors}
+\rSec5[range.move.sent.op.const]{\tcode{move_sentinel} constructors}
 
 \indexlibrary{\idxcode{move_sentinel}!\idxcode{move_sentinel}}%
 \begin{itemdecl}
@@ -3829,7 +3392,7 @@ constexpr move_sentinel();
 \begin{itemdescr}
 \pnum
 \effects Constructs a \tcode{move_sentinel}, value-initializing
-\tcode{last}. If \tcode{is_\-trivially_\-default_\-constr\-uct\-ible\-\added{_v}<\brk{}S>\removed{::value}} is \tcode{true}, then this constructor
+\tcode{last}. If \tcode{is_\-trivially_\-default_\-constr\-uct\-ible\-\newtxt{_v}<\brk{}S>\oldtxt{::value}} is \tcode{true}, then this constructor
 is a \tcode{constexpr} constructor.
 \end{itemdescr}
 
@@ -3846,8 +3409,8 @@ explicit move_sentinel(S s);
 
 \indexlibrary{\idxcode{move_sentinel}!constructor}%
 \begin{itemdecl}
-@\added{template <ConvertibleTo<S> U>}@
-  move_sentinel(const move_sentinel<@\changed{ConvertibleTo<S>}{U}@>& s);
+@\newtxt{template <ConvertibleTo<S> U>}@
+  move_sentinel(const move_sentinel<@\oldtxt{ConvertibleTo<S>}\newtxt{U}@>& s);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3856,13 +3419,13 @@ explicit move_sentinel(S s);
 \tcode{last} with \tcode{s.last}.
 \end{itemdescr}
 
-\rSec4[std2.move.sent.op=]{\tcode{move_sentinel::operator=}}
+\rSec5[range.move.sent.op=]{\tcode{move_sentinel::operator=}}
 
 \indexlibrary{\idxcode{operator=}!\idxcode{move_sentinel}}%
 \indexlibrary{\idxcode{move_sentinel}!\idxcode{operator=}}%
 \begin{itemdecl}
-@\added{template <ConvertibleTo<S> U>}@
-  move_sentinel& operator=(const move_sentinel<@\changed{ConvertibleTo<S>}{U}@>& s);
+@\newtxt{template <ConvertibleTo<S> U>}@
+  move_sentinel& operator=(const move_sentinel<@\oldtxt{ConvertibleTo<S>}\newtxt{U}@>& s);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3873,7 +3436,7 @@ explicit move_sentinel(S s);
 \returns \tcode{*this}.
 \end{itemdescr}
 
-\rSec4[std2.move.sent.op.comp]{\tcode{move_sentinel} comparisons}
+\rSec5[range.move.sent.op.comp]{\tcode{move_sentinel} comparisons}
 
 \indexlibrary{\idxcode{operator==}!\idxcode{move_sentinel}}%
 \indexlibrary{\idxcode{move_sentinel}!\idxcode{operator==}}%
@@ -3907,7 +3470,7 @@ template <class I, Sentinel<I> S>
 \effects Equivalent to: \tcode{return !(i == s);}
 \end{itemdescr}
 
-\rSec4[std2.move.sent.nonmember]{\tcode{move_sentinel} non-member functions}
+\rSec5[range.move.sent.nonmember]{\tcode{move_sentinel} non-member functions}
 
 \indexlibrary{\idxcode{operator-}!\idxcode{move_sentinel}}%
 \indexlibrary{\idxcode{move_sentinel}!\idxcode{operator-}}%
@@ -3944,7 +3507,7 @@ template <Semiregular S>
 \returns \tcode{move_sentinel<S>(s)}.
 \end{itemdescr}
 
-\rSec2[std2.iterators.common]{Common iterators}
+\rSec3[range.iterators.common]{Common iterators}
 
 \ednote{TODO: respecify this in terms of \tcode{std::variant}.}
 
@@ -3976,11 +3539,11 @@ fun(CI(make_counted_iterator(s.begin(), 10)),
 \end{codeblock}
 \exitexample
 
-\rSec3[std2.common.iterator]{Class template \tcode{common_iterator}}
+\rSec4[range.common.iterator]{Class template \tcode{common_iterator}}
 
 \indexlibrary{\idxcode{common_iterator}}%
 \begin{codeblock}
-namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { inline namespace v1 {
+namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace experimental \{ namespace ranges \{ inline namespace v1 \{}@
   template <Iterator I, Sentinel<I> S>
     requires !Same<I, S>
   class common_iterator {
@@ -3990,12 +3553,12 @@ namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { 
     constexpr common_iterator();
     constexpr common_iterator(I i);
     constexpr common_iterator(S s);
-    @\removed{constexpr common_iterator(const common_iterator<ConvertibleTo<I>, ConvertibleTo<S>>\& u);}@
-    @\added{template <ConvertibleTo<I> II, ConvertibleTo<S> SS>}@
-      @\added{constexpr common_iterator(const common_iterator<II, SS>\& u);}@
-    @\removed{common_iterator\& operator=(const common_iterator<ConvertibleTo<I>, ConvertibleTo<S>>\& u);}@
-    @\added{template <ConvertibleTo<I> II, ConvertibleTo<S> SS>}@
-      @\added{common_iterator\& operator=(const common_iterator<II, SS>\& u);}@
+    @\oldtxt{constexpr common_iterator(const common_iterator<ConvertibleTo<I>, ConvertibleTo<S>>\& u);}@
+    @\newtxt{template <ConvertibleTo<I> II, ConvertibleTo<S> SS>}@
+      @\newtxt{constexpr common_iterator(const common_iterator<II, SS>\& u);}@
+    @\oldtxt{common_iterator\& operator=(const common_iterator<ConvertibleTo<I>, ConvertibleTo<S>>\& u);}@
+    @\newtxt{template <ConvertibleTo<I> II, ConvertibleTo<S> SS>}@
+      @\newtxt{common_iterator\& operator=(const common_iterator<II, SS>\& u);}@
 
     decltype(auto) operator*();
     decltype(auto) operator*() const
@@ -4050,12 +3613,12 @@ namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { 
   template <class I2, SizedSentinel<I2> I1, SizedSentinel<I2> S1, SizedSentinel<I1> S2>
   difference_type_t<I2> operator-(
     const common_iterator<I1, S1>& x, const common_iterator<I2, S2>& y);
-}}@\removed{\}\}}@
+}@\oldtxt{\}\}\}}@
 \end{codeblock}
 
-\rSec3[std2.common.iter.ops]{\tcode{common_iterator} operations}
+\rSec4[range.common.iter.ops]{\tcode{common_iterator} operations}
 
-\rSec4[std2.common.iter.op.const]{\tcode{common_iterator} constructors}
+\rSec5[range.common.iter.op.const]{\tcode{common_iterator} constructors}
 
 \indexlibrary{\idxcode{common_iterator}!\idxcode{common_iterator}}%
 \begin{itemdecl}
@@ -4097,9 +3660,9 @@ initializing \tcode{sentinel} with \tcode{s}.
 
 \indexlibrary{\idxcode{common_iterator}!constructor}%
 \begin{itemdecl}
-@\removed{constexpr common_iterator(const common_iterator<ConvertibleTo<I>, ConvertibleTo<S>>\& u);}@
-@\added{template <ConvertibleTo<I> II, ConvertibleTo<S> SS>}@
-  @\added{constexpr common_iterator(const common_iterator<II, SS>\& u);}@
+@\oldtxt{constexpr common_iterator(const common_iterator<ConvertibleTo<I>, ConvertibleTo<S>>\& u);}@
+@\newtxt{template <ConvertibleTo<I> II, ConvertibleTo<S> SS>}@
+  @\newtxt{constexpr common_iterator(const common_iterator<II, SS>\& u);}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4109,14 +3672,14 @@ with \tcode{u.is_sentinel}, \tcode{iter} with \tcode{u.iter}, and \tcode{sentine
 with \tcode{u.sentinel}.
 \end{itemdescr}
 
-\rSec4[std2.common.iter.op=]{\tcode{common_iterator::operator=}}
+\rSec5[range.common.iter.op=]{\tcode{common_iterator::operator=}}
 
 \indexlibrary{\idxcode{operator=}!\idxcode{common_iterator}}%
 \indexlibrary{\idxcode{common_iterator}!\idxcode{operator=}}%
 \begin{itemdecl}
-    @\removed{common_iterator\& operator=(const common_iterator<ConvertibleTo<I>, ConvertibleTo<S>>\& u);}@
-    @\added{template <ConvertibleTo<I> II, ConvertibleTo<S> SS>}@
-      @\added{common_iterator\& operator=(const common_iterator<II, SS>\& u);}@
+    @\oldtxt{common_iterator\& operator=(const common_iterator<ConvertibleTo<I>, ConvertibleTo<S>>\& u);}@
+    @\newtxt{template <ConvertibleTo<I> II, ConvertibleTo<S> SS>}@
+      @\newtxt{common_iterator\& operator=(const common_iterator<II, SS>\& u);}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4128,7 +3691,7 @@ with \tcode{u.sentinel}.
 \returns \tcode{*this}
 \end{itemdescr}
 
-\rSec4[std2.common.iter.op.star]{\tcode{common_iterator::operator*}}
+\rSec5[range.common.iter.op.star]{\tcode{common_iterator::operator*}}
 
 \indexlibrary{\idxcode{operator*}!\idxcode{common_iterator}}%
 \indexlibrary{\idxcode{common_iterator}!\idxcode{operator*}}%
@@ -4146,7 +3709,7 @@ decltype(auto) operator*() const
 \effects Equivalent to: \tcode{return *iter;}
 \end{itemdescr}
 
-\rSec4[std2.common.iter.op.ref]{\tcode{common_iterator::operator->}}
+\rSec5[range.common.iter.op.ref]{\tcode{common_iterator::operator->}}
 
 \indexlibrary{\idxcode{operator->}!\idxcode{common_iterator}}%
 \indexlibrary{\idxcode{common_iterator}!\idxcode{operator->}}%
@@ -4193,13 +3756,13 @@ The expression in the requires clause is equivalent to:
 \begin{codeblock}
 Readable<const I> &&
   (requires(const I& i) { i.operator->(); } ||
-   is_reference@\added{_v}@<reference_t<I>>@\removed{::value}@ ||
+   is_reference@\newtxt{_v}@<reference_t<I>>@\oldtxt{::value}@ ||
    Constructible<value_type_t<I>, reference_t<I>>)
 \end{codeblock}
 \end{itemdescr}
 
 
-\rSec4[std2.common.iter.op.incr]{\tcode{common_iterator::operator++}}
+\rSec5[range.common.iter.op.incr]{\tcode{common_iterator::operator++}}
 
 \indexlibrary{\idxcode{operator++}!\idxcode{common_iterator}}%
 \indexlibrary{\idxcode{common_iterator}!\idxcode{operator++}}%
@@ -4250,7 +3813,7 @@ return tmp;
 \end{codeblock}
 \end{itemdescr}
 
-\rSec4[std2.common.iter.op.comp]{\tcode{common_iterator} comparisons}
+\rSec5[range.common.iter.op.comp]{\tcode{common_iterator} comparisons}
 
 \indexlibrary{\idxcode{operator==}!\idxcode{common_iterator}}%
 \indexlibrary{\idxcode{common_iterator}!\idxcode{operator==}}%
@@ -4325,7 +3888,7 @@ difference_type_t<I2> operator-(
 \end{codeblock}
 \end{itemdescr}
 
-\rSec4[std2.common.iter.op.iter_move]{\tcode{iter_move}}
+\rSec5[range.common.iter.op.iter_move]{\tcode{iter_move}}
 
 \indexlibrary{\idxcode{iter_move}!\idxcode{common_iterator}}%
 \indexlibrary{\idxcode{common_iterator}!\idxcode{iter_move}}%
@@ -4340,16 +3903,16 @@ friend rvalue_reference_t<I> iter_move(const common_iterator& i)
 \requires \tcode{!i.is_sentinel}.
 
 \pnum
-\effects Equivalent to: \tcode{return \changed{ranges}{::std2}::iter_move(i.iter);}
+\effects Equivalent to: \tcode{return ranges::iter_move(i.iter);}
 
 \pnum
 \remarks The expression in \tcode{noexcept} is equivalent to:
 \begin{codeblock}
-noexcept(@\changed{ranges}{::std2}@::iter_move(i.iter))
+noexcept(ranges::iter_move(i.iter))
 \end{codeblock}
 \end{itemdescr}
 
-\rSec4[std2.common.iter.op.iter_swap]{\tcode{iter_swap}}
+\rSec5[range.common.iter.op.iter_swap]{\tcode{iter_swap}}
 
 \indexlibrary{\idxcode{iter_swap}!\idxcode{common_iterator}}%
 \indexlibrary{\idxcode{common_iterator}!\idxcode{iter_swap}}%
@@ -4364,35 +3927,35 @@ template <IndirectlySwappable<I> I2>
 \requires \tcode{!x.is_sentinel \&\& !y.is_sentinel}.
 
 \pnum
-\effects Equivalent to \tcode{\changed{ranges}{::std2}::iter_swap(x.iter, y.iter)}.
+\effects Equivalent to \tcode{ranges::iter_swap(x.iter, y.iter)}.
 
 \pnum
 \remarks The expression in \tcode{noexcept} is equivalent to:
 \begin{codeblock}
-noexcept(@\changed{ranges}{::std2}@::iter_swap(x.iter, y.iter))
+noexcept(ranges::iter_swap(x.iter, y.iter))
 \end{codeblock}
 \end{itemdescr}
 
 
-\rSec2[std2.default.sentinels]{Default sentinels}
+\rSec3[range.default.sentinels]{Default sentinels}
 
-\rSec3[std2.default.sent]{Class \tcode{default_sentinel}}
+\rSec4[range.default.sent]{Class \tcode{default_sentinel}}
 
 \indexlibrary{\idxcode{default_sentinel}}%
 \begin{itemdecl}
-namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { inline namespace v1 {
+namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace experimental \{ namespace ranges \{ inline namespace v1 \{}@
   class default_sentinel { };
-}}@\removed{\}\}}@
+}@\oldtxt{\}\}\}}@
 \end{itemdecl}
 
 \pnum
 Class \tcode{default_sentinel} is an empty type used to denote the end of a
 range. It is intended to be used together with iterator types that know the bound
-of their range (e.g., \tcode{counted_iterator}~(\ref{std2.counted.iterator})).
+of their range (e.g., \tcode{counted_iterator}~(\ref{range.counted.iterator})).
 
-\rSec2[std2.iterators.counted]{Counted iterators}
+\rSec3[range.iterators.counted]{Counted iterators}
 
-\rSec3[std2.counted.iterator]{Class template \tcode{counted_iterator}}
+\rSec4[range.counted.iterator]{Class template \tcode{counted_iterator}}
 
 \pnum
 Class template \tcode{counted_iterator} is an iterator adaptor
@@ -4421,19 +3984,19 @@ and \tcode{next(\brk{}i2.\brk{}base(), i2.count())} refer to the same (possibly 
 
 \indexlibrary{\idxcode{counted_iterator}}%
 \begin{codeblock}
-namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { inline namespace v1 {
+namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace experimental \{ namespace ranges \{ inline namespace v1 \{}@
   template <Iterator I>
   class counted_iterator {
   public:
-    using iterator_type = I;
+    using iterator_type   = I;
     using difference_type = difference_type_t<I>;
 
     constexpr counted_iterator();
     constexpr counted_iterator(I x, difference_type_t<I> n);
-    @\added{template <ConvertibleTo<I> U>}@
-      constexpr counted_iterator(const counted_iterator<@\changed{ConvertibleTo<I>}{U}@>& i);
-    @\added{template <ConvertibleTo<I> U>}@
-      constexpr counted_iterator& operator=(const counted_iterator<@\changed{ConvertibleTo<I>}{U}@>& i);
+    @\newtxt{template <ConvertibleTo<I> U>}@
+      constexpr counted_iterator(const counted_iterator<@\oldtxt{ConvertibleTo<I>}\newtxt{U}@>& i);
+    @\newtxt{template <ConvertibleTo<I> U>}@
+      constexpr counted_iterator& operator=(const counted_iterator<@\oldtxt{ConvertibleTo<I>}\newtxt{U}@>& i);
 
     constexpr I base() const;
     constexpr difference_type_t<I> count() const;
@@ -4487,23 +4050,23 @@ namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { 
       requires Common<I1, I2>
     constexpr bool operator==(
       const counted_iterator<I1>& x, const counted_iterator<I2>& y);
-  @\added{template <class I>}@
+  @\newtxt{template <class I>}@
     constexpr bool operator==(
-      const counted_iterator<@\changed{auto}{I}@>& x, default_sentinel);
-  @\added{template <class I>}@
+      const counted_iterator<@\oldtxt{auto}\newtxt{I}@>& x, default_sentinel);
+  @\newtxt{template <class I>}@
     constexpr bool operator==(
-      default_sentinel, const counted_iterator<@\changed{auto}{I}@>& x);
+      default_sentinel, const counted_iterator<@\oldtxt{auto}\newtxt{I}@>& x);
 
   template <class I1, class I2>
       requires Common<I1, I2>
     constexpr bool operator!=(
       const counted_iterator<I1>& x, const counted_iterator<I2>& y);
-  @\added{template <class I>}@
+  @\newtxt{template <class I>}@
       constexpr bool operator!=(
-      const counted_iterator<@\changed{auto}{I}@>& x, default_sentinel y);
-  @\added{template <class I>}@
+      const counted_iterator<@\oldtxt{auto}\newtxt{I}@>& x, default_sentinel y);
+  @\newtxt{template <class I>}@
     constexpr bool operator!=(
-      default_sentinel x, const counted_iterator<@\changed{auto}{I}@>& y);
+      default_sentinel x, const counted_iterator<@\oldtxt{auto}\newtxt{I}@>& y);
 
   template <class I1, class I2>
       requires Common<I1, I2>
@@ -4538,12 +4101,12 @@ namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { 
 
   template <Iterator I>
     constexpr counted_iterator<I> make_counted_iterator(I i, difference_type_t<I> n);
-}}@\removed{\}\}}@
+}@\oldtxt{\}\}\}}@
 \end{codeblock}
 
-\rSec3[std2.counted.iter.ops]{\tcode{counted_iterator} operations}
+\rSec4[range.counted.iter.ops]{\tcode{counted_iterator} operations}
 
-\rSec4[std2.counted.iter.op.const]{\tcode{counted_iterator} constructors}
+\rSec5[range.counted.iter.op.const]{\tcode{counted_iterator} constructors}
 
 \indexlibrary{\idxcode{counted_iterator}!\idxcode{counted_iterator}}%
 \begin{itemdecl}
@@ -4574,8 +4137,8 @@ constexpr counted_iterator(I i, difference_type_t<I> n);
 
 \indexlibrary{\idxcode{counted_iterator}!constructor}%
 \begin{itemdecl}
-@\added{template <ConvertibleTo<I> U>}@
-  constexpr counted_iterator(const counted_iterator<@\changed{ConvertibleTo<I>}{U}@>& i);
+@\newtxt{template <ConvertibleTo<I> U>}@
+  constexpr counted_iterator(const counted_iterator<@\oldtxt{ConvertibleTo<I>}\newtxt{U}@>& i);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4584,13 +4147,13 @@ constexpr counted_iterator(I i, difference_type_t<I> n);
 \tcode{current} with \tcode{i.current} and \tcode{cnt} with \tcode{i.cnt}.
 \end{itemdescr}
 
-\rSec4[std2.counted.iter.op=]{\tcode{counted_iterator::operator=}}
+\rSec5[range.counted.iter.op=]{\tcode{counted_iterator::operator=}}
 
 \indexlibrary{\idxcode{operator=}!\idxcode{counted_iterator}}%
 \indexlibrary{\idxcode{counted_iterator}!\idxcode{operator=}}%
 \begin{itemdecl}
-@\added{template <ConvertibleTo<I> U>}@
-  constexpr counted_iterator& operator=(const counted_iterator<@\changed{ConvertibleTo<I>}{U}@>& i);
+@\newtxt{template <ConvertibleTo<I> U>}@
+  constexpr counted_iterator& operator=(const counted_iterator<@\oldtxt{ConvertibleTo<I>}\newtxt{U}@>& i);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4600,7 +4163,7 @@ constexpr counted_iterator(I i, difference_type_t<I> n);
 
 \end{itemdescr}
 
-\rSec4[std2.counted.iter.op.conv]{\tcode{counted_iterator} conversion}
+\rSec5[range.counted.iter.op.conv]{\tcode{counted_iterator} conversion}
 
 \indexlibrary{\idxcode{base}!\idxcode{counted_iterator}}%
 \indexlibrary{\idxcode{counted_iterator}!\idxcode{base}}%
@@ -4613,7 +4176,7 @@ constexpr I base() const;
 \returns \tcode{current}.
 \end{itemdescr}
 
-\rSec4[std2.counted.iter.op.cnt]{\tcode{counted_iterator} count}
+\rSec5[range.counted.iter.op.cnt]{\tcode{counted_iterator} count}
 
 \indexlibrary{\idxcode{count}!\idxcode{counted_iterator}}%
 \indexlibrary{\idxcode{counted_iterator}!\idxcode{count}}%
@@ -4626,7 +4189,7 @@ constexpr difference_type_t<I> count() const;
 \returns \tcode{cnt}.
 \end{itemdescr}
 
-\rSec4[std2.counted.iter.op.star]{\tcode{counted_iterator::operator*}}
+\rSec5[range.counted.iter.op.star]{\tcode{counted_iterator::operator*}}
 
 \indexlibrary{\idxcode{operator*}!\idxcode{counted_iterator}}%
 \indexlibrary{\idxcode{counted_iterator}!\idxcode{operator*}}%
@@ -4642,7 +4205,7 @@ constexpr decltype(auto) operator*() const
 \tcode{return *current;}
 \end{itemdescr}
 
-\rSec4[std2.counted.iter.op.incr]{\tcode{counted_iterator::operator++}}
+\rSec5[range.counted.iter.op.incr]{\tcode{counted_iterator::operator++}}
 
 \indexlibrary{\idxcode{operator++}!\idxcode{counted_iterator}}%
 \indexlibrary{\idxcode{counted_iterator}!\idxcode{operator++}}%
@@ -4702,7 +4265,7 @@ return tmp;
 \end{codeblock}
 \end{itemdescr}
 
-\rSec4[std2.counted.iter.op.decr]{\tcode{counted_iterator::operator-{-}}}
+\rSec5[range.counted.iter.op.decr]{\tcode{counted_iterator::operator-{-}}}
 
 \indexlibrary{\idxcode{operator\dcr}!\idxcode{counted_iterator}}%
 \indexlibrary{\idxcode{counted_iterator}!\idxcode{operator\dcr}}%
@@ -4740,7 +4303,7 @@ return tmp;
 \end{codeblock}
 \end{itemdescr}
 
-\rSec4[std2.counted.iter.op.+]{\tcode{counted_iterator::operator+}}
+\rSec5[range.counted.iter.op.+]{\tcode{counted_iterator::operator+}}
 
 \indexlibrary{\idxcode{operator+}!\idxcode{counted_iterator}}%
 \indexlibrary{\idxcode{counted_iterator}!\idxcode{operator+}}%
@@ -4758,7 +4321,7 @@ return tmp;
 \tcode{return counted_iterator(current + n, cnt - n);}
 \end{itemdescr}
 
-\rSec4[std2.counted.iter.op.+=]{\tcode{counted_iterator::operator+=}}
+\rSec5[range.counted.iter.op.+=]{\tcode{counted_iterator::operator+=}}
 
 \indexlibrary{\idxcode{operator+=}!\idxcode{counted_iterator}}%
 \indexlibrary{\idxcode{counted_iterator}!\idxcode{operator+=}}%
@@ -4782,7 +4345,7 @@ cnt -= n;
 \returns \tcode{*this}.
 \end{itemdescr}
 
-\rSec4[std2.counted.iter.op.-]{\tcode{counted_iterator::operator-}}
+\rSec5[range.counted.iter.op.-]{\tcode{counted_iterator::operator-}}
 
 \indexlibrary{\idxcode{operator-}!\idxcode{counted_iterator}}%
 \indexlibrary{\idxcode{counted_iterator}!\idxcode{operator-}}%
@@ -4800,7 +4363,7 @@ cnt -= n;
 \tcode{return counted_iterator(current - n, cnt + n);}
 \end{itemdescr}
 
-\rSec4[std2.counted.iter.op.-=]{\tcode{counted_iterator::operator-=}}
+\rSec5[range.counted.iter.op.-=]{\tcode{counted_iterator::operator-=}}
 
 \indexlibrary{\idxcode{operator-=}!\idxcode{counted_iterator}}%
 \indexlibrary{\idxcode{counted_iterator}!\idxcode{operator-=}}%
@@ -4824,7 +4387,7 @@ cnt += n;
 \returns \tcode{*this}.
 \end{itemdescr}
 
-\rSec4[std2.counted.iter.op.index]{\tcode{counted_iterator::operator[]}}
+\rSec5[range.counted.iter.op.index]{\tcode{counted_iterator::operator[]}}
 
 \indexlibrary{\idxcode{operator[]}!\idxcode{counted_iterator}}%
 \indexlibrary{\idxcode{counted_iterator}!\idxcode{operator[]}}%
@@ -4842,7 +4405,7 @@ cnt += n;
 \tcode{return current[n];}
 \end{itemdescr}
 
-\rSec4[std2.counted.iter.op.comp]{\tcode{counted_iterator} comparisons}
+\rSec5[range.counted.iter.op.comp]{\tcode{counted_iterator} comparisons}
 
 \indexlibrary{\idxcode{operator==}!\idxcode{counted_iterator}}%
 \indexlibrary{\idxcode{counted_iterator}!\idxcode{operator==}}%
@@ -4856,7 +4419,7 @@ template <class I1, class I2>
 \begin{itemdescr}
 \pnum
 \requires \tcode{x} and {y} shall refer to elements of the same
-sequence~(\ref{std2.iterators.counted}).
+sequence~(\ref{range.iterators.counted}).
 
 \pnum
 \effects Equivalent to:
@@ -4864,12 +4427,12 @@ sequence~(\ref{std2.iterators.counted}).
 \end{itemdescr}
 
 \begin{itemdecl}
-@\added{template <class I>}@
+@\newtxt{template <class I>}@
   constexpr bool operator==(
-    const counted_iterator<@\changed{auto}{I}@>& x, default_sentinel);
-@\added{template <class I>}@
+    const counted_iterator<@\oldtxt{auto}\newtxt{I}@>& x, default_sentinel);
+@\newtxt{template <class I>}@
   constexpr bool operator==(
-    default_sentinel, const counted_iterator<@\changed{auto}{I}@>& x);
+    default_sentinel, const counted_iterator<@\oldtxt{auto}\newtxt{I}@>& x);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4885,18 +4448,18 @@ template <class I1, class I2>
     requires Common<I1, I2>
   constexpr bool operator!=(
     const counted_iterator<I1>& x, const counted_iterator<I2>& y);
-@\added{template <class I>}@
+@\newtxt{template <class I>}@
   constexpr bool operator!=(
-    const counted_iterator<@\changed{auto}{I}@>& x, default_sentinel);
-@\added{template <class I>}@
+    const counted_iterator<@\oldtxt{auto}\newtxt{I}@>& x, default_sentinel);
+@\newtxt{template <class I>}@
   constexpr bool operator!=(
-    default_sentinel, const counted_iterator<@\changed{auto}{I}@>& x);
+    default_sentinel, const counted_iterator<@\oldtxt{auto}\newtxt{I}@>& x);
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
 \requires For the first overload, \tcode{x} and {y} shall refer to
-elements of the same sequence~(\ref{std2.iterators.counted}).
+elements of the same sequence~(\ref{range.iterators.counted}).
 
 \pnum
 \effects Equivalent to:
@@ -4915,7 +4478,7 @@ template <class I1, class I2>
 \begin{itemdescr}
 \pnum
 \requires \tcode{x} and {y} shall refer to
-elements of the same sequence~(\ref{std2.iterators.counted}).
+elements of the same sequence~(\ref{range.iterators.counted}).
 
 \pnum
 \effects Equivalent to:
@@ -4939,7 +4502,7 @@ template <class I1, class I2>
 \begin{itemdescr}
 \pnum
 \requires \tcode{x} and {y} shall refer to
-elements of the same sequence~(\ref{std2.iterators.counted}).
+elements of the same sequence~(\ref{range.iterators.counted}).
 
 \pnum
 \effects Equivalent to:
@@ -4958,7 +4521,7 @@ template <class I1, class I2>
 \begin{itemdescr}
 \pnum
 \requires \tcode{x} and {y} shall refer to
-elements of the same sequence~(\ref{std2.iterators.counted}).
+elements of the same sequence~(\ref{range.iterators.counted}).
 
 \pnum
 \effects Equivalent to:
@@ -4977,14 +4540,14 @@ template <class I1, class I2>
 \begin{itemdescr}
 \pnum
 \requires \tcode{x} and {y} shall refer to
-elements of the same sequence~(\ref{std2.iterators.counted}).
+elements of the same sequence~(\ref{range.iterators.counted}).
 
 \pnum
 \effects Equivalent to:
 \tcode{return !(x < y);}
 \end{itemdescr}
 
-\rSec4[std2.counted.iter.nonmember]{\tcode{counted_iterator} non-member functions}
+\rSec5[range.counted.iter.nonmember]{\tcode{counted_iterator} non-member functions}
 
 \indexlibrary{\idxcode{operator-}!\idxcode{counted_iterator}}%
 \indexlibrary{\idxcode{counted_iterator}!\idxcode{operator-}}%
@@ -4998,7 +4561,7 @@ elements of the same sequence~(\ref{std2.iterators.counted}).
 \begin{itemdescr}
 \pnum
 \requires \tcode{x} and {y} shall refer to
-elements of the same sequence~(\ref{std2.iterators.counted}).
+elements of the same sequence~(\ref{range.iterators.counted}).
 
 \pnum
 \effects Equivalent to:
@@ -5056,12 +4619,12 @@ friend constexpr rvalue_reference_t<I> iter_move(const counted_iterator& i)
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to: \tcode{return \changed{ranges}{::std2}::iter_move(i.current);}
+\effects Equivalent to: \tcode{return ranges::iter_move(i.current);}
 
 \pnum
 \remarks The expression in \tcode{noexcept} is equivalent to:
 \begin{codeblock}
-noexcept(@\changed{ranges}{::std2}@::iter_move(i.current))
+noexcept(ranges::iter_move(i.current))
 \end{codeblock}
 \end{itemdescr}
 
@@ -5075,12 +4638,12 @@ template <IndirectlySwappable<I> I2>
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to \tcode{\changed{ranges}{::std2}::iter_swap(x.current, y.current)}.
+\effects Equivalent to \tcode{ranges::iter_swap(x.current, y.current)}.
 
 \pnum
 \remarks The expression in \tcode{noexcept} is equivalent to:
 \begin{codeblock}
-noexcept(@\changed{ranges}{::std2}@::iter_swap(x.current, y.current))
+noexcept(ranges::iter_swap(x.current, y.current))
 \end{codeblock}
 \end{itemdescr}
 
@@ -5098,11 +4661,9 @@ template <Iterator I>
 \returns \tcode{counted_iterator<I>(i, n)}.
 \end{itemdescr}
 
-\ednote{\tcode{dangling} has been moved to the ``Ranges library'' subclause.}
+\rSec3[range.unreachable.sentinels]{Unreachable sentinel}
 
-\rSec2[std2.unreachable.sentinels]{Unreachable sentinel}
-
-\rSec3[std2.unreachable.sentinel]{Class \tcode{unreachable}}
+\rSec4[range.unreachable.sentinel]{Class \tcode{unreachable}}
 
 \pnum
 \indexlibrary{\idxcode{unreachable}}%
@@ -5123,7 +4684,7 @@ the sentinel does not require a conditional branch.
 \exitexample
 
 \begin{codeblock}
-namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { inline namespace v1 {
+namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace experimental \{ namespace ranges \{ inline namespace v1 \{}@
   class unreachable { };
 
   template <Iterator I>
@@ -5134,12 +4695,12 @@ namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { 
     constexpr bool operator!=(const I&, unreachable) noexcept;
   template <Iterator I>
     constexpr bool operator!=(unreachable, const I&) noexcept;
-}}@\removed{\}\}}@
+}@\oldtxt{\}\}\}}@
 \end{codeblock}
 
-\rSec3[std2.unreachable.sentinel.ops]{\tcode{unreachable} operations}
+\rSec4[range.unreachable.sentinel.ops]{\tcode{unreachable} operations}
 
-\rSec4[std2.unreachable.sentinel.op==]{\tcode{operator==}}
+\rSec5[range.unreachable.sentinel.op==]{\tcode{operator==}}
 
 \indexlibrary{\idxcode{operator==}!\idxcode{unreachable}}%
 \indexlibrary{\idxcode{unreachable}!\idxcode{operator==}}%
@@ -5155,7 +4716,7 @@ template <Iterator I>
 \returns \tcode{false}.
 \end{itemdescr}
 
-\rSec4[std2.unreachable.sentinel.op!=]{\tcode{operator!=}}
+\rSec5[range.unreachable.sentinel.op!=]{\tcode{operator!=}}
 
 \indexlibrary{\idxcode{operator"!=}!\idxcode{unreachable}}%
 \indexlibrary{\idxcode{unreachable}!\idxcode{operator"!=}}%
@@ -5172,7 +4733,7 @@ template <Iterator I>
 \tcode{true}.
 \end{itemdescr}
 
-\rSec1[std2.iterators.stream]{Stream iterators}
+\rSec2[range.iterators.stream]{Stream iterators}
 
 \pnum
 To make it possible for algorithmic templates to work directly with input/output streams, appropriate
@@ -5193,13 +4754,13 @@ and prints the partial sums onto
 \tcode{cout}.
 \exitexample
 
-\rSec2[std2.istream.iterator]{Class template \tcode{istream_iterator}}
+\rSec3[range.istream.iterator]{Class template \tcode{istream_iterator}}
 
 \pnum
 \indexlibrary{\idxcode{istream_iterator}}%
 The class template
 \tcode{istream_iterator}
-is an input iterator~(\ref{std2.iterators.input}) that
+is an input iterator~(\ref{range.iterators.input}) that
 reads (using
 \tcode{operator\shr})
 successive elements from the input stream for which it was constructed.
@@ -5242,19 +4803,20 @@ equal to a non-end-of-stream iterator.
 Two non-end-of-stream iterators are equal when they are constructed from the same stream.
 
 \begin{codeblock}
-namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { inline namespace v1 {
+namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace experimental \{ namespace ranges \{ inline namespace v1 \{}@
   template <class T, class charT = char, class traits = char_traits<charT>,
       class Distance = ptrdiff_t>
   class istream_iterator {
   public:
-    typedef input_iterator_tag iterator_category;
-    typedef Distance difference_type;
-    typedef T value_type;
-    typedef const T& reference;
-    typedef const T* pointer;
-    typedef charT char_type;
-    typedef traits traits_type;
-    typedef basic_istream<charT, traits> istream_type;
+    using iterator_category = input_iterator_tag;
+    using difference_type   = Distance;
+    using value_type        = T;
+    using reference         = const T&;
+    using pointer           = const T*;
+    using char_type         = charT;
+    using traits_type       = traits;
+    using istream_type      = basic_istream<charT, traits>;
+
     constexpr istream_iterator();
     constexpr istream_iterator(default_sentinel);
     istream_iterator(istream_type& s);
@@ -5288,10 +4850,10 @@ namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { 
   template <class T, class charT, class traits, class Distance>
     bool operator!=(const istream_iterator<T, charT, traits, Distance>& x,
             default_sentinel y);
-}}@\removed{\}\}}@
+}@\oldtxt{\}\}\}}@
 \end{codeblock}
 
-\rSec3[std2.istream.iterator.cons]{\tcode{istream_iterator} constructors and destructor}
+\rSec4[range.istream.iterator.cons]{\tcode{istream_iterator} constructors and destructor}
 
 \indexlibrary{\idxcode{istream_iterator}!constructor}%
 \begin{itemdecl}
@@ -5349,7 +4911,7 @@ Constructs a copy of \tcode{x}. If \tcode{T} is a literal type, then this constr
 The iterator is destroyed. If \tcode{T} is a literal type, then this destructor shall be a trivial destructor.
 \end{itemdescr}
 
-\rSec3[std2.istream.iterator.ops]{\tcode{istream_iterator} operations}
+\rSec4[range.istream.iterator.ops]{\tcode{istream_iterator} operations}
 
 \indexlibrary{\idxcode{operator*}!\idxcode{istream_iterator}}%
 \indexlibrary{\idxcode{istream_iterator}!\idxcode{operator*}}%
@@ -5473,7 +5035,7 @@ template <class T, class charT, class traits, class Distance>
 \tcode{!(x == y)}
 \end{itemdescr}
 
-\rSec2[std2.ostream.iterator]{Class template \tcode{ostream_iterator}}
+\rSec3[range.ostream.iterator]{Class template \tcode{ostream_iterator}}
 
 \pnum
 \indexlibrary{\idxcode{ostream_iterator}}%
@@ -5501,14 +5063,15 @@ while (first != last)
 is defined as:
 
 \begin{codeblock}
-namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { inline namespace v1 {
+namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace experimental \{ namespace ranges \{ inline namespace v1 \{}@
   template <class T, class charT = char, class traits = char_traits<charT>>
   class ostream_iterator {
   public:
-    typedef ptrdiff_t difference_type;
-    typedef charT char_type;
-    typedef traits traits_type;
-    typedef basic_ostream<charT, traits> ostream_type;
+    using difference_type = ptrdiff_t;
+    using char_type       = charT;
+    using traits_type     = traits;
+    using ostream_type    = basic_ostream<charT, traits>;
+
     constexpr ostream_iterator() noexcept;
     ostream_iterator(ostream_type& s) noexcept;
     ostream_iterator(ostream_type& s, const charT* delimiter) noexcept;
@@ -5523,10 +5086,10 @@ namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { 
     basic_ostream<charT, traits>* out_stream;  // \expos
     const charT* delim;                        // \expos
   };
-}}@\removed{\}\}}@
+}@\oldtxt{\}\}\}}@
 \end{codeblock}
 
-\rSec3[std2.ostream.iterator.cons.des]{\tcode{ostream_iterator} constructors and destructor}
+\rSec4[range.ostream.iterator.cons.des]{\tcode{ostream_iterator} constructors and destructor}
 
 \indexlibrary{\idxcode{ostream_iterator}!constructor}%
 \begin{itemdecl}
@@ -5583,7 +5146,7 @@ Constructs a copy of \tcode{x}.
 The iterator is destroyed.
 \end{itemdescr}
 
-\rSec3[std2.ostream.iterator.ops]{\tcode{ostream_iterator} operations}
+\rSec4[range.ostream.iterator.ops]{\tcode{ostream_iterator} operations}
 
 \indexlibrary{\idxcode{operator=}!\idxcode{ostream_iterator}}%
 \indexlibrary{\idxcode{ostream_iterator}!\idxcode{operator=}}%
@@ -5627,13 +5190,13 @@ ostream_iterator& operator++(int);
 \tcode{*this}.
 \end{itemdescr}
 
-\rSec2[std2.istreambuf.iterator]{Class template \tcode{istreambuf_iterator}}
+\rSec3[range.istreambuf.iterator]{Class template \tcode{istreambuf_iterator}}
 
 \pnum
 The
 class template
 \tcode{istreambuf_iterator}
-defines an input iterator~(\ref{std2.iterators.input}) that
+defines an input iterator~(\ref{range.iterators.input}) that
 reads successive
 \textit{characters}
 from the streambuf for which it was constructed.
@@ -5669,22 +5232,20 @@ It is impossible to assign a character via an input iterator.
 \indexlibrary{\idxcode{istreambuf_iterator}}%
 
 \begin{codeblock}
-namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { inline namespace v1 {
+namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace experimental \{ namespace ranges \{ inline namespace v1 \{}@
   template <class charT, class traits = char_traits<charT>>
   class istreambuf_iterator {
   public:
-    typedef input_iterator_tag             iterator_category;
-    typedef charT                          value_type;
-    typedef typename traits::off_type      difference_type;
-    typedef charT                          reference;
-    typedef @\unspec@                   pointer;
-    typedef charT                          char_type;
-    typedef traits                         traits_type;
-    typedef typename traits::int_type      int_type;
-    typedef basic_streambuf<charT, traits> streambuf_type;
-    typedef basic_istream<charT, traits>   istream_type;
-
-    class proxy;                           // \expos
+    using iterator_category = input_iterator_tag;
+    using value_type        = charT;
+    using difference_type   = typename traits::off_type;
+    using reference         = charT;
+    using pointer           = @\unspec@;
+    using char_type         = charT;
+    using traits_type       = traits;
+    using int_type          = typename traits::int_type;
+    using streambuf_type    = basic_streambuf<charT, traits>;
+    using istream_type      = basic_istream<charT, traits>;
 
     constexpr istreambuf_iterator() noexcept;
     constexpr istreambuf_iterator(default_sentinel) noexcept;
@@ -5698,6 +5259,7 @@ namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { 
     proxy operator++(int);
     bool equal(const istreambuf_iterator& b) const;
   private:
+    class proxy;                           // \expos
     streambuf_type* sbuf_;                // \expos
   };
 
@@ -5719,14 +5281,14 @@ namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { 
   template <class charT, class traits>
     bool operator!=(const istreambuf_iterator<charT, traits>& a,
             default_sentinel b);
-}}@\removed{\}\}}@
+}@\oldtxt{\}\}\}}@
 \end{codeblock}
 
-\rSec3[std2.istreambuf.iterator::proxy]{Class template \tcode{istreambuf_iterator::proxy}}
+\rSec4[range.istreambuf.iterator::proxy]{Class template \tcode{istreambuf_iterator::proxy}}
 
 \indexlibrary{\idxcode{proxy}!\idxcode{istreambuf_iterator}}%
 \begin{codeblock}
-namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { inline namespace v1 {
+namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace experimental \{ namespace ranges \{ inline namespace v1 \{}@
   template <class charT, class traits = char_traits<charT>>
   class istreambuf_iterator<charT, traits>::proxy { // \expos
     charT keep_;
@@ -5736,7 +5298,7 @@ namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { 
   public:
     charT operator*() { return keep_; }
   };
-}}@\removed{\}\}}@
+}@\oldtxt{\}\}\}}@
 \end{codeblock}
 
 \pnum
@@ -5753,7 +5315,7 @@ placeholder as the return value of the post-increment operator
 It keeps the character pointed to by the previous value
 of the iterator for some possible future access to get the character.
 
-\rSec3[std2.istreambuf.iterator.cons]{\tcode{istreambuf_iterator} constructors}
+\rSec4[range.istreambuf.iterator.cons]{\tcode{istreambuf_iterator} constructors}
 
 \indexlibrary{\idxcode{istreambuf_iterator}!constructor}%
 \begin{itemdecl}
@@ -5808,7 +5370,7 @@ object pointed to by the
 object's constructor argument \tcode{p}.
 \end{itemdescr}
 
-\rSec3[std2.istreambuf.iterator::op*]{\tcode{istreambuf_iterator::operator*}}
+\rSec4[range.istreambuf.iterator::op*]{\tcode{istreambuf_iterator::operator*}}
 
 \indexlibrary{\idxcode{operator*}!\idxcode{istreambuf_iterator}}%
 \begin{itemdecl}
@@ -5824,7 +5386,7 @@ member
 \tcode{sbuf_->sgetc()}.
 \end{itemdescr}
 
-\rSec3[std2.istreambuf.iterator::op++]{\tcode{istreambuf_iterator::operator++}}
+\rSec4[range.istreambuf.iterator::op++]{\tcode{istreambuf_iterator::operator++}}
 
 \indexlibrary{\idxcode{operator++}!\idxcode{istreambuf_iterator}}%
 \begin{itemdecl}
@@ -5854,7 +5416,7 @@ proxy istreambuf_iterator<charT, traits>::operator++(int);
 \tcode{return proxy(sbuf_->sbumpc(), sbuf_);}
 \end{itemdescr}
 
-\rSec3[std2.istreambuf.iterator::equal]{\tcode{istreambuf_iterator::equal}}
+\rSec4[range.istreambuf.iterator::equal]{\tcode{istreambuf_iterator::equal}}
 
 \indexlibrary{\idxcode{equal}!\idxcode{istreambuf_iterator}}%
 \begin{itemdecl}
@@ -5871,7 +5433,7 @@ or neither is at end-of-stream, regardless of what
 object they use.
 \end{itemdescr}
 
-\rSec3[std2.istreambuf.iterator::op==]{\tcode{operator==}}
+\rSec4[range.istreambuf.iterator::op==]{\tcode{operator==}}
 
 \indexlibrary{\idxcode{operator==}!\idxcode{istreambuf_iterator}}%
 \begin{itemdecl}
@@ -5910,7 +5472,7 @@ template <class charT, class traits>
 \tcode{return a.equal(istreambuf_iterator<charT, traits>\{\});}
 \end{itemdescr}
 
-\rSec3[std2.istreambuf.iterator::op!=]{\tcode{operator!=}}
+\rSec4[range.istreambuf.iterator::op!=]{\tcode{operator!=}}
 
 \indexlibrary{\idxcode{operator"!=}!\idxcode{istreambuf_iterator}}%
 \begin{itemdecl}
@@ -5931,19 +5493,19 @@ template <class charT, class traits>
 \tcode{return !(a == b);}
 \end{itemdescr}
 
-\rSec2[std2.ostreambuf.iterator]{Class template \tcode{ostreambuf_iterator}}
+\rSec3[range.ostreambuf.iterator]{Class template \tcode{ostreambuf_iterator}}
 
 \indexlibrary{\idxcode{ostreambuf_iterator}}%
 \begin{codeblock}
-namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { inline namespace v1 {
+namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace experimental \{ namespace ranges \{ inline namespace v1 \{}@
   template <class charT, class traits = char_traits<charT>>
   class ostreambuf_iterator {
   public:
-    typedef ptrdiff_t                      difference_type;
-    typedef charT                          char_type;
-    typedef traits                         traits_type;
-    typedef basic_streambuf<charT, traits> streambuf_type;
-    typedef basic_ostream<charT, traits>   ostream_type;
+    using difference_type = ptrdiff_t;
+    using char_type       = charT;
+    using traits_type     = traits;
+    using streambuf_type  = basic_streambuf<charT, traits>;
+    using ostream_type    = basic_ostream<charT, traits>;
 
     constexpr ostreambuf_iterator() noexcept;
     ostreambuf_iterator(ostream_type& s) noexcept;
@@ -5958,7 +5520,7 @@ namespace @\changed{std \{ namespace experimental \{ namespace ranges}{std2}@ { 
   private:
     streambuf_type* sbuf_;                // \expos
   };
-}}@\removed{\}\}}@
+}@\oldtxt{\}\}\}}@
 \end{codeblock}
 
 \pnum
@@ -5970,7 +5532,7 @@ writes successive
 onto the output stream from which it was constructed.
 It is not possible to get a character value out of the output iterator.
 
-\rSec3[std2.ostreambuf.iter.cons]{\tcode{ostreambuf_iterator} constructors}
+\rSec4[range.ostreambuf.iter.cons]{\tcode{ostreambuf_iterator} constructors}
 
 \indexlibrary{\idxcode{ostreambuf_iterator}!constructor}%
 \begin{itemdecl}
@@ -6015,7 +5577,7 @@ ostreambuf_iterator(streambuf_type* s) noexcept;
 Initializes \tcode{sbuf_} with \tcode{s}.
 \end{itemdescr}
 
-\rSec3[std2.ostreambuf.iter.ops]{\tcode{ostreambuf_iterator} operations}
+\rSec4[range.ostreambuf.iter.ops]{\tcode{ostreambuf_iterator} operations}
 
 \indexlibrary{\idxcode{operator=}!\idxcode{ostreambuf_iterator}}%
 \begin{itemdecl}

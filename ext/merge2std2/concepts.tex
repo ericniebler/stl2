@@ -1,0 +1,158 @@
+%!TEX root = P0896.tex
+
+\setcounter{chapter}{21}
+\rSec0[concepts.lib]{Concepts library}
+
+\setcounter{section}{2}
+\rSec1[concepts.lib.corelang]{Core language concepts}
+
+\setcounter{subsection}{10}
+\rSec2[concepts.lib.corelang.swappable]{Concept \tcode{Swappable}}
+
+\ednote{Modify the definitions of the \tcode{Swappable} and \tcode{SwappableWith}
+concepts as follows (This restores the Ranges TS design for these concepts from
+which P0898 had to deviate due to the absence of the \tcode{ranges::swap}
+customization point):}
+
+\indexlibrary{\idxcode{Swappable}}%
+\begin{itemdecl}
+template <class T>
+@\removed{concept Swappable = is_swappable_v<T>; // \seebelow}@
+@\added{concept Swappable = requires(T\& a, T\& b) \{ ranges::swap(a, b); \};}@
+\end{itemdecl}
+
+{\color{remclr}
+\begin{itemdescr}
+\pnum
+Let \tcode{a1} and \tcode{a2} denote distinct equal objects of type \tcode{T},
+and let \tcode{b1} and \tcode{b2} similarly denote distinct equal objects of type
+\tcode{T}. \tcode{Swappable<T>} is satisfied only if:
+\begin{itemize}
+\item After evaluating either \tcode{swap(a1, b1)} or \tcode{swap(b1, a1)} in the
+  context described below, \tcode{a1} is equal to \tcode{b2} and \tcode{b1} is
+  equal to \tcode{a2}.
+\end{itemize}
+
+\pnum
+The context in which \tcode{swap(a1, b1)} or \tcode{swap(b1, a1)} are evaluated shall ensure that a binary non-member
+function named "swap" is selected via overload resolution~(\cxxref{over.match}) on a candidate set that includes:
+\begin{itemize}
+\item the two \tcode{swap} function templates defined in \tcode{<utility>}~(\ref{utility}) and
+\item the lookup set produced by argument-dependent lookup~(\cxxref{basic.lookup.argdep}).
+\end{itemize}
+
+\pnum
+There need be no subsumption relationship between \tcode{Swappable<T>} and
+\tcode{is_swappable_v<T>}.
+\end{itemdescr}
+} %% \color{remclr}
+
+\indexlibrary{\idxcode{SwappableWith}}%
+\begin{itemdecl}
+template <class T, class U>
+concept SwappableWith =
+  @\removed{is_swappable_with_v<T, T> \&\& is_swappable_with_v<U, U> \&\& // \seebelow}@
+  CommonReference<const remove_reference_t<T>&, const remove_reference_t<U>&> &&
+  @\removed{is_swappable_with_v<T, U> \&\& is_swappable_with_v<U, T>; // \seebelow}@
+  @\added{requires(T\&\& t, U\&\& u) \{}@
+    @\added{ranges::swap(std::forward<T>(t), std::forward<T>(t));}@
+    @\added{ranges::swap(std::forward<U>(u), std::forward<U>(u));}@
+    @\added{ranges::swap(std::forward<T>(t), std::forward<U>(u));}@
+    @\added{ranges::swap(std::forward<U>(u), std::forward<T>(t));}@
+  @\added{\};}@
+\end{itemdecl}
+
+{\color{remclr}
+\begin{itemdescr}
+\pnum
+Let \tcode{t1} and \tcode{t2} denote distinct equal objects of type
+\tcode{remove_cvref_t<T>}, and $E_t$ be an expression that denotes \tcode{t1}
+such that \tcode{decltype(($E_t$))} is \tcode{T}.
+Let \tcode{u1} and \tcode{u2} similarly denote distinct equal objects of type
+\tcode{remove_cvref_t<U>}, and $E_u$ be an expression that denotes \tcode{u1}
+such that \tcode{decltype(($E_u$))} is \tcode{U}. Let \tcode{C} be
+\tcode{common_reference_t<const remove_reference_t<T>\&, const remove_reference_t<U>\&>}.
+\tcode{SwappableWith<T, U>} is satisfied only if:
+
+\begin{itemize}
+\item After evaluating either \tcode{swap($E_t$, $E_u$)} or \tcode{swap($E_u$, $E_t$)} in the
+  context described above, \tcode{C(t1)} is equal to \tcode{C(u2)} and \tcode{C(u1)} is
+  equal to \tcode{C(t2)}.
+\end{itemize}
+
+\pnum
+The context in which \tcode{swap($E_t$, $E_u$)} or \tcode{swap($E_u$, $E_t$)} are evaluated shall ensure that a binary non-member
+function named "swap" is selected via overload resolution~(\cxxref{over.match}) on a candidate set that includes:
+\begin{itemize}
+\item the two \tcode{swap} function templates defined in \tcode{<utility>}~(\ref{utility}) and
+\item the lookup set produced by argument-dependent lookup~(\cxxref{basic.lookup.argdep}).
+\end{itemize}
+
+\pnum
+There need be no subsumption relationship between \tcode{SwappableWith<T, U>} and
+any specialization of \tcode{is_swappable_with_v}.
+\end{itemdescr}
+} %% \color{remclr}
+
+{\color{addclr}
+\begin{itemdescr}
+\pnum
+This subclause provides definitions for swappable types and expressions. In these
+definitions, let \tcode{t} denote an expression of type \tcode{T}, and let \tcode{u}
+denote an expression of type \tcode{U}.
+
+\pnum
+An object \tcode{t} is \defn{swappable with} an object \tcode{u} if and only if
+\tcode{SwappableWith<T, U>} is satisfied. \tcode{Swappable\-With<T, U>} is satisfied
+only if given distinct objects \tcode{t2} equal to \tcode{t}
+and \tcode{u2} equal to \tcode{u}, after evaluating either
+\tcode{ranges::swap(t, u)} or \tcode{ranges::swap(u, t)}, \tcode{t2} is equal to
+\tcode{u} and \tcode{u2} is equal to \tcode{t}.
+
+\pnum
+An rvalue or lvalue \tcode{t} is \defn{swappable} if and only if \tcode{t} is
+swappable with any rvalue or lvalue, respectively, of type \tcode{T}.
+
+\enterexample User code can ensure that the evaluation of \tcode{swap} calls
+is performed in an appropriate context under the various conditions as follows:
+\begin{codeblock}
+#include <utility>
+
+// Requires: \tcode{std::forward<T>(t)} shall be swappable with \tcode{std::forward<U>(u)}.
+template <class T, @\oldtxt{class}\newtxt{SwappableWith<T>}@ U>
+void value_swap(T&& t, U&& u) {
+  ranges::swap(std::forward<T>(t), std::forward<U>(u)); // OK: uses ``swappable with'' conditions
+                                                        // for rvalues and lvalues
+}
+
+// Requires: lvalues of \tcode{T} shall be swappable.
+template <@\oldtxt{class}\newtxt{Swappable}@ T>
+void lv_swap(T& t1, T& t2) {
+  ranges::swap(t1, t2);                                 // OK: uses swappable conditions for
+}                                                       // lvalues of type \tcode{T}
+
+namespace N {
+  struct A { int m; };
+  struct Proxy { A* a; };
+  Proxy proxy(A& a) { return Proxy{ &a }; }
+
+  void swap(A& x, Proxy p) {
+    ranges::swap(x.m, p.a->m);                // OK: uses context equivalent to swappable
+                                              // conditions for fundamental types
+  }
+  void swap(Proxy p, A& x) { swap(x, p); }  // satisfy symmetry constraint
+}
+
+int main() {
+  int i = 1, j = 2;
+  lv_swap(i, j);
+  assert(i == 2 && j == 1);
+
+  N::A a1 = { 5 }, a2 = { -5 };
+  value_swap(a1, proxy(a2));
+  assert(a1.m == -5 && a2.m == 5);
+}
+\end{codeblock}
+\exitexample
+\end{itemdescr}
+} %% \color{addclr}
