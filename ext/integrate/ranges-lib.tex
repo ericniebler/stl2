@@ -1,0 +1,254 @@
+%!TEX root = std.tex
+\rSec0[ranges]{Ranges library}
+
+\rSec1[range.general]{General}
+
+\pnum
+This clause describes components for dealing with ranges of elements.
+
+\pnum
+The following subclauses describe
+range and view requirements, and
+components for
+range primitives
+as summarized in Table~\ref{tab:ranges.lib.summary}.
+
+\begin{libsumtab}{Ranges library summary}{tab:ranges.lib.summary}
+  \removed{\ref{range.iterators}}    & \removed{Iterators}         & \removed{\tcode{<range>}} \\
+  \ref{range.access}       & Range access      & \added{\tcode{<range>}} \\
+  \ref{range.primitives}   & Range primitives  & \\
+  \ref{range.requirements} & Requirements      & \\
+  \removed{\ref{range.algorithms}}   & \removed{Algorithms}        & \\
+\end{libsumtab}
+
+\rSec1[range.decaycopy]{decay_copy}
+
+\ednote{... as in P0896R1.}
+
+\rSec1[range.synopsis]{Header \tcode{<range>} synopsis}
+
+\ednote{Remove the \tcode<range> synopsis from P0896R1 and replace it with the
+following. Note that everything except the range access points and range
+primitives gets promoted to namespace \tcode{std}.}
+
+\indexlibrary{\idxhdr{range}}%
+\begin{codeblock}
+#include <iterator>
+#include <initializer_list>
+
+namespace std {
+  namespace ranges {
+    inline namespace @\unspec@ {
+      // \ref{range.access}, range access:
+      inline constexpr @\unspec@ begin = @\unspec@;
+      inline constexpr @\unspec@ end = @\unspec@;
+      inline constexpr @\unspec@ cbegin = @\unspec@;
+      inline constexpr @\unspec@ cend = @\unspec@;
+      inline constexpr @\unspec@ rbegin = @\unspec@;
+      inline constexpr @\unspec@ rend = @\unspec@;
+      inline constexpr @\unspec@ crbegin = @\unspec@;
+      inline constexpr @\unspec@ crend = @\unspec@;
+
+      // \ref{range.primitives}, range primitives:
+      inline constexpr @\unspec@ size = @\unspec@;
+      inline constexpr @\unspec@ empty = @\unspec@;
+      inline constexpr @\unspec@ data = @\unspec@;
+      inline constexpr @\unspec@ cdata = @\unspec@;
+    }
+  }
+
+  template <class T>
+  using iterator_t = decltype(ranges::begin(declval<T&>()));
+
+  template <class T>
+  using sentinel_t = decltype(ranges::end(declval<T&>()));
+
+  template <class>
+  constexpr bool disable_sized_range = false;
+
+  template <class T>
+  struct enable_view { };
+
+  struct view_base { };
+
+  // \ref{range.requirements}, range requirements:
+
+  // \ref{range.range}, Range:
+  template <class T>
+  concept Range = @\seebelow@;
+
+  // \ref{range.sized}, SizedRange:
+  template <class T>
+  concept SizedRange = @\seebelow@;
+
+  // \ref{range.view}, View:
+  template <class T>
+  concept View = @\seebelow@;
+
+  // \ref{range.common}, CommonRange:
+  template <class T>
+  concept CommonRange = @\seebelow@;
+
+  // \ref{range.input}, InputRange:
+  template <class T>
+  concept InputRange = @\seebelow@;
+
+  // \ref{range.output}, OutputRange:
+  template <class R, class T>
+  concept OutputRange = @\seebelow@;
+
+  // \ref{range.forward}, ForwardRange:
+  template <class T>
+  concept ForwardRange = @\seebelow@;
+
+  // \ref{range.bidirectional}, BidirectionalRange:
+  template <class T>
+  concept BidirectionalRange = @\seebelow@;
+
+  // \ref{range.random.access}, RandomAccessRange:
+  template <class T>
+  concept RandomAccessRange = @\seebelow@;
+}
+\end{codeblock}
+
+\ednote{Remove 29.4, [range.iterators], from P0896R1.}
+
+\rSec1[range.access]{Range access}
+
+\begin{addedblock}
+\pnum
+In addition to begin available via inclusion of the \tcode{<range>} header,
+the customization point objects in \ref{range.access} are available when
+\tcode{<iterator>} is included.
+\end{addedblock}
+
+\ednote{...otherwise, as in P0896R1.}
+
+\rSec1[range.primitives]{Range primitives}
+
+\begin{addedblock}
+\pnum
+In addition to begin available via inclusion of the \tcode{<range>} header,
+the customization point objects in \ref{range.primitives} are available when
+\tcode{<iterator>} is included.
+\end{addedblock}
+
+\ednote{...otherwise, as in P0896R1.}
+
+\rSec1[range.requirements]{Range requirements}
+
+\setcounter{subsection}{2}
+\rSec2[range.sized]{Sized ranges}
+\ednote{Change the definition of the \tcode{SizedRange} concept as follows:}
+
+\pnum
+The \tcode{SizedRange} concept specifies the requirements
+of a \tcode{Range} type that knows its size in constant time with the
+\tcode{size} function.
+
+\begin{itemdecl}
+template <class T>
+concept SizedRange =
+  Range<T> &&
+  !disable_sized_range<@remove_cv\added{ref}_t<\removed{remove_reference_t<}R>\removed{>}@> &&
+  requires(T& t) {
+    { ranges::size(t) } -> ConvertibleTo<@\changed{difference_type_t}{iter_difference_t}@<iterator_t<T>>>;
+  };
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+Given an lvalue \tcode{t} of type \tcode{remove_reference_t<T>},
+\tcode{SizedRange<T>} is satisfied only if:
+
+\begin{itemize}
+\item \tcode{ranges::size(t)} is \bigoh{1}, does not modify \tcode{t}, and is equal
+to \tcode{ranges::distance(t)}.
+
+\item If \tcode{iterator_t<T>} satisfies \tcode{ForwardIterator},
+\tcode{size(t)} is well-defined regardless of the evaluation of
+\tcode{begin(t)}. \enternote \tcode{size(t)} is otherwise not required be
+well-defined after evaluating \tcode{begin(t)}. For a \tcode{SizedRange}
+whose iterator type does not model \tcode{ForwardIterator}, for
+example, \tcode{size(t)} might only be well-defined if evaluated before
+the first call to \tcode{begin(t)}. \exitnote
+\end{itemize}
+
+\pnum
+\enternote The \tcode{disable_sized_range} predicate provides a mechanism to enable use
+of range types with the library that meet the syntactic requirements but do
+not in fact satisfy \tcode{SizedRange}. A program that instantiates a library template
+that requires a \tcode{Range} with such a range type \tcode{R} is ill-formed with no
+diagnostic required unless
+\tcode{disable_sized_range<remove_cv\added{ref}_t<\removed{remove_reference_t<}R>\removed{>}>} evaluates
+to \tcode{true}~(\ref{ranges.structure.requirements}). \exitnote
+\end{itemdescr}
+
+\rSec1[dangling.wrappers]{Dangling wrapper}
+
+\rSec2[dangling.wrap]{Class template \tcode{dangling}}
+
+\pnum
+\indexlibrary{\idxcode{dangling}}%
+Class template \tcode{dangling} is a wrapper for an object that refers to another object whose
+lifetime may have ended. It is used by algorithms that accept rvalue ranges and return iterators.
+
+\begin{codeblock}
+namespace std { namespace ranges {
+  template <CopyConstructible T>
+  class dangling {
+  public:
+    constexpr dangling() requires DefaultConstructible<T>;
+    constexpr dangling(T t);
+    constexpr T get_unsafe() const;
+  private:
+    T value; // \expos
+  };
+
+  template <Range R>
+  using safe_iterator_t =
+    conditional_t<is_lvalue_reference_v<R>,
+      iterator_t<R>,
+      dangling<iterator_t<R>>>;
+}}
+\end{codeblock}
+
+\rSec3[dangling.wrap.ops]{\tcode{dangling} operations}
+
+\rSec4[dangling.wrap.op.const]{\tcode{dangling} constructors}
+
+\indexlibrary{\idxcode{dangling}!\idxcode{dangling}}%
+\begin{itemdecl}
+constexpr dangling() requires DefaultConstructible<T>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Constructs a \tcode{dangling}, value-initializing \tcode{value}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{dangling}!\idxcode{dangling}}%
+\begin{itemdecl}
+constexpr dangling(T t);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Constructs a \tcode{dangling}, initializing \tcode{value} with
+\tcode{\added{std::move(}t\added{)}}.
+\end{itemdescr}
+
+\rSec4[dangling.wrap.op.get]{\tcode{dangling::get_unsafe}}
+
+\indexlibrary{\idxcode{get_unsafe}!\idxcode{dangling}}%
+\indexlibrary{\idxcode{dangling}!\idxcode{get_unsafe}}%
+\begin{itemdecl}
+constexpr T get_unsafe() const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\returns \tcode{value}.
+\end{itemdescr}
+
+\ednote{Remove 29.9, [range.algorithms], from P0896R1.}
