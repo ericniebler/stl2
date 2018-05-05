@@ -8,7 +8,7 @@
 This Clause describes components that \Cpp{} programs may use to perform
 iterations over containers\iref{containers},
 streams\iref{iostream.format},
-and stream buffers\iref{stream.buffers}.
+\removed{and} stream buffers\iref{stream.buffers}\added{, and other ranges\iref{range}}.
 
 \pnum
 The following subclauses describe
@@ -82,56 +82,60 @@ namespace std {
   using @\added{iter_}@rvalue_reference_t
     = decltype(ranges::iter_move(declval<T&>()));
 
-  // \ref{iterators.readable}, Readable:
+  // \ref{iterator.concept.readable}, Readable:
   template <class In>
   concept Readable = @\seebelow@;
 
-  // \ref{iterators.writable}, Writable:
+  // \ref{iterator.concept.writable}, Writable:
   template <class Out, class T>
   concept Writable = @\seebelow@;
 
-  // \ref{iterators.weaklyincrementable}, WeaklyIncrementable:
+  // \ref{iterator.concept.weaklyincrementable}, WeaklyIncrementable:
   template <class I>
   concept WeaklyIncrementable = @\seebelow@;
 
-  // \ref{iterators.incrementable}, Incrementable:
+  // \ref{iterator.concept.incrementable}, Incrementable:
   template <class I>
   concept Incrementable = @\seebelow@;
 
-  // \ref{iterators.iterator}, Iterator:
+  // \ref{iterator.concept.iterator}, Iterator:
   template <class I>
   concept Iterator = @\seebelow@;
 
-  // \ref{iterators.sentinel}, Sentinel:
+  // \ref{iterator.concept.incrementable}, Sentinel:
   template <class S, class I>
   concept Sentinel = @\seebelow@;
 
-  // \ref{iterators.sizedsentinel}, SizedSentinel:
+  // \ref{iterator.concept.sizedsentinel}, SizedSentinel:
   template <class S, class I>
   constexpr bool disable_sized_sentinel = false;
 
   template <class S, class I>
   concept SizedSentinel = @\seebelow@;
 
-  // \ref{iterators.input}, InputIterator:
+  // \ref{iterator.concept.input}, InputIterator:
   template <class I>
   concept InputIterator = @\seebelow@;
 
-  // \ref{iterators.output}, OutputIterator:
+  // \ref{iterator.concept.output}, OutputIterator:
   template <class I>
   concept OutputIterator = @\seebelow@;
 
-  // \ref{iterators.forward}, ForwardIterator:
+  // \ref{iterator.concept.forward}, ForwardIterator:
   template <class I>
   concept ForwardIterator = @\seebelow@;
 
-  // \ref{iterators.bidirectional}, BidirectionalIterator:
+  // \ref{iterator.concept.bidirectional}, BidirectionalIterator:
   template <class I>
   concept BidirectionalIterator = @\seebelow@;
 
-  // \ref{iterators.random.access}, RandomAccessIterator:
+  // \ref{iterator.concept.random.access}, RandomAccessIterator:
   template <class I>
   concept RandomAccessIterator = @\seebelow@;
+
+  // \ref{iterator.concept.contiguous}, ContiguousIterator:
+  template <class I>
+  concept ContiguousIterator = @\seebelow@;
 
   // \ref{indirectcallable}, indirect callable requirements:
   // \ref{indirectcallable.indirectinvocable}, indirect callables:
@@ -218,7 +222,7 @@ namespace std {
   struct random_access_iterator_tag: public bidirectional_iterator_tag { };
   @\added{struct contiguous_iterator_tag: public random_access_iterator_tag \{ \};}@
 
-  @\ednote{The clones of the iterator tags in the ranges:: namespace from P0896R1 are intentionally omitted here.}@
+  @\ednote{The clones of the iterator tags in the ranges namespace from P0896R1 are intentionally omitted here.}@
 
   // \ref{iterator.operations}, iterator operations
   template<class InputIterator, class Distance>
@@ -497,7 +501,7 @@ with \tcode{readable_traits<>}, \tcode{incrementable_traits<>}, \tcode{iter_valu
 \pnum
 \indextext{requirements!iterator}%
 Iterators are a generalization of pointers that allow a \Cpp{} program to work with different data structures
-(containers) in a uniform manner.
+(\added{for example,} containers \added{and ranges}) in a uniform manner.
 To be able to construct template algorithms that work correctly and
 efficiently on different types of data structures, the library formalizes not just the interfaces but also the
 semantics and complexity assumptions of iterators.
@@ -510,22 +514,24 @@ resulting in a value of some object type
 called the
 \term{value type}
 of the iterator.
+% Think about making this "non-empty set of expression type-and-value-categories"
+% what's here now is easy to understand and incorrect.
 An output iterator \tcode{i} has a non-empty set of types that are
 \defn{writable} to the iterator;
 for each such type \tcode{T}, the expression \tcode{*i = o}
 is valid where \tcode{o} is a value of type \tcode{T}.
-An iterator
+\removed{An iterator
 \tcode{i}
 for which the expression
 \tcode{(*i).m}
 is well-defined supports the expression
 \tcode{i->m}
 with the same semantics as
-\tcode{(*i).m}.
+\tcode{(*i).m}.}
 For every iterator type
 \tcode{X}
-for which
-equality is defined, there is a corresponding signed integer type called the
+\removed{for which
+equality is defined}, there is a corresponding signed integer type called the
 \term{difference type}
 of the iterator.
 
@@ -595,6 +601,9 @@ the corresponding range denoted by pointers is
 $[$\tcode{addressof(*a)}$, $\tcode{addressof(*a) + (b - a)}$)$;
 \tcode{b} might not be dereferenceable.
 \end{note}
+\ednote{TODO: The term "contiguous iterator" is now *extremely* confusing in that it
+can easily be conflated with "types that satisfy the \tcode{ContiguousIterator} concept."
+Consider removing it.}
 
 \pnum
 Just as a regular pointer to an array guarantees that there is a pointer value pointing past the last element
@@ -624,7 +633,7 @@ Results of most expressions are undefined for singular values;
 the only exceptions are destroying an iterator that holds a singular value,
 the assignment of a non-singular value to
 an iterator that holds a singular value, and, for iterators that satisfy the
-\tcode{DefaultConstructible} requirements, using a value-initialized iterator
+\tcode{STL1DefaultConstructible} requirements, using a value-initialized iterator
 as the source of a copy or move operation. \begin{note} This guarantee is not
 offered for default-initialization, although the distinction only matters for types
 with trivial default constructors such as pointers or aggregates holding pointers.
@@ -634,6 +643,7 @@ value is overwritten the same way as any other value.
 Dereferenceable
 values are always non-singular.
 
+\begin{removedblock}
 \pnum
 An iterator
 \tcode{j}
@@ -672,6 +682,50 @@ is reachable from
 \tcode{i}.
 The result of the application of functions in the library to invalid ranges is
 undefined.
+\end{removedblock}
+
+\begin{addedblock}
+\pnum
+Most of the library's algorithmic templates that operate on data structures have
+interfaces that use ranges. A \term{range} is an iterator and a \term{sentinel}
+that designate the beginning and end of the computation, or an iterator and a
+count that designate the beginning and the number of elements to which the
+computation is to be applied.\footnote{The sentinel denoting the end of a range
+may have the same type as the iterator denoting the beginning of the range, or a
+different type.}
+
+\pnum
+An iterator and a sentinel denoting a range are comparable. \oldtxt{The types of a
+sentinel and an iterator that denote a range must satisfy
+\tcode{Sentinel}~(\ref{iterator.concept.incrementable}).}
+A range \range{i}{s}
+is empty if \tcode{i == s};
+otherwise, \range{i}{s}
+refers to the elements in the data structure starting with the element
+pointed to by
+\tcode{i}
+and up to but not including the element pointed to by
+the first iterator \tcode{j} such that \tcode{j == s}.
+
+\pnum
+A sentinel \tcode{s} is called \term{reachable} from an iterator \tcode{i} if
+and only if there is a finite sequence of applications of the expression
+\tcode{++i} that makes \tcode{i == s}. If \tcode{s} is reachable from \tcode{i},
+\range{i}{s} denotes a range.
+
+\pnum
+A counted range \range{i}{n} is empty if \tcode{n == 0}; otherwise, \range{i}{n}
+refers to the \tcode{n} elements in the data structure starting with the element
+pointed to by \tcode{i} and up to but not including the element pointed to by
+the result of incrementing \tcode{i} \tcode{n} times.
+
+\pnum
+A range \range{i}{s} is valid if and only if \tcode{s} is reachable from
+\tcode{i}. A counted range \range{i}{n} is valid if and only if \tcode{n == 0};
+or \tcode{n} is positive, \tcode{i} is dereferenceable, and \range{++i}{-{-}n}
+is valid. The result of the application of functions in the library to invalid
+ranges is undefined.
+\end{addedblock}
 
 \pnum
 All the categories of iterators require only those functions that are realizable for a given category in
@@ -679,7 +733,7 @@ constant time (amortized).
 Therefore, requirement tables for the iterators do not have a complexity column.
 
 \pnum
-Destruction of an iterator may invalidate pointers and references
+Destruction of an iterator \added{whose category is weaker than forward} may invalidate pointers and references
 previously obtained from that iterator.
 
 \pnum
@@ -705,6 +759,7 @@ For example, the types ``pointer to \tcode{int}'' and
 \tcode{reverse_iterator<int*>} are constexpr iterators.
 \end{note}
 
+\begin{removedblock}
 \pnum
 In the following sections,
 \tcode{a}
@@ -733,10 +788,12 @@ denotes a value of value type
 denotes a value of some type that is writable to the output iterator.
 \begin{note} For an iterator type \tcode{X} there must be an instantiation
 of \tcode{iterator_traits<X>}\iref{iterator.traits}. \end{note}
+\end{removedblock}
 
 \ednote{[range.iterator.custpoints], [range.iterator.assoc.types], and the concept
 definitions \tcode{Readable} through \tcode{RandomAccessIterator} from subsection
-[range.iterator.requirements] all get moved into a new section [iterator.concepts].}
+[range.iterator.requirements] (and P0944's \tcode{ContiguousIterator} concept)
+all get moved into a new section [iterator.concepts].}
 
 \rSec2[iterator.concepts]{Iterator concepts}
 \rSec3[iterator.custpoints]{Customization points}
@@ -785,11 +842,11 @@ determine the value and
 difference types that correspond to a particular iterator type.
 Accordingly, it is required that if
 \tcode{WI} is the name of a type that
-satisfies the \tcode{WeaklyIncrementable} concept~(\ref{iterators.weaklyincrementable})\changed{,}{ and}
+satisfies the \tcode{WeaklyIncrementable} concept~(\ref{iterator.concept.weaklyincrementable})\changed{,}{ and}
 \tcode{R} is the name of a type that
-satisfies the \tcode{Readable} concept~(\ref{iterators.readable})\removed{, and
+satisfies the \tcode{Readable} concept~(\ref{iterator.concept.readable})\removed{, and
 \tcode{II} is the name of a type that satisfies the
-\tcode{InputIterator} concept~(\ref{iterators.input}) concept}, the types
+\tcode{InputIterator} concept~(\ref{iterator.concept.input}) concept}, the types
 
 \begin{codeblock}
 @\changed{difference_type_t}{iter_difference_t}@<WI>
@@ -949,11 +1006,10 @@ has no associated value type.\exitnote
 
 \ednote{Remove section ``\tcode{iterator_category}'' [iterator.assoc.types.iterator_category].}
 
-
-\ednote{Change section ``Concept InputIterator''~(\ref{iterators.input}) as follows:}
-
 \setcounter{subsubsection}{10}
-\rSec3[iterators.input]{Concept \tcode{InputIterator}}
+\rSec3[iterator.concept.input]{Concept \tcode{InputIterator}}
+
+\ednote{Change as follows:}
 
 \begin{addedblock}
 \pnum
@@ -975,12 +1031,12 @@ Let \tcode{\textit{ITER_CONCEPT}(I)} be defined as follows:
 
 \pnum
 The \tcode{InputIterator} concept is a refinement of
-\tcode{Iterator}~(\ref{iterators.iterator}). It defines requirements for a type
+\tcode{Iterator}~(\ref{iterator.concept.iterator}). It defines requirements for a type
 whose referenced values can be read (from the requirement for
-\tcode{Readable}~(\ref{iterators.readable})) and which can be both pre- and
+\tcode{Readable}~(\ref{iterator.concept.readable})) and which can be both pre- and
 post-incremented.
-\enternote Unlike in ISO/IEC 14882, input iterators are not required to satisfy
-\tcode{EqualityComparable}~(\ref{concepts.lib.compare.equalitycomparable}).\exitnote
+\enternote Unlike the input iterator requirements in \ref{input.iterators},
+the \tcode{InputIterator} concept does not require equality comparison.\exitnote
 
 \indexlibrary{\idxcode{InputIterator}}%
 \begin{codeblock}
@@ -993,10 +1049,9 @@ post-incremented.
 \end{codeblock}
 
 \setcounter{subsubsection}{12}
-\rSec3[iterators.forward]{Concept \tcode{ForwardIterator}}
+\rSec3[iterator.concept.forward]{Concept \tcode{ForwardIterator}}
 
-\ednote{In subsection ``Concept ForwardIterator''~(\ref{iterators.forward}),
-change the definition of the \tcode{ForwardIterator} concept as follows:}
+\ednote{Change the definition of the \tcode{ForwardIterator} concept as follows:}
 
 \indexlibrary{\idxcode{ForwardIterator}}%
 \begin{codeblock}
@@ -1008,10 +1063,9 @@ change the definition of the \tcode{ForwardIterator} concept as follows:}
     Sentinel<I, I>;
 \end{codeblock}
 
-\rSec3[iterators.bidirectional]{Concept \tcode{BidirectionalIterator}}
+\rSec3[iterator.concept.bidirectional]{Concept \tcode{BidirectionalIterator}}
 
-\ednote{In subsection ``Concept BidirectionalIterator''~(\ref{iterators.bidirectional}),
-change the definition of the \tcode{BidirectionalIterator} concept as follows:}
+\ednote{Change the definition of the \tcode{BidirectionalIterator} concept as follows:}
 
 \indexlibrary{\idxcode{BidirectionalIterator}}%
 \begin{codeblock}
@@ -1025,10 +1079,9 @@ change the definition of the \tcode{BidirectionalIterator} concept as follows:}
     };
 \end{codeblock}
 
-\rSec3[iterators.random.access]{Concept \tcode{RandomAccessIterator}}
+\rSec3[iterator.concept.random.access]{Concept \tcode{RandomAccessIterator}}
 
-\ednote{In subsection ``Concept RandomAccessIterator''~(\ref{iterators.random.access}),
-change the definition of the \tcode{RandomAccessIterator} concept as follows:}
+\ednote{Change the definition of the \tcode{RandomAccessIterator} concept as follows:}
 
 \indexlibrary{\idxcode{RandomAccessIterator}}%
 \begin{codeblock}
@@ -1049,10 +1102,9 @@ change the definition of the \tcode{RandomAccessIterator} concept as follows:}
     };
 \end{codeblock}
 
-\rSec3[iterators.contiguous]{Concept \tcode{ContiguousIterator}}
+\rSec3[iterator.concept.contiguous]{Concept \tcode{ContiguousIterator}}
 
-\ednote{In subsection ``Concept ContiguousIterator''~(\ref{iterators.contiguous}),
-change the definition of the \tcode{ContiguousIterator} concept as follows:}
+\ednote{Change the definition of the \tcode{ContiguousIterator} concept as follows:}
 
 \indexlibrary{\idxcode{ContiguousIterator}}%
 \begin{codeblock}
@@ -1068,7 +1120,36 @@ change the definition of the \tcode{ContiguousIterator} concept as follows:}
 \rSec2[iterator.cpp98]{\Cpp{}98 iterator requirements}
 
 \pnum
-TODO describe this section
+\ednote{TODO describe this section}
+
+\pnum
+In the following sections,
+\tcode{a}
+and
+\tcode{b}
+denote values of type
+\tcode{X} or \tcode{const X},
+\tcode{difference_type} and \tcode{reference} refer to the
+types \tcode{iterator_traits<X>::difference_type} and
+\tcode{iterator_traits<X>::reference}, respectively,
+\tcode{n}
+denotes a value of
+\tcode{difference_type},
+\tcode{u},
+\tcode{tmp},
+and
+\tcode{m}
+denote identifiers,
+\tcode{r}
+denotes a value of
+\tcode{X\&},
+\tcode{t}
+denotes a value of value type
+\tcode{T},
+\tcode{o}
+denotes a value of some type that is writable to the output iterator.
+\begin{note} For an iterator type \tcode{X} there must be an instantiation
+of \tcode{iterator_traits<X>}\iref{iterator.traits}. \end{note}
 
 \end{addedblock}
 
@@ -1087,8 +1168,8 @@ to provide a richer set of iterator movements~(\ref{forward.iterators},
 A type \tcode{X} satisfies the \tcode{Iterator} requirements if:
 
 \begin{itemize}
-\item \tcode{X} satisfies the \tcode{CopyConstructible}, \tcode{CopyAssignable}, and
-\tcode{Destructible} requirements\iref{utility.arg.requirements} and lvalues
+\item \tcode{X} satisfies the \tcode{STL1CopyConstructible}, \tcode{STL1CopyAssignable}, and
+\tcode{STL1Destructible} requirements\iref{utility.arg.requirements} and lvalues
 of type \tcode{X} are swappable\iref{swappable.requirements}, and
 
 \item the expressions in \tref{iterator.requirements} are valid and have
@@ -1129,7 +1210,7 @@ satisfies the requirements of an input iterator for the value type
 \tcode{T}
 if
 \tcode{X} satisfies the \tcode{Iterator}\iref{iterator.iterators} and
-\tcode{EqualityComparable} (\tref{equalitycomparable}) requirements and
+\tcode{STL1EqualityComparable} (\tref{equalitycomparable}) requirements and
 the expressions in \tref{iterator.input.requirements} are valid and have
 the indicated semantics.
 
@@ -1221,7 +1302,7 @@ Algorithms on input iterators should never attempt to pass through the same iter
 They should be
 \term{single pass}
 algorithms.
-Value type \tcode{T} is not required to be a \tcode{CopyAssignable} type (\tref{copyassignable}).
+Value type \tcode{T} is not required to be a \tcode{STL1CopyAssignable} type (\tref{copyassignable}).
 These algorithms can be used with istreams as the source of the input data through the
 \tcode{istream_iterator}
 class template.
@@ -1303,7 +1384,7 @@ satisfies the requirements of a forward iterator if
 \begin{itemize}
 \item \tcode{X} satisfies the requirements of an input iterator\iref{input.iterators},
 
-\item \tcode{X} satisfies the \tcode{DefaultConstructible}
+\item \tcode{X} satisfies the \tcode{STL1DefaultConstructible}
 requirements\iref{utility.arg.requirements},
 
 \item if \tcode{X} is a mutable iterator, \tcode{reference} is a reference to \tcode{T};
