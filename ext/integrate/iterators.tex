@@ -150,14 +150,14 @@ namespace std {
   template <class F, class I1, class I2 = I1>
   concept IndirectStrictWeakOrder = @\seebelow@;
 
-  template <class, class... Is> struct indirect_result@\added{ \{ \}}@;
+  template <class, class...> struct indirect_result { };
 
   template <class F, class... Is>
     requires (Readable<Is> &&...) && Invocable<F, @\added{iter_}@reference_t<Is>...>
   struct indirect_result<F, Is...>;
 
   template <class F, class... Is>
-  using indirect_result_t = typename indirect_result<F>::type;
+  using indirect_result_t = typename indirect_result<F, Is...>::type;
 
   // \ref{projected}, projected:
   template <Readable I, IndirectRegularUnaryInvocable<I> Proj>
@@ -202,7 +202,7 @@ namespace std {
   template <class I, class R = @\added{ranges::}@less<>, class P = identity>
   concept Sortable = @\seebelow@;
 
-  @\ednote{ranges::iterator_traits from P0896R1 is intentionally omited.}@
+  @\ednote{ranges::iterator_traits from P0896 is intentionally omitted.}@
 
   template <Readable T> using iter_common_reference_t
     = common_reference_t<@\added{iter_}@reference_t<T>, @\changed{value_type_t}{iter_value_t}@<T>&>;
@@ -250,8 +250,6 @@ namespace std {
     template <Iterator I, Sentinel<I> S>
       constexpr @\added{iter_}@difference@\removed{_type}@_t<I> distance(I first, S last);
     template <Range R>
-      constexpr @\added{iter_}@difference@\removed{_type}@_t<iterator_t<R>> distance(R&& r);
-    template <SizedRange R>
       constexpr @\added{iter_}@difference@\removed{_type}@_t<iterator_t<R>> distance(R&& r);
 
     @\added{// \ref{range.iterator.operations.next}, \tcode{ranges::next}:}@
@@ -1529,7 +1527,7 @@ callable objects~(\cxxref{func.def}) as arguments.
 \indexlibrary{\idxcode{IndirectRelation}}%
 \indexlibrary{\idxcode{IndirectStrictWeakOrder}}%
 \begin{codeblock}
-@\added{namespace std\{}@
+@\added{namespace std \{}@
   template <class F, class I>
   concept IndirectUnaryInvocable = // ... as in P0986R1 with new associated type names
 
@@ -1544,8 +1542,6 @@ callable objects~(\cxxref{func.def}) as arguments.
 
   template <class F, class I1, class I2 = I1>
   concept IndirectStrictWeakOrder = // ... as in P0986R1 with new associated type names
-
-  @\removed{template <class, class...> struct indirect_result \{ \};}@
 
   template <class F, class... Is>
     requires (Readable<Is> &&...) && Invocable<F, @\added{iter_}@reference_t<Is>...>
@@ -1601,10 +1597,10 @@ for rearrangements: \tcode{Permut\-able}, \tcode{Mergeable}, and \tcode{Sortable
 There is one relational concept for comparing values from different sequences: \tcode{IndirectlyComparable}.
 
 \pnum
-\enternote The \tcode{@\added{ranges::}@equal_to<>} and \tcode{@\added{ranges::}@less<>}~(\ref{range.comparisons}) function types used in the
-concepts below impose additional constraints on their arguments beyond those that appear explicitly in the
-concepts' bodies. \tcode{@\added{ranges::}@equal_to<>} requires its arguments satisfy \tcode{EqualityComparableWith}~(\cxxref{concepts.lib.compare.equalitycomparable}),
-and \tcode{@\added{ranges::}@less<>} requires its arguments satisfy \tcode{StrictTotallyOrderedWith}~(\cxxref{concepts.lib.compare.stricttotallyordered}).\exitnote
+\enternote The \tcode{\added{ranges::}equal_to<>} and \tcode{\added{ranges::}less<>}~(\ref{range.comparisons}) function \added{object} types used in the
+concepts below impose \removed{additional} constraints on their arguments \changed{beyond}{in addition to} those that appear explicitly in the
+concepts' bodies. \tcode{\added{ranges::}equal_to<>} requires its arguments satisfy \tcode{EqualityComparableWith}~(\cxxref{concepts.lib.compare.equalitycomparable}),
+and \tcode{\added{ranges::}less<>} requires its arguments satisfy \tcode{StrictTotallyOrderedWith}~(\cxxref{concepts.lib.compare.stricttotallyordered}).\exitnote
 
 \rSec3[commonalgoreq.indirectlymovable]{Concept \tcode{IndirectlyMovable}}
 
@@ -1803,8 +1799,9 @@ iterator_traits<Iterator>::pointer
 
 shall be defined as the iterator's reference and pointer types\changed{,}{;} that is, for an
 iterator object \tcode{a}, the same type as the type of \tcode{*a} and \tcode{a->},
-respectively. \added{The type \tcode{iterator_traits<Iterator>::pointer} is
-permitted to be \tcode{void}. Additionally, i}\removed{I}n the case of an output
+respectively. \added{The type \tcode{iterator_traits<Iterator>::pointer} shall be
+\tcode{void} for a type \tcode{Iterator} which does not support \tcode{operator->}.
+Additionally, i}\removed{I}n the case of an output
 iterator, the types
 
 \begin{codeblock}
@@ -2274,7 +2271,7 @@ by
 
 \begin{itemdecl}
 template <Iterator I, Sentinel<I> S>
-  constexpr void advance(I& i, S bound) const;
+  constexpr void advance(I& i, S bound);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2299,7 +2296,7 @@ shall denote a range.
 
 \begin{itemdecl}
 template <Iterator I, Sentinel<I> S>
-  constexpr @\added{iter_}@difference@\removed{_type}@_t<I> advance(I& i, @\added{iter_}@difference@\removed{_type}@_t<I> n, S bound) const;
+  constexpr @\added{iter_}@difference@\removed{_type}@_t<I> advance(I& i, @\added{iter_}@difference@\removed{_type}@_t<I> n, S bound);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2336,7 +2333,7 @@ shall be satisfied.
 
 \begin{itemdecl}
 template <Iterator I, Sentinel<I> S>
-  constexpr @\added{iter_}@difference@\removed{_type}@_t<I> distance(I first, S last) const;
+  constexpr @\added{iter_}@difference@\removed{_type}@_t<I> distance(I first, S last);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2356,25 +2353,20 @@ to
 
 \begin{itemdecl}
 template <Range R>
-  constexpr @\added{iter_}@difference@\removed{_type}@_t<iterator_t<R>> distance(R&& r) const;
-\end{itemdecl}
-
-\begin{itemdescr}
-\effects
-Equivalent to:
-\tcode{return distance(ranges::begin(r), ranges::end(r));}~(\ref{range.access})
-\end{itemdescr}
-
-\begin{itemdecl}
-template <SizedRange R>
-  constexpr @\added{iter_}@difference@\removed{_type}@_t<iterator_t<R>> distance(R&& r) const;
+  constexpr @\added{iter_}@difference@\removed{_type}@_t<iterator_t<R>> distance(R&& r);
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
 \effects
-Equivalent to: \tcode{return ranges::size(r);}~(\ref{range.primitives.size})
-
+If \tcode{SizedRange<R>} is satisfied, equivalent to:
+\begin{codeblock}
+return ranges::size(r); // \ref{range.primitives.size}
+\end{codeblock}
+Otherwise, equivalent to:
+\begin{codeblock}
+return distance(ranges::begin(r), ranges::end(r)); // \ref{range.access}
+\end{codeblock}
 \end{itemdescr}
 
 \rSec3[range.iterator.operations.next]{\tcode{ranges::next}}
@@ -2382,7 +2374,7 @@ Equivalent to: \tcode{return ranges::size(r);}~(\ref{range.primitives.size})
 
 \begin{itemdecl}
 template <Iterator I>
-  constexpr I next(I x) const;
+  constexpr I next(I x);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2392,7 +2384,7 @@ template <Iterator I>
 
 \begin{itemdecl}
 template <Iterator I>
-  constexpr I next(I x, @\added{iter_}@difference@\removed{_type}@_t<I> n) const;
+  constexpr I next(I x, @\added{iter_}@difference@\removed{_type}@_t<I> n);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2402,7 +2394,7 @@ template <Iterator I>
 
 \begin{itemdecl}
 template <Iterator I, Sentinel<I> S>
-  constexpr I next(I x, S bound) const;
+  constexpr I next(I x, S bound);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2412,7 +2404,7 @@ template <Iterator I, Sentinel<I> S>
 
 \begin{itemdecl}
 template <Iterator I, Sentinel<I> S>
-  constexpr I next(I x, @\added{iter_}@difference@\removed{_type}@_t<I> n, S bound) const;
+  constexpr I next(I x, @\added{iter_}@difference@\removed{_type}@_t<I> n, S bound);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2425,7 +2417,7 @@ template <Iterator I, Sentinel<I> S>
 
 \begin{itemdecl}
 template <BidirectionalIterator I>
-  constexpr I prev(I x) const;
+  constexpr I prev(I x);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2435,7 +2427,7 @@ template <BidirectionalIterator I>
 
 \begin{itemdecl}
 template <BidirectionalIterator I>
-  constexpr I prev(I x, @\added{iter_}@difference@\removed{_type}@_t<I> n) const;
+  constexpr I prev(I x, @\added{iter_}@difference@\removed{_type}@_t<I> n);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2445,7 +2437,7 @@ template <BidirectionalIterator I>
 
 \begin{itemdecl}
 template <BidirectionalIterator I>
-  constexpr I prev(I x, @\added{iter_}@difference@\removed{_type}@_t<I> n, I bound) const;
+  constexpr I prev(I x, @\added{iter_}@difference@\removed{_type}@_t<I> n, I bound);
 \end{itemdecl}
 
 \begin{itemdescr}
