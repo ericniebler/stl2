@@ -15,12 +15,12 @@
 \newcommand{\removed}[1]{\textcolor{remclr}{\sout{#1}}}
 \renewcommand{\changed}[2]{\removed{#1}\added{#2}}
 
-% Mark-up text that is unique to the Ranges TS
+% Mark-up text that is unique to this document
 % (\oldtxt{X} gets deleted in next draft, \newtxt{X} becomes \added{X}.)
 \newcommand{\oldtxt}[1]{\textcolor{oldclr}{\sout{#1}}}
 \newcommand{\newtxt}[1]{\textcolor{newclr}{\uline{#1}}}
 
-% Mark-up text that is in the C++14 standard
+% Mark-up text that is in the base document
 % (\newnewtxt{X} becomes \added{X}.)
 \newcommand{\newnewtxt}[1]{\newtxt{#1}}
 % (\oldoldtxt{X} becomes \removed{X}.)
@@ -59,20 +59,29 @@
 % the range [0,5].  (If it proves necessary, it wouldn't take much
 % programming to raise the limit from 5 to something larger.)
 
+% Set the xref label for a clause to be "Clause n", not just "n".
+\makeatletter
+\newcommand{\customlabel}[2]{%
+\protected@write \@auxout {}{\string \newlabel {#1}{{#2}{\thepage}{#2}{#1}{}} }%
+\hypertarget{#1}{}%
+}
+\makeatother
+\newcommand{\clauselabel}[1]{\customlabel{#1}{Clause \thechapter}}
+\newcommand{\annexlabel}[1]{\customlabel{#1}{Annex \thechapter}}
 
 % The basic sectioning command.  Example:
 %    \Sec1[intro.scope]{Scope}
 % defines a first-level section whose name is "Scope" and whose short
 % tag is intro.scope.  The square brackets are mandatory.
 \def\Sec#1[#2]#3{%
-\ifcase#1\let\s=\chapter
-      \or\let\s=\section
-      \or\let\s=\subsection
-      \or\let\s=\subsubsection
-      \or\let\s=\paragraph
-      \or\let\s=\subparagraph
+\ifcase#1\let\s=\chapter\let\l=\clauselabel
+      \or\let\s=\section\let\l=\label
+      \or\let\s=\subsection\let\l=\label
+      \or\let\s=\subsubsection\let\l=\label
+      \or\let\s=\paragraph\let\l=\label
+      \or\let\s=\subparagraph\let\l=\label
       \fi%
-\s[#3]{#3\hfill[#2]}\label{#2}}
+\s[#3]{#3\hfill[#2]}\l{#2}\addxref{#2}}
 
 % A convenience feature (mostly for the convenience of the Project
 % Editor, to make it easy to move around large blocks of text):
@@ -83,12 +92,12 @@
 % is equivalent to
 %   \Sec2[temp.arg.type]{Template type arguments}
 \newcounter{SectionDepthBase}
-\newcounter{scratch}
+\newcounter{SectionDepth}
 
 \def\rSec#1[#2]#3{%
-\setcounter{scratch}{#1}
-\addtocounter{scratch}{\value{SectionDepthBase}}
-\Sec{\arabic{scratch}}[#2]{#3}}
+\setcounter{SectionDepth}{#1}
+\addtocounter{SectionDepth}{\value{SectionDepthBase}}
+\Sec{\arabic{SectionDepth}}[#2]{#3}}
 
 \newcommand{\synopsis}[1]{\textbf{#1}}
 
@@ -146,7 +155,7 @@
 \newcommand{\shr}{>{>}}
 \newcommand{\dcr}{-{-}}
 \newcommand{\exor}{\^{}}
-\newcommand{\bigoh}[1]{\ensuremath{\mathscr{O}(#1)}}
+\newcommand{\bigoh}[1]{\ensuremath{\mathcal{O}(#1)}}
 
 % Make all tildes a little larger to avoid visual similarity with hyphens.
 % FIXME: Remove \tilde in favour of \~.
@@ -171,8 +180,6 @@
 \newcommand{\exitnote}{\ExitBlock{note}}
 \newcommand{\enterexample}{\EnterBlock{Example}}
 \newcommand{\exitexample}{\ExitBlock{example}}
-
-%% Notes and examples
 \newcommand{\noteintro}[1]{[\,\textit{#1:}\space}
 \newcommand{\noteoutro}[1]{\textit{\,---\,end #1}\,]}
 \newenvironment{note}[1][Note]{\noteintro{#1}}{\noteoutro{note}\space}
@@ -194,8 +201,6 @@
 \newcommand{\complexity}{\Fundesc{Complexity}}
 \newcommand{\remark}{\Fundesc{Remark}}
 \newcommand{\remarks}{\Fundesc{Remarks}}
-% \newcommand{\note}{\remark}
-\newcommand{\notes}{\remarks}
 \newcommand{\realnote}{\Fundesc{Note}}
 \newcommand{\realnotes}{\Fundesc{Notes}}
 \newcommand{\errors}{\Fundesc{Error conditions}}
@@ -214,6 +219,9 @@
 %% Cross reference
 \newcommand{\xref}{\textsc{See also:}\xspace}
 \newcommand{\xsee}{\textsc{See:}\xspace}
+
+%% Inline parenthesized reference
+\newcommand{\iref}[1]{\nolinebreak[3] (\ref{#1})}
 
 %% NTBS, etc.
 \newcommand{\NTS}[1]{\textsc{#1}\xspace}
@@ -240,7 +248,7 @@
 %% Double underscore
 \newcommand{\ungap}{\kern.5pt}
 \newcommand{\unun}{\_\ungap\_}
-\newcommand{\xname}[1]{\texorpdfstring{\unun\ungap#1}{\_\_#1}}
+\newcommand{\xname}[1]{\unun\ungap#1}
 \newcommand{\mname}[1]{\tcode{\unun\ungap#1\ungap\unun}}
 
 %% Ranges
@@ -510,25 +518,23 @@
 \newcommand{\addxref}[1]{\glossary[xrefindex]{#1}{(\ref{#1})}}
 
 %%--------------------------------------------------
-%% Definitions section
-% usage: \definition{name}{xref}
-%\newcommand{\definition}[2]{\rSec2[#2]{#1}}
-% for ISO format, use:
-\newcommand{\definition}[2]
- {\hfill\vspace{.25ex plus .5ex minus .2ex}\\
- \addtocounter{subsection}{1}%
- \textbf{\thesubsection\hfill\relax[#2]}\\
- \textbf{#1}\label{#2}\\
- }
-
-%%--------------------------------------------------
 %% Definitions section for "Terms and definitions"
+\newcounter{termnote}
 \newcommand{\nocontentsline}[3]{}
-\newcommand{\definitionx}[3]{%
-\addxref{#3}%
+\newcommand{\definition}[2]{%
+\addxref{#2}%
+\setcounter{termnote}{0}%
 \let\oldcontentsline\addcontentsline%
 \let\addcontentsline\nocontentsline%
-#1[#2]{\hfill[#3]}\vspace{-.3\onelineskip}\label{#3} \textbf{#2}\\*%
+\ifcase\value{SectionDepth}
+         \let\s=\section
+      \or\let\s=\subsection
+      \or\let\s=\subsubsection
+      \or\let\s=\paragraph
+      \or\let\s=\subparagraph
+      \fi%
+\s[#1]{\hfill[#2]}\vspace{-.3\onelineskip}\label{#2} \textbf{#1}\\*%
 \let\addcontentsline\oldcontentsline%
 }
 \newcommand{\defncontext}[1]{\textlangle#1\textrangle}
+\newenvironment{defnote}{\addtocounter{termnote}{1}\noteintro{Note \thetermnote{} to entry}}{\noteoutro{note}\space}
