@@ -43,8 +43,43 @@ namespace std {
   template <class T> concept @\placeholder{dereferenceable}@ // \expos
     = requires(T& t) { {*t} -> auto&&; };
 
+  @\ednote{The following through the definition of indirect_result_t is also relocated from <range> but promoted to namespace std::.}@
+  // \ref{iterator.assoc.types}, associated types:
+  // \ref{incrementable.traits}, \changed{difference_type}{incrementable traits}:
+  template <class> struct @\changed{difference_type}{incrementable_traits}@;
+  template <class T>
+    using @\changed{difference_type_t}{iter_difference_t = \seebelow;}@
+      @\removed{= typename difference_type<T>::type;}@
+
+  // \ref{readable.traits}, \changed{value_type}{readable traits}:
+  template <class> struct @\changed{value_type}{readable_traits}@;
+  template <class T>
+    using @\changed{value_type_t}{iter_value_t = \seebelow;}@
+      @\removed{= typename value_type<T>::type;}@
+
+  @\removed{// \ref{iterator.assoc.types.iterator_category}, iterator_category:}@
+  @\removed{template <class> struct iterator_category;}@
+  @\removed{template <class T> using iterator_category_t}@
+    @\removed{= typename iterator_category<T>::type;}@
+
+  // \ref{iterator.traits}, Iterator traits \ednote{Moved here from below.}
+  template<class Iterator> struct iterator_traits;
+  template<class T> struct iterator_traits<T*>;
+
+  template <@\placeholder{dereferenceable}@ T>
+    using @\added{iter_}@reference_t = decltype(*declval<T&>());
+
+  template <Readable T>
+    using iter_common_reference_t = common_reference_t<@\added{iter_}@reference_t<T>,
+                                                       @\changed{value_type_t}{iter_value_t}@<T>&>;
+
+  template <@\placeholder{dereferenceable}@ T>
+      requires @\changed{\seebelow}{requires (T\& t) \{}@
+        @\added{\{ ranges::iter_move(t) \} -> auto \&\&;}@
+      @\added{\}}@
+    using @\added{iter_}@rvalue_reference_t = decltype(ranges::iter_move(declval<T&>()));
+
   namespace ranges {
-    // \ref{iterator.concepts}, iterator \changed{requirements}{concepts}:
     // \ref{iterator.custpoints}, customization points:
     inline namespace @\unspec@ {
       // \ref{iterator.custpoints.iter_move}, iter_move:
@@ -55,33 +90,7 @@ namespace std {
     }
   }
 
-  @\ednote{The following through the definition of indirect_result_t is also relocated from <range> but promoted to namespace std::.}@
-  // \ref{iterator.assoc.types}, associated types:
-  // \ref{iterator.assoc.types.incrementable_traits}, \changed{difference_type}{incrementable_traits}:
-  template <class> struct @\changed{difference_type}{incrementable_traits}@;
-  template <class T> using @\changed{difference_type_t}{iter_difference_t = \seebelow;}@
-    @\removed{= typename difference_type<T>::type;}@
-
-  // \ref{iterator.assoc.types.readable_traits}, \changed{value_type}{readable_traits}:
-  template <class> struct @\changed{value_type}{readable_traits}@;
-  template <class T> using @\changed{value_type_t}{iter_value_t = \seebelow;}@
-    @\removed{= typename value_type<T>::type;}@
-
-  @\removed{// \ref{iterator.assoc.types.iterator_category}, iterator_category:}@
-  @\removed{template <class> struct iterator_category;}@
-  @\removed{template <class T> using iterator_category_t}@
-    @\removed{= typename iterator_category<T>::type;}@
-
-  template <@\placeholder{dereferenceable}@ T> using @\added{iter_}@reference_t
-    = decltype(*declval<T&>());
-
-  template <@\placeholder{dereferenceable}@ T>
-      requires @\changed{\seebelow}{requires (T\& t) \{}@
-        @\added{\{ ranges::iter_move(t) \} -> auto \&\&;}@
-      @\added{\}}@
-  using @\added{iter_}@rvalue_reference_t
-    = decltype(ranges::iter_move(declval<T&>()));
-
+  // \ref{iterator.concepts}, iterator \changed{requirements}{concepts}:
   // \ref{iterator.concept.readable}, Readable:
   template <class In>
   concept Readable = @\seebelow@;
@@ -208,13 +217,8 @@ namespace std {
 
   @\ednote{ranges::iterator_traits from P0896 is intentionally omitted.}@
 
-  template <Readable T> using iter_common_reference_t
-    = common_reference_t<@\added{iter_}@reference_t<T>, @\changed{value_type_t}{iter_value_t}@<T>&>;
-
   // \ref{iterator.primitives}, primitives
-  template<class Iterator> struct iterator_traits;
-  template<class T> struct iterator_traits<T*>;
-
+  @\added{// \ref{std.iterator.tags}, iterator tags}@
   struct input_iterator_tag { };
   struct output_iterator_tag { };
   struct forward_iterator_tag: public input_iterator_tag { };
@@ -240,6 +244,7 @@ namespace std {
       prev(BidirectionalIterator x,
            typename iterator_traits<BidirectionalIterator>::difference_type n = 1);
 
+  // \ref{range.iterator.operations}, range iterator operations
   @\added{namespace ranges \{}@
     // \ref{range.iterator.operations}, \added{Range} iterator operations:
     @\added{// \ref{range.iterator.operations.advance}, \tcode{ranges::advance}:}@
@@ -790,52 +795,14 @@ denotes a value of some type that is writable to the output iterator.
 of \tcode{iterator_traits<X>}\iref{iterator.traits}. \end{note}
 \end{removedblock}
 
-\ednote{[range.iterator.custpoints], [range.iterator.assoc.types], and the concept
-definitions \tcode{Readable} through \tcode{RandomAccessIterator} from subsection
-[range.iterator.requirements] (and P0944's \tcode{ContiguousIterator} concept)
-all get moved into a new section [iterator.concepts].}
 
-\rSec2[iterator.concepts]{Iterator concepts}
-\rSec3[iterator.custpoints]{Customization points}
-\ednote{Relocated from [range.iterator.custpoints] in P0896R1.}
+\ednote{Relocate [range.iterator.assoc.types] from P0896R1 here.}
 
-\rSec4[iterator.custpoints.iter_move]{\tcode{iter_move}}
-\ednote{Relocated from [range.iterator.custpoints.iter_move] in P0896R1 and
-changed as follows:}
+\rSec2[iterator.assoc.types]{Iterator associated types}
+\ednote{Relocated from [range.iterator.assoc.types] in P0896R1 and changed as
+follows:}
 
-\pnum
-The name \tcode{iter_move} denotes a \techterm{customization point
-object}~(\cxxref{customization.point.object}). The expression
-\tcode{ranges::iter_move(E)} for some subexpression \tcode{E} is expression-equivalent to the
-following:
-
-\begin{itemize}
-\item \tcode{\removed{static_cast<decltype(iter_move(E))>(}iter_move(E)\removed{)}}, if that expression
-is well-formed when evaluated in a context that does not include
-\tcode{ranges::iter_move} but does include the
-lookup set produced by argument-dependent lookup~(\cxxref{basic.lookup.argdep}).
-
-\item Otherwise, if the expression \tcode{*E} is well-formed:
-\begin{itemize}
-\item if \tcode{*E} is an lvalue, \tcode{std::move(*E)};
-
-\item otherwise, \tcode{\removed{static_cast<decltype(*E)>(}*E\removed{)}}.
-\end{itemize}
-
-\item Otherwise, \tcode{ranges::iter_move(E)} is ill-formed.
-\end{itemize}
-
-\pnum
-If \tcode{ranges::iter_move(E)} does not equal \tcode{*E}, the program is
-ill-formed with no diagnostic required.
-
-\rSec4[iterator.custpoints.iter_swap]{\tcode{iter_swap}}
-
-\ednote{...as in P0896R1 with updates for the new associated type alias names.}
-
-\rSec3[iterator.assoc.types]{Iterator associated types}
-\ednote{Relocated from [range.iterator.assoc.types] in P0896R1 and changed as follows:}
-
+\begin{removedblock}
 \pnum
 To implement algorithms only in terms of iterators, it is often necessary to
 determine the value and
@@ -844,27 +811,44 @@ Accordingly, it is required that if
 \tcode{WI} is the name of a type that
 satisfies the \tcode{WeaklyIncrementable} concept~(\ref{iterator.concept.weaklyincrementable})\changed{,}{ and}
 \tcode{R} is the name of a type that
-satisfies the \tcode{Readable} concept~(\ref{iterator.concept.readable})\removed{, and
+satisfies the \tcode{Readable} concept~(\ref{iterator.concept.readable}), and
 \tcode{II} is the name of a type that satisfies the
-\tcode{InputIterator} concept~(\ref{iterator.concept.input}) concept}, the types
+\tcode{InputIterator} concept~(\ref{iterator.concept.input}) concept, the types
 
 \begin{codeblock}
-@\changed{difference_type_t}{iter_difference_t}@<WI>
-@\changed{value_type_t}{iter_value_t}@<R>
-@\removed{iterator_category_t<II>}@
+difference_type_t<WI>
+value_type_t<R>
+iterator_category_t<II>
 \end{codeblock}
 
-be defined as the iterator's difference type\changed{,}{ and} value type
-\removed{ and iterator category}, respectively.
+be defined as the iterator's difference type, value type
+and iterator category, respectively.
+\end{removedblock}
 
 \ednote{Change the name of [iterator.assoc.types.difference_type] from
-``\tcode{difference_type}'' to ``\tcode{incrementable_traits}''.}
-\rSec4[iterator.assoc.types.incrementable_traits]{\tcode{incrementable_traits}}
+``\tcode{difference_type}'' to ``\tcode{Incrementable traits}'' and change
+its stable name to [incrementable.traits].}
+\rSec3[incrementable.traits]{Incrementable traits}
+
+\begin{addedblock}
+\pnum
+To implement algorithms only in terms of incrementable types, it is often necessary to
+determine the difference type that corresponds to a particular incrementable type.
+Accordingly, it is required that if \tcode{WI} is the name of a type that
+satisfies the \tcode{WeaklyIncrementable} concept\iref{iterator.concept.weaklyincrementable},
+the type
+
+\begin{codeblock}
+iter_difference_t<WI>
+\end{codeblock}
+
+be defined as the incrementable type's difference type.
+\end{addedblock}
 
 \pnum
-\indexlibrary{\idxcode{iter_difference_t}}%
-\tcode{\changed{difference_type_t}{iter_difference_t}<T>} is implemented as if:
+\tcode{\changed{difference_type_t<T>}{iter_difference_t}} is implemented as if:
 
+\indexlibrary{\idxcode{iter_difference_t}}%
 \indexlibrary{\idxcode{incrementable_traits}}%
 \begin{codeblock}
 @\added{namespace std \{ namespace ranges \{}@
@@ -898,17 +882,18 @@ be defined as the iterator's difference type\changed{,}{ and} value type
     : @\added{\xname{with_difference_type< }}@make_signed@\added{_t}@< decltype(declval<T>() - declval<T>()) >@\added{>}@ {
   };
 
-  template <class T> using @\changed{difference_type_t}{iter_difference_t = \seebelow;}@
-    @\removed{= typename difference_type<T>::type;}@
+  template <class T>
+    using @\changed{difference_type_t}{iter_difference_t = \seebelow;}@
+      @\removed{= typename difference_type<T>::type;}@
 @\added{\}\}}@
 \end{codeblock}
 
 \begin{addedblock}
 \pnum
-If \tcode{iterator_traits<T>} does not name an instantiation of the primary
-template, then \tcode{iter_difference_t<T>}
-is an alias for the type \tcode{iterator_traits<T>::difference_type}; otherwise,
-it is an alias for the type \tcode{incrementable_traits<T>::difference_type}.
+If \tcode{iterator_traits<I>} does not name an instantiation of the primary
+template, then \tcode{iter_difference_t<I>}
+is an alias for the type \tcode{iterator_traits<I>::difference_type}; otherwise,
+it is an alias for the type \tcode{incrementable_traits<I>::difference_type}.
 \end{addedblock}
 
 \pnum
@@ -916,13 +901,36 @@ Users may specialize \changed{\tcode{difference_type}}{\tcode{incrementable_trai
 on user-defined types.
 
 \ednote{Change the name of [iterator.assoc.types.value_type] from
-``\tcode{value_type}'' to ``\tcode{readable_traits}''.}
-\rSec4[iterator.assoc.types.readable_traits]{\tcode{readable_traits}}
+``\tcode{value_type}'' to ``\tcode{Readable traits}'' and change its stable
+name to [readable.traits].}
+\rSec3[readable.traits]{Readable traits}
 
+\begin{removedblock}
 \pnum
 A \tcode{Readable} type has an associated value type that can be accessed with the
-\changed{\tcode{value_type_t}}{\tcode{iter_value_t}} alias template.
+\tcode{value_type_t} alias template.
+\end{removedblock}
 
+\setcounter{Paras}{0}
+\begin{addedblock}
+\pnum
+To implement algorithms only in terms of readable types, it is often necessary to
+determine the value type that corresponds to a particular readable type.
+Accordingly, it is required that if \tcode{R} is the name of a type that
+satisfies the \tcode{Readable} concept\iref{iterator.concept.readable},
+the type
+
+\begin{codeblock}
+iter_value_t<R>
+\end{codeblock}
+
+be defined as the readable type's value type.
+
+\pnum
+\tcode{iter_value_t} is implemented as if:
+\end{addedblock}
+
+\indexlibrary{\idxcode{iter_value_t}}%
 \indexlibrary{\idxcode{readable_traits}}%
 \begin{codeblock}
   @\added{template <class T> struct \xname{with_value_type} \{ // \expos}@
@@ -966,10 +974,10 @@ A \tcode{Readable} type has an associated value type that can be accessed with t
 
 \begin{addedblock}
 \pnum
-If \tcode{iterator_traits<T>} does not name an instantiation of the primary
-template, then \tcode{iter_value_t<T>} is an
-alias for the type \tcode{iterator_traits<T>::value_type}; otherwise, it is an
-alias for the type \tcode{readable_traits<T>::value_type}.
+If \tcode{iterator_traits<I>} does not name an instantiation of the primary
+template, then \tcode{iter_value_t<I>} is an
+alias for the type \tcode{iterator_traits<I>::value_type}; otherwise, it is an
+alias for the type \tcode{readable_traits<I>::value_type}.
 \end{addedblock}
 
 \pnum
@@ -1004,8 +1012,280 @@ type \tcode{\added{value_}type}. \enternote Smart pointers like
 But a smart pointer like \tcode{shared_ptr<void>} is not \tcode{Readable} and
 has no associated value type.\exitnote
 
-\ednote{Remove section ``\tcode{iterator_category}'' [iterator.assoc.types.iterator_category].}
+\ednote{Remove section ``\tcode{iterator_category}'' [iterator.assoc.types.iterator_category]
+from P0896R1.}
 
+\ednote{From P0896R1, strike [iterator.traits], [iterator.stdtraits], and
+[std.iterator.tags]. Relocate the working draft's [iterator.traits] from
+[iterator.primitives] to here and change it as follows:}
+\rSec3[iterator.traits]{Iterator traits}
+
+\pnum
+\indexlibrary{\idxcode{iterator_traits}}%
+To implement algorithms only in terms of iterators, it is \changed{often}{sometimes}
+necessary to determine the \changed{value and
+difference types}{iterator category} that correspond\added{s} to a particular
+iterator type. Accordingly, it is required that if
+\changed{\tcode{Iterator}}{\tcode{I}} is the type of an iterator, the type\removed{s}
+
+\indexlibrarymember{iterator_category}{iterator_traits}%
+\begin{codeblock}
+@\removed{iterator_traits<Iterator>::difference_type}@
+@\removed{iterator_traits<Iterator>::value_type}@
+iterator_traits<@\changed{Iterator}{I}@>::iterator_category
+\end{codeblock}
+
+be defined as the iterator's \removed{difference type, value type
+and} iterator category\removed{, respectively}.
+In addition, the types
+
+\indexlibrarymember{reference}{iterator_traits}%
+\indexlibrarymember{pointer}{iterator_traits}%
+\begin{codeblock}
+iterator_traits<@\changed{Iterator}{I}@>::reference
+iterator_traits<@\changed{Iterator}{I}@>::pointer
+\end{codeblock}
+
+shall be defined as the iterator's reference and pointer types\changed{,}{;}
+that is, for an
+iterator object \tcode{a}, the same type as the type of \tcode{*a} and \tcode{a->},
+respectively. \added{The type \tcode{iterator_traits<I>::pointer} shall be
+\tcode{void} for a type \tcode{I} that does not support \tcode{operator->}.
+Additionally, i}\removed{I}n the case of an output iterator, the types
+
+\begin{codeblock}
+iterator_traits<@\changed{Iterator}{I}@>::difference_type
+iterator_traits<@\changed{Iterator}{I}@>::value_type
+iterator_traits<@\changed{Iterator}{I}@>::reference
+@\removed{iterator_traits<Iterator>::pointer}@
+\end{codeblock}
+
+may be defined as \tcode{void}.
+
+\begin{addedblock}
+\pnum
+The member types of the primary template are computed as defined below.
+The definition below makes use of several exposition-only concepts equivalent
+to the following:
+
+\begin{codeblock}
+template <class I>
+concept @\textit{_Cpp98Iterator}@ =
+  Copyable<I> && requires (I i) {
+    { *i } -> auto &&;
+    { ++i } -> Same<I>&;
+    { *i++ } -> auto &&;
+  };
+
+template <class I>
+concept @\textit{_Cpp98InputIterator}@ =
+  @\textit{_Cpp98Iterator}@<I> && EqualityComparable<I> && requires (I i) {
+    typename common_reference_t<iter_reference_t<I> &&,
+                                typename readable_traits<I>::value_type &>;
+    typename common_reference_t<decltype(*i++) &&,
+                                typename readable_traits<I>::value_type &>;
+  } && SignedIntegral<typename incrementable_traits<I>::difference_type>;
+
+template <class I>
+concept @\textit{_Cpp98ForwardIterator}@ =
+  @\textit{_Cpp98InputIterator}@<I> && Constructible<I> &&
+  Same<remove_cvref_t<iter_reference_t<I>>, typename readable_traits<I>::value_type> &&
+  requires (I i) {
+    { i++ } -> I const &;
+    requires Same<iter_reference_t<I>, decltype(*i++)>;
+  };
+
+template <class I>
+concept @\textit{_Cpp98BidirectionalIterator}@ =
+  @\textit{_Cpp98ForwardIterator}@<I> && requires (I i) {
+    { --i } -> Same<I>&;
+    { i-- } -> I const &;
+    requires Same<iter_reference_t<I>, decltype(*i--)>;
+  };
+
+template <class I>
+concept @\textit{_Cpp98RandomAccessIterator}@ =
+  @\textit{_Cpp98BidirectionalIterator}@<I> && StrictTotallyOrdered<I> &&
+  requires (I i, typename incrementable_traits<I>::difference_type n) {
+    { i += n } -> Same<I>&;
+    { i -= n } -> Same<I>&;
+    requires Same<I, decltype(i + n)>;
+    requires Same<I, decltype(n + i)>;
+    requires Same<I, decltype(i - n)>;
+    requires Same<decltype(n), decltype(i - i)>;
+    { i[n] } -> iter_reference_t<I>;
+  };
+\end{codeblock}
+\end{addedblock}
+
+\begin{itemize}
+\item
+If \tcode{Iterator} has valid~(\cxxref{temp.deduct}) member
+types \tcode{difference_type}, \tcode{value_type}, \removed{\tcode{pointer},}
+\tcode{reference}, and \tcode{iterator_category},
+\tcode{iterator_traits<Iterator>}
+shall have the following as publicly accessible members:
+\begin{codeblock}
+  using difference_type   = typename Iterator::difference_type;
+  using value_type        = typename Iterator::value_type;
+  using pointer           = @\changed{typename Iterator::pointer}{\seebelow}@;
+  using reference         = typename Iterator::reference;
+  using iterator_category = typename Iterator::iterator_category;
+\end{codeblock}
+\begin{addedblock}
+If \tcode{Iterator} has a valid member type \tcode{pointer}, then
+\tcode{iterator_traits<Iterator>::pointer} names that type; otherwise, it
+is \tcode{void}.
+\end{addedblock}
+
+\begin{addedblock}
+\item
+Otherwise, if \tcode{Iterator} satisfies the exposition-only concept
+\tcode{\textit{_Cpp98InputIterator}}, \tcode{iterator_traits<{}Iterator>} shall
+have the following as publicly accessible members:
+\begin{codeblock}
+  using difference_type   = typename incrementable_traits<Iterator>::difference_type;
+  using value_type        = typename readable_traits<Iterator>::value_type;
+  using pointer           = @\seebelow@;
+  using reference         = @\seebelow@;
+  using iterator_category = @\seebelow@;
+\end{codeblock}
+If \tcode{Iterator::pointer} is well-formed and names a type, \tcode{pointer} is
+an alias for that type. Otherwise, if \tcode{decltype(declval<Iterator\&>().operator->())}
+is well-formed, then \tcode{pointer} names that type. Otherwise, if
+\tcode{iter_reference_t<Iterator>} is an lvalue reference type, \tcode{pointer}
+is \tcode{add_pointer_t<iter_reference_t<Iterator{>}>}. Otherwise, \tcode{pointer}
+is \tcode{void}.
+
+If \tcode{Iterator::reference} is well-formed and names a type, \tcode{reference}
+names that type. Otherwise, \tcode{reference} is \tcode{iter_reference_t<Iterator>}.
+
+If \tcode{Iterator::iterator_category} is well-formed and names a type,
+\tcode{iterator_category} names that type. Otherwise, if \tcode{Iterator}
+satisfies \tcode{\textit{_Cpp98RandomAccessIterator}}, \tcode{iterator_category}
+is \tcode{random_access_iterator_tag}. Otherwise, if \tcode{Iterator}
+satisfies \tcode{\textit{_Cpp98BidirectionalIterator}}, \tcode{iterator_category}
+is \tcode{bidirectional_iterator_tag}. Otherwise, if \tcode{Iterator}
+satisfies \tcode{\textit{_Cpp98ForwardIterator}}, \tcode{iterator_category}
+is \tcode{forward_iterator_tag}. Otherwise, \tcode{iterator_category}
+is \tcode{input_iterator_tag}.
+
+\item
+Otherwise, if \tcode{Iterator} satisfies the exposition-only concept
+\tcode{\textit{_Cpp98Iterator}}, \tcode{iterator_traits<{}Iterator>} shall
+have the following as publicly accessible members:
+\begin{codeblock}
+  using difference_type   = @\seebelow@;
+  using value_type        = void;
+  using pointer           = void;
+  using reference         = void;
+  using iterator_category = output_iterator_tag;
+\end{codeblock}
+If \tcode{incrementable_traits<Iterator>::difference_type} is well-formed
+and names a type, then \tcode{difference_type} names that type; otherwise, it is
+\tcode{void}.
+\end{addedblock}
+
+\item
+Otherwise, \tcode{iterator_traits<Iterator>}
+shall have no members by any of the above names.
+\end{itemize}
+
+\begin{addedblock}
+\pnum
+Additionally, user specializations of \tcode{iterator_traits} may have a member
+type \tcode{iterator_concept} that is used to opt in or out of conformance to the
+iterator concepts defined in~\ref{iterator.concepts}. If specified, it should be
+an alias for one of the standard iterator tag types~(\ref{std.iterator.tags}),
+or an empty, copy- and move-constructible, trivial class type that is publicly
+and unambiguously derived from one of the standard iterator tag types.
+\end{addedblock}
+
+\pnum
+\changed{It}{\tcode{iterator_traits}} is specialized for pointers as
+
+\begin{codeblock}
+namespace std {
+  template<class T> struct iterator_traits<T*> {
+    using difference_type   = ptrdiff_t;
+    using value_type        = remove_cv_t<T>;
+    using pointer           = T*;
+    using reference         = T&;
+    using iterator_category = random_access_iterator_tag;
+    @\added{using iterator_concept   = contiguous_iterator_tag;}@
+  };
+}
+\end{codeblock}
+
+\pnum
+\begin{example}
+To implement a generic
+\tcode{reverse}
+function, a \Cpp{} program can do the following:
+
+\begin{codeblock}
+template<class BidirectionalIterator>
+void reverse(BidirectionalIterator first, BidirectionalIterator last) {
+  typename iterator_traits<BidirectionalIterator>::difference_type n =
+    distance(first, last);
+  --n;
+  while(n > 0) {
+    typename iterator_traits<BidirectionalIterator>::value_type
+     tmp = *first;
+    *first++ = *--last;
+    *last = tmp;
+    n -= 2;
+  }
+}
+\end{codeblock}
+\end{example}
+
+
+\rSec2[iterator.custpoints]{Customization points}
+\ednote{Relocated from [range.iterator.custpoints] in P0896R1.}
+
+\rSec4[iterator.custpoints.iter_move]{\tcode{iter_move}}
+\ednote{Relocated from [range.iterator.custpoints.iter_move] in P0896R1 and
+changed as follows:}
+
+\pnum
+The name \tcode{iter_move} denotes a \techterm{customization point
+object}~(\cxxref{customization.point.object}). The expression
+\tcode{ranges::iter_move(E)} for some subexpression \tcode{E} is expression-equivalent to the
+following:
+
+\begin{itemize}
+\item \tcode{\removed{static_cast<decltype(iter_move(E))>(}iter_move(E)\removed{)}}, if that expression
+is well-formed when evaluated in a context that does not include
+\tcode{ranges::iter_move} but does include the
+lookup set produced by argument-dependent lookup~(\cxxref{basic.lookup.argdep}).
+
+\item Otherwise, if the expression \tcode{*E} is well-formed:
+\begin{itemize}
+\item if \tcode{*E} is an lvalue, \tcode{std::move(*E)};
+
+\item otherwise, \tcode{\removed{static_cast<decltype(*E)>(}*E\removed{)}}.
+\end{itemize}
+
+\item Otherwise, \tcode{ranges::iter_move(E)} is ill-formed.
+\end{itemize}
+
+\pnum
+If \tcode{ranges::iter_move(E)} does not equal \tcode{*E}, the program is
+ill-formed with no diagnostic required.
+
+\rSec4[iterator.custpoints.iter_swap]{\tcode{iter_swap}}
+
+\ednote{...as in P0896R1 with updates for the new associated type alias names.}
+
+
+
+\ednote{The concept definitions \tcode{Readable}
+through \tcode{RandomAccessIterator} from subsection [range.iterator.requirements]
+(and P0944's \tcode{ContiguousIterator} concept) all get moved into a new section
+[iterator.concepts].}
+
+\rSec2[iterator.concepts]{Iterator concepts}
 \setcounter{subsubsection}{10}
 \rSec3[iterator.concept.input]{Concept \tcode{InputIterator}}
 
@@ -1618,19 +1898,19 @@ callable objects~(\cxxref{func.def}) as arguments.
 \begin{codeblock}
 @\added{namespace std \{}@
   template <class F, class I>
-  concept IndirectUnaryInvocable = // ... as in P0986R1 with new associated type names
+  concept IndirectUnaryInvocable = // ... as in P0896R1 with new associated type names
 
   template <class F, class I>
-  concept IndirectRegularUnaryInvocable = // ... as in P0986R1 with new associated type names
+  concept IndirectRegularUnaryInvocable = // ... as in P0896R1 with new associated type names
 
   template <class F, class I>
-  concept IndirectUnaryPredicate = // ... as in P0986R1 with new associated type names
+  concept IndirectUnaryPredicate = // ... as in P0896R1 with new associated type names
 
   template <class F, class I1, class I2 = I1>
-  concept IndirectRelation = // ... as in P0986R1 with new associated type names
+  concept IndirectRelation = // ... as in P0896R1 with new associated type names
 
   template <class F, class I1, class I2 = I1>
-  concept IndirectStrictWeakOrder = // ... as in P0986R1 with new associated type names
+  concept IndirectStrictWeakOrder = // ... as in P0896R1 with new associated type names
 
   template <class F, class... Is>
     requires (Readable<Is> &&...) && Invocable<F, @\added{iter_}@reference_t<Is>...>
@@ -1838,247 +2118,11 @@ sequences into ordered sequences (e.g., \tcode{sort}).
     IndirectStrictWeakOrder<R, projected<I, P>>;
 \end{codeblock}
 
-
-
-
-
-
 \rSec1[iterator.primitives]{Iterator primitives}
 
 \pnum
 To simplify the task of defining iterators, the library provides
 several classes and functions:
-
-\rSec2[iterator.traits]{Iterator traits}
-
-\ednote{From the Ranges TS, strike [iterator.traits], [iterator.stdtraits], and
-[std.iterator.tags]. In the working draft of the IS, change section
-``Iterator traits''~(\ref{iterator.traits}) as follows:}
-
-\ednote{TODO: Merge this into iterator.assoc.types.}
-
-\pnum
-\indexlibrary{\idxcode{iterator_traits}}%
-To implement algorithms only in terms of iterators, it is often necessary to
-determine the value and
-difference types that correspond to a particular iterator type.
-Accordingly, it is required that if
-\tcode{Iterator}
-is the type of an iterator,
-the types
-
-\indexlibrarymember{difference_type}{iterator_traits}%
-\indexlibrarymember{value_type}{iterator_traits}%
-\indexlibrarymember{iterator_category}{iterator_traits}%
-\begin{codeblock}
-iterator_traits<Iterator>::difference_type
-iterator_traits<Iterator>::value_type
-iterator_traits<Iterator>::iterator_category
-\end{codeblock}
-
-be defined as the iterator's difference type, value type and iterator category, respectively.
-In addition, the types
-
-\indexlibrarymember{reference}{iterator_traits}%
-\indexlibrarymember{pointer}{iterator_traits}%
-\begin{codeblock}
-iterator_traits<Iterator>::reference
-iterator_traits<Iterator>::pointer
-\end{codeblock}
-
-shall be defined as the iterator's reference and pointer types\changed{,}{;} that is, for an
-iterator object \tcode{a}, the same type as the type of \tcode{*a} and \tcode{a->},
-respectively. \added{The type \tcode{iterator_traits<Iterator>::pointer} shall be
-\tcode{void} for a type \tcode{Iterator} which does not support \tcode{operator->}.
-Additionally, i}\removed{I}n the case of an output
-iterator, the types
-
-\begin{codeblock}
-iterator_traits<Iterator>::difference_type
-iterator_traits<Iterator>::value_type
-iterator_traits<Iterator>::reference
-@\removed{iterator_traits<Iterator>::pointer}@
-\end{codeblock}
-
-may be defined as \tcode{void}.
-
-\pnum
-\begin{addedblock}
-The member types of the primary template are computed as defined below.
-The definition below makes use of several exposition-only concepts equivalent
-to the following:
-
-\begin{codeblock}
-template <class I>
-concept @\textit{_Cpp98Iterator}@ =
-  Copyable<I> && requires (I i) {
-    { *i } -> auto &&;
-    { ++i } -> Same<I>&;
-    { *i++ } -> auto &&;
-  };
-
-template <class I>
-concept @\textit{_Cpp98InputIterator}@ =
-  @\textit{_Cpp98Iterator}@<I> && EqualityComparable<I> && requires (I i) {
-    typename common_reference_t<iter_reference_t<I> &&,
-                                typename readable_traits<I>::value_type &>;
-    typename common_reference_t<decltype(*i++) &&,
-                                typename readable_traits<I>::value_type &>;
-  } && SignedIntegral<typename incrementable_traits<I>::difference_type>;
-
-template <class I>
-concept @\textit{_Cpp98ForwardIterator}@ =
-  @\textit{_Cpp98InputIterator}@<I> && Constructible<I> &&
-  Same<remove_cvref_t<iter_reference_t<I>>, typename readable_traits<I>::value_type> &&
-  requires (I i) {
-    { i++ } -> I const &;
-    requires Same<iter_reference_t<I>, decltype(*i++)>;
-  };
-
-template <class I>
-concept @\textit{_Cpp98BidirectionalIterator}@ =
-  @\textit{_Cpp98ForwardIterator}@<I> && requires (I i) {
-    { --i } -> Same<I>&;
-    { i-- } -> I const &;
-    requires Same<iter_reference_t<I>, decltype(*i--)>;
-  };
-
-template <class I>
-concept @\textit{_Cpp98RandomAccessIterator}@ =
-  @\textit{_Cpp98BidirectionalIterator}@<I> && StrictTotallyOrdered<I> &&
-  requires (I i, typename incrementable_traits<I>::difference_type n) {
-    { i += n } -> Same<I>&;
-    { i -= n } -> Same<I>&;
-    requires Same<I, decltype(i + n)>;
-    requires Same<I, decltype(n + i)>;
-    requires Same<I, decltype(i - n)>;
-    requires Same<decltype(n), decltype(i - i)>;
-    { i[n] } -> iter_reference_t<I>;
-  };
-\end{codeblock}
-\end{addedblock}
-
-\begin{itemize}
-\item
-If \tcode{Iterator} has valid~(\cxxref{temp.deduct}) member
-types \tcode{difference_type}, \tcode{value_type}, \removed{\tcode{pointer},}
-\tcode{reference}, and \tcode{iterator_category},
-\tcode{iterator_traits<Iterator>}
-shall have the following as publicly accessible members:
-\begin{codeblock}
-  using difference_type   = typename Iterator::difference_type;
-  using value_type        = typename Iterator::value_type;
-  using pointer           = @\changed{typename Iterator::pointer}{\seebelow}@;
-  using reference         = typename Iterator::reference;
-  using iterator_category = typename Iterator::iterator_category;
-\end{codeblock}
-\begin{addedblock}
-If \tcode{Iterator} has a valid member type \tcode{pointer}, then
-\tcode{iterator_traits<Iterator>::pointer} names that type; otherwise, it
-is \tcode{void}.
-\end{addedblock}
-
-\begin{addedblock}
-\item
-Otherwise, if \tcode{Iterator} satisfies the exposition-only concept
-\tcode{\textit{_Cpp98InputIterator}}, \tcode{iterator_traits<{}Iterator>} shall
-have the following as publicly accessible members:
-\begin{codeblock}
-  using difference_type   = typename incrementable_traits<Iterator>::difference_type;
-  using value_type        = typename readable_traits<Iterator>::value_type;
-  using pointer           = @\seebelow@;
-  using reference         = @\seebelow@;
-  using iterator_category = @\seebelow@;
-\end{codeblock}
-If \tcode{Iterator::pointer} is well-formed and names a type, \tcode{pointer} is
-an alias for that type. Otherwise, if \tcode{decltype(declval<Iterator\&>().operator->())}
-is well-formed, then \tcode{pointer} names that type. Otherwise, if
-\tcode{iter_reference_t<Iterator>} is an lvalue reference type, \tcode{pointer}
-is \tcode{add_pointer_t<iter_reference_t<Iterator{>}>}. Otherwise, \tcode{pointer}
-is \tcode{void}.
-
-If \tcode{Iterator::reference} is well-formed and names a type, \tcode{reference}
-names that type. Otherwise, \tcode{reference} is \tcode{iter_reference_t<Iterator>}.
-
-If \tcode{Iterator::iterator_category} is well-formed and names a type,
-\tcode{iterator_category} names that type. Otherwise, if \tcode{Iterator}
-satisfies \tcode{\textit{_Cpp98RandomAccessIterator}}, \tcode{iterator_category}
-is \tcode{random_access_iterator_tag}. Otherwise, if \tcode{Iterator}
-satisfies \tcode{\textit{_Cpp98BidirectionalIterator}}, \tcode{iterator_category}
-is \tcode{bidirectional_iterator_tag}. Otherwise, if \tcode{Iterator}
-satisfies \tcode{\textit{_Cpp98ForwardIterator}}, \tcode{iterator_category}
-is \tcode{forward_iterator_tag}. Otherwise, \tcode{iterator_category}
-is \tcode{input_iterator_tag}.
-
-\item
-Otherwise, if \tcode{Iterator} satisfies the exposition-only concept
-\tcode{\textit{_Cpp98Iterator}}, \tcode{iterator_traits<{}Iterator>} shall
-have the following as publicly accessible members:
-\begin{codeblock}
-  using difference_type   = @\seebelow@;
-  using value_type        = void;
-  using pointer           = void;
-  using reference         = void;
-  using iterator_category = output_iterator_tag;
-\end{codeblock}
-If \tcode{incrementable_traits<Iterator>::difference_type} is well-formed
-and names a type, then \tcode{difference_type} names that type; otherwise, it is
-\tcode{void}.
-\end{addedblock}
-
-\item
-Otherwise, \tcode{iterator_traits<Iterator>}
-shall have no members by any of the above names.
-\end{itemize}
-
-\begin{addedblock}
-\pnum
-Additionally, user specializations of \tcode{iterator_traits} may have a member
-type \tcode{iterator_concept} that is used to opt in or out of conformance to the
-iterator concepts defined in~\ref{iterator.concepts}. If specified, it should be
-an alias for one of the standard iterator tag types~(\ref{std.iterator.tags}),
-or an empty, copy- and move-constructible, trivial class type that is publicly
-and unambiguously derived from one of the standard iterator tag types.
-\end{addedblock}
-
-\pnum
-\changed{It}{\tcode{iterator_traits}} is specialized for pointers as
-
-\begin{codeblock}
-namespace std {
-  template<class T> struct iterator_traits<T*> {
-    using difference_type   = ptrdiff_t;
-    using value_type        = remove_cv_t<T>;
-    using pointer           = T*;
-    using reference         = T&;
-    using iterator_category = random_access_iterator_tag;
-    @\added{using iterator_concept   = contiguous_iterator_tag;}@
-  };
-}
-\end{codeblock}
-
-\pnum
-\begin{example}
-To implement a generic
-\tcode{reverse}
-function, a \Cpp{} program can do the following:
-
-\begin{codeblock}
-template<class BidirectionalIterator>
-void reverse(BidirectionalIterator first, BidirectionalIterator last) {
-  typename iterator_traits<BidirectionalIterator>::difference_type n =
-    distance(first, last);
-  --n;
-  while(n > 0) {
-    typename iterator_traits<BidirectionalIterator>::value_type
-     tmp = *first;
-    *first++ = *--last;
-    *last = tmp;
-    n -= 2;
-  }
-}
-\end{codeblock}
-\end{example}
 
 \rSec2[std.iterator.tags]{Standard iterator tags}
 
@@ -2600,7 +2644,8 @@ namespace std {
     @\added{friend constexpr iter_rvalue_reference_t<Iterator> iter_move(const reverse_iterator\& i)}@
       @\added{noexcept(\seebelow);}@
     @\added{template <IndirectlySwappable<Iterator> Iterator2>}@
-      @\added{friend constexpr void iter_swap(const reverse_iterator\& x, const reverse_iterator<Iterator2>\& y)}@
+      @\added{friend constexpr void iter_swap(const reverse_iterator\& x,}@
+                                      @\added{const reverse_iterator<Iterator2>\& y)}@
         @\added{noexcept(\seebelow);}@
 
   protected:
