@@ -2031,14 +2031,40 @@ parameterized by iterator types.
 Because of this, they can work with program-defined data structures, as long
 as these data structures have iterator types satisfying the assumptions on the algorithms.
 
+\begin{addedblock}
+\pnum
+The function templates defined in the \tcode{std::ranges} namespace
+in this subclause are not found by argument-dependent
+name lookup~(\cxxref{basic.lookup.argdep}). When found by
+unqualified~(\cxxref{basic.lookup.unqual}) name lookup for the
+\grammarterm{postfix-expression} in a function call~(\cxxref{expr.call}), they
+inhibit argument-dependent name lookup.
+
+\begin{example}
+\begin{codeblock}
+void foo() {
+    using namespace std::ranges;
+    std::vector<int> vec{1,2,3};
+    find(begin(vec), end(vec), 2); // \#1
+}
+\end{codeblock}
+The function call expression at \tcode{\#1} invokes \tcode{std::ranges::find},
+not \tcode{std::find}, despite that (a) the iterator type returned from \tcode{begin(vec)}
+and \tcode{end(vec)} may be associated with namespace \tcode{std} and (b)
+\tcode{std::find} is more specialized~(\cxxref{temp.func.order}) than
+\tcode{std::ranges::find} since the former requires its first two parameters to
+have the same type.
+\end{example}
+\end{addedblock}
+
 \pnum
 For purposes of determining the existence of data races, algorithms shall
 not modify objects referenced through an iterator argument unless the
 specification requires such modification.
 
 \pnum
-Throughout this Clause, the names of template parameters
-are used to express type requirements.
+Throughout this Clause, \added{where the template parameters are not constrained,}
+the names of template parameters are used to express type requirements.
 \begin{itemize}
 \item
 If an algorithm's template parameter is named
@@ -2047,7 +2073,7 @@ If an algorithm's template parameter is named
 or
 \tcode{Input\-Iterator2},
 the template argument shall satisfy the
-requirements of an input iterator\iref{input.iterators}.
+requirements of \changed{an}{a \Cpp{}98} input iterator\iref{input.iterators}.
 \item
 If an algorithm's template parameter is named
 \tcode{OutputIterator},
@@ -2055,7 +2081,7 @@ If an algorithm's template parameter is named
 or
 \tcode{Output\-Iterator2},
 the template argument shall satisfy the requirements
-of an output iterator\iref{output.iterators}.
+of \changed{an}{a \Cpp{}98} output iterator\iref{output.iterators}.
 \item
 If an algorithm's template parameter is named
 \tcode{ForwardIterator},
@@ -2063,7 +2089,7 @@ If an algorithm's template parameter is named
 or
 \tcode{Forward\-Iterator2},
 the template argument shall satisfy the requirements
-of a forward iterator\iref{forward.iterators}.
+of a \added{\Cpp{}98} forward iterator\iref{forward.iterators}.
 \item
 If an algorithm's template parameter is named
 \tcode{BidirectionalIterator},
@@ -2071,7 +2097,7 @@ If an algorithm's template parameter is named
 or
 \tcode{BidirectionalIterator2},
 the template argument shall satisfy the requirements
-of a bidirectional iterator\iref{bidirectional.iterators}.
+of a \added{\Cpp{}98} bidirectional iterator\iref{bidirectional.iterators}.
 \item
 If an algorithm's template parameter is named
 \tcode{RandomAccessIterator},
@@ -2079,7 +2105,7 @@ If an algorithm's template parameter is named
 or
 \tcode{RandomAccessIterator2},
 the template argument shall satisfy the requirements
-of a random-access iterator\iref{random.access.iterators}.
+of a \added{\Cpp{}98} random-access iterator\iref{random.access.iterators}.
 \end{itemize}
 
 \pnum
@@ -2096,7 +2122,9 @@ This requirement does not affect arguments that are named
 \tcode{OutputIterator1},
 or
 \tcode{OutputIterator2},
-because output iterators must always be mutable.
+because output iterators must always be mutable\added{, neither does it
+affect arguments that are constrained, as the requirement for mutable is
+expressed explicitly}.
 \end{note}
 
 \pnum
@@ -2111,7 +2139,7 @@ When such a version is provided for \textit{algorithm} it is called
 suffix \tcode{_if} (which follows the suffix \tcode{_copy}).
 
 \pnum
-The
+\changed{T}{When not otherwise constrained, t}he
 \tcode{Predicate}
 parameter is used whenever an algorithm expects a function object\iref{function.objects}
 that, when applied to the result
@@ -2130,7 +2158,7 @@ shall not apply any non-constant
 function through the dereferenced iterator.
 
 \pnum
-The
+\changed{T}{When not otherwise constrained, t}he
 \tcode{BinaryPredicate}
 parameter is used whenever an algorithm expects a function object that when applied to
 the result of dereferencing two corresponding iterators or to dereferencing an
@@ -2195,6 +2223,30 @@ is the same as of
 \begin{codeblock}
 return distance(a, b);
 \end{codeblock}
+
+\begin{addedblock}
+\pnum
+In the description of algorithm return values, sentinel values are sometimes
+returned where an iterator is expected. In these cases, the semantics are as
+if the sentinel is converted into an iterator as follows:
+
+\begin{codeblock}
+I tmp = first;
+while(tmp != last)
+  ++tmp;
+return tmp;
+\end{codeblock}
+
+\pnum
+Overloads of algorithms that take \tcode{Range} arguments~(\ref{range.range})
+behave as if they are implemented by calling \tcode{range::begin} and \tcode{range::end} on
+the \tcode{Range} and dispatching to the overload that takes separate
+iterator and sentinel arguments.
+
+\pnum
+The number and order of template parameters for algorithm declarations
+is unspecified, except where explicitly stated otherwise.
+\end{addedblock}
 
 \rSec1[algorithms.parallel]{Parallel algorithms}
 
