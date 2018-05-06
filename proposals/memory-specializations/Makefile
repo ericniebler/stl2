@@ -1,4 +1,4 @@
-# Makefile for d1033 changes
+# Makefile for p1033 changes
 
 LATEX=pdflatex
 BIBTEX=bibtex
