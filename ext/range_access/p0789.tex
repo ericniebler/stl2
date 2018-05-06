@@ -2,10 +2,13 @@
 
 \part[Changes to P0789 R3]{Changes to P0789 R3\hfill[P0789]}\label{P0789}
 
-\setcounter{chapter}{27}
+\setcounter{chapter}{28}
 \rSec0[ranges]{Ranges library}
 
 \ednote{The following changes are suggested for P0789.}
+
+\setcounter{section}{2}
+\rSec1[range.synopsis]{Header \tcode{<range>} synopsis}
 
 \ednote{Change section ``Header \tcode{<range>} synopsis''
 [range.synopsis], as follows:}
@@ -27,15 +30,45 @@ namespace std { namespace ranges {
     @\added{constexpr S end(subrange<I, S, K>\&\& r);}@
 
   // ... as before
+
+  template <ForwardIterator I, Sentinel<I> S>
+    requires Permutable<I>
+    @\removed{tagged_pair<tag::begin(I), tag::end(I)>}@
+    @\added{subrange<I>}@
+      rotate(I first, I middle, S last);
+
+  template <ForwardRange Rng>
+    requires Permutable<iterator_t<Rng>>
+    @\removed{tagged_pair<tag::begin(safe_iterator_t<Rng>),}@
+                @\removed{tag::end(safe_iterator_t<Rng>)>}@
+    @\added{safe_subrange_t<Rng>}@
+      rotate(Rng&& rng, iterator_t<Rng> middle);
+
+  // ... as before
+
+  template <ForwardIterator I, Sentinel<I> S, class T, class Proj = identity,
+      IndirectStrictWeakOrder<const T*, projected<I, Proj>> Comp = less<>>
+    @\removed{tagged_pair<tag::begin(I), tag::end(I)>}@
+    @\added{subrange<I>}@
+      equal_range(I first, S last, const T& value, Comp comp = Comp{}, Proj proj = Proj{});
+
+  template <ForwardRange Rng, class T, class Proj = identity,
+      IndirectStrictWeakOrder<const T*, projected<iterator_t<Rng>, Proj>> Comp = less<>>
+    @\removed{tagged_pair<tag::begin(safe_iterator_t<Rng>),}@
+                @\removed{tag::end(safe_iterator_t<Rng>)>}@
+    @\added{safe_subrange_t<Rng>}@
+      equal_range(Rng&& rng, const T& value, Comp comp = Comp{}, Proj proj = Proj{});
+
+  // ... as before
 }}
 \end{codeblock}
 
-\setcounter{section}{5}
+\setcounter{section}{6}
 \rSec1[ranges.requirements]{Range requirements}
 
 \setcounter{subsection}{1}
 \rSec2[ranges.range]{Ranges}
-\ednote{The equivalent change should be made in P0896 also.}
+\ednote{The equivalent change should be made in P0896R1 also.}
 
 \pnum
 The \tcode{Range} concept defines the requirements of a type that allows
@@ -123,9 +156,10 @@ There need not be any subsumption relationship between \tcode{ViewableRange<T>}
 and \tcode{is_lvalue_reference_v<T>}.
 \end{removedblock}
 
+\setcounter{section}{7}
 \rSec1[ranges.utilities]{Range utilities}
 
-\setcounter{subsection}{1}
+\setcounter{subsection}{2}
 \rSec2[ranges.subranges]{Sub-ranges}
 
 \rSec3[ranges.subrange]{\tcode{subrange}}
@@ -589,62 +623,19 @@ expression is well-formed}.
 \remark Whenever \tcode{view::all(E)} is a valid expression, it is a prvalue
 whose type satisfies \tcode{View}.
 
-\rSec0[algorithms]{Algorithms library}
+\setcounter{section}{9}
+\rSec1[range.algorithms]{Algorithms library}
 
 \ednote{Some of the algorithms in the Ranges TS (\tcode{rotate} and \tcode{equal_range})
 actually return subranges, but they do so using \tcode{tagged_pair}. With the addition
 of a proper \tcode{subrange} type, we suggest changing these algorithms to return
 \tcode{subrange}.}
 
-\rSec1[algorithms.general]{General}
+\setcounter{subsection}{2}
+\rSec2[range.alg.modifying.operations]{Mutating sequence operations}
 
-\ednote{Change the \tcode{<algorithm>} synopsis as follows:}
-
-\begin{codeblock}
-#include <initializer_list>
-
-namespace std { namespace ranges {
-  // ... as before
-
-  template <ForwardIterator I, Sentinel<I> S>
-    requires Permutable<I>
-    @\removed{tagged_pair<tag::begin(I), tag::end(I)>}@
-    @\added{subrange<I>}@
-      rotate(I first, I middle, S last);
-
-  template <ForwardRange Rng>
-    requires Permutable<iterator_t<Rng>>
-    @\removed{tagged_pair<tag::begin(safe_iterator_t<Rng>),}@
-                @\removed{tag::end(safe_iterator_t<Rng>)>}@
-    @\added{safe_subrange_t<Rng>}@
-      rotate(Rng&& rng, iterator_t<Rng> middle);
-
-  // ... as before
-
-  template <ForwardIterator I, Sentinel<I> S, class T, class Proj = identity,
-      IndirectStrictWeakOrder<const T*, projected<I, Proj>> Comp = less<>>
-    @\removed{tagged_pair<tag::begin(I), tag::end(I)>}@
-    @\added{subrange<I>}@
-      equal_range(I first, S last, const T& value, Comp comp = Comp{}, Proj proj = Proj{});
-
-  template <ForwardRange Rng, class T, class Proj = identity,
-      IndirectStrictWeakOrder<const T*, projected<iterator_t<Rng>, Proj>> Comp = less<>>
-    @\removed{tagged_pair<tag::begin(safe_iterator_t<Rng>),}@
-                @\removed{tag::end(safe_iterator_t<Rng>)>}@
-    @\added{safe_subrange_t<Rng>}@
-      equal_range(Rng&& rng, const T& value, Comp comp = Comp{}, Proj proj = Proj{});
-
-  // ... as before
-}}
-\end{codeblock}
-
-\setcounter{section}{3}
-
-\rSec1[alg.modifying.operations]{Mutating sequence operations}
-
-\setcounter{subsection}{10}
-
-\rSec2[alg.rotate]{Rotate}
+\setcounter{subsubsection}{10}
+\rSec3[range.alg.rotate]{Rotate}
 
 \indexlibrary{\idxcode{rotate}}%
 \begin{itemdecl}
@@ -693,15 +684,13 @@ At most
 swaps.
 \end{itemdescr}
 
-\rSec1[alg.sorting]{Sorting and related operations}
-
-\setcounter{subsection}{2}
-
-\rSec2[alg.binary.search]{Binary search}
+\rSec2[range.alg.sorting]{Sorting and related operations}
 
 \setcounter{subsubsection}{2}
+\rSec3[range.alg.binary.search]{Binary search}
 
-\rSec3[equal.range]{\tcode{equal_range}}
+\setcounter{paragraph}{2}
+\rSec4[range.equal.range]{\tcode{equal_range}}
 
 \indexlibrary{\idxcode{equal_range}}%
 \begin{itemdecl}
