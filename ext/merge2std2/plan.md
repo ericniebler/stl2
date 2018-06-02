@@ -22,11 +22,11 @@
 
 Document-wide changes to make:
 * [X] Remove "std2." from stable names or replace with "range."
-* [ ] Ensure references to old requirements tables agree with P0896
+* [ ] Ensure references to old requirements tables agree with P0898
 * [ ] Reformulate concepts AND REQUIRES CLAUSES to use C++20
 * [ ] Replace `{ E } -> Concept<Args...>&&;` with `E; requires Concept<decltype((E)), Args...>;`
 * [X] Use `_v` traits everywhere
-* [ ] Use `remove_cvref_t` to replace `remove_ref_t<remove_cv_t<foo>>` and (where appropriate) `decay_t`
+* [X] Use `remove_cvref_t` to replace `remove_ref_t<remove_cv_t<foo>>` and (where appropriate) `decay_t`
 * [X] Reformulate `result_of` (`indirect_result_of`) uses in terms of `invoke_result` (`indirect_invoke_result`)
 * [X] Define *explicit* CPOs as inline constexpr objects
 * [ ] Add an "Open Issues" subclause to the design discussion
