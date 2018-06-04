@@ -1,6 +1,6 @@
 * [ ] `-> auto&&` is broken in C++20
 * [ ] Cleanup the excess `static_cast`s in the CPO wording, now that we can rely on guaranteed elision
-* [ ] More `constexpr` for `move_sentinel`
+* [X] More `constexpr` for `move_sentinel`
 * [X] `constexpr` the algorithms that are `constexpr` in the IS
 * [ ] Respecify `common_iterator` in terms of `variant`
 * [X] Remove `ranges::exchange` (Verify it's unused)
