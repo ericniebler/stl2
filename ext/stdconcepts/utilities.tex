@@ -107,17 +107,17 @@ Equivalent to: \tcode{return}} \tcode{std::forward<T>(t);}
  \added{\oldtxt{The primary template shall have no member typedef
  \tcode{type}.} A program may specialize this trait if at least one
  template parameter in the specialization depends on a user-defined
- type. In such a specialization, a member typedef \tcode{type} may be
- defined or omitted. If it is omitted, there shall be no member
- \tcode{type}.
- \enternote Such specializations may be used to influence
+ type. \oldtxt{In such a specialization, a member typedef \tcode{type} may be
+ defined or} \oldtxt{omitted. If it is omitted, there shall be no member
+ \tcode{type}.} \newtxt{If there is a member \tcode{type}, it shall be a \grammarterm{typedef-name}.}
+ \enternote Such specializations \oldtxt{may} \newtxt{can} be used to influence
  the result of }\tcode{\added{common_reference}}\added{.\exitnote} \\ \rowsep
 
 \added{\tcode{template <class... T>}} \added{\tcode{struct common_reference;}}
  &
- \added{The member typedef \tcode{type} shall be defined or omitted
- as specified below. If it is omitted, there shall be no member
- \tcode{type}. Each type in the parameter pack \tcode{T} shall be
+ \added{The member typedef\newtxt{-name} \tcode{type} \oldtxt{shall be} \newtxt{is} defined or omitted
+ as specified below. \oldtxt{If it is omitted, there shall be no member
+ \tcode{type}.} Each type in the parameter pack \tcode{T} shall be
  complete or (possibly \cv) \tcode{void}.} \\ \rowsep
 
 ... & ... \\
@@ -130,20 +130,23 @@ Equivalent to: \tcode{return}} \tcode{std::forward<T>(t);}
 \setcounter{Paras}{2}
 \indexlibrary{\idxcode{common_type}}%
 \pnum
-Let \tcode{CREF(A)} be \tcode{add_lvalue_reference_t<const remove_reference_t<A>{}>}.
-Let \tcode{XREF(A)} denote a unary template \tcode{T} such that
+Let
+\begin{itemize}
+\item \tcode{CREF(A)} be \tcode{add_lvalue_reference_t<const remove_reference_t<A>{}>},
+\item \tcode{XREF(A)} denote a unary \newtxt{class} template \tcode{T} such that
   \tcode{\oldtxt{T<remove_cvref_t<A>{}>}}\oldtxt{ denotes the same type as \tcode{A}}
   \tcode{\newtxt{T<U>}}\newtxt{ denotes the same type as \tcode{U} with the addition
   of \tcode{A}'s cv and reference qualifiers, for a type \tcode{U} such
-  that }\tcode{\newtxt{is_same_v<U, remove_cvref_t<U>{}>}}\newtxt{ is \tcode{true}.}
-Let \tcode{COPYCV(FROM, TO)} be an alias for type \tcode{TO} with the addition of
+  that }\tcode{\newtxt{is_same_v<U, remove_cvref_t<U>{}>}}\newtxt{ is \tcode{true},}
+\item \tcode{COPYCV(FROM, TO)} be an alias for type \tcode{TO} with the addition of
   \tcode{FROM}'s top-level cv-qualifiers.
   \enterexample \tcode{COPYCV(const int, volatile short)} is an alias for
-  \tcode{const volatile short}. \exitexample
-\oldtxt{Let \tcode{RREF_RES(Z)} be \tcode{remove_reference_t<Z>\&\&} if \tcode{Z} is a
+  \tcode{const volatile short}. \exitexample.
+\item \oldtxt{\tcode{RREF_RES(Z)} be \tcode{remove_reference_t<Z>\&\&} if \tcode{Z} is a
   reference type or \tcode{Z} otherwise.}
-Let \tcode{COND_RES(X, Y)} be
-  \tcode{decltype(declval<bool>() ? declval<X(\&)()>()() : declval<Y(\&)()>()())}.
+\item \tcode{COND_RES(X, Y)} be
+  \tcode{decltype(\oldtxt{declval<bool>()} \newtxt{false} ? declval<X(\&)()>()() : declval<Y(\&)()>()())}.
+\end{itemize}
 Given types \tcode{A} and \tcode{B}, let \tcode{X} be \tcode{remove_reference_t<A>},
  let \tcode{Y} be \tcode{remove_reference_t<B>}, and let \tcode{COMMON_REF(A, B)} be:
 \begin{itemize}
@@ -170,7 +173,7 @@ Given types \tcode{A} and \tcode{B}, let \tcode{X} be \tcode{remove_reference_t<
   \oldtxt{\tcode{decay_t<COND_RES(CREF(A), CREF(B))>}} \newtxt{ill-formed}.
 \end{itemize}
 
-If any of the types computed above are ill-formed, then
+If any of the types computed above \oldtxt{are} \newtxt{is} ill-formed, then
 \tcode{COMMON_REF(A, B)} is ill-formed.
 \end{addedblock}
 
@@ -211,8 +214,8 @@ decay_t<decltype(false ? declval<D1>() : declval<D2>())>
     \removed{\enternote This will not apply if there is a specialization \tcode{common_type<D1, D2>}. \exitnote}
     \added{denotes a valid type, let \tcode{C} denote its type.}
 
-  \item \added{Otherwise, let \tcode{C} denote the same type
-    as }\tcode{\added{decay_t<COND_RES(CREF(D1), CREF(D2))>}}\added{, if any.}
+  \item \added{Otherwise, \newtxt{if \tcode{COND_RES(CREF(D1), CREF(D2))} denotes a type,} let \tcode{C} denote the \oldtxt{same} type
+    \oldtxt{as} }\tcode{\added{decay_t<COND_RES(CREF(D1), CREF(D2))>}}\oldtxt{, if any}\added{.}
   \end{itemize}
 In either case, the member \grammarterm{typedef-name} \tcode{type} shall denote
 the same type, if any, as \tcode{C}.
@@ -287,7 +290,7 @@ for an accessible and unambiguous type \tcode{C}
 to which each of the types \tcode{TQual<T>} and \tcode{UQual<U>} is convertible.
 Moreover, \tcode{basic_common_reference<T, U, TQual, UQual>::type} shall denote
 the same type, if any, as does \tcode{basic_common_reference<U, T, UQual, TQual>::type}.
-A program may not specialize \tcode{basic_common_reference} on the third or
+A program \oldtxt{may} \newtxt{shall} not specialize \tcode{basic_common_reference} on the third or
 fourth parameters, \tcode{TQual} or \tcode{UQual}. No diagnostic is required for
 a violation of these rules.
 \end{addedblock}

@@ -96,16 +96,18 @@ operands, and \#3 modifies only its first operand \tcode{a}.
 Expression \#1 implicitly requires additional expression variations that meet the
 requirements for \tcode{c == d} (including non-modification), as if the expressions
 \begin{codeblock}
-a == d;       a == b;             a == move(b);       a == d;
-c == a;       c == move(a);       c == move(d);
-move(a) == d; move(a) == b;       move(a) == move(b); move(a) == move(d);
-move(c) == b; move(c) == move(b); move(c) == d;       move(c) == move(d);
+a == d;                       a == b;                       a == @\newtxt{std::}@move(b); a == @\newtxt{std::move(}@d@\newtxt{)}@;
+c == a;                       c == @\newtxt{std::}@move(a);            c == @\newtxt{std::}@move(d);
+@\newtxt{std::}@move(a) == d;            @\newtxt{std::}@move(a) == b;
+@\newtxt{std::}@move(a) == @\newtxt{std::}@move(b); @\newtxt{std::}@move(a) == @\newtxt{std::}@move(d);
+@\newtxt{std::}@move(c) == b;            @\newtxt{std::}@move(c) == @\newtxt{std::}@move(b);
+@\newtxt{std::}@move(c) == d;            @\newtxt{std::}@move(c) == @\newtxt{std::}@move(d);
 \end{codeblock}
 had been declared as well.
 
 Expression \#3 implicitly requires additional expression variations that meet the
 requirements for \tcode{a = c} (including non-modification of the second operand),
-as if the expressions \tcode{a = b} and \tcode{a = move(c)} had been declared.
+as if the expressions \tcode{a = b} and \tcode{a = \newtxt{std::}move(c)} had been declared.
 Expression \#3 does not implicitly require an expression variation with a
 non-constant rvalue second operand, since expression \#2 already specifies exactly
 such an expression explicitly.
@@ -125,7 +127,7 @@ struct T {
 \tcode{T} fails to meet the implicit
 requirements of \tcode{C}, so \tcode{C<T>} is not satisfied. Since
 implementations are not required to validate the syntax of implicit requirements, it
-is unspecified whether or not an implementation diagnoses as ill-formed a program
+is unspecified whether \oldtxt{or not} an implementation diagnoses as ill-formed a program
 which requires \tcode{C<T>}.
 \exitexample
 
@@ -269,17 +271,40 @@ This section contains the definition of concepts corresponding to language featu
 These concepts express relationships between types, type classifications, and
 fundamental type properties.
 
+{\color{newclr}
+\pnum
+\begin{example}
+Several concept specifications in this subclause are specified in terms of a type
+trait, and include an annotation that there need be no subsumption relationship
+between the concept and the type trait. Given the following set of declarations:
+\begin{codeblock}
+template <class T> concept C1 = is_c1_v<T>;
+template <class U> concept C2 = C1<U> && true;
+
+template <C1 T> void f(T);     // \#1
+template <C2 T> void f(T);     // \#2
+
+template <class T>
+void g(T) requires is_c1_v<T>; // \#3
+template <C2 T> void g(T);     // \#4
+\end{codeblock}
+Since \tcode{C2} subsumes \tcode{C1}, the expression \tcode{f(42)} unambiguously
+calls \#2. \tcode{g(42)}, however, is potentially ambiguous if there need be no
+subsumption relationship between \tcode{C1} and \tcode{is_c1_v}.
+\end{example}
+}
+
 \rSec2[concepts.lib.corelang.same]{Concept \tcode{Same}}
 
 \indexlibrary{\idxcode{Same}}%
 \begin{itemdecl}
 template <class T, class U>
-concept Same = is_same_v<T, U>; // \seebelow
+concept Same = is_same_v<T, U>; @\oldtxt{// \seebelow}@
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-There need not be any subsumption relationship between \tcode{Same<T, U>} and
+There need \oldtxt{not} be \oldtxt{any} \newtxt{no} subsumption relationship between \tcode{Same<T, U>} and
 \tcode{is_same_v<T, U>}.
 
 \pnum
@@ -294,12 +319,12 @@ There need not be any subsumption relationship between \tcode{Same<T, U>} and
 template <class Derived, class Base>
 concept DerivedFrom = is_base_of_v<Base, Derived> &&
   @\oldtxt{is_convertible_v<remove_cv_t<Derived>*, remove_cv_t<Base>*>;}@
-  @\newtxt{is_convertible_v<const volatile Derived*, const volatile Base*>;}@ // \seebelow
+  @\newtxt{is_convertible_v<const volatile Derived*, const volatile Base*>;}@ @\oldtxt{// \seebelow}@
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-There need not be any subsumption relationship between
+There need \oldtxt{not} be \oldtxt{any} \newtxt{no} subsumption relationship between
 \tcode{DerivedFrom<Derived, Base>}
 and either
 \tcode{is_base_of_v<Base, Derived>}
@@ -317,10 +342,17 @@ is publicly and unambiguously derived from \tcode{Base}, or \tcode{Derived} and
 
 \rSec2[concepts.lib.corelang.convertibleto]{Concept \tcode{ConvertibleTo}}
 
+{\color{newclr}
+\pnum
+The \tcode{ConvertibleTo} concept requires an expression of a particular type
+and value category to be both implicitly and explicitly convertible to some other
+type. The implicit and explicit conversions must produce equal results.
+}
+
 \indexlibrary{\idxcode{ConvertibleTo}}%
 \begin{itemdecl}
 template <class From, class To>
-concept ConvertibleTo = is_convertible_v<From, To> && // \seebelow
+concept ConvertibleTo = is_convertible_v<From, To> && @\oldtxt{// \seebelow}@
   requires(From (&f)()) { static_cast<To>(f()); };
 \end{itemdecl}
 
@@ -355,7 +387,7 @@ Otherwise, the object referred to by \tcode{f()} is not modified by either above
 \end{itemize}
 
 \pnum
-There need not be any subsumption relationship between \tcode{ConvertibleTo<From, To>}
+There need \oldtxt{not} be \oldtxt{any} \newtxt{no} subsumption relationship between \tcode{ConvertibleTo<From, To>}
 and \tcode{is_\-convert\-ible_v\brk{}<From,\brk{} To>}.
 \end{itemdescr}
 
@@ -369,7 +401,7 @@ is well-formed and denotes a type \tcode{C} such that both
 satisfied, then \tcode{T} and \tcode{U} share a \techterm{common reference
 type}, \tcode{C}. \enternote \tcode{C} could be the same as \tcode{T}, or
 \tcode{U}, or it could be a different type. \tcode{C} may be a reference
-type. \tcode{C} need not be unique.\exitnote
+type. \oldtxt{\tcode{C} need not be unique.}\exitnote
 
 \indexlibrary{\idxcode{CommonReference}}%
 \begin{itemdecl}
@@ -404,7 +436,7 @@ only if:
 If \tcode{T} and \tcode{U} can both be explicitly converted to some third type,
 \tcode{C}, then \tcode{T} and \tcode{U} share a \techterm{common type},
 \tcode{C}. \enternote \tcode{C} could be the same as \tcode{T}, or \tcode{U}, or
-it could be a different type. \tcode{C} may not be unique.\exitnote
+it could be a different type. \tcode{C} \oldtxt{may} \newtxt{might} not be unique.\exitnote
 
 \indexlibrary{\idxcode{Common}}%
 \begin{itemdecl}
@@ -448,12 +480,12 @@ class template~(\ref{meta.trans.other}).\exitnote
 \indexlibrary{\idxcode{Integral}}%
 \begin{itemdecl}
 template <class T>
-concept Integral = is_integral_v<T>; // \seebelow
+concept Integral = is_integral_v<T>; @\oldtxt{// \seebelow}@
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-There need not be any subsumption relationship between \tcode{Integral<T>} and
+There need \oldtxt{not} be \oldtxt{any} \newtxt{no} subsumption relationship between \tcode{Integral<T>} and
 \tcode{is_integral_v<T>}.
 \end{itemdescr}
 
@@ -462,16 +494,16 @@ There need not be any subsumption relationship between \tcode{Integral<T>} and
 \indexlibrary{\idxcode{SignedIntegral}}%
 \begin{itemdecl}
 template <class T>
-concept SignedIntegral = Integral<T> && is_signed_v<T>; // \seebelow
+concept SignedIntegral = Integral<T> && is_signed_v<T>; @\oldtxt{// \seebelow}@
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-There need not be any subsumption relationship between \tcode{SignedIntegral<T>} and
+There need \oldtxt{not} be \oldtxt{any} \newtxt{no} subsumption relationship between \tcode{SignedIntegral<T>} and
 \tcode{is_signed_v<T>}.
 
 \pnum
-\enternote \tcode{SignedIntegral<T>} may be satisfied even for
+\enternote \tcode{SignedIntegral<T>} \oldtxt{may} \newtxt{can} be satisfied even \oldtxt{for} \newtxt{by}
 types that are not signed integral types~(\cxxref{basic.fundamental});
 for example, \tcode{char}.
 \exitnote
@@ -487,7 +519,7 @@ concept UnsignedIntegral = Integral<T> && !SignedIntegral<T>;
 
 \begin{itemdescr}
 \pnum
-\enternote \tcode{UnsignedIntegral<T>} may be satisfied even for
+\enternote \tcode{UnsignedIntegral<T>} \oldtxt{may} \newtxt{can} be satisfied even \oldtxt{for} \newtxt{by}
 types that are not unsigned integral types~(\cxxref{basic.fundamental});
 for example, \tcode{char}.
 \exitnote
@@ -499,7 +531,7 @@ for example, \tcode{char}.
 \begin{itemdecl}
 template <class LHS, class RHS>
 concept Assignable =
-  is_lvalue_reference_v<LHS> && // \seebelow
+  is_lvalue_reference_v<LHS> && @\oldtxt{// \seebelow}@
   CommonReference<const remove_reference_t<LHS>&, const remove_reference_t<RHS>&> &&
   requires(LHS lhs, RHS&& rhs) {
     @\oldtxt{\{ lhs = std::forward<RHS>(rhs) \} -> Same<LHS>\&\&;}@
@@ -510,10 +542,14 @@ concept Assignable =
 
 \begin{itemdescr}
 \pnum
-Let \tcode{lhs} be an lvalue that refers to an object \tcode{lcopy} such that
-\tcode{decltype((lhs))} is \tcode{LHS}, and \tcode{rhs} an expression such that
-\tcode{decltype((rhs))} is \tcode{RHS}. Let \tcode{rcopy} be a distinct object that is
-equal to \tcode{rhs}. \tcode{Assignable<LHS, RHS>} is satisfied only if
+Let:
+\begin{itemize}
+\item \tcode{lhs} be an lvalue that refers to an object \tcode{lcopy} such that
+  \tcode{decltype((lhs))} is \tcode{LHS},
+\item \tcode{rhs} be an expression such that \tcode{decltype((rhs))} is \tcode{RHS}, and
+\item \tcode{rcopy} be a distinct object that is equal to \tcode{rhs}.
+\end{itemize}
+\tcode{Assignable<LHS, RHS>} is satisfied only if
 
 \begin{itemize}
 \item \tcode{addressof(lhs = rhs) == addressof(lcopy)}.
@@ -533,7 +569,7 @@ modified.
 \end{itemize}
 
 \pnum
-There need not be any subsumption relationship between \tcode{Assignable<LHS, RHS>}
+There need \oldtxt{not} be \oldtxt{any} \newtxt{no} subsumption relationship between \tcode{Assignable<LHS, RHS>}
 and \tcode{is_\-lval\-ue_\-ref\-er\-ence_v<LHS>}.
 
 \pnum
@@ -549,7 +585,7 @@ of \tcode{=}. \exitnote
 \begin{itemdecl}
 template <class T>
 @\oldtxt{concept Swappable = requires(T\& a, T\& b) \{ ranges::swap(a, b); \};}@
-@\newtxt{concept Swappable = is_swappable_v<T>; // \seebelow}@
+@\newtxt{concept Swappable = is_swappable_v<T>;}@
 \end{itemdecl}
 
 {\color{newclr}
@@ -557,12 +593,9 @@ template <class T>
 \pnum
 Let \tcode{a1} and \tcode{a2} denote distinct equal objects of type \tcode{T},
 and let \tcode{b1} and \tcode{b2} similarly denote distinct equal objects of type
-\tcode{T}. \tcode{Swappable<T>} is satisfied only if:
-\begin{itemize}
-\item After evaluating either \tcode{swap(a1, b1)} or \tcode{swap(b1, a1)} in the
-  context described below, \tcode{a1} is equal to \tcode{b2} and \tcode{b1} is
-  equal to \tcode{a2}.
-\end{itemize}
+\tcode{T}. \tcode{Swappable<T>} is satisfied only if after evaluating either
+\tcode{swap(a1, b1)} or \tcode{swap(b1, a1)} in the context described below,
+\tcode{a1} is equal to \tcode{b2} and \tcode{b1} is equal to \tcode{a2}.
 
 \pnum
 The context in which \tcode{swap(a1, b1)} or \tcode{swap(b1, a1)} are evaluated shall ensure that a binary non-member
@@ -582,9 +615,9 @@ There need be no subsumption relationship between \tcode{Swappable<T>} and
 \begin{itemdecl}
 template <class T, class U>
 concept SwappableWith =
-  @\newtxt{is_swappable_with_v<T, T> \&\& is_swappable_with_v<U, U> \&\& // \seebelow}@
+  @\newtxt{is_swappable_with_v<T, T> \&\& is_swappable_with_v<U, U> \&\&}@
   CommonReference<const remove_reference_t<T>&, const remove_reference_t<U>&> &&
-  @\newtxt{is_swappable_with_v<T, U> \&\& is_swappable_with_v<U, T>; // \seebelow}@
+  @\newtxt{is_swappable_with_v<T, U> \&\& is_swappable_with_v<U, T>;}@
   @\oldtxt{requires(T\&\& t, U\&\& u) \{}@
     @\oldtxt{ranges::swap(std::forward<T>(t), std::forward<T>(t));}@
     @\oldtxt{ranges::swap(std::forward<U>(u), std::forward<U>(u));}@
@@ -596,20 +629,22 @@ concept SwappableWith =
 {\color{newclr}
 \begin{itemdescr}
 \pnum
-Let \tcode{t1} and \tcode{t2} denote distinct equal objects of type
-\tcode{remove_cvref_t<T>}, and $E_t$ be an expression that denotes \tcode{t1}
-such that \tcode{decltype(($E_t$))} is \tcode{T}.
-Let \tcode{u1} and \tcode{u2} similarly denote distinct equal objects of type
-\tcode{remove_cvref_t<U>}, and $E_u$ be an expression that denotes \tcode{u1}
-such that \tcode{decltype(($E_u$))} is \tcode{U}. Let \tcode{C} be
-\tcode{common_reference_t<const remove_reference_t<T>\&, const remove_reference_t<U>\&>}.
-\tcode{SwappableWith<T, U>} is satisfied only if:
-
+Let:
 \begin{itemize}
-\item After evaluating either \tcode{swap($E_t$, $E_u$)} or \tcode{swap($E_u$, $E_t$)} in the
-  context described above, \tcode{C(t1)} is equal to \tcode{C(u2)} and \tcode{C(u1)} is
-  equal to \tcode{C(t2)}.
+\item \tcode{t1} and \tcode{t2} denote distinct equal objects of type
+  \tcode{remove_cvref_t<T>},
+\item $E_t$ be an expression that denotes \tcode{t1} such that
+  \tcode{decltype(($E_t$))} is \tcode{T},
+\item \tcode{u1} and \tcode{u2} similarly denote distinct equal objects of type
+  \tcode{remove_cvref_t<U>},
+\item $E_u$ be an expression that denotes \tcode{u1} such that
+  \tcode{decltype(($E_u$))} is \tcode{U}, and
+\item \tcode{C} be
+  \tcode{common_reference_t<const remove_reference_t<T>\&, const remove_reference_t<U>\&>}.
 \end{itemize}
+\tcode{SwappableWith<T, U>} is satisfied only if after evaluating either
+\tcode{swap($E_t$, $E_u$)} or \tcode{swap($E_u$, $E_t$)} in the context described
+above, \tcode{C(t1)} is equal to \tcode{C(u2)} and \tcode{C(u1)} is equal to \tcode{C(t2)}.
 
 \pnum
 The context in which \tcode{swap($E_t$, $E_u$)} or \tcode{swap($E_u$, $E_t$)} are evaluated shall ensure that a binary non-member
@@ -625,8 +660,8 @@ any specialization of \tcode{is_swappable_with_v}.
 \end{itemdescr}
 } %% \color{newclr}
 
-{\color{oldclr}
 \begin{itemdescr}
+{\color{oldclr}
 \pnum
 This subclause provides definitions for swappable types and expressions. In these
 definitions, let \tcode{t} denote an expression of type \tcode{T}, and let \tcode{u}
@@ -643,23 +678,26 @@ and \tcode{u2} equal to \tcode{u}, after evaluating either
 \pnum
 An rvalue or lvalue \tcode{t} is \defn{swappable} if and only if \tcode{t} is
 swappable with any rvalue or lvalue, respectively, of type \tcode{T}.
+} %% \color{oldclr}
 
 \enterexample User code can ensure that the evaluation of \tcode{swap} calls
 is performed in an appropriate context under the various conditions as follows:
 \begin{codeblock}
 #include <utility>
 
-// Requires: \tcode{std::forward<T>(t)} shall be swappable with \tcode{std::forward<U>(u)}.
-template <class T, class U>
+@\oldtxt{// Requires: \tcode{std::forward<T>(t)} shall be swappable with \tcode{std::forward<U>(u)}.}@
+template <class T, @\oldtxt{class}\newtxt{SwappableWith<T>}@ U>
 void value_swap(T&& t, U&& u) {
-  ranges::swap(std::forward<T>(t), std::forward<U>(u)); // OK: uses ``swappable with'' conditions
+  @\newtxt{using std::swap;}@
+  @\oldtxt{ranges::}@swap(std::forward<T>(t), std::forward<U>(u)); // OK: uses ``swappable with'' conditions
                                                         // for rvalues and lvalues
 }
 
-// Requires: lvalues of \tcode{T} shall be swappable.
-template <class T>
+@\oldtxt{// Requires: lvalues of \tcode{T} shall be swappable.}@
+template <@\oldtxt{class}\newtxt{Swappable}@ T>
 void lv_swap(T& t1, T& t2) {
-  ranges::swap(t1, t2);                                 // OK: uses swappable conditions for
+  @\newtxt{using std::swap;}@
+  @\oldtxt{ranges::}@swap(t1, t2);                                 // OK: uses swappable conditions for
 }                                                       // lvalues of type \tcode{T}
 
 namespace N {
@@ -668,7 +706,7 @@ namespace N {
   Proxy proxy(A& a) { return Proxy{ &a }; }
 
   void swap(A& x, Proxy p) {
-    ranges::swap(x.m, p.a->m);                // OK: uses context equivalent to swappable
+    @\oldtxt{ranges}\newtxt{std}@::swap(x.m, p.a->m);             // OK: uses context equivalent to swappable
                                               // conditions for fundamental types
   }
   void swap(Proxy p, A& x) { swap(x, p); }  // satisfy symmetry constraint
@@ -686,7 +724,6 @@ int main() {
 \end{codeblock}
 \exitexample
 \end{itemdescr}
-} %% \color{oldclr}
 
 \rSec2[concepts.lib.corelang.destructible]{Concept \tcode{Destructible}}
 
@@ -697,12 +734,12 @@ which can be destroyed at the end of their lifetime, or reference types.
 \indexlibrary{\idxcode{Destructible}}%
 \begin{itemdecl}
 template <class T>
-concept Destructible = is_nothrow_destructible_v<T>; // \seebelow
+concept Destructible = is_nothrow_destructible_v<T>; @\oldtxt{// \seebelow}@
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-There need not be any subsumption relationship between \tcode{Destructible<T>}
+There need \oldtxt{not} be \oldtxt{any} \newtxt{no} subsumption relationship between \tcode{Destructible<T>}
 and \tcode{is_\-no\-throw_\-destruct\-ible_v<T>}.
 
 \pnum
@@ -720,12 +757,12 @@ a given type with a particular set of argument types.
 \indexlibrary{\idxcode{Constructible}}%
 \begin{itemdecl}
 template <class T, class... Args>
-concept Constructible = Destructible<T> && is_constructible_v<T, Args...>; // \seebelow
+concept Constructible = Destructible<T> && is_constructible_v<T, Args...>; @\oldtxt{// \seebelow}@
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-There need not be any subsumption relationship between \tcode{Constructible<T, Args...>}
+There need \oldtxt{not} be \oldtxt{any} \newtxt{no} subsumption relationship between \tcode{Constructible<T, Args...>}
 and \tcode{is_constructible_v<T, Args...>}.
 \end{itemdescr}
 
@@ -754,7 +791,7 @@ and \tcode{u2} a distinct object of type \tcode{T} equal to \tcode{rv}.
 \begin{itemize}
 \item After the definition \tcode{T u = rv;}, \tcode{u} is equal to \tcode{u2}.
 
-\item \tcode{T\{rv\}} is equal to \tcode{u2}.
+\item \tcode{T\oldtxt{\{}\newtxt{(}rv\oldtxt{\}\newtxt{)}}} is equal to \tcode{u2}.
 
 \item If \tcode{T} is not \tcode{const}, \tcode{rv}'s resulting state is valid
 but unspecified~(\cxxref{lib.types.movedfrom}); otherwise, it is unchanged.
@@ -781,7 +818,7 @@ If \tcode{T} is an object type, then let \tcode{v} be an lvalue of type (possibl
 \begin{itemize}
 \item After the definition \tcode{T u = v;}, \tcode{u} is equal to \tcode{v}.
 
-\item \tcode{T\{v\}} is equal to \tcode{v}.
+\item \tcode{T\oldtxt{\{}\newtxt{(}v\oldtxt{\}}\newtxt{)}} is equal to \tcode{v}.
 \end{itemize}
 
 \end{itemdescr}
@@ -837,8 +874,8 @@ concept Boolean = Movable<remove_cvref_t<B>> && // (see \ref{concepts.lib.object
 \end{itemdecl}
 
 \pnum
-Given \tcode{const} lvalues \tcode{b1} and \tcode{b2} of type
-\tcode{remove_reference_t<B>}, then \tcode{Boolean<B>} is satisfied only if
+Given \oldtxt{\tcode{const}} lvalues \tcode{b1} and \tcode{b2} of type
+\tcode{\newtxt{const} remove_reference_t<B>}, then \tcode{Boolean<B>} is satisfied only if
 
 \begin{itemize}
 \item \tcode{bool(b1) == !bool(!b1)}.
@@ -880,8 +917,9 @@ concept @\xname{WeaklyEqualityComparableWith}@ = // \expos
 
 \begin{itemdescr}
 \pnum
-Let \tcode{t} and \tcode{u} be \tcode{const} lvalues of types
-\tcode{remove_reference_t<T>} and \tcode{remove_reference_t<U>} respectively.
+Let \tcode{t} and \tcode{u} be \oldtxt{\tcode{const}} lvalues of types
+\tcode{\newtxt{const} remove_reference_t<T>} and
+\tcode{\newtxt{const} remove_reference_t<U>} respectively.
 \tcode{\xname{Weakly\-Equality\-Comparable\-With}<T, U>} is satisfied only if:
 \begin{itemize}
 \item \tcode{t == u}, \tcode{u == t}, \tcode{t != u}, and \tcode{u != t}
@@ -901,12 +939,9 @@ concept EqualityComparable = @\xname{WeaklyEqualityComparableWith}@<T, T>;
 \begin{itemdescr}
 \pnum
 Let \tcode{a} and \tcode{b} be objects of type \tcode{T}.
-\tcode{EqualityComparable<T>} is satisfied only if:
-
-\begin{itemize}
-\item \tcode{bool(a == b)} if and only if \tcode{a} is equal to
-\tcode{b}~(\ref{concepts.lib.general.equality}).
-\end{itemize}
+\tcode{EqualityComparable<T>} is satisfied only if \tcode{bool(a == b)}
+\oldtxt{if and only if} \newtxt{is \tcode{true} when} \tcode{a} is equal to
+\tcode{b}~(\ref{concepts.lib.general.equality}), and \tcode{false} otherwise.
 
 \pnum
 \enternote The requirement that the expression \tcode{a == b} is equality preserving
@@ -925,16 +960,15 @@ concept EqualityComparableWith =
 
 \begin{itemdescr}
 \pnum
-Let \tcode{t} be a \tcode{const} lvalue of type \tcode{remove_reference_t<T>}, \tcode{u} be a
-\tcode{const} lvalue of type \tcode{remove_reference_t<U>}, and \tcode{C} be:
+Let \tcode{t} be a\newtxt{n} \oldtxt{\tcode{const}} lvalue of type
+\tcode{\newtxt{const} remove_reference_t<T>}, \tcode{u} be a\newtxt{n}
+\oldtxt{\tcode{const}} lvalue of type \tcode{\newtxt{const} remove_reference_t<U>},
+and \tcode{C} be:
 \begin{codeblock}
 common_reference_t<const remove_reference_t<T>&, const remove_reference_t<U>&>
 \end{codeblock}
-\tcode{EqualityComparableWith<T, U>} is satisfied only if:
-
-\begin{itemize}
-\item \tcode{bool(t == u) == bool(C(t) == C(u))}.
-\end{itemize}
+\tcode{EqualityComparableWith<T, U>} is satisfied only if
+\tcode{bool(t == u) == bool(C(t) == C(u))}.
 \end{itemdescr}
 
 \rSec2[concepts.lib.compare.stricttotallyordered]{Concept \tcode{StrictTotallyOrdered}}
@@ -958,7 +992,8 @@ concept StrictTotallyOrdered = EqualityComparable<T> &&
 
 \begin{itemdescr}
 \pnum
-Let \tcode{a}, \tcode{b}, and \tcode{c} be \tcode{const} lvalues of type \tcode{remove_reference_t<T>}.
+Let \tcode{a}, \tcode{b}, and \tcode{c} be \oldtxt{\tcode{const}} lvalues of type
+\tcode{\newtxt{const} remove_reference_t<T>}.
 \tcode{StrictTotallyOrdered<T>} is satisfied only if
 
 \begin{itemize}
@@ -1002,8 +1037,9 @@ concept StrictTotallyOrderedWith = StrictTotallyOrdered<T> && StrictTotallyOrder
 
 \begin{itemdescr}
 \pnum
-Let \tcode{t} be a \tcode{const} lvalue of type \tcode{remove_reference_t<T>},
-\tcode{u} be a \tcode{const} lvalue of type \tcode{remove_reference_t<U>},
+Let \tcode{t} be a\newtxt{n} \oldtxt{\tcode{const}} lvalue of type
+\tcode{\newtxt{const} remove_reference_t<T>}, \tcode{u} be a\newtxt{n}
+\oldtxt{\tcode{const}} lvalue of type \tcode{\newtxt{const} remove_reference_t<U>},
 and \tcode{C} be:
 \begin{codeblock}
 common_reference_t<const remove_reference_t<T>&, const remove_reference_t<U>&>
@@ -1038,7 +1074,7 @@ concept Movable = is_object_v<T> && MoveConstructible<T> && Assignable<T&, T> &&
 
 \begin{itemdescr}
 \pnum
-There need not be any subsumption relationship between \tcode{Movable<T>} and
+There need \oldtxt{not} be \oldtxt{any} \newtxt{no} subsumption relationship between \tcode{Movable<T>} and
 \tcode{is_object_v<T>}.
 \end{itemdescr}
 
@@ -1061,7 +1097,7 @@ concept Semiregular = Copyable<T> && DefaultConstructible<T>;
 \begin{itemdescr}
 \pnum
 \enternote The \tcode{Semiregular} concept is satisfied by types that
-behave similarly to built-in types like \tcode{int}, except that they may not be
+behave similarly to built-in types like \tcode{int}, except that they \oldtxt{may} \newtxt{might} not be
 comparable with \tcode{==}.\exitnote
 \end{itemdescr}
 
@@ -1104,10 +1140,12 @@ concept Invocable = requires(F&& f, Args&&... args) {
 
 \begin{itemdescr}
 \pnum
-\enternote Since the \tcode{invoke} function call
-expression is not required to be
-equality-preserving~(\ref{concepts.lib.general.equality}), a function that generates random numbers
-may satisfy \tcode{Invocable}.\exitnote
+\begin{example}
+\newtxt{A function that generates random numbers can satisfy \tcode{Invocable},}
+since the \tcode{invoke} function call expression is not required to be
+equality-preserving~(\ref{concepts.lib.general.equality})\oldtxt{,
+a function that generates random numbers may satisfy \tcode{Invocable}}.
+\end{example}
 \end{itemdescr}
 
 \rSec2[concepts.lib.callable.regularinvocable]{Concept \tcode{RegularInvocable}}
@@ -1126,8 +1164,10 @@ shall not modify the function object or the arguments~(\ref{concepts.lib.general
 annotation in the definition of \tcode{Invocable}. \exitnote
 
 \pnum
-\enternote A random number generator does not satisfy
-\tcode{RegularInvocable}.\exitnote
+\begin{example}
+A random number generator does not satisfy
+\tcode{RegularInvocable}.
+\end{example}
 
 \pnum
 \enternote The distinction between \tcode{Invocable} and
@@ -1159,11 +1199,14 @@ concept Relation = Predicate<R, T, T> && Predicate<R, U, U> &&
 
 \begin{itemdescr}
 \pnum
-Let \tcode{r} be an expression such that \tcode{decltype((r))} is \tcode{R},
-\tcode{t} be an expression such that \tcode{decltype((t))} is \tcode{T},
-\tcode{u} be an expression such that \tcode{decltype((u))} is \tcode{U},
-and \tcode{C} be \tcode{common_reference_t<const remove_reference_t<T>\&,
-const remove_reference_t<U>\&>}.
+Let
+\begin{itemize}
+\item \tcode{r} be an expression such that \tcode{decltype((r))} is \tcode{R},
+\item \tcode{t} be an expression such that \tcode{decltype((t))} is \tcode{T},
+\item \tcode{u} be an expression such that \tcode{decltype((u))} is \tcode{U}, and
+\item \tcode{C} be \tcode{common_reference_t<const remove_reference_t<T>\&,
+  const remove_reference_t<U>\&>}.
+\end{itemize}
 \tcode{Relation<R, T, U>} is satisfied only if
 
 \begin{itemize}
@@ -1215,6 +1258,9 @@ implies
 \tcode{equiv(a, b) \&\& equiv(b, c)}
 implies
 \tcode{equiv(a, c)}
+\end{itemize}
+
+\pnum
 \enternote
 Under these conditions, it can be shown that
 \begin{itemize}
@@ -1230,7 +1276,5 @@ classes determined by
 The induced relation is a strict total ordering.
 \exitnote
 \end{itemize}
-\end{itemize}
 \end{itemdescr}
-
 \end{addedblock}
