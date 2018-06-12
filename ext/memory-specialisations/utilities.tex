@@ -108,11 +108,11 @@ Constructible<value_type_t<iterator_t<ORng>>, reference_t<iterator_t<IRng>>>
   tagged_pair<tag::in(safe_iterator_t<IRng>), tag::out(safe_iterator_t<ORng>)>
 uninitialized_copy(IRng&& irng, ORng&& orng);
 
-template <InputIterator I, @\placeholder{no-throw-forward-iterator}@ O>
+template <InputIterator I, @\placeholder{no-throw-forward-iterator}@ O, @\placeholder{no-throw-sentinel}@<O> S>
   requires
 Constructible<value_type_t<O>, reference_t<I>>
   tagged_pair<tag::in(I), tag::out(O)>
-uninitialized_copy_n(I first, difference_type_t<I> n, O out)
+uninitialized_copy_n(I ifirst, difference_type_t<I> n, O ofirst, S olast)
 \end{codeblock}
 } %% \color{addclr}
 
@@ -140,11 +140,11 @@ Constructible<value_type_t<iterator_t<ORng>>, rvalue_reference_t<iterator_t<IRng
   tagged_pair<tag::in(safe_iterator_t<IRng>), tag::out(safe_iterator_t<ORng>)>
 uninitialized_move(IRng&& irng, ORng&& orng);
 
-template <InputIterator I, @\placeholder{no-throw-forward-iterator}@ O>
+template <InputIterator I, @\placeholder{no-throw-forward-iterator}@ O, @\placeholder{no-throw-sentinel}@<O> S>
   requires
 Constructible<value_type_t<O>, rvalue_reference_t<I>>
   tagged_pair<tag::in(I), tag::out(O)>
-uninitialized_move_n(I first, difference_type_t<I> n, O result);
+uninitialized_move_n(I ifirst, difference_type_t<I> n, O ofirst, S olast);
 \end{codeblock}
 } %% \color{addclr}
 
@@ -564,22 +564,24 @@ template <class InputIterator, class Size, class ForwardIterator>
 
 {\color{addclr}
 \begin{codeblock}
-template <InputIterator I, @\placeholder{no-throw-forward-iterator}@ O>
+template <InputIterator I, @\placeholder{no-throw-forward-iterator}@ O, @\placeholder{no-throw-sentinel}@<O> S>
   requires
 Constructible<value_type_t<O>, reference_t<I>>
-  tagged_pair<tag::in(I), tag::out(O)> uninitialized_copy_n(I first, difference_type_t<I> n, O out);
+  tagged_pair<tag::in(I), tag::out(O)>
+uninitialized_copy_n(I ifirst, difference_type_t<I> n, O ofirst, S olast);
 \end{codeblock}
 
 \setcounter{Paras}{4}
 \pnum
 \effects Equivalent to:
 \begin{codeblock}
-    auto t = uninitialized_copy(make_counted_iterator(first, n), default_sentinel{}).base();
+    auto t = uninitialized_copy(make_counted_iterator(ifirst, n),
+                                default_sentinel{}, ofirst, olast).base();
     return {t.in().base(), t.out()};
 \end{codeblock}
 
 \pnum
-\requires \range{result}{next(first, n)} shall not overlap with \range{first}{next(first, n)}.
+\requires \range{ofirst}{olast} shall not overlap with \range{ifirst}{next(ifirst, n)}.
 
 \ednote{This paragraph also applies to \tcode{std::uninitialized_copy_n}.}
 } %% \color{addclr}
@@ -675,31 +677,31 @@ template <class InputIterator, class Size, class ForwardIterator>
 
 {\color{addclr}
 \begin{codeblock}
-template <InputIterator I, @\placeholder{no-throw-forward-iterator}@ O>
+template <InputIterator I, @\placeholder{no-throw-forward-iterator}@ O, @\placeholder{no-throw-sentinel}@<O> S>
 requires
   Constructible<value_type_t<O>, rvalue_reference_t<I>>
 tagged_pair<tag::in(I), tag::out(O)>
-  uninitialized_move_n(I first, difference_type_t<I> n, O result);
+  uninitialized_move_n(I ifirst, difference_type_t<I> n, O ofirst, S olast);
 \end{codeblock}
 
 \pnum
 \effects Equivalent to:
 \begin{codeblock}
-    auto t = uninitialized_move(make_counted_iterator(first, n),
-                                default_sentinel{}, result).base();
+    auto t = uninitialized_move(make_counted_iterator(ifirst, n),
+                                default_sentinel{}, ofirst, olast).base();
     return {t.in().base(), t.out()};
 \end{codeblock}
 } %% \color{addclr}
 
 \setcounter{Paras}{3}
 \pnum
-\remarks If an exception is thrown, some objects in the range \range{first}{next(first, n)} are left
+\remarks If an exception is thrown, some objects in the range \range{ifirst}{next(ifirst, n)} are left
 in a valid\added{,} but unspecified state.
 
 {\color{addclr}
 \setcounter{Paras}{5}
 \pnum
-\requires \range{result}{next(result, n)} shall not overlap with \range{first}{next(first, n)}.
+\requires \range{ofirst}{olast} shall not overlap with \range{ifirst}{next(ifirst, n)}.
 
 \ednote{This paragraph also applies to \tcode{std::uninitialized_move_n}.}
 } %% \color{addclr}
