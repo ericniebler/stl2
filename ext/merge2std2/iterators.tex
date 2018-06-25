@@ -3383,7 +3383,6 @@ explicit @\newtxt{constexpr}@ move_sentinel(S s);
 
 \ednote{Relocate [iterators.common] from the Ranges TS here and modify as follows:}
 \rSec2[iterators.common]{Common iterators}
-\ednote{TODO: respecify this in terms of \tcode{std::variant}.}
 
 \pnum
 Class template \tcode{common_iterator} is an iterator/sentinel adaptor that is
@@ -3426,7 +3425,7 @@ namespace std { @\oldtxt{namespace experimental \{ namespace ranges \{ inline na
   public:
     using difference_type = @\newtxt{iter_}@difference@\oldtxt{_type}@_t<I>;
 
-    constexpr common_iterator();
+    constexpr common_iterator() @\newtxt{= default;}@
     constexpr common_iterator(I i);
     constexpr common_iterator(S s);
     @\oldtxt{constexpr common_iterator(const common_iterator<ConvertibleTo<I>, ConvertibleTo<S>>\& u);}@
@@ -3449,35 +3448,36 @@ namespace std { @\oldtxt{namespace experimental \{ namespace ranges \{ inline na
       requires ForwardIterator<I>;
 
     @\ednote{Make non-member operators hidden friends.}@
-    template<@\oldtxt{class I1}@, class I2, @\oldtxt{Sentinel<I2> S1,}@ Sentinel<I1> S2>
-      @\newtxt{requires Sentinel<S1, I2>}@
+    template<@\oldtxt{class I1}@, class I2, @\oldtxt{Sentinel<I2> S1,}@ Sentinel<I@\oldtxt{1}@> S2>
+      @\newtxt{requires Sentinel<S, I2>}@
     friend bool operator==(
       const common_iterator@\oldtxt{<I1, S1>}@& x, const common_iterator<I2, S2>& y);
-    template<@\oldtxt{class I1,}@ class I2, @\oldtxt{Sentinel<I2> S1,}@ Sentinel<I1> S2>
-      requires @\newtxt{Sentinel<S1, I2> \&\&}@ EqualityComparableWith<I1, I2>
+    template<@\oldtxt{class I1,}@ class I2, @\oldtxt{Sentinel<I2> S1,}@ Sentinel<I@\oldtxt{1}@> S2>
+      requires @\newtxt{Sentinel<S, I2> \&\&}@ EqualityComparableWith<I@\oldtxt{1}@, I2>
     friend bool operator==(
       const common_iterator@\oldtxt{<I1, S1>}@& x, const common_iterator<I2, S2>& y);
-    template<@\oldtxt{class I1,}@ class I2, @\oldtxt{Sentinel<I2> S1,}@ Sentinel<I1> S2>
-      @\newtxt{requires Sentinel<S1, I2>}@
+    template<@\oldtxt{class I1,}@ class I2, @\oldtxt{Sentinel<I2> S1,}@ Sentinel<I@\oldtxt{1}@> S2>
+      @\newtxt{requires Sentinel<S, I2>}@
     friend bool operator!=(
       const common_iterator@\oldtxt{<I1, S1>}@& x, const common_iterator<I2, S2>& y);
 
-    template<class I2, @\oldtxt{SizedSentinel<I2> I1,}@ @\oldtxt{SizedSentinel<I2> S1,}@ SizedSentinel<I1> S2>
-      @\newtxt{requires SizedSentinel<I1, I2> \&\& SizedSentinel<S1, I2>}@
+    template<@\oldtxt{class}\newtxt{SizedSentinel<I>}@ I2, @\oldtxt{SizedSentinel<I2> I1,}@ @\oldtxt{SizedSentinel<I2> S1,}@ SizedSentinel<I@\oldtxt{1}@> S2>
+      @\newtxt{requires SizedSentinel<S, I2>}@
     friend difference_type_t<I2> operator-(
       const common_iterator@\oldtxt{<I1, S1>}@& x, const common_iterator<I2, S2>& y);
 
     friend @\newtxt{iter_}@rvalue_reference_t<I> iter_move(const common_iterator& i)
-      noexcept(@\oldtxt{\seebelow}\newtxt{noexcept(ranges::iter_move(i.iter))}@)
+      noexcept(@\oldtxt{\seebelow}\newtxt{noexcept(ranges::iter_move(declval<const I\&>()))}@)
         requires InputIterator<I>;
     template<IndirectlySwappable<I> I2, class S2>
       friend void iter_swap(const common_iterator& x, const common_iterator<I2, S2>& y)
-        noexcept(@\oldtxt{\seebelow}\newtxt{noexcept(ranges::iter_swap(x.iter, y.iter))}@);
+        noexcept(@\oldtxt{\seebelow}\newtxt{noexcept(ranges::iter_swap(declval<const I\&>(), declval<const I\&>()))}@);
 
   private:
-    bool is_sentinel; // \expos
-    I iter;           // \expos
-    S sentinel;       // \expos
+    @\newtxt{variant<I, S> v_{}; // \expos}@
+    @\oldtxt{bool is_sentinel;   // \expos}@
+    @\oldtxt{I iter;             // \expos}@
+    @\oldtxt{S sentinel;         // \expos}@
   };
 
   template<Readable I, class S>
@@ -3524,6 +3524,7 @@ is an lvalue of type \tcode{const common_iterator<I, S>}, then
 
 \rSec4[common.iterator.op.const]{\tcode{common_iterator} constructors and conversions}
 
+{\color{oldclr}
 \indexlibrary{\idxcode{common_iterator}!\idxcode{common_iterator}}%
 \begin{itemdecl}
 constexpr common_iterator();
@@ -3537,6 +3538,7 @@ applied to the resulting iterator have defined behavior if and only if the
 corresponding operations are defined on a value-initialized iterator of type
 \tcode{I}.
 \end{itemdescr}
+} %% \color{oldclr}
 
 \indexlibrary{\idxcode{common_iterator}!constructor}%
 \begin{itemdecl}
@@ -3545,9 +3547,12 @@ constexpr common_iterator(I i);
 
 \begin{itemdescr}
 \pnum
-\effects Constructs a \tcode{common_iterator}, initializing
+\effects
+\newtxt{Initializes }\tcode{\newtxt{v_}}\newtxt{ as if by
+}\tcode{\newtxt{v_\{in_place_type<I>, std::move(i)\}}}\newtxt{.}
+\oldtxt{Constructs a \tcode{common_iterator}, initializing
 \tcode{is_sentinel} with \tcode{false}, \tcode{iter} with \tcode{i}, and
-value-initializing \tcode{sentinel}.
+value-initializing \tcode{sentinel}.}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{common_iterator}!constructor}%
@@ -3557,9 +3562,11 @@ constexpr common_iterator(S s);
 
 \begin{itemdescr}
 \pnum
-\effects Constructs a \tcode{common_iterator}, initializing
+\effects \newtxt{Initializes }\tcode{\newtxt{v_}}\newtxt{ as if by
+}\tcode{\newtxt{v_\{in_place_type<S>, std::move(s)\}}}\newtxt{.}
+\oldtxt{Constructs a \tcode{common_iterator}, initializing
 \tcode{is_sentinel} with \tcode{true}, value-initializing \tcode{iter}, and
-initializing \tcode{sentinel} with \tcode{s}.
+initializing \tcode{sentinel} with \tcode{s}.}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{common_iterator}!constructor}%
@@ -3571,9 +3578,17 @@ initializing \tcode{sentinel} with \tcode{s}.
 
 \begin{itemdescr}
 \pnum
-\effects Constructs a \tcode{common_iterator}, initializing \tcode{is_sentinel}
-with \tcode{\oldtxt{u}\newtxt{that}.is_sentinel}, \tcode{iter} with \tcode{\oldtxt{u}\newtxt{that}.iter}, and \tcode{sentinel}
-with \tcode{\oldtxt{u}\newtxt{that}.sentinel}.
+\newtxt{\requires
+}\tcode{\newtxt{that.v_.valueless_by_exception()}}\newtxt{ is \tcode{false}.}
+
+\pnum
+\effects
+\newtxt{Initializes }\tcode{\newtxt{v_}}\newtxt{ as if by
+}\tcode{\newtxt{v_\{in_place_index<$i$>, get<$i$>(that.v_)\}}}\newtxt{,
+where $i$ is }\tcode{\newtxt{that.v_.index()}}\newtxt{.}
+\oldtxt{Constructs a \tcode{common_iterator}, initializing \tcode{is_sentinel}
+with \tcode{u.is_sentinel}, \tcode{iter} with \tcode{u.iter}, and \tcode{sentinel}
+with \tcode{u.sentinel}.}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{operator=}!\idxcode{common_iterator}}%
@@ -3586,8 +3601,23 @@ with \tcode{\oldtxt{u}\newtxt{that}.sentinel}.
 
 \begin{itemdescr}
 \pnum
-\effects Assigns \tcode{\oldtxt{u}\newtxt{that}.is_sentinel} to \tcode{is_sentinel}, \tcode{\oldtxt{u}\newtxt{that}.iter} to
-\tcode{iter}, and \tcode{\oldtxt{u}\newtxt{that}.sentinel} to \tcode{sentinel}.
+\newtxt{\requires
+}\tcode{\newtxt{that.v_.valueless_by_exception()}}\newtxt{ is \tcode{false}.}
+
+\pnum
+\effects
+{\color{newclr}
+Equivalent to:
+\begin{itemize}
+\item If \tcode{v_.index() == that.v_.index()}, then
+\tcode{get<$i$>(v_) = get<$i$>(that.v_)}.
+
+\item Otherwise, \tcode{v_.emplace<$i$>(get<$i$>(that.v_))}.
+\end{itemize}
+where $i$ is \tcode{that.v_.index()}.
+} %% \color{newclr}
+\oldtxt{Assigns \tcode{u.is_sentinel} to \tcode{is_sentinel}, \tcode{u.iter} to
+\tcode{iter}, and \tcode{u.sentinel} to \tcode{sentinel}.}
 
 \pnum
 \returns \tcode{*this}
@@ -3605,10 +3635,14 @@ decltype(auto) operator*() const
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{!is_sentinel}
+\requires
+\tcode{\newtxt{holds_alternative<I>(v_)}}\newtxt{.}
+\oldtxt{\tcode{!is_sentinel}}
 
 \pnum
-\effects Equivalent to: \tcode{return *iter;}
+\effects Equivalent to:
+\tcode{\newtxt{return *get<I>(v_);}}
+\oldtxt{\tcode{return *iter;}}
 \end{itemdescr}
 
 \rSec4[common.iterator.op.ref]{\tcode{common_iterator::operator->}}
@@ -3622,24 +3656,27 @@ decltype(auto) operator->() const
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{!is_sentinel}
+\requires
+\tcode{\newtxt{holds_alternative<I>(v_)}}\newtxt{.}
+\oldtxt{\tcode{!is_sentinel}}
 
 \pnum
 \effects Equivalent to:
 \begin{itemize}
 \item
 If \tcode{I} is a pointer type or if the expression \tcode{i.operator->()} is
-well-formed, \tcode{return iter;}
+well-formed, \tcode{return \oldtxt{iter} \newtxt{get<I>(v_)};}
 
 \item
-Otherwise, if the expression \tcode{*iter} is a glvalue:
+Otherwise, if the expression \tcode{\oldtxt{*iter} \newtxt{*get<I>(v_)}} is a glvalue:
 \begin{codeblock}
-auto&& tmp = *iter;
+auto&& tmp = @\oldtxt{*iter} \newtxt{*get<I>(v_)}@;
 return addressof(tmp);
 \end{codeblock}
 
 \item
-Otherwise, \tcode{return proxy(*iter);} where \tcode{proxy} is the exposition-only class:
+Otherwise, \tcode{return proxy(\oldtxt{*iter} \newtxt{*get<I>(v_)});} where
+\tcode{proxy} is the exposition-only class:
 \begin{codeblock}
 class proxy {               // \expos
   @\newtxt{iter_}@value@\oldtxt{_type}@_t<I> keep_;
@@ -3673,10 +3710,12 @@ common_iterator& operator++();
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{!is_sentinel}
+\requires
+\tcode{\newtxt{holds_alternative<I>(v_)}}\newtxt{.}
+\oldtxt{\tcode{!is_sentinel}}
 
 \pnum
-\effects Equivalent to \tcode{++iter}.
+\effects Equivalent to \tcode{\oldtxt{++iter} \newtxt{++get<I>(v_)}}.
 
 \pnum
 \returns \tcode{*this}.
@@ -3690,10 +3729,12 @@ decltype(auto) operator++(int);
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{!is_sentinel}.
+\requires
+\tcode{\newtxt{holds_alternative<I>(v_)}}\newtxt{.}
+\oldtxt{\tcode{!is_sentinel}}
 
 \pnum
-\effects Equivalent to: \tcode{return iter++;}
+\effects Equivalent to: \tcode{return \oldtxt{iter} \newtxt{get<I>(v_)}++;}
 \end{itemdescr}
 
 \begin{itemdecl}
@@ -3703,13 +3744,16 @@ common_iterator operator++(int)
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{!is_sentinel}
+\requires
+\tcode{\newtxt{holds_alternative<I>(v_)}}\newtxt{.}
+\oldtxt{\tcode{!is_sentinel}}
 
 \pnum
 \effects Equivalent to:
 \begin{codeblock}
 common_iterator tmp = *this;
-++iter;
+@\newtxt{++get<I>(v_);}@
+@\oldtxt{++iter;}@
 return tmp;
 \end{codeblock}
 \end{itemdescr}
@@ -3727,12 +3771,24 @@ friend bool operator==(
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to:
+\newtxt{\requires
+}\tcode{\newtxt{x.v_.valueless_by_exception()}}\newtxt{ and
+}\tcode{\newtxt{y.v_.valueless_by_exception()}}\newtxt{ are each \tcode{false}.}
+
+\pnum
+\oldtxt{\effects Equivalent to:}
 \begin{codeblock}
-  return x.is_sentinel
-    ?  (y.is_sentinel || y.iter == x.sentinel)
-    : (!y.is_sentinel || x.iter == y.sentinel);
+  @\oldtxt{return x.is_sentinel}@
+    @\oldtxt{?  (y.is_sentinel || y.iter == x.sentinel)}@
+    @\oldtxt{: (!y.is_sentinel || x.iter == y.sentinel);}@
 \end{codeblock}
+
+\pnum
+\newtxt{\returns
+\tcode{true} if \tcode{$i$ == $j$},
+and otherwise }\tcode{\newtxt{get<$i$>(x.v_) == get<$j$>(y.v_)}}\newtxt{,
+where $i$ is }\tcode{\newtxt{x.v_.index()}}\newtxt{ and $j$ is
+}\tcode{\newtxt{y.v_.index()}}\newtxt{.}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{operator==}!\idxcode{common_iterator}}%
@@ -3746,14 +3802,26 @@ friend bool operator==(
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to:
+\newtxt{\requires
+}\tcode{\newtxt{x.v_.valueless_by_exception()}}\newtxt{ and
+}\tcode{\newtxt{y.v_.valueless_by_exception()}}\newtxt{ are each \tcode{false}.}
+
+\pnum
+\oldtxt{\effects Equivalent to:}
 \begin{codeblock}
-  return x.is_sentinel
-    ? (y.is_sentinel || y.iter == x.sentinel)
-    : (y.is_sentinel
-      ? x.iter == y.sentinel
-      : x.iter == y.iter);
+  @\oldtxt{return x.is_sentinel}@
+    @\oldtxt{? (y.is_sentinel || y.iter == x.sentinel)}@
+    @\oldtxt{: (y.is_sentinel}@
+      @\oldtxt{? x.iter == y.sentinel}@
+      @\oldtxt{: x.iter == y.iter);}@
 \end{codeblock}
+
+\pnum
+\newtxt{\returns
+\tcode{true} if $i$ and $j$ are each \tcode{1}, and otherwise
+}\tcode{\newtxt{get<$i$>(x.v_) == get<$j$>(y.v_)}}\newtxt{, where
+$i$ is }\tcode{\newtxt{x.v_.index()}}\newtxt{ and $j$ is
+}\tcode{\newtxt{y.v_.index()}}\newtxt{.}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{operator"!=}!\idxcode{common_iterator}}%
@@ -3774,20 +3842,31 @@ friend bool operator!=(
 \indexlibrary{\idxcode{operator-}!\idxcode{common_iterator}}%
 \indexlibrary{\idxcode{common_iterator}!\idxcode{operator-}}%
 \begin{itemdecl}
-template<class I2, @\oldtxt{SizedSentinel<I2> I1,}@ @\oldtxt{SizedSentinel<I2> S1,}@ SizedSentinel<I1> S2>
-  @\newtxt{requires SizedSentinel<I1, I2> \&\& SizedSentinel<S1, I2>}@
+template<@\oldtxt{class}\newtxt{SizedSentinel<I>}@ I2, @\oldtxt{SizedSentinel<I2> I1,}@ @\oldtxt{SizedSentinel<I2> S1,}@ SizedSentinel<I@\oldtxt{1}@> S2>
+  @\newtxt{requires SizedSentinel<S, I2>}@
 friend difference_type_t<I2> operator-(
   const common_iterator@\oldtxt{<I1, S1>}@& x, const common_iterator<I2, S2>& y);
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to:
+\newtxt{\requires
+}\tcode{\newtxt{x.v_.valueless_by_exception()}}\newtxt{ and
+}\tcode{\newtxt{y.v_.valueless_by_exception()}}\newtxt{ are each \tcode{false}.}
+
+\pnum
+\oldtxt{\effects Equivalent to:}
 \begin{codeblock}
-  return x.is_sentinel
-    ? (y.is_sentinel ? 0 : x.sentinel - y.iter)
-    : (y.is_sentinel ? x.iter - y.sentinel : x.iter - y.iter);
+  @\oldtxt{return x.is_sentinel}@
+    @\oldtxt{? (y.is_sentinel ? 0 : x.sentinel - y.iter)}@
+    @\oldtxt{: (y.is_sentinel ? x.iter - y.sentinel : x.iter - y.iter);}@
 \end{codeblock}
+
+\pnum
+\newtxt{\returns
+\tcode{0} if $i$ and $j$ are each \tcode{1}, and otherwise
+}\tcode{\newtxt{get<$i$>(x.v_) - get<$j$>(y.v_)}}\newtxt{, where
+$i$ is }\tcode{\newtxt{x.v_.index()} and $j$ is \tcode{y.v_.index()}}\newtxt{.}
 \end{itemdescr}
 
 \rSec4[common.iterator.op.iter_move]{\tcode{iter_move}}
@@ -3796,16 +3875,18 @@ friend difference_type_t<I2> operator-(
 \indexlibrary{\idxcode{common_iterator}!\idxcode{iter_move}}%
 \begin{itemdecl}
 friend @\newtxt{iter_}@rvalue_reference_t<I> iter_move(const common_iterator& i)
-  noexcept(@\oldtxt{\seebelow}\newtxt{noexcept(ranges::iter_move(i.iter))}@)
+  noexcept(@\oldtxt{\seebelow}\newtxt{noexcept(ranges::iter_move(declval<const I\&>()))}@)
     requires InputIterator<I>;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{!i.is_sentinel}.
+\requires
+\tcode{\newtxt{holds_alternative<I>(v_)}}\newtxt{.}
+\oldtxt{\tcode{!is_sentinel}}
 
 \pnum
-\effects Equivalent to: \tcode{return ranges::iter_move(i.iter);}
+\effects Equivalent to: \tcode{return ranges::iter_move(\newtxt{get<I>(i.v_)} \oldtxt{i.iter});}
 
 \pnum
 \oldtxt{\remarks The expression in \tcode{noexcept} is equivalent to:}
@@ -3821,15 +3902,20 @@ friend @\newtxt{iter_}@rvalue_reference_t<I> iter_move(const common_iterator& i)
 \begin{itemdecl}
 template<IndirectlySwappable<I> I2>
   friend void iter_swap(const common_iterator& x, const common_iterator<I2>& y)
-    noexcept(@\oldtxt{\seebelow}\newtxt{noexcept(ranges::iter_swap(x.iter, y.iter))}@);
+    noexcept(@\oldtxt{\seebelow}\newtxt{noexcept(ranges::iter_swap(declval<const I\&>(), declval<const I\&>()))}@);
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{!x.is_sentinel \&\& !y.is_sentinel}.
+\requires
+\tcode{\newtxt{holds_alternative<I>(x.v_)}}\newtxt{ and
+}\tcode{\newtxt{holds_alternative<I>(y.v_)}}\newtxt{ are each \tcode{true}.}
+\oldtxt{\tcode{!is_sentinel}}
 
 \pnum
-\effects Equivalent to \tcode{ranges::iter_swap(x.iter, y.iter)}.
+\effects
+Equivalent to
+\tcode{ranges::iter_swap(\newtxt{get<I>(x.v_), get<I>(y.v_)} \oldtxt{x.iter, y.iter})}.
 
 \pnum
 \oldtxt{\remarks The expression in \tcode{noexcept} is equivalent to:}
@@ -3837,6 +3923,7 @@ template<IndirectlySwappable<I> I2>
 @\oldtxt{noexcept(ranges::iter_swap(x.iter, y.iter))}@
 \end{codeblock}
 \end{itemdescr}
+
 
 \ednote{Relocate Ranges TS [default.sentinels] here and modify as follows:}
 \rSec2[default.sentinels]{Default sentinels}

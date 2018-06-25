@@ -36,7 +36,6 @@ P0896:
 * [ ] Deal with the P1037 `iterator_category`/`iterator_concept`/`iterator_category_t` changes in the view adaptors' iterators
 * [ ] `operator->` for the view adaptors' iterators
 * [ ] Resume detailed review of ranges.tex at `split_view`
-* [ ] Respecify `common_iterator` in terms of `variant`; fix the mess I made by making the operators members.
 * [ ] Add `operator[]` to *ref-view*
 * [ ] Add mutable `single_view` access.
 * [ ] Update the Swappable text from the P0898 merge.
@@ -53,6 +52,7 @@ P0896:
 * [ ] Consider constraining the template parameters of the "named tuples" returned by algorithms.
 * [ ] https://github.com/ericniebler/stl2/issues/553
 * [ ] Reformulate `noexcept(E1) && noexcept(E2)` as `noexcept(E1, E2)`?
+* [X] Respecify `common_iterator` in terms of `variant`; fix the mess I made by making the operators members.
 * [X] Turn all of the `\xname{iterator}` and `\xname{sentinel}` into non-`\xname` expo-`private`
 * [X] Make `filter_view::iterator` and `::sentinel` expo
 * [X] Add `ref_view` as exposition-only, propose to LEWG for SD.
