@@ -33,9 +33,8 @@ P0944:
   * [X] `span`
 
 P0896:
-* [ ] Deal with the P1037 `iterator_category`/`iterator_concept`/`iterator_category_t` changes in the view adaptors' iterators
 * [ ] `operator->` for the view adaptors' iterators
-* [ ] Resume detailed review of ranges.tex at `split_view`
+* [ ] Detailed review of `split_view` (Don't forget `iterator_category`/`iterator_concept`)
 * [ ] Add `operator[]` to *ref-view*
 * [ ] Add mutable `single_view` access.
 * [ ] Update the Swappable text from the P0898 merge.
@@ -44,7 +43,7 @@ P0896:
 * [ ] Specify `enable_view` specializations with the individual types instead of with `View`
 * [ ] `Decrementable` doesn't constrain the behavior of objects that aren't both *incrementable* and *decrementable*.
 * [ ] Why are `single_view::begin`, `::end`, and `::data` declared `noexcept` when they have a precondition?
-* [ ] Why doesn't `split_view` inherit from `view_interface`?
+* [ ] Consider merging the view and corresponding range adaptor into a single subclause: "view::common is ... common_view is..."
 * [ ] Update concept stable names as in the P0898 merge.
 * [ ] Audit all concepts for P0717
 * [ ] Shorten new stable names.
@@ -52,6 +51,7 @@ P0896:
 * [ ] Consider constraining the template parameters of the "named tuples" returned by algorithms.
 * [ ] https://github.com/ericniebler/stl2/issues/553
 * [ ] Reformulate `noexcept(E1) && noexcept(E2)` as `noexcept(E1, E2)`?
+* [X] Why doesn't `split_view` inherit from `view_interface`?
 * [X] Respecify `common_iterator` in terms of `variant`; fix the mess I made by making the operators members.
 * [X] Turn all of the `\xname{iterator}` and `\xname{sentinel}` into non-`\xname` expo-`private`
 * [X] Make `filter_view::iterator` and `::sentinel` expo
