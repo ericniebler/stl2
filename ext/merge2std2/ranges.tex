@@ -200,7 +200,7 @@ namespace std { @\oldtxt{namespace experimental \{}@
     // \ref{range.adaptors.split_view}
     template<InputRange Rng, ForwardRange Pattern>
       requires View<Rng> && View<Pattern> &&
-          IndirectlyComparable<iterator_t<Rng>, iterator_t<Pattern>> &&
+          IndirectlyComparable<iterator_t<Rng>, iterator_t<Pattern>@\newtxt{, ranges::equal_to<>}@> &&
           (ForwardRange<Rng> || @\placeholder{tiny-range}@<Pattern>)
     class split_view;
 
@@ -5280,13 +5280,13 @@ namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace ranges \{}@
 
   template<InputRange Rng, ForwardRange Pattern>
     requires View<Rng> && View<Pattern> &&
-      IndirectlyComparable<iterator_t<Rng>, iterator_t<Pattern>> &&
+      IndirectlyComparable<iterator_t<Rng>, iterator_t<Pattern>@\newtxt{, ranges::equal_to<>}@> &&
       (ForwardRange<Rng> || @\placeholdernc{tiny-range}@<Pattern>)
   class split_view @\newtxt{: public view_interface<split_view<Rng, Pattern>>}@ {
   private:
-    Rng base_ {}; // \expos
-    Pattern pattern_ {}; // \expos
-    iterator_t<Rng> current_ {}; // \expos, only present if \tcode{!ForwardRange<Rng>}
+    Rng base_ {};                               // \expos
+    Pattern pattern_ {};                        // \expos
+    iterator_t<Rng> current_ {};                // \expos, only present if \tcode{!ForwardRange<Rng>}
     template<bool Const> struct outer_iterator; // \expos
     template<bool Const> struct outer_sentinel; // \expos
     template<bool Const> struct inner_iterator; // \expos
@@ -5296,16 +5296,18 @@ namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace ranges \{}@
     constexpr split_view(Rng base, Pattern pattern);
 
     template<InputRange O, ForwardRange P>
-      requires ViewableRange<O> && ViewableRange<P> &&
+      requires @\oldtxt{ViewableRange<O> \&\& ViewableRange<P> \&\&}@
         Constructible<Rng, all_view<O>> &&
         Constructible<Pattern, all_view<P>>
     constexpr split_view(O&& o, P&& p);
 
     template<InputRange O>
-      requires ViewableRange<O> &&
+      requires @\oldtxt{ViewableRange<O> \&\&}@
         Constructible<Rng, all_view<O>> &&
         Constructible<Pattern, single_view<@\newtxt{iter_}@value@\oldtxt{_type}@_t<iterator_t<O>>>>
-    constexpr split_view(O&& o, @\newtxt{iter_}@value@\oldtxt{_type}@_t<iterator_t<O>> e);
+    constexpr split_view(O&& o, @\newtxt{iter_}@value@\oldtxt{_type}@_t<iterator_t<O>> e)@\oldtxt{;}@
+      @\newtxt{: split_view\{view::all(std::forward<O>(o)), single_view\{std::move(e)\}\}}@
+    @\newtxt{\{\}}@
 
     constexpr auto begin();
     constexpr auto begin() requires ForwardRange<Rng>;
@@ -5336,7 +5338,6 @@ namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace ranges \{}@
 \end{codeblock}
 
 \rSec3[range.adaptors.split_view.ops]{\tcode{split_view} operations}
-\rSec4[range.adaptors.split_view.ctor]{\tcode{split_view} constructors}
 
 \indexlibrary{\idxcode{split_view}!\idxcode{split_view}}%
 \begin{itemdecl}
@@ -5345,14 +5346,14 @@ constexpr split_view(Rng base, Pattern pattern);
 
 \begin{itemdescr}
 \pnum
-\effects Initializes \tcode{base_} with \tcode{std::move(base)} and initializes
-\tcode{pattern_} with \tcode{std::move(pattern)}.
+\effects Initializes \tcode{base_} with \tcode{std::move(base)}, and
+\oldtxt{initializes} \tcode{pattern_} with \tcode{std::move(pattern)}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{split_view}!\idxcode{split_view}}%
 \begin{itemdecl}
 template<InputRange O, ForwardRange P>
-  requires ViewableRange<O> && ViewableRange<P> &&
+  requires @\oldtxt{ViewableRange<O> \&\& ViewableRange<P> \&\&}@
     Constructible<Rng, all_view<O>> &&
     Constructible<Pattern, all_view<P>>
 constexpr split_view(O&& o, P&& p);
@@ -5360,17 +5361,24 @@ constexpr split_view(O&& o, P&& p);
 
 \begin{itemdescr}
 \pnum
-\effects Delegates to
-\tcode{split_view\{view::all(std::forward<O>(o)), view::all(std::forward<P>(p))\}}.
+\effects
+{\color{newclr}
+Initializes \tcode{base_} with \tcode{Rng(view::all(std::forward<O>(o)))} and
+\tcode{pattern_} with \tcode{Pattern(\brk{}view::all(std::forward<P>(p)))}.
+} %% \color{newclr}
+
+\oldtxt{Delegates to:
+}\tcode{\oldtxt{split_view\{view::all(std::forward<O>(o)), view::all(std::forward<P>(p))\}}}
 \end{itemdescr}
 
+{\color{oldclr}
 \indexlibrary{\idxcode{split_view}!\idxcode{split_view}}%
 \begin{itemdecl}
 template<InputRange O>
   requires ViewableRange<O> &&
     Constructible<Rng, all_view<O>> &&
-    Constructible<Pattern, single_view<@\newtxt{iter_}@value@\oldtxt{_type}@_t<iterator_t<O>>>>
-constexpr split_view(O&& o, @\newtxt{iter_}@value@\oldtxt{_type}@_t<iterator_t<O>> e);
+    Constructible<Pattern, single_view<value_type_t<iterator_t<O>>>>
+constexpr split_view(O&& o, value_type_t<iterator_t<O>> e);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -5378,8 +5386,7 @@ constexpr split_view(O&& o, @\newtxt{iter_}@value@\oldtxt{_type}@_t<iterator_t<O
 \effects Delegates to
 \tcode{split_view\{view::all(std::forward<O>(o)), single_view\{std::move(e)\}\}}.
 \end{itemdescr}
-
-\rSec4[range.adaptors.split_view.begin]{\tcode{split_view} range begin}
+} %% \color{oldclr}
 
 \indexlibrary{\idxcode{begin}!\idxcode{split_view}}%
 \begin{itemdecl}
@@ -5391,14 +5398,14 @@ constexpr auto begin();
 \effects Equivalent to:
 \begin{codeblock}
 current_ = ranges::begin(base_);
-return iterator{*this};
+return @\newtxt{outer_}@iterator{*this};
 \end{codeblock}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{begin}!\idxcode{split_view}}%
 \begin{itemdecl}
 constexpr auto begin() requires ForwardRange<Rng>;
-constexpr auto begin() const requires ForwardRange<Rng>;
+constexpr auto begin() const requires ForwardRange<@\newtxt{const}@ Rng>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -5410,12 +5417,10 @@ constexpr auto begin() const requires ForwardRange<Rng>;
 for the first and second overloads, respectively.}
 \end{itemdescr}
 
-\rSec4[range.adaptors.split_view.end]{\tcode{split_view} range end}
-
 \indexlibrary{\idxcode{end}!\idxcode{split_view}}%
 \begin{itemdecl}
 constexpr auto end()
-constexpr auto end() const requires ForwardRange<Rng>;
+constexpr auto end() const requires ForwardRange<@\newtxt{const}@ Rng>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -5432,7 +5437,7 @@ for the first and second overloads, respectively.
 constexpr auto end()
   requires ForwardRange<Rng> && CommonRange<Rng>;
 constexpr auto end() const
-  requires ForwardRange<Rng> && CommonRange<Rng>;
+  requires ForwardRange<@\newtxt{const}@ Rng> && CommonRange<@\newtxt{const}@ Rng>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -5441,29 +5446,33 @@ constexpr auto end() const
 \tcode{return outer_iterator<\oldtxt{\placeholder{simple-view}<R>}\newtxt{$C$}>\{*this, ranges::end(base_)\};} \\
 \oldtxt{and }\tcode{\oldtxt{return outer_iterator<true>\{*this, ranges::end(base_)\};}}
 \newtxt{where $C$ is \tcode{\placeholder{simple-view}<R>} or \tcode{true}
-for the first and second overload, respectively.}
+for the first and second overloads, respectively.}
 \end{itemdescr}
 
 \rSec3[range.adaptors.split_view.outer_iterator]{Class template \tcode{split_view::outer_iterator}}
 
 \pnum
 \begin{note}
-\tcode{split_view::outer_iterator} is an exposition-only type.
+\tcode{\oldtxt{split_view::outer_iterator}}\oldtxt{ is an exposition-only type.}
 \end{note}
 
 \begin{codeblock}
-namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
+namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace ranges \{}@
   template<class Rng, class Pattern>
   template<bool Const>
-  struct split_view<Rng, Pattern>::outer_iterator {
+  struct split_view<Rng, Pattern>::outer_iterator { @\newtxt{// \expos}@
   private:
-    using Parent = conditional_t<Const, const split_view, split_view>;
-    using Base   = conditional_t<Const, const Rng, Rng>;
-    iterator_t<Base> current_ {}; // Only present if \tcode{Rng} models \libconcept{ForwardRange}
-    Parent* parent_ = nullptr;
+    using Parent =                @\newtxt{// \expos}@
+      conditional_t<Const, const split_view, split_view>;
+    using Base   =                @\newtxt{// \expos}@
+      conditional_t<Const, const Rng, Rng>;
+    iterator_t<Base> current_ {}; // \expos, present only if \tcode{\newtxt{Base}\oldtxt{Rng}} models \libconcept{ForwardRange}
+    Parent* parent_ = nullptr;    // \expos
   public:
-    using iterator_category = @\seebelow@;
-    using difference_type = @\newtxt{iter_}@difference@\oldtxt{_type}@_t<iterator_t<Base>>;
+    using iterator_category = @\newtxt{input_iterator_tag}\oldtxt{\seebelow}@;
+    @\newtxt{using iterator_concept  =}@
+      @\newtxt{conditional_t<ForwardRange<Base>, forward_iterator_tag, input_iterator_tag>;}@
+    using difference_type   = @\newtxt{iter_}@difference@\oldtxt{_type}@_t<iterator_t<Base>>;
     struct value_type;
 
     outer_iterator() = default;
@@ -5484,17 +5493,28 @@ namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\remov
     friend constexpr bool operator!=(const outer_iterator& x, const outer_iterator& y)
       requires ForwardRange<Base>;
   };
-}}@\removed{\}\}}@
+}@\oldtxt{\}}@
 \end{codeblock}
 
+{\color{oldclr}
 \pnum
-\tcode{split_view<Rng, Pattern>::outer_iterator::iterator_category} is defines
+\tcode{split_view<Rng, Pattern>::outer_iterator::iterator_category} is defined
 as follows:
 \begin{itemize}
-\item If \tcode{outer_iterator::Base} \oldtxt{satisfies} \newtxt{models} \tcode{ForwardRange}, then
-\tcode{iterator_category} is \tcode{ranges::forward_iterator_tag}.
+\item If \tcode{outer_iterator::Base} satisfies \libconcept{ForwardRange},
+then \tcode{iterator_category} is \tcode{ranges::forward_iterator_tag}.
+
 \item Otherwise, \tcode{iterator_category} is \tcode{ranges::input_iterator_tag}.
 \end{itemize}
+} %% \color{oldclr}
+
+{\color{newclr}
+\pnum
+Many of the following specifications refer to the notional member
+\tcode{\placeholder{current}} of \tcode{outer_iterator}.
+\tcode{\placeholder{current}} is equivalent to \tcode{current_} if \tcode{Rng}
+models \libconcept{ForwardRange}, and \tcode{parent_->current_} otherwise.
+} %% \color{newclr}
 
 \rSec3[range.adaptors.split_view.outer_iterator.ops]{\tcode{split_view::outer_iterator} operations}
 \rSec4[range.adaptors.split_view.outer_iterator.ctor]{\tcode{split_view::outer_iterator} constructors}
@@ -5517,20 +5537,19 @@ constexpr outer_iterator(Parent& parent, iterator_t<Base> current)
 
 \begin{itemdescr}
 \pnum
-\effects Initializes \tcode{parent_} with \tcode{\oldtxt{\&}\newtxt{addressof(}parent\newtxt{)}} and \tcode{current_}
-with \tcode{current}.
+\effects Initializes \tcode{parent_} with \tcode{\oldtxt{\&}\newtxt{addressof(}parent\newtxt{)}}
+and \tcode{current_} with \tcode{current}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{outer_iterator}!\idxcode{split_view::outer_iterator}}%
 \begin{itemdecl}
 constexpr outer_iterator(outer_iterator<!Const> i) requires Const &&
-ConvertibleTo<iterator_t<Rng>, iterator_t<Base>>;
+  ConvertibleTo<iterator_t<Rng>, iterator_t<Base>>;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects Initializes \tcode{parent_} with \tcode{i.parent_} and \tcode{current_}
-with \tcode{i.current_}.
+\effects Initializes \tcode{parent_} with \tcode{i.parent_} and \tcode{current_} with \tcode{i.current_}.
 \end{itemdescr}
 
 \rSec4[range.adaptors.split_view.outer_iterator.star]{\tcode{split_view::outer_iterator::operator*}}
@@ -5542,7 +5561,7 @@ constexpr value_type operator*() const;
 
 \begin{itemdescr}
 \pnum
-\returns \tcode{value_type\{*this\}}.
+\oldtxt{\returns} \newtxt{\effects Equivalent to:} \tcode{\newtxt{return} value_type\{*this\}\newtxt{;}}
 \end{itemdescr}
 
 \rSec4[range.adaptors.split_view.outer_iterator.inc]{\tcode{split_view::outer_iterator::operator++}}
@@ -5560,7 +5579,7 @@ auto const end = ranges::end(parent_->base_);
 if (@\placeholder{current}@ == end) return *this;
 auto const [pbegin, pend] = subrange{parent_->pattern_};
 do {
-  auto [b,p] = mismatch(@\placeholdernc{current}@, end, pbegin, pend);
+  auto [b,p] = @\newtxt{ranges::}@mismatch(@\placeholdernc{current}@, end, pbegin, pend);
   if (p != pend) continue; // The pattern didn't match
   @\placeholder{current}@ = @\placeholdernc{bump}@(b, pbegin, pend, end); // skip the pattern
   break;
@@ -5569,15 +5588,20 @@ return *this;
 \end{codeblock}
 \end{itemdescr}
 
-Where \tcode{\placeholder{current}} is equivalent to:
+Where {\color{oldclr}
+\tcode{\placeholder{current}} is equivalent to:
 \begin{itemize}
-\item If \tcode{Rng} \oldtxt{satisfies} \newtxt{models} \tcode{ForwardRange}, \tcode{current_}.
+\item If \tcode{Rng} satisfies \libconcept{ForwardRange}, \tcode{current_}.
+
 \item Otherwise, \tcode{parent_->current_}.
 \end{itemize}
+} %% \color{oldclr}
 
-and \tcode{\placeholdernc{bump}(b, x, y, e)} is equivalent to:
+\oldtxt{and} \tcode{\placeholdernc{bump}(b, x, y, e)} is equivalent to:
 \begin{itemize}
-\item If \tcode{Rng} \oldtxt{satisfies} \newtxt{models} \libconcept{ForwardRange}, \tcode{\newtxt{ranges::}next(b, (int)(x == y), e)}.
+\item If \tcode{Rng} \oldtxt{satisfies} \newtxt{models} \libconcept{ForwardRange},
+\tcode{\newtxt{ranges::}next(b, (int)(x == y), e)}.
+
 \item Otherwise, \tcode{b}.
 \end{itemize}
 
@@ -5616,10 +5640,7 @@ friend constexpr bool operator==(const outer_iterator& x, const outer_iterator& 
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to:
-\begin{codeblock}
-return x.current_ == y.current_;
-\end{codeblock}
+\effects Equivalent to: \tcode{return x.current_ == y.current_;}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{operator!=}!\idxcode{split_view::outer_iterator}}%
@@ -5630,121 +5651,18 @@ friend constexpr bool operator!=(const outer_iterator& x, const outer_iterator& 
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to:
-\begin{codeblock}
-return !(x == y);
-\end{codeblock}
-\end{itemdescr}
-
-\rSec3[range.adaptors.split_view.outer_sentinel]{Class template \tcode{split_view::outer_sentinel}}
-
-\pnum
-\begin{note}
-\tcode{split_view::outer_sentinel} is an exposition-only type.
-\end{note}
-
-\begin{codeblock}
-namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
-  template<class Rng, class Pattern>
-  template<bool Const>
-  struct split_view<Rng, Pattern>::outer_sentinel {
-  private:
-    using Parent = conditional_t<Const, const split_view, split_view>;
-    using Base   = conditional_t<Const, const Rng, Rng>;
-    sentinel_t<Base> end_;
-  public:
-    outer_sentinel() = default;
-    constexpr explicit outer_sentinel(Parent& parent);
-
-    friend constexpr bool operator==(const outer_iterator<Const>& x, const outer_sentinel& y);
-    friend constexpr bool operator==(const outer_sentinel& x, const outer_iterator<Const>& y);
-    friend constexpr bool operator!=(const outer_iterator<Const>& x, const outer_sentinel& y);
-    friend constexpr bool operator!=(const outer_sentinel& x, const outer_iterator<Const>& y);
-  };
-}}@\removed{\}\}}@
-\end{codeblock}
-
-\rSec4[range.adaptors.split_view.outer_sentinel.ctor]{\tcode{split_view::outer_sentinel} constructors}
-
-\indexlibrary{\idxcode{outer_sentinel}!\idxcode{split_view::outer_sentinel}}%
-\begin{itemdecl}
-constexpr explicit outer_sentinel(Parent& parent);
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\effects Initializes \tcode{end_} with \tcode{ranges::end(parent.base_)}.
-\end{itemdescr}
-
-\rSec4[range.adaptors.split_view.outer_sentinel.nonmember]{\tcode{split_view::outer_sentinel} non-member functions}
-
-\indexlibrary{\idxcode{operator==}!\idxcode{split_view::outer_sentinel}}%
-\begin{itemdecl}
-friend constexpr bool operator==(const outer_iterator<Const>& x, const outer_sentinel& y);
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\effects Equivalent to:
-\begin{codeblock}
-return @\placeholdernc{current}@(x) == y.end_;
-\end{codeblock}
-
-Where \tcode{\placeholdernc{current}(x)} is equivalent to:
-\begin{itemize}
-\item If \tcode{Rng} \oldtxt{satisfies} \newtxt{models} \tcode{ForwardRange}, \tcode{x.current_}.
-\item Otherwise, \tcode{x.parent_->current_}.
-\end{itemize}
-\end{itemdescr}
-
-\indexlibrary{\idxcode{operator==}!\idxcode{split_view::outer_sentinel}}%
-\begin{itemdecl}
-friend constexpr bool operator==(const outer_sentinel& x, const outer_iterator<Const>& y);
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\effects Equivalent to:
-\begin{codeblock}
-return y == x;
-\end{codeblock}
-\end{itemdescr}
-
-\indexlibrary{\idxcode{operator!=}!\idxcode{split_view::outer_sentinel}}%
-\begin{itemdecl}
-friend constexpr bool operator!=(const outer_iterator<Const>& x, const outer_sentinel& y);
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\effects Equivalent to:
-\begin{codeblock}
-return !(x == y);
-\end{codeblock}
-\end{itemdescr}
-
-\indexlibrary{\idxcode{operator!=}!\idxcode{split_view::outer_sentinel}}%
-\begin{itemdecl}
-friend constexpr bool operator!=(const outer_sentinel& x, const outer_iterator<Const>& y);
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\effects Equivalent to:
-\begin{codeblock}
-return !(y == x);
-\end{codeblock}
+\effects Equivalent to: \tcode{return !(x == y);}
 \end{itemdescr}
 
 \rSec3[range.adaptors.split_view.outer_iterator.value_type]{Class \tcode{split_view::outer_iterator::value_type}}
 
 \pnum
 \begin{note}
-\tcode{split_view::outer_iterator::value_type} is an exposition-only type.
+\tcode{\oldtxt{split_view::outer_iterator::value_type}}\oldtxt{ is an exposition-only type.}
 \end{note}
 
 \begin{codeblock}
-namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
+namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace ranges \{}@
   template<class Rng, class Pattern>
   template<bool Const>
   struct split_view<Rng, Pattern>::outer_iterator<Const>::value_type {
@@ -5757,10 +5675,10 @@ namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\remov
     constexpr auto begin() const;
     constexpr auto end() const;
   };
-}}@\removed{\}\}}@
+}@\oldtxt{\}}@
 \end{codeblock}
 
-\rSec4[range.adaptors.split_view.outer_iterator.value_type.ctor]{\tcode{split_view::outer_iterator::value_type} constructors}
+\rSec4[range.adaptors.split_view.outer_iterator.value_type.ops]{\tcode{split_view::outer_iterator::value_type} operations}
 
 \indexlibrary{\idxcode{value_type}!\idxcode{split_view::outer_iterator::value_type}}%
 \begin{itemdecl}
@@ -5772,8 +5690,6 @@ constexpr explicit value_type(outer_iterator i);
 \effects Initializes \tcode{i_} with \tcode{i}.
 \end{itemdescr}
 
-\rSec4[range.adaptors.split_view.outer_iterator.value_type.begin]{\tcode{split_view::outer_iterator::value_type} range begin}
-
 \indexlibrary{\idxcode{begin}!\idxcode{split_view::outer_iterator::value_type}}%
 \begin{itemdecl}
 constexpr auto begin() const;
@@ -5781,13 +5697,8 @@ constexpr auto begin() const;
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to:
-\begin{codeblock}
-return inner_iterator<Const>{i_};
-\end{codeblock}
+\effects Equivalent to: \tcode{return inner_iterator<Const>\{i_\};}
 \end{itemdescr}
-
-\rSec4[range.adaptors.split_view.outer_iterator.value_type.end]{\tcode{split_view::outer_iterator::value_type} range end}
 
 \indexlibrary{\idxcode{end}!\idxcode{split_view::outer_iterator::value_type}}%
 \begin{itemdecl}
@@ -5796,38 +5707,135 @@ constexpr auto end() const;
 
 \begin{itemdescr}
 \pnum
+\effects Equivalent to: \tcode{return inner_sentinel<Const>\{\};}
+\end{itemdescr}
+
+\rSec3[range.adaptors.split_view.outer_sentinel]{Class template \tcode{split_view::outer_sentinel}}
+
+\pnum
+\begin{note}
+\tcode{\oldtxt{split_view::outer_sentinel}}\oldtxt{ is an exposition-only type.}
+\end{note}
+
+\begin{codeblock}
+namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace ranges \{}@
+  template<class Rng, class Pattern>
+  template<bool Const>
+  struct split_view<Rng, Pattern>::outer_sentinel { @\newtxt{// \expos}@
+  private:
+    using Parent = conditional_t<Const, const split_view, split_view>;
+    using Base   = conditional_t<Const, const Rng, Rng>;
+    sentinel_t<Base> end_;
+  public:
+    outer_sentinel() = default;
+    constexpr explicit outer_sentinel(Parent& parent);
+
+    friend constexpr bool operator==(const outer_iterator<Const>& x, const outer_sentinel& y);
+    friend constexpr bool operator==(const outer_sentinel& @\newtxt{y}\oldtxt{x}@, const outer_iterator<Const>& @\newtxt{x}\oldtxt{y}@);
+    friend constexpr bool operator!=(const outer_iterator<Const>& x, const outer_sentinel& y);
+    friend constexpr bool operator!=(const outer_sentinel& @\newtxt{y}\oldtxt{x}@, const outer_iterator<Const>& @\newtxt{x}\oldtxt{y}@);
+  };
+}@\oldtxt{\}}@
+\end{codeblock}
+
+\rSec4[range.adaptors.split_view.outer_sentinel.ops]{\tcode{split_view::outer_sentinel} operations}
+
+\indexlibrary{\idxcode{outer_sentinel}!\idxcode{split_view::outer_sentinel}}%
+\begin{itemdecl}
+constexpr explicit outer_sentinel(Parent& parent);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Initializes \tcode{end_} with \tcode{ranges::end(parent.base_)}.
+\end{itemdescr}
+
+\indexlibrary{\idxcode{operator==}!\idxcode{split_view::outer_sentinel}}%
+\begin{itemdecl}
+friend constexpr bool operator==(const outer_iterator<Const>& x, const outer_sentinel& y);
+@\newtxt{friend constexpr bool operator==(const outer_sentinel\& y, const outer_iterator<Const>\& x);}@
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
 \effects Equivalent to:
 \begin{codeblock}
-return inner_sentinel<Const>{};
+return @\newtxt{x.}@\placeholdernc{current}@\oldtxt{(x)}@ == y.end_;
 \end{codeblock}
+
+{\color{oldclr}
+Where \tcode{\placeholdernc{current}(x)} is equivalent to:
+\begin{itemize}
+\item If \tcode{Rng} satisfies \tcode{ForwardRange}, \tcode{x.current_}.
+\item Otherwise, \tcode{x.parent_->current_}.
+\end{itemize}
+} %% \color{oldclr}
 \end{itemdescr}
+
+{\color{oldclr}
+\indexlibrary{\idxcode{operator==}!\idxcode{split_view::outer_sentinel}}%
+\begin{itemdecl}
+friend constexpr bool operator==(const outer_sentinel& x, const outer_iterator<Const>& y);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to: \tcode{return y == x;}
+\end{itemdescr}
+} %% \color{oldclr}
+
+\indexlibrary{\idxcode{operator!=}!\idxcode{split_view::outer_sentinel}}%
+\begin{itemdecl}
+friend constexpr bool operator!=(const outer_iterator<Const>& x, const outer_sentinel& y);
+@\newtxt{friend constexpr bool operator!=(const outer_sentinel\& y, const outer_iterator<Const>\& x);}@
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to: \tcode{return !(x == y);}
+\end{itemdescr}
+
+{\color{oldclr}
+\indexlibrary{\idxcode{operator!=}!\idxcode{split_view::outer_sentinel}}%
+\begin{itemdecl}
+friend constexpr bool operator!=(const outer_sentinel& x, const outer_iterator<Const>& y);
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to: \tcode{return !(y == x);}
+\end{itemdescr}
+} %% \color{oldclr}
 
 \rSec3[range.adaptors.split_view.inner_iterator]{Class template \tcode{split_view::inner_iterator}}
 
 \pnum
 \begin{note}
-\tcode{split_view::inner_iterator} is an exposition-only type.
+\tcode{\oldtxt{split_view::inner_iterator}}\oldtxt{ is an exposition-only type.}
 \end{note}
 
+{\color{oldclr}
 \pnum
 In the definition of \tcode{split_view<Rng, Pattern>::inner_iterator} below,
 \tcode{\placeholdernc{current}(i)} is equivalent to:
 \begin{itemize}
 \item If \tcode{Rng} \oldtxt{satisfies} \newtxt{models} \tcode{ForwardRange}, \tcode{i.current_}.
+
 \item Otherwise, \tcode{i.parent_->current_}.
 \end{itemize}
+} %% \color{oldclr}
 
 \begin{codeblock}
-namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
+namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace ranges \{}@
   template<class Rng, class Pattern>
   template<bool Const>
-  struct split_view<Rng, Pattern>::inner_iterator {
+  struct split_view<Rng, Pattern>::inner_iterator { @\newtxt{// \expos}@
   private:
     using Base = conditional_t<Const, const Rng, Rng>;
-    outer_iterator<Const> i_ {};
-    bool zero_ = false;
+    outer_iterator<Const> i_ {}; @\newtxt{// \expos}@
+    bool zero_ = false;          @\newtxt{// \expos}@
   public:
-    using iterator_category = iterator_category_t<outer_iterator<Const>>;
+    using iterator_category = iterator_category_t<outer_iterator<Const>>; // FIXME
     using difference_type = @\newtxt{iter_}@difference@\oldtxt{_type}@_t<iterator_t<Base>>;
     using value_type = @\newtxt{iter_}@value@\oldtxt{_type}@_t<iterator_t<Base>>;
 
@@ -5846,11 +5854,12 @@ namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\remov
       requires ForwardRange<Base>;
 
     friend constexpr decltype(auto) iter_move(const inner_iterator& i)
-      noexcept(@\seebelow@);
+      noexcept(@\oldtxt{\seebelow}\newtxt{noexcept(ranges::iter_move(i.i_.\placeholdernc{current}))}@);
     friend constexpr void iter_swap(const inner_iterator& x, const inner_iterator& y)
-      noexcept(@\seebelow@) requires IndirectlySwappable<iterator_t<Base>>;
+      noexcept(@\oldtxt{\seebelow}\newtxt{noexcept(ranges::iter_swap(x.i_.\placeholdernc{current}, y.i_.\placeholdernc{current}))}@)
+      requires IndirectlySwappable<iterator_t<Base>>;
   };
-}}@\removed{\}\}}@
+}@\oldtxt{\}}@
 \end{codeblock}
 
 \rSec4[range.adaptors.split_view.inner_iterator.ctor]{\tcode{split_view::inner_iterator} constructors}
@@ -5874,7 +5883,9 @@ constexpr decltype(auto) operator*() const;
 
 \begin{itemdescr}
 \pnum
-\returns \tcode{*\placeholdernc{current}(i_)}.
+\newtxt{\effects Equivalent to: \tcode{return *i_.\placeholdernc{current};}}
+
+\oldtxt{\returns \tcode{*\placeholdernc{current}(i_)}.}
 \end{itemdescr}
 
 \rSec4[range.adaptors.split_view.inner_iterator.inc]{\tcode{split_view::inner_iterator::operator++}}
@@ -5888,7 +5899,8 @@ constexpr decltype(auto) operator++() const;
 \pnum
 \effects Equivalent to:
 \begin{codeblock}
-++@\placeholdernc{current}@(i_);
+@\oldtxt{++\placeholdernc{current}(i_);}@
+@\newtxt{++i_.\placeholdernc{current};}@
 zero_ = true;
 return *this;
 \end{codeblock}
@@ -5929,10 +5941,7 @@ friend constexpr bool operator==(const inner_iterator& x, const inner_iterator& 
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to:
-\begin{codeblock}
-return x.i_.current_ == y.i_.current_;
-\end{codeblock}
+\effects Equivalent to: \tcode{return x.i_.current_ == y.i_.current_;}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{operator!=}!\idxcode{split_view::inner_iterator}}%
@@ -5943,10 +5952,7 @@ friend constexpr bool operator!=(const inner_iterator& x, const inner_iterator& 
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to:
-\begin{codeblock}
-return !(x == y);
-\end{codeblock}
+\effects Equivalent to: \tcode{return !(x == y);}
 \end{itemdescr}
 
 \rSec4[range.adaptors.split_view.inner_iterator.nonmember]{\tcode{split_view::inner_iterator} non-member functions}
@@ -5954,12 +5960,14 @@ return !(x == y);
 \indexlibrary{\idxcode{iter_move}!\idxcode{split_view::inner_iterator}}%
 \begin{itemdecl}
 friend constexpr decltype(auto) iter_move(const inner_iterator& i)
-  noexcept(@\oldtxt{\seebelow}\newtxt{noexcept(ranges::iter_move(\placeholdernc{current}(i.i_)))}@);
+  noexcept(@\oldtxt{\seebelow}\newtxt{noexcept(ranges::iter_move(i.i_.\placeholdernc{current}))}@);
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\returns \tcode{ranges::iter_move(\placeholdernc{current}(i.i_))}.
+\newtxt{\effects }\tcode{\newtxt{ranges::iter_move(i.i_.\placeholdernc{current})}}\newtxt{.}
+
+\oldtxt{\returns }\tcode{\oldtxt{ranges::iter_move(\placeholdernc{current}(i.i_))}}\oldtxt{.}
 
 \pnum
 \oldtxt{\remarks The expression in the \tcode{noexcept} clause is equivalent to:}
@@ -5971,7 +5979,7 @@ friend constexpr decltype(auto) iter_move(const inner_iterator& i)
 \indexlibrary{\idxcode{iter_swap}!\idxcode{split_view::inner_iterator}}%
 \begin{itemdecl}
 friend constexpr void iter_swap(const inner_iterator& x, const inner_iterator& y)
-  noexcept(@\oldtxt{\seebelow}\newtxt{noexcept(ranges::iter_swap(\placeholdernc{current}(x.i_), \placeholdernc{current}(y.i_)))}@)
+  noexcept(@\oldtxt{\seebelow}\newtxt{noexcept(ranges::iter_swap(x.i_.\placeholdernc{current}, y.i_.\placeholdernc{current}))}@)
   requires IndirectlySwappable<iterator_t<Base>>;
 \end{itemdecl}
 
@@ -5990,20 +5998,20 @@ friend constexpr void iter_swap(const inner_iterator& x, const inner_iterator& y
 
 \pnum
 \begin{note}
-\tcode{split_view::inner_sentinel} is an exposition-only type.
+\oldtxt{\tcode{split_view::inner_sentinel} is an exposition-only type.}
 \end{note}
 
 \begin{codeblock}
-namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\removed{inline namespace v1 \{}@
+namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace ranges \{}@
   template<class Rng, class Pattern>
   template<bool Const>
-  struct split_view<Rng, Pattern>::inner_sentinel {
+  struct split_view<Rng, Pattern>::inner_sentinel { @\newtxt{// \expos}@
     friend constexpr bool operator==(const inner_iterator<Const>& x, inner_sentinel);
-    friend constexpr bool operator==(inner_sentinel x, const inner_iterator<Const>& y);
+    friend constexpr bool operator==(inner_sentinel @\oldtxt{x}@, const inner_iterator<Const>& @\newtxt{x}\oldtxt{y}@);
     friend constexpr bool operator!=(const inner_iterator<Const>& x, inner_sentinel y);
-    friend constexpr bool operator!=(inner_sentinel x, const inner_iterator<Const>& y);
+    friend constexpr bool operator!=(inner_sentinel @\oldtxt{x}@, const inner_iterator<Const>& @\newtxt{x}\oldtxt{y}@);
   };
-}}@\removed{\}\}}@
+}@\oldtxt{\}}@
 \end{codeblock}
 
 \rSec4[range.adaptors.split_view.inner_sentinel.comp]{\tcode{split_view::inner_sentinel} comparisons}
@@ -6011,13 +6019,14 @@ namespace std { @\removed{namespace experimental \{}@ namespace ranges { @\remov
 \indexlibrary{\idxcode{operator==}!\idxcode{split_view::inner_sentinel}}%
 \begin{itemdecl}
 friend constexpr bool operator==(const inner_iterator<Const>& x, inner_sentinel)
+@\newtxt{friend constexpr bool operator==(inner_sentinel, const inner_iterator<Const>\& x);}@
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
 \effects Equivalent to:
 \begin{codeblock}
-auto cur = x.i_.current();
+auto cur = x.i_.@\placeholdernc{current}\oldtxt{()}@;
 auto end = ranges::end(x.i_.parent_->base_);
 if (cur == end) return true;
 auto [pcur, pend] = subrange{x.i_.parent_->pattern_};
@@ -6030,6 +6039,7 @@ return false;
 \end{codeblock}
 \end{itemdescr}
 
+{\color{oldclr}
 \indexlibrary{\idxcode{operator==}!\idxcode{split_view::inner_sentinel}}%
 \begin{itemdecl}
 friend constexpr bool operator==(inner_sentinel x, const inner_iterator<Const>& y);
@@ -6042,20 +6052,20 @@ friend constexpr bool operator==(inner_sentinel x, const inner_iterator<Const>& 
 return y == x;
 \end{codeblock}
 \end{itemdescr}
+} %% \color{oldclr}
 
 \indexlibrary{\idxcode{operator!=}!\idxcode{split_view::inner_sentinel}}%
 \begin{itemdecl}
 friend constexpr bool operator!=(const inner_iterator<Const>& x, inner_sentinel y);
+@\newtxt{friend constexpr bool operator!=(inner_sentinel, const inner_iterator<Const>\& x);}@
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to:
-\begin{codeblock}
-return !(x == y);
-\end{codeblock}
+\effects Equivalent to: \tcode{return !(x == y);}
 \end{itemdescr}
 
+{\color{oldclr}
 \indexlibrary{\idxcode{operator!=}!\idxcode{split_view::inner_sentinel}}%
 \begin{itemdecl}
 friend constexpr bool operator!=(inner_sentinel x, const inner_iterator<Const>& y);
@@ -6068,18 +6078,19 @@ friend constexpr bool operator!=(inner_sentinel x, const inner_iterator<Const>& 
 return !(y == x);
 \end{codeblock}
 \end{itemdescr}
+} %% \color{oldclr}
 
 \rSec2[range.adaptors.split]{\tcode{view::split}}
 
 \pnum
-The name \tcode{view::split} denotes a range adaptor object\iref{range.adaptor.object}.
-Let \tcode{E} and \tcode{F} be expressions such that their types are \tcode{T}
-and \tcode{U} respectively. Then the expression \tcode{view::split(E, F)} is
-expression-equivalent to:
-
-\begin{itemize}
-\item \tcode{split_view\{E, F\}} if either of the following sets of requirements
-is satisfied:
+The name \tcode{view::split} denotes a range adaptor
+object\iref{range.adaptor.object}.
+\oldtxt{Let \tcode{E} and \tcode{F} be expressions such that their types are
+\tcode{T} and \tcode{U} respectively. Then} The expression
+\tcode{view::split(E, F)} \newtxt{for some subexpressions \tcode{E} and
+\tcode{F}} is expression-equivalent to \tcode{split_view\{E, F\}}\newtxt{.}
+\oldtxt{if either of the following sets of requirements is satisfied:}
+{\color{oldclr}
 \begin{itemize}
 \item \begin{codeblock}
 InputRange<T> && ForwardRange<U> &&
@@ -6090,13 +6101,14 @@ IndirectlyComparable<iterator_t<T>, iterator_t<U>> &&
 
 \item \begin{codeblock}
 InputRange<T> && ViewableRange<T> &&
-IndirectlyComparable<iterator_t<T>, const @\newtxt{iter_}@value@\oldtxt{_type}@_t<iterator_t<T>>*> &&
-CopyConstructible<@\newtxt{iter_}@value@\oldtxt{_type}@_t<iterator_t<T>>> &&
-ConvertibleTo<U, @\newtxt{iter_}@value@\oldtxt{_type}@_t<iterator_t<T>>>
+IndirectlyComparable<iterator_t<T>, const value_type_t<iterator_t<T>>*> &&
+CopyConstructible<value_type_t<iterator_t<T>>> &&
+ConvertibleTo<U, value_type_t<iterator_t<T>>>
 \end{codeblock}
 \end{itemize}
-\item Otherwise, \tcode{view::split(E, F)} is ill-formed.
-\end{itemize}
+Otherwise, \tcode{view::split(E, F)} is ill-formed.
+} %% \color{oldclr}
+
 
 \rSec2[range.adaptors.counted]{\tcode{view::counted}}
 

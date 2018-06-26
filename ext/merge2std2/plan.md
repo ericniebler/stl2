@@ -34,7 +34,11 @@ P0944:
 
 P0896:
 * [ ] `operator->` for the view adaptors' iterators
-* [ ] Detailed review of `split_view` (Don't forget `iterator_category`/`iterator_concept`)
+* [ ] Audit the specifications of `iterator_category` for `forward`s that don't have reference reference types.
+* [ ] Detailed review of `split_view`
+  * [ ] What happens if `const Rng` models `ForwardRange` and `Rng` only models `InputRange`?
+* [ ] Mark *all* private members `\expos`
+* [ ] Consider formulating `iterator_category`/`_concept` with `conditional_t` instead of prose where possible.
 * [ ] Add `operator[]` to *ref-view*
 * [ ] Update the Swappable text from the P0898 merge.
 * [ ] Define "models", and use it throughout to replace both "`foo` satisfies `Concept`" and the "syntactic requirements...otherwise ill-formed NDR" dance.
