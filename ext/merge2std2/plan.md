@@ -36,7 +36,6 @@ P0896:
 * [ ] `operator->` for the view adaptors' iterators
 * [ ] Detailed review of `split_view` (Don't forget `iterator_category`/`iterator_concept`)
 * [ ] Add `operator[]` to *ref-view*
-* [ ] Add mutable `single_view` access.
 * [ ] Update the Swappable text from the P0898 merge.
 * [ ] Define "models", and use it throughout to replace both "`foo` satisfies `Concept`" and the "syntactic requirements...otherwise ill-formed NDR" dance.
 * [ ] `-> auto&&` is broken in C++20
@@ -51,6 +50,7 @@ P0896:
 * [ ] Consider constraining the template parameters of the "named tuples" returned by algorithms.
 * [ ] https://github.com/ericniebler/stl2/issues/553
 * [ ] Reformulate `noexcept(E1) && noexcept(E2)` as `noexcept(E1, E2)`?
+* [X] Add mutable `single_view` access.
 * [X] Why doesn't `split_view` inherit from `view_interface`?
 * [X] Respecify `common_iterator` in terms of `variant`; fix the mess I made by making the operators members.
 * [X] Turn all of the `\xname{iterator}` and `\xname{sentinel}` into non-`\xname` expo-`private`
