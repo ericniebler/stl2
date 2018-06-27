@@ -33,7 +33,6 @@ P0944:
   * [X] `span`
 
 P0896:
-* [ ] Audit the specifications of `iterator_category` for `forward`s that don't have reference reference types.
 * [ ] `operator->` for the view adaptors' iterators
 * [ ] Mark *all* private members `\expos`
 * [ ] Consider formulating `iterator_category`/`_concept` with `conditional_t` instead of prose where possible.
@@ -53,6 +52,7 @@ P0896:
 * [ ] Consider constraining the template parameters of the "named tuples" returned by algorithms.
 * [ ] https://github.com/ericniebler/stl2/issues/553
 * [ ] Reformulate `noexcept(E1) && noexcept(E2)` as `noexcept(E1, E2)`?
+* [X] Audit the specifications of `iterator_category` for `forward`s that don't have reference reference types.
 * [X] Detailed review of `split_view`
   * [X] What happens if `const Rng` models `ForwardRange` and `Rng` only models `InputRange`?
   * [X] `iterator_category`/`_concept`
