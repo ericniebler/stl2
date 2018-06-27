@@ -36,7 +36,11 @@ P0896:
 * [ ] `operator->` for the view adaptors' iterators
   * [ ] `counted_iterator`
   * [ ] Reconcile the `common_iterator` and *has-arrow* `operator->` styles.
-* [ ] Use the P0788 terminology in function specifications in [range].
+* [ ] Use the P0788 terminology in function specifications (except algorithms?).
+  * [X] utilities.tex
+  * [ ] iterators.tex
+  * [ ] ranges.tex
+  * [ ] algorithms.tex
 * [ ] Add `operator[]` to *ref-view*
 * [ ] Update the Swappable text from the P0898 merge.
 * [ ] Define "models", and use it throughout to replace both "`foo` satisfies `Concept`" and the "syntactic requirements...otherwise ill-formed NDR" dance.
