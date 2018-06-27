@@ -33,9 +33,6 @@ P0944:
   * [X] `span`
 
 P0896:
-* [X] Detailed review of `split_view`
-  * [X] What happens if `const Rng` models `ForwardRange` and `Rng` only models `InputRange`?
-  * [ ] `iterator_category`/`_concept`
 * [ ] Audit the specifications of `iterator_category` for `forward`s that don't have reference reference types.
 * [ ] `operator->` for the view adaptors' iterators
 * [ ] Mark *all* private members `\expos`
@@ -56,6 +53,9 @@ P0896:
 * [ ] Consider constraining the template parameters of the "named tuples" returned by algorithms.
 * [ ] https://github.com/ericniebler/stl2/issues/553
 * [ ] Reformulate `noexcept(E1) && noexcept(E2)` as `noexcept(E1, E2)`?
+* [X] Detailed review of `split_view`
+  * [X] What happens if `const Rng` models `ForwardRange` and `Rng` only models `InputRange`?
+  * [X] `iterator_category`/`_concept`
 * [X] Add mutable `single_view` access.
 * [X] Why doesn't `split_view` inherit from `view_interface`?
 * [X] Respecify `common_iterator` in terms of `variant`; fix the mess I made by making the operators members.
