@@ -35,10 +35,9 @@ P0944:
 P0896:
 * [ ] `operator->` for the view adaptors' iterators
 * [ ] Audit the specifications of `iterator_category` for `forward`s that don't have reference reference types.
-* [ ] Detailed review of `split_view`
-  * [ ] What happens if `const Rng` models `ForwardRange` and `Rng` only models `InputRange`?
 * [ ] Mark *all* private members `\expos`
 * [ ] Consider formulating `iterator_category`/`_concept` with `conditional_t` instead of prose where possible.
+* [ ] Use the P0788 terminology in function specifications in [range].
 * [ ] Add `operator[]` to *ref-view*
 * [ ] Update the Swappable text from the P0898 merge.
 * [ ] Define "models", and use it throughout to replace both "`foo` satisfies `Concept`" and the "syntactic requirements...otherwise ill-formed NDR" dance.
@@ -54,6 +53,8 @@ P0896:
 * [ ] Consider constraining the template parameters of the "named tuples" returned by algorithms.
 * [ ] https://github.com/ericniebler/stl2/issues/553
 * [ ] Reformulate `noexcept(E1) && noexcept(E2)` as `noexcept(E1, E2)`?
+* [X] Detailed review of `split_view`
+  * [X] What happens if `const Rng` models `ForwardRange` and `Rng` only models `InputRange`?
 * [X] Add mutable `single_view` access.
 * [X] Why doesn't `split_view` inherit from `view_interface`?
 * [X] Respecify `common_iterator` in terms of `variant`; fix the mess I made by making the operators members.

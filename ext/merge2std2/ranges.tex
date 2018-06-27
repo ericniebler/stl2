@@ -5305,21 +5305,21 @@ namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace ranges \{}@
       requires @\oldtxt{ViewableRange<O> \&\&}@
         Constructible<Rng, all_view<O>> &&
         Constructible<Pattern, single_view<@\newtxt{iter_}@value@\oldtxt{_type}@_t<iterator_t<O>>>>
-    constexpr split_view(O&& o, @\newtxt{iter_}@value@\oldtxt{_type}@_t<iterator_t<O>> e)@\oldtxt{;}@
-      @\newtxt{: split_view\{view::all(std::forward<O>(o)), single_view\{std::move(e)\}\}}@
-    @\newtxt{\{\}}@
+    constexpr split_view(O&& o, @\newtxt{iter_}@value@\oldtxt{_type}@_t<iterator_t<O>> e);
 
     constexpr auto begin();
     constexpr auto begin() requires ForwardRange<Rng>;
-    constexpr auto begin() const requires ForwardRange<const Rng>;
+    constexpr auto begin() const
+      requires @\newtxt{ForwardRange<Rng> \&\&}@ ForwardRange<const Rng>;
 
     constexpr auto end()
-    constexpr auto end() const requires ForwardRange<const Rng>;
+    constexpr auto end() const
+      requires @\newtxt{ForwardRange<Rng> \&\&}@ ForwardRange<const Rng>;
 
     constexpr auto end()
       requires ForwardRange<Rng> && CommonRange<Rng>;
     constexpr auto end() const
-      requires ForwardRange<const Rng> && CommonRange<const Rng>;
+      requires @\newtxt{ForwardRange<Rng> \&\&}@ ForwardRange<const Rng> && CommonRange<const Rng>;
   };
 
   template<@\oldtxt{InputRange}\newtxt{class}@ O, @\oldtxt{ForwardRange}\newtxt{class}@ P>
@@ -5363,30 +5363,34 @@ constexpr split_view(O&& o, P&& p);
 \pnum
 \effects
 {\color{newclr}
-Initializes \tcode{base_} with \tcode{Rng(view::all(std::forward<O>(o)))} and
-\tcode{pattern_} with \tcode{Pattern(\brk{}view::all(std::forward<P>(p)))}.
+Initializes \tcode{base_} with \tcode{view::all(std::forward<O>(o))} and
+\tcode{pattern_} with \tcode{view::all(std\brk{}::forward<P>(p))}.
 } %% \color{newclr}
 
 \oldtxt{Delegates to:
-}\tcode{\oldtxt{split_view\{view::all(std::forward<O>(o)), view::all(std::forward<P>(p))\}}}
+}\tcode{\oldtxt{split_view\{view::all(std::forward<O>(o)), view::all(std::\brk{}forward<P>(p))\}}}\oldtxt{.}
 \end{itemdescr}
 
-{\color{oldclr}
 \indexlibrary{\idxcode{split_view}!\idxcode{split_view}}%
 \begin{itemdecl}
 template<InputRange O>
-  requires ViewableRange<O> &&
+  requires @\oldtxt{ViewableRange<O> \&\&}@
     Constructible<Rng, all_view<O>> &&
-    Constructible<Pattern, single_view<value_type_t<iterator_t<O>>>>
-constexpr split_view(O&& o, value_type_t<iterator_t<O>> e);
+    Constructible<Pattern, single_view<@\newtxt{iter_}@value@\oldtxt{_type}@_t<iterator_t<O>>>>
+constexpr split_view(O&& o, @\newtxt{iter_}@value@\oldtxt{_type}@_t<iterator_t<O>> e);
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects Delegates to
-\tcode{split_view\{view::all(std::forward<O>(o)), single_view\{std::move(e)\}\}}.
+\effects
+{\color{newclr}
+Initializes \tcode{base_} with \tcode{view::all(std::forward<O>(o))} and
+\tcode{pattern_} with \tcode{single_view\{\brk{}std::move(e)\}}.
+} %% \color{newclr}
+
+\oldtxt{Delegates to
+}\tcode{\oldtxt{split_view\{view::all(std::forward<O>(o)), single_view\{std::\brk{}move(e)\}\}}}\oldtxt{.}
 \end{itemdescr}
-} %% \color{oldclr}
 
 \indexlibrary{\idxcode{begin}!\idxcode{split_view}}%
 \begin{itemdecl}
@@ -5405,7 +5409,8 @@ return @\newtxt{outer_}@iterator{*this};
 \indexlibrary{\idxcode{begin}!\idxcode{split_view}}%
 \begin{itemdecl}
 constexpr auto begin() requires ForwardRange<Rng>;
-constexpr auto begin() const requires ForwardRange<@\newtxt{const}@ Rng>;
+constexpr auto begin() const
+  requires @\newtxt{ForwardRange<Rng> \&\&}@ ForwardRange<@\newtxt{const}@ Rng>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -5420,7 +5425,8 @@ for the first and second overloads, respectively.}
 \indexlibrary{\idxcode{end}!\idxcode{split_view}}%
 \begin{itemdecl}
 constexpr auto end()
-constexpr auto end() const requires ForwardRange<@\newtxt{const}@ Rng>;
+constexpr auto end() const
+  requires @\newtxt{ForwardRange<Rng> \&\&}@ ForwardRange<@\newtxt{const}@ Rng>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -5437,7 +5443,7 @@ for the first and second overloads, respectively.
 constexpr auto end()
   requires ForwardRange<Rng> && CommonRange<Rng>;
 constexpr auto end() const
-  requires ForwardRange<@\newtxt{const}@ Rng> && CommonRange<@\newtxt{const}@ Rng>;
+  requires @\newtxt{ForwardRange<Rng> \&\&}@ ForwardRange<@\newtxt{const}@ Rng> && CommonRange<@\newtxt{const}@ Rng>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -5466,7 +5472,7 @@ namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace ranges \{}@
       conditional_t<Const, const split_view, split_view>;
     using Base   =                @\newtxt{// \expos}@
       conditional_t<Const, const Rng, Rng>;
-    iterator_t<Base> current_ {}; // \expos, present only if \tcode{\newtxt{Base}\oldtxt{Rng}} models \libconcept{ForwardRange}
+    iterator_t<Base> current_ {}; // \expos, present only if \tcode{Rng} models \libconcept{ForwardRange}
     Parent* parent_ = nullptr;    // \expos
   public:
     using iterator_category = @\newtxt{input_iterator_tag}\oldtxt{\seebelow}@;
@@ -5579,31 +5585,37 @@ auto const end = ranges::end(parent_->base_);
 if (@\placeholder{current}@ == end) return *this;
 auto const [pbegin, pend] = subrange{parent_->pattern_};
 do {
-  auto [b,p] = @\newtxt{ranges::}@mismatch(@\placeholdernc{current}@, end, pbegin, pend);
-  if (p != pend) continue; // The pattern didn't match
-  @\placeholder{current}@ = @\placeholdernc{bump}@(b, pbegin, pend, end); // skip the pattern
-  break;
+  auto [b, p] = @\newtxt{ranges::}@mismatch(@\placeholdernc{current}@, end, pbegin, pend);
+  if (p == pend) @\oldtxt{continue;}@ @\newtxt{\{}@ // The pattern matches
+    // skip the pattern:
+    @\newtxt{if constexpr (ForwardRange<Base>)}@
+      @\newtxt{\placeholder{current} = ranges::next(b, (int)(pbegin == pend), end);}@
+    @\newtxt{else}@
+      @\newtxt{\placeholder{current} = b;}@
+    @\oldtxt{\placeholder{current} = \placeholdernc{bump}(b, pbegin, pend, end);}@
+    break;
+  @\newtxt{\}}@
 } while (++@\placeholder{current}@ != end);
 return *this;
 \end{codeblock}
 \end{itemdescr}
 
-Where {\color{oldclr}
-\tcode{\placeholder{current}} is equivalent to:
+{\color{oldclr}
+Where \tcode{\placeholder{current}} is equivalent to:
 \begin{itemize}
 \item If \tcode{Rng} satisfies \libconcept{ForwardRange}, \tcode{current_}.
 
 \item Otherwise, \tcode{parent_->current_}.
 \end{itemize}
-} %% \color{oldclr}
 
-\oldtxt{and} \tcode{\placeholdernc{bump}(b, x, y, e)} is equivalent to:
+and \tcode{\placeholdernc{bump}(b, x, y, e)} is equivalent to:
 \begin{itemize}
-\item If \tcode{Rng} \oldtxt{satisfies} \newtxt{models} \libconcept{ForwardRange},
-\tcode{\newtxt{ranges::}next(b, (int)(x == y), e)}.
+\item If \tcode{Rng} satisfies \libconcept{ForwardRange},
+\tcode{next(b, (int)(x == y), e)}.
 
 \item Otherwise, \tcode{b}.
 \end{itemize}
+} %% \color{oldclr}
 
 \indexlibrary{\idxcode{operator++}!\idxcode{split_view::outer_iterator}}%
 \begin{itemdecl}
@@ -5760,7 +5772,7 @@ friend constexpr bool operator==(const outer_iterator<Const>& x, const outer_sen
 \pnum
 \effects Equivalent to:
 \begin{codeblock}
-return @\newtxt{x.}@\placeholdernc{current}@\oldtxt{(x)}@ == y.end_;
+return @\newtxt{x.}\placeholdernc{current}\oldtxt{(x)}@ == y.end_;
 \end{codeblock}
 
 {\color{oldclr}
@@ -5883,7 +5895,7 @@ constexpr decltype(auto) operator*() const;
 
 \begin{itemdescr}
 \pnum
-\newtxt{\effects Equivalent to: \tcode{return *i_.\placeholdernc{current};}}
+\newtxt{\effects Equivalent to: }\tcode{\newtxt{return *i_.\placeholdernc{current};}}
 
 \oldtxt{\returns \tcode{*\placeholdernc{current}(i_)}.}
 \end{itemdescr}
@@ -5892,7 +5904,7 @@ constexpr decltype(auto) operator*() const;
 
 \indexlibrary{\idxcode{operator++}!\idxcode{split_view::inner_iterator}}%
 \begin{itemdecl}
-constexpr decltype(auto) operator++() const;
+constexpr @\newtxt{inner_iterator\&}@ @\oldtxt{decltype(auto)}@ operator++() const;
 \end{itemdecl}
 
 \begin{itemdescr}
