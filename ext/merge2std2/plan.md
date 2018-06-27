@@ -34,8 +34,8 @@ P0944:
 
 P0896:
 * [ ] `operator->` for the view adaptors' iterators
-* [ ] Mark *all* private members `\expos`
-* [ ] Consider formulating `iterator_category`/`_concept` with `conditional_t` instead of prose where possible.
+  * [ ] `counted_iterator`
+  * [ ] Reconcile the `common_iterator` and *has-arrow* `operator->` styles.
 * [ ] Use the P0788 terminology in function specifications in [range].
 * [ ] Add `operator[]` to *ref-view*
 * [ ] Update the Swappable text from the P0898 merge.
@@ -52,6 +52,7 @@ P0896:
 * [ ] Consider constraining the template parameters of the "named tuples" returned by algorithms.
 * [ ] https://github.com/ericniebler/stl2/issues/553
 * [ ] Reformulate `noexcept(E1) && noexcept(E2)` as `noexcept(E1, E2)`?
+* [X] Mark *all* private members `\expos`
 * [X] Audit the specifications of `iterator_category` for `forward`s that don't have reference reference types.
 * [X] Detailed review of `split_view`
   * [X] What happens if `const Rng` models `ForwardRange` and `Rng` only models `InputRange`?
