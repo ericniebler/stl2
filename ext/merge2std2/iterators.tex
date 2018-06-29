@@ -1430,7 +1430,8 @@ concept all get moved into a new section [iterator.concepts]:}
 
 \pnum
 Many of the concepts defined in this subclause\iref{iterator.concepts} use the
-exposition-only type function \placeholder{ITER_CONCEPT} in their specifications.
+exposition-only type function \tcode{\placeholder{ITER_CONCEPT}} in their
+specifications.
 
 \pnum
 For a type \tcode{I}, let \tcode{\placeholdernc{ITER_TRAITS}(I)} denote the type
@@ -2475,7 +2476,7 @@ template<Iterator I>
 
 \begin{itemdescr}
 \pnum
-\requires
+\oldtxt{\requires} \newtxt{\expects}
 \tcode{n}
 shall be negative only for bidirectional iterators.
 
@@ -2497,7 +2498,7 @@ template<Iterator I, Sentinel<I> S>
 
 \begin{itemdescr}
 \pnum
-\requires
+\oldtxt{\requires} \newtxt{\expects}
 If
 \tcode{Assignable<I\&, S>} is not satisfied, \range{i}{bound}
 shall denote a range.
@@ -2522,7 +2523,7 @@ template<Iterator I, Sentinel<I> S>
 
 \begin{itemdescr}
 \pnum
-\requires
+\oldtxt{\requires} \newtxt{\expects}
 If \tcode{n > 0}, \range{i}{bound} shall denote a range. If
 \tcode{n == 0}, \range{i}{bound} or \range{bound}{i} shall denote a range. If \tcode{n < 0},
 \range{bound}{i} shall denote a range and \tcode{(BidirectionalIterator<I> \&\& Same<I, S>)}
@@ -2562,7 +2563,7 @@ template<Iterator I, Sentinel<I> S>
 
 \begin{itemdescr}
 \pnum
-\requires
+\oldtxt{\requires} \newtxt{\expects}
 \range{first}{last} shall denote a range, or \tcode{(Same<S, I> \&\& SizedSentinel<S, I>)} shall be
 satisfied and \range{last}{first} shall denote a range.
 
@@ -2597,7 +2598,7 @@ return distance(ranges::begin(r), ranges::end(r)); // \ref{range.access}
 \remarks
 Instantiations of this member function template may be ill-formed if the
 declarations in \tcode{<experimental/ranges/range>} are not in scope at the
-point of instantiation~(\cxxref{temp.point}).}
+point of instantiation\cxxiref{temp.point}.}
 \end{itemdescr}
 
 {\color{oldclr}
@@ -2800,7 +2801,8 @@ constexpr pointer operator->() const;
 
 \begin{itemdescr}
 \pnum
-\returns \tcode{\oldtxt{addressof(operator*())}\newtxt{prev(current)}}.
+\oldtxt{\returns} \newtxt{\effects Equivalent to:
+}\tcode{\newtxt{return} \oldtxt{addressof(operator*())} \newtxt{prev(current)}\newtxt{;}}\oldtxt{.}
 \end{itemdescr}
 
 [...]
@@ -3159,7 +3161,9 @@ constexpr @\changed{\unspec}{reference}@ operator[](difference_type n) const;
 
 \begin{itemdescr}
 \pnum
-\returns \tcode{\removed{std::move(current[n])}\added{ranges::iter_move(current + n)}}.
+\oldtxt{\returns }\tcode{\oldtxt{std::move(current[n])}}\oldtxt{.}
+
+\newtxt{\effects Equivalent to: }\tcode{\newtxt{ranges::iter_move(current + n);}}
 \end{itemdescr}
 
 \rSec4[move.iter.op.comp]{\tcode{move_iterator} comparisons}
@@ -3444,11 +3448,11 @@ namespace std { @\oldtxt{namespace experimental \{ namespace ranges \{ inline na
     constexpr common_iterator(S s);
     @\oldtxt{constexpr common_iterator(const common_iterator<ConvertibleTo<I>, ConvertibleTo<S>>\& u);}@
     @\newtxt{template<ConvertibleTo<I> I2, ConvertibleTo<S> S2>}@
-      @\newtxt{constexpr common_iterator(const common_iterator<I2, S2>\& that);}@
+      @\newtxt{constexpr common_iterator(const common_iterator<I2, S2>\& x);}@
 
     @\oldtxt{common_iterator\& operator=(const common_iterator<ConvertibleTo<I>, ConvertibleTo<S>>\& u);}@
     @\newtxt{template<ConvertibleTo<I> I2, ConvertibleTo<S> S2>}@
-      @\newtxt{common_iterator\& operator=(const common_iterator<I2, S2>\& that);}@
+      @\newtxt{common_iterator\& operator=(const common_iterator<I2, S2>\& x);}@
 
     decltype(auto) operator*();
     decltype(auto) operator*() const
@@ -3595,19 +3599,19 @@ initializing \tcode{sentinel} with \tcode{s}.}
 \begin{itemdecl}
 @\oldtxt{constexpr common_iterator(const common_iterator<ConvertibleTo<I>, ConvertibleTo<S>>\& u);}@
 @\newtxt{template<ConvertibleTo<I> I2, ConvertibleTo<S> S2>}@
-  @\newtxt{constexpr common_iterator(const common_iterator<I2, S2>\& that);}@
+  @\newtxt{constexpr common_iterator(const common_iterator<I2, S2>\& x);}@
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\newtxt{\requires
-}\tcode{\newtxt{that.v_.valueless_by_exception()}}\newtxt{ is \tcode{false}.}
+\newtxt{\expects
+}\tcode{\newtxt{x.v_.valueless_by_exception()}}\newtxt{ is \tcode{false}.}
 
 \pnum
 \effects
 \newtxt{Initializes }\tcode{\newtxt{v_}}\newtxt{ as if by
-}\tcode{\newtxt{v_\{in_place_index<$i$>, get<$i$>(that.v_)\}}}\newtxt{,
-where $i$ is }\tcode{\newtxt{that.v_.index()}}\newtxt{.}
+}\tcode{\newtxt{v_\{in_place_index<$i$>, get<$i$>(x.v_)\}}}\newtxt{,
+where $i$ is }\tcode{\newtxt{x.v_.index()}}\newtxt{.}
 \oldtxt{Constructs a \tcode{common_iterator}, initializing \tcode{is_sentinel}
 with \tcode{u.is_sentinel}, \tcode{iter} with \tcode{u.iter}, and \tcode{sentinel}
 with \tcode{u.sentinel}.}
@@ -3618,25 +3622,25 @@ with \tcode{u.sentinel}.}
 \begin{itemdecl}
     @\oldtxt{common_iterator\& operator=(const common_iterator<ConvertibleTo<I>, ConvertibleTo<S>>\& u);}@
     @\newtxt{template<ConvertibleTo<I> I2, ConvertibleTo<S> S2>}@
-      @\newtxt{common_iterator\& operator=(const common_iterator<I2, S2>\& that);}@
+      @\newtxt{common_iterator\& operator=(const common_iterator<I2, S2>\& x);}@
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\newtxt{\requires
-}\tcode{\newtxt{that.v_.valueless_by_exception()}}\newtxt{ is \tcode{false}.}
+\newtxt{\expects
+}\tcode{\newtxt{x.v_.valueless_by_exception()}}\newtxt{ is \tcode{false}.}
 
 \pnum
 \effects
 {\color{newclr}
 Equivalent to:
 \begin{itemize}
-\item If \tcode{v_.index() == that.v_.index()}, then
-\tcode{get<$i$>(v_) = get<$i$>(that.v_)}.
+\item If \tcode{v_.index() == x.v_.index()}, then
+\tcode{get<$i$>(v_) = get<$i$>(x.v_)}.
 
-\item Otherwise, \tcode{v_.emplace<$i$>(get<$i$>(that.v_))}.
+\item Otherwise, \tcode{v_.emplace<$i$>(get<$i$>(x.v_))}.
 \end{itemize}
-where $i$ is \tcode{that.v_.index()}.
+where $i$ is \tcode{x.v_.index()}.
 } %% \color{newclr}
 \oldtxt{Assigns \tcode{u.is_sentinel} to \tcode{is_sentinel}, \tcode{u.iter} to
 \tcode{iter}, and \tcode{u.sentinel} to \tcode{sentinel}.}
@@ -3657,9 +3661,12 @@ decltype(auto) operator*() const
 
 \begin{itemdescr}
 \pnum
-\requires
-\tcode{\newtxt{holds_alternative<I>(v_)}}\newtxt{.}
-\oldtxt{\tcode{!is_sentinel}}
+\oldtxt{\requires
+\tcode{!is_sentinel}}
+
+\pnum
+\newtxt{\expects
+}\tcode{\newtxt{holds_alternative<I>(v_)}}\newtxt{.}
 
 \pnum
 \effects Equivalent to:
@@ -3678,9 +3685,12 @@ decltype(auto) operator->() const
 
 \begin{itemdescr}
 \pnum
-\requires
-\tcode{\newtxt{holds_alternative<I>(v_)}}\newtxt{.}
-\oldtxt{\tcode{!is_sentinel}}
+\oldtxt{\requires
+\tcode{!is_sentinel}}
+
+\pnum
+\newtxt{\expects
+}\tcode{\newtxt{holds_alternative<I>(v_)}}\newtxt{.}
 
 \pnum
 \effects Equivalent to:
@@ -3732,9 +3742,12 @@ common_iterator& operator++();
 
 \begin{itemdescr}
 \pnum
-\requires
-\tcode{\newtxt{holds_alternative<I>(v_)}}\newtxt{.}
-\oldtxt{\tcode{!is_sentinel}}
+\oldtxt{\requires
+\tcode{!is_sentinel}}
+
+\pnum
+\newtxt{\expects
+}\tcode{\newtxt{holds_alternative<I>(v_)}}\newtxt{.}
 
 \pnum
 \effects Equivalent to \tcode{\oldtxt{++iter} \newtxt{++get<I>(v_)}}.
@@ -3751,9 +3764,12 @@ decltype(auto) operator++(int);
 
 \begin{itemdescr}
 \pnum
-\requires
-\tcode{\newtxt{holds_alternative<I>(v_)}}\newtxt{.}
-\oldtxt{\tcode{!is_sentinel}}
+\oldtxt{\requires
+\tcode{!is_sentinel}}
+
+\pnum
+\newtxt{\expects
+}\tcode{\newtxt{holds_alternative<I>(v_)}}\newtxt{.}
 
 \pnum
 \effects Equivalent to: \tcode{return \oldtxt{iter} \newtxt{get<I>(v_)}++;}
@@ -3766,9 +3782,12 @@ common_iterator operator++(int)
 
 \begin{itemdescr}
 \pnum
-\requires
-\tcode{\newtxt{holds_alternative<I>(v_)}}\newtxt{.}
-\oldtxt{\tcode{!is_sentinel}}
+\oldtxt{\requires
+\tcode{!is_sentinel}}
+
+\pnum
+\newtxt{\expects
+}\tcode{\newtxt{holds_alternative<I>(v_)}}\newtxt{.}
 
 \pnum
 \effects Equivalent to:
@@ -3793,7 +3812,7 @@ friend bool operator==(
 
 \begin{itemdescr}
 \pnum
-\newtxt{\requires
+\newtxt{\expects
 }\tcode{\newtxt{x.v_.valueless_by_exception()}}\newtxt{ and
 }\tcode{\newtxt{y.v_.valueless_by_exception()}}\newtxt{ are each \tcode{false}.}
 
@@ -3824,7 +3843,7 @@ friend bool operator==(
 
 \begin{itemdescr}
 \pnum
-\newtxt{\requires
+\newtxt{\expects
 }\tcode{\newtxt{x.v_.valueless_by_exception()}}\newtxt{ and
 }\tcode{\newtxt{y.v_.valueless_by_exception()}}\newtxt{ are each \tcode{false}.}
 
@@ -3872,7 +3891,7 @@ friend difference_type_t<I2> operator-(
 
 \begin{itemdescr}
 \pnum
-\newtxt{\requires
+\newtxt{\expects
 }\tcode{\newtxt{x.v_.valueless_by_exception()}}\newtxt{ and
 }\tcode{\newtxt{y.v_.valueless_by_exception()}}\newtxt{ are each \tcode{false}.}
 
@@ -3903,9 +3922,12 @@ friend @\newtxt{iter_}@rvalue_reference_t<I> iter_move(const common_iterator& i)
 
 \begin{itemdescr}
 \pnum
-\requires
-\tcode{\newtxt{holds_alternative<I>(v_)}}\newtxt{.}
-\oldtxt{\tcode{!is_sentinel}}
+\oldtxt{\requires
+\tcode{!is_sentinel}}
+
+\pnum
+\newtxt{\expects
+}\tcode{\newtxt{holds_alternative<I>(v_)}}\newtxt{.}
 
 \pnum
 \effects Equivalent to: \tcode{return ranges::iter_move(\newtxt{get<I>(i.v_)} \oldtxt{i.iter});}
@@ -3929,10 +3951,13 @@ template<IndirectlySwappable<I> I2>
 
 \begin{itemdescr}
 \pnum
-\requires
-\tcode{\newtxt{holds_alternative<I>(x.v_)}}\newtxt{ and
+\oldtxt{\requires
+\tcode{!is_sentinel}}
+
+\pnum
+\newtxt{\expects
+}\tcode{\newtxt{holds_alternative<I>(x.v_)}}\newtxt{ and
 }\tcode{\newtxt{holds_alternative<I>(y.v_)}}\newtxt{ are each \tcode{true}.}
-\oldtxt{\tcode{!is_sentinel}}
 
 \pnum
 \effects
@@ -4031,16 +4056,16 @@ namespace std { @\oldtxt{namespace experimental \{ namespace ranges \{ inline na
     constexpr counted_iterator operator--(int)
       requires BidirectionalIterator<I>;
 
-    constexpr counted_iterator  operator+ (difference_type n) const
+    constexpr counted_iterator operator+ (difference_type n) const
       requires RandomAccessIterator<I>;
     @\oldtxt{template<RandomAccessIterator I>}@
       @\newtxt{friend}@ constexpr counted_iterator@\oldtxt{<I>}@ operator+(
-        @\newtxt{iter_}@difference@\oldtxt{_type}@_t<I> n, const counted_iterator@\oldtxt{<I>}@& @\oldtxt{x}\newtxt{self}@)
+        @\newtxt{iter_}@difference@\oldtxt{_type}@_t<I> n, const counted_iterator@\oldtxt{<I>}@& x)
           @\newtxt{requires RandomAccessIterator<I>}@;
     constexpr counted_iterator& operator+=(difference_type n)
       requires RandomAccessIterator<I>;
 
-    constexpr counted_iterator  operator- (difference_type n) const
+    constexpr counted_iterator operator- (difference_type n) const
       requires RandomAccessIterator<I>;
     template<@\oldtxt{class I1,}@ @\oldtxt{class}\newtxt{Common<I>}@ I2>
         @\oldtxt{requires Common<I1, I2>}@
@@ -4051,7 +4076,7 @@ namespace std { @\oldtxt{namespace experimental \{ namespace ranges \{ inline na
         @\oldtxt{const counted_iterator<I>\& x,}@ default_sentinel @\oldtxt{y}@) @\newtxt{const}@;
     @\oldtxt{template<class I>}@
       @\newtxt{friend}@ constexpr @\newtxt{iter_}@difference@\oldtxt{_type}@_t<I> operator-(
-        default_sentinel @\oldtxt{x}@, const counted_iterator@\oldtxt{<I>}@& @\oldtxt{y}\newtxt{self}@);
+        default_sentinel @\oldtxt{x}@, const counted_iterator@\oldtxt{<I>}@& y);
     constexpr counted_iterator& operator-=(difference_type n)
       requires RandomAccessIterator<I>;
 
@@ -4065,7 +4090,7 @@ namespace std { @\oldtxt{namespace experimental \{ namespace ranges \{ inline na
     constexpr bool operator==(
       @\oldtxt{const counted_iterator<auto>\& x,}@ default_sentinel) @\newtxt{const}@;
     @\newtxt{friend}@ constexpr bool operator==(
-      default_sentinel, const counted_iterator@\oldtxt{<auto>}@& @\oldtxt{x}\newtxt{self}@);
+      default_sentinel, const counted_iterator@\oldtxt{<auto>}@& x);
 
     template<@\oldtxt{class I1,}@ @\oldtxt{class}\newtxt{Common<I>}@ I2>
         @\oldtxt{requires Common<I1, I2>}@
@@ -4074,7 +4099,7 @@ namespace std { @\oldtxt{namespace experimental \{ namespace ranges \{ inline na
     constexpr bool operator!=(
       @\oldtxt{const counted_iterator<auto>\& x,}@ default_sentinel @\oldtxt{y}\newtxt{that}@) @\newtxt{const}@;
     @\newtxt{friend}@ constexpr bool operator!=(
-      default_sentinel @\oldtxt{x}\newtxt{that}@, const counted_iterator@\oldtxt{<auto>}@& @\oldtxt{y}\newtxt{self}@);
+      default_sentinel @\oldtxt{x}\newtxt{that}@, const counted_iterator@\oldtxt{<auto>}@& y);
 
     template<@\oldtxt{class I1,}@ @\oldtxt{class}\newtxt{Common<I>}@ I2>
         @\oldtxt{requires Common<I1, I2>}@
@@ -4093,8 +4118,8 @@ namespace std { @\oldtxt{namespace experimental \{ namespace ranges \{ inline na
       constexpr bool operator>=(
         @\oldtxt{const counted_iterator<I1>\& x,}@ const counted_iterator<I2>& @\oldtxt{y}\newtxt{that}@) @\newtxt{const}@;
 
-    friend constexpr @\newtxt{iter_}@rvalue_reference_t<I> iter_move(const counted_iterator& @\oldtxt{i}\newtxt{self}@)
-      noexcept(@\oldtxt{\seebelow}\newtxt{noexcept(ranges::iter_move(self.current))}@)
+    friend constexpr @\newtxt{iter_}@rvalue_reference_t<I> iter_move(const counted_iterator& i)
+      noexcept(@\oldtxt{\seebelow}\newtxt{noexcept(ranges::iter_move(i.current))}@)
         requires InputIterator<I>;
     template<IndirectlySwappable<I> I2>
       friend constexpr void iter_swap(const counted_iterator& x, const counted_iterator<I2>& y)
@@ -4146,7 +4171,8 @@ constexpr counted_iterator(I i, @\newtxt{iter_}@difference@\oldtxt{_type}@_t<I> 
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{n >= 0}
+\oldtxt{\requires} \newtxt{\expects}
+\tcode{n >= 0}
 
 \pnum
 \effects Constructs a \tcode{counted_iterator}, initializing
@@ -4188,7 +4214,11 @@ constexpr I base() const;
 
 \begin{itemdescr}
 \pnum
-\returns \tcode{current}.
+\oldtxt{\returns \tcode{current}.}
+
+\pnum
+\newtxt{\effects
+Equivalent to :}\tcode{\newtxt{return current;}}
 \end{itemdescr}
 
 \rSec4[counted.iter.op.cnt]{\tcode{counted_iterator} count}
@@ -4201,7 +4231,11 @@ constexpr @\newtxt{iter_}@difference@\oldtxt{_type}@_t<I> count() const;
 
 \begin{itemdescr}
 \pnum
-\returns \tcode{cnt}.
+\oldtxt{\returns \tcode{cnt}.}
+
+\pnum
+\newtxt{\effects
+Equivalent to: }\tcode{\newtxt{return cnt;}}
 \end{itemdescr}
 
 \rSec4[counted.iter.op.star]{\tcode{counted_iterator::operator*}}
@@ -4230,7 +4264,8 @@ constexpr counted_iterator& operator++();
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{cnt > 0}
+\oldtxt{\requires} \newtxt{\expects}
+\tcode{cnt > 0}
 
 \pnum
 \effects Equivalent to:
@@ -4251,7 +4286,8 @@ decltype(auto) operator++(int);
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{cnt > 0}.
+\oldtxt{\requires} \newtxt{\expects}
+\tcode{cnt > 0}.
 
 \pnum
 \effects Equivalent to:
@@ -4269,7 +4305,8 @@ constexpr counted_iterator operator++(int)
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{cnt > 0}
+\oldtxt{\requires} \newtxt{\expects}
+\tcode{cnt > 0}
 
 \pnum
 \effects Equivalent to:
@@ -4329,7 +4366,8 @@ return tmp;
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{n <= cnt}
+\oldtxt{\requires} \newtxt{\expects}
+\tcode{n <= cnt}
 
 \pnum
 \effects Equivalent to:
@@ -4341,17 +4379,18 @@ return tmp;
 \begin{itemdecl}
 @\oldtxt{template<RandomAccessIterator I>}@
   @\newtxt{friend}@ constexpr counted_iterator@\oldtxt{<I>}@ operator+(
-    @\newtxt{iter_}@difference@\oldtxt{_type}@_t<I> n, const counted_iterator@\oldtxt{<I>}@& @\oldtxt{x}\newtxt{self}@)
+    @\newtxt{iter_}@difference@\oldtxt{_type}@_t<I> n, const counted_iterator@\oldtxt{<I>}@& x)
       @\newtxt{requires RandomAccessIterator<I>}@;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{n <= \oldtxt{x}\newtxt{self}.cnt}.
+\oldtxt{\requires} \newtxt{\expects}
+\tcode{n <= x.cnt}.
 
 \pnum
 \effects Equivalent to:
-\tcode{return \oldtxt{x}\newtxt{self} + n;}
+\tcode{return x + n;}
 \end{itemdescr}
 
 \rSec4[counted.iter.op.+=]{\tcode{counted_iterator::operator+=}}
@@ -4365,7 +4404,8 @@ return tmp;
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{n <= cnt}
+\oldtxt{\requires} \newtxt{\expects}
+\tcode{n <= cnt}
 
 \pnum
 \effects
@@ -4389,7 +4429,8 @@ cnt -= n;
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{-n <= cnt}
+\oldtxt{\requires} \newtxt{\expects}
+\tcode{-n <= cnt}
 
 \pnum
 \effects Equivalent to:
@@ -4407,8 +4448,9 @@ template<@\oldtxt{class I1,}@ @\oldtxt{class}\newtxt{Common<I>}@ I2>
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{\oldtxt{x}\newtxt{*this}} and \tcode{\oldtxt{y}\newtxt{that}} shall refer to
-elements of the same sequence\iref{counted.iterator}.
+\oldtxt{\requires} \newtxt{\expects}
+\tcode{\oldtxt{x}\newtxt{*this}} and \tcode{\oldtxt{y}\newtxt{that}} shall refer
+to elements of the same sequence\iref{counted.iterator}.
 
 \pnum
 \effects Equivalent to:
@@ -4430,13 +4472,13 @@ elements of the same sequence\iref{counted.iterator}.
 \begin{itemdecl}
 @\oldtxt{template<class I>}@
   @\newtxt{friend}@ constexpr @\newtxt{iter_}@difference@\oldtxt{_type}@_t<I> operator-(
-    default_sentinel @\oldtxt{x}@, const counted_iterator@\oldtxt{<I>}@& @\oldtxt{y}\newtxt{self}@);
+    default_sentinel @\oldtxt{x}@, const counted_iterator@\oldtxt{<I>}@& y);
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
 \effects Equivalent to:
-\tcode{return \oldtxt{y}\newtxt{self}.cnt;}
+\tcode{return y.cnt;}
 \end{itemdescr}
 
 \rSec4[counted.iter.op.-=]{\tcode{counted_iterator::operator-=}}
@@ -4450,7 +4492,8 @@ elements of the same sequence\iref{counted.iterator}.
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{-n <= cnt}
+\oldtxt{\requires} \newtxt{\expects}
+\tcode{-n <= cnt}
 
 \pnum
 \effects
@@ -4474,7 +4517,8 @@ cnt += n;
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{n <= cnt}
+\oldtxt{\requires} \newtxt{\expects}
+\tcode{n <= cnt}
 
 \pnum
 \effects Equivalent to:
@@ -4494,8 +4538,9 @@ template<@\oldtxt{class I1,}@ @\oldtxt{class}\newtxt{Common<I>}@ I2>
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{\oldtxt{x}\newtxt{*this}} and \tcode{\oldtxt{y}\newtxt{that}} shall refer to elements of the same
-sequence\iref{counted.iterator}.
+\oldtxt{\requires} \newtxt{\expects}
+\tcode{\oldtxt{x}\newtxt{*this}} and \tcode{\oldtxt{y}\newtxt{that}} shall refer
+to elements of the same sequence\iref{counted.iterator}.
 
 \pnum
 \effects Equivalent to:
@@ -4514,13 +4559,13 @@ constexpr bool operator==(
 
 \begin{itemdecl}
 @\newtxt{friend}@ constexpr bool operator==(
-  default_sentinel, const counted_iterator@\oldtxt{<auto>}@& @\oldtxt{x}\newtxt{self}@));
+  default_sentinel, const counted_iterator@\oldtxt{<auto>}@& x));
 \end{itemdecl}
 
 {\color{newclr}
 \begin{itemdescr}
 \pnum
-\newtxt{\effects Equivalent to: }\tcode{\newtxt{return self == default_sentinel\{\};}}
+\newtxt{\effects Equivalent to: }\tcode{\newtxt{return x == default_sentinel\{\};}}
 \end{itemdescr}
 } %% \color{newclr}
 
@@ -4537,8 +4582,10 @@ constexpr bool operator!=(
 
 \begin{itemdescr}
 \pnum
-\requires For the first overload, \tcode{\oldtxt{x}\newtxt{*this}} and \tcode{\oldtxt{y}\newtxt{that}} shall refer to
-elements of the same sequence\iref{counted.iterator}.
+\oldtxt{\requires} \newtxt{\expects}
+For the first overload, \tcode{\oldtxt{x}\newtxt{*this}} and
+\tcode{\oldtxt{y}\newtxt{that}} shall refer to elements of the same
+sequence\iref{counted.iterator}.
 
 \pnum
 \effects Equivalent to:
@@ -4549,13 +4596,13 @@ elements of the same sequence\iref{counted.iterator}.
 \indexlibrary{\idxcode{counted_iterator}!\idxcode{operator"!=}}%
 \begin{itemdecl}
 @\newtxt{friend}@ constexpr bool operator!=(
-  default_sentinel @\oldtxt{x}\newtxt{that}@, const counted_iterator@\oldtxt{<auto>}@& @\oldtxt{y}\newtxt{self}@);
+  default_sentinel @\oldtxt{x}\newtxt{that}@, const counted_iterator@\oldtxt{<auto>}@& y);
 \end{itemdecl}
 
 {\color{newclr}
 \begin{itemdescr}
 \pnum
-\newtxt{\effects Equivalent to: }\tcode{\newtxt{return !(that == self);}}
+\newtxt{\effects Equivalent to: }\tcode{\newtxt{return !(that == y);}}
 \end{itemdescr}
 } %% \color{newclr}
 
@@ -4570,8 +4617,9 @@ template<@\oldtxt{class I1,}@ @\oldtxt{class}\newtxt{Common<I>}@ I2>
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{\oldtxt{x}\newtxt{*this}} and \tcode{\oldtxt{y}\newtxt{that}} shall refer to
-elements of the same sequence\iref{counted.iterator}.
+\oldtxt{\requires} \newtxt{\expects}
+\tcode{\oldtxt{x}\newtxt{*this}} and \tcode{\oldtxt{y}\newtxt{that}} shall refer
+to elements of the same sequence\iref{counted.iterator}.
 
 \pnum
 \effects Equivalent to:
@@ -4595,8 +4643,9 @@ template<@\oldtxt{class I1,}@ @\oldtxt{class}\newtxt{Common<I>}@ I2>
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{\oldtxt{x}\newtxt{*this}} and \tcode{\oldtxt{y}\newtxt{that}} shall refer to
-elements of the same sequence\iref{counted.iterator}.
+\oldtxt{\requires} \newtxt{\expects}
+\tcode{\oldtxt{x}\newtxt{*this}} and \tcode{\oldtxt{y}\newtxt{that}} shall refer
+to elements of the same sequence\iref{counted.iterator}.
 
 \pnum
 \effects Equivalent to:
@@ -4614,8 +4663,9 @@ template<@\oldtxt{class I1,}@ @\oldtxt{class}\newtxt{Common<I>}@ I2>
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{\oldtxt{x}\newtxt{*this}} and \tcode{\oldtxt{y}\newtxt{that}} shall refer to
-elements of the same sequence\iref{counted.iterator}.
+\oldtxt{\requires} \newtxt{\expects}
+\tcode{\oldtxt{x}\newtxt{*this}} and \tcode{\oldtxt{y}\newtxt{that}} shall refer
+to elements of the same sequence\iref{counted.iterator}.
 
 \pnum
 \effects Equivalent to:
@@ -4633,8 +4683,9 @@ template<@\oldtxt{class I1,}@ @\oldtxt{class}\newtxt{Common<I>}@ I2>
 
 \begin{itemdescr}
 \pnum
-\requires \tcode{\oldtxt{x}\newtxt{*this}} and \tcode{\oldtxt{y}\newtxt{that}} shall refer to
-elements of the same sequence\iref{counted.iterator}.
+\oldtxt{\requires} \newtxt{\expects}
+\tcode{\oldtxt{x}\newtxt{*this}} and \tcode{\oldtxt{y}\newtxt{that}} shall refer
+to elements of the same sequence\iref{counted.iterator}.
 
 \pnum
 \effects Equivalent to:
@@ -4646,14 +4697,14 @@ elements of the same sequence\iref{counted.iterator}.
 \indexlibrary{\idxcode{iter_move}!\idxcode{counted_iterator}}%
 \indexlibrary{\idxcode{counted_iterator}!\idxcode{iter_move}}%
 \begin{itemdecl}
-friend constexpr @\newtxt{iter_}@rvalue_reference_t<I> iter_move(const counted_iterator& \oldtxt{i}\newtxt{self})
-  noexcept(@\oldtxt{\seebelow}\newtxt{noexcept(ranges::iter_move(self.current))}@)
+friend constexpr @\newtxt{iter_}@rvalue_reference_t<I> iter_move(const counted_iterator& i)
+  noexcept(@\oldtxt{\seebelow}\newtxt{noexcept(ranges::iter_move(i.current))}@)
     requires InputIterator<I>;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to: \tcode{return ranges::iter_move(\oldtxt{i}\newtxt{self}.current);}
+\effects Equivalent to: \tcode{return ranges::iter_move(i.current);}
 
 {\color{oldclr}
 \pnum
