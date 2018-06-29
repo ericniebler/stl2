@@ -41,7 +41,8 @@ P0896:
   * [ ] iterators.tex
   * [ ] ranges.tex
   * [ ] algorithms.tex
-* [ ] Add `operator[]` to *ref-view*
+* [ ] Forbid explicit template arguments for quasi-CPOs.
+* [ ] Add `operator[]` to *ref-view*?
 * [ ] Update the Swappable text from the P0898 merge.
 * [ ] Define "models", and use it throughout to replace both "`foo` satisfies `Concept`" and the "syntactic requirements...otherwise ill-formed NDR" dance.
 * [ ] `-> auto&&` is broken in C++20
@@ -52,6 +53,7 @@ P0896:
 * [ ] Update concept stable names as in the P0898 merge.
 * [ ] Audit all concepts for P0717
 * [ ] Shorten new stable names.
+* [ ] Fix the intro - it hasn't been updated since P0!
 * [ ] Replace cxxref with cxxiref where appropriate.
 * [ ] Consider constraining the template parameters of the "named tuples" returned by algorithms.
 * [ ] https://github.com/ericniebler/stl2/issues/553
