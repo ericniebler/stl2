@@ -1324,7 +1324,7 @@ constexpr auto data() const
 \indexlibrary{\idxcode{size}!\idxcode{view_interface}}%
 \begin{itemdecl}
 constexpr auto size() const requires ForwardRange<const D> &&
-SizedSentinel<sentinel_t<const D>, iterator_t<const D>>;
+  SizedSentinel<sentinel_t<const D>, iterator_t<const D>>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2115,10 +2115,7 @@ constexpr Rng& base() const;
 
 \begin{itemdescr}
 \pnum
-\oldtxt{\returns} \newtxt{\effects Equivalent to:} \tcode{\newtxt{return} *rng_\newtxt{;}}\oldtxt{.}
-
-\pnum
-\throws Nothing.
+\effects Equivalent to: \tcode{return *rng_;}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{begin}!\idxcode{\placeholder{ref-view}}}%
@@ -2444,7 +2441,7 @@ constexpr iterator_t<R> operator->() const
 \begin{itemdescr}
 \pnum
 \effects
-Equivalent to: \tcode{return current_;}.
+Equivalent to: \tcode{return current_;}
 \end{itemdescr}
 } %% \color{newclr}
 
@@ -3574,7 +3571,7 @@ constexpr explicit iota_view(I value);
 \begin{itemdescr}
 \pnum
 \oldtxt{\requires} \newtxt{\expects}
-\newtxt{\tcode{Bound} is \tcode{unreachable} or }
+\newtxt{\tcode{Bound} denotes \tcode{unreachable} or }
 \tcode{Bound\{\}} is reachable from \tcode{value}.
 
 \pnum
@@ -3589,7 +3586,7 @@ constexpr iota_view(I value, Bound bound);
 \begin{itemdescr}
 \pnum
 \oldtxt{\requires} \newtxt{\expects}
-\newtxt{\tcode{Bound} is \tcode{unreachable} or }
+\newtxt{\tcode{Bound} denotes \tcode{unreachable} or }
 \tcode{bound} is reachable from \tcode{value}.
 
 \pnum
@@ -5448,8 +5445,8 @@ constexpr auto end() const
 \begin{itemdescr}
 \pnum
 \effects Equivalent to:
-\tcode{return outer_sentinel<\oldtxt{\placeholder{simple-view}<R>}\newtxt{$C$}>\{*this\};} \\
-\oldtxt{and }\tcode{\oldtxt{return outer_sentinel<true>\{*this\};}}
+\tcode{return outer_sentinel<\oldtxt{\placeholder{simple-view}<R>}\newtxt{$C$}>\{\oldtxt{*this}\};} \\
+\oldtxt{and }\tcode{\oldtxt{return outer_sentinel<true>\{\oldtxt{*this}\};}}
 \newtxt{where $C$ is \tcode{\placeholder{simple-view}<R>} or \tcode{true}}
 for the first and second overloads, respectively.
 \end{itemdescr}
@@ -5750,25 +5747,26 @@ namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace ranges \{}@
   template<class Rng, class Pattern>
   template<bool Const>
   struct split_view<Rng, Pattern>::outer_sentinel { @\newtxt{// \expos}@
-  private:
-    using Parent =                                       // \expos
-      conditional_t<Const, const split_view, split_view>;
-    using Base   = conditional_t<Const, const Rng, Rng>; // \expos
-    sentinel_t<Base> end_;                               // \expos
-  public:
-    outer_sentinel() = default;
-    constexpr explicit outer_sentinel(Parent& parent);
+  @\oldtxt{private:}@
+    @\oldtxt{using Parent =                                       // \expos}@
+      @\oldtxt{conditional_t<Const, const split_view, split_view>;}@
+    @\oldtxt{using Base   = conditional_t<Const, const Rng, Rng>; // \expos}@
+    @\oldtxt{sentinel_t<Base> end_;                               // \expos}@
+  @\oldtxt{public:}@
+    @\oldtxt{outer_sentinel() = default;}@
+    @\oldtxt{constexpr explicit outer_sentinel(Parent\& parent);}@
 
-    friend constexpr bool operator==(const outer_iterator<Const>& x, const outer_sentinel& y);
-    friend constexpr bool operator==(const outer_sentinel& @\newtxt{y}\oldtxt{x}@, const outer_iterator<Const>& @\newtxt{x}\oldtxt{y}@);
-    friend constexpr bool operator!=(const outer_iterator<Const>& x, const outer_sentinel& y);
-    friend constexpr bool operator!=(const outer_sentinel& @\newtxt{y}\oldtxt{x}@, const outer_iterator<Const>& @\newtxt{x}\oldtxt{y}@);
+    friend constexpr bool operator==(const outer_iterator<Const>& x, @\oldtxt{const}@ outer_sentinel@\oldtxt{\& y}@);
+    friend constexpr bool operator==(@\oldtxt{const}@ outer_sentinel@\oldtxt{\& x}@, const outer_iterator<Const>& @\newtxt{x}\oldtxt{y}@);
+    friend constexpr bool operator!=(const outer_iterator<Const>& x, @\oldtxt{const}@ outer_sentinel@\oldtxt{\&}@ y);
+    friend constexpr bool operator!=(@\oldtxt{const}@ outer_sentinel@\oldtxt{\& x} \newtxt{y}@, const outer_iterator<Const>& @\newtxt{x}\oldtxt{y}@);
   };
 }@\oldtxt{\}}@
 \end{codeblock}
 
 \rSec4[range.adaptors.split_view.outer_sentinel.ops]{\tcode{split_view::outer_sentinel} operations}
 
+{\color{oldclr}
 \indexlibrary{\idxcode{outer_sentinel}!\idxcode{split_view::outer_sentinel}}%
 \begin{itemdecl}
 constexpr explicit outer_sentinel(Parent& parent);
@@ -5778,18 +5776,19 @@ constexpr explicit outer_sentinel(Parent& parent);
 \pnum
 \effects Initializes \tcode{end_} with \tcode{ranges::end(parent.base_)}.
 \end{itemdescr}
+} %% \color{oldclr}
 
 \indexlibrary{\idxcode{operator==}!\idxcode{split_view::outer_sentinel}}%
 \begin{itemdecl}
-friend constexpr bool operator==(const outer_iterator<Const>& x, const outer_sentinel& y);
-@\newtxt{friend constexpr bool operator==(const outer_sentinel\& y, const outer_iterator<Const>\& x);}@
+friend constexpr bool operator==(const outer_iterator<Const>& x, @\oldtxt{const}@ outer_sentinel@\oldtxt{\& y}@);
+@\newtxt{friend constexpr bool operator==(outer_sentinel, const outer_iterator<Const>\& x);}@
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
 \effects Equivalent to:
 \begin{codeblock}
-return @\newtxt{x.}\placeholdernc{current}\oldtxt{(x)}@ == y.end_;
+return @\newtxt{x.}\placeholdernc{current}\oldtxt{(x)}@ == @\newtxt{ranges::end(x.parent_->base_)} \oldtxt{y.end_}@;
 \end{codeblock}
 
 {\color{oldclr}
@@ -5815,8 +5814,8 @@ friend constexpr bool operator==(const outer_sentinel& x, const outer_iterator<C
 
 \indexlibrary{\idxcode{operator!=}!\idxcode{split_view::outer_sentinel}}%
 \begin{itemdecl}
-friend constexpr bool operator!=(const outer_iterator<Const>& x, const outer_sentinel& y);
-@\newtxt{friend constexpr bool operator!=(const outer_sentinel\& y, const outer_iterator<Const>\& x);}@
+friend constexpr bool operator!=(const outer_iterator<Const>& x, @\oldtxt{const}@ outer_sentinel@\oldtxt{\&}@ y);
+@\newtxt{friend constexpr bool operator!=(outer_sentinel y, const outer_iterator<Const>\& x);}@
 \end{itemdecl}
 
 \begin{itemdescr}

@@ -33,6 +33,7 @@ P0944:
   * [X] `span`
 
 P0896:
+* [ ] `view_interface::data` needs to return a pointer
 * [ ] `operator->` for the view adaptors' iterators
   * [ ] `counted_iterator`
   * [ ] Reconcile the `common_iterator` and *has-arrow* `operator->` styles.
