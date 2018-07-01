@@ -1416,7 +1416,7 @@ operator C() const;
 \pnum
 \effects Equivalent to:
 \begin{codeblock}
-using I = @\placeholder{range-common-iterator}@<R>;
+using I = @\placeholder{range-common-iterator}@<@\newtxt{const D} \oldtxt{R}@>;
 return C(I{ranges::begin(derived())}, I{ranges::end(derived())});
 \end{codeblock}
 \end{itemdescr}
@@ -5325,18 +5325,18 @@ namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace ranges \{}@
     constexpr split_view(O&& o, @\newtxt{iter_}@value@\oldtxt{_type}@_t<iterator_t<O>> e);
 
     constexpr auto begin();
-    constexpr auto begin() requires ForwardRange<Rng>;
+    @\oldtxt{constexpr auto begin() requires ForwardRange<Rng>;}@
     constexpr auto begin() const
       requires @\newtxt{ForwardRange<Rng> \&\&}@ ForwardRange<const Rng>;
 
-    constexpr auto end() @\newtxt{const;}@
+    @\oldtxt{constexpr auto end()}@
     @\oldtxt{constexpr auto end() const}@
       @\oldtxt{requires ForwardRange<const Rng>;}@
 
     constexpr auto end()
       requires ForwardRange<Rng> && CommonRange<Rng>;
-    constexpr auto end() const
-      requires @\newtxt{ForwardRange<Rng> \&\&}@ ForwardRange<const Rng> && CommonRange<const Rng>;
+    constexpr auto end() const@\newtxt{;}@
+      @\oldtxt{requires ForwardRange<const Rng> \&\& CommonRange<const Rng>;}@
   };
 
   template<@\oldtxt{InputRange}\newtxt{class}@ O, @\oldtxt{ForwardRange}\newtxt{class}@ P>
@@ -5416,16 +5416,20 @@ constexpr auto begin();
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to:
+\effects
+\newtxt{If \tcode{Rng} models \libconcept{ForwardRange}, equivalent to
+}\tcode{\newtxt{return I\{*this, ranges::begin(base_)\};}}\newtxt{ Otherwise,}
+equivalent to:
 \begin{codeblock}
 current_ = ranges::begin(base_);
-return @\newtxt{outer_}@iterator@\newtxt{<\placeholder{simple-view}<R>>}@{*this};
+return @\oldtxt{iterator} \newtxt{I}@{*this};
 \end{codeblock}
+\newtxt{where \tcode{I} is }\tcode{\newtxt{outer_iterator<\placeholder{simple-view}<Rng>>}}\newtxt{.}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{begin}!\idxcode{split_view}}%
 \begin{itemdecl}
-constexpr auto begin() requires ForwardRange<Rng>;
+@\oldtxt{constexpr auto begin() requires ForwardRange<Rng>;}@
 constexpr auto begin() const
   requires @\newtxt{ForwardRange<Rng> \&\&}@ ForwardRange<@\newtxt{const}@ Rng>;
 \end{itemdecl}
@@ -5433,45 +5437,57 @@ constexpr auto begin() const
 \begin{itemdescr}
 \pnum
 \effects Equivalent to:
-\tcode{return outer_iterator<\oldtxt{\placeholder{simple-view}<R>}\newtxt{$C$}>\{*this, ranges::begin(base_)\};} \\
-\oldtxt{and }\tcode{\oldtxt{return outer_iterator<true>\{*this, ranges::begin(base_)\};}}
-\newtxt{where $C$ is \tcode{\placeholder{simple-view}<R>} or \tcode{true}
+\tcode{return outer_iterator<\newtxt{true} \oldtxt{\placeholder{simple-view}<R>}>\{*this, ranges::begin(base_)\};} \\
+\oldtxt{and }\tcode{\oldtxt{return outer_iterator<true>\{*this, ranges::begin(base_)\};}}\oldtxt{
 for the first and second overloads, respectively.}
 \end{itemdescr}
 
+{\color{oldclr}
 \indexlibrary{\idxcode{end}!\idxcode{split_view}}%
 \begin{itemdecl}
-constexpr auto end() @\newtxt{const;}@
-@\oldtxt{constexpr auto end() const}@
-  @\oldtxt{requires ForwardRange<Rng>;}@
+constexpr auto end()
+constexpr auto end() const
+  requires ForwardRange<Rng>;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
 \effects
-Equivalent to: \tcode{\newtxt{return default_sentinel\{\};}}
-
-\oldtxt{\tcode{return outer_sentinel<\placeholder{simple-view}<R>>\{*this\};}
+Equivalent to:
+\tcode{return outer_sentinel<\placeholder{simple-view}<R>>\{*this\};}
 and \tcode{return outer_sentinel<true>\{*this\};}
-for the first and second overloads, respectively.}
+for the first and second overloads, respectively.
 \end{itemdescr}
+} %% \color{oldclr}
 
 \indexlibrary{\idxcode{end}!\idxcode{split_view}}%
 \begin{itemdecl}
 constexpr auto end()
   requires ForwardRange<Rng> && CommonRange<Rng>;
-constexpr auto end() const
-  requires @\newtxt{ForwardRange<Rng> \&\&}@ ForwardRange<@\newtxt{const}@ Rng> && CommonRange<@\newtxt{const}@ Rng>;
+@\oldtxt{constexpr auto end() const}@
+  @\oldtxt{requires ForwardRange<Rng> \&\& CommonRange<Rng>;}@
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
 \effects Equivalent to:
-\tcode{return outer_iterator<\oldtxt{\placeholder{simple-view}<R>}\newtxt{$C$}>\{*this, ranges::end(base_)\};} \\
+\tcode{return outer_iterator<\placeholder{simple-view}<R\newtxt{ng}>>\{*this, ranges::end(base_)\};} \\
 \oldtxt{and }\tcode{\oldtxt{return outer_iterator<true>\{*this, ranges::end(base_)\};}}
-\newtxt{where $C$ is \tcode{\placeholder{simple-view}<R>} or \tcode{true}
-for the first and second overloads, respectively.}
 \end{itemdescr}
+
+{\color{newclr}
+\indexlibrary{\idxcode{end}!\idxcode{split_view}}%
+\begin{itemdecl}
+constexpr auto end() const;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects
+If \tcode{Rng} models \tcode{ForwardRange<Rng> \&\& ForwardRange<const Rng> \&\& CommonRange<const Rng>}, equivalent to: \tcode{return outer_iterator<true>\{*this, ranges::end(base_)\};}
+Otherwise, equivalent to: \tcode{return default_sentinel\{\};}
+\end{itemdescr}
+} %% \color{newclr}
 
 \rSec3[range.adaptors.split_view.outer_iterator]{Class template \tcode{split_view::outer_iterator}}
 

@@ -36,11 +36,6 @@ P0896:
 * [ ] `operator->` for the view adaptors' iterators
   * [ ] `counted_iterator`
   * [ ] Reconcile the `common_iterator` and *has-arrow* `operator->` styles.
-* [ ] Use the P0788 terminology in function specifications (except algorithms?).
-  * [X] utilities.tex
-  * [X] iterators.tex
-  * [X] ranges.tex
-  * [ ] algorithms.tex?
 * [ ] Forbid explicit template arguments for quasi-CPOs (algorithms, iterator operations, specialized memory algorithms)
 * [ ] `-> auto&&` is broken in C++20
 * [ ] Update the Swappable text from the P0898 merge.
@@ -49,6 +44,11 @@ P0896:
 * [ ] `Decrementable` doesn't constrain the behavior of objects that aren't both *incrementable* and *decrementable*.
 * [ ] Why are `single_view::begin`, `::end`, and `::data` declared `noexcept` when they have a precondition?
 * [ ] Add `operator[]` to *ref-view*?
+* [ ] Use the P0788 terminology in function specifications
+  * [X] utilities.tex
+  * [X] iterators.tex
+  * [X] ranges.tex
+  * [ ] algorithms.tex?
 * [ ] Consider merging the view and corresponding range adaptor into a single subclause: "view::common is ... common_view is..."
 * [ ] Update concept stable names as in the P0898 merge.
 * [ ] Audit all concepts for P0717
