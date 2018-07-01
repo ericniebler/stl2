@@ -33,7 +33,6 @@ P0944:
   * [X] `span`
 
 P0896:
-* [ ] `view_interface::data` needs to return a pointer
 * [ ] `operator->` for the view adaptors' iterators
   * [ ] `counted_iterator`
   * [ ] Reconcile the `common_iterator` and *has-arrow* `operator->` styles.
@@ -59,6 +58,7 @@ P0896:
 * [ ] Consider constraining the template parameters of the "named tuples" returned by algorithms.
 * [ ] https://github.com/ericniebler/stl2/issues/553
 * [ ] Reformulate `noexcept(E1) && noexcept(E2)` as `noexcept(E1, E2)`?
+* [X] `view_interface::data` needs to return a pointer
 * [X] Mark *all* private members `\expos`
 * [X] Audit the specifications of `iterator_category` for `forward`s that don't have reference reference types.
 * [X] Detailed review of `split_view`
