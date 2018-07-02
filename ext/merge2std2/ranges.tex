@@ -5303,7 +5303,6 @@ namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace ranges \{}@
     Rng base_ {};                               // \expos
     Pattern pattern_ {};                        // \expos
     iterator_t<Rng> current_ {};                // \expos, only present if \tcode{!ForwardRange<Rng>}
-    @\newtxt{bool zero_ = false;}@                         @\newtxt{// \expos, only present if \tcode{!ForwardRange<Rng>}}@
     template<bool Const> struct outer_iterator; // \expos
     @\oldtxt{template<bool Const> struct outer_sentinel; // \expos}@
     template<bool Const> struct inner_iterator; // \expos
@@ -5625,22 +5624,17 @@ constexpr outer_iterator& operator++();
 const auto end = ranges::end(parent_->base_);
 if (@\placeholder{current}@ == end) return *this;
 const auto [pbegin, pend] = subrange{parent_->pattern_};
-do {
-  @\newtxt{const}@ auto [b, p] = @\newtxt{ranges::}@mismatch(@\placeholdernc{current}@, end, pbegin, pend);
-  if (p == pend) @\oldtxt{continue;}@ @\newtxt{\{}@
-    // The pattern matches; skip it:
-    @\newtxt{\placeholder{current} = b;}@
-    @\newtxt{if (pbegin == pend) \{}@
-      @\newtxt{if constexpr (ForwardRange<Base>) ++\placeholdernc{current};}@
-      @\newtxt{else \{}@
-        @\newtxt{if (!parent_->zero_) ++\placeholdernc{current};}@
-        @\newtxt{parent_->zero_ = false;}@
-      @\newtxt{\}}@
+@\newtxt{if (pbegin == pend) ++\placeholdernc{current};}@
+@\newtxt{else \{}@
+  do {
+    @\newtxt{const}@ auto [b, p] = @\newtxt{ranges::}@mismatch(@\placeholdernc{current}@, end, pbegin, pend);
+    if (p == pend) @\oldtxt{continue;}@ @\newtxt{\{}@
+      @\newtxt{\placeholder{current} = b;}@ // The pattern matched; skip it:
+      @\oldtxt{\placeholder{current} = \placeholdernc{bump}(b, pbegin, pend, end);}@
+      break;
     @\newtxt{\}}@
-    @\oldtxt{\placeholder{current} = \placeholdernc{bump}(b, pbegin, pend, end);}@
-    break;
-  @\newtxt{\}}@
-} while (++@\placeholder{current}@ != end);
+  } while (++@\placeholder{current}@ != end);
+@\newtxt{\}}@
 return *this;
 \end{codeblock}
 \end{itemdescr}
@@ -5923,7 +5917,7 @@ namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace ranges \{}@
     using Base =
       conditional_t<Const, const Rng, Rng>; @\newtxt{// \expos}@
     outer_iterator<Const> i_ {};            @\newtxt{// \expos}@
-    bool zero_ = false;                     @\newtxt{// \expos, present only if \tcode{Rng} models \libconcept{ForwardRange}}@
+    bool zero_ = false;                     @\newtxt{// \expos}@
   public:
     using iterator_category = @\newtxt{\seebelownc;}@
       @\oldtxt{iterator_category_t<outer_iterator<Const>>;}@
@@ -5967,12 +5961,6 @@ The \grammarterm{typedef-name} \tcode{iterator_category} denotes
 \tcode{iterator_traits<iterator_t<Base>>::iterator_category} models
 \tcode{DerivedFrom<forward_iterator_tag>}, and \tcode{input_iterator_tag}
 otherwise.
-
-\pnum
-Many of the following specifications refer to the notional member
-\tcode{\placeholder{zero}} of \tcode{inner_iterator}.
-\tcode{\placeholder{zero}} is equivalent to \tcode{zero_} if \tcode{Rng}
-models \libconcept{ForwardRange}, and \tcode{parent_->zero_} otherwise.
 } %% \color{newclr}
 
 \rSec4[range.adaptors.split_view.inner_iterator.ctor]{\tcode{split_view::inner_iterator} constructors}
@@ -6013,8 +6001,13 @@ constexpr @\newtxt{inner_iterator\&}@ @\oldtxt{decltype(auto)}@ operator++() con
 \effects Equivalent to:
 \begin{codeblock}
 @\oldtxt{++\placeholdernc{current}(i_);}@
+zero_ = true;
+@\newtxt{if constexpr (!ForwardRange<Base>) \{}@
+  @\newtxt{if constexpr (Pattern::size() == 0) \{}@
+    @\newtxt{return *this;}@
+  @\newtxt{\}}@
+@\newtxt{\}}@
 @\newtxt{++i_.\placeholdernc{current};}@
-@\placeholdernc{zero}\oldtxt{_}@ = true;
 return *this;
 \end{codeblock}
 \end{itemdescr}
@@ -6095,7 +6088,7 @@ auto cur = x.i_.@\placeholdernc{current}@;
 auto end = ranges::end(x.i_.parent_->base_);
 if (cur == end) return true;
 auto [pcur, pend] = subrange{x.i_.parent_->pattern_};
-if (pcur == pend) return x.@\placeholdernc{zero}@;
+if (pcur == pend) return x.zero_;
 do {
   if (*cur != *pcur) return false;
   if (++pcur == pend) return true;
