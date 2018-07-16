@@ -3527,8 +3527,8 @@ namespace std { @\oldtxt{namespace experimental \{ namespace ranges \{ inline na
 
     common_iterator& operator++();
     decltype(auto) operator++(int);
-    common_iterator operator++(int)
-      requires ForwardIterator<I>;
+    @\oldtxt{common_iterator operator++(int)}@
+      @\oldtxt{requires ForwardIterator<I>;}@
 
     @\ednote{Make non-member operators hidden friends.}@
     template<@\oldtxt{class I1}@, class I2, @\oldtxt{Sentinel<I2> S1,}@ Sentinel<I@\oldtxt{1}@> S2>
@@ -3837,9 +3837,19 @@ decltype(auto) operator++(int);
 }\tcode{\newtxt{holds_alternative<I>(v_)}}\newtxt{.}
 
 \pnum
-\effects Equivalent to: \tcode{return \oldtxt{iter} \newtxt{get<I>(v_)}++;}
+\effects
+{\color{newclr}
+If \tcode{I} models \libconcept{ForwardIterator}, equivalent to:
+\begin{codeblock}
+common_iterator tmp = *this;
+++*this;
+return tmp;
+\end{codeblock}
+Otherwise,} %% \color{newclr}
+equivalent to: \tcode{return \oldtxt{iter} \newtxt{get<I>(v_)}++;}
 \end{itemdescr}
 
+{\color{oldclr}
 \begin{itemdecl}
 common_iterator operator++(int)
   requires ForwardIterator<I>;
@@ -3847,22 +3857,18 @@ common_iterator operator++(int)
 
 \begin{itemdescr}
 \pnum
-\oldtxt{\requires
-\tcode{!is_sentinel}}
-
-\pnum
-\newtxt{\expects
-}\tcode{\newtxt{holds_alternative<I>(v_)}}\newtxt{.}
+\requires
+\tcode{!is_sentinel}
 
 \pnum
 \effects Equivalent to:
 \begin{codeblock}
 common_iterator tmp = *this;
-@\newtxt{++get<I>(v_);}@
-@\oldtxt{++iter;}@
+++iter;
 return tmp;
 \end{codeblock}
 \end{itemdescr}
+} %% \color{oldclr}
 
 \rSec4[common.iterator.op.comp]{\tcode{common_iterator} comparisons}
 
