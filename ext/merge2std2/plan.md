@@ -35,6 +35,7 @@ P0944:
 P0896:
 * [ ] The magic for returning sentinels needs to be expanded to include arithmetic, and possibly copied to [specialized.algorithms]. Also `i - n` needs to make sense, or I need to eradicate it.
 * [ ] `ranges::destroy_at` needs to handle arrays properly.
+* [ ] `take_view` should require `Range` instead of `InputRange`. Audit the other view adaptors for similar overconstraint.
 * [ ] `operator->` for the view adaptors' iterators
   * [ ] `counted_iterator`
   * [ ] Reconcile the `common_iterator` and *has-arrow* `operator->` styles.
