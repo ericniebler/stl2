@@ -4124,8 +4124,8 @@ for (int i : few)
 
 \begin{codeblock}
 namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace ranges \{}@
-  template<InputRange R>
-    requires View<R>
+  template<@\oldtxt{InputRange} \newtxt{View}@ R>
+    @\oldtxt{requires View<R>}@
   class take_view : public view_interface<take_view<R>> {
   private:
     R base_ {};                                      // \expos
@@ -4134,36 +4134,35 @@ namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace ranges \{}@
   public:
     take_view() = default;
     constexpr take_view(R base, @\newtxt{iter_}@difference@\oldtxt{_type}@_t<iterator_t<R>> count);
-    template<InputRange O>
-      requires ViewableRange<O> && Constructible<R, all_view<O>>
+    template<@\oldtxt{Input}\newtxt{Viewable}@Range O>
+      requires @\oldtxt{ViewableRange<O> \&\&}@ Constructible<R, all_view<O>>
     constexpr take_view(O&& o, @\newtxt{iter_}@difference@\oldtxt{_type}@_t<iterator_t<R>> count);
 
     constexpr R base() const;
 
-    constexpr auto begin();
+    constexpr auto begin() @\newtxt{requires !\placeholder{simple-view}<R>}@;
     constexpr auto begin() const requires Range<const R>;
-    constexpr auto begin() requires RandomAccessRange<R> && SizedRange<R>;
-    constexpr auto begin() const
-      requires RandomAccessRange<const R> && SizedRange<const R>;
+    @\oldtxt{constexpr auto begin() requires RandomAccessRange<R> \&\& SizedRange<R>;}@
+    @\oldtxt{constexpr auto begin() const}@
+      @\oldtxt{requires RandomAccessRange<const R> \&\& SizedRange<const R>;}@
 
-    constexpr auto end();
+    constexpr auto end() @\newtxt{requires !\placeholder{simple-view}<R>}@;
     constexpr auto end() const requires Range<const R>;
-    constexpr auto end() requires RandomAccessRange<R> && SizedRange<R>;
-    constexpr auto end() const
-      requires RandomAccessRange<const R> && SizedRange<const R>;
+    @\oldtxt{constexpr auto end() requires RandomAccessRange<R> \&\& SizedRange<R>;}@
+    @\oldtxt{constexpr auto end() const}@
+      @\oldtxt{requires RandomAccessRange<const R> \&\& SizedRange<const R>;}@
 
     constexpr auto size() requires SizedRange<R>;
     constexpr auto size() const requires SizedRange<const R>;
   };
 
-  template<@\oldtxt{InputRange}\newtxt{class}@ R>
+  template<@\oldtxt{InputRange}\newtxt{Range}@ R>
   take_view(R&& base, @\newtxt{iter_}@difference@\oldtxt{_type}@_t<iterator_t<R>> n)
     -> take_view<all_view<R>>;
 }@\oldtxt{\}}@
 \end{codeblock}
 
 \rSec3[range.adaptors.take_view.ops]{\tcode{take_view} operations}
-\rSec4[range.adaptors.take_view.ctor]{\tcode{take_view} constructors}
 
 \indexlibrary{\idxcode{take_view}!\idxcode{take_view}}%
 \begin{itemdecl}
@@ -4172,24 +4171,22 @@ constexpr take_view(R base, @\newtxt{iter_}@difference@\oldtxt{_type}@_t<iterato
 
 \begin{itemdescr}
 \pnum
-\effects Initializes \tcode{base_} with \tcode{std::move(base)} and initializes
+\effects Initializes \tcode{base_} with \tcode{std::move(base)} and \oldtxt{initializes}
 \tcode{count_} with \tcode{count}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{take_view}!\idxcode{take_view}}%
 \begin{itemdecl}
-template<InputRange O>
-  requires ViewableRange<O> && Constructible<R, all_view<O>>
+template<@\oldtxt{Input}\newtxt{Viewable}@Range O>
+  requires @\oldtxt{ViewableRange<O> \&\&}@ Constructible<R, all_view<O>>
 constexpr take_view(O&& o, @\newtxt{iter_}@difference@\oldtxt{_type}@_t<iterator_t<R>> count);
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
 \effects Initializes \tcode{base_} with \tcode{view::all(std::forward<O>(o))}
-and initializes \tcode{count_} with \tcode{count}.
+and \oldtxt{initializes} \tcode{count_} with \tcode{count}.
 \end{itemdescr}
-
-\rSec4[range.adaptors.take_view.conv]{\tcode{take_view} conversion}
 
 \indexlibrary{\idxcode{base}!\idxcode{take_view}}%
 \begin{itemdecl}
@@ -4201,19 +4198,37 @@ constexpr R base() const;
 \oldtxt{\returns} \newtxt{\effects Equivalent to:} \tcode{\newtxt{return} base_\newtxt{;}}\oldtxt{.}
 \end{itemdescr}
 
-\rSec4[range.adaptors.take_view.begin]{\tcode{take_view} range begin}
-
 \indexlibrary{\idxcode{begin}!\idxcode{take_view}}%
 \begin{itemdecl}
-constexpr auto begin();
+constexpr auto begin() @\newtxt{requires !\placeholder{simple-view}<R>}@;
 constexpr auto begin() const requires Range<const R>;
 \end{itemdecl}
 
 \begin{itemdescr}
+{\color{newclr}
 \pnum
-\effects Equivalent to: \tcode{return \oldtxt{make_}counted_iterator\oldtxt{(}\newtxt{\{}ranges::begin(base_), count_\newtxt{\}}\oldtxt{)};}
+Let \tcode{Rng} be \tcode{R} for the first overload and \tcode{const R} for the
+second.
+} %% \color{newclr}
+
+\pnum
+\effects
+Equivalent to:
+\begin{itemize}
+{\color{newclr}
+\item If \tcode{Rng} models both
+\libconcept{SizedRange} and \libconcept{RandomAccessRange},
+\tcode{return ranges::begin(base_);}
+
+\item Otherwise, if \tcode{Rng} models \libconcept{SizedRange},
+\tcode{return counted_iterator\{ranges::begin(base_), size()\};}
+} %% \color{newclr}
+
+\item \newtxt{Otherwise,} \tcode{return \oldtxt{make_}counted_iterator\oldtxt{(}\newtxt{\{}ranges::begin(base_), count_\newtxt{\}}\oldtxt{)};}
+\end{itemize}
 \end{itemdescr}
 
+{\color{oldclr}
 \indexlibrary{\idxcode{begin}!\idxcode{take_view}}%
 \begin{itemdecl}
 constexpr auto begin() requires RandomAccessRange<R> && SizedRange<R>;
@@ -4225,31 +4240,44 @@ constexpr auto begin() const
 \pnum
 \effects Equivalent to: \tcode{return ranges::begin(base_);}
 \end{itemdescr}
-
-\rSec4[range.adaptors.take_view.end]{\tcode{take_view} range end}
+} %% \color{oldclr}
 
 \indexlibrary{\idxcode{end}!\idxcode{take_view}}%
 \begin{itemdecl}
-constexpr auto end();
+constexpr auto end() @\newtxt{requires !\placeholder{simple-view}<R>}@;
 constexpr auto end() const requires Range<const R>;
 \end{itemdecl}
 
 \begin{itemdescr}
-\ednote{LWG: Why not constrain the non-\tcode{const} overload with
-\tcode{!\placeholder{simple-view<R>}}
-and return something like
-\tcode{constexpr bool i_am_const = is_const_v<remove_reference_t<decltype(*this)>>;
-sentinel<i_am_const>\{ranges::end(base_)\}}?
-(Similarly for the other occurrences elsewhere.)}
+{\color{newclr}
+\pnum
+Let \tcode{Rng} be \tcode{R} for the first overload and \tcode{const R} for the
+second.
+} %% \color{newclr}
 
 \pnum
-\effects Equivalent to:
-\tcode{\newtxt{return }sentinel<\oldtxt{\placeholder{simple-view}<R>}\newtxt{$C$}>\{ranges::end(base_)\}\newtxt{;}} \\
-\oldtxt{and }\tcode{\oldtxt{sentinel<true>\{ranges::end(base_)\}}}
-\newtxt{where $C$ is }\tcode{\newtxt{\placeholder{simple-view}<R>}}\newtxt{ or
-\tcode{true}} for the first and second overload, respectively.
+\effects
+Equivalent to:
+\tcode{\oldtxt{sentinel<\placeholder{simple-view}<R>>\{ranges::end(base_)\}}}
+\oldtxt{and } \\ \tcode{\oldtxt{sentinel<true>\{ranges::end(base_)\}}}
+\oldtxt{for the first and second overload, respectively.}
+
+\begin{itemize}
+{\color{newclr}
+\item If \tcode{Rng} models both
+\libconcept{SizedRange} and \libconcept{RandomAccessRange},
+\tcode{return ranges::begin(base_) + size();}
+
+\item Otherwise, if \tcode{Rng} models \libconcept{SizedRange},
+\tcode{return default_sentinel\{\};}
+
+\item Otherwise,
+\tcode{return sentinel<is_const_v<Rng>>\{ranges::end(base_)\};}
+} %% \color{newclr}
+\end{itemize}
 \end{itemdescr}
 
+{\color{oldclr}
 \indexlibrary{\idxcode{end}!\idxcode{take_view}}%
 \begin{itemdecl}
 constexpr auto end() requires RandomAccessRange<R> && SizedRange<R>;
@@ -4261,8 +4289,7 @@ constexpr auto end() const
 \pnum
 \effects Equivalent to: \tcode{return ranges::begin(base_) + size();}
 \end{itemdescr}
-
-\rSec4[range.adaptors.take_view.size]{\tcode{take_view} range size}
+} %% \color{oldclr}
 
 \indexlibrary{\idxcode{size}!\idxcode{take_view}}%
 \begin{itemdecl}
@@ -4292,11 +4319,11 @@ namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace ranges \{}@
   template<bool Const>
   class take_view<R>::sentinel { // \expos
   private:
-    using Parent =                                 // \expos
-      conditional_t<Const, const take_view, take_view>;
+    @\oldtxt{using Parent =                                 // \expos}@
+      @\oldtxt{conditional_t<Const, const take_view, take_view>;}@
     using Base = conditional_t<Const, const R, R>; // \expos
-    sentinel_t<Base> end_ {};                      // \expos
     using CI = counted_iterator<iterator_t<Base>>; // \expos
+    sentinel_t<Base> end_ {};                      // \expos
   public:
     sentinel() = default;
     constexpr explicit sentinel(sentinel_t<Base> end);
@@ -4307,18 +4334,17 @@ namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace ranges \{}@
 
     friend constexpr bool operator==(const sentinel& x, const CI& y)
       @\oldtxt{requires EqualityComparable<iterator_t<Base>>}@;
-    friend constexpr bool operator==(const CI& x, const sentinel& y)
+    friend constexpr bool operator==(const CI& @\oldtxt{x}\newtxt{y}@, const sentinel& @\oldtxt{y}\newtxt{x}@)
       @\oldtxt{requires EqualityComparable<iterator_t<Base>>}@;
     friend constexpr bool operator!=(const sentinel& x, const CI& y)
       @\oldtxt{requires EqualityComparable<iterator_t<Base>>}@;
-    friend constexpr bool operator!=(const CI& x, const sentinel& y)
+    friend constexpr bool operator!=(const CI& @\oldtxt{x}\newtxt{y}@, const sentinel& @\oldtxt{y}\newtxt{x}@)
       @\oldtxt{requires EqualityComparable<iterator_t<Base>>}@;
   };
 }@\oldtxt{\}}@
 \end{codeblock}
 
 \rSec4[range.adaptors.take_view.sentinel.ops]{\tcode{take_view::sentinel} operations}
-\rSec5[range.adaptors.take_view.sentinel.ctor]{\tcode{take_view::sentinel} constructors}
 
 \indexlibrary{\idxcode{sentinel}!\idxcode{take_view::sentinel}}
 \begin{itemdecl}
@@ -4341,8 +4367,6 @@ constexpr sentinel(sentinel<!Const> s)
 \effects Initializes \tcode{end_} with \tcode{s.end_}.
 \end{itemdescr}
 
-\rSec5[range.adaptors.take_view.sentinel.conv]{\tcode{take_view::sentinel} conversion}
-
 \indexlibrary{\idxcode{base}!\idxcode{take_view::sentinel}}
 \begin{itemdecl}
 constexpr sentinel_t<Base> base() const;
@@ -4353,33 +4377,36 @@ constexpr sentinel_t<Base> base() const;
 \oldtxt{\returns} \newtxt{\effects Equivalent to:} \tcode{\newtxt{return} end_\newtxt{;}}\oldtxt{.}
 \end{itemdescr}
 
-\rSec4[range.adaptors.take_view.sentinel.comp]{\tcode{take_view::sentinel} comparisons}
-
 \indexlibrary{\idxcode{operator==}!\idxcode{take_view::sentinel}}
 \begin{itemdecl}
 friend constexpr bool operator==(const sentinel& x, const CI& y)
   @\oldtxt{requires EqualityComparable<iterator_t<Base>>}@;
+@\newtxt{friend constexpr bool operator==(const CI\& y, const sentinel\& x)}@
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\oldtxt{\returns} \newtxt{\effects Equivalent to: }\tcode{\newtxt{return} y.count() == 0 || y.base() == x.end_\newtxt{;}}\oldtxt{.}
+\oldtxt{\returns} \newtxt{\effects Equivalent to:
+}\tcode{\newtxt{return} y.count() == 0 || y.base() == x.end_\newtxt{;}}\oldtxt{.}
 \end{itemdescr}
 
+{\color{oldclr}
 \begin{itemdecl}
 friend constexpr bool operator==(const CI& x, const sentinel& y)
-  @\oldtxt{requires EqualityComparable<iterator_t<Base>>}@;
+  requires EqualityComparable<iterator_t<Base>>;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\oldtxt{\returns} \newtxt{\effects Equivalent to: }\tcode{\newtxt{return} y == x\newtxt{;}}\oldtxt{.}
+\returns \tcode{y == x}.
 \end{itemdescr}
+} %% \color{oldclr}
 
 \indexlibrary{\idxcode{operator!=}!\idxcode{take_view::sentinel}}%
 \begin{itemdecl}
 friend constexpr bool operator!=(const sentinel& x, const CI& y)
   @\oldtxt{requires EqualityComparable<iterator_t<Base>>}@;
+@\newtxt{friend constexpr bool operator!=(const CI\& y, const sentinel\& x)}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4387,15 +4414,17 @@ friend constexpr bool operator!=(const sentinel& x, const CI& y)
 \oldtxt{\returns} \newtxt{\effects Equivalent to: }\tcode{\newtxt{return} !(x == y)\newtxt{;}}\oldtxt{.}
 \end{itemdescr}
 
+{\color{oldclr}
 \begin{itemdecl}
 friend constexpr bool operator!=(const CI& x, const sentinel& y)
-  @\oldtxt{requires EqualityComparable<iterator_t<Base>>}@;
+  requires EqualityComparable<iterator_t<Base>>;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\oldtxt{\returns} \newtxt{\effects Equivalent to: }\tcode{\newtxt{return} !(y == x)\newtxt{;}}\oldtxt{.}
+\returns \tcode{!(y == x)}.
 \end{itemdescr}
+} %% \color{oldclr}
 
 \rSec2[range.adaptors.take]{\tcode{view::take}}
 
