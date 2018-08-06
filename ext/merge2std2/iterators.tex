@@ -2732,13 +2732,12 @@ namespace std {
     @\oldtxt{using iterator_category = typename iterator_traits<Iterator>::iterator_category;}@
     @\oldtxt{using value_type        = typename iterator_traits<Iterator>::value_type;}@
     @\oldtxt{using difference_type   = typename iterator_traits<Iterator>::difference_type;}@
-    @\oldtxt{using pointer           = typename iterator_traits<Iterator>::pointer;}@
-    @\oldtxt{using reference         = typename iterator_traits<Iterator>::reference;}@
     @\newtxt{using iterator_category = \seebelownc;}@
     @\newtxt{using iterator_concept  = \seebelownc;}@
     @\newtxt{using value_type        = iter_value_t<Iterator>;}@
     @\newtxt{using difference_type   = iter_difference_t<Iterator>;}@
-    @\newtxt{using pointer           = Iterator;}@
+    using pointer           = typename iterator_traits<Iterator>::pointer;
+    @\oldtxt{using reference         = typename iterator_traits<Iterator>::reference;}@
     @\newtxt{using reference         = iter_reference_t<Iterator>;}@
 
     constexpr reverse_iterator();
@@ -2748,7 +2747,7 @@ namespace std {
 
     constexpr Iterator base() const;      @\oldtxt{// explicit}@
     constexpr reference operator*() const;
-    constexpr pointer   operator->() const;
+    constexpr pointer   operator->() const @\newtxt{requires \seebelownc}@;
 
     [...]
 
@@ -2825,8 +2824,8 @@ or
 are referenced in a way that requires instantiation\cxxiref{temp.inst}.
 
 
-\ednote{Change [reverse.iterator.elem] as follows (note that this change resolves
-\href{https://wg21.link/lwg1052}{LWG 1052}):}
+\ednote{Change [reverse.iterator.elem] as follows (note that this change
+incorporates the PR of \href{https://wg21.link/lwg1052}{LWG 1052}):}
 \setcounter{subsubsection}{4}
 \rSec3[reverse.iterator.elem]{\tcode{reverse_iterator} element access}
 
@@ -2836,13 +2835,21 @@ are referenced in a way that requires instantiation\cxxiref{temp.inst}.
 
 \indexlibrarymember{operator->}{reverse_iterator}%
 \begin{itemdecl}
-constexpr pointer operator->() const;
+constexpr pointer operator->() const @\newtxt{requires is_pointer_v<Iterator>}@
+  @\newtxt{|| requires(const Iterator i) \{ i.operator->(); \}}@;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\oldtxt{\returns} \newtxt{\effects Equivalent to:
-}\tcode{\newtxt{return} \oldtxt{addressof(operator*())} \newtxt{prev(current)}\newtxt{;}}\oldtxt{.}
+\oldtxt{\returns \tcode{addressof(operator*())}.}
+{\color{newclr}
+\effects Equivalent to:
+\begin{itemize}
+\item If \tcode{Iterator} is a pointer type, \tcode{return prev(current);}
+
+\item Otherwise, \tcode{return prev(current).operator->();}
+\end{itemize}
+} %% \color{newclr}
 \end{itemdescr}
 
 [...]
