@@ -33,6 +33,8 @@ P0944:
   * [X] `span`
 
 P0896:
+* [ ] Tim's feedbacl from `Swappable` on
+* [ ] If we require that contiguous allocator-aware containers have contiguous iterators without requiring that Allocator pointers are contiguous iterators, we effectively forbid such a container from using the pointer type directly as an iterator.
 * [ ] The magic for returning sentinels needs to be expanded to include arithmetic, and possibly copied to [specialized.algorithms]. Also `i - n` needs to make sense, or I need to eradicate it.
 * [ ] `ranges::destroy_at` needs to handle arrays properly.
 * [ ] Audit the view adaptors for overconstraint requiring `InputRange` when they could require vanilla `Range`.
@@ -43,6 +45,7 @@ P0896:
 * [ ] Forbid explicit template arguments for quasi-CPOs (algorithms, iterator operations, specialized memory algorithms)
 * [ ] `-> auto&&` is broken in C++20
 * [ ] Update the Swappable text from the P0898 merge.
+* [ ] `ranges::swap` of pointer-to-uninstantiated should avoid instantiation
 * [ ] Define "models", and use it throughout to replace both "`foo` satisfies `Concept`" and the "syntactic requirements...otherwise ill-formed NDR" dance.
 * [ ] Specify `enable_view` specializations with the individual types instead of with `View`
 * [ ] `Decrementable` doesn't constrain the behavior of objects that aren't both *incrementable* and *decrementable*.
