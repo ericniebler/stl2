@@ -44,7 +44,6 @@ P0896:
   * [ ] Reconcile the `common_iterator` and *has-arrow* `operator->` styles.
 * [ ] Forbid explicit template arguments for quasi-CPOs (algorithms, iterator operations, specialized memory algorithms)
 * [ ] `-> auto&&` is broken in C++20 (Don't miss `\tcode{auto\&\&}`)
-* [ ] `ranges::swap` of pointer-to-uninstantiated should avoid instantiation
 * [ ] Define "models", and use it throughout to replace both "`foo` satisfies `Concept`" and the "syntactic requirements...otherwise ill-formed NDR" dance.
 * [ ] Specify `enable_view` specializations with the individual types instead of with `View`
 * [ ] `Decrementable` doesn't constrain the behavior of objects that aren't both *incrementable* and *decrementable*.
@@ -65,6 +64,7 @@ P0896:
 * [ ] https://github.com/ericniebler/stl2/issues/553
 * [ ] Reformulate `noexcept(E1) && noexcept(E2)` as `noexcept(E1, E2)`?
 * [X] Update the Swappable text from the P0898 merge.
+* [X] `ranges::swap` of pointer-to-uninstantiated should avoid instantiation
 * [X] `view_interface::data` needs to return a pointer
 * [X] Mark *all* private members `\expos`
 * [X] Audit the specifications of `iterator_category` for `forward`s that don't have reference reference types.
