@@ -3906,10 +3906,13 @@ assignments.
 
 \rSec2[alg.swap]{Swap}
 
+\ednote{This wording integrates the PR for
+\href{https://github.com/ericniebler/stl2/issues/415}{stl2\#415}.}
+
 \indexlibrary{\idxcode{swap_ranges}}%
 \begin{itemdecl}
 template<class ForwardIterator1, class ForwardIterator2>
-  ForwardIterator2
+  constexpr ForwardIterator2
     swap_ranges(ForwardIterator1 first1, ForwardIterator1 last1,
                 ForwardIterator2 first2);
 template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2>
@@ -3918,35 +3921,6 @@ template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2>
                 ForwardIterator1 first1, ForwardIterator1 last1,
                 ForwardIterator2 first2);
 \end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires
-The two ranges \range{first1}{last1}
-and
-\range{first2}{first2 + (last1 - first1)}
-shall not overlap.
-\tcode{*(first1 + n)} shall be swappable with\cxxref{swappable.requirements}
-\tcode{*(first2 + n)}.
-
-\pnum
-\effects
-For each non-negative integer
-\tcode{n < (last1 - first1)}
-performs:
-\tcode{swap(*(first1 + n), \brk{}*(first2 + n))}.
-
-\pnum
-\returns
-\tcode{first2 + (last1 - first1)}.
-
-\pnum
-\complexity
-Exactly
-\tcode{last1 - first1}
-swaps.
-\end{itemdescr}
-
 \begin{addedblock}
 \indexlibrary{\idxcode{swap_ranges}}%
 \begin{itemdecl}
@@ -3963,43 +3937,65 @@ namespace ranges {
       swap_ranges(Rng1&& rng1, Rng2&& rng2);
 }
 \end{itemdecl}
-
-\ednote{This wording integrates the PR for
-\href{https://github.com/ericniebler/stl2/issues/415}{stl2\#415}.}
+\end{addedblock}
 
 \begin{itemdescr}
+{\color{newclr}
+\pnum
+Let:
+\begin{itemize}
+\item \tcode{last2} be \tcode{first2 + (last1 - first1)} for the overloads with
+  no parameter named \tcode{last2}, and
+\item $M$ be $min(\tcode{last1 - first1}, \tcode{last2 - first2})$.
+\end{itemize}
+} %% \color{newclr}
+
 \pnum
 \requires
 The two ranges \range{first1}{last1}
 and
-\range{first2}{last2}
-shall not overlap.
-\oldtxt{\tcode{*(first1 + n)} shall be swappable with\iref{concept.swappable}
-\tcode{*(first2 + n)}.}
+\range{first2}{\oldtxt{first2 + (last1 - first1)} \newtxt{last2}}
+shall not overlap. \newtxt{For the overloads in namespace \tcode{std},}
+\tcode{*(first1 + \oldtxt{n} \newtxt{$n$})} shall be swappable with\cxxiref{swappable.requirements}
+\tcode{*(first2 + \oldtxt{n} \newtxt{$n$})}.
 
 \pnum
 \effects
-For each non-negative integer \tcode{n < min(last1 - first1, last2 - first2)}
-performs: \\
-\tcode{ranges::iter_swap(first1 + n, first2 + n)}.
+For each non-negative integer
+\tcode{\oldtxt{n < (last1 - first1)}}
+\newtxt{$n < M$}
+performs: \oldtxt{\tcode{swap(*(first1 + n), *(first2 + n))}}
+{\color{newclr}
+\begin{itemize}
+\item \tcode{swap(*(first1 + $n$), *(first2 + $n$))} for the overloads in
+  namespace \tcode{std}, or
+\item \tcode{ranges::iter_swap(first1 + $n$, first2 + $n$)} for the overloads
+  in namespace \tcode{ranges}.
+\end{itemize}
+} %% \color{newclr}
 
 \pnum
-\returns
-\tcode{\{first1 + n, first2 + n\}}, where
-\tcode{n} is \tcode{min(last1 - first1, last2 - first2)}.
+\returns \tcode{\oldtxt{first2 + (last1 - first1)}}
+{\color{newclr}
+\begin{itemize}
+\item \tcode{last2} for the overloads in namespace \tcode{std}, or
+\item \tcode{\{first1 + $M$, first2 + $M$\}}
+for the overloads in namespace \tcode{ranges}.
+\end{itemize}
+} %% \color{newclr}
 
 \pnum
 \complexity
 Exactly
-\tcode{min(last1 - first1, last2 - first2)}
+\oldtxt{\tcode{last1 - first1}} \newtxt{$M$}
 swaps.
 \end{itemdescr}
-\end{addedblock}
+
 
 \indexlibrary{\idxcode{iter_swap}}%
 \begin{itemdecl}
 template<class ForwardIterator1, class ForwardIterator2>
-  void iter_swap(ForwardIterator1 a, ForwardIterator2 b);
+  constexpr void iter_swap(ForwardIterator1 a, ForwardIterator2 b);
 \end{itemdecl}
 
 [...]
