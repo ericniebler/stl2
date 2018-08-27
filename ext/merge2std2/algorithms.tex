@@ -4007,13 +4007,13 @@ template<class ForwardIterator1, class ForwardIterator2>
 template<class InputIterator, class OutputIterator,
          class UnaryOperation>
   constexpr OutputIterator
-    transform(InputIterator first, InputIterator last,
+    transform(InputIterator first@\newtxt{1}@, InputIterator last@\newtxt{1}@,
               OutputIterator result, UnaryOperation op);
 template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2,
          class UnaryOperation>
   ForwardIterator2
     transform(ExecutionPolicy&& exec,
-              ForwardIterator1 first, ForwardIterator1 last,
+              ForwardIterator1 first@\newtxt{1}@, ForwardIterator1 last@\newtxt{1}@,
               ForwardIterator2 result, UnaryOperation op);
 
 template<class InputIterator1, class InputIterator2,
@@ -4030,53 +4030,7 @@ template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2,
               ForwardIterator2 first2, ForwardIterator result,
               BinaryOperation binary_op);
 \end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires
-\tcode{op} and \tcode{binary_op}
-shall not invalidate iterators or subranges, or modify elements in the ranges
-\begin{itemize}
-\item \crange{first1}{last1},
-\item \crange{first2}{first2 + (last1 - first1)}, and
-\item \crange{result}{result + (last1 - first1)}.\footnote{The use of fully
-closed ranges is intentional.}
-\end{itemize}
-
-\pnum
-\effects
-Assigns through every iterator
-\tcode{i}
-in the range
-\range{result}{result + (last1 - first1)}
-a new
-corresponding value equal to
-\tcode{op(*(first1 + (i - result)))}
-or
-\tcode{binary_op(*(first1 + (i - result)), *(first2 + (i - result)))}.
-
-\pnum
-\returns
-\tcode{result + (last1 - first1)}.
-
-\pnum
-\complexity
-Exactly
-\tcode{last1 - first1}
-applications of
-\tcode{op} or \tcode{binary_op}.  This requirement also applies to the overload
-with an \tcode{ExecutionPolicy} .
-
-\pnum
-\remarks
-\tcode{result} may be equal to \tcode{first}
-in case of unary transform,
-or to \tcode{first1} or \tcode{first2}
-in case of binary transform.
-\end{itemdescr}
-
 \begin{addedblock}
-\indexlibrary{\idxcode{transform}}%
 \begin{itemdecl}
 namespace ranges {
   template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O,
@@ -4084,7 +4038,7 @@ namespace ranges {
     requires Writable<O, indirect_result@\oldtxt{_of}@_t<F&@\oldtxt{(}\newtxt{, }@projected<I, Proj>@\oldtxt{)}@>>
     @\oldtxt{tagged_pair<tag::in(I), tag::out(O)>}@
     @\newtxt{constexpr unary_transform_result<I, O>}@
-      transform(I first, S last, O result, F op, Proj proj = Proj{});
+      transform(I first@\newtxt{1}@, S last@\newtxt{1}@, O result, F op, Proj proj = Proj{});
   template<InputRange Rng, WeaklyIncrementable O, CopyConstructible F,
       class Proj = identity>
     requires Writable<O, indirect_result@\oldtxt{_of}@_t<F&@\oldtxt{(}\newtxt{,}@
@@ -4113,55 +4067,80 @@ namespace ranges {
                 F binary_op, Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
 }
 \end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+{\color{newclr}
 \pnum
-Let $N$ be \tcode{(last1 - first1)}
-for unary transforms, or \tcode{min(last1 - first1, last2 - first2) for binary
-transforms.}
+Let:
+\begin{itemize}
+\item \tcode{last2} be \tcode{first2 + (last1 - first1)} for the overloads with
+  parameter \tcode{first2} but no parameter \tcode{last2},
+\item $N$ be \tcode{last1 - first1} for unary transforms, or $\min(\tcode{last1 - first1}, \tcode{last2 - first2})$ for binary transforms, and
+\item $E$ be
+  \begin{itemize}
+  \item \tcode{op(*(first1 + (i - result)))} for unary transforms defined in
+    namespace \tcode{std},
+  \item \tcode{binary_op(*(first1 + (i - result)), *(first2 + (i - result)))} for
+    binary transforms defined in namespace \tcode{std},
+  \item \tcode{invoke(op, invoke(proj, *(first1 + (i - result))))} for unary
+    transforms defined in namespace \tcode{ranges}, or
+  \item \tcode{invoke(binary_op, invoke(proj1, *(first1 + (i - result))), invoke(proj2, *(first2 + (i - result))))}
+    for binary transforms defined in namespace \tcode{ranges}.
+  \end{itemize}
+\end{itemize}
+} %% \color{newclr}
+
+\pnum
+\requires
+\tcode{op} and \tcode{binary_op}
+shall not invalidate iterators or subranges, or modify elements in the ranges
+\begin{itemize}
+\item \crange{first1}{\newtxt{first1 + $N$} \oldtxt{last1}},
+\item \crange{first2}{first2 + \newtxt{$N$} \oldtxt{(last1 - first1)}}, and
+\item \crange{result}{result + \newtxt{$N$} \oldtxt{(last1 - first1)}}.\footnote{The use of fully
+closed ranges is intentional.}
+\end{itemize}
 
 \pnum
 \effects
 Assigns through every iterator
 \tcode{i}
 in the range
-\range{result}{result + $N$}
+\range{result}{result + \oldtxt{(last1 - first1)} \newtxt{$N$}}
 a new
-corresponding value equal to
-\tcode{invoke(op, invoke(proj, *(first1 + (i - result))))}
+corresponding value equal to \newtxt{$E$}
+\oldtxt{\tcode{op(*(first1 + (i - result)))}
 or
-\tcode{invoke(\brk{}binary_op, invoke(proj1, *(first1 + (i - result))), invoke(proj2, *(first2 + (i - result))))}.
-
-\pnum
-\requires
-\tcode{op} and \tcode{binary_op}
-shall not invalidate iterators or subranges, or modify elements in the ranges
-\crange{first1}{first1 + $N$},
-\crange{first2}{first2 + $N$},
-and
-\crange{result}{result + $N$}.\footnote{The use of fully
-closed ranges is intentional.}
+\tcode{binary_op(*(first1 + (i - result)), *(first2 + (i - result)))}}.
 
 \pnum
 \returns
-\tcode{\{first1 + $N$, result + $N$\}}
- or \tcode{\oldtxt{make_tagged_tuple<tag::in1, tag::in2, tag::out\brk{}>(}\newtxt{\{}\brk{}first1 + $N$, first2 + $N$, result + $N$\oldtxt{)}\newtxt{\}}}.
+\begin{itemize}
+\item \tcode{result + \newtxt{$N$} \oldtxt{(last1 - first1)}}
+  \newtxt{for the overloads defined in namespace \tcode{std},}
+\item \newtxt{\tcode{\{first1 + $N$, result + $N$\}} for unary transforms
+  defined in namespace \tcode{ranges}, or}
+\item \newtxt{\tcode{\{first1 + $N$, first2 + $N$, result + $N$\}} for binary
+  transforms defined in namespace \tcode{ranges}}.
+\end{itemize}
 
 \pnum
 \complexity
 Exactly
-\tcode{$N$}
+\newtxt{$N$} \oldtxt{\tcode{last1 - first1}}
 applications of
-\tcode{op} or \tcode{binary_op} and the corresponding projection(s).
+\tcode{op} or \tcode{binary_op}\newtxt{, and any projections}.
+This requirement also applies to the overload with an \tcode{ExecutionPolicy}.
 
 \pnum
 \remarks
-\tcode{result} may be equal to \tcode{first1}
+\tcode{result} may be equal \oldtxt{to \tcode{first}
 in case of unary transform,
-or to \tcode{first1} or \tcode{first2}
-in case of binary transform.
+or} to \tcode{first1} or \tcode{first2}
+\oldtxt{in case of binary transform}.
 \end{itemdescr}
-\end{addedblock}
+
 
 \rSec2[alg.replace]{Replace}
 
