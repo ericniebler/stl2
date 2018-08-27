@@ -33,7 +33,7 @@ P0944:
   * [X] `span`
 
 P0896:
-* [ ] Tim's feedbacl from `Swappable` on
+* [ ] Tim's feedback from `Swappable` on
 * [ ] If we require that contiguous allocator-aware containers have contiguous iterators without requiring that Allocator pointers are contiguous iterators, we effectively forbid such a container from using the pointer type directly as an iterator.
 * [ ] The magic for returning sentinels needs to be expanded to include arithmetic, and possibly copied to [specialized.algorithms]. Also `i - n` needs to make sense, or I need to eradicate it.
 * [ ] `ranges::destroy_at` needs to handle arrays properly.
