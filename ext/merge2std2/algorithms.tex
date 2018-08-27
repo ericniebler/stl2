@@ -3744,8 +3744,34 @@ template<class InputIterator, class OutputIterator>
   constexpr OutputIterator move(InputIterator first, InputIterator last,
                                 OutputIterator result);
 \end{itemdecl}
+\begin{addedblock}
+\indexlibrary{\idxcode{move}}%
+\begin{itemdecl}
+namespace ranges {
+  template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O>
+    requires IndirectlyMovable<I, O>
+    @\oldtxt{tagged_pair<tag::in(I), tag::out(O)>}@
+    @\newtxt{constexpr move_result<I, O>}@
+      move(I first, S last, O result);
+  template<InputRange Rng, WeaklyIncrementable O>
+    requires IndirectlyMovable<iterator_t<Rng>, O>
+    @\oldtxt{tagged_pair<tag::in(safe_iterator_t<Rng>), tag::out(O)>}@
+    @\newtxt{constexpr move_result<safe_iterator_t<Rng>, O>}@
+      move(Rng&& rng, O result);
+}
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+{\color{newclr}
+\pnum
+Let $E$ be
+\begin{itemize}
+\item \tcode{std::move(*(first + $n$))} for the overload in namespace \tcode{std}, or
+\item \tcode{ranges::iter_move(first + $n$)} for the overloads in namespace \tcode{ranges}.
+\end{itemize}
+} %% \color{newclr}
+
 \pnum
 \requires
 \tcode{result}
@@ -3758,19 +3784,23 @@ Moves elements in the range \range{first}{last}
 into the range \range{result}{result + (last - first)}
 starting from first and proceeding to last.
 For each non-negative integer
-\tcode{n < (last-first)},
+\oldtxt{\tcode{n < (last-first)}} \newtxt{$n < \tcode{(last - first)}$},
 performs
-\tcode{*(result + n) = std::move(*(first + n))}.
+\oldtxt{\tcode{*(result + n) = std::move(*(first + n))}}
+\newtxt{\tcode{*(result + $n$) = $E$}}.
 
 \pnum
 \returns
-\tcode{result + (last - first)}.
+\begin{itemize}
+\item \tcode{result + (last - first)} \newtxt{for the overload in namespace \tcode{std}, or}
+\item \tcode{\added{\{last, result + (last - first)\}}} \newtxt{for the overloads in namespace \tcode{ranges}.}
+\end{itemize}
 
 \pnum
 \complexity
 Exactly
 \tcode{last - first}
-move assignments.
+\oldtxt{move} assignments.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{move}!algorithm}%
@@ -3799,52 +3829,6 @@ performs \tcode{*(result + n) = std::\brk{}move(*(first + n))}.
 \complexity Exactly \tcode{last - first} assignments.
 \end{itemdescr}
 
-\begin{addedblock}
-\indexlibrary{\idxcode{move}}%
-\begin{itemdecl}
-namespace ranges {
-  template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O>
-    requires IndirectlyMovable<I, O>
-    @\oldtxt{tagged_pair<tag::in(I), tag::out(O)>}@
-    @\newtxt{constexpr move_result<I, O>}@
-      move(I first, S last, O result);
-  template<InputRange Rng, WeaklyIncrementable O>
-    requires IndirectlyMovable<iterator_t<Rng>, O>
-    @\oldtxt{tagged_pair<tag::in(safe_iterator_t<Rng>), tag::out(O)>}@
-    @\newtxt{constexpr move_result<safe_iterator_t<Rng>, O>}@
-      move(Rng&& rng, O result);
-}
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires
-\tcode{result}
-shall not be in the range
-\range{first}{last}.
-
-\pnum
-\effects
-Moves elements in the range \range{first}{last}
-into the range \range{result}{result + (last - first)}
-starting from first and proceeding to last.
-For each non-negative integer
-\tcode{n < (last-first)},
-performs
-\tcode{*(result + n) = ranges::iter_move(first + n)}.
-
-\pnum
-\returns
-\tcode{\{last, result + (last - first)\}}.
-
-\pnum
-\complexity
-Exactly
-\tcode{last - first}
-move assignments.
-\end{itemdescr}
-\end{addedblock}
-
 \indexlibrary{\idxcode{move_backward}}%
 \begin{itemdecl}
 template<class BidirectionalIterator1, class BidirectionalIterator2>
@@ -3852,42 +3836,6 @@ template<class BidirectionalIterator1, class BidirectionalIterator2>
     move_backward(BidirectionalIterator1 first, BidirectionalIterator1 last,
                   BidirectionalIterator2 result);
 \end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires
-\tcode{result}
-shall not be in the range
-\brange{first}{last}.
-
-\pnum
-\effects
-Moves elements in the range \range{first}{last}
-into the
-range \range{result - (last-first)}{result}
-starting from
-\tcode{last - 1}
-and proceeding to first.\footnote{\tcode{move_backward}
-should be used instead of move when last
-is in
-the range
-\range{result - (last - first)}{result}.}
-For each positive integer
-\tcode{n <= (last - first)},
-performs
-\tcode{*(result - n) = std::move(*(last - n))}.
-
-\pnum
-\returns
-\tcode{result - (last - first)}.
-
-\pnum
-\complexity
-Exactly
-\tcode{last - first}
-assignments.
-\end{itemdescr}
-
 \begin{addedblock}
 \indexlibrary{\idxcode{move_backward}}%
 \begin{itemdecl}
@@ -3904,8 +3852,18 @@ namespace ranges {
       move_backward(Rng&& rng, I result);
 }
 \end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+{\color{newclr}
+\pnum
+Let $E$ be
+\begin{itemize}
+\item \tcode{std::move(*(last - $n$))} for the overload in namespace \tcode{std}, or
+\item \tcode{ranges::iter_move(last - $n$)} for the overloads in namespace \tcode{ranges}.
+\end{itemize}
+} %% \color{newclr}
+
 \pnum
 \requires
 \tcode{result}
@@ -3916,7 +3874,7 @@ shall not be in the range
 \effects
 Moves elements in the range \range{first}{last}
 into the
-range \range{result - (last-first)}{result}
+range \range{result - (last\newtxt{ }-\newtxt{ }first)}{result}
 starting from
 \tcode{last - 1}
 and proceeding to first.\footnote{\tcode{move_backward}
@@ -3925,13 +3883,18 @@ is in
 the range
 \range{result - (last - first)}{result}.}
 For each positive integer
-\tcode{n <= (last - first)},
+\tcode{\oldtxt{n <= (last - first)}}
+\newtxt{$n \le \tcode{(last - first)}$},
 performs
-\tcode{*(result - n) = ranges::iter_move(last - n)}.
+\tcode{\oldtxt{*(result - n) = std::move(*(last - n))}}
+\tcode{\newtxt{*(result - $n$) = $E$}}.
 
 \pnum
 \returns
-\tcode{\{last, result - (last - first)\}}.
+\begin{itemize}
+\item \tcode{result - (last - first)} \newtxt{for the overload in namespace \tcode{std}, or}
+\item \tcode{\added{\{last, result - (last - first)\}}} \newtxt{for the overloads in namespace \tcode{ranges}.}
+\end{itemize}
 
 \pnum
 \complexity
@@ -3939,7 +3902,7 @@ Exactly
 \tcode{last - first}
 assignments.
 \end{itemdescr}
-\end{addedblock}
+
 
 \rSec2[alg.swap]{Swap}
 
