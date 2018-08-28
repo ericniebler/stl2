@@ -4163,33 +4163,7 @@ template<class ExecutionPolicy, class ForwardIterator, class Predicate, class T>
                   ForwardIterator first, ForwardIterator last,
                   Predicate pred, const T& new_value);
 \end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires
-The expression
-\tcode{*first = new_value}
-shall be valid.
-
-\pnum
-\effects
-Substitutes elements referred by the iterator
-\tcode{i}
-in the range \range{first}{last}
-with \tcode{new_value},
-when the following corresponding conditions hold:
-\tcode{*i == old_value}, \tcode{pred(*i) != false}.
-
-\pnum
-\complexity
-Exactly
-\tcode{last - first}
-applications of the corresponding predicate.
-\end{itemdescr}
-
 \begin{addedblock}
-\indexlibrary{\idxcode{replace}}%
-\indexlibrary{\idxcode{replace_if}}%
 \begin{itemdecl}
 namespace ranges {
   template<InputIterator I, Sentinel<I> S, class T1, class T2, class Proj = identity>
@@ -4213,28 +4187,49 @@ namespace ranges {
       replace_if(Rng&& rng, Pred pred, const T& new_value, Proj proj = Proj{});
 }
 \end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+{\color{newclr}
 \pnum
-\effects
-Assigns \tcode{new_value} through each iterator
-\tcode{i}
-in the range \range{first}{last}
-when the following corresponding conditions hold:
-\tcode{invoke(proj, *i) == old_value},
-\tcode{invoke(pred, invoke(proj, *i)) != false}.
+Let $E$ be
+\begin{itemize}
+\item \tcode{bool(*i == old_value)} for the \tcode{std::replace},
+\item \tcode{bool(pred(*i))} for \tcode{std::replace_if},
+\item \tcode{bool(invoke(proj, *i) == old_value)} for \tcode{ranges::replace}, or
+\item \tcode{bool(invoke(pred, invoke(proj, *i)))} for \tcode{ranges::replace_if}.
+\end{itemize}
+} %% \color{newclr}
 
 \pnum
+\requires
+The expression
+\tcode{*first = new_value}
+shall be valid.
+
+\pnum
+\effects
+Substitutes elements referred by the iterator
+\tcode{i}
+in the range \range{first}{last}
+with \tcode{new_value},
+when \newtxt{$E$ is \tcode{true}}
+\oldtxt{the following corresponding conditions hold:
+\tcode{*i == old_value}, \tcode{pred(*i) != false}}.
+
+{\color{newclr}
+\pnum
 \returns
-\tcode{last}.
+\tcode{last} for the overloads in namespace \tcode{ranges}.
+} %% \color{newclr}
 
 \pnum
 \complexity
 Exactly
 \tcode{last - first}
-applications of the corresponding predicate and projection.
+applications of the corresponding predicate \newtxt{and any projection}.
 \end{itemdescr}
-\end{addedblock}
+
 
 \indexlibrary{\idxcode{replace_copy}}%
 \indexlibrary{\idxcode{replace_copy_if}}%
@@ -4264,55 +4259,7 @@ template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2,
                     ForwardIterator2 result,
                     Predicate pred, const T& new_value);
 \end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires
-The results of the expressions
-\tcode{*first}
-and
-\tcode{new_value}
-shall be writable\iref{iterator.requirements.general} to the
-\tcode{result}
-output iterator.
-The ranges
-\range{first}{last}
-and
-\range{result}{result + (last - first)}
-shall not overlap.
-
-\pnum
-\effects
-Assigns to every iterator
-\tcode{i}
-in the
-range
-\range{result}{result + (last - first)}
-either
-\tcode{new_value}
-or
-\tcode{*\brk(first + (i - result))}
-depending on whether the following corresponding conditions hold:
-
-\begin{codeblock}
-*(first + (i - result)) == old_value
-pred(*(first + (i - result))) != false
-\end{codeblock}
-
-\pnum
-\returns
-\tcode{result + (last - first)}.
-
-\pnum
-\complexity
-Exactly
-\tcode{last - first}
-applications of the corresponding predicate.
-\end{itemdescr}
-
 \begin{addedblock}
-\indexlibrary{\idxcode{replace_copy}}%
-\indexlibrary{\idxcode{replace_copy_if}}%
 \begin{itemdecl}
 namespace ranges {
   template<InputIterator I, Sentinel<I> S, class T1, class T2, OutputIterator<const T2&> O,
@@ -4348,10 +4295,33 @@ namespace ranges {
                       Proj proj = Proj{});
 }
 \end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+{\color{newclr}
+\pnum
+Let $E$ be
+\begin{itemize}
+\item \tcode{bool(*(first + (i - result)) == old_value)}
+  for \tcode{std::replace_copy},
+\item \tcode{bool(pred(*(first + (i - result))))}
+  for \tcode{std::replace_copy_if},
+\item \tcode{bool(invoke(proj, *(first + (i - result))) == old_value)}
+  for \tcode{ranges::replace_copy},
+\item \tcode{bool(invoke(pred, invoke(proj, *(first + (i - result)))))}
+  for \tcode{ranges::replace_copy_if}.
+\end{itemize}
+} %% \color{newclr}
+
 \pnum
 \requires
+The results of the expressions
+\tcode{*first}
+and
+\tcode{new_value}
+shall be writable\iref{iterator.requirements.general} to the
+\tcode{result}
+output iterator.
 The ranges
 \range{first}{last}
 and
@@ -4369,24 +4339,31 @@ either
 \tcode{new_value}
 or
 \tcode{*\brk(first + (i - result))}
-depending on whether the following corresponding conditions hold:
-
+depending on whether \newtxt{$E$ holds.} \oldtxt{the following corresponding
+conditions hold:}
+{\color{oldclr}
 \begin{codeblock}
-invoke(proj, *(first + (i - result))) == old_value
-invoke(pred, invoke(proj, *(first + (i - result)))) != false
+*(first + (i - result)) == old_value
+pred(*(first + (i - result))) != false
 \end{codeblock}
+} %% \color{oldclr}
 
 \pnum
 \returns
-\tcode{\{last, result + (last - first)\}}.
+\begin{itemize}
+\item \tcode{result + (last - first)} \newtxt{for the overloads in
+  namespace \tcode{std}, or}
+\item \newtxt{\tcode{\{last, result + (last - first)\}} for the overloads in
+  namespace \tcode{ranges}}.
+\end{itemize}
 
 \pnum
 \complexity
 Exactly
 \tcode{last - first}
-applications of the corresponding predicate and projection.
+applications of the corresponding predicate \newtxt{and any projection}.
 \end{itemdescr}
-\end{addedblock}
+
 
 \rSec2[alg.fill]{Fill}
 
