@@ -4529,48 +4529,7 @@ template<class ExecutionPolicy, class ForwardIterator, class Predicate>
                             ForwardIterator first, ForwardIterator last,
                             Predicate pred);
 \end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires
-The type of
-\tcode{*first}
-shall satisfy the \oldconcept{MoveAssignable}
-requirements (\cxxref{tab:moveassignable}).
-
-\pnum
-\effects
-Eliminates all the elements referred to by iterator
-\tcode{i}
-in the range \range{first}{last}
-for which the following corresponding conditions hold:
-\tcode{*i == value, pred(*i) != false}.
-
-\pnum
-\returns
-The end of the resulting range.
-
-\pnum
-\remarks Stable\cxxref{algorithm.stable}.
-
-\pnum
-\complexity
-Exactly
-\tcode{last - first}
-applications of the corresponding predicate.
-
-\pnum
-\begin{note}
-Each element in the range \range{ret}{last}, where \tcode{ret} is
-the returned value, has a valid but unspecified state, because the algorithms
-can eliminate elements by moving from elements that were originally
-in that range.
-\end{note}
-\end{itemdescr}
-
 \begin{addedblock}
-\indexlibrary{\idxcode{remove}}%
-\indexlibrary{\idxcode{remove_if}}%
 \begin{itemdecl}
 namespace ranges {
   template<ForwardIterator I, Sentinel<I> S, class T, class Proj = identity>
@@ -4593,29 +4552,47 @@ namespace ranges {
       remove_if(Rng&& rng, Pred pred, Proj proj = Proj{});
 }
 \end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+{\color{newclr}
+\pnum
+Let $E$ be
+\begin{itemize}
+\item \tcode{bool(*i == value)} for \tcode{std::remove},
+\item \tcode{bool(pred(*i))} for \tcode{std::remove_if},
+\item \tcode{bool(invoke(proj, *i) == value)} for \tcode{ranges::remove}, or
+\item \tcode{bool(invoke(pred, invoke(proj, *i)))} for \tcode{ranges::remove_if}.
+\end{itemize}
+} %% \color{newclr}
+
+\pnum
+\requires
+\oldtxt{The} \newtxt{For the algorithms in namespace \tcode{std}, the} type of
+\tcode{*first}
+shall \oldtxt{satisfy} \newtxt{meet} the \oldconcept{MoveAssignable}
+requirements\cxxiref{tab:moveassignable}.
+
 \pnum
 \effects
 Eliminates all the elements referred to by iterator
 \tcode{i}
 in the range \range{first}{last}
-for which the following corresponding conditions hold:
-\tcode{invoke(proj, *i) == value},
-\tcode{invoke(pred, invoke(proj, *i)) != false}.
+for which \newtxt{$E$ holds} \oldtxt{the following corresponding conditions hold:
+\tcode{*i == value, pred(*i) != false}}.
 
 \pnum
 \returns
 The end of the resulting range.
 
 \pnum
-\remarks Stable~(\cxxref{algorithm.stable}).
+\remarks Stable\cxxiref{algorithm.stable}.
 
 \pnum
 \complexity
 Exactly
 \tcode{last - first}
-applications of the corresponding predicate and projection.
+applications of the corresponding predicate \newtxt{and any projection}.
 
 \pnum
 \begin{note}
@@ -4625,7 +4602,7 @@ can eliminate elements by moving from elements that were originally
 in that range.
 \end{note}
 \end{itemdescr}
-\end{addedblock}
+
 
 \indexlibrary{\idxcode{remove_copy}}%
 \indexlibrary{\idxcode{remove_copy_if}}%
@@ -4652,47 +4629,7 @@ template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2,
                    ForwardIterator1 first, ForwardIterator1 last,
                    ForwardIterator2 result, Predicate pred);
 \end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires
-The ranges
-\range{first}{last}
-and
-\range{result}{result + (last - first)}
-shall not overlap. The expression \tcode{*result = *first} shall be valid.
-\begin{note}
-For the overloads with an \tcode{ExecutionPolicy}, there may be a performance
-cost if \tcode{iterator_traits<ForwardIterator1>::value_type} is not
-\tcode{Move\-Constructible} (\cxxref{tab:moveconstructible}).
-\end{note}
-
-\pnum
-\effects
-Copies all the elements referred to by the iterator
-\tcode{i}
-in the range
-\range{first}{last}
-for which the following corresponding conditions do not hold:
-\tcode{*i == value, pred(*i) != false}.
-
-\pnum
-\returns
-The end of the resulting range.
-
-\pnum
-\complexity
-Exactly
-\tcode{last - first}
-applications of the corresponding predicate.
-
-\pnum
-\remarks Stable\cxxref{algorithm.stable}.
-\end{itemdescr}
-
 \begin{addedblock}
-\indexlibrary{\idxcode{remove_copy}}%
-\indexlibrary{\idxcode{remove_copy_if}}%
 \begin{itemdecl}
 namespace ranges {
   template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O, class T,
@@ -4722,15 +4659,35 @@ namespace ranges {
       remove_copy_if(Rng&& rng, O result, Pred pred, Proj proj = Proj{});
 }
 \end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+{\color{newclr}
+\pnum
+Let $E$ be
+\begin{itemize}
+\item \tcode{bool(*i == value)} for \tcode{std::remove_copy},
+\item \tcode{bool(pred(*i))} for \tcode{std::remove_copy_if},
+\item \tcode{bool(invoke(proj, *i) == value)} for \tcode{ranges::remove_copy}, or
+\item \tcode{bool(invoke(pred, invoke(proj, *i)))} for \tcode{ranges::remove_copy_if}.
+\end{itemize}
+
+\pnum
+Let $N$ be the number of elements in \range{first}{last} for which $E$ is \tcode{false}.
+} %% \color{newclr}
+
 \pnum
 \requires
 The ranges
 \range{first}{last}
 and
 \range{result}{result + (last - first)}
-shall not overlap.
+shall not overlap. The expression \tcode{*result = *first} shall be valid.
+\begin{note}
+For the overloads with an \tcode{ExecutionPolicy}, there may be a performance
+cost if \tcode{iterator_traits<ForwardIterator1>::value_type} \oldtxt{is} \newtxt{does} not
+\newtxt{meet the} \oldconcept{MoveConstructible}\cxxiref{tab:moveconstructible} \newtxt{requirements}.
+\end{note}
 
 \pnum
 \effects
@@ -4738,25 +4695,28 @@ Copies all the elements referred to by the iterator
 \tcode{i}
 in the range
 \range{first}{last}
-for which the following corresponding conditions do not hold:
-\tcode{invoke(proj, *i) == value},
-\tcode{invoke(pred, invoke(proj, *i)) != false}.
+for which \newtxt{$E$ is \tcode{false}} \oldtxt{the following corresponding conditions do not hold:
+\tcode{*i == value, pred(*i) != false}}.
 
 \pnum
-\returns
-\oldtxt{A pair consisting of \tcode{last} and the end of the resulting range}
-\tcode{\newtxt{\{last, result + (last - first)\}}}.
+\returns \oldtxt{The end of the resulting range.}
+{\color{newclr}
+\begin{itemize}
+\item \tcode{result + $N$}, for the algorithms in namespace \tcode{std}, or
+\item \tcode{\{last, result + $N$\}}, for the algorithms in namespace \tcode{ranges}.
+\end{itemize}
+} %% \color{newclr}
 
 \pnum
 \complexity
 Exactly
 \tcode{last - first}
-applications of the corresponding predicate and projection.
+applications of the corresponding predicate \newtxt{and any projection}.
 
 \pnum
-\remarks Stable~(\cxxref{algorithm.stable}).
+\remarks Stable\cxxiref{algorithm.stable}.
 \end{itemdescr}
-\end{addedblock}
+
 
 \rSec2[alg.unique]{Unique}
 
