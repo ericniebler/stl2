@@ -689,12 +689,14 @@ namespace std {
 
   // \ref{alg.swap}, swap
   template<class ForwardIterator1, class ForwardIterator2>
-    ForwardIterator2 swap_ranges(ForwardIterator1 first1, ForwardIterator1 last1,
-                                 ForwardIterator2 first2);
+    constexpr ForwardIterator2
+      swap_ranges(ForwardIterator1 first1, ForwardIterator1 last1,
+                  ForwardIterator2 first2);
   template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2>
-    ForwardIterator2 swap_ranges(ExecutionPolicy&& exec, // see \cxxref{algorithms.parallel.overloads}
-                                 ForwardIterator1 first1, ForwardIterator1 last1,
-                                 ForwardIterator2 first2);
+    ForwardIterator2
+      swap_ranges(ExecutionPolicy&& exec, // see \cxxref{algorithms.parallel.overloads}
+                  ForwardIterator1 first1, ForwardIterator1 last1,
+                  ForwardIterator2 first2);
 \end{codeblock}\begin{addedblock}\begin{codeblock}
   namespace ranges {
     @\newtxt{template<class I1, class I2>}@
@@ -4194,8 +4196,8 @@ namespace ranges {
 \pnum
 Let $E$ be
 \begin{itemize}
-\item \tcode{bool(*i == old_value)} for the \tcode{std::replace},
-\item \tcode{bool(pred(*i))} for \tcode{std::replace_if},
+\item \tcode{bool(*i == old_value)} for the \tcode{replace},
+\item \tcode{bool(pred(*i))} for \tcode{replace_if},
 \item \tcode{bool(invoke(proj, *i) == old_value)} for \tcode{ranges::replace}, or
 \item \tcode{bool(invoke(pred, invoke(proj, *i)))} for \tcode{ranges::replace_if}.
 \end{itemize}
@@ -4303,9 +4305,9 @@ namespace ranges {
 Let $E$ be
 \begin{itemize}
 \item \tcode{bool(*(first + (i - result)) == old_value)}
-  for \tcode{std::replace_copy},
+  for \tcode{replace_copy},
 \item \tcode{bool(pred(*(first + (i - result))))}
-  for \tcode{std::replace_copy_if},
+  for \tcode{replace_copy_if},
 \item \tcode{bool(invoke(proj, *(first + (i - result))) == old_value)}
   for \tcode{ranges::replace_copy},
 \item \tcode{bool(invoke(pred, invoke(proj, *(first + (i - result)))))}
@@ -4559,8 +4561,8 @@ namespace ranges {
 \pnum
 Let $E$ be
 \begin{itemize}
-\item \tcode{bool(*i == value)} for \tcode{std::remove},
-\item \tcode{bool(pred(*i))} for \tcode{std::remove_if},
+\item \tcode{bool(*i == value)} for \tcode{remove},
+\item \tcode{bool(pred(*i))} for \tcode{remove_if},
 \item \tcode{bool(invoke(proj, *i) == value)} for \tcode{ranges::remove}, or
 \item \tcode{bool(invoke(pred, invoke(proj, *i)))} for \tcode{ranges::remove_if}.
 \end{itemize}
@@ -4666,8 +4668,8 @@ namespace ranges {
 \pnum
 Let $E$ be
 \begin{itemize}
-\item \tcode{bool(*i == value)} for \tcode{std::remove_copy},
-\item \tcode{bool(pred(*i))} for \tcode{std::remove_copy_if},
+\item \tcode{bool(*i == value)} for \tcode{remove_copy},
+\item \tcode{bool(pred(*i))} for \tcode{remove_copy_if},
 \item \tcode{bool(invoke(proj, *i) == value)} for \tcode{ranges::remove_copy}, or
 \item \tcode{bool(invoke(pred, invoke(proj, *i)))} for \tcode{ranges::remove_copy_if}.
 \end{itemize}
@@ -4736,37 +4738,6 @@ template<class ExecutionPolicy, class ForwardIterator, class BinaryPredicate>
                          ForwardIterator first, ForwardIterator last,
                          BinaryPredicate pred);
 \end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires
-The comparison function shall be an equivalence relation.
-The type of \tcode{*first} shall satisfy the
-\oldconcept{MoveAssignable} requirements (\cxxref{tab:moveassignable}).
-
-\pnum
-\effects
-For a nonempty range, eliminates all but the first element from every
-consecutive group of equivalent elements referred to by the iterator
-\tcode{i}
-in the range
-\range{first + 1}{last}
-for which the following conditions hold:
-\tcode{*(i - 1) == *i}
-or
-\tcode{pred(*(i - 1), *i) != false}.
-
-\pnum
-\returns
-The end of the resulting range.
-
-\pnum
-\complexity
-For nonempty ranges, exactly
-\tcode{(last - first) - 1}
-applications of the corresponding predicate.
-\end{itemdescr}
-
 \begin{addedblock}
 \indexlibrary{\idxcode{unique}}%
 \begin{itemdecl}
@@ -4782,8 +4753,29 @@ namespace ranges {
       unique(Rng&& rng, R comp = R{}, Proj proj = Proj{});
 }
 \end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+{\color{newclr}
+\pnum
+Let \tcode{pred} be \tcode{equal_to<>\{\}} for the overloads with no
+parameter \tcode{pred}, and let $E$ be
+\begin{itemize}
+\item \tcode{bool(pred(*(i - 1), *i))}
+  for the overloads in namespace \tcode{std}, or
+\item \tcode{bool(invoke(comp, invoke(proj, *(i - 1)), invoke(proj, *i)))}
+  for the overloads in namespace \tcode{ranges}.
+\end{itemize}
+} %% \color{newclr}
+
+\pnum
+\requires
+\oldtxt{The comparison function} \newtxt{For the overloads in
+namepace \tcode{std}, \tcode{pred}} shall be
+an equivalence relation\oldtxt{. The} \newtxt{and the}
+type of \tcode{*first} shall \oldtxt{satisfy} \newtxt{meet} the
+\oldconcept{MoveAssignable} requirements (\cxxref{tab:moveassignable}).
+
 \pnum
 \effects
 For a nonempty range, eliminates all but the first element from every
@@ -4791,10 +4783,10 @@ consecutive group of equivalent elements referred to by the iterator
 \tcode{i}
 in the range
 \range{first + 1}{last}
-for which the following conditions hold:
-\tcode{invoke(proj, *(i - 1)) == invoke(proj, *i)}
+for which \newtxt{$E$ is \tcode{true}.} \oldtxt{the following conditions hold:
+\tcode{*(i - 1) == *i}
 or
-\tcode{invoke(pred, invoke(proj, *(i - 1)), invoke(proj, *i)) != false}.
+\tcode{pred(*(i - 1), *i) != false}.}
 
 \pnum
 \returns
@@ -4804,10 +4796,10 @@ The end of the resulting range.
 \complexity
 For nonempty ranges, exactly
 \tcode{(last - first) - 1}
-applications of the corresponding predicate and no more than twice as many
-applications of the projection.
+applications of the corresponding predicate \newtxt{and no more than twice as
+many applications of any projection}.
 \end{itemdescr}
-\end{addedblock}
+
 
 \indexlibrary{\idxcode{unique_copy}}%
 \begin{itemdecl}
@@ -4833,68 +4825,7 @@ template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2,
                 ForwardIterator1 first, ForwardIterator1 last,
                 ForwardIterator2 result, BinaryPredicate pred);
 \end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires
-\begin{itemize}
-\item
-The comparison function shall be an equivalence relation.
-
-\item
-The ranges
-\range{first}{last}
-and
-\range{result}{result+(last-first)}
-shall not overlap.
-
-\item
-The expression
-\tcode{*result = *first}
-shall be valid.
-
-\item
-For the overloads with no \tcode{ExecutionPolicy},
-let \tcode{T} be the value type of \tcode{InputIterator}.
-If \tcode{InputIterator} meets the forward iterator requirements,
-then there are no additional requirements for \tcode{T}.
-Otherwise, if \tcode{OutputIterator} meets the forward iterator
-requirements and its value type is the same as \tcode{T},
-then \tcode{T} shall be \oldconcept{CopyAssignable} (\cxxref{tab:copyassignable}).
-Otherwise, \tcode{T} shall be both
-\oldconcept{CopyConstructible} (\cxxref{tab:copyconstructible}) and \oldconcept{CopyAssignable}.
-\begin{note}
-For the overloads with an \tcode{ExecutionPolicy}, there may be a performance
-cost if the value type of \tcode{ForwardIterator1} is not both
-\oldconcept{CopyConstructible} and \oldconcept{CopyAssignable}.
-\end{note}
-\end{itemize}
-
-\pnum
-\effects
-Copies only the first element from every consecutive group of equal elements referred to by
-the iterator
-\tcode{i}
-in the range
-\range{first}{last}
-for which the following corresponding conditions hold:
-\tcode{*i == *(i - 1)}
-or
-\tcode{pred(*i, *(i - 1)) != false}.
-
-\pnum
-\returns
-The end of the resulting range.
-
-\pnum
-\complexity
-For nonempty ranges, exactly
-\tcode{last - first - 1}
-applications of the corresponding predicate.
-\end{itemdescr}
-
 \begin{addedblock}
-\indexlibrary{\idxcode{unique_copy}}%
 \begin{itemdecl}
 namespace ranges {
   template<InputIterator I, Sentinel<I> S, WeaklyIncrementable O,
@@ -4917,15 +4848,66 @@ namespace ranges {
       unique_copy(Rng&& rng, O result, R comp = R{}, Proj proj = Proj{});
 }
 \end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+\begin{newnewblock}
+\pnum
+Let \tcode{pred} be \tcode{equal_to<>\{\}} for the overloads in
+namespace \tcode{std} with no parameter \tcode{pred}, and let $E$ be
+\begin{itemize}
+\item \tcode{bool(pred(*i, *(i - 1)))}
+  for the overloads in namespace \tcode{std}, or
+\item \tcode{bool(invoke(comp, invoke(proj, *i), invoke(proj, *(i - 1))))}
+  for the overloads in namespace \tcode{ranges}.
+\end{itemize}
+\end{newnewblock}
+
 \pnum
 \requires
+\begin{itemize}
+\item
+\oldoldtxt{The comparison function shall be an equivalence relation.}
+
+\item
 The ranges
 \range{first}{last}
 and
-\range{result}{result + (last - first)}
+\range{result}{result+(last-first)}
 shall not overlap.
+
+\item
+\newnewtxt{For the overloads in namespace \tcode{std}:}
+\begin{itemize}
+\item
+\newnewtxt{The comparison function shall be an equivalence relation.}
+
+\item
+The expression
+\tcode{*result = *first}
+shall be valid.
+
+\item
+For the overloads with no \tcode{ExecutionPolicy},
+let \tcode{T} be the value type of \tcode{InputIterator}.
+If \tcode{InputIterator} meets the \oldtxt{forward iterator}
+\newtxt{\oldconcept{ForwardIterator}} requirements,
+then there are no additional requirements for \tcode{T}.
+Otherwise, if \tcode{OutputIterator} meets the \oldtxt{forward iterator}
+\newtxt{\oldconcept{ForwardIterator}} requirements and its value type is
+the same as \tcode{T}, then \tcode{T} shall \oldtxt{be} \newtxt{meet the}
+\oldconcept{CopyAssignable}\cxxiref{tab:copyassignable} \newtxt{requirements}.
+Otherwise, \tcode{T} shall \oldtxt{be both} \newtxt{meet the}
+\oldconcept{CopyConstructible}\cxxiref{tab:copyconstructible} and
+\oldconcept{CopyAssignable} \newtxt{requirements}.
+\begin{note}
+For the overloads with an \tcode{ExecutionPolicy}, there may be a performance
+cost if the value type of \tcode{ForwardIterator1} \oldtxt{is not both}
+\newtxt{does not meet the} \oldconcept{CopyConstructible} and
+\oldconcept{CopyAssignable} \newtxt{requirements}.
+\end{note}
+\end{itemize}
+\end{itemize}
 
 \pnum
 \effects
@@ -4934,64 +4916,43 @@ the iterator
 \tcode{i}
 in the range
 \range{first}{last}
-for which the following corresponding conditions hold:
-\begin{codeblock}
-invoke(proj, *i) == invoke(proj, *(i - 1))
-\end{codeblock}
+for which \newnewtxt{$E$ holds.}
+\oldoldtxt{the following corresponding conditions hold:
+\tcode{*i == *(i - 1)}
 or
-\begin{codeblock}
-invoke(pred, invoke(proj, *i), invoke(proj, *(i - 1))) != false.
-\end{codeblock}
+\tcode{pred(*i, *(i - 1)) != false}.}
 
 \pnum
 \returns
-\oldtxt{A pair consisting of \tcode{last} and the end of the resulting range}
-\tcode{\newtxt{\{last, result + (last - first)\}}}.
+\oldoldtxt{The end of the resulting range.}
+\begin{newnewblock}
+\begin{itemize}
+\item \tcode{result + $N$} for the overloads in namespace \tcode{std}, or
+\item \tcode{\{last, result + $N$\}} for the overloads in namespace \tcode{ranges}
+\end{itemize}
+where $N$ is the number of groups of equal elements.
+\end{newnewblock}
 
 \pnum
 \complexity
 For nonempty ranges, exactly
 \tcode{last - first - 1}
-applications of the corresponding predicate and no more than twice as many
-applications of the projection.
+applications of the corresponding predicate
+\newtxt{and no more than twice as many applications of any projection}.
 \end{itemdescr}
-\end{addedblock}
+
 
 \rSec2[alg.reverse]{Reverse}
 
 \indexlibrary{\idxcode{reverse}}%
 \begin{itemdecl}
 template<class BidirectionalIterator>
-  void reverse(BidirectionalIterator first, BidirectionalIterator last);
+  constexpr void reverse(BidirectionalIterator first, BidirectionalIterator last);
 template<class ExecutionPolicy, class BidirectionalIterator>
   void reverse(ExecutionPolicy&& exec,
                BidirectionalIterator first, BidirectionalIterator last);
 \end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires
-\tcode{BidirectionalIterator} shall satisfy the
-\oldconcept{ValueSwappable} requirements~(\cxxref{swappable.requirements}).
-
-\pnum
-\effects
-For each non-negative integer
-\tcode{i < (last - first) / 2},
-applies
-\tcode{iter_swap}
-to all pairs of iterators
-\tcode{first + i, (last - i) - 1}.
-
-\pnum
-\complexity
-Exactly
-\tcode{(last - first)/2}
-swaps.
-\end{itemdescr}
-
 \begin{addedblock}
-\indexlibrary{\idxcode{reverse}}%
 \begin{itemdecl}
 namespace ranges {
   template<BidirectionalIterator I, Sentinel<I> S>
@@ -5002,27 +4963,38 @@ namespace ranges {
     @\newtxt{constexpr}@ safe_iterator_t<Rng> reverse(Rng&& rng);
 }
 \end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
+\requires
+\newtxt{For the overloads in namespace \tcode{std},}
+\tcode{BidirectionalIterator} shall satisfy the
+\oldconcept{ValueSwappable} requirements~(\cxxref{swappable.requirements}).
+
+\pnum
 \effects
 For each non-negative integer
-\tcode{i < (last - first)/2},
+\tcode{i < (last - first) / 2},
 applies
-\tcode{iter_swap}
+\tcode{iter_swap}\newtxt{, or \tcode{ranges::iter_swap} for the overloads
+in namespace \tcode{ranges},}
 to all pairs of iterators
 \tcode{first + i, (last - i) - 1}.
 
+\begin{newnewblock}
 \pnum
-\returns \tcode{last}.
+\returns
+\tcode{last} for the overloads in namespace \tcode{ranges}.
+\end{newnewblock}
 
 \pnum
 \complexity
 Exactly
-\tcode{(last - first)/2}
+\tcode{(last - first)\newtxt{ }/\newtxt{ }2}
 swaps.
 \end{itemdescr}
-\end{addedblock}
+
 
 \indexlibrary{\idxcode{reverse_copy}}%
 \begin{itemdecl}
@@ -5036,41 +5008,7 @@ template<class ExecutionPolicy, class BidirectionalIterator, class ForwardIterat
                  BidirectionalIterator first, BidirectionalIterator last,
                  ForwardIterator result);
 \end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires
-The ranges
-\range{first}{last}
-and
-\range{result}{result + (last - first)}
-shall not overlap.
-
-\pnum
-\effects
-Copies the range
-\range{first}{last}
-to the range
-\range{result}{result + (last - first)}
-such that
-for every non-negative integer
-\tcode{i < (last - first)}
-the following assignment takes place:
-\tcode{*(result + (last - first) - 1 - i) = *(first + i)}.
-
-\pnum
-\returns
-\tcode{result + (last - first)}.
-
-\pnum
-\complexity
-Exactly
-\tcode{last - first}
-assignments.
-\end{itemdescr}
-
 \begin{addedblock}
-\indexlibrary{\idxcode{reverse_copy}}%
 \begin{itemdecl}
 namespace ranges {
   template<BidirectionalIterator I, Sentinel<I> S, WeaklyIncrementable O>
@@ -5085,8 +5023,17 @@ namespace ranges {
       reverse_copy(Rng&& rng, O result);
 }
 \end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+\pnum
+\requires
+The ranges
+\range{first}{last}
+and
+\range{result}{result + (last - first)}
+shall not overlap.
+
 \pnum
 \effects
 Copies the range
@@ -5100,16 +5047,14 @@ the following assignment takes place:
 \tcode{*(result + (last - first) - 1 - i) = *(first + i)}.
 
 \pnum
-\requires
-The ranges
-\range{first}{last}
-and
-\range{result}{result + (last - first)}
-shall not overlap.
-
-\pnum
 \returns
-\tcode{\{last, result + (last - first)\}}.
+\begin{itemize}
+\item \tcode{result + (last - first)}\newtxt{ for the overloads in
+  namespace \tcode{std}}, or
+
+\item \newtxt{\tcode{\{last, result + (last - first)\}} for the overloads
+  in namespace \tcode{ranges}}.
+\end{itemize}
 
 \pnum
 \complexity
@@ -5117,9 +5062,12 @@ Exactly
 \tcode{last - first}
 assignments.
 \end{itemdescr}
-\end{addedblock}
+
 
 \rSec2[alg.rotate]{Rotate}
+
+\ednote{This wording incorporates the PR for
+\href{https://github.com/ericniebler/stl2/issues/526}{stl2\#526}).}
 
 \indexlibrary{\idxcode{rotate}}%
 \begin{itemdecl}
@@ -5131,47 +5079,7 @@ template<class ExecutionPolicy, class ForwardIterator>
     rotate(ExecutionPolicy&& exec,
            ForwardIterator first, ForwardIterator middle, ForwardIterator last);
 \end{itemdecl}
-
-\ednote{This wording incorporates the PR for
-\href{https://github.com/ericniebler/stl2/issues/526}{stl2\#526}).}
-
-\begin{itemdescr}
-\pnum
-\requires
-\range{first}{middle}
-and
-\range{middle}{last}
-shall be valid ranges.
-\tcode{ForwardIterator} shall satisfy the
-\oldconcept{ValueSwappable} requirements~(\cxxref{swappable.requirements}). The type of \tcode{*first} shall satisfy
-the \oldconcept{MoveConstructible} (\cxxref{tab:moveconstructible}) and
-\oldconcept{MoveAssignable} (\cxxref{tab:moveassignable}) requirements.
-
-\pnum
-\effects
-For each non-negative integer
-\tcode{i < (last - first)},
-places the element from the position
-\tcode{first + i}
-into position
-\tcode{first + (i + (last - middle)) \% (last - first)}.
-
-\pnum
-\returns \tcode{first + (last - middle)}.
-
-\pnum
-\remarks
-This is a left rotate.
-
-\pnum
-\complexity
-At most
-\tcode{last - first}
-swaps.
-\end{itemdescr}
-
 \begin{addedblock}
-\indexlibrary{\idxcode{rotate}}%
 \begin{itemdecl}
 namespace ranges {
   template<ForwardIterator I, Sentinel<I> S>
@@ -5187,8 +5095,23 @@ namespace ranges {
       rotate(Rng&& rng, iterator_t<Rng> middle);
 }
 \end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+\pnum
+\requires
+\range{first}{middle}
+and
+\range{middle}{last}
+shall be valid ranges.
+\newtxt{For the overloads in namespace \tcode{std},}
+\tcode{ForwardIterator} shall \oldtxt{satisfy} \newtxt{meet} the
+\oldconcept{ValueSwappable}
+requirements~(\cxxref{swappable.requirements})\oldtxt{. The} \newtxt{, and the}
+type of \tcode{*first} shall \oldtxt{satisfy} \newtxt{meet}
+the \oldconcept{MoveConstructible} (\cxxref{tab:moveconstructible}) and
+\oldconcept{MoveAssignable} (\cxxref{tab:moveassignable}) requirements.
+
 \pnum
 \effects
 For each non-negative integer
@@ -5197,20 +5120,24 @@ places the element from the position
 \tcode{first + i}
 into position
 \tcode{first + (i + (last - middle)) \% (last - first)}.
+\begin{newnewblock}
+\begin{note}
+\newtxt{This is a left rotate.}
+\end{note}
+\end{newnewblock}
 
 \pnum
-\returns \tcode{\{first + (last - middle), last\}}.
+\returns
+\begin{itemize}
+\item \tcode{first + (last - middle)} \newtxt{for the overloads in
+  namespace \tcode{std}, or}
+\item \newtxt{\tcode{\{first + (last - middle), last\}} for the overloads in
+  namespace \tcode{ranges}}.
+\end{itemize}
 
 \pnum
-\remarks
-This is a left rotate.
-
-\pnum
-\requires
-\range{first}{middle}
-and
-\range{middle}{last}
-shall be valid ranges.
+\oldtxt{\remarks
+This is a left rotate.}
 
 \pnum
 \complexity
@@ -5218,7 +5145,7 @@ At most
 \tcode{last - first}
 swaps.
 \end{itemdescr}
-\end{addedblock}
+
 
 \indexlibrary{\idxcode{rotate_copy}}%
 \begin{itemdecl}
@@ -5232,41 +5159,7 @@ template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2>
                 ForwardIterator1 first, ForwardIterator1 middle, ForwardIterator1 last,
                 ForwardIterator2 result);
 \end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires
-The ranges
-\range{first}{last}
-and
-\range{result}{result + (last - first)}
-shall not overlap.
-
-\pnum
-\effects
-Copies the range
-\range{first}{last}
-to the range
-\range{result}{result + (last - first)}
-such that for each non-negative integer
-\tcode{i < (last - first)}
-the following assignment takes place:
-\tcode{*(result + i) =  *(first +
-(i + (middle - first)) \% (last - first))}.
-
-\pnum
-\returns
-\tcode{result + (last - first)}.
-
-\pnum
-\complexity
-Exactly
-\tcode{last - first}
-assignments.
-\end{itemdescr}
-
 \begin{addedblock}
-\indexlibrary{\idxcode{rotate_copy}}%
 \begin{itemdecl}
 namespace ranges {
   template<ForwardIterator I, Sentinel<I> S, WeaklyIncrementable O>
@@ -5281,8 +5174,17 @@ namespace ranges {
       rotate_copy(Rng&& rng, iterator_t<Rng> middle, O result);
 }
 \end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+\pnum
+\requires
+The ranges
+\range{first}{last}
+and
+\range{result}{result + (last - first)}
+shall not overlap.
+
 \pnum
 \effects
 Copies the range
@@ -5297,15 +5199,12 @@ the following assignment takes place:
 
 \pnum
 \returns
-\tcode{\{last, result + (last - first)\}}.
-
-\pnum
-\requires
-The ranges
-\range{first}{last}
-and
-\range{result}{result + (last - first)}
-shall not overlap.
+\begin{itemize}
+\item \tcode{result + (last - first)} \newtxt{for the overloads in
+  namespace \tcode{std}, or}
+\item \newtxt{\tcode{\{last, result + (last - first)\}} for the overloads in
+  namespace \tcode{ranges}}.
+\end{itemize}
 
 \pnum
 \complexity
@@ -5313,7 +5212,7 @@ Exactly
 \tcode{last - first}
 assignments.
 \end{itemdescr}
-\end{addedblock}
+
 
 \rSec2[alg.random.sample]{Sample}
 
@@ -5328,62 +5227,52 @@ template<class RandomAccessIterator, class UniformRandomBitGenerator>
                RandomAccessIterator last,
                UniformRandomBitGenerator&& g);
 \end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires
-\tcode{RandomAccessIterator} shall satisfy the
-\oldconcept{ValueSwappable} requirements~(\cxxref{swappable.requirements}).
-The type
-\tcode{remove_reference_t<UniformRandomBitGenerator>}
-shall satisfy the requirements of a
-uniform random bit generator\cxxref{rand.req.urng} type whose return type is
-convertible to
-\tcode{iterator_traits<Random\-Access\-Itera\-tor>::difference_type}.
-
-\pnum
-\effects
-Permutes the elements in the range
-\range{first}{last}
-such that each possible permutation of those elements has equal probability of appearance.
-
-\pnum
-\complexity
-Exactly
-\tcode{(last - first) - 1}
-swaps.
-
-\pnum
-\remarks
-To the extent that the implementation of this function makes use of random
-numbers, the object \tcode{g} shall serve as the implementation's source of
-randomness.
-\end{itemdescr}
-
 \begin{addedblock}
-\indexlibrary{\idxcode{shuffle}}%
 \begin{itemdecl}
 namespace ranges {
   template<RandomAccessIterator I, Sentinel<I> S, class Gen>
     requires Permutable<I> &&
       UniformRandom@\oldtxt{Number}\newtxt{Bit}@Generator<remove_reference_t<Gen>> &&
-      ConvertibleTo<@\oldtxt{result_of_t<Gen\&()>}\newtxt{invoke_result_t<Gen\&>}@, @\newtxt{iter_}@difference@\oldtxt{_type}@_t<I>>
+      @\oldtxt{ConvertibleTo<result_of_t<Gen\&()>, difference_type_t<I>>}@
+      @\newtxt{ConvertibleTo<invoke_result_t<Gen\&>, iter_difference_t<I>>}@
     I shuffle(I first, S last, Gen&& g);
   template<RandomAccessRange Rng, class Gen>
     requires Permutable<@\newtxt{iterator_t<Rng>} \oldtxt{I}@> &&
       UniformRandom@\oldtxt{Number}\newtxt{Bit}@Generator<remove_reference_t<Gen>> &&
-      ConvertibleTo<@\oldtxt{result_of_t<Gen\&()>}\newtxt{invoke_result_t<Gen\&>}@, @\newtxt{iter_}@difference@\oldtxt{_type}@_t<@\newtxt{iterator_t<Rng>} \oldtxt{I}@>>
+      @\oldtxt{ConvertibleTo<result_of_t<Gen\&()>, difference_type_t<I>>}@
+      @\newtxt{ConvertibleTo<invoke_result_t<Gen\&>, iter_difference_t<iterator_t<Rng>>>}@
     safe_iterator_t<Rng>
       shuffle(Rng&& rng, Gen&& g);
 }
 \end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+\pnum
+\requires
+\newtxt{For the overloads in namespace \tcode{std}:}
+\begin{itemize}
+\item \tcode{RandomAccessIterator} shall \oldtxt{satisfy} \newtxt{meet} the
+\oldconcept{ValueSwappable} requirements~(\cxxref{swappable.requirements}).
+\item The type
+\tcode{remove_reference_t<UniformRandomBitGenerator>}
+shall \oldtxt{satisfy the requirements of a} \newtxt{meet the}
+uniform random bit generator\cxxiref{rand.req.urng} \newtxt{requirements} \oldtxt{type whose return type is
+convertible to
+\tcode{iterator_traits<Random\-Access\-Itera\-tor>::difference_type}}.
+\end{itemize}
+
 \pnum
 \effects
 Permutes the elements in the range
 \range{first}{last}
 such that each possible permutation of those elements has equal probability of appearance.
+
+\begin{newnewblock}
+\pnum
+\returns
+\tcode{last} for the overloads in namespace \tcode{ranges}.
+\end{newnewblock}
 
 \pnum
 \complexity
@@ -5392,15 +5281,12 @@ Exactly
 swaps.
 
 \pnum
-\returns \tcode{last}
-
-\pnum
 \remarks
 To the extent that the implementation of this function makes use of random
-numbers, the object \tcode{g} shall serve as the implementation's source of
-randomness.
+numbers, the object \newtxt{referenced by} \tcode{g} shall serve as
+the implementation's source of randomness.
 \end{itemdescr}
-\end{addedblock}
+
 
 \rSec1[alg.sorting]{Sorting and related operations}
 
