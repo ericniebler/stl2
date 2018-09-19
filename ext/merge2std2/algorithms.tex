@@ -1341,9 +1341,9 @@ namespace std {
   // \ref{alg.sorting}, sorting and related operations
   // \ref{alg.sort}, sorting
   template<class RandomAccessIterator>
-    void sort(RandomAccessIterator first, RandomAccessIterator last);
+    constexpr void sort(RandomAccessIterator first, RandomAccessIterator last);
   template<class RandomAccessIterator, class Compare>
-    void sort(RandomAccessIterator first, RandomAccessIterator last,
+    constexpr void sort(RandomAccessIterator first, RandomAccessIterator last,
               Compare comp);
   template<class ExecutionPolicy, class RandomAccessIterator>
     void sort(ExecutionPolicy&& exec, // see \cxxref{algorithms.parallel.overloads}
@@ -1392,13 +1392,13 @@ namespace std {
 \end{codeblock}\end{addedblock}\begin{codeblock}
 
   template<class RandomAccessIterator>
-    void partial_sort(RandomAccessIterator first,
-                      RandomAccessIterator middle,
-                      RandomAccessIterator last);
+    constexpr void partial_sort(RandomAccessIterator first,
+                                RandomAccessIterator middle,
+                                RandomAccessIterator last);
   template<class RandomAccessIterator, class Compare>
-    void partial_sort(RandomAccessIterator first,
-                      RandomAccessIterator middle,
-                      RandomAccessIterator last, Compare comp);
+    constexpr void partial_sort(RandomAccessIterator first,
+                                RandomAccessIterator middle,
+                                RandomAccessIterator last, Compare comp);
   template<class ExecutionPolicy, class RandomAccessIterator>
     void partial_sort(ExecutionPolicy&& exec, // see \cxxref{algorithms.parallel.overloads}
                       RandomAccessIterator first,
@@ -1424,12 +1424,12 @@ namespace std {
   }
 \end{codeblock}\end{addedblock}\begin{codeblock}
   template<class InputIterator, class RandomAccessIterator>
-    RandomAccessIterator
+    constexpr RandomAccessIterator
       partial_sort_copy(InputIterator first, InputIterator last,
                         RandomAccessIterator result_first,
                         RandomAccessIterator result_last);
   template<class InputIterator, class RandomAccessIterator, class Compare>
-    RandomAccessIterator
+    constexpr RandomAccessIterator
       partial_sort_copy(InputIterator first, InputIterator last,
                         RandomAccessIterator result_first,
                         RandomAccessIterator result_last,
@@ -1520,11 +1520,11 @@ namespace std {
 
   // \ref{alg.nth.element}, Nth element
   template<class RandomAccessIterator>
-    void nth_element(RandomAccessIterator first, RandomAccessIterator nth,
-                     RandomAccessIterator last);
+    constexpr void nth_element(RandomAccessIterator first, RandomAccessIterator nth,
+                               RandomAccessIterator last);
   template<class RandomAccessIterator, class Compare>
-    void nth_element(RandomAccessIterator first, RandomAccessIterator nth,
-                     RandomAccessIterator last, Compare comp);
+    constexpr void nth_element(RandomAccessIterator first, RandomAccessIterator nth,
+                               RandomAccessIterator last, Compare comp);
   template<class ExecutionPolicy, class RandomAccessIterator>
     void nth_element(ExecutionPolicy&& exec, // see \cxxref{algorithms.parallel.overloads}
                      RandomAccessIterator first, RandomAccessIterator nth,
@@ -5291,7 +5291,7 @@ the implementation's source of randomness.
 \rSec1[alg.sorting]{Sorting and related operations}
 
 \pnum
-All the operations in~\ref{alg.sorting} \added{directly in namespace \tcode{std}}
+\changed{All the}{The} operations in~\ref{alg.sorting} \added{defined directly in namespace \tcode{std}}
 have two versions: one that takes a function object of type
 \tcode{Compare}
 and one that uses an
@@ -5326,8 +5326,8 @@ defaults to
 For algorithms other than those described in~\ref{alg.binary.search},
 \tcode{comp} shall induce a strict weak ordering on the values.
 
-\ednote{This specification of strict weak ordering may be redundant with the
-specification of strict weak ordering in \cxxref{concepts}.}
+% \ednote{This specification of strict weak ordering may be redundant with the
+% specification of strict weak ordering in \cxxref{concepts}.}
 
 \pnum
 The term
@@ -5436,41 +5436,20 @@ are considered equivalent if and only if
 \indexlibrary{\idxcode{sort}}%
 \begin{itemdecl}
 template<class RandomAccessIterator>
-  void sort(RandomAccessIterator first, RandomAccessIterator last);
+  constexpr void sort(RandomAccessIterator first, RandomAccessIterator last);
 template<class ExecutionPolicy, class RandomAccessIterator>
   void sort(ExecutionPolicy&& exec,
             RandomAccessIterator first, RandomAccessIterator last);
 
 template<class RandomAccessIterator, class Compare>
-  void sort(RandomAccessIterator first, RandomAccessIterator last,
+  constexpr void sort(RandomAccessIterator first, RandomAccessIterator last,
             Compare comp);
 template<class ExecutionPolicy, class RandomAccessIterator, class Compare>
   void sort(ExecutionPolicy&& exec,
             RandomAccessIterator first, RandomAccessIterator last,
             Compare comp);
 \end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires
-\tcode{RandomAccessIterator} shall satisfy the
-\oldconcept{ValueSwappable} requirements~(\cxxref{swappable.requirements}). The type
-of \tcode{*first} shall satisfy the
-\oldconcept{MoveConstructible} (\cxxref{tab:moveconstructible}) and
-\oldconcept{MoveAssignable} (\cxxref{tab:moveassignable}) requirements.
-
-\pnum
-\effects
-Sorts the elements in the range
-\range{first}{last}.
-
-\pnum
-\complexity
-\bigoh{N \log N} comparisons, where $N = \tcode{last - first}$.
-\end{itemdescr}
-
 \begin{addedblock}
-\indexlibrary{\idxcode{sort}}%
 \begin{itemdecl}
 namespace ranges {
   template<RandomAccessIterator I, Sentinel<I> S, class Comp = @\newtxt{ranges::}@less<>,
@@ -5484,24 +5463,35 @@ namespace ranges {
       sort(Rng&& rng, Comp comp = Comp{}, Proj proj = Proj{});
 }
 \end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+\pnum
+\requires
+\newnewtxt{For the overloads in namespace \tcode{std},}
+\tcode{RandomAccessIterator} shall \oldoldtxt{satisfy}\newnewtxt{meet} the
+\oldconcept{ValueSwappable} requirements~(\cxxref{swappable.requirements})\oldoldtxt{.
+The}\newnewtxt{and the} type of \tcode{*first} shall \oldoldtxt{satisfy}\newnewtxt{meet} the
+\oldconcept{MoveConstructible}\cxxiref{tab:moveconstructible} and
+\oldconcept{MoveAssignable}\cxxiref{tab:moveassignable} requirements.
+
 \pnum
 \effects
 Sorts the elements in the range
 \range{first}{last}.
 
+\begin{newnewblock}
 \pnum
-\returns \tcode{last}.
+\returns \tcode{last}, for the overloads in namespace \tcode{ranges}.
+\end{newnewblock}
 
 \pnum
 \complexity
-\bigoh{N\log(N)}
-(where
-\tcode{$N$ == last - first})
-comparisons, and twice as many applications of the projection.
+\newnewtxt{Let $N$ be \tcode{last - first}.} \bigoh{N \log\newnewtxt{(}N\newnewtxt{)}}
+comparisons\newnewtxt{ and twice as many applications of any
+projection.}\oldoldtxt{, where $N = \tcode{last - first}$.}
 \end{itemdescr}
-\end{addedblock}
+
 
 \rSec3[stable.sort]{\tcode{stable_sort}}
 
@@ -5521,32 +5511,7 @@ template<class ExecutionPolicy, class RandomAccessIterator, class Compare>
                    RandomAccessIterator first, RandomAccessIterator last,
                    Compare comp);
 \end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires
-\tcode{RandomAccessIterator} shall satisfy the
-\oldconcept{ValueSwappable} requirements~(\cxxref{swappable.requirements}). The type
-of \tcode{*first} shall satisfy the
-\oldconcept{MoveConstructible} (\cxxref{tab:moveconstructible}) and
-\oldconcept{MoveAssignable} (\cxxref{tab:moveassignable}) requirements.
-
-\pnum
-\effects
-Sorts the elements in the range \range{first}{last}.
-
-\pnum
-\complexity
-At most $N \log^2(N)$
-comparisons, where
-$N = \tcode{last - first}$, but only $N \log N$ comparisons if there is enough extra memory.
-
-\pnum
-\remarks Stable\cxxref{algorithm.stable}.
-\end{itemdescr}
-
 \begin{addedblock}
-\indexlibrary{\idxcode{stable_sort}}%
 \begin{itemdecl}
 namespace ranges {
   template<RandomAccessIterator I, Sentinel<I> S, class Comp = @\newtxt{ranges::}@less<>,
@@ -5559,36 +5524,51 @@ namespace ranges {
       stable_sort(Rng&& rng, Comp comp = Comp{}, Proj proj = Proj{});
 }
 \end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+\pnum
+\requires
+\newnewtxt{For the overloads in namespace \tcode{std},}
+\tcode{RandomAccessIterator} shall \oldoldtxt{satisfy}\newnewtxt{meet} the
+\oldconcept{ValueSwappable} requirements\cxxiref{swappable.requirements}\oldoldtxt{.
+The} \newnewtxt{and the} type of \tcode{*first} shall
+\oldoldtxt{satisfy}\newnewtxt{meet} the
+\oldconcept{MoveConstructible}\cxxiref{tab:moveconstructible} and
+\oldconcept{MoveAssignable}\cxxiref{tab:moveassignable} requirements.
+
 \pnum
 \effects
 Sorts the elements in the range \range{first}{last}.
 
+\begin{newnewblock}
 \pnum
-\returns \tcode{last}.
+\returns \tcode{last} for the overloads in namespace \tcode{ranges}.
+\end{newnewblock}
 
 \pnum
 \complexity
-Let \tcode{$N$ == last - first}.
+\newnewtxt{Let $N$ be \tcode{last - first}.
 If enough extra memory is available, $N \log(N)$ comparisons.
 Otherwise, at most $N \log^2(N)$ comparisons.
-In either case, twice as many applications of the projection as the number of
-comparisons.
+In either case, twice as many applications of any projection as
+the number of comparisons.} \oldoldtxt{At most $N \log^2(N)$
+comparisons, where $N = \tcode{last - first}$,
+but only $N \log N$ comparisons if there is enough extra memory.}
 
 \pnum
-\remarks Stable~(\cxxref{algorithm.stable}).
+\remarks Stable\cxxiref{algorithm.stable}.
 \end{itemdescr}
-\end{addedblock}
+
 
 \rSec3[partial.sort]{\tcode{partial_sort}}
 
 \indexlibrary{\idxcode{partial_sort}}%
 \begin{itemdecl}
 template<class RandomAccessIterator>
-  void partial_sort(RandomAccessIterator first,
-                    RandomAccessIterator middle,
-                    RandomAccessIterator last);
+  constexpr void partial_sort(RandomAccessIterator first,
+                              RandomAccessIterator middle,
+                              RandomAccessIterator last);
 template<class ExecutionPolicy, class RandomAccessIterator>
   void partial_sort(ExecutionPolicy&& exec,
                     RandomAccessIterator first,
@@ -5596,50 +5576,18 @@ template<class ExecutionPolicy, class RandomAccessIterator>
                     RandomAccessIterator last);
 
 template<class RandomAccessIterator, class Compare>
-  void partial_sort(RandomAccessIterator first,
-                    RandomAccessIterator middle,
-                    RandomAccessIterator last,
-                    Compare comp);
+  constexpr void partial_sort(RandomAccessIterator first,
+                              RandomAccessIterator middle,
+                              RandomAccessIterator last,
+                              Compare comp);
 template<class ExecutionPolicy, class RandomAccessIterator, class Compare>
   void partial_sort(ExecutionPolicy&& exec,
                     RandomAccessIterator first,
                     RandomAccessIterator middle,
                     RandomAccessIterator last,
                     Compare comp);
-
 \end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires
-\tcode{RandomAccessIterator} shall satisfy the
-\oldconcept{ValueSwappable} requirements~(\cxxref{swappable.requirements}). The type
-of \tcode{*first} shall satisfy the
-\oldconcept{MoveConstructible} (\cxxref{tab:moveconstructible}) and
-\oldconcept{MoveAssignable} (\cxxref{tab:moveassignable}) requirements.
-
-\pnum
-\effects
-Places the first
-\tcode{middle - first}
-sorted elements from the range
-\range{first}{last}
-into the range
-\range{first}{middle}.
-The rest of the elements in the range
-\range{middle}{last}
-are placed in an unspecified order.
-\indextext{unspecified}%
-
-\pnum
-\complexity
-Approximately
-\tcode{(last - first) * log(middle - first)}
-comparisons.
-\end{itemdescr}
-
 \begin{addedblock}
-\indexlibrary{\idxcode{partial_sort}}%
 \begin{itemdecl}
 namespace ranges {
   template<RandomAccessIterator I, Sentinel<I> S, class Comp = @\newtxt{ranges::}@less<>,
@@ -5654,8 +5602,19 @@ namespace ranges {
                    Proj proj = Proj{});
 }
 \end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+\pnum
+\requires
+\newnewtxt{For the overloads in namespace \tcode{std},}
+\tcode{RandomAccessIterator} shall \oldoldtxt{satisfy}\newnewtxt{meet} the
+\oldconcept{ValueSwappable}
+requirements\cxxiref{swappable.requirements}\oldoldtxt{. The} \newnewtxt{and
+the} type of \tcode{*first} shall \oldoldtxt{satisfy}\newnewtxt{meet} the
+\oldconcept{MoveConstructible}\cxxiref{tab:moveconstructible} and
+\oldconcept{MoveAssignable}\cxxiref{tab:moveassignable} requirements.
+
 \pnum
 \effects
 Places the first
@@ -5669,23 +5628,26 @@ The rest of the elements in the range
 are placed in an unspecified order.
 \indextext{unspecified}%
 
+\begin{newnewblock}
 \pnum
-\returns \tcode{last}.
+\returns \tcode{last} for the overloads in namespace \tcode{ranges}.
+\end{newnewblock}
 
 \pnum
 \complexity
-It takes approximately
+Approximately
 \tcode{(last - first) * log(middle - first)}
-comparisons, and exactly twice as many applications of the projection.
+comparisons\newnewtxt{, and exactly twice as many applications
+of any projection}.
 \end{itemdescr}
-\end{addedblock}
+
 
 \rSec3[partial.sort.copy]{\tcode{partial_sort_copy}}
 
 \indexlibrary{\idxcode{partial_sort_copy}}%
 \begin{itemdecl}
 template<class InputIterator, class RandomAccessIterator>
-  RandomAccessIterator
+  constexpr RandomAccessIterator
     partial_sort_copy(InputIterator first, InputIterator last,
                       RandomAccessIterator result_first,
                       RandomAccessIterator result_last);
@@ -5698,7 +5660,7 @@ template<class ExecutionPolicy, class ForwardIterator, class RandomAccessIterato
 
 template<class InputIterator, class RandomAccessIterator,
          class Compare>
-  RandomAccessIterator
+  constexpr RandomAccessIterator
     partial_sort_copy(InputIterator first, InputIterator last,
                       RandomAccessIterator result_first,
                       RandomAccessIterator result_last,
@@ -5712,38 +5674,7 @@ template<class ExecutionPolicy, class ForwardIterator, class RandomAccessIterato
                       RandomAccessIterator result_last,
                       Compare comp);
 \end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires
-\tcode{RandomAccessIterator} shall satisfy the
-\oldconcept{ValueSwappable} requirements~(\cxxref{swappable.requirements}). The type
-of \tcode{*result_first} shall satisfy the
-\oldconcept{MoveConstructible} (\cxxref{tab:moveconstructible}) and
-\oldconcept{MoveAssignable} (\cxxref{tab:moveassignable}) requirements.
-
-\pnum
-\effects
-Places the first
-\tcode{min(last - first, result_last - result_first)}
-sorted elements into the range
-\range{result_first}{result_first + min(last - first, result_last - result_first)}.
-
-\pnum
-\returns
-The smaller of:
-\tcode{result_last} or
-\tcode{result_first + (last - first)}.
-
-\pnum
-\complexity
-Approximately
-\tcode{(last - first) * log(min(last - first, result_last - result_first))}
-comparisons.
-\end{itemdescr}
-
 \begin{addedblock}
-\indexlibrary{\idxcode{partial_sort_copy}}%
 \begin{itemdecl}
 namespace ranges {
   template<InputIterator I1, Sentinel<I1> S1, RandomAccessIterator I2, Sentinel<I2> S2,
@@ -5764,8 +5695,19 @@ namespace ranges {
                         Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
 }
 \end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+\pnum
+\requires
+\newnewtxt{For the overloads in namespace \tcode{std},}
+\tcode{RandomAccessIterator} shall \oldoldtxt{satisfy}\newnewtxt{meet} the
+\oldconcept{ValueSwappable} requirements\cxxiref{swappable.requirements}\oldoldtxt{.
+The} \newnewtxt{and the} type of \tcode{*result_first} shall
+\oldoldtxt{satisfy}\newnewtxt{meet} the
+\oldconcept{MoveConstructible}\cxxiref{tab:moveconstructible} and
+\oldconcept{MoveAssignable}\cxxiref{tab:moveassignable} requirements.
+
 \pnum
 \effects
 Places the first
@@ -5782,12 +5724,10 @@ The smaller of:
 \pnum
 \complexity
 Approximately
-\begin{codeblock}
-(last - first) * log(min(last - first, result_last - result_first))
-\end{codeblock}
-comparisons, and exactly twice as many applications of the projection.
+\tcode{(last - first) * log(min(last - first, result_last - result_first))}
+comparisons\newnewtxt{, and exactly twice as many applications of any projection}.
 \end{itemdescr}
-\end{addedblock}
+
 
 \rSec3[is.sorted]{\tcode{is_sorted}}
 
@@ -5799,7 +5739,7 @@ template<class ForwardIterator>
 
 \begin{itemdescr}
 \pnum
-\returns \tcode{is_sorted_until(first, last) == last}.
+\oldoldtxt{\returns}\newnewtxt{\effects Equivalent to:} \tcode{\newnewtxt{return} is_sorted_until(first, last) == last\newnewtxt{;}}\oldoldtxt{.}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{is_sorted}}%
@@ -5811,7 +5751,11 @@ template<class ExecutionPolicy, class ForwardIterator>
 
 \begin{itemdescr}
 \pnum
-\returns \tcode{is_sorted_until(std::forward<ExecutionPolicy>(exec), first, last) == last}.
+\oldoldtxt{\returns}\newnewtxt{\effects Equivalent to:}
+\begin{codeblock}
+@\newnewtxt{return}@ is_sorted_until(std::forward<ExecutionPolicy>(exec), first, last) == last@\newnewtxt{;}@
+\end{codeblock}
+\oldoldtxt{.}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{is_sorted}}%
@@ -5823,7 +5767,7 @@ template<class ForwardIterator, class Compare>
 
 \begin{itemdescr}
 \pnum
-\returns \tcode{is_sorted_until(first, last, comp) == last}.
+\oldoldtxt{\returns}\newnewtxt{\effects Equivalent to:} \tcode{\newnewtxt{return} is_sorted_until(first, last, comp) == last\newnewtxt{;}}\oldoldtxt{.}
 \end{itemdescr}
 
 
@@ -5837,9 +5781,9 @@ template<class ExecutionPolicy, class ForwardIterator, class Compare>
 
 \begin{itemdescr}
 \pnum
-\returns
+\oldoldtxt{\returns}\newnewtxt{\effects Equivalent to:}
 \begin{codeblock}
-is_sorted_until(std::forward<ExecutionPolicy>(exec), first, last, comp) == last
+@\newnewtxt{return}@ is_sorted_until(std::forward<ExecutionPolicy>(exec), first, last, comp) == last@\newnewtxt{;}@
 \end{codeblock}
 \end{itemdescr}
 
@@ -5858,7 +5802,7 @@ namespace ranges {
 
 \begin{itemdescr}
 \pnum
-\returns \tcode{is_sorted_until(first, last, comp, proj) == last}
+\oldtxt{\returns}\newtxt{\effects Equivalent to:} \tcode{\newtxt{return} is_sorted_until(first, last, comp, proj) == last\newtxt{;}}
 \end{itemdescr}
 \end{addedblock}
 
@@ -5882,6 +5826,19 @@ template<class ExecutionPolicy, class ForwardIterator, class Compare>
                     ForwardIterator first, ForwardIterator last,
                     Compare comp);
 \end{itemdecl}
+\begin{addedblock}
+\begin{itemdecl}
+namespace ranges {
+  template<ForwardIterator I, Sentinel<I> S, class Proj = identity,
+      IndirectStrictWeakOrder<projected<I, Proj>> Comp = @\newtxt{ranges::}@less<>>
+    @\newtxt{constexpr}@ I is_sorted_until(I first, S last, Comp comp = Comp{}, Proj proj = Proj{});
+  template<ForwardRange Rng, class Proj = identity,
+      IndirectStrictWeakOrder<projected<iterator_t<Rng>, Proj>> Comp = @\newtxt{ranges::}@less<>>
+    @\newtxt{constexpr}@ safe_iterator_t<Rng>
+      is_sorted_until(Rng&& rng, Comp comp = Comp{}, Proj proj = Proj{});
+}
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
@@ -5894,61 +5851,59 @@ range \range{first}{i} is sorted.
 \complexity Linear.
 \end{itemdescr}
 
-\begin{addedblock}
-\indexlibrary{\idxcode{is_sorted_until}}%
-\begin{itemdecl}
-namespace ranges {
-  template<ForwardIterator I, Sentinel<I> S, class Proj = identity,
-      IndirectStrictWeakOrder<projected<I, Proj>> Comp = @\newtxt{ranges::}@less<>>
-    @\newtxt{constexpr}@ I is_sorted_until(I first, S last, Comp comp = Comp{}, Proj proj = Proj{});
-  template<ForwardRange Rng, class Proj = identity,
-      IndirectStrictWeakOrder<projected<iterator_t<Rng>, Proj>> Comp = @\newtxt{ranges::}@less<>>
-    @\newtxt{constexpr}@ safe_iterator_t<Rng>
-      is_sorted_until(Rng&& rng, Comp comp = Comp{}, Proj proj = Proj{});
-}
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\returns If \tcode{distance(first, last) < 2}, returns
-\tcode{last}. Otherwise, returns
-the last iterator \tcode{i} in \crange{first}{last} for which the
-range \range{first}{i} is sorted.
-
-\pnum
-\complexity Linear.
-\end{itemdescr}
-\end{addedblock}
 
 \rSec2[alg.nth.element]{Nth element}
 
 \indexlibrary{\idxcode{nth_element}}%
 \begin{itemdecl}
 template<class RandomAccessIterator>
-  void nth_element(RandomAccessIterator first, RandomAccessIterator nth,
-                   RandomAccessIterator last);
+  constexpr void nth_element(RandomAccessIterator first, RandomAccessIterator nth,
+                             RandomAccessIterator last);
 template<class ExecutionPolicy, class RandomAccessIterator>
   void nth_element(ExecutionPolicy&& exec,
                    RandomAccessIterator first, RandomAccessIterator nth,
                    RandomAccessIterator last);
 
 template<class RandomAccessIterator, class Compare>
-  void nth_element(RandomAccessIterator first, RandomAccessIterator nth,
-                   RandomAccessIterator last,  Compare comp);
+  constexpr void nth_element(RandomAccessIterator first, RandomAccessIterator nth,
+                             RandomAccessIterator last,  Compare comp);
 template<class ExecutionPolicy, class RandomAccessIterator, class Compare>
   void nth_element(ExecutionPolicy&& exec,
                    RandomAccessIterator first, RandomAccessIterator nth,
                    RandomAccessIterator last, Compare comp);
 \end{itemdecl}
+\begin{addedblock}
+\begin{itemdecl}
+namespace ranges {
+  template<RandomAccessIterator I, Sentinel<I> S, class Comp = @\newtxt{ranges::}@less<>,
+      class Proj = identity>
+    requires Sortable<I, Comp, Proj>
+    @\newtxt{constexpr}@ I
+      nth_element(I first, I nth, S last, Comp comp = Comp{}, Proj proj = Proj{});
+  template<RandomAccessRange Rng, class Comp = @\newtxt{ranges::}@less<>, class Proj = identity>
+    requires Sortable<iterator_t<Rng>, Comp, Proj>
+    @\newtxt{constexpr}@ safe_iterator_t<Rng>
+      nth_element(Rng&& rng, iterator_t<Rng> nth, Comp comp = Comp{}, Proj proj = Proj{});
+}
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+\begin{newnewblock}
+\pnum
+Let \tcode{comp} be \tcode{std::less<>\{\}} for the overloads with no parameter
+named \tcode{comp}.
+\end{newnewblock}
+
 \pnum
 \requires
-\tcode{RandomAccessIterator} shall satisfy the
-\oldconcept{ValueSwappable} requirements~(\cxxref{swappable.requirements}). The type
-of \tcode{*first} shall satisfy the
-\oldconcept{MoveConstructible} (\cxxref{tab:moveconstructible}) and
-\oldconcept{MoveAssignable} (\cxxref{tab:moveassignable}) requirements.
+\newnewtxt{For the overloads in namespace \tcode{std},}
+\tcode{RandomAccessIterator} shall \oldoldtxt{satisfy}\newnewtxt{meet} the
+\oldconcept{ValueSwappable} requirements\cxxiref{swappable.requirements}\oldoldtxt{.
+The}\newnewtxt{and the} type of \tcode{*first} shall
+\oldoldtxt{satisfy}\newnewtxt{meet} the
+\oldconcept{MoveConstructible}\cxxiref{tab:moveconstructible} and
+\oldconcept{MoveAssignable}\cxxiref{tab:moveassignable} requirements.
 
 \pnum
 \effects
@@ -5966,9 +5921,22 @@ and every iterator
 in the range
 \range{nth}{last}
 it holds that:
-\tcode{!(*j < *i)}
+\oldoldtxt{\tcode{!(*j < *i)}
 or
-\tcode{comp(*j, *i) == false}.
+\tcode{comp(*j, *i) == false}.}
+\begin{newnewblock}
+\begin{itemize}
+\item \tcode{bool(comp(*j, *i))} is \tcode{false} for the overloads in namespace
+  \tcode{std}, or
+\item \tcode{bool(invoke(comp, invoke(proj, *j), invoke(proj, *i)))} is
+  \tcode{false} for the overloads in namespace \tcode{ranges}.
+\end{itemize}
+\end{newnewblock}
+
+\begin{newnewblock}
+\pnum
+\returns \tcode{last} for the overloads in namespace \tcode{ranges}.
+\end{newnewblock}
 
 \pnum
 \complexity
@@ -5977,48 +5945,6 @@ For the overloads with an \tcode{ExecutionPolicy}, \bigoh{N} applications of
 the predicate, and \bigoh{N \log N} swaps, where $N = \tcode{last - first}$.
 \end{itemdescr}
 
-\begin{addedblock}
-\indexlibrary{\idxcode{nth_element}}%
-\begin{itemdecl}
-namespace ranges {
-  template<RandomAccessIterator I, Sentinel<I> S, class Comp = @\newtxt{ranges::}@less<>,
-      class Proj = identity>
-    requires Sortable<I, Comp, Proj>
-    @\newtxt{constexpr}@ I
-      nth_element(I first, I nth, S last, Comp comp = Comp{}, Proj proj = Proj{});
-  template<RandomAccessRange Rng, class Comp = @\newtxt{ranges::}@less<>, class Proj = identity>
-    requires Sortable<iterator_t<Rng>, Comp, Proj>
-    @\newtxt{constexpr}@ safe_iterator_t<Rng>
-      nth_element(Rng&& rng, iterator_t<Rng> nth, Comp comp = Comp{}, Proj proj = Proj{});
-}
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-After
-\tcode{nth_element}
-the element in the position pointed to by \tcode{nth}
-is the element that would be
-in that position if the whole range were sorted, unless \tcode{nth == last}.
-Also for every iterator
-\tcode{i}
-in the range
-\range{first}{nth}
-and every iterator
-\tcode{j}
-in the range
-\range{nth}{last}
-it holds that:
-\tcode{invoke(comp, invoke(proj, *j), invoke(proj, *i)) == false}.
-
-\pnum
-\returns \tcode{last}.
-
-\pnum
-\complexity
-Linear on average.
-\end{itemdescr}
-\end{addedblock}
 
 \rSec2[alg.binary.search]{Binary search}
 
@@ -6048,43 +5974,7 @@ template<class ForwardIterator, class T, class Compare>
     lower_bound(ForwardIterator first, ForwardIterator last,
                 const T& value, Compare comp);
 \end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires
-The elements
-\tcode{e}
-of
-\range{first}{last}
-shall be partitioned with respect to the expression
-\tcode{e < value}
-or
-\tcode{comp(e, value)}.
-
-\pnum
-\returns
-The furthermost iterator
-\tcode{i}
-in the range
-\crange{first}{last}
-such that for every iterator
-\tcode{j}
-in the range
-\range{first}{i}
-the following corresponding conditions hold:
-\tcode{*j < value}
-or
-\tcode{comp(*j, value) != false}.
-
-\pnum
-\complexity
-At most
-$\log_2(\tcode{last - first}) + \bigoh{1}$
-comparisons.
-\end{itemdescr}
-
 \begin{addedblock}
-\indexlibrary{\idxcode{lower_bound}}%
 \begin{itemdecl}
 namespace ranges {
   template<ForwardIterator I, Sentinel<I> S, class T, class Proj = identity,
@@ -6097,8 +5987,15 @@ namespace ranges {
       lower_bound(Rng&& rng, const T& value, Comp comp = Comp{}, Proj proj = Proj{});
 }
 \end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+\begin{newnewblock}
+\pnum
+Let \tcode{comp} be \tcode{std::less<>\{\}} for the overload with no parameter
+named \tcode{comp}.
+\end{newnewblock}
+
 \pnum
 \requires
 The elements
@@ -6106,7 +6003,14 @@ The elements
 of
 \range{first}{last}
 shall be partitioned with respect to the expression
-\tcode{invoke(\brk{}comp, invoke(proj, e), value)}.
+\oldoldtxt{\tcode{e < value}
+or}\newnewtxt{:}
+\begin{itemize}
+\item \tcode{\newnewtxt{bool(}comp(e, value)\newnewtxt{)}}\newnewtxt{,
+  for the overloads in namespace \tcode{std}, or}
+\item \newnewtxt{\tcode{bool(invoke(comp, invoke(proj, e), value))},
+  for the overloads in namespace \tcode{ranges}}.
+\end{itemize}
 
 \pnum
 \returns
@@ -6118,16 +6022,23 @@ such that for every iterator
 \tcode{j}
 in the range
 \range{first}{i}
-the following corresponding condition holds:
-\tcode{invoke(comp, invoke(proj, *j), value) != false}.
+the following corresponding conditions hold:
+\oldoldtxt{\tcode{*j < value}
+or}
+\begin{itemize}
+\item \tcode{\newnewtxt{bool(}comp(*j, value)\newnewtxt{)} \oldoldtxt{!= false}}
+  \newnewtxt{for the overloads in namespace \tcode{std}, or}
+\item \newnewtxt{\tcode{bool(invoke(comp, invoke(proj, *j), value))},
+  for the overloads in namespace \tcode{ranges}}.
+\end{itemize}
 
 \pnum
 \complexity
 At most
 $\log_2(\tcode{last - first}) + \bigoh{1}$
-applications of the comparison function and projection.
+comparisons \newnewtxt{and applications of any projection}.
 \end{itemdescr}
-\end{addedblock}
+
 
 \rSec3[upper.bound]{\tcode{upper_bound}}
 
@@ -6143,8 +6054,27 @@ template<class ForwardIterator, class T, class Compare>
     upper_bound(ForwardIterator first, ForwardIterator last,
                 const T& value, Compare comp);
 \end{itemdecl}
+\begin{addedblock}
+\begin{itemdecl}
+namespace ranges {
+  template<ForwardIterator I, Sentinel<I> S, class T, class Proj = identity,
+      IndirectStrictWeakOrder<const T*, projected<I, Proj>> Comp = @\newtxt{ranges::}@less<>>
+    @\newtxt{constexpr}@ I upper_bound(I first, S last, const T& value, Comp comp = Comp{}, Proj proj = Proj{});
+  template<ForwardRange Rng, class T, class Proj = identity,
+      IndirectStrictWeakOrder<const T*, projected<iterator_t<Rng>, Proj>> Comp = @\newtxt{ranges::}@less<>>
+    @\newtxt{constexpr}@ safe_iterator_t<Rng>
+      upper_bound(Rng&& rng, const T& value, Comp comp = Comp{}, Proj proj = Proj{});
+}
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+\begin{newnewblock}
+\pnum
+Let \tcode{comp} be \tcode{std::less<>\{\}} for the overload with no parameter
+named \tcode{comp}.
+\end{newnewblock}
+
 \pnum
 \requires
 The elements
@@ -6152,9 +6082,14 @@ The elements
 of
 \range{first}{last}
 shall be partitioned with respect to the expression
-\tcode{!(value < e)}
-or
-\tcode{!comp(\brk{}value, e)}.
+\oldoldtxt{\tcode{!(value < e)}
+or}
+\begin{itemize}
+\item \tcode{!\newnewtxt{bool(}comp(value, e)\newnewtxt{)}}
+  \newnewtxt{for the overloads in namespace \tcode{std}, or}
+\item \newnewtxt{\tcode{!invoke(comp, value, invoke(proj, e))}
+  for the overloads in namespace \tcode{ranges}}.
+\end{itemize}
 
 \pnum
 \returns
@@ -6167,63 +6102,27 @@ such that for every iterator
 in the range
 \range{first}{i}
 the following corresponding conditions hold:
-\tcode{!(value < *j)}
-or
-\tcode{comp(value, *j) == false}.
+\oldoldtxt{\tcode{!(value < *j)}
+or}
+\begin{itemize}
+\item \tcode{\newnewtxt{!bool(}comp(value, *j)\newnewtxt{)} \oldoldtxt{== false}}
+  \newnewtxt{for the overloads in namespace \tcode{std}, or}
+\item \newnewtxt{\tcode{!invoke(comp, value, invoke(proj, *j))}
+  for the overloads in namespace \tcode{ranges}}.
+\end{itemize}
 
 \pnum
 \complexity
 At most
 $\log_2(\tcode{last - first}) + \bigoh{1}$
-comparisons.
+comparisons \newnewtxt{and applications of any projection}.
 \end{itemdescr}
 
-\begin{addedblock}
-\indexlibrary{\idxcode{upper_bound}}%
-\begin{itemdecl}
-namespace ranges {
-  template<ForwardIterator I, Sentinel<I> S, class T, class Proj = identity,
-      IndirectStrictWeakOrder<const T*, projected<I, Proj>> Comp = @\newtxt{ranges::}@less<>>
-    @\newtxt{constexpr}@ I upper_bound(I first, S last, const T& value, Comp comp = Comp{}, Proj proj = Proj{});
-  template<ForwardRange Rng, class T, class Proj = identity,
-      IndirectStrictWeakOrder<const T*, projected<iterator_t<Rng>, Proj>> Comp = @\newtxt{ranges::}@less<>>
-    @\newtxt{constexpr}@ safe_iterator_t<Rng>
-      upper_bound(Rng&& rng, const T& value, Comp comp = Comp{}, Proj proj = Proj{});
-}
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires
-The elements
-\tcode{e}
-of
-\range{first}{last}
-shall be partitioned with respect to the expression
-\tcode{!invoke(\brk{}comp, value, invoke(proj, e))}.
-
-\pnum
-\returns
-The furthermost iterator
-\tcode{i}
-in the range
-\crange{first}{last}
-such that for every iterator
-\tcode{j}
-in the range
-\range{first}{i}
-the following corresponding condition holds:
-\tcode{invoke(comp, value, invoke(proj, *j)) == false}.
-
-\pnum
-\complexity
-At most
-$\log_2(\tcode{last - first}) + \bigoh{1}$
-applications of the comparison function and projection.
-\end{itemdescr}
-\end{addedblock}
 
 \rSec3[equal.range]{\tcode{equal_range}}
+
+\ednote{This wording incorporates the PR for
+\href{https://github.com/ericniebler/stl2/issues/526}{stl2\#526}).}
 
 \indexlibrary{\idxcode{equal_range}}%
 \begin{itemdecl}
@@ -6238,58 +6137,7 @@ template<class ForwardIterator, class T, class Compare>
                 ForwardIterator last, const T& value,
                 Compare comp);
 \end{itemdecl}
-
-\ednote{This wording incorporates the PR for
-\href{https://github.com/ericniebler/stl2/issues/526}{stl2\#526}).}
-
-\begin{itemdescr}
-\pnum
-\requires
-The elements
-\tcode{e}
-of
-\range{first}{last}
-shall be partitioned with respect to the expressions
-\tcode{e < value}
-and
-\tcode{!(value < e)}
-or
-\tcode{comp(e, value)}
-and
-\tcode{!comp(value, e)}.
-Also, for all elements
-\tcode{e}
-of
-\tcode{[first, last)},
-\tcode{e < value}
-shall imply
-\tcode{!(value < e)}
-or
-\tcode{comp(e, value)}
-shall imply
-\tcode{!comp(value, e)}.
-
-\pnum
-\returns
-\begin{codeblock}
-make_pair(lower_bound(first, last, value),
-          upper_bound(first, last, value))
-\end{codeblock}
-or
-\begin{codeblock}
-make_pair(lower_bound(first, last, value, comp),
-          upper_bound(first, last, value, comp))
-\end{codeblock}
-
-\pnum
-\complexity
-At most
-$2 * \log_2(\tcode{last - first}) + \bigoh{1}$
-comparisons.
-\end{itemdescr}
-
 \begin{addedblock}
-\indexlibrary{\idxcode{equal_range}}%
 \begin{itemdecl}
 namespace ranges {
   template<ForwardIterator I, Sentinel<I> S, class T, class Proj = identity,
@@ -6305,8 +6153,15 @@ namespace ranges {
       equal_range(Rng&& rng, const T& value, Comp comp = Comp{}, Proj proj = Proj{});
 }
 \end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+\begin{newnewblock}
+\pnum
+Let \tcode{comp} be \tcode{std::less<>\{\}} for the overload with no parameter
+named \tcode{comp}.
+\end{newnewblock}
+
 \pnum
 \requires
 The elements
@@ -6314,31 +6169,70 @@ The elements
 of
 \range{first}{last}
 shall be partitioned with respect to the expressions
-\tcode{invoke(comp, invoke(proj, e), value)}
+\oldoldtxt{\tcode{e < value}
 and
-\tcode{!invoke(\brk{}comp, value, invoke(proj, e))}.
+\tcode{!(value < e)}
+or}
+\begin{itemize}
+\item \tcode{\newnewtxt{bool(}comp(e, value)\newnewtxt{)}}
+and
+\tcode{!\newnewtxt{bool(}comp(value, e)\newnewtxt{)}}
+\newnewtxt{for the overloads in namespace \tcode{std}, or}
+\item
+\newnewtxt{\tcode{invoke(comp, invoke(proj, e), value)}
+and
+\tcode{!invoke(comp, value, invoke(proj, e))}.
+for the overloads in namespace \tcode{ranges}}.
+\end{itemize}
 Also, for all elements
 \tcode{e}
 of
 \tcode{[first, last)},
-\tcode{invoke(comp, invoke(proj, e), value)}
-shall imply \\
-\tcode{!invoke(\brk{}comp, value, invoke(proj, e))}.
+\oldoldtxt{\tcode{e < value}
+shall imply
+\tcode{!(value < e)}
+or}
+\begin{itemize}
+\item
+\tcode{\newnewtxt{bool(}comp(e, value)\newnewtxt{)}}
+shall imply
+\tcode{!\newnewtxt{bool(}comp(value, e)\newnewtxt{)}}
+\newnewtxt{for the overloads in namespace \tcode{std}, or}
+\item
+\newnewtxt{\tcode{bool(invoke(comp, invoke(proj, e), value))}
+shall imply
+\tcode{!invoke(comp, value, invoke(proj, e))}
+for the overloads in namespace \tcode{ranges}}.
+\end{itemize}
 
 \pnum
 \returns
+\begin{itemize}
+\item \newnewtxt{For the overloads in namespace \tcode{std}:}
 \begin{codeblock}
-{lower_bound(first, last, value, comp, proj),
- upper_bound(first, last, value, comp, proj)}
+@\oldoldtxt{make_pair(lower_bound(first, last, value),}@
+          @\oldoldtxt{upper_bound(first, last, value))}@
 \end{codeblock}
+\oldoldtxt{or}
+\begin{codeblock}
+@\oldoldtxt{make_pair(}\newnewtxt{\{}@lower_bound(first, last, value, comp),
+           upper_bound(first, last, value, comp)@\newnewtxt{\}}\oldoldtxt{)}@
+\end{codeblock}
+
+\item \newnewtxt{For the overloads in namespace \tcode{ranges}:}
+\begin{codeblock}
+@\newnewtxt{\{ranges::lower_bound(first, last, value, comp, proj),}@
+ @\newnewtxt{ranges::upper_bound(first, last, value, comp, proj)\}}@
+\end{codeblock}
+\end{itemize}
 
 \pnum
 \complexity
 At most
 $2 * \log_2(\tcode{last - first}) + \bigoh{1}$
-applications of the comparison function and projection.
+comparisons \newnewtxt{and applications of any projection}.
 \end{itemdescr}
-\end{addedblock}
+
 
 \rSec3[binary.search]{\tcode{binary_search}}
 
@@ -6356,6 +6250,12 @@ template<class ForwardIterator, class T, class Compare>
 \end{itemdecl}
 
 \begin{itemdescr}
+\begin{newnewblock}
+\pnum
+Let \tcode{comp} be \tcode{std::less<>\{\}} for the overload with no parameter
+named \tcode{comp}.
+\end{newnewblock}
+
 \pnum
 \requires
 The elements
@@ -6363,36 +6263,36 @@ The elements
 of
 \range{first}{last}
 shall be partitioned with respect to the expressions
-\tcode{e < value}
+\oldoldtxt{\tcode{e < value}
 and
 \tcode{!(value < e)}
-or
-\tcode{comp(e, value)}
+or}
+\tcode{\newnewtxt{bool(}comp(e, value)\newnewtxt{)}}
 and
-\tcode{!comp(value, e)}.
+\tcode{!\newnewtxt{bool(}comp(value, e)\newnewtxt{)}}.
 Also, for all elements
 \tcode{e}
 of
 \tcode{[first, last)},
-\tcode{e < value}
+\oldoldtxt{\tcode{e < value}
 shall imply
 \tcode{!(value < e)}
-or
-\tcode{comp(e, value)}
+or}
+\tcode{\newnewtxt{bool(}comp(e, value)\newnewtxt{)}}
 shall imply
-\tcode{!comp(value, e)}.
+\tcode{!\newnewtxt{bool(}comp(value, e)\newnewtxt{)}}.
 
 \pnum
 \returns
 \tcode{true}
-if there is an iterator
+if \newnewtxt{and only if} there is an iterator
 \tcode{i}
 in the range
 \range{first}{last}
 that satisfies the corresponding conditions:
-\tcode{!(*i < value) \&\& !(value < *i)}
-or
-\tcode{comp(*i, value) == false \&\& comp(value, *i) == false}.
+\oldoldtxt{\tcode{!(*i < value) \&\& !(value < *i)}
+or}
+\tcode{\newnewtxt{!bool(}comp(*i, value)\newnewtxt{)} \oldoldtxt{== false} \&\& \newnewtxt{!bool(}comp(value, *i)\newnewtxt{)} \oldoldtxt{== false}}.
 
 \pnum
 \complexity
@@ -6424,28 +6324,27 @@ The elements
 of
 \range{first}{last}
 are partitioned with respect to the expressions
-\tcode{invoke(\brk{}comp, invoke(proj, e), value)}
+\tcode{\newtxt{bool(}invoke(\brk{}comp, invoke(proj, e), value)\newtxt{)}}
 and
 \tcode{!invoke(comp, value, invoke(proj, e))}.
 Also, for all elements
 \tcode{e}
 of
 \tcode{[first, last)},
-\tcode{invoke(comp, invoke(proj, e), value)}
+\tcode{\newtxt{bool(}invoke(comp, invoke(proj, e), value)\newtxt{)}}
 shall imply
 \tcode{!invoke(\brk{}comp, value, invoke(proj, e))}.
 
 \pnum
 \returns
 \tcode{true}
-if there is an iterator
+if \newtxt{and only if} there is an iterator
 \tcode{i}
 in the range
 \range{first}{last}
 that satisfies the corresponding conditions:
-\tcode{
-invoke(comp, invoke(proj, *i), value) == false \&\&
-invoke(comp, value, invoke(proj, *i)) == false}.
+\tcode{\newtxt{!}invoke(comp, invoke(proj, *i), value) \oldtxt{== false} \&\&
+\newtxt{!}invoke(comp, value, invoke(proj, *i)) \oldtxt{== false}}.
 
 \pnum
 \complexity
@@ -6454,6 +6353,7 @@ $\log_2(\tcode{last - first}) + \bigoh{1}$
 applications of the comparison function and projection.
 \end{itemdescr}
 \end{addedblock}
+
 
 \rSec2[alg.partitions]{Partitions}
 
@@ -8975,7 +8875,5 @@ At most
 swaps.
 \end{itemdescr}
 \end{addedblock}
-
-\rSec1[alg.c.library]{C library algorithms}
 
 [...]
