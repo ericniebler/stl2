@@ -2359,7 +2359,7 @@ If an algorithm's
 element specifies that a value pointed to by any iterator passed
 as an argument is modified, then that algorithm has an additional
 type requirement:
-The type of that argument shall satisfy the requirements
+The type of that argument shall \oldoldtxt{satisfy} \newnewtxt{meet} the requirements
 of a mutable iterator\iref{iterator.requirements}.
 \begin{note}
 This requirement does not affect arguments that are named
@@ -4972,7 +4972,7 @@ namespace ranges {
 \pnum
 \requires
 \newtxt{For the overloads in namespace \tcode{std},}
-\tcode{BidirectionalIterator} shall satisfy the
+\tcode{BidirectionalIterator} shall \oldoldtxt{satisfy} \newnewtxt{meet} the
 \oldconcept{ValueSwappable} requirements~(\cxxref{swappable.requirements}).
 
 \pnum
@@ -6788,36 +6788,7 @@ template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2,
           ForwardIterator2 first2, ForwardIterator2 last2,
           ForwardIterator result, Compare comp);
 \end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires The ranges \range{first1}{last1} and \range{first2}{last2} shall be
-sorted with respect to \tcode{oper\-ator<} or \tcode{comp}.
-The resulting range shall not overlap with either of the original ranges.
-
-\pnum
-\effects Copies all the elements of the two ranges \range{first1}{last1} and
-\range{first2}{last2} into the range \range{result}{result_last}, where \tcode{result_last}
-is \tcode{result + (last1 - first1) + (last2 - first2)}, such that the resulting range satisfies
-\tcode{is_sorted(result, result_last)} or \tcode{is_sorted(re\-sult, result_last, comp)}, respectively.
-
-\pnum
-\returns
-\tcode{result + (last1 - first1) + (last2 - first2)}.
-
-\pnum
-\complexity Let $N = \tcode{(last1 - first1) + (last2 - first2)}$:
-\begin{itemize}
-\item For the overloads with no \tcode{ExecutionPolicy}, at most $N - 1$ comparisons.
-\item For the overloads with an \tcode{ExecutionPolicy}, \bigoh{N} comparisons.
-\end{itemize}
-
-\pnum
-\remarks Stable\cxxiref{algorithm.stable}.
-\end{itemdescr}
-
 \begin{addedblock}
-\indexlibrary{\idxcode{merge}}%
 \begin{itemdecl}
 namespace ranges {
   template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
@@ -6839,38 +6810,66 @@ namespace ranges {
             Comp comp = Comp{}, Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
 }
 \end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+\begin{newnewblock}
 \pnum
-\effects Copies all the elements of the two ranges \range{first1}{last1} and
-\range{first2}{last2} into the range \range{result}{result_last}, where \tcode{result_last}
-is \tcode{result + (last1 - first1) + (last2 - first2)}.
-If an element \tcode{a} precedes \tcode{b} in an input range,
-\tcode{a} is copied into the output range before \tcode{b}. If \tcode{e1} is
-an element of \range{first1}{last1} and \tcode{e2} of \range{first2}{last2},
-\tcode{e2} is copied into the output range before \tcode{e1} if and only if
-\tcode{bool(invoke(comp, invoke(proj2, e2), invoke(proj1, e1)))} is
-\tcode{true}.
+Let \tcode{comp} be \tcode{std::less<>\{\}} for the overloads with no parameter
+\tcode{comp}, and let $N$ be \tcode{(last1 - first1) + (last2 - first2)}.
+\end{newnewblock}
 
 \pnum
 \requires The ranges \range{first1}{last1} and \range{first2}{last2} shall be
-sorted with respect to \tcode{comp}, \tcode{proj1}, and \tcode{proj2}.
+sorted with respect to \oldoldtxt{\tcode{oper\-ator<} or} \tcode{comp}\newnewtxt{,
+and the corresponding projection \tcode{proj1} or \tcode{proj2} for
+the overloads in namespace \tcode{ranges}}.
 The resulting range shall not overlap with either of the original ranges.
 
 \pnum
-\returns
-\tcode{\oldtxt{make_tagged_tuple<tag::in1, tag::in2, tag::out>(}\newtxt{\{}last1, last2, result_last\newtxt{\}}\oldtxt{)}}.
+\effects Copies all the elements of the two ranges \range{first1}{last1} and
+\range{first2}{last2} into the range \range{result}{result_last}, where
+\tcode{result_last} is
+\tcode{result + \newnewtxt{$N$} \oldoldtxt{(last1 - first1) + (last2 - first2)}}\oldoldtxt{,
+such that the resulting range satisfies
+\tcode{is_sorted(result, result_last)} or
+\tcode{is_sorted(result, result_last, comp)}, respectively}.
+\begin{newnewblock}
+If an element \tcode{a} precedes \tcode{b} in an input range, \tcode{a} is
+copied into the output range before \tcode{b}. If \tcode{e1} is an element of
+\range{first1}{last1} and \tcode{e2} of \range{first2}{last2}, \tcode{e2} is
+copied into the output range before \tcode{e1} if and only if
+\begin{itemize}
+\item \tcode{bool(comp(e2, e1))} for the overloads in namespace \tcode{std}, or
+\item \tcode{bool(invoke(comp, invoke(proj2, e2), invoke(proj1, e1)))}
+  for the overloads in namespace \tcode{ranges}
+\end{itemize}
+is \tcode{true}.
+\end{newnewblock}
 
 \pnum
-\complexity
-At most
-\tcode{(last1 - first1) + (last2 - first2) - 1}
-applications of the comparison function and each projection.
+\returns \oldoldtxt{\tcode{result + (last1 - first1) + (last2 - first2)}.}
+\begin{newnewblock}
+\begin{itemize}
+\item \tcode{result_last} for the overloads in namespace \tcode{std}, or
+\item \tcode{\{last1, last2, result_last\}} for the overloads in
+  namespace \tcode{ranges}.
+\end{itemize}
+\end{newnewblock}
 
 \pnum
-\remarks Stable~(\cxxref{algorithm.stable}).
+\complexity \oldoldtxt{Let $N = \tcode{(last1 - first1) + (last2 - first2)}$:}
+\begin{itemize}
+\item For the overloads with no \tcode{ExecutionPolicy},
+  at most $N - 1$ comparisons \newnewtxt{and applications of each projection}.
+\item For the overloads with an \tcode{ExecutionPolicy},
+  \bigoh{N} comparisons.
+\end{itemize}
+
+\pnum
+\remarks Stable\cxxiref{algorithm.stable}.
 \end{itemdescr}
-\end{addedblock}
+
 
 \indexlibrary{\idxcode{inplace_merge}}%
 \begin{itemdecl}
@@ -6894,55 +6893,7 @@ template<class ExecutionPolicy, class BidirectionalIterator, class Compare>
                      BidirectionalIterator middle,
                      BidirectionalIterator last, Compare comp);
 \end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires
-The ranges \range{first}{middle} and \range{middle}{last} shall be
-sorted with respect to \tcode{operator<} or \tcode{comp}.
-\tcode{BidirectionalIterator} shall satisfy the
-\oldconcept{ValueSwappable} requirements~(\cxxref{swappable.requirements}). The type
-of \tcode{*first} shall satisfy the
-\oldconcept{MoveConstructible} (\cxxref{tab:moveconstructible}) and
-\oldconcept{MoveAssignable} (\cxxref{tab:moveassignable}) requirements.
-
-\pnum
-\effects
-Merges two sorted consecutive ranges
-\range{first}{middle}
-and
-\range{middle}{last},
-putting the result of the merge into the range
-\range{first}{last}.
-The resulting range will be in non-decreasing order;
-that is, for every iterator
-\tcode{i}
-in
-\range{first}{last}
-other than
-\tcode{first},
-the condition
-\tcode{*i < *(i - 1)}
-or, respectively,
-\tcode{comp(*i, *(i - 1))}
-will be \tcode{false}.
-
-\pnum
-\complexity Let $N = \tcode{last - first}$:
-\begin{itemize}
-\item For the overloads with no \tcode{ExecutionPolicy}, if enough additional
-memory is available, exactly $N - 1$ comparisons.
-\item For the overloads with no \tcode{ExecutionPolicy} if no additional
-memory is available,  \bigoh{N \log N} comparisons.
-\item For the overloads with an \tcode{ExecutionPolicy}, \bigoh{N \log N} comparisons.
-\end{itemize}
-
-\pnum
-\remarks Stable\cxxref{algorithm.stable}.
-\end{itemdescr}
-
 \begin{addedblock}
-\indexlibrary{\idxcode{inplace_merge}}%
 \begin{itemdecl}
 namespace ranges {
   template<BidirectionalIterator I, Sentinel<I> S, class Comp = @\newtxt{ranges::}@less<>,
@@ -6956,8 +6907,28 @@ namespace ranges {
                     Proj proj = Proj{});
 }
 \end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+\begin{newnewblock}
+\pnum
+Let \tcode{comp} be \tcode{std::less<>\{\}} for the overloads with no parameter
+\tcode{comp}.
+\end{newnewblock}
+
+\pnum
+\requires
+The ranges \range{first}{middle} and \range{middle}{last} shall be
+sorted with respect to \oldoldtxt{\tcode{operator<} or} \tcode{comp}\newnewtxt{,
+and \tcode{proj} for the overloads in namespace \tcode{ranges}}.
+\newnewtxt{For the overloads in namespace \tcode{std},}
+\tcode{BidirectionalIterator} shall \oldoldtxt{satisfy} \newnewtxt{meet} the
+\oldconcept{ValueSwappable} requirements\cxxiref{swappable.requirements}\oldoldtxt{.
+The} \newnewtxt{and the} type
+of \tcode{*first} shall \oldoldtxt{satisfy} \newnewtxt{meet} the
+\oldconcept{MoveConstructible}\cxxiref{tab:moveconstructible} and
+\oldconcept{MoveAssignable}\cxxiref{tab:moveassignable} requirements.
+
 \pnum
 \effects
 Merges two sorted consecutive ranges
@@ -6974,34 +6945,37 @@ in
 other than
 \tcode{first},
 the condition
-\tcode{invoke(comp, invoke(proj, *i), invoke(proj, *(i - 1)))}
-will be false.
+\oldoldtxt{\tcode{*i < *(i - 1)}
+or, respectively,}
+\begin{itemize}
+\item \tcode{\newnewtxt{bool(}comp(*i, *(i - 1))\newnewtxt{)}}
+  \newnewtxt{for the overloads in namespace \tcode{std}, or}
+\item \newnewtxt{\tcode{bool(invoke(comp, invoke(proj, *i), invoke(proj, *(i - 1))))}
+  for the overloads in namespace \tcode{ranges}}
+\end{itemize}
+will be \tcode{false}.
+
+\begin{newnewblock}
+\pnum
+\returns \tcode{last} for the overloads in namespace \tcode{ranges}.
+\end{newnewblock}
 
 \pnum
-\requires
-The ranges \range{first}{middle} and \range{middle}{last} shall be
-sorted with respect to \tcode{comp} and \tcode{proj}.
+\complexity Let $N = \tcode{last - first}$:
+\begin{itemize}
+\item For the overloads with no \tcode{ExecutionPolicy}, if enough additional
+memory is available, exactly $N - 1$ comparisons.
+\item \oldoldtxt{For the overloads with no \tcode{ExecutionPolicy} if no additional
+memory is available, \bigoh{N \log N} comparisons.}
+\item \newnewtxt{Otherwise} \oldoldtxt{For the overloads with an \tcode{ExecutionPolicy}}, \bigoh{N \log N} comparisons.
+\end{itemize}
+\newnewtxt{In any case, exactly twice as many applications of any projection as
+the number of comparisons.}
 
 \pnum
-\returns \tcode{last}
-
-\pnum
-\complexity
-When enough additional memory is available,
-\tcode{(last - first) - 1}
-applications of the comparison function and projection.
-If no additional memory is available, an algorithm with complexity
-$N \log(N)$
-(where
-\tcode{N}
-is equal to
-\tcode{last - first})
-may be used.
-
-\pnum
-\remarks Stable~(\cxxref{algorithm.stable}).
+\remarks Stable\cxxiref{algorithm.stable}.
 \end{itemdescr}
-\end{addedblock}
+
 
 \rSec2[alg.set.operations]{Set operations on sorted structures}
 
@@ -7612,7 +7586,7 @@ template<class RandomAccessIterator, class Compare>
 The range
 \range{first}{last - 1}
 shall be a valid heap.
-The type of \tcode{*first} shall satisfy
+The type of \tcode{*first} shall \oldoldtxt{satisfy} \newnewtxt{meet}
 the \oldconcept{MoveConstructible} requirements
 (\cxxref{tab:moveconstructible}) and the
 \oldconcept{MoveAssignable} requirements
@@ -7691,9 +7665,9 @@ template<class RandomAccessIterator, class Compare>
 The range
 \range{first}{last}
 shall be a valid non-empty heap.
-\tcode{RandomAccessIterator} shall satisfy the
+\tcode{RandomAccessIterator} shall \oldoldtxt{satisfy} \newnewtxt{meet} the
 \oldconcept{ValueSwappable} requirements~(\cxxref{swappable.requirements}). The type
-of \tcode{*first} shall satisfy the
+of \tcode{*first} shall \oldoldtxt{satisfy} \newnewtxt{meet} the
 \oldconcept{MoveConstructible} (\cxxref{tab:moveconstructible}) and
 \oldconcept{MoveAssignable} (\cxxref{tab:moveassignable}) requirements.
 
@@ -7836,9 +7810,9 @@ template<class RandomAccessIterator, class Compare>
 \begin{itemdescr}
 \pnum
 \requires The range \range{first}{last} shall be a valid heap.
-\tcode{RandomAccessIterator} shall satisfy the
+\tcode{RandomAccessIterator} shall \oldoldtxt{satisfy} \newnewtxt{meet} the
 \oldconcept{ValueSwappable} requirements~(\cxxref{swappable.requirements}). The type
-of \tcode{*first} shall satisfy the
+of \tcode{*first} shall \oldoldtxt{satisfy} \newnewtxt{meet} the
 \oldconcept{MoveConstructible} (\cxxref{tab:moveconstructible}) and
 \oldconcept{MoveAssignable} (\cxxref{tab:moveassignable}) requirements.
 
@@ -8742,7 +8716,7 @@ template<class BidirectionalIterator, class Compare>
 \begin{itemdescr}
 \pnum
 \requires
-\tcode{BidirectionalIterator} shall satisfy the
+\tcode{BidirectionalIterator} shall \oldoldtxt{satisfy} \newnewtxt{meet} the
 \oldconcept{ValueSwappable} requirements~(\cxxref{swappable.requirements}).
 
 \pnum
@@ -8824,7 +8798,7 @@ template<class BidirectionalIterator, class Compare>
 \begin{itemdescr}
 \pnum
 \requires
-\tcode{BidirectionalIterator} shall satisfy the
+\tcode{BidirectionalIterator} shall \oldoldtxt{satisfy} \newnewtxt{meet} the
 \oldconcept{ValueSwappable} requirements~(\cxxref{swappable.requirements}).
 
 \pnum
