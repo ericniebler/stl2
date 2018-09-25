@@ -2274,11 +2274,11 @@ namespace std {
 
   // \ref{alg.permutation.generators}, permutations
   template<class BidirectionalIterator>
-    bool next_permutation(BidirectionalIterator first,
-                          BidirectionalIterator last);
+    constexpr bool next_permutation(BidirectionalIterator first,
+                                    BidirectionalIterator last);
   template<class BidirectionalIterator, class Compare>
-    bool next_permutation(BidirectionalIterator first,
-                          BidirectionalIterator last, Compare comp);
+    constexpr bool next_permutation(BidirectionalIterator first,
+                                    BidirectionalIterator last, Compare comp);
 \end{codeblock}\begin{addedblock}\begin{codeblock}
   namespace ranges {
     template<BidirectionalIterator I, Sentinel<I> S, class Comp = @\newtxt{ranges::}@less<>,
@@ -2294,11 +2294,11 @@ namespace std {
   }
 \end{codeblock}\end{addedblock}\begin{codeblock}
   template<class BidirectionalIterator>
-    bool prev_permutation(BidirectionalIterator first,
-                          BidirectionalIterator last);
+    constexpr bool prev_permutation(BidirectionalIterator first,
+                                    BidirectionalIterator last);
   template<class BidirectionalIterator, class Compare>
-    bool prev_permutation(BidirectionalIterator first,
-                          BidirectionalIterator last, Compare comp);
+    constexpr bool prev_permutation(BidirectionalIterator first,
+                                    BidirectionalIterator last, Compare comp);
 \end{codeblock}\begin{addedblock}\begin{codeblock}
   namespace ranges {
     template<BidirectionalIterator I, Sentinel<I> S, class Comp = @\newtxt{ranges::}@less<>,
@@ -8328,55 +8328,7 @@ template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2,
                             ForwardIterator2 first2, ForwardIterator2 last2,
                             Compare comp);
 \end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\returns
-\tcode{true}
-if the sequence of elements defined by the range
-\range{first1}{last1}
-is lexicographically less than the sequence of elements defined by the range
-\range{first2}{last2} and
-\tcode{false}
-otherwise.
-
-\pnum
-\complexity
-At most
-$2 \min(\tcode{last1 - first1}, \ \tcode{last2 - first2})$
-applications of the corresponding comparison.
-
-\pnum
-\remarks
-If two sequences have the same number of elements and their corresponding
-elements (if any) are equivalent, then neither sequence is lexicographically
-less than the other.
-If one sequence is a prefix of the other, then the shorter sequence is
-lexicographically less than the longer sequence.
-Otherwise, the lexicographical comparison of the sequences yields the same
-result as the comparison of the first corresponding pair of
-elements that are not equivalent.
-
-\pnum
-\begin{example}
-The following sample implementation satisfies these requirements:
-\begin{codeblock}
-for ( ; first1 != last1 && first2 != last2 ; ++first1, (void) ++first2) {
-  if (*first1 < *first2) return true;
-  if (*first2 < *first1) return false;
-}
-return first1 == last1 && first2 != last2;
-\end{codeblock}
-\end{example}
-
-\pnum
-\begin{note} An empty sequence is lexicographically less than any non-empty sequence, but
-not less than any empty sequence.
-\end{note}
-\end{itemdescr}
-
 \begin{addedblock}
-\indexlibrary{\idxcode{lexicographical_compare}}%
 \begin{itemdecl}
 namespace ranges {
   template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
@@ -8394,28 +8346,29 @@ namespace ranges {
                               Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
 }
 \end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
 \returns
 \tcode{true}
-if the sequence of elements defined by the range
+if \newnewtxt{and only if} the sequence of elements defined by the range
 \range{first1}{last1}
 is lexicographically less than the sequence of elements defined by the range
-\range{first2}{last2} and
+\range{first2}{last2} \oldoldtxt{and
 \tcode{false}
-otherwise.
+otherwise}.
 
 \pnum
 \complexity
 At most
-\tcode{2*min((last1 - first1), (last2 - first2))}
-applications of the corresponding comparison and projections.
+$2 \min(\tcode{last1 - first1}, \ \tcode{last2 - first2})$
+applications of the corresponding comparison \newnewtxt{and any projections}.
 
 \pnum
 \remarks
 If two sequences have the same number of elements and their corresponding
-elements are equivalent, then neither sequence is lexicographically
+elements (if any) are equivalent, then neither sequence is lexicographically
 less than the other.
 If one sequence is a prefix of the other, then the shorter sequence is
 lexicographically less than the longer sequence.
@@ -8423,19 +8376,31 @@ Otherwise, the lexicographical comparison of the sequences yields the same
 result as the comparison of the first corresponding pair of
 elements that are not equivalent.
 
+\pnum
+\begin{example}
+\newnewtxt{Let \tcode{comp} be \tcode{std::less<>\{\}} for the overloads with
+no parameter \tcode{comp}, and let \tcode{proj1} and \tcode{proj2} be
+\tcode{std::identity\{\}} for the overloads with no parameters \tcode{proj1} and
+\tcode{proj2}.}
+The following sample implementation satisfies these requirements:
 \begin{codeblock}
 for ( ; first1 != last1 && first2 != last2 ; ++first1, (void) ++first2) {
-  if (invoke(comp, invoke(proj1, *first1), invoke(proj2, *first2))) return true;
-  if (invoke(comp, invoke(proj2, *first2), invoke(proj1, *first1))) return false;
+  @\oldoldtxt{if (*first1 < *first2) return true;}@
+  @\oldoldtxt{if (*first2 < *first1) return false;}@
+  @\newnewtxt{if (invoke(comp, invoke(proj1, *first1), invoke(proj2, *first2))) return true;}@
+  @\newnewtxt{if (invoke(comp, invoke(proj2, *first2), invoke(proj1, *first1))) return false;}@
 }
 return first1 == last1 && first2 != last2;
 \end{codeblock}
+\end{example}
 
 \pnum
-\remarks An empty sequence is lexicographically less than any non-empty sequence, but
+\begin{note}
+An empty sequence is lexicographically less than any non-empty sequence, but
 not less than any empty sequence.
+\end{note}
 \end{itemdescr}
-\end{addedblock}
+
 
 \rSec2[alg.3way]{Three-way comparison algorithms}
 
@@ -8446,47 +8411,14 @@ not less than any empty sequence.
 \indexlibrary{\idxcode{next_permutation}}%
 \begin{itemdecl}
 template<class BidirectionalIterator>
-  bool next_permutation(BidirectionalIterator first,
-                        BidirectionalIterator last);
+  constexpr bool next_permutation(BidirectionalIterator first,
+                                  BidirectionalIterator last);
 
 template<class BidirectionalIterator, class Compare>
-  bool next_permutation(BidirectionalIterator first,
-                        BidirectionalIterator last, Compare comp);
+  constexpr bool next_permutation(BidirectionalIterator first,
+                                  BidirectionalIterator last, Compare comp);
 \end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires
-\tcode{BidirectionalIterator} shall \oldoldtxt{satisfy} \newnewtxt{meet} the
-\oldconcept{ValueSwappable} requirements~(\cxxref{swappable.requirements}).
-
-\pnum
-\effects
-Takes a sequence defined by the range
-\range{first}{last}
-and transforms it into the next permutation.
-The next permutation is found by assuming that the set of all permutations is
-lexicographically sorted with respect to
-\tcode{operator<}
-or \tcode{comp}.
-
-\pnum
-\returns
-\tcode{true}
-if such a permutation exists.
-Otherwise, it transforms the sequence into the smallest permutation,
-that is, the ascendingly sorted one, and returns
-\tcode{false}.
-
-\pnum
-\complexity
-At most
-\tcode{(last - first) / 2}
-swaps.
-\end{itemdescr}
-
 \begin{addedblock}
-\indexlibrary{\idxcode{next_permutation}}%
 \begin{itemdecl}
 namespace ranges {
   template<BidirectionalIterator I, Sentinel<I> S, class Comp = @\newtxt{ranges::}@less<>,
@@ -8501,8 +8433,15 @@ namespace ranges {
       next_permutation(Rng&& rng, Comp comp = Comp{}, Proj proj = Proj{});
 }
 \end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+\pnum
+\requires
+\newnewtxt{For the overloads in namespace \tcode{std},}
+\tcode{BidirectionalIterator} shall \oldoldtxt{satisfy} \newnewtxt{meet} the
+\oldconcept{ValueSwappable} requirements\cxxiref{swappable.requirements}.
+
 \pnum
 \effects
 Takes a sequence defined by the range
@@ -8510,9 +8449,13 @@ Takes a sequence defined by the range
 and transforms it into the next permutation.
 The next permutation is found by assuming that the set of all permutations is
 lexicographically sorted with respect to
-\tcode{comp} and \tcode{proj}.
-If such a permutation exists, it returns
-\tcode{true}.
+\tcode{operator<}
+or \tcode{comp} \newnewtxt{(and \tcode{proj}, if present)}.
+
+\pnum
+\returns
+\tcode{true}
+if such a permutation exists.
 Otherwise, it transforms the sequence into the smallest permutation,
 that is, the ascendingly sorted one, and returns
 \tcode{false}.
@@ -8520,27 +8463,44 @@ that is, the ascendingly sorted one, and returns
 \pnum
 \complexity
 At most
-\tcode{(last - first)/2}
+\tcode{(last - first) / 2}
 swaps.
 \end{itemdescr}
-\end{addedblock}
+
 
 \indexlibrary{\idxcode{prev_permutation}}%
 \begin{itemdecl}
 template<class BidirectionalIterator>
-  bool prev_permutation(BidirectionalIterator first,
-                        BidirectionalIterator last);
+  constexpr bool prev_permutation(BidirectionalIterator first,
+                                  BidirectionalIterator last);
 
 template<class BidirectionalIterator, class Compare>
-  bool prev_permutation(BidirectionalIterator first,
-                        BidirectionalIterator last, Compare comp);
+  constexpr bool prev_permutation(BidirectionalIterator first,
+                                  BidirectionalIterator last, Compare comp);
 \end{itemdecl}
+\begin{addedblock}
+\begin{itemdecl}
+namespace ranges {
+  template<BidirectionalIterator I, Sentinel<I> S, class Comp = @\newtxt{ranges::}@less<>,
+      class Proj = identity>
+    requires Sortable<I, Comp, Proj>
+    @\newtxt{constexpr}@ bool
+      prev_permutation(I first, S last, Comp comp = Comp{}, Proj proj = Proj{});
+  template<BidirectionalRange Rng, class Comp = @\newtxt{ranges::}@less<>,
+      class Proj = identity>
+    requires Sortable<iterator_t<Rng>, Comp, Proj>
+    @\newtxt{constexpr}@ bool
+      prev_permutation(Rng&& rng, Comp comp = Comp{}, Proj proj = Proj{});
+}
+\end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
 \pnum
 \requires
+\newnewtxt{For the overloads in namespace \tcode{std},}
 \tcode{BidirectionalIterator} shall \oldoldtxt{satisfy} \newnewtxt{meet} the
-\oldconcept{ValueSwappable} requirements~(\cxxref{swappable.requirements}).
+\oldconcept{ValueSwappable} requirements\cxxiref{swappable.requirements}.
 
 \pnum
 \effects
@@ -8550,7 +8510,7 @@ and transforms it into the previous permutation.
 The previous permutation is found by assuming that the set of all permutations is
 lexicographically sorted with respect to
 \tcode{operator<}
-or \tcode{comp}.
+or \tcode{comp} \newnewtxt{(and \tcode{proj}, if present)}.
 
 \pnum
 \returns
@@ -8566,48 +8526,5 @@ At most
 \tcode{(last - first) / 2}
 swaps.
 \end{itemdescr}
-
-\begin{addedblock}
-\indexlibrary{\idxcode{prev_permutation}}%
-\begin{itemdecl}
-namespace ranges {
-  template<BidirectionalIterator I, Sentinel<I> S, class Comp = @\newtxt{ranges::}@less<>,
-      class Proj = identity>
-    requires Sortable<I, Comp, Proj>
-    @\newtxt{constexpr}@ bool
-      prev_permutation(I first, S last, Comp comp = Comp{}, Proj proj = Proj{});
-  template<BidirectionalRange Rng, class Comp = @\newtxt{ranges::}@less<>,
-      class Proj = identity>
-    requires Sortable<iterator_t<Rng>, Comp, Proj>
-    @\newtxt{constexpr}@ bool
-      prev_permutation(Rng&& rng, Comp comp = Comp{}, Proj proj = Proj{});
-}
-\end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\effects
-Takes a sequence defined by the range
-\range{first}{last}
-and transforms it into the previous permutation.
-The previous permutation is found by assuming that the set of all permutations is
-lexicographically sorted with respect to
-\tcode{comp} and \tcode{proj}.
-
-\pnum
-\returns
-\tcode{true}
-if such a permutation exists.
-Otherwise, it transforms the sequence into the largest permutation,
-that is, the descendingly sorted one, and returns
-\tcode{false}.
-
-\pnum
-\complexity
-At most
-\tcode{(last - first)/2}
-swaps.
-\end{itemdescr}
-\end{addedblock}
 
 [...]
