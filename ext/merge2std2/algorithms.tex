@@ -1828,16 +1828,21 @@ namespace std {
                        ForwardIterator result, Compare comp);
 \end{codeblock}\begin{addedblock}\begin{codeblock}
   namespace ranges {
+    @\newtxt{template<class I1, class I2, class O>}@
+    @\newtxt{using set_intersection_result = binary_transform_result<I1, I2, O>;}@
+
     template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
         WeaklyIncrementable O, class Comp = @\newtxt{ranges::}@less<>, class Proj1 = identity, class Proj2 = identity>
       requires Mergeable<I1, I2, O, Comp, Proj1, Proj2>
-      @\newtxt{constexpr}@ O set_intersection(I1 first1, S1 last1, I2 first2, S2 last2, O result,
-                                   Comp comp = Comp{}, Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+      @\newtxt{constexpr set_intersection_result<I1, I2,}@ O@\newtxt{>}@
+        set_intersection(I1 first1, S1 last1, I2 first2, S2 last2, O result,
+                         Comp comp = Comp{}, Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
     template<InputRange Rng1, InputRange Rng2, WeaklyIncrementable O,
         class Comp = @\newtxt{ranges::}@less<>, class Proj1 = identity, class Proj2 = identity>
       requires Mergeable<iterator_t<Rng1>, iterator_t<Rng2>, O, Comp, Proj1, Proj2>
-      @\newtxt{constexpr}@ O set_intersection(Rng1&& rng1, Rng2&& rng2, O result,
-                                   Comp comp = Comp{}, Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+      @\newtxt{constexpr set_intersection_result<safe_iterator_t<Rng1>, safe_iterator_t<Rng2>,}@ O@\newtxt{>}@
+        set_intersection(Rng1&& rng1, Rng2&& rng2, O result,
+                         Comp comp = Comp{}, Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
   }
 \end{codeblock}\end{addedblock}\begin{codeblock}
 
@@ -6994,6 +6999,9 @@ to contain the minimum, and so on.
 
 \rSec3[includes]{\tcode{includes}}
 
+\ednote{This wording includes the proposed resolution for
+\href{https://wg21.link/lwg3115}{LWG 3115}.}
+
 \indexlibrary{\idxcode{includes}}%
 \begin{itemdecl}
 template<class InputIterator1, class InputIterator2>
@@ -7014,29 +7022,7 @@ template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2, 
                 ForwardIterator2 first2, ForwardIterator2 last2,
                 Compare comp);
 \end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\returns
-\tcode{true}
-if \range{first2}{last2} is empty or
-if every element in the range
-\range{first2}{last2}
-is contained in the range
-\range{first1}{last1}.
-Returns
-\tcode{false}
-otherwise.
-
-\pnum
-\complexity
-At most
-\tcode{2 * ((last1 - first1) + (last2 - first2)) - 1}
-comparisons.
-\end{itemdescr}
-
 \begin{addedblock}
-\indexlibrary{\idxcode{includes}}%
 \begin{itemdecl}
 namespace ranges {
   template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
@@ -7052,27 +7038,46 @@ namespace ranges {
                             Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
 }
 \end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+\begin{newnewblock}
+\pnum
+Let \tcode{comp} be \tcode{std::less<>\{\}} for the overloads with no parameter
+\tcode{comp}.
+
+\pnum
+\requires
+The ranges \range{first1}{last1} and \range{first2}{last2} shall be
+sorted with respect to \tcode{comp},
+and \tcode{proj} for the overloads in namespace \tcode{ranges}.
+\end{newnewblock}
+
 \pnum
 \returns
 \tcode{true}
-if \range{first2}{last2} is empty or
+if \newnewtxt{and only if} \range{first2}{last2} is \oldoldtxt{empty or
 if every element in the range
 \range{first2}{last2}
 is contained in the range
 \range{first1}{last1}.
-Returns
-\tcode{false}
-otherwise.
+Returns \tcode{false} otherwise.}
+\begin{newnewblock}
+a subsequence of \range{first1}{last1}.
+\begin{note}
+A sequence $S$ is a subsequence of another sequence $T$ if $S$ can be obtained
+from $T$ by removing some, all, or none of $T$'s elements and keeping the
+remaining elements in the same order.
+\end{note}
+\end{newnewblock}
 
 \pnum
 \complexity
 At most
-\tcode{2 * ((last1 - first1) + (last2 - first2)) - 1}
-applications of the comparison function and projections.
+\tcode{2 * (last1 - first1)}
+comparisons \newnewtxt{and applications of any projections}.
 \end{itemdescr}
-\end{addedblock}
+
 
 \rSec3[set.union]{\tcode{set_union}}
 
@@ -7106,37 +7111,7 @@ template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2,
               ForwardIterator2 first2, ForwardIterator2 last2,
               ForwardIterator result, Compare comp);
 \end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires
-The resulting range shall not overlap with either of the original ranges.
-
-\pnum
-\effects
-Constructs a sorted union of the elements from the two ranges;
-that is, the set of elements that are present in one or both of the ranges.
-
-\pnum
-\returns
-The end of the constructed range.
-
-\pnum
-\complexity
-At most
-\tcode{2 * ((last1 - first1) + (last2 - first2)) - 1}
-comparisons.
-
-\pnum
-\remarks If \range{first1}{last1} contains $m$ elements that are equivalent to
-each other and \range{first2}{last2} contains $n$ elements that are equivalent
-to them, then all $m$ elements from the first range shall be copied to the output
-range, in order, and then $\max(n - m, 0)$ elements from the second range shall
-be copied to the output range, in order.
-\end{itemdescr}
-
 \begin{addedblock}
-\indexlibrary{\idxcode{set_union}}%
 \begin{itemdecl}
 namespace ranges {
   template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
@@ -7157,36 +7132,49 @@ namespace ranges {
                 Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
 }
 \end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+\pnum
+\requires
+\newnewtxt{The ranges \range{first1}{last1} and \range{first2}{last2} shall be
+sorted with respect to \tcode{comp}, and the corresponding projection
+\tcode{proj1} or \tcode{proj2} for the overloads in namespace \tcode{ranges}}.
+The resulting range shall not overlap with either of the original ranges.
+
 \pnum
 \effects
 Constructs a sorted union of the elements from the two ranges;
 that is, the set of elements that are present in one or both of the ranges.
 
 \pnum
-\requires
-The resulting range shall not overlap with either of the original ranges.
-
-\pnum
 \returns
-\tcode{\oldtxt{make_tagged_tuple<tag::in1, tag::in2, tag::out>(}\newtxt{\{}last1, last2, result + $n$\newtxt{\}}\oldtxt{)}},
-where \tcode{$n$} is the number of elements in the constructed range.
+\oldoldtxt{T}\newnewtxt{Let \tcode{result_last} be t}he end of the
+constructed range.
+\begin{newnewblock}
+Returns
+\begin{itemize}
+\item \tcode{result_last} for the overloads in namespace \tcode{std}, or
+\item \tcode{\{last1, last2, result_last\}} for the overloads in
+  namespace \tcode{ranges}.
+\end{itemize}
+\end{newnewblock}
 
 \pnum
 \complexity
 At most
 \tcode{2 * ((last1 - first1) + (last2 - first2)) - 1}
-applications of the comparison function and projections.
+comparisons \newnewtxt{and applications of any projections}.
 
 \pnum
-\remarks If \range{first1}{last1} contains $m$ elements that are equivalent to
+\remarks \newnewtxt{Stable\cxxiref{algorithm.stable}.}
+If \range{first1}{last1} contains $m$ elements that are equivalent to
 each other and \range{first2}{last2} contains $n$ elements that are equivalent
 to them, then all $m$ elements from the first range shall be copied to the output
-range, in order, and then $\max(n - m, 0)$ elements from the second range shall
-be copied to the output range, in order.
+range, in order, and then \newnewtxt{the final} $\max(n - m, 0)$
+elements from the second range shall be copied to the output range, in order.
 \end{itemdescr}
-\end{addedblock}
+
 
 \rSec3[set.intersection]{\tcode{set_intersection}}
 
@@ -7220,78 +7208,65 @@ template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2,
                      ForwardIterator2 first2, ForwardIterator2 last2,
                      ForwardIterator result, Compare comp);
 \end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires
-The resulting range shall not overlap with either of the original ranges.
-
-\pnum
-\effects
-Constructs a sorted intersection of the elements from the two ranges;
-that is, the set of elements that are present in both of the ranges.
-
-\pnum
-\returns
-The end of the constructed range.
-
-\pnum
-\complexity
-At most
-\tcode{2 * ((last1 - first1) + (last2 - first2)) - 1}
-comparisons.
-
-\pnum
-\remarks If \range{first1}{last1} contains $m$ elements that are equivalent to
-each other and \range{first2}{last2} contains $n$ elements that are equivalent
-to them, the first $\min(m, n)$ elements shall be copied from the first range
-to the output range, in order.
-\end{itemdescr}
-
 \begin{addedblock}
-\indexlibrary{\idxcode{set_intersection}}%
 \begin{itemdecl}
 namespace ranges {
   template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
       WeaklyIncrementable O, class Comp = @\newtxt{ranges::}@less<>, class Proj1 = identity, class Proj2 = identity>
     requires Mergeable<I1, I2, O, Comp, Proj1, Proj2>
-    @\newtxt{constexpr}@ O set_intersection(I1 first1, S1 last1, I2 first2, S2 last2, O result,
-                                 Comp comp = Comp{}, Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+    @\newtxt{constexpr set_intersection_result<I1, I2,}@ O@\newtxt{>}@
+      set_intersection(I1 first1, S1 last1, I2 first2, S2 last2, O result,
+                       Comp comp = Comp{}, Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
   template<InputRange Rng1, InputRange Rng2, WeaklyIncrementable O,
       class Comp = @\newtxt{ranges::}@less<>, class Proj1 = identity, class Proj2 = identity>
     requires Mergeable<iterator_t<Rng1>, iterator_t<Rng2>, O, Comp, Proj1, Proj2>
-    @\newtxt{constexpr}@ O set_intersection(Rng1&& rng1, Rng2&& rng2, O result,
-                                 Comp comp = Comp{}, Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
+    @\newtxt{constexpr set_intersection_result<safe_iterator_t<Rng1>, safe_iterator_t<Rng2>,}@ O@\newtxt{>}@
+      set_intersection(Rng1&& rng1, Rng2&& rng2, O result,
+                       Comp comp = Comp{}, Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
 }
 \end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+\pnum
+\requires
+\newnewtxt{The ranges \range{first1}{last1} and \range{first2}{last2} shall be
+sorted with respect to \tcode{comp}, and the corresponding projection
+\tcode{proj1} or \tcode{proj2} for the overloads in namespace \tcode{ranges}}.
+The resulting range shall not overlap with either of the original ranges.
+
 \pnum
 \effects
 Constructs a sorted intersection of the elements from the two ranges;
 that is, the set of elements that are present in both of the ranges.
 
 \pnum
-\requires
-The resulting range shall not overlap with either of the original ranges.
-
-\pnum
 \returns
-The end of the constructed range.
+\oldoldtxt{T}\newnewtxt{Let \tcode{result_last} be t}he end of the
+constructed range.
+\begin{newnewblock}
+Returns
+\begin{itemize}
+\item \tcode{result_last} for the overloads in namespace \tcode{std}, or
+\item \tcode{\{last1, last2, result_last\}} for the overloads in
+  namespace \tcode{ranges}.
+\end{itemize}
+\end{newnewblock}
 
 \pnum
 \complexity
 At most
 \tcode{2 * ((last1 - first1) + (last2 - first2)) - 1}
-applications of the comparison function and projections.
+comparisons \newnewtxt{and applications of any projections}.
 
 \pnum
-\remarks If \range{first1}{last1} contains $m$ elements that are equivalent to
+\remarks \newnewtxt{Stable\cxxiref{algorithm.stable}.}
+If \range{first1}{last1} contains $m$ elements that are equivalent to
 each other and \range{first2}{last2} contains $n$ elements that are equivalent
 to them, the first $\min(m, n)$ elements shall be copied from the first range
 to the output range, in order.
 \end{itemdescr}
-\end{addedblock}
+
 
 \rSec3[set.difference]{\tcode{set_difference}}
 
@@ -7325,49 +7300,7 @@ template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2,
                    ForwardIterator2 first2, ForwardIterator2 last2,
                    ForwardIterator result, Compare comp);
 \end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires
-The resulting range shall not overlap with either of the original ranges.
-
-\pnum
-\effects
-Copies the elements of the range
-\range{first1}{last1}
-which are not present in the range
-\range{first2}{last2}
-to the range beginning at
-\tcode{result}.
-The elements in the constructed range are sorted.
-
-\pnum
-\returns
-The end of the constructed range.
-
-\pnum
-\complexity
-At most
-\tcode{2 * ((last1 - first1) + (last2 - first2)) - 1}
-comparisons.
-
-\pnum
-\remarks
-If
-\range{first1}{last1}
-contains $m$
-elements that are equivalent to each other and
-\range{first2}{last2}
-contains $n$
-elements that are equivalent to them, the last
-$\max(m - n, 0)$
-elements from
-\range{first1}{last1}
-shall be copied to the output range.
-\end{itemdescr}
-
 \begin{addedblock}
-\indexlibrary{\idxcode{set_difference}}%
 \begin{itemdecl}
 namespace ranges {
   template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
@@ -7386,8 +7319,16 @@ namespace ranges {
                      Comp comp = Comp{}, Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
 }
 \end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+\pnum
+\requires
+\newnewtxt{The ranges \range{first1}{last1} and \range{first2}{last2} shall be
+sorted with respect to \tcode{comp}, and the corresponding projection
+\tcode{proj1} or \tcode{proj2} for the overloads in namespace \tcode{ranges}}.
+The resulting range shall not overlap with either of the original ranges.
+
 \pnum
 \effects
 Copies the elements of the range
@@ -7399,19 +7340,23 @@ to the range beginning at
 The elements in the constructed range are sorted.
 
 \pnum
-\requires
-The resulting range shall not overlap with either of the original ranges.
-
-\pnum
 \returns
-\tcode{\{last1, result + $n$\}}, where $n$
-is the number of elements in the constructed range.
+\oldoldtxt{T}\newnewtxt{Let \tcode{result_last} be t}he end of the
+constructed range.
+\begin{newnewblock}
+Returns
+\begin{itemize}
+\item \tcode{result_last} for the overloads in namespace \tcode{std}, or
+\item \tcode{\{last1, result_last\}} for the overloads in
+  namespace \tcode{ranges}.
+\end{itemize}
+\end{newnewblock}
 
 \pnum
 \complexity
 At most
 \tcode{2 * ((last1 - first1) + (last2 - first2)) - 1}
-applications of the comparison function and projections.
+comparisons \newnewtxt{and applications of any projections}.
 
 \pnum
 \remarks
@@ -7427,7 +7372,7 @@ elements from
 \range{first1}{last1}
 shall be copied to the output range.
 \end{itemdescr}
-\end{addedblock}
+
 
 \rSec3[set.symmetric.difference]{\tcode{set_symmetric_difference}}
 
@@ -7461,47 +7406,7 @@ template<class ExecutionPolicy, class ForwardIterator1, class ForwardIterator2,
                              ForwardIterator2 first2, ForwardIterator2 last2,
                              ForwardIterator result, Compare comp);
 \end{itemdecl}
-
-\begin{itemdescr}
-\pnum
-\requires
-The resulting range shall not overlap with either of the original ranges.
-
-\pnum
-\effects
-Copies the elements of the range
-\range{first1}{last1}
-that are not present in the range
-\range{first2}{last2},
-and the elements of the range
-\range{first2}{last2}
-that are not present in the range
-\range{first1}{last1}
-to the range beginning at
-\tcode{result}.
-The elements in the constructed range are sorted.
-
-\pnum
-\returns
-The end of the constructed range.
-
-\pnum
-\complexity
-At most
-\tcode{2 * ((last1 - first1) + (last2 - first2)) - 1}
-comparisons.
-
-\pnum
-\remarks
-If \range{first1}{last1} contains $m$ elements that are equivalent to each other and
-\range{first2}{last2} contains $n$ elements that are equivalent to them, then
-$|m - n|$ of those elements shall be copied to the output range: the last
-$m - n$ of these elements from \range{first1}{last1} if $m > n$, and the last
-$n - m$ of these elements from \range{first2}{last2} if $m < n$.
-\end{itemdescr}
-
 \begin{addedblock}
-\indexlibrary{\idxcode{set_symmetric_difference}}%
 \begin{itemdecl}
 namespace ranges {
   template<InputIterator I1, Sentinel<I1> S1, InputIterator I2, Sentinel<I2> S2,
@@ -7523,8 +7428,16 @@ namespace ranges {
                                Proj1 proj1 = Proj1{}, Proj2 proj2 = Proj2{});
 }
 \end{itemdecl}
+\end{addedblock}
 
 \begin{itemdescr}
+\pnum
+\requires
+\newnewtxt{The ranges \range{first1}{last1} and \range{first2}{last2} shall be
+sorted with respect to \tcode{comp}, and the corresponding projection
+\tcode{proj1} or \tcode{proj2} for the overloads in namespace \tcode{ranges}}.
+The resulting range shall not overlap with either of the original ranges.
+
 \pnum
 \effects
 Copies the elements of the range
@@ -7540,19 +7453,23 @@ to the range beginning at
 The elements in the constructed range are sorted.
 
 \pnum
-\requires
-The resulting range shall not overlap with either of the original ranges.
-
-\pnum
 \returns
-\tcode{\oldtxt{make_tagged_tuple<tag::in1, tag::in2, tag::out>(}\newtxt{\{}last1, last2, result + $n$\newtxt{\}}\oldtxt{)}}, \\ where \tcode{$n$} is
-the number of elements in the constructed range.
+\oldoldtxt{T}\newnewtxt{Let \tcode{result_last} be t}he end of the
+constructed range.
+\begin{newnewblock}
+Returns
+\begin{itemize}
+\item \tcode{result_last} for the overloads in namespace \tcode{std}, or
+\item \tcode{\{last1, last2, result_last\}} for the overloads in
+  namespace \tcode{ranges}.
+\end{itemize}
+\end{newnewblock}
 
 \pnum
 \complexity
 At most
 \tcode{2 * ((last1 - first1) + (last2 - first2)) - 1}
-applications of the comparison function and projections.
+comparisons \newnewtxt{and applications of any projections}.
 
 \pnum
 \remarks
@@ -7562,7 +7479,7 @@ $|m - n|$ of those elements shall be copied to the output range: the last
 $m - n$ of these elements from \range{first1}{last1} if $m > n$, and the last
 $n - m$ of these elements from \range{first2}{last2} if $m < n$.
 \end{itemdescr}
-\end{addedblock}
+
 
 \rSec2[alg.heap.operations]{Heap operations}
 
