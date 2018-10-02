@@ -22,3 +22,5 @@ CC: [memory.syn] Lack of [`noexcept`] requirement is to support older code. We c
 DS: [memory.syn] `uninitialized_copy_n_result` is redundant with `<algorithm>`'s `copy_result` [reuse `copy_result`]
 
 AM: [memory.syn] would like copy result [et al] to be deducible [Mike is proposing CTAD for aggregates]
+
+TS: [memory.syn] Look at `insert_return_type` to get wording to ensure structured binding works and prevent private members [done for all `_result` types]
