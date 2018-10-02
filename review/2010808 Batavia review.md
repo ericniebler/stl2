@@ -38,3 +38,5 @@ WB: [specialized.algorithms] Would like to reorder p3 first sentence like we did
 WB: [specialized.algorithms] Suggest a note like “This means that these algorithms may not be called with explicit template arguments” [added a note]
 
 WB: [specialized.algorithms] "When invoked on ranges of potentially overlapped subobjects, the algorithms specified in this subclause result in undefined behavior." [so rephrased]
+
+AM: [special.mem.concepts] When talking about an assignment not throwing, do you mean any assignment? ... spell it out entirely [spammed out]
