@@ -26,3 +26,7 @@ AM: [memory.syn] would like copy result [et al] to be deducible [Mike is proposi
 TS: [memory.syn] Look at `insert_return_type` to get wording to ensure structured binding works and prevent private members [done for all `_result` types]
 
 AM: [memory.syn] Why not `Range` instead of `Rng` [for template parameter names]? ... Rename [everywhere] to `R` [Rename `([Rr])ng` to `$1`. Rename "Relation" template parameters from `R` to `C`. (no change marks)]
+
+WB: [specialized.algorithms] "In this subclause, the names of template parameters are used to express type requirements for those algorithms defined directly in namespace std." [Rephrased]
+
+CC: [specialized.algorithms] Last sentence of P1 needs to be a separate paragraph [separated]
