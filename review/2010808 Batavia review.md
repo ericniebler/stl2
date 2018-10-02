@@ -24,3 +24,5 @@ DS: [memory.syn] `uninitialized_copy_n_result` is redundant with `<algorithm>`'s
 AM: [memory.syn] would like copy result [et al] to be deducible [Mike is proposing CTAD for aggregates]
 
 TS: [memory.syn] Look at `insert_return_type` to get wording to ensure structured binding works and prevent private members [done for all `_result` types]
+
+AM: [memory.syn] Why not `Range` instead of `Rng` [for template parameter names]? ... Rename [everywhere] to `R` [Rename `([Rr])ng` to `$1`. Rename "Relation" template parameters from `R` to `C`. (no change marks)]
