@@ -30,3 +30,5 @@ AM: [memory.syn] Why not `Range` instead of `Rng` [for template parameter names]
 WB: [specialized.algorithms] "In this subclause, the names of template parameters are used to express type requirements for those algorithms defined directly in namespace std." [Rephrased]
 
 CC: [specialized.algorithms] Last sentence of P1 needs to be a separate paragraph [separated]
+
+TS: [specialized.algorithms] `advance` and `distance` are they always `std::`? [Neither `std::` nor `ranges::` will work in all cases.] [Reworded to remove uses of `+` and define semantics for `-` without using `distance`.]
