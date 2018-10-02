@@ -32,3 +32,5 @@ WB: [specialized.algorithms] "In this subclause, the names of template parameter
 CC: [specialized.algorithms] Last sentence of P1 needs to be a separate paragraph [separated]
 
 TS: [specialized.algorithms] `advance` and `distance` are they always `std::`? [Neither `std::` nor `ranges::` will work in all cases.] [Reworded to remove uses of `+` and define semantics for `-` without using `distance`.]
+
+WB: [specialized.algorithms] Would like to reorder p3 first sentence like we did for p1. [so reordered: note this is now p4]
