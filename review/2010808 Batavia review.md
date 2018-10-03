@@ -44,3 +44,5 @@ AM: [special.mem.concepts] When talking about an assignment not throwing, do you
 AM: [uninitialized.construct.default] Would suggest a function like `voidify` to replace the `static_cast` and `const_cast`s [added `voidify`]
 
 CC: [uninitialized.fill] I'd like to change all the `_n` algorithms to use CTAD for `counted_iterator` rather than `make_counted_iterator` [especially since we struck `make_counted_iterator`!]. [Replaced throughout]
+
+TS: [specialized.destroy] `destroy_at` needs to correctly handle a pointer to array [done]

@@ -36,7 +36,6 @@ P0896:
 * [ ] Tim's feedback from `Swappable` on
 * [ ] If we require that contiguous allocator-aware containers have contiguous iterators without requiring that Allocator pointers are contiguous iterators, we effectively forbid such a container from using the pointer type directly as an iterator.
 * [ ] The magic for returning sentinels needs to be expanded to include arithmetic, and possibly copied to [specialized.algorithms]. Also `i - n` needs to make sense, or I need to eradicate it.
-* [ ] `ranges::destroy_at` needs to handle arrays properly.
 * [ ] Audit the view adaptors for overconstraint requiring `InputRange` when they could require vanilla `Range`.
 * [ ] When a view adaptor uses the iterators/sentinel of the underlying range directly, it should be "rvalue range-able" iff the underlying range is "rvalue range-able".
 * [ ] `operator->` for the view adaptors' iterators
@@ -63,6 +62,7 @@ P0896:
 * [ ] Consider constraining the template parameters of the "named tuples" returned by algorithms.
 * [ ] https://github.com/ericniebler/stl2/issues/553
 * [ ] Reformulate `noexcept(E1) && noexcept(E2)` as `noexcept(E1, E2)`?
+* [X] `ranges::destroy_at` needs to handle arrays properly.
 * [X] Update the Swappable text from the P0898 merge.
 * [X] `ranges::swap` of pointer-to-uninstantiated should avoid instantiation
 * [X] `view_interface::data` needs to return a pointer
