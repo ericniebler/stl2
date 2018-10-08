@@ -42,7 +42,6 @@ P0896:
   * [ ] `counted_iterator`
   * [ ] Reconcile the `common_iterator` and *has-arrow* `operator->` styles.
 * [ ] Forbid explicit template arguments for quasi-CPOs (algorithms, iterator operations, specialized memory algorithms)
-* [ ] `-> auto&&` is broken in C++20 (Don't miss `\tcode{auto\&\&}`)
 * [ ] Define "models", and use it throughout to replace both "`foo` satisfies `Concept`" and the "syntactic requirements...otherwise ill-formed NDR" dance.
 * [ ] Specify `enable_view` specializations with the individual types instead of with `View`
 * [ ] `Decrementable` doesn't constrain the behavior of objects that aren't both *incrementable* and *decrementable*.
@@ -58,10 +57,10 @@ P0896:
 * [ ] Audit all concepts for P0717
 * [ ] Shorten new stable names.
 * [ ] Fix the intro - it hasn't been updated since P0!
-* [ ] Replace cxxref with cxxiref where appropriate.
 * [ ] Consider constraining the template parameters of the "named tuples" returned by algorithms.
 * [ ] https://github.com/ericniebler/stl2/issues/553
 * [ ] Reformulate `noexcept(E1) && noexcept(E2)` as `noexcept(E1, E2)`?
+* [X] `-> auto&&` is broken in C++20 (Don't miss `\tcode{auto\&\&}`)
 * [X] `ranges::destroy_at` needs to handle arrays properly.
 * [X] Update the Swappable text from the P0898 merge.
 * [X] `ranges::swap` of pointer-to-uninstantiated should avoid instantiation

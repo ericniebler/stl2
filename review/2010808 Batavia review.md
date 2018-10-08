@@ -46,3 +46,9 @@ AM: [uninitialized.construct.default] Would suggest a function like `voidify` to
 CC: [uninitialized.fill] I'd like to change all the `_n` algorithms to use CTAD for `counted_iterator` rather than `make_counted_iterator` [especially since we struck `make_counted_iterator`!]. [Replaced throughout]
 
 TS: [specialized.destroy] `destroy_at` needs to correctly handle a pointer to array [done]
+
+AM: [range.comparisons] why follow idiom of templatizing on type? [Proposed redesign in P1252R0]
+
+TS: [string.view.iterators] Suggest changing all usages of "contiguous iterator" to the concept version. [So changed]
+
+ALL: [iterator.synopsis] `-> auto&&` is a bogus deduction constraint. [Replaced with a valid constraint]

@@ -41,8 +41,15 @@ and modify as follows:}
 
 namespace std {
 \end{codeblock}\begin{addedblock}\begin{codeblock}
+  @\newtxt{template<class T> using \placeholder{with-reference} // \expos}@
+    @\newtxt{= T\&;}@
+  @\newtxt{template<class T> concept \placeholder{can-reference} // \expos}@
+    @\newtxt{= requires \{ typename \placeholdernc{with-reference}<T>; \};}@
   template<class T> concept @\placeholder{dereferenceable}@ // \expos
-    = requires(T& t) { { *t } -> auto&&; }; // not required to be equality-preserving
+    = requires(T& t) {
+      @\oldtxt{\{}@ *t @\oldtxt{\} -> auto\&\&}@; // not required to be equality-preserving
+      @\newtxt{requires \placeholdernc{can-reference}<decltype(*t)>;}@
+    };
 
   // \ref{iterator.assoc.types}, associated types
   // \ref{incrementable.traits}, incrementable traits
@@ -893,9 +900,11 @@ several exposition-only concepts equivalent to the following:
 template<class I>
 concept @\placeholder{_Cpp17Iterator}@ =
   Copyable<I> && requires (I i) {
-    { *i } -> auto&&;
+    @\oldtxt{\{}@ *i @\oldtxt{\} -> auto\&\&;}@
+    @\newtxt{requires \placeholdernc{can-reference}<decltype(*i)>;}@
     { ++i } -> Same<I>&;
-    { *i++ } -> auto&&;
+    @\oldtxt{\{}@ *i++ @\oldtxt{\} -> auto\&\&;}@
+    @\newtxt{requires \placeholdernc{can-reference}<decltype(*i++)>;}@
   };
 
 template<class I>
@@ -1369,16 +1378,19 @@ to provide a richer set of iterator movements (\ref{iterator.concept.forward},
 template<class I>
   concept Iterator =
     requires(I i) {
-      { *i } -> auto&&; // Requires: i is dereferenceable
+      @\oldtxt{\{}@ *i @\oldtxt{\} -> auto\&\&; // Requires: i is dereferenceable}@
+      @\newtxt{requires \placeholdernc{can-reference}<decltype(*i)>;}@
     } &&
     WeaklyIncrementable<I>;
 \end{codeblock}
 
+{\color{oldclr}
 \pnum
 \begin{note}
-The requirement that the result of dereferencing the iterator is deducible from
-\tcode{auto\&\&} means that it cannot be \tcode{void}.
+\oldtxt{The requirement that the result of dereferencing the iterator is deducible from
+\tcode{auto\&\&} means that it cannot be \tcode{void}.}
 \end{note}
+} %% \color{oldclr}
 
 \rSec3[iterator.concept.sentinel]{Concept \tcode{Sentinel}}
 
