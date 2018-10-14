@@ -52,3 +52,5 @@ AM: [range.comparisons] why follow idiom of templatizing on type? [Proposed rede
 TS: [string.view.iterators] Suggest changing all usages of "contiguous iterator" to the concept version. [So changed]
 
 ALL: [iterator.synopsis] `-> auto&&` is a bogus deduction constraint. [Replaced with a valid constraint]
+
+AM: [iterator.synopsis] Recommend putting Permutable, Mergeable, and Sortable into Algorithms header [not changing at this time, rationale on the reflectors.]
