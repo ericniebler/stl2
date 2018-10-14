@@ -54,3 +54,5 @@ TS: [string.view.iterators] Suggest changing all usages of "contiguous iterator"
 ALL: [iterator.synopsis] `-> auto&&` is a bogus deduction constraint. [Replaced with a valid constraint]
 
 AM: [iterator.synopsis] Recommend putting Permutable, Mergeable, and Sortable into Algorithms header [not changing at this time, rationale on the reflectors.]
+
+TS: [iterator.requirements.general]/12 & /14 “Up to but not including the element pointed to by the…” -> “Up to but not including the element, if any, pointed to by the…”
