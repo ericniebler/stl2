@@ -73,3 +73,5 @@ TS: move second sentence to p14. [so rearranged]
 WB: [iterator.requirements.general] "Functions in the library" -> "library functions" [so changed]
 
 TS: [iterator.requirements.general] We dont have a definition of "weaker" [removed uses of "weaker" in reference to iterator categories; also in [iterator.concept.forward].]
+
+AM: `WeaklyIncrementable` and `Incrementable` sound far more primitive than to just being tied to iterators. Would like to see them move down into `<concepts>`. [So would I - but this design change needs investigation to determine if and how to extract `iter_difference_t` from `iterator_traits`; this needs a paper.]
