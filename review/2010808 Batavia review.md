@@ -71,3 +71,5 @@ CC: We need the phrase ‘a range is valid’. can put this in p13
 TS: move second sentence to p14. [so rearranged]
 
 WB: [iterator.requirements.general] "Functions in the library" -> "library functions" [so changed]
+
+TS: [iterator.requirements.general] We dont have a definition of "weaker" [removed uses of "weaker" in reference to iterator categories; also in [iterator.concept.forward].]
