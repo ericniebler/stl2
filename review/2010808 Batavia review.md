@@ -55,4 +55,13 @@ ALL: [iterator.synopsis] `-> auto&&` is a bogus deduction constraint. [Replaced 
 
 AM: [iterator.synopsis] Recommend putting Permutable, Mergeable, and Sortable into Algorithms header [not changing at this time, rationale on the reflectors.]
 
-TS: [iterator.requirements.general]/12 & /14 “Up to but not including the element pointed to by the…” -> “Up to but not including the element, if any, pointed to by the…”
+TS: [iterator.requirements.general]/12 & /14 “Up to but not including the element pointed to by the…” -> “Up to but not including the element, if any, pointed to by the…” [so changed]
+
+TS: [iterator.requirements.general] last sentence of p13 duplicates first sentence of p15.
+
+TS: last sentence of p13 duplicates first sentence of p15.
+WB: Would like to strike first sentence
+CC: We need the phrase ‘a range is valid’. can put this in p13
+TS: move second sentence to p14. [so rearranged]
+
+WB: [iterator.requirements.general] "Functions in the library" -> "library functions" [so changed]
