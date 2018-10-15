@@ -1,11 +1,9 @@
-Mon PM
-
-DS: Dan S
-TS: Tim S
 AM: Alisdair Meredith
-WB: Walter Brown
 CC: Casey Carter
+DS: Dan S
 RD: Rob Douglas
+TS: Tim Song
+WB: Walter Brown
 
 WB: [allocator.requirements] "the additional requirement that, when..." [so reworded]
 
@@ -75,3 +73,5 @@ WB: [iterator.requirements.general] "Functions in the library" -> "library funct
 TS: [iterator.requirements.general] We dont have a definition of "weaker" [removed uses of "weaker" in reference to iterator categories; also in [iterator.concept.forward].]
 
 AM: `WeaklyIncrementable` and `Incrementable` sound far more primitive than to just being tied to iterators. Would like to see them move down into `<concepts>`. [So would I - but this design change needs investigation to determine if and how to extract `iter_difference_t` from `iterator_traits`; this needs a paper.]
+
+WB: [incrementable.traits] & [readable.traits] do we have meaning for "implemented as if"? [These seem to be noise words; struck.]
