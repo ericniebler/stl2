@@ -902,13 +902,15 @@ may be defined as \tcode{void}.
 
 \begin{addedblock}
 \pnum
-The member types of non-program-defined specializations of
+\oldtxt{The member types of non-program-defined specializations of
 \tcode{iterator_traits} are computed as defined below. The definition below uses
-several exposition-only concepts equivalent to the following:
+several exposition-only concepts equivalent to the following:}
+\newtxt{The definitions in this subclause make use of the following
+exposition-only concepts:}
 
 \begin{codeblock}
 template<class I>
-concept @\placeholder{_Cpp17Iterator}@ =
+concept @\placeholder{\oldtxt{_Cpp17Iterator}} \placeholder{\newtxt{cpp17-iterator}}@ =
   Copyable<I> && requires (I i) {
     @\oldtxt{\{}@ *i @\oldtxt{\} -> auto\&\&;}@
     @\newtxt{requires \placeholdernc{can-reference}<decltype(*i)>;}@
@@ -918,8 +920,8 @@ concept @\placeholder{_Cpp17Iterator}@ =
   };
 
 template<class I>
-concept @\placeholder{_Cpp17InputIterator}@ =
-  @\placeholder{_Cpp17Iterator}@<I> && EqualityComparable<I> && requires (I i) {
+concept @\placeholder{\oldtxt{_Cpp17InputIterator}} \placeholder{\newtxt{cpp17-input-iterator}}@ =
+  @\placeholder{\oldtxt{_Cpp17Iterator}} \placeholder{\newtxt{cpp17-iterator}}@<I> && EqualityComparable<I> && requires (I i) {
     typename incrementable_traits<I>::difference_type;
     typename readable_traits<I>::value_type;
     typename common_reference_t<iter_reference_t<I> &&,
@@ -930,8 +932,8 @@ concept @\placeholder{_Cpp17InputIterator}@ =
   };
 
 template<class I>
-concept @\placeholder{_Cpp17ForwardIterator}@ =
-  @\placeholder{_Cpp17InputIterator}@<I> && Constructible<I> &&
+concept @\placeholder{\oldtxt{_Cpp17ForwardIterator}} \placeholder{\newtxt{cpp17-forward-iterator}}@ =
+  @\placeholder{\oldtxt{_Cpp17InputIterator}} \placeholder{\newtxt{cpp17-input-iterator}}@<I> && Constructible<I> &&
   Same<remove_cvref_t<iter_reference_t<I>>, typename readable_traits<I>::value_type> &&
   requires (I i) {
     { i++ } -> const I&;
@@ -939,16 +941,16 @@ concept @\placeholder{_Cpp17ForwardIterator}@ =
   };
 
 template<class I>
-concept @\placeholder{_Cpp17BidirectionalIterator}@ =
-  @\placeholder{_Cpp17ForwardIterator}@<I> && requires (I i) {
+concept @\placeholder{\oldtxt{_Cpp17BidirectionalIterator}} \placeholder{\newtxt{cpp17-bidirectional-iterator}}@ =
+  @\placeholder{\oldtxt{_Cpp17ForwardIterator}} \placeholder{\newtxt{cpp17-forward-iterator}}@<I> && requires (I i) {
     { --i } -> Same<I>&;
     { i-- } -> const I&;
     requires Same<iter_reference_t<I>, decltype(*i--)>;
   };
 
 template<class I>
-concept @\placeholder{_Cpp17RandomAccessIterator}@ =
-  @\placeholder{_Cpp17BidirectionalIterator}@<I> && StrictTotallyOrdered<I> &&
+concept @\placeholder{\oldtxt{_Cpp17RandomAccessIterator}} \placeholder{\newtxt{cpp17-random-access-iterator}}@ =
+  @\placeholder{\oldtxt{_Cpp17BidirectionalIterator}} \placeholder{\newtxt{cpp17-bidirectional-iterator}}@<I> && StrictTotallyOrdered<I> &&
   requires (I i, typename incrementable_traits<I>::difference_type n) {
     { i += n } -> Same<I>&;
     { i -= n } -> Same<I>&;
@@ -959,15 +961,22 @@ concept @\placeholder{_Cpp17RandomAccessIterator}@ =
     { i[n] } -> iter_reference_t<I>;
   };
 \end{codeblock}
+
+{\color{newclr}
+\pnum
+The member types of \tcode{iterator_traits} specializations that are not
+program-defined are computed as follows:
+} %% \color{newclr}
 \end{addedblock}
 
 \begin{itemize}
 \item
 If \tcode{\changed{Iterator}{I}} has valid\cxxiref{temp.deduct} member
 types \tcode{difference_type}, \tcode{value_type}, \removed{\tcode{pointer},}
-\tcode{reference}, and \tcode{iterator_category},
+\tcode{reference}, and \tcode{iterator_category}, \newnewtxt{then}
 \tcode{iterator_traits<\changed{Iterator}{I}>}
-shall have the following as publicly accessible members:
+\oldoldtxt{shall have} \newnewtxt{has} the following \oldoldtxt{as}
+publicly accessible members:
 \begin{codeblock}
   using difference_type   = typename @\changed{Iterator}{I}@::difference_type;
   using value_type        = typename @\changed{Iterator}{I}@::value_type;
@@ -975,16 +984,16 @@ shall have the following as publicly accessible members:
   using reference         = typename @\changed{Iterator}{I}@::reference;
   using iterator_category = typename @\changed{Iterator}{I}@::iterator_category;
 \end{codeblock}
-\added{If the \grammarterm{qualified-id} \tcode{I::pointer} is valid and
-denotes a type, then
-}\tcode{\added{iterator_traits<I>::pointer}}\added{ names that type; otherwise,
-it names \tcode{void}.}
-
 \begin{addedblock}
+If the \grammarterm{qualified-id} \tcode{I::pointer} is valid and
+denotes a type, then \tcode{iterator_traits<I>::pointer} names that type;
+otherwise, it names \tcode{void}.
+
 \item
 Otherwise, if \tcode{I} satisfies the exposition-only concept
-\tcode{\placeholder{_Cpp17InputIterator}}, \tcode{iterator_traits<I>} shall
-have the following as publicly accessible members:
+\tcode{\placeholder{\oldtxt{_Cpp17InputIterator}} \placeholder{\newtxt{cpp17-input-iterator}}},
+\newtxt{then} \tcode{iterator_traits<I>} \oldtxt{shall have} \newtxt{has} the following
+\oldtxt{as} publicly accessible members:
 \begin{codeblock}
   using difference_type   = typename incrementable_traits<I>::difference_type;
   using value_type        = typename readable_traits<I>::value_type;
@@ -992,29 +1001,41 @@ have the following as publicly accessible members:
   using reference         = @\seebelownc@;
   using iterator_category = @\seebelownc@;
 \end{codeblock}
-If the \grammarterm{qualified-id} \tcode{I::pointer} is valid and denotes a type,
+\begin{itemize}
+\item If the \grammarterm{qualified-id} \tcode{I::pointer} is valid and denotes a type,
 \tcode{pointer} names that type. Otherwise, if
 \tcode{decltype(\brk{}declval<I\&>().operator->())} is well-formed, then
-\tcode{pointer} names that type. Otherwise, \tcode{pointer} is \tcode{void}.
+\tcode{pointer} names that type. Otherwise, \tcode{pointer} \oldtxt{is}
+\newtxt{names} \tcode{void}.
 
-If the \grammarterm{qualified-id} \tcode{I::reference} is valid and denotes a
-type, \tcode{reference} names that type. Otherwise, \tcode{reference} is
-\tcode{iter_reference_t<I>}.
+\item If the \grammarterm{qualified-id} \tcode{I::reference} is valid and denotes a
+type, \tcode{reference} names that type. Otherwise, \tcode{reference} \oldtxt{is}
+\newtxt{names} \tcode{iter_reference_t<I>}.
 
-If the \grammarterm{qualified-id} \tcode{I::iterator_category} is valid and
+\item If the \grammarterm{qualified-id} \tcode{I::iterator_category} is valid and
 denotes a type, \tcode{iterator_category} names that type. Otherwise, if
-\tcode{I} satisfies \tcode{\placeholder{_Cpp17RandomAccessIterator}},
-\tcode{iterator_category} is \tcode{random_access_iterator_tag}. Otherwise, if
-\tcode{I} satisfies \tcode{\placeholder{_Cpp17BidirectionalIterator}},
-\tcode{iterator_category} is \tcode{bidirectional_iterator_tag}. Otherwise, if
-\tcode{I} satisfies \tcode{\placeholder{_Cpp17ForwardIterator}},
-\tcode{iterator_category} is \tcode{forward_iterator_tag}.
-Otherwise, \tcode{iterator_category} is \tcode{input_iterator_tag}.
+\tcode{I} satisfies \tcode{\placeholder{\oldtxt{_Cpp17RandomAccessIterator}}
+\placeholder{\newtxt{cpp17-random-access-iterator}}},
+\tcode{iterator_category} \oldtxt{is} \newtxt{names}
+\tcode{random_access_iterator_tag}. Otherwise, if
+\tcode{I} satisfies \tcode{\placeholder{\oldtxt{_Cpp17BidirectionalIterator}}
+\placeholder{\newtxt{cpp17-bidirectional-iterator}}},
+\tcode{iterator_category} \oldtxt{is} \newtxt{names}
+\tcode{bidirectional_iterator_tag}. Otherwise, if
+\tcode{I} satisfies \tcode{\placeholder{\oldtxt{_Cpp17ForwardIterator}}
+\placeholder{\newtxt{cpp17-forward-iterator}}},
+\tcode{iterator_category} \oldtxt{is} \newtxt{names}
+\tcode{forward_iterator_tag}.
+Otherwise, \tcode{iterator_category} \oldtxt{is} \newtxt{names}
+\tcode{input_iterator_tag}.
+\end{itemize}
 
 \item
 Otherwise, if \tcode{I} satisfies the exposition-only concept
-\tcode{\placeholder{_Cpp17Iterator}}, \tcode{iterator_traits<I>} shall
-have the following as publicly accessible members:
+\tcode{\placeholder{\oldtxt{_Cpp17Iterator}}
+\placeholder{\newtxt{cpp17-iterator}}}, \newtxt{then} \tcode{iterator_traits<I>}
+\oldtxt{shall have} \newtxt{has} the following \oldtxt{as} publicly accessible
+members:
 \begin{codeblock}
   using difference_type   = @\seebelownc@;
   using value_type        = void;
@@ -1023,13 +1044,13 @@ have the following as publicly accessible members:
   using iterator_category = output_iterator_tag;
 \end{codeblock}
 If \tcode{incrementable_traits<I>::difference_type} is well-formed
-and names a type, then \tcode{difference_type} names that type; otherwise, it is
-\tcode{void}.
+and names a type, then \tcode{difference_type} names that type; otherwise, it
+\oldtxt{is} \newtxt{names} \tcode{void}.
 \end{addedblock}
 
 \item
 Otherwise, \tcode{iterator_traits<\changed{Iterator}{I}>}
-shall have no members by any of the above names.
+\oldoldtxt{shall have} \newnewtxt{has} no members by any of the above names.
 \end{itemize}
 
 \begin{addedblock}

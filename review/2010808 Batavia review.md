@@ -79,3 +79,14 @@ WB: [incrementable.traits] & [readable.traits] do we have meaning for "implement
 TS (offline): [incrementable.traits] Do you need to `decay` [in the `const I` partial specialization of `incrementable_traits`]? [Not really; the intent was to reduce the number of specializations needed for `iter_difference_t<const int[42]>`, but that's such a weird corner that it's not worth complicating the spec. Changed to `remove_const_t`.]
 
 AM: [iterator.traits] [p1 says] `iterator_traits<int*>::pointer` is `void` [since it does not support `operator->`]? [Clarified these statements apply only to iterators of class type. Drive-by: fix the prior sentence as well which was ~~a dumpster fire~~ not good.]
+
+WB: [iterator.traits]/2 "Member types of specializations that are not program defined"
+RD: [iterator.traits]/2 Why arent you using kebab naming form?
+TS (offline): [iterator.traits]/2 Should we kebab the exposition-only names?
+Group: [iterator.traits]/2 is too long. Separate out exposition only concepts.
+DS: [iterator.traits]/2 first sentence of 2.1 needs a "then"
+WB: [iterator.traits]/2 Add "then"s to complement the "if"s?
+WB: [iterator.traits]/2 2.2 may be easier to have as sub-bulleted list
+WB: [iterator.traits]/2 Don’t like mixing of "names" and "is" [All changes applied]
+
+TS (offline): `requires !C<T>` isn't a valid *requires-clause* in C++20's reduced grammar. [audited all *requires-clause*s]
