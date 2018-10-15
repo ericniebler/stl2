@@ -65,7 +65,7 @@ TS: [iterator.requirements.general] last sentence of p13 duplicates first senten
 
 TS: last sentence of p13 duplicates first sentence of p15.
 WB: Would like to strike first sentence
-CC: We need the phrase ‘a range is valid’. can put this in p13
+CC: We need the phrase "a range is valid". can put this in p13
 TS: move second sentence to p14. [so rearranged]
 
 WB: [iterator.requirements.general] "Functions in the library" -> "library functions" [so changed]
@@ -75,3 +75,5 @@ TS: [iterator.requirements.general] We dont have a definition of "weaker" [remov
 AM: `WeaklyIncrementable` and `Incrementable` sound far more primitive than to just being tied to iterators. Would like to see them move down into `<concepts>`. [So would I - but this design change needs investigation to determine if and how to extract `iter_difference_t` from `iterator_traits`; this needs a paper.]
 
 WB: [incrementable.traits] & [readable.traits] do we have meaning for "implemented as if"? [These seem to be noise words; struck.]
+
+AM: [iterator.traits] [p1 says] `iterator_traits<int*>::pointer` is `void` [since it does not support `operator->`]? [Clarified these statements apply only to iterators of class type. Drive-by: fix the prior sentence as well which was ~~a dumpster fire~~ not good.]
