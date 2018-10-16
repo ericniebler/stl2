@@ -90,3 +90,7 @@ WB: [iterator.traits]/2 2.2 may be easier to have as sub-bulleted list
 WB: [iterator.traits]/2 Don’t like mixing of "names" and "is" [All changes applied]
 
 TS (offline): `requires !C<T>` isn't a valid *requires-clause* in C++20's reduced grammar. [audited all *requires-clause*s]
+
+WB: [iterator.traits]/3 second sentence "if specified" -> "is present"
+CC: [iterator.traits]/3 "should" is also problematic. This is meant to put requirements on users, but I dont think we need to impose these requirements.
+Group: [iterator.traits]/3 "should" -> "shall" [Sentence struck: There's no reason to require that program-defined `iterator_concept` has any relation to a `std` type, or that it has SMFs for tag dispatch.]
