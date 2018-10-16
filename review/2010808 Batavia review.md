@@ -1,6 +1,7 @@
 AM: Alisdair Meredith
 CC: Casey Carter
 DS: Dan S
+MH: Mark Hoemmen
 RD: Rob Douglas
 TS: Tim Song
 WB: Walter Brown
@@ -105,3 +106,5 @@ TS (offline): [iterator.custpoints.iter_move] We should harmonize [the wording i
 CC: [iterator.custpoints.iter_swap]/1.3 Add a "then" before `(void)` [to clearly delimit the conditions from the equivalent expression]. [Fixed]
 CC: [iterator.custpoints.iter_swap]/2 "does not swap" -> "does not exchange the values" with cross reference [to [concept.swappable]].
 
+[iterator.concepts.general]
+WB: What's a "type function"? Do we need p1? Strike p1. [struck]
