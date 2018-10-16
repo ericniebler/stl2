@@ -94,3 +94,5 @@ TS (offline): `requires !C<T>` isn't a valid *requires-clause* in C++20's reduce
 WB: [iterator.traits]/3 second sentence "if specified" -> "is present"
 CC: [iterator.traits]/3 "should" is also problematic. This is meant to put requirements on users, but I dont think we need to impose these requirements.
 Group: [iterator.traits]/3 "should" -> "shall" [Sentence struck: There's no reason to require that program-defined `iterator_concept` has any relation to a `std` type, or that it has SMFs for tag dispatch.]
+
+TS: [iterator.traits]/5 Can we rename the template parameter [BidirectionalIterator]in this example [to avoid confusion with the concept of the same name]? [Renamed to `BI`]
