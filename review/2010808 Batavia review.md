@@ -96,3 +96,5 @@ CC: [iterator.traits]/3 "should" is also problematic. This is meant to put requi
 Group: [iterator.traits]/3 "should" -> "shall" [Sentence struck: There's no reason to require that program-defined `iterator_concept` has any relation to a `std` type, or that it has SMFs for tag dispatch.]
 
 TS: [iterator.traits]/5 Can we rename the template parameter [BidirectionalIterator]in this example [to avoid confusion with the concept of the same name]? [Renamed to `BI`]
+
+WB & TS (offline): [iterator.custpoints.iter_move] Don't italicize "customization point object" - this isn't a definition. [fixed here and in [iterator.custpoints.iter_swap]]
