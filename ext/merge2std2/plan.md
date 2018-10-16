@@ -33,7 +33,7 @@ P0944:
   * [X] `span`
 
 P0896:
-* [ ] Tim's feedback from [iterator.traits]/2
+* [ ] Tim's feedback from [iterator.concepts]
 * [ ] If we require that contiguous allocator-aware containers have contiguous iterators without requiring that Allocator pointers are contiguous iterators, we effectively forbid such a container from using the pointer type directly as an iterator.
 * [ ] The magic for returning sentinels needs to be expanded to include arithmetic, and possibly copied to [specialized.algorithms]. Also `i - n` needs to make sense, or I need to eradicate it.
 * [ ] Audit the view adaptors for overconstraint requiring `InputRange` when they could require vanilla `Range`.
@@ -47,19 +47,18 @@ P0896:
 * [ ] `Decrementable` doesn't constrain the behavior of objects that aren't both *incrementable* and *decrementable*.
 * [ ] Why are `single_view::begin`, `::end`, and `::data` declared `noexcept` when they have a precondition?
 * [ ] Add `operator[]` to *ref-view*?
-* [ ] Use the P0788 terminology in function specifications
-  * [X] utilities.tex
-  * [X] iterators.tex
-  * [X] ranges.tex
-  * [ ] algorithms.tex?
 * [ ] Consider merging the view and corresponding range adaptor into a single subclause: "view::common is ... common_view is..."
-* [ ] Update concept stable names as in the P0898 merge.
-* [ ] Audit all concepts for P0717
 * [ ] Shorten new stable names.
 * [ ] Fix the intro - it hasn't been updated since P0!
 * [ ] Consider constraining the template parameters of the "named tuples" returned by algorithms.
 * [ ] https://github.com/ericniebler/stl2/issues/553
 * [ ] Reformulate `noexcept(E1) && noexcept(E2)` as `noexcept(E1, E2)`?
+* [X] Audit all concepts for P0717
+* [X] Update concept stable names as in the P0898 merge.
+* [X] Use the P0788 terminology in function specifications
+  * [X] utilities.tex
+  * [X] iterators.tex
+  * [X] ranges.tex
 * [X] `-> auto&&` is broken in C++20 (Don't miss `\tcode{auto\&\&}`)
 * [X] `ranges::destroy_at` needs to handle arrays properly.
 * [X] Update the Swappable text from the P0898 merge.
