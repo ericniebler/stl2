@@ -98,3 +98,5 @@ Group: [iterator.traits]/3 "should" -> "shall" [Sentence struck: There's no reas
 TS: [iterator.traits]/5 Can we rename the template parameter [BidirectionalIterator]in this example [to avoid confusion with the concept of the same name]? [Renamed to `BI`]
 
 WB & TS (offline): [iterator.custpoints.iter_move] Don't italicize "customization point object" - this isn't a definition. [fixed here and in [iterator.custpoints.iter_swap]]
+
+TS (offline): [iterator.custpoints.iter_move] We should harmonize [the wording in 1.1] with `ranges::swap`... "with overload resolution performed in a context..." [adjusted `iter_move` and `iter_swap` to agree with the style of the other CPOs]
