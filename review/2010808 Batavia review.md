@@ -98,13 +98,15 @@ Group: [iterator.traits]/3 "should" -> "shall" [Sentence struck: There's no reas
 
 TS: [iterator.traits]/5 Can we rename the template parameter [BidirectionalIterator]in this example [to avoid confusion with the concept of the same name]? [Renamed to `BI`]
 
-WB & TS (offline): [iterator.custpoints.iter_move] Don't italicize "customization point object" - this isn't a definition. [fixed here and in [iterator.custpoints.iter_swap]]
+[iterator.custpoints.iter_move]
+WB & TS (offline): Don't italicize "customization point object" - this isn't a definition. [fixed here and in [iterator.custpoints.iter_swap]]
+TS (offline): We should harmonize [the wording in 1.1] with `ranges::swap`... "with overload resolution performed in a context..." [adjusted `iter_move` and `iter_swap` to agree with the style of the other CPOs]
 
-TS (offline): [iterator.custpoints.iter_move] We should harmonize [the wording in 1.1] with `ranges::swap`... "with overload resolution performed in a context..." [adjusted `iter_move` and `iter_swap` to agree with the style of the other CPOs]
-
-??: [iterator.custpoints.iter_swap]/1.2 "both" -> "each" [Fixed. Drive-by: clarify by referring to `SwappableWith` directly.]
-CC: [iterator.custpoints.iter_swap]/1.3 Add a "then" before `(void)` [to clearly delimit the conditions from the equivalent expression]. [Fixed]
-CC: [iterator.custpoints.iter_swap]/2 "does not swap" -> "does not exchange the values" with cross reference [to [concept.swappable]].
+[iterator.custpoints.iter_swap]
+??: /1.2 "both" -> "each" [Fixed. Drive-by: clarify by referring to `SwappableWith` directly.]
+CC: /1.3 Add a "then" before `(void)` [to clearly delimit the conditions from the equivalent expression]. [Fixed]
+CC: /2 "does not swap" -> "does not exchange the values" with cross reference [to [concept.swappable]].
 
 [iterator.concepts.general]
 WB: What's a "type function"? Do we need p1? Strike p1. [struck]
+CC: phrasing of "primary template" is wrong [should be "not program-defined"]. [Nope. "primary template" was, in fact, correct - restore the "instantiation of the primary template" wording throughout.]
