@@ -110,3 +110,4 @@ CC: /2 "does not swap" -> "does not exchange the values" with cross reference [t
 [iterator.concepts.general]
 WB: What's a "type function"? Do we need p1? Strike p1. [struck]
 CC: phrasing of "primary template" is wrong [should be "not program-defined"]. [Nope. "primary template" was, in fact, correct - restore the "instantiation of the primary template" wording throughout.]
+TS (offline): Missing "the *qualified-id*" in 2.2 [fixed]
