@@ -148,3 +148,7 @@ CC: "refines `BidirectionalIterator` with support for ..., as well as the comput
 
 [iterator.concept.contiguous]
 WB: consult project editor regarding "`expression == expression` is `true`" vs "`expression` is equal to `expression`" [Unilaterally changed to the second form.]
+
+[projected]
+WB: "is intended for use" -> "is used to constrain" [so changed.]
+CC: Delete the note [Replaced by `// not defined` comment.]
