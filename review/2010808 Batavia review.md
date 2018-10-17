@@ -123,3 +123,9 @@ RD: /2 note needs to update for change in syntax to `{...} -> auto&&`. [Note has
 [iterator.concept.sentinel]
 TS (offline):  "over time" seems like the wrong description. It doesn't change spontaneously; only as a result of other evaluations. [change "can change over time" to "is not static".]
 AM: When I increment an iterator, all *other* iterators are invalidated. Suggest: "Any *other* iterator" [changed]
+
+[iterator.concept.sizedsentinel]
+RD: Missing semicolon in `SizeSentinel` definition. [fixed]
+WB: p3 first sentence "mechanism to enable library use"? [Reworded]
+CC: Can strike [second] sentence [of p3, it's not actually normative]. [struck]
+WB: [p4] Strikes more as example than note [changed to example]
