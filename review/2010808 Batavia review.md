@@ -1,9 +1,15 @@
 AM: Alisdair Meredith
+
 CC: Casey Carter
+
 DS: Dan S
+
 MH: Mark Hoemmen
+
 RD: Rob Douglas
+
 TS: Tim Song
+
 WB: Walter Brown
 
 WB: [allocator.requirements] "the additional requirement that, when..." [so reworded]
@@ -64,16 +70,19 @@ TS: [iterator.requirements.general]/12 & /14 "Up to but not including the elemen
 
 TS: [iterator.requirements.general] last sentence of p13 duplicates first sentence of p15.
 
-TS: last sentence of p13 duplicates first sentence of p15.
-WB: Would like to strike first sentence
-CC: We need the phrase "a range is valid". can put this in p13
+TS: last sentence of p13 duplicates first sentence of p15. [fixed]
+
+WB: Would like to strike first sentence [struck]
+
+CC: We need the phrase "a range is valid". can put this in p13 [done]
+
 TS: move second sentence to p14. [so rearranged]
 
 WB: [iterator.requirements.general] "Functions in the library" -> "library functions" [so changed]
 
 TS: [iterator.requirements.general] We dont have a definition of "weaker" [removed uses of "weaker" in reference to iterator categories; also in [iterator.concept.forward].]
 
-AM: `WeaklyIncrementable` and `Incrementable` sound far more primitive than to just being tied to iterators. Would like to see them move down into `<concepts>`. [So would I - but this design change needs investigation to determine if and how to extract `iter_difference_t` from `iterator_traits`; this needs a paper.]
+AM: `WeaklyIncrementable` and `Incrementable` sound far more primitive than to just being tied to iterators. Would like to see them move down into `<concepts>`. [So would I - but this design change needs investigation to determine how to extract `iter_difference_t` from `iterator_traits`; this needs a paper.]
 
 WB: [incrementable.traits] & [readable.traits] do we have meaning for "implemented as if"? [These seem to be noise words; struck.]
 
@@ -81,77 +90,108 @@ TS (offline): [incrementable.traits] Do you need to `decay` [in the `const I` pa
 
 AM: [iterator.traits] [p1 says] `iterator_traits<int*>::pointer` is `void` [since it does not support `operator->`]? [Clarified these statements apply only to iterators of class type. Drive-by: fix the prior sentence as well which was ~~a dumpster fire~~ not good.]
 
-WB: [iterator.traits]/2 "Member types of specializations that are not program defined"
-RD: [iterator.traits]/2 Why arent you using kebab naming form?
-TS (offline): [iterator.traits]/2 Should we kebab the exposition-only names?
-Group: [iterator.traits]/2 is too long. Separate out exposition only concepts.
-DS: [iterator.traits]/2 first sentence of 2.1 needs a "then"
-WB: [iterator.traits]/2 Add "then"s to complement the "if"s?
-WB: [iterator.traits]/2 2.2 may be easier to have as sub-bulleted list
-WB: [iterator.traits]/2 Don’t like mixing of "names" and "is" [All changes applied]
+WB: [iterator.traits]/2 "Member types of specializations that are not program defined" [Fixed.]
+
+RD: [iterator.traits]/2 Why arent you using kebab naming form? TS (offline): [iterator.traits]/2 Should we kebab the exposition-only names? [Fixed.]
+
+Group: [iterator.traits]/2 is too long. Separate out exposition only concepts. [Fixed.]
+
+DS: [iterator.traits]/2 first sentence of 2.1 needs a "then". [Fixed.]
+
+WB: [iterator.traits]/2 Add "then"s to complement the "if"s? [Fixed.]
+
+WB: [iterator.traits]/2 2.2 may be easier to have as sub-bulleted list. [Fixed.]
+
+WB: [iterator.traits]/2 Don't like mixing of "names" and "is". [Fixed.]
 
 TS (offline): `requires !C<T>` isn't a valid *requires-clause* in C++20's reduced grammar. [audited all *requires-clause*s]
 
-WB: [iterator.traits]/3 second sentence "if specified" -> "is present"
-CC: [iterator.traits]/3 "should" is also problematic. This is meant to put requirements on users, but I dont think we need to impose these requirements.
-Group: [iterator.traits]/3 "should" -> "shall" [Sentence struck: There's no reason to require that program-defined `iterator_concept` has any relation to a `std` type, or that it has SMFs for tag dispatch.]
+#### [iterator.traits]/3
+WB:  second sentence "if specified" -> "is present" CC: [iterator.traits]/3 "should" is also problematic. This is meant to put requirements on users, but I dont think we need to impose these requirements. Group: [iterator.traits]/3 "should" -> "shall" [Sentence struck: There's no reason to require that program-defined `iterator_concept` has any relation to a `std` type, or that it has SMFs for tag dispatch.]
 
-TS: [iterator.traits]/5 Can we rename the template parameter [BidirectionalIterator]in this example [to avoid confusion with the concept of the same name]? [Renamed to `BI`]
+#### [iterator.traits]/5
+TS: Can we rename the template parameter [`BidirectionalIterator`] in this example [to avoid confusion with the concept of the same name]? [Renamed to `BI`]
 
-[iterator.custpoints.iter_move]
+#### [iterator.custpoints.iter_move]
 WB & TS (offline): Don't italicize "customization point object" - this isn't a definition. [fixed here and in [iterator.custpoints.iter_swap]]
+
 TS (offline): We should harmonize [the wording in 1.1] with `ranges::swap`... "with overload resolution performed in a context..." [adjusted `iter_move` and `iter_swap` to agree with the style of the other CPOs]
 
-[iterator.custpoints.iter_swap]
+#### [iterator.custpoints.iter_swap]
 ??: /1.2 "both" -> "each" [Fixed. Drive-by: clarify by referring to `SwappableWith` directly.]
+
 CC: /1.3 Add a "then" before `(void)` [to clearly delimit the conditions from the equivalent expression]. [Fixed]
+
 CC: /2 "does not swap" -> "does not exchange the values" with cross reference [to [concept.swappable]].
 
-[iterator.concepts.general]
+#### [iterator.concepts.general]
 WB: What's a "type function"? Do we need p1? Strike p1. [struck]
+
 CC: phrasing of "primary template" is wrong [should be "not program-defined"]. [Nope. "primary template" was, in fact, correct - restore the "instantiation of the primary template" wording throughout.]
+
 TS (offline): Missing "the *qualified-id*" in 2.2 [fixed]
+
 AM: Why not just always use `iterator_traits<I>`? Suggest a note. [added a note]
 
-[iterator.concept.writable]
+#### [iterator.concept.writable]
 WB: Why italics in note in p5? CC: Because it came from the IS, of course. [Italics removed; and in the IS]
+
 AM: Why `const_cast` statements in p1? Please add a note. [Added a note]
 
-[iterator.concept.iterator]
+#### [iterator.concept.iterator]
 RD: /2 note needs to update for change in syntax to `{...} -> auto&&`. [Note has been struck.]
 
-[iterator.concept.sentinel]
+#### [iterator.concept.sentinel]
 TS (offline):  "over time" seems like the wrong description. It doesn't change spontaneously; only as a result of other evaluations. [change "can change over time" to "is not static".]
+
 AM: When I increment an iterator, all *other* iterators are invalidated. Suggest: "Any *other* iterator" [changed]
 
-[iterator.concept.sizedsentinel]
+#### [iterator.concept.sizedsentinel]
 RD: Missing semicolon in `SizeSentinel` definition. [fixed]
+
 WB: p3 first sentence "mechanism to enable library use"? [Reworded]
+
 CC: Can strike [second] sentence [of p3, it's not actually normative]. [struck]
+
 WB: [p4] Strikes more as example than note [changed to example]
 
-[iterator.concept.input]
-AM: Loses equality comparison requirement. Because sentinel? Please include in note. [so included]
+#### [iterator.concept.input]
+AM: Loses equality comparison requirement. Because `Sentinel`? Please include in note. [so included]
+
 CC: Blech, strike "The XXX concept is a refinement of YYY."; it's redundant with the concept definitions. WB: Agreed, do it in all these subclauses. [struck]
+
 WB: In p1 note "Unlike the Cpp17InputIterator (22.3.5.2)" [so rephrased]
 
-[iterator.concept.output]
-AM: Don’t want a term of art [*single pass*] defined in note [italics removed]
+#### [iterator.concept.output]
+AM: Don't want a term of art [*single pass*] defined in note [italics removed]
+
 CC (drive-by): The sentence "However, output iterators are not required to satisfy `EqualityComparable`." is normative duplication. Also, "however" seems out of place here. [Strike "however", turn into a note.]
 
-[iterator.concept.forward]
+#### [iterator.concept.forward]
 WB: Would it be possible to have a diagram of the relationships of these concepts? [Such a diagram would be large and verges on tutorial - I think it would be out of place in the IS.]
+
 Group: 4.2 needs to be `((void)[](X x){++x;}(a), *a)` [i.e., add a cast to `(void)` to avoid `,` hijacking via ADL]. [added.]
 
-[iterator.concept.random.access]
+#### [iterator.concept.random.access]
 CC: "refines `BidirectionalIterator` with support for ..., as well as the computation..." [So changed.]
 
-[iterator.concept.contiguous]
+#### [iterator.concept.contiguous]
 WB: consult project editor regarding "`expression == expression` is `true`" vs "`expression` is equal to `expression`" [Unilaterally changed to the second form.]
 
-[projected]
+#### [projected]
 WB: "is intended for use" -> "is used to constrain" [so changed.]
+
 CC: Delete the note [Replaced by `// not defined` comment.]
 
-[commonalgoreq.general]
+#### [commonalgoreq.general]
 WB: "on their arguments" -> "on its arguments". [This is correct, but unclear: replaced "their" with its antecedent "the concepts'". Also strike the noise word "explicitly".]
+
+#### [commonalgoreq.indirectlymovable]
+TS (offline): Presumably we need a similar rule [specifying that an rvalue RHS is valid-but-unspecified] for the `Assignable` part as well? [Nope: `Assignable` already has that semantic.]
+
+#### [commonalgoreq.indirectlyswappable]
+RD: p2 here differs from previous subclauses with usage of "only". [Rephrased.]
+
+TS (offline):  It looks like `I1` and `I2` can't be reference types, so why are we forwarding? [They are references [to avoid decay](https://github.com/ericniebler/stl2/issues/241). We went too far making them *rvalue* references, however. Changed to lvalue reference types.]
+
+TS (offline): vice-versa here appears to fail to cover `iter_swap(i2, i1)` [Fixed.].
