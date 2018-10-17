@@ -129,3 +129,11 @@ RD: Missing semicolon in `SizeSentinel` definition. [fixed]
 WB: p3 first sentence "mechanism to enable library use"? [Reworded]
 CC: Can strike [second] sentence [of p3, it's not actually normative]. [struck]
 WB: [p4] Strikes more as example than note [changed to example]
+
+[iterator.concept.input]
+AM: Loses equality comparison requirement. Because sentinel? Please include in note. [so included]
+CC: Blech, strike "The XXX concept is a refinement of YYY."; it's redundant with the concept definitions. WB: Agreed, do it in all these subclauses. [struck]
+WB: In p1 note "Unlike the Cpp17InputIterator (22.3.5.2)" [so rephrased]
+
+[iterator.concept.output]
+AM: Don’t want a term of art [*single pass*] defined in note [italics removed]

@@ -1,39 +1,5 @@
-P0789:
-* [X] Merge
-* [X] Fixup view_interface::data for contiguous iterators.
-* [X] Merge P0970 *again*
-
-P1033:
-* [X] Merge
-
-P1037:
-* [X] Merge
-* [X] Search and replace:
-  * [X] `difference_type` with `incrementable_traits`
-  * [X] `difference_type_t` with `\newtxt{iter_}difference\oldtxt{_type}_t`
-  * [X] `value_type` with `readable_traits`
-  * [X] `value_type_t` with `\newtxt{iter_}value\oldtxt{_type}_t`
-  * [X] `reference_t` with `\newtxt{iter_}reference_t`
-  * [X] `rvalue_reference_t` with `\newtxt{iter_}rvalue_reference_t`
-  * [X] In [algorithms]: `equal_to` with `ranges::equal_to`, `less` with `ranges::less`
-
-P0970:
-* [X] Merge to P896.
-* [X] `span`
-* [X] LEWG: Drop `dangling`, make calls that would dangle ill-formed
-
-P0944:
-* [X] Merge
-* Specify `ranges::iterator_category` is `ranges::contiguous_iterator_tag` for:
-  * [X] `basic_string` (contiguous container)
-  * [X] `basic_string_view`
-  * [X] `array` (contiguous container)
-  * [X] `vector` (contiguous container)
-  * [X] `valarray`
-  * [X] `span`
-
 P0896:
-* [ ] Tim's feedback from [iterator.concept.sentinel]
+* [ ] Tim's feedback from [commonalgoreq.indirectlymovable]
 * [ ] If we require that contiguous allocator-aware containers have contiguous iterators without requiring that Allocator pointers are contiguous iterators, we effectively forbid such a container from using the pointer type directly as an iterator.
 * [ ] The magic for returning sentinels needs to be expanded to include arithmetic, and possibly copied to [specialized.algorithms]. Also `i - n` needs to make sense, or I need to eradicate it.
 * [ ] Audit the view adaptors for overconstraint requiring `InputRange` when they could require vanilla `Range`.
@@ -110,3 +76,37 @@ Document-wide changes to make:
 * [X] Define *explicit* CPOs as inline constexpr objects
 * [ ] Add an "Open Issues" subclause to the design discussion
 * [X] Replace `\xname`s with new-style `\placeholder` exposition-only names
+
+P0789:
+* [X] Merge
+* [X] Fixup view_interface::data for contiguous iterators.
+* [X] Merge P0970 *again*
+
+P1033:
+* [X] Merge
+
+P1037:
+* [X] Merge
+* [X] Search and replace:
+  * [X] `difference_type` with `incrementable_traits`
+  * [X] `difference_type_t` with `\newtxt{iter_}difference\oldtxt{_type}_t`
+  * [X] `value_type` with `readable_traits`
+  * [X] `value_type_t` with `\newtxt{iter_}value\oldtxt{_type}_t`
+  * [X] `reference_t` with `\newtxt{iter_}reference_t`
+  * [X] `rvalue_reference_t` with `\newtxt{iter_}rvalue_reference_t`
+  * [X] In [algorithms]: `equal_to` with `ranges::equal_to`, `less` with `ranges::less`
+
+P0970:
+* [X] Merge to P896.
+* [X] `span`
+* [X] LEWG: Drop `dangling`, make calls that would dangle ill-formed
+
+P0944:
+* [X] Merge
+* Specify `ranges::iterator_category` is `ranges::contiguous_iterator_tag` for:
+  * [X] `basic_string` (contiguous container)
+  * [X] `basic_string_view`
+  * [X] `array` (contiguous container)
+  * [X] `vector` (contiguous container)
+  * [X] `valarray`
+  * [X] `span`
