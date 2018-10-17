@@ -142,3 +142,6 @@ CC (drive-by): The sentence "However, output iterators are not required to satis
 [iterator.concept.forward]
 WB: Would it be possible to have a diagram of the relationships of these concepts? [Such a diagram would be large and verges on tutorial - I think it would be out of place in the IS.]
 Group: 4.2 needs to be `((void)[](X x){++x;}(a), *a)` [i.e., add a cast to `(void)` to avoid `,` hijacking via ADL]. [added.]
+
+[iterator.concept.random.access]
+CC: "refines `BidirectionalIterator` with support for ..., as well as the computation..." [So changed.]
