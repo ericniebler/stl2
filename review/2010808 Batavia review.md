@@ -145,3 +145,6 @@ Group: 4.2 needs to be `((void)[](X x){++x;}(a), *a)` [i.e., add a cast to `(voi
 
 [iterator.concept.random.access]
 CC: "refines `BidirectionalIterator` with support for ..., as well as the computation..." [So changed.]
+
+[iterator.concept.contiguous]
+WB: consult project editor regarding "`expression == expression` is `true`" vs "`expression` is equal to `expression`" [Unilaterally changed to the second form.]
