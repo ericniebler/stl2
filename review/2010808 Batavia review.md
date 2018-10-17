@@ -116,3 +116,10 @@ AM: Why not just always use `iterator_traits<I>`? Suggest a note. [added a note]
 [iterator.concept.writable]
 WB: Why italics in note in p5? CC: Because it came from the IS, of course. [Italics removed; and in the IS]
 AM: Why `const_cast` statements in p1? Please add a note. [Added a note]
+
+[iterator.concept.iterator]
+RD: /2 note needs to update for change in syntax to `{...} -> auto&&`. [Note has been struck.]
+
+[iterator.concept.sentinel]
+TS (offline):  "over time" seems like the wrong description. It doesn't change spontaneously; only as a result of other evaluations. [change "can change over time" to "is not static".]
+AM: When I increment an iterator, all *other* iterators are invalidated. Suggest: "Any *other* iterator" [changed]
