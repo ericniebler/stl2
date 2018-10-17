@@ -138,3 +138,7 @@ WB: In p1 note "Unlike the Cpp17InputIterator (22.3.5.2)" [so rephrased]
 [iterator.concept.output]
 AM: Don’t want a term of art [*single pass*] defined in note [italics removed]
 CC (drive-by): The sentence "However, output iterators are not required to satisfy `EqualityComparable`." is normative duplication. Also, "however" seems out of place here. [Strike "however", turn into a note.]
+
+[iterator.concept.forward]
+WB: Would it be possible to have a diagram of the relationships of these concepts? [Such a diagram would be large and verges on tutorial - I think it would be out of place in the IS.]
+Group: 4.2 needs to be `((void)[](X x){++x;}(a), *a)` [i.e., add a cast to `(void)` to avoid `,` hijacking via ADL]. [added.]
