@@ -195,3 +195,8 @@ RD: p2 here differs from previous subclauses with usage of "only". [Rephrased.]
 TS (offline):  It looks like `I1` and `I2` can't be reference types, so why are we forwarding? [They are references [to avoid decay](https://github.com/ericniebler/stl2/issues/241). We went too far making them *rvalue* references, however. Changed to lvalue reference types.]
 
 TS (offline): vice-versa here appears to fail to cover `iter_swap(i2, i1)` [Fixed.].
+
+#### [std.iterator.tags]
+RD: Get an oxford comma from core. [fixed]
+WB: strike “and optionally” [struck]
+RD: strike “defined in” [struck]
