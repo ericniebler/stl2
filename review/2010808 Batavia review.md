@@ -34,7 +34,7 @@ TS: [specialized.algorithms] `advance` and `distance` are they always `std::`? [
 
 WB: [specialized.algorithms] Would like to reorder p3 first sentence like we did for p1. [so reordered: note this is now p4]
 
-WB: [specialized.algorithms] Suggest a note like “This means that these algorithms may not be called with explicit template arguments” [added a note]
+WB: [specialized.algorithms] Suggest a note like "This means that these algorithms may not be called with explicit template arguments" [added a note]
 
 WB: [specialized.algorithms] "When invoked on ranges of potentially overlapped subobjects, the algorithms specified in this subclause result in undefined behavior." [so rephrased]
 
@@ -60,7 +60,7 @@ ALL: [iterator.synopsis] `-> auto&&` is a bogus deduction constraint. [Replaced 
 
 AM: [iterator.synopsis] Recommend putting Permutable, Mergeable, and Sortable into Algorithms header [not changing at this time, rationale on the reflectors.]
 
-TS: [iterator.requirements.general]/12 & /14 “Up to but not including the element pointed to by the…” -> “Up to but not including the element, if any, pointed to by the…” [so changed]
+TS: [iterator.requirements.general]/12 & /14 "Up to but not including the element pointed to by the…" -> "Up to but not including the element, if any, pointed to by the…" [so changed]
 
 TS: [iterator.requirements.general] last sentence of p13 duplicates first sentence of p15.
 
@@ -152,3 +152,6 @@ WB: consult project editor regarding "`expression == expression` is `true`" vs "
 [projected]
 WB: "is intended for use" -> "is used to constrain" [so changed.]
 CC: Delete the note [Replaced by `// not defined` comment.]
+
+[commonalgoreq.general]
+WB: "on their arguments" -> "on its arguments". [This is correct, but unclear: replaced "their" with its antecedent "the concepts'". Also strike the noise word "explicitly".]
