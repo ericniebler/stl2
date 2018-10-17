@@ -137,3 +137,4 @@ WB: In p1 note "Unlike the Cpp17InputIterator (22.3.5.2)" [so rephrased]
 
 [iterator.concept.output]
 AM: Don’t want a term of art [*single pass*] defined in note [italics removed]
+CC (drive-by): The sentence "However, output iterators are not required to satisfy `EqualityComparable`." is normative duplication. Also, "however" seems out of place here. [Strike "however", turn into a note.]
