@@ -2731,13 +2731,18 @@ friend constexpr iter_rvalue_reference_t<Iterator> iter_move(const reverse_itera
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to: \tcode{return ranges::iter_move(prev(i.current));}
+\effects Equivalent to:
+\begin{codeblock}
+@\newtxt{auto tmp = i.current;}@
+return ranges::iter_move(@\newtxt{--tmp}@ @\oldtxt{prev(i.current)}@);
+\end{codeblock}
 
 \pnum
 \remarks The expression in \tcode{noexcept} is equivalent to:
 \begin{codeblock}
-   noexcept(ranges::iter_move(declval<Iterator&>())) && noexcept(--declval<Iterator&>()) &&
-     is_nothrow_copy_constructible_v<Iterator>
+   is_nothrow_copy_constructible_v<Iterator> &&
+     @\oldtxt{noexcept(--declval<Iterator\&>()) \&\&}@
+     noexcept(ranges::iter_move(@\newtxt{--i.current}@ @\oldtxt{declval<Iterator\&>()}@))
 \end{codeblock}
 \end{itemdescr}
 
@@ -2750,13 +2755,19 @@ template<IndirectlySwappable<Iterator> Iterator2>
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to \tcode{ranges::iter_swap(ranges::prev(x.current), ranges::prev(y.current))}.
+\effects Equivalent to:
+\begin{codeblock}
+@\newtxt{auto xtmp = x.current;}@
+@\newtxt{auto ytmp = y.current;}@
+ranges::iter_swap(@\newtxt{std::move(--xtmp), std::move(--ytmp)}@ @\oldtxt{ranges::prev(x.current), ranges::prev(y.current)}@)
+\end{codeblock}
 
 \pnum
 \remarks The expression in \tcode{noexcept} is equivalent to:
 \begin{codeblock}
-  noexcept(ranges::iter_swap(declval<Iterator>(), declval<Iterator>())) &&
-    noexcept(--declval<Iterator&>() && is_nothrow_copy_constructible_v<Iterator>)
+  is_nothrow_copy_constructible_v<Iterator> &&
+    @\oldtxt{noexcept(--declval<Iterator\&>()) \&\&}@
+    noexcept(ranges::iter_swap(@\newtxt{std::move(--x.current), std::move(--y.current)}@ @\oldtxt{declval<Iterator>(), declval<Iterator>()}@))
 \end{codeblock}
 \end{itemdescr}
 \end{addedblock}

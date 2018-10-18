@@ -225,7 +225,7 @@ WB: either _ shall denote a range or else _ shall denote a range. [Rephrased for
 [reverse.iterator]
 WB: order [the iterator traits] aliases consistently. [Changed consistently throughout to `iterator_concept` (if present), `iterator_category`, `value_type`, `difference_type`, `pointer`, `reference`. Since this is a simple permutation, I put diff markings in the IS text but not in the new text.]
 
-WB: /1 line break please. [broke]
+WB: p1 line break please. [broke]
 
 DS: Please rename template parameter `Iterator` to `I`. TS (offline): Can we rename
 the template parameter to avoid confusion with the Iterator concept? [I've made a note to submit this change as a post-merge editorial issue; I'd rather not bloat the proposal with *all* the wording for `reverse_iterator` and `move_iterator` simply so I can markup this change.]
@@ -234,3 +234,14 @@ the template parameter to avoid confusion with the Iterator concept? [I've made 
 CC: "satisfy" -> "meet". [fixed]
 
 WB: This is a mess. If you can clean it up, I'd be very happy. [Improved (happiness is not guaranteed)]
+
+[reverse.iter.nonmember]
+CC: [The conditional `noexcept`s] could be simplified [by using `current` instead of `declval`]. [so simplified]
+
+TS (offline): [several comments about the conditional `noexcept`s indicating that the intended implementation is too subtle]. [clarified effects]
+
+RD: right-most paren [in p4] needs to be moved toward noexcept and not include `is_nothrow_copy_constructible_v` [fixed]
+
+MH: `Iterator2` needs to be in `noexcept` clause [in p4]. TS (offline): [ditto]. [fixed.]
+
+TS (offline): Do we want to include [`iter_`-]swapping in either order? [Sort of, but not enough to want to pay the compile time cost.]
