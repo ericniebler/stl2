@@ -1,5 +1,5 @@
 P0896:
-* [ ] Tim's feedback from [commonalgoreq.indirectlymovable]
+* [ ] Tim's feedback from [reverse.iterator]
 * [ ] If we require that contiguous allocator-aware containers have contiguous iterators without requiring that Allocator pointers are contiguous iterators, we effectively forbid such a container from using the pointer type directly as an iterator.
 * [ ] The magic for returning sentinels needs to be expanded to include arithmetic, and possibly copied to [specialized.algorithms]. Also `i - n` needs to make sense, or I need to eradicate it.
 * [ ] Audit the view adaptors for overconstraint requiring `InputRange` when they could require vanilla `Range`.

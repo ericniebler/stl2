@@ -218,3 +218,6 @@ CC (Drive-by): Clarify uses of "for foo iterators" with "If `I` models `FooItera
 CC (Drive-by): "until `i == bound`" is not well-defined for `Boolean` expression `i == bound`. [fixed]
 
 MH: /8 uses "distance" rather than "difference". TS (offline): Should we have a note that `M` can be negative? [Rephrase: "`M` is the difference between the ending and starting positions of `i`"]
+
+[range.iterator.operations.distance]
+WB: either _ shall denote a range or else _ shall denote a range. [Rephrased for clarity, but without "either...else": the preconditions are not mutually exclusive.]
