@@ -228,7 +228,9 @@ WB: order [the iterator traits] aliases consistently. [Changed consistently thro
 WB: /1 line break please. [broke]
 
 DS: Please rename template parameter `Iterator` to `I`. TS (offline): Can we rename
-the template parameter to avoid confusion with the Iterator concept? [I've made a note to submit this change as a post-merge editorial issue (I'd rather not bloat the proposal with all the wording necessary for this change).]
+the template parameter to avoid confusion with the Iterator concept? [I've made a note to submit this change as a post-merge editorial issue; I'd rather not bloat the proposal with *all* the wording for `reverse_iterator` and `move_iterator` simply so I can markup this change.]
 
 [reverse.iter.requirements]
 CC: "satisfy" -> "meet". [fixed]
+
+WB: This is a mess. If you can clean it up, I'd be very happy. [Improved (happiness is not guaranteed)]
