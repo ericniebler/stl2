@@ -252,3 +252,16 @@ RD: right-most paren [in p4] needs to be moved toward noexcept and not include `
 MH: `Iterator2` needs to be in `noexcept` clause [in p4]. TS (offline): [ditto]. [fixed.]
 
 TS (offline): Do we want to include [`iter_`-]swapping in either order? [Sort of, but not enough to want to pay the compile time cost.]
+
+[move.iterator]
+
+TS (offline): Can we rename the template parameter to avoid confusion with the `Iterator` concept? [Same response as for `reverse_iterator`: I'll do this in a
+a follow-up editorial issue.]
+
+[move.iter.requirements]
+WB: "If any of the _ functions *is* instantiated" ["any" can be either singular or plural, and I think the plural reads better here. COME AT ME, Walter!]
+
+[move.iter.nav]
+CC: use `auto` rather than `decltype(auto)` [fixed]
+
+TS (offline): Can we have a note that the return type is `void` in [the "otherwise"] case? [There are no `return`s from which to deduce a return type, how is this not clear?]
