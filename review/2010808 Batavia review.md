@@ -221,3 +221,8 @@ MH: /8 uses "distance" rather than "difference". TS (offline): Should we have a 
 
 [range.iterator.operations.distance]
 WB: either _ shall denote a range or else _ shall denote a range. [Rephrased for clarity, but without "either...else": the preconditions are not mutually exclusive.]
+
+[reverse.iterator]
+WB: order [the iterator traits] aliases consistently. [Changed consistently throughout to `iterator_concept` (if present), `iterator_category`, `value_type`, `difference_type`, `pointer`, `reference`. Since this is a simple permutation, I put diff markings in the IS text but not in the new text.]
+
+WB: /1 line break please. [broke]

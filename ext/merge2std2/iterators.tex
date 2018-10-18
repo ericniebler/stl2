@@ -889,14 +889,15 @@ In addition, the types
 \indexlibrarymember{reference}{iterator_traits}%
 \indexlibrarymember{pointer}{iterator_traits}%
 \begin{codeblock}
-iterator_traits<@\changed{Iterator}{I}@>::reference
+@\oldoldtxt{iterator_traits<Iterator>::reference}@
 iterator_traits<@\changed{Iterator}{I}@>::pointer
+@\newnewtxt{iterator_traits<I>::reference}@
 \end{codeblock}
 
-shall be defined as the iterator's reference and pointer types\changed{,}{;} that is, for an
+shall be defined as the iterator's \newnewtxt{pointer and} reference \oldoldtxt{and pointer} types\changed{,}{;} that is, for an
 iterator object \tcode{a} \newnewtxt{of class type}, the same type as
-\oldoldtxt{the type of} \tcode{\newnewtxt{decltype(}*a\newnewtxt{)}} and
-\tcode{\newnewtxt{decltype(}a\newnewtxt{.operator}->\newnewtxt{())}},
+\oldoldtxt{the type of \tcode{*a} and \tcode{a->}}
+\newnewtxt{\tcode{decltype(a.operator->())} and \tcode{decltype(*a)}},
 respectively. \added{The type
 }\tcode{\added{iterator_traits<I>::pointer}}\added{ shall be \tcode{void} for
 a\newnewtxt{n iterator of class} type \tcode{I} that does not support
@@ -904,8 +905,9 @@ a\newnewtxt{n iterator of class} type \tcode{I} that does not support
 the types
 
 \begin{codeblock}
+@\newnewtxt{iterator_traits<I>::value_type}@
 iterator_traits<@\changed{Iterator}{I}@>::difference_type
-iterator_traits<@\changed{Iterator}{I}@>::value_type
+@\oldoldtxt{iterator_traits<Iterator>::value_type}@
 iterator_traits<@\changed{Iterator}{I}@>::reference
 @\removed{iterator_traits<Iterator>::pointer}@
 \end{codeblock}
@@ -991,11 +993,13 @@ types \tcode{difference_type}, \tcode{value_type}, \removed{\tcode{pointer},}
 \oldoldtxt{shall have} \newnewtxt{has} the following \oldoldtxt{as}
 publicly accessible members:
 \begin{codeblock}
-  using difference_type   = typename @\changed{Iterator}{I}@::difference_type;
+  @\newnewtxt{using iterator_category = typename I::iterator_category;}@
+  @\oldoldtxt{using difference_type{ }{ }{ }= typename Iterator::difference_type;}@
   using value_type        = typename @\changed{Iterator}{I}@::value_type;
+  @\newnewtxt{using difference_type{ }{ }{ }= typename I::difference_type;}@
   using pointer           = @\changed{typename Iterator::pointer}{\seebelownc}@;
   using reference         = typename @\changed{Iterator}{I}@::reference;
-  using iterator_category = typename @\changed{Iterator}{I}@::iterator_category;
+  @\oldoldtxt{using iterator_category = typename Iterator::iterator_category;}@
 \end{codeblock}
 \begin{addedblock}
 If the \grammarterm{qualified-id} \tcode{I::pointer} is valid and
@@ -1008,11 +1012,11 @@ Otherwise, if \tcode{I} satisfies the exposition-only concept
 \newtxt{then} \tcode{iterator_traits<I>} \oldtxt{shall have} \newtxt{has} the following
 \oldtxt{as} publicly accessible members:
 \begin{codeblock}
-  using difference_type   = typename incrementable_traits<I>::difference_type;
+  using iterator_category = @\seebelownc@;
   using value_type        = typename readable_traits<I>::value_type;
+  using difference_type   = typename incrementable_traits<I>::difference_type;
   using pointer           = @\seebelownc@;
   using reference         = @\seebelownc@;
-  using iterator_category = @\seebelownc@;
 \end{codeblock}
 \begin{itemize}
 \item If the \grammarterm{qualified-id} \tcode{I::pointer} is valid and denotes a type,
@@ -1050,11 +1054,11 @@ Otherwise, if \tcode{I} satisfies the exposition-only concept
 \oldtxt{shall have} \newtxt{has} the following \oldtxt{as} publicly accessible
 members:
 \begin{codeblock}
-  using difference_type   = @\seebelownc@;
+  using iterator_category = output_iterator_tag;
   using value_type        = void;
+  using difference_type   = @\seebelownc@;
   using pointer           = void;
   using reference         = void;
-  using iterator_category = output_iterator_tag;
 \end{codeblock}
 If \tcode{incrementable_traits<I>::difference_type} is well-formed
 and names a type, then \tcode{difference_type} names that type; otherwise, it
@@ -1086,12 +1090,15 @@ namespace std {
   template<class T>
     @\added{requires is_object_v<T>}@
   struct iterator_traits<T*> {
+    @\newnewtxt{using iterator_concept}@  @\newnewtxt{= contiguous_iterator_tag;}@
+    @\newnewtxt{using iterator_category = random_access_iterator_tag;}@
+    @\newnewtxt{using value_type}@        @\newnewtxt{= remove_cv_t<T>;}@
     using difference_type   = ptrdiff_t;
-    using value_type        = remove_cv_t<T>;
+    @\oldoldtxt{using value_type}@        @\oldoldtxt{= remove_cv_t<T>;}@
     using pointer           = T*;
     using reference         = T&;
-    using iterator_category = random_access_iterator_tag;
-    @\added{using iterator_concept}\added{ }\added{ }\added{= contiguous_iterator_tag;}@
+    @\oldoldtxt{using iterator_category = random_access_iterator_tag;}@
+    @\oldtxt{using iterator_concept}@  @\oldtxt{= contiguous_iterator_tag;}@
   };
 }
 \end{codeblock}
@@ -1271,8 +1278,8 @@ of an iterator's category and concept.
 \begin{example}
 \begin{codeblock}
 struct I {
-  using difference_type = int;
   using value_type = int;
+  using difference_type = int;
 
   int operator*() const;
   I& operator++();
@@ -2193,8 +2200,8 @@ several classes and functions:
 \rSec2[std.iterator.tags]{Standard iterator tags}
 
 \pnum
-\indexlibrary{\idxcode{input_iterator_tag}}%
 \indexlibrary{\idxcode{output_iterator_tag}}%
+\indexlibrary{\idxcode{input_iterator_tag}}%
 \indexlibrary{\idxcode{forward_iterator_tag}}%
 \indexlibrary{\idxcode{bidirectional_iterator_tag}}%
 \indexlibrary{\idxcode{random_access_iterator_tag}}%
@@ -2208,8 +2215,9 @@ library introduces
 \term{category tag}
 classes which are used as compile time tags for algorithm selection.
 They are:
+\added{\tcode{output_iterator_tag},}
 \tcode{input_iterator_tag},
-\tcode{output_iterator_tag},
+\removed{\tcode{output_iterator_tag},}
 \tcode{forward_iterator_tag},
 \tcode{bidirectional_iterator_tag}\added{,}
 \removed{and}
@@ -2227,8 +2235,9 @@ in}\iref{iterator.concepts}.}
 
 \begin{codeblock}
 namespace std {
+  @\added{struct output_iterator_tag \{ \};}@
   struct input_iterator_tag { };
-  struct output_iterator_tag { };
+  @\removed{struct output_iterator_tag \{ \};}@
   struct forward_iterator_tag: @\removed{public}@ input_iterator_tag { };
   struct bidirectional_iterator_tag: @\removed{public}@ forward_iterator_tag { };
   struct random_access_iterator_tag: @\removed{public}@ bidirectional_iterator_tag { };
@@ -2548,12 +2557,12 @@ namespace std {
   class reverse_iterator {
   public:
     using iterator_type     = Iterator;
-    @\removed{using iterator_category}@ @\removed{= typename iterator_traits<Iterator>::iterator_category;}@
-    @\removed{using value_type}@        @\removed{= typename iterator_traits<Iterator>::value_type;}@
-    @\removed{using difference_type}@   @\removed{= typename iterator_traits<Iterator>::difference_type;}@
-    @\added{using iterator_category}@ @\added{= \seebelownc;}@
     @\added{using iterator_concept}@  @\added{= \seebelownc;}@
+    @\removed{using iterator_category}@ @\removed{= typename iterator_traits<Iterator>::iterator_category;}@
+    @\added{using iterator_category}@ @\added{= \seebelownc;}@
+    @\removed{using value_type}@        @\removed{= typename iterator_traits<Iterator>::value_type;}@
     @\added{using value_type}@        @\added{= iter_value_t<Iterator>;}@
+    @\removed{using difference_type}@   @\removed{= typename iterator_traits<Iterator>::difference_type;}@
     @\added{using difference_type}@   @\added{= iter_difference_t<Iterator>;}@
     using pointer           = typename iterator_traits<Iterator>::pointer;
     @\removed{using reference}@         @\removed{= typename iterator_traits<Iterator>::reference;}@
@@ -2598,17 +2607,17 @@ namespace std {
 
 \begin{addedblock}
 \pnum
+The member \grammarterm{typedef-name} \tcode{iterator_concept} denotes
+\tcode{random_access_iterator_tag} if \tcode{Iterator} models
+\libconcept{RandomAccessIterator}, and
+\tcode{bidirectional_iterator_tag} otherwise.
+
+\pnum
 The member \grammarterm{typedef-name} \tcode{iterator_category} denotes
 \tcode{random_access_iterator_tag} if
 \tcode{iterator_traits<\brk{}Iterator>::iterator_category} is derived from
 \tcode{random_access_iterator_tag}, and
 \tcode{iterator_traits<\brk{}Iterator>::iterator_category} otherwise.
-
-\pnum
-The member \grammarterm{typedef-name} \tcode{iterator_concept} denotes
-\tcode{random_access_iterator_tag} if \tcode{Iterator} models
-\libconcept{RandomAccessIterator}, and
-\tcode{bidirectional_iterator_tag} otherwise.
 \end{addedblock}
 
 \rSec3[reverse.iter.requirements]{\tcode{reverse_iterator} requirements}
@@ -2897,12 +2906,12 @@ namespace std {
   class move_iterator {
   public:
     using iterator_type     = Iterator;
+    @\added{using iterator_concept}@  @\added{= input_iterator_tag;}@
     using iterator_category = @\changed{typename iterator_traits<Iterator>::iterator_category}{\seebelownc}@;
     using value_type        = @\changed{typename iterator_traits<Iterator>::value_type}{iter_value_t<Iterator>}@;
     using difference_type   = @\changed{typename iterator_traits<Iterator>::difference_type}{iter_difference_t<Iterator>}@;
     using pointer           = Iterator;
     using reference         = @\changed{\seebelow}{iter_rvalue_reference_t<Iterator>}@;
-    @\added{using iterator_concept}@  @\added{= input_iterator_tag;}@
 
     constexpr move_iterator();
     constexpr explicit move_iterator(Iterator i);
@@ -3367,12 +3376,12 @@ namespace std {
 
   template<InputIterator I, class S>
   struct iterator_traits<common_iterator<I, S>> {
-    using difference_type = iter_difference_t<I>;
-    using value_type = iter_value_t<I>;
-    using reference = iter_reference_t<I>;
-    using pointer = @\seebelownc@;
-    using iterator_category = @\seebelownc@;
     using iterator_concept = @\seebelownc@;
+    using iterator_category = @\seebelownc@;
+    using value_type = iter_value_t<I>;
+    using difference_type = iter_difference_t<I>;
+    using pointer = @\seebelownc@;
+    using reference = iter_reference_t<I>;
   };
 }
 \end{codeblock}
@@ -3382,12 +3391,11 @@ namespace std {
 \pnum
 The nested \grammarterm{typedef-name}s of the specialization of
 \tcode{iterator_traits} for \tcode{common_iterator<I, S>} are defined as follows.
-
 \pnum
-If the expression \tcode{a.operator->()} is well-formed, where \tcode{a}
-is an lvalue of type \tcode{const common_iterator<I, S>}, then
-\tcode{pointer} denotes the type of that expression. Otherwise, \tcode{pointer}
-denotes \tcode{void}.
+\tcode{iterator_concept} denotes \tcode{forward_iterator_tag} if \tcode{I}
+models \libconcept{ForwardIterator}; otherwise it denotes
+\tcode{input_iterator_tag}.
+
 
 \pnum
 Let \tcode{C} denote the type \tcode{iterator_traits<I>::iterator_category}. If
@@ -3396,9 +3404,10 @@ Let \tcode{C} denote the type \tcode{iterator_traits<I>::iterator_category}. If
 \tcode{iterator_category} denotes \tcode{input_iterator_tag}.
 
 \pnum
-\tcode{iterator_concept} denotes \tcode{forward_iterator_tag} if \tcode{I}
-models \libconcept{ForwardIterator}; otherwise it denotes
-\tcode{input_iterator_tag}.
+If the expression \tcode{a.operator->()} is well-formed, where \tcode{a}
+is an lvalue of type \tcode{const common_iterator<I, S>}, then
+\tcode{pointer} denotes the type of that expression. Otherwise, \tcode{pointer}
+denotes \tcode{void}.
 
 \rSec3[common.iterator.ops]{\tcode{common_iterator} operations}
 
