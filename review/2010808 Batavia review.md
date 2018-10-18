@@ -1,5 +1,7 @@
 AM: Alisdair Meredith
 
+BB: Billy Baker
+
 CC: Casey Carter
 
 DS: Dan S
@@ -265,3 +267,6 @@ WB: "If any of the _ functions *is* instantiated" ["any" can be either singular 
 CC: use `auto` rather than `decltype(auto)` [fixed]
 
 TS (offline): Can we have a note that the return type is `void` in [the "otherwise"] case? [There are no `return`s from which to deduce a return type, how is this not clear?]
+
+[move.iter.op.comp]
+CC (Drive-by): Explode p1 into constraints elements as for [reverse.iter.comp].
