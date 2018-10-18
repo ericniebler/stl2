@@ -226,3 +226,9 @@ WB: either _ shall denote a range or else _ shall denote a range. [Rephrased for
 WB: order [the iterator traits] aliases consistently. [Changed consistently throughout to `iterator_concept` (if present), `iterator_category`, `value_type`, `difference_type`, `pointer`, `reference`. Since this is a simple permutation, I put diff markings in the IS text but not in the new text.]
 
 WB: /1 line break please. [broke]
+
+DS: Please rename template parameter `Iterator` to `I`. TS (offline): Can we rename
+the template parameter to avoid confusion with the Iterator concept? [I've made a note to submit this change as a post-merge editorial issue (I'd rather not bloat the proposal with all the wording necessary for this change).]
+
+[reverse.iter.requirements]
+CC: "satisfy" -> "meet". [fixed]

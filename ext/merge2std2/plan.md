@@ -20,6 +20,7 @@ P0896:
 * [ ] Consider constraining the template parameters of the "named tuples" returned by algorithms.
 * [ ] https://github.com/ericniebler/stl2/issues/553
 * [ ] Reformulate `noexcept(E1) && noexcept(E2)` as `noexcept(E1, E2)`?
+* [X] Feature test macro `__cpp_lib_ranges` defined in `<algorithm>`, `<functional>`, `<iterator>`, `<memory>`, and `<ranges>`
 * [X] Audit all concepts for P0717
 * [X] Update concept stable names as in the P0898 merge.
 * [X] Use the P0788 terminology in function specifications
@@ -67,6 +68,10 @@ P0896:
 * [X] https://github.com/ericniebler/stl2/issues/502
 * [X] `projection` definition from [intro.defs] in 898
 * [X] Consider making `advance`, `next`, `prev`, and `distance` *implicit* CPOs like the algorithms
+
+Post-merge:
+* [ ] Rename the template parameter for the pre-existing iterator adaptors from `Iterator` to `I`
+* [ ] Sweep the IS for "foo iterators" and replace with appropriate named requirements.
 
 Document-wide changes to make:
 * [X] Remove "std2." from stable names or replace with "range."
