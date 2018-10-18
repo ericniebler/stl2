@@ -197,13 +197,24 @@ TS (offline): It looks like `I1` and `I2` can't be reference types, so why are w
 TS (offline): vice-versa here appears to fail to cover `iter_swap(i2, i1)` [Fixed.].
 
 #### [std.iterator.tags]
-RD: Get an oxford comma from core. [fixed]
+RD: Get an Oxford comma from core. [fixed]
 
-WB: strike “and optionally” [struck]
+WB: strike "and optionally" [struck]
 
-RD: strike “defined in” [struck]
+RD: strike "defined in" [struck]
 
 #### [range.iterator.operations]
 AM: I could have a type that has `operator+` but isn't a `RandomAccessIterator`. [rewrite this horrible paragraph comepletely]
 
 CC: Missing the "you may not specify explicit template arguments" requirement [copy from [algorithms.requirements] and tailor]
+
+#### [range.iterator.operations.advance]
+TS (offline): `n` -> `|n|`. Group: Wording without absval will be left alone as it's based on existing wording. [fixed here and in the IS. ]
+
+AM: Strike p4 up to comma. [struck]
+
+CC (Drive-by): Clarify uses of "for foo iterators" with "If `I` models `FooIterator`". [fixed]
+
+CC (Drive-by): "until `i == bound`" is not well-defined for `Boolean` expression `i == bound`. [fixed]
+
+MH: /8 uses "distance" rather than "difference". TS (offline): Should we have a note that `M` can be negative? [Rephrase: "`M` is the difference between the ending and starting positions of `i`"]
