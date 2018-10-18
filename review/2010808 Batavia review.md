@@ -270,3 +270,6 @@ TS (offline): Can we have a note that the return type is `void` in [the "otherwi
 
 [move.iter.op.comp]
 CC (Drive-by): Explode p1 into constraints elements as for [reverse.iter.comp].
+
+[move.iter.nonmember]
+CC (Drive-by): Explode p1 into constraints elements as for [move.iter.op.comp].
