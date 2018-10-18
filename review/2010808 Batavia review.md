@@ -235,6 +235,13 @@ CC: "satisfy" -> "meet". [fixed]
 
 WB: This is a mess. If you can clean it up, I'd be very happy. [Improved (happiness is not guaranteed)]
 
+[reverse.iter.cmp]
+WB: would rather phrase p1 as ... [p1 struck]
+
+CC: "subsection" should be removed. [p1 struck]
+
+Group: would like this wording applied throughout. [done]
+
 [reverse.iter.nonmember]
 CC: [The conditional `noexcept`s] could be simplified [by using `current` instead of `declval`]. [so simplified]
 
