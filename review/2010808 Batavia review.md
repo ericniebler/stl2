@@ -309,3 +309,6 @@ WB: Why "possibly differing" rather than "possibly identical"? [struck - it's im
 DS: `cnt` -> `n` or something else, but not `count` as that is a function name. [change to `length`]
 
 CC (Drive-by): The specialization of `readable_traits` is unnecessary given the specialization of `iterator_traits`. [struck]
+
+[counted.iter.op.const]
+CC: Strike p1 and declaration that precedes it [replace with DMIs and defaulted constructor]. [fixed]
