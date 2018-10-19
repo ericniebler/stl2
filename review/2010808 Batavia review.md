@@ -304,4 +304,6 @@ WB: Merge into [default.sentinels]. [fixed]
 [counted.iterator]
 CC: "distance from its starting position" is just wrong. [fixed]
 
+WB: Why "possibly differing" rather than "possibly identical"? [struck - it's immaterial.]
+
 CC (Drive-by): The specialization of `readable_traits` is unnecessary given the specialization of `iterator_traits`. [struck]
