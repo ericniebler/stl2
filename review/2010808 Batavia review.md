@@ -278,3 +278,6 @@ TS (offline): [The converting constructor template] is mis-constrained: `Convert
 
 [common.iterator.traits]
 WB: p2-p4 should be bullets under p1. [fixed]
+
+[common.iterator.const]
+WB: Do we need separate subclauses for each operator? [Coalesce tiny subclauses]
