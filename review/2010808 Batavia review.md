@@ -327,6 +327,6 @@ RD: ["Expects" element for `operator++()`] needs a period. [Audited all "Expects
 
 DS: [The "Returns" element for `operator++()`] could be moved into "Effects". TS (offline): Why not put this into the codeblock? [Merge all "Returns" elements into "Effects"]
 
-TS (offline): [The "Expects" element on `operator++(int) requires ForwardIterator`] is implied by the equivalent-to [since it invokes `operator++()` which has that precondition]. [struck]
+TS (offline): [The "Expects" element on `operator++(int) requires ForwardIterator`, `operator+`, and `operator-`] are implied by the equivalent-to. [struck]
 
 BB: Now that `operator+` is a `friend`, can use `difference_type` rather than `iter_difference_t<I>`. [`difference_type` is a relic of the TS design. Current design intent is that people use the traits, and that iterators/ranges don't have nested types. `difference_type` here - and in `common_iterator` - should be a specialization of `incrementable_traits`.]
