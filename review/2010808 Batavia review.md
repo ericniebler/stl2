@@ -306,4 +306,6 @@ CC: "distance from its starting position" is just wrong. [fixed]
 
 WB: Why "possibly differing" rather than "possibly identical"? [struck - it's immaterial.]
 
+DS: `cnt` -> `n` or something else, but not `count` as that is a function name. [change to `length`]
+
 CC (Drive-by): The specialization of `readable_traits` is unnecessary given the specialization of `iterator_traits`. [struck]
