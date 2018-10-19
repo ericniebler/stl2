@@ -299,4 +299,6 @@ TS (offline): [`y.v_` has no alternative `I`, it has `I2`]. [fixed]
 WB: Merge into [default.sentinels]. [fixed]
 
 [counted.iterator]
+CC: "distance from its starting position" is just wrong. [fixed]
+
 CC (Drive-by): The specialization of `readable_traits` is unnecessary given the specialization of `iterator_traits`. [struck]
