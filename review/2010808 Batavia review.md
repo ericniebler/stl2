@@ -235,7 +235,7 @@ the template parameter to avoid confusion with the Iterator concept? [I've made 
 [reverse.iter.requirements]
 CC: "satisfy" -> "meet". [fixed]
 
-WB: This is a mess. If you can clean it up, I'd be very happy. [Improved (happiness is not guaranteed)]
+WB: This is a mess. If you can clean it up, I'd be very happy. [Improved (happiness not guaranteed)]
 
 [reverse.iter.cmp]
 WB: would rather phrase p1 as ... [p1 struck]
@@ -279,5 +279,14 @@ TS (offline): [The converting constructor template] is mis-constrained: `Convert
 [common.iterator.traits]
 WB: p2-p4 should be bullets under p1. [fixed]
 
+TS (offline): Where do we require `I` to be at least input? [The `iterator_traits` specialization is constrained to require `InputIterator`.]
+
+CC (Drive-by): The specialization of `readable_traits` is unnecessary given that `common_iterator` specializes `iterator_traits`. [struck]
+
 [common.iterator.const]
 WB: Do we need separate subclauses for each operator? [Coalesce tiny subclauses]
+
+
+
+[counted.iterator]
+CC (Drive-by): The specialization of `readable_traits` is unnecessary given the specialization of `iterator_traits`. [struck]
