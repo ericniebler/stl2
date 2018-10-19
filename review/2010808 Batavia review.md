@@ -324,3 +324,5 @@ RD: `noexcept` on `count()`. [`noexcept`ed]
 Group: Squash all subclauses to one ginormous section. [Rearrange subclauses in the style of the working draft.]
 
 RD: ["Expects" element] needs a period. [Audited all "Expects"]
+
+DS: [The "Returns" element for `operator++()`] could be moved into "Effects". TS (offline): Why not put this into the codeblock? [Merge all "Returns" elements into "Effects"]
