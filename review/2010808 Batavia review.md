@@ -276,6 +276,9 @@ CC (Drive-by): Explode p1 into constraints elements as for [move.iter.op.comp]. 
 [move.sent.op.const]
 TS (offline): [The converting constructor template] is mis-constrained: `ConvertibleTo` examines the convertiblity of non-`const` rvalue `S2`, but we are initializing from a `const` lvalue. [audited all uses of `ConvertibleTo`]
 
+[iterators.common]
+CC (Drive-by): Hanging paragraphs. [Push down into [common.iterator]]
+
 [common.iterator.traits]
 WB: p2-p4 should be bullets under p1. [fixed]
 
