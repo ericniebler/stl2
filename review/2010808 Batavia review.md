@@ -317,5 +317,10 @@ CC: Strike p1 and declaration that precedes it [replace with DMIs and defaulted 
 
 CC: Strike "Constructs a `counted_iterator`," [struck]
 
+[counted.iter.access]
+RD: `noexcept` on `count()`. [`noexcept`ed]
+
 [counted.iter.ops]
 Group: Squash all subclauses to one ginormous section. [Rearrange subclauses in the style of the working draft.]
+
+RD: ["Expects" element] needs a period. [Audited all "Expects"]
