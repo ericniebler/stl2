@@ -310,7 +310,12 @@ DS: `cnt` -> `n` or something else, but not `count` as that is a function name. 
 
 CC (Drive-by): The specialization of `readable_traits` is unnecessary given the specialization of `iterator_traits`. [struck]
 
-[counted.iter.op.const]
+[counted.iter.const]
 WB: "and conversions" but conversion are elsewhere. [Merge [counted.iter.op.conv]]
 
 CC: Strike p1 and declaration that precedes it [replace with DMIs and defaulted constructor]. [fixed]
+
+CC: Strike "Constructs a `counted_iterator`," [struck]
+
+[counted.iter.ops]
+Group: Squash all subclauses to one ginormous section. [Rearrange subclauses in the style of the working draft.]
