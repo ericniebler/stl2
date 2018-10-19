@@ -290,10 +290,13 @@ WB: Do we need separate subclauses for each operator? [Coalesce tiny subclauses]
 Group: Move [conditional `noexcept` paragraph] P4 to P1. [moved]
 
 [common.iter.cmp]
-RD: `I1` -> `I`, `S1` -> `S` [fixed]
+RD: `I1` -> `I`, `S1` -> `S`. [fixed]
 
 [common.iter.cust]
-TS (offline): [`y.v_` has no alternative `I`, it has `I2`.] [fixed]
+TS (offline): [`y.v_` has no alternative `I`, it has `I2`]. [fixed]
+
+[default.sent]
+WB: Merge into [default.sentinels]. [fixed]
 
 [counted.iterator]
 CC (Drive-by): The specialization of `readable_traits` is unnecessary given the specialization of `iterator_traits`. [struck]
