@@ -286,7 +286,8 @@ CC (Drive-by): The specialization of `readable_traits` is unnecessary given that
 [common.iterator.const]
 WB: Do we need separate subclauses for each operator? [Coalesce tiny subclauses]
 
-
+[common.iter.cust]
+TS (offline): [`y.v_` has no alternative `I`, it has `I2`.] [fixed]
 
 [counted.iterator]
 CC (Drive-by): The specialization of `readable_traits` is unnecessary given the specialization of `iterator_traits`. [struck]
