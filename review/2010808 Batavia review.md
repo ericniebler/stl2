@@ -286,6 +286,9 @@ CC (Drive-by): The specialization of `readable_traits` is unnecessary given that
 [common.iterator.const]
 WB: Do we need separate subclauses for each operator? [Coalesce tiny subclauses]
 
+[common.iter.access]
+Group: Move [conditional `noexcept` paragraph] P4 to P1. [moved]
+
 [common.iter.cust]
 TS (offline): [`y.v_` has no alternative `I`, it has `I2`.] [fixed]
 
