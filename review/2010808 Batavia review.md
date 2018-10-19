@@ -310,6 +310,8 @@ DS: `cnt` -> `n` or something else, but not `count` as that is a function name. 
 
 CC (Drive-by): The specialization of `readable_traits` is unnecessary given the specialization of `iterator_traits`. [struck]
 
+Group: Squash all [counted.iterator.ops] subclauses to one ginormous section. [Rearrange subclauses in the style of the working draft.]
+
 [counted.iter.const]
 WB: "and conversions" but conversion are elsewhere. [Merge [counted.iter.op.conv]]
 
@@ -320,9 +322,9 @@ CC: Strike "Constructs a `counted_iterator`," [struck]
 [counted.iter.access]
 RD: `noexcept` on `count()`. [`noexcept`ed]
 
-[counted.iter.ops]
-Group: Squash all subclauses to one ginormous section. [Rearrange subclauses in the style of the working draft.]
-
-RD: ["Expects" element] needs a period. [Audited all "Expects"]
+[counted.iter.nav]
+RD: ["Expects" element for `operator++()`] needs a period. [Audited all "Expects"]
 
 DS: [The "Returns" element for `operator++()`] could be moved into "Effects". TS (offline): Why not put this into the codeblock? [Merge all "Returns" elements into "Effects"]
+
+TS (offline): [The "Expects" element on `operator++(int) requires ForwardIterator`] is implied by the equivalent-to [since it invokes `operator++()` which has that precondition]. [struck]
