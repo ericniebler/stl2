@@ -256,7 +256,6 @@ MH: `Iterator2` needs to be in `noexcept` clause [in p4]. TS (offline): [ditto].
 TS (offline): Do we want to include [`iter_`-]swapping in either order? [Sort of, but not enough to want to pay the compile time cost.]
 
 [move.iterator]
-
 TS (offline): Can we rename the template parameter to avoid confusion with the `Iterator` concept? [Same response as for `reverse_iterator`: I'll do this in a
 a follow-up editorial issue.]
 
@@ -269,7 +268,10 @@ CC: use `auto` rather than `decltype(auto)` [fixed]
 TS (offline): Can we have a note that the return type is `void` in [the "otherwise"] case? [There are no `return`s from which to deduce a return type, how is this not clear?]
 
 [move.iter.op.comp]
-CC (Drive-by): Explode p1 into constraints elements as for [reverse.iter.comp].
+CC (Drive-by): Explode p1 into constraints elements as for [reverse.iter.comp]. [fixed]
 
 [move.iter.nonmember]
-CC (Drive-by): Explode p1 into constraints elements as for [move.iter.op.comp].
+CC (Drive-by): Explode p1 into constraints elements as for [move.iter.op.comp]. [fixed]
+
+[move.sent.op.const]
+TS (offline): [The converting constructor template] is mis-constrained: `ConvertibleTo` examines the convertiblity of non-`const` rvalue `S2`, but we are initializing from a `const` lvalue. [audited all uses of `ConvertibleTo`]
