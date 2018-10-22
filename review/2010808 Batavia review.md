@@ -360,3 +360,8 @@ AM: update notes [here and in `cend`, `rend`, and `crend`] to clarify `Sentinel`
 
 [range.access.rbegin]
 AM: remove `make_reverse_iterator` to use CTAD. [This would break `ranges::rbegin(x)` when `x` is a range of `reverse_iterator`s; CTAD is dangerous in generic code.]
+
+[range.primitives.size]
+TS (offline): [The type `T` of an expression is never a reference type; `remove_cvref_t<T>` here could be `remove_cv_t`]. [fixed]
+
+TS (offline): Extract `disable_sized_range` from 1.2 and 1.3 and turn them into sub-bullets.
