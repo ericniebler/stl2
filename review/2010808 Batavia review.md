@@ -372,3 +372,11 @@ WB/CC: Otherwise, let `RANGE_DIFF` be `DECAY_COPY(ranges::cend(E) - ranges::cbeg
 RD: p1.2 could be read to dictate that size must be `0`? Suggest adding `()` [done]
 
 AM: 1.3 fix as above [for `ranges::size`]. [done]
+
+[range.primitives.data]
+AM: Delete p1.3 as p1.4 subsumes it?
+CC: for an empty range 1.3 returns a pointer. p1.4 always returns nullptr for an empty range.
+AM: So whether vector hits 1.3 depends on whether it uses pointers or fancy iterators?
+CC: yes. This helps it match the result of calling `begin()`.
+AM: I read this to say the opposite. Having iterators as pointers would ensure that I get something different.
+Group: Strike p1.3 [struck what is now p1.2]
