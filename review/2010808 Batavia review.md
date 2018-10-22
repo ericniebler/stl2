@@ -356,7 +356,7 @@ TS (offline): [This definition] permits a member `begin` to be paired with a non
 
 AM: [Question on whether final bullet in each customization-point disables SFINAE]. [The words "Otherwise `ranges::cpo(E)` is ill-formed." necessarily produce SFINAE when the expression is in the immediate context and substitution into `E` results in `ranges::cpo(E)` being ill-formed.] [added notes]
 
-AM: update notes to clarify sentinel usage of both types.
+AM: update notes [here and in `cend`, `rend`, and `crend`] to clarify `Sentinel` usage of both types. [fixed]
 
 [range.access.rbegin]
 AM: remove `make_reverse_iterator` to use CTAD. [This would break `ranges::rbegin(x)` when `x` is a range of `reverse_iterator`s; CTAD is dangerous in generic code.]
