@@ -367,3 +367,6 @@ TS (offline): [The type `T` of an expression is never a reference type; `remove_
 TS (offline): Extract `disable_sized_range` from 1.2 and 1.3 and turn them into sub-bullets. [fixed]
 
 WB/CC: Otherwise, let `RANGE_DIFF` be `DECAY_COPY(ranges::cend(E) - ranges::cbegin(E))` with `E` evaluated exactly once, if `RANGE_DIFF` is a valid expression and the types `I` and `S` of `ranges::cbegin(E)` and `ranges::cend(E)` model `SizedSentinel<S, I>` and `ForwardIterator<I>`. [fixed]
+
+[range.primitives.empty]
+RD: p1.2 could be read to dictate that size must be `0`? Suggest adding `()`
