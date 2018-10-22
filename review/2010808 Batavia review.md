@@ -348,3 +348,15 @@ AM: Suggest to move contents of [range.access] and [range.primitives] to `<itera
 TS (offline): [Many "link" comments lack textual descriptions]. [added]
 
 TS (offline): [Missing declarations of `take_view` and `view::take`]. [added]
+
+[range.access.end]
+CC: strike cross reference in p1.2. [No, this is fine. One cross-reference per subclause is reasonable ;)]
+
+TS (offline): [This definition] permits a member `begin` to be paired with a non-member `end`. Do we care or is the concept checks enough? [*I* don't care about member vs. non-member if they satisfy the concepts.]
+
+AM: [Question on whether final bullet in each customization-point disables SFINAE]. [The words "Otherwise `ranges::cpo(E)` is ill-formed." necessarily produce SFINAE when the expression is in the immediate context and substitution into `E` results in `ranges::cpo(E)` being ill-formed.] [added notes]
+
+AM: update notes to clarify sentinel usage of both types.
+
+[range.access.rbegin]
+AM: remove `make_reverse_iterator` to use CTAD. [This would break `ranges::rbegin(x)` when `x` is a range of `reverse_iterator`s; CTAD is dangerous in generic code.]
