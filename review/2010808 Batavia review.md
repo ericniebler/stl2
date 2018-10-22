@@ -364,4 +364,4 @@ AM: remove `make_reverse_iterator` to use CTAD. [This would break `ranges::rbegi
 [range.primitives.size]
 TS (offline): [The type `T` of an expression is never a reference type; `remove_cvref_t<T>` here could be `remove_cv_t`]. [fixed]
 
-TS (offline): Extract `disable_sized_range` from 1.2 and 1.3 and turn them into sub-bullets.
+TS (offline): Extract `disable_sized_range` from 1.2 and 1.3 and turn them into sub-bullets. [fixed]
