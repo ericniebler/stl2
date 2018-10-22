@@ -332,7 +332,11 @@ TS (offline): [The "Expects" element on `operator++(int) requires ForwardIterato
 BB: Now that `operator+` is a `friend`, can use `difference_type` rather than `iter_difference_t<I>`. [`difference_type` is a relic of the TS design. Current design intent is that people use the traits, and that iterators/ranges don't have nested types. `difference_type` here - and in `common_iterator` - should be a specialization of `incrementable_traits`.]
 
 [unreachable.sentinel]
-RD: "placeholder type" not what you want.
+RD: "placeholder type" not what you want. [strike "is a placeholder type that"]
+
+WB: I'd like to just strike p1 final sentence. [struck]
+
+CC: p2 Example is broken in being unreachable. Group: p1 could use note about utility with single-pass iterators. [Deferred for now: I have design concerns about `unreachable` that need investigation.]
 
 [ranges.syn]
 TS (offline): [Many "link" comments lack textual descriptions].
