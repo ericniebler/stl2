@@ -339,4 +339,8 @@ WB: I'd like to just strike p1 final sentence. [struck]
 CC: p2 Example is broken in being unreachable. Group: p1 could use note about utility with single-pass iterators. [Deferred for now: I have design concerns about `unreachable` that need investigation.]
 
 [ranges.syn]
+AM: Should `transform_view` use something other than `Invocable`? CC: Suspect we might want to use `IndirectUnaryInvocable`. [No: `IndirectUnaryInvocable` is overconstraining here.]
+
+AM: Suggest putting all ranges [declarations] in `namespace std::ranges {...}` and all things in `std` namespace afterward in `namespace std {...}` [done]
+
 TS (offline): [Many "link" comments lack textual descriptions].
