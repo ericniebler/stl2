@@ -60,34 +60,32 @@ namespace std@\newtxt{::ranges}@ {
     inline constexpr @\unspec@ cdata = @\unspecnc@;
   }
 
+  // \ref{range.range}, Range
   template<class T>
     using iterator_t = decltype(ranges::begin(declval<T&>()));
 
   template<class T>
     using sentinel_t = decltype(ranges::end(declval<T&>()));
 
+  template<@\oldtxt{Range}\newtxt{\placeholder{fowarding-range}}@ R>
+    using safe_iterator_t = @\oldtxt{decltype(ranges::begin(declval<R>()))}\newtxt{iterator_t<R>}@;
+
+  template<class T>
+    concept Range = @\seebelownc@;
+
+  // \ref{range.sized}, SizedRange
   template<class>
     inline constexpr bool disable_sized_range = false;
 
+  template<class T>
+    concept SizedRange = @\seebelownc@;
+
+  // \ref{range.view}, View
   template<class T>
   struct enable_view { };
 
   struct view_base { };
 
-  template<@\oldtxt{Range}\newtxt{\placeholder{fowarding-range}}@ R>
-    using safe_iterator_t = @\oldtxt{decltype(ranges::begin(declval<R>()))}\newtxt{iterator_t<R>}@;
-
-  // \ref{range.requirements}, range requirements
-
-  // \ref{range.range}, Range
-  template<class T>
-    concept Range = @\seebelownc@;
-
-  // \ref{range.sized}, SizedRange
-  template<class T>
-    concept SizedRange = @\seebelownc@;
-
-  // \ref{range.view}, View
   template<class T>
     concept View = @\seebelownc@;
 
@@ -119,16 +117,16 @@ namespace std@\newtxt{::ranges}@ {
   template<class T>
     concept ContiguousRange = @\seebelownc@;
 
-  // \ref{range.viewable}
+  // \ref{range.viewable}\newtxt{, Viewable ranges}
   template<class T>
     concept ViewableRange = @\seebelownc@;
 
-  // \ref{range.view_interface}
+  // \ref{range.view_interface}\newtxt{, class template }\tcode{\newtxt{view_interface}}
   template<class D>
     requires is_class_v<D>
   class view_interface;
 
-  // \ref{range.subrange}
+  // \ref{range.subrange}\newtxt{, sub-ranges}
   enum class subrange_kind : bool { unsized, sized };
 
   template<Iterator I, Sentinel<I> S = I, subrange_kind K = @\seebelownc@>
@@ -138,39 +136,39 @@ namespace std@\newtxt{::ranges}@ {
   @\newtxt{template<\placeholder{forwarding-range} R>}@
     @\newtxt{using safe_subrange_t = subrange<iterator_t<R>>;}@
 
-  // \ref{range.adaptors.all}
+  // \ref{range.adaptors.all}\newtxt{, range adaptor \tcode{view::all}}
   namespace view { inline constexpr @\unspec@ all = @\unspecnc@; }
 
   template<ViewableRange R>
     using all_view = decltype(view::all(declval<R>()));
 
-  // \ref{range.adaptors.filter_view}
+  // \ref{range.adaptors.filter_view}\newtxt{, range adaptor \tcode{view::filter}}
   template<InputRange R, IndirectUnaryPredicate<iterator_t<R>> Pred>
     requires View<R>
   class filter_view;
 
   namespace view { inline constexpr @\unspec@ filter = @\unspecnc@; }
 
-  // \ref{range.adaptors.transform_view}
+  // \ref{range.adaptors.transform_view}\newtxt{, range adaptor \tcode{view::transform}}
   template<InputRange R, CopyConstructible F>
     requires View<R> && is_object_v<F> && Invocable<F&, iter_reference_t<iterator_t<R>>>
   class transform_view;
 
   namespace view { inline constexpr @\unspec@ transform = @\unspecnc@; }
 
-  // \ref{range.adaptors.iota_view}
+  // \ref{range.adaptors.iota_view}\newtxt{, range factory \tcode{view::iota}}
   template<WeaklyIncrementable I, Semiregular Bound = unreachable>
     requires @\placeholder{weakly-equality-comparable-with}@<I, Bound>
   class iota_view;
 
   namespace view { inline constexpr @\unspec@ iota = @\unspecnc@; }
 
-  // \ref{range.adaptors.take_view}
+  // \ref{range.adaptors.take_view}\newtxt{, range adaptor \tcode{view::take}}
   template<View> class take_view;
 
   namespace view { inline constexpr @\unspec@ take = @\unspecnc@; }
 
-  // \ref{range.adaptors.join_view}
+  // \ref{range.adaptors.join_view}\newtxt{, range adaptor \tcode{view::join}}
   template<InputRange R>
     requires View<R> && InputRange<iter_reference_t<iterator_t<R>>> &&
         (is_reference_v<iter_reference_t<iterator_t<R>>> ||
@@ -179,7 +177,7 @@ namespace std@\newtxt{::ranges}@ {
 
   namespace view { inline constexpr @\unspec@ join = @\unspecnc@; }
 
-  // \ref{range.adaptors.empty_view}
+  // \ref{range.adaptors.empty_view}\newtxt{, range factory \tcode{view::empty}}
   template<class T>
     requires is_object_v<T>
   class empty_view;
@@ -189,18 +187,17 @@ namespace std@\newtxt{::ranges}@ {
       inline constexpr empty_view<T> empty {};
   }
 
-  // \ref{range.adaptors.single_view}
+  // \ref{range.adaptors.single_view}\newtxt{, range factory \tcode{view::single}}
   template<CopyConstructible T>
     requires is_object_v<T>
   class single_view;
 
   namespace view { inline constexpr @\unspec@ single = @\unspecnc@; }
 
-  // \expos
+  // \ref{range.adaptors.split_view}\newtxt{, range adaptor \tcode{view::split}}
   template<class R>
-    concept @\placeholder{tiny-range}@ = @\seebelownc@;
+    concept @\placeholder{tiny-range}@ = @\seebelownc@; // \expos
 
-  // \ref{range.adaptors.split_view}
   template<InputRange R, ForwardRange Pattern>
     requires View<R> && View<Pattern> &&
         IndirectlyComparable<iterator_t<R>, iterator_t<Pattern>, ranges::equal_to<>> &&
@@ -209,17 +206,17 @@ namespace std@\newtxt{::ranges}@ {
 
   namespace view { inline constexpr @\unspec@ split = @\unspecnc@; }
 
-  // \ref{range.adaptors.counted}
+  // \ref{range.adaptors.counted}\newtxt{, range adaptor \tcode{view::counted}}
   namespace view { inline constexpr @\unspec@ counted = @\unspecnc@; }
 
-  // \ref{range.adaptors.common_view}
+  // \ref{range.adaptors.common_view}\newtxt{, range adaptor \tcode{view::common}}
   template<View R>
     requires @\newtxt{(}@!CommonRange<R>@\newtxt{)}@
   class common_view;
 
   namespace view { inline constexpr @\unspec@ common = @\unspecnc@; }
 
-  // \ref{range.adaptors.weiv_esrever}
+  // \ref{range.adaptors.weiv_esrever}\newtxt{, range adaptor \tcode{view::reverse}}
   template<View R>
     requires BidirectionalRange<R>
   class reverse_view;

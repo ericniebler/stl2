@@ -343,4 +343,8 @@ AM: Should `transform_view` use something other than `Invocable`? CC: Suspect we
 
 AM: Suggest putting all ranges [declarations] in `namespace std::ranges {...}` and all things in `std` namespace afterward in `namespace std {...}` [done]
 
-TS (offline): [Many "link" comments lack textual descriptions].
+AM: Suggest to move contents of [range.access] and [range.primitives] to `<iterator>` [to break apparent cycle]. [Not making this change: These are range-specific machinery, not iterator-specific, and they belong in `<range>` despite the historical accident of declaring them in `<iterator>`. Implementers will have no trouble breaking the cycle.]
+
+TS (offline): [Many "link" comments lack textual descriptions]. [added]
+
+TS (offline): [Missing declarations of `take_view` and `view::take`]. [added]
