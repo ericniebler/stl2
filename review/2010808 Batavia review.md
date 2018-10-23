@@ -426,4 +426,8 @@ RD: Ask Core for another Oxford comma. [,]
 
 AM: "A container" to "Most containers". [changed]
 
-AM: Reword to "Program-defined specializations of `enable_view` shall have a base characteristic of either `true_type` or `false_type`."
+AM: Reword to "Program-defined specializations of `enable_view` shall have a base characteristic of either `true_type` or `false_type`." [Bah - let's merge `enable_view` and *`view_predicate`*.]
+
+RD: "shall be" -> "is". [fixed]
+
+RD: Change line ending ";"s to "."s [in p4]. [fixed]
