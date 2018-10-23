@@ -409,3 +409,14 @@ TS (offline): [`begin` and `end` don't require implicit expression variations] e
 CC (Drive-by): `ranges::begin(static_cast<T&>(E))` is ill-formed when `E` is an rvalue; *`forwarding-range`* is broken. [fixed]
 
 AM: Would be good to have a note following p4 to describe the purpose of *`forwarding-range`*. [add a note *and* an example]
+
+[range.sized]
+CC: Strike deduction constraint in requires expression. TS (offline): Is this `ConvertibleTo` requirement useful? [struck]
+
+DS: add ", and" to end of p2.1. [added]
+
+RD: p2.2 in note, "*to* be". [added]
+
+WB: Please move "for example" to start of the sentence. [moved]
+
+CC: p3 needs same cleanup just like `disable_sized_sentinel`. [so cleaned]
