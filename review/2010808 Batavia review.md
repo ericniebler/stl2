@@ -420,3 +420,10 @@ RD: p2.2 in note, "*to* be". [added]
 WB: Please move "for example" to start of the sentence. [moved]
 
 CC: p3 needs same cleanup just like `disable_sized_sentinel`. [so cleaned]
+
+[range.view]
+RD: Ask Core for another Oxford comma. [,]
+
+AM: "A container" to "Most containers". [changed]
+
+AM: Reword to "Program-defined specializations of `enable_view` shall have a base characteristic of either `true_type` or `false_type`."
