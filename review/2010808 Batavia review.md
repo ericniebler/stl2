@@ -221,10 +221,10 @@ CC (Drive-by): "until `i == bound`" is not well-defined for `Boolean` expression
 
 MH: /8 uses "distance" rather than "difference". TS (offline): Should we have a note that `M` can be negative? [Rephrase: "`M` is the difference between the ending and starting positions of `i`"]
 
-[range.iterator.operations.distance]
+#### [range.iterator.operations.distance]
 WB: either _ shall denote a range or else _ shall denote a range. [Rephrased for clarity, but without "either...else": the preconditions are not mutually exclusive.]
 
-[reverse.iterator]
+#### [reverse.iterator]
 WB: order [the iterator traits] aliases consistently. [Changed consistently throughout to `iterator_concept` (if present), `iterator_category`, `value_type`, `difference_type`, `pointer`, `reference`. Since this is a simple permutation, I put diff markings in the IS text but not in the new text.]
 
 WB: p1 line break please. [broke]
@@ -232,19 +232,19 @@ WB: p1 line break please. [broke]
 DS: Please rename template parameter `Iterator` to `I`. TS (offline): Can we rename
 the template parameter to avoid confusion with the Iterator concept? [I've made a note to submit this change as a post-merge editorial issue; I'd rather not bloat the proposal with *all* the wording for `reverse_iterator` and `move_iterator` simply so I can markup this change.]
 
-[reverse.iter.requirements]
+#### [reverse.iter.requirements]
 CC: "satisfy" -> "meet". [fixed]
 
 WB: This is a mess. If you can clean it up, I'd be very happy. [Improved (happiness not guaranteed)]
 
-[reverse.iter.cmp]
+#### [reverse.iter.cmp]
 WB: would rather phrase p1 as ... [p1 struck]
 
 CC: "subsection" should be removed. [p1 struck]
 
 Group: would like this wording applied throughout. [done]
 
-[reverse.iter.nonmember]
+#### [reverse.iter.nonmember]
 CC: [The conditional `noexcept`s] could be simplified [by using `current` instead of `declval`]. [so simplified]
 
 TS (offline): [several comments about the conditional `noexcept`s indicating that the intended implementation is too subtle]. [clarified effects]
@@ -255,53 +255,53 @@ MH: `Iterator2` needs to be in `noexcept` clause [in p4]. TS (offline): [ditto].
 
 TS (offline): Do we want to include [`iter_`-]swapping in either order? [Sort of, but not enough to want to pay the compile time cost.]
 
-[move.iterator]
+#### [move.iterator]
 TS (offline): Can we rename the template parameter to avoid confusion with the `Iterator` concept? [Same response as for `reverse_iterator`: I'll do this in a
 a follow-up editorial issue.]
 
-[move.iter.requirements]
+#### [move.iter.requirements]
 WB: "If any of the _ functions *is* instantiated" ["any" can be either singular or plural, and I think the plural reads better here. COME AT ME, Walter!]
 
-[move.iter.nav]
+#### [move.iter.nav]
 CC: use `auto` rather than `decltype(auto)` [fixed]
 
 TS (offline): Can we have a note that the return type is `void` in [the "otherwise"] case? [There are no `return`s from which to deduce a return type, how is this not clear?]
 
-[move.iter.op.comp]
+#### [move.iter.op.comp]
 CC (Drive-by): Explode p1 into constraints elements as for [reverse.iter.comp]. [fixed]
 
-[move.iter.nonmember]
+#### [move.iter.nonmember]
 CC (Drive-by): Explode p1 into constraints elements as for [move.iter.op.comp]. [fixed]
 
-[move.sent.op.const]
+#### [move.sent.op.const]
 TS (offline): [The converting constructor template] is mis-constrained: `ConvertibleTo` examines the convertiblity of non-`const` rvalue `S2`, but we are initializing from a `const` lvalue. [audited all uses of `ConvertibleTo`]
 
-[iterators.common]
+#### [iterators.common]
 CC (Drive-by): Hanging paragraphs. [Push down into [common.iterator]]
 
-[common.iterator.traits]
+#### [common.iterator.traits]
 WB: p2-p4 should be bullets under p1. [fixed]
 
 TS (offline): Where do we require `I` to be at least input? [The `iterator_traits` specialization is constrained to require `InputIterator`.]
 
 CC (Drive-by): The specialization of `readable_traits` is unnecessary given that `common_iterator` specializes `iterator_traits`. [struck]
 
-[common.iterator.const]
+#### [common.iterator.const]
 WB: Do we need separate subclauses for each operator? [Coalesce tiny subclauses]
 
-[common.iter.access]
+#### [common.iter.access]
 Group: Move [conditional `noexcept` paragraph] P4 to P1. [moved]
 
-[common.iter.cmp]
+#### [common.iter.cmp]
 RD: `I1` -> `I`, `S1` -> `S`. [fixed]
 
-[common.iter.cust]
+#### [common.iter.cust]
 TS (offline): [`y.v_` has no alternative `I`, it has `I2`]. [fixed]
 
-[default.sent]
+#### [default.sent]
 WB: Merge into [default.sentinels]. [fixed]
 
-[counted.iterator]
+#### [counted.iterator]
 CC: "distance from its starting position" is just wrong. [fixed]
 
 WB: Why "possibly differing" rather than "possibly identical"? [struck - it's immaterial.]
@@ -312,17 +312,17 @@ CC (Drive-by): The specialization of `readable_traits` is unnecessary given the 
 
 Group: Squash all [counted.iterator.ops] subclauses to one ginormous section. [Rearrange subclauses in the style of the working draft.]
 
-[counted.iter.const]
+#### [counted.iter.const]
 WB: "and conversions" but conversion are elsewhere. [Merge [counted.iter.op.conv]]
 
 CC: Strike p1 and declaration that precedes it [replace with DMIs and defaulted constructor]. [fixed]
 
 CC: Strike "Constructs a `counted_iterator`," [struck]
 
-[counted.iter.access]
+#### [counted.iter.access]
 RD: `noexcept` on `count()`. [`noexcept`ed]
 
-[counted.iter.nav]
+#### [counted.iter.nav]
 RD: ["Expects" element for `operator++()`] needs a period. [Audited all "Expects"]
 
 DS: [The "Returns" element for `operator++()`] could be moved into "Effects". TS (offline): Why not put this into the codeblock? [Merge all "Returns" elements into "Effects"]
@@ -331,14 +331,14 @@ TS (offline): [The "Expects" element on `operator++(int) requires ForwardIterato
 
 BB: Now that `operator+` is a `friend`, can use `difference_type` rather than `iter_difference_t<I>`. [`difference_type` is a relic of the TS design. Current design intent is that people use the traits, and that iterators/ranges don't have nested types. `difference_type` here - and in `common_iterator` - should be a specialization of `incrementable_traits`.]
 
-[unreachable.sentinel]
+#### [unreachable.sentinel]
 RD: "placeholder type" not what you want. [strike "is a placeholder type that"]
 
 WB: I'd like to just strike p1 final sentence. [struck]
 
 CC: p2 Example is broken in being unreachable. Group: p1 could use note about utility with single-pass iterators. [Deferred for now: I have design concerns about `unreachable` that need investigation.]
 
-[ranges.syn]
+#### [ranges.syn]
 AM: Should `transform_view` use something other than `Invocable`? CC: Suspect we might want to use `IndirectUnaryInvocable`. [No: `IndirectUnaryInvocable` is overconstraining here.]
 
 AM: Suggest putting all ranges [declarations] in `namespace std::ranges {...}` and all things in `std` namespace afterward in `namespace std {...}` [done]
@@ -349,7 +349,7 @@ TS (offline): [Many "link" comments lack textual descriptions]. [added]
 
 TS (offline): [Missing declarations of `take_view` and `view::take`]. [added]
 
-[range.access.end]
+#### [range.access.end]
 CC: strike cross reference in p1.2. [No, this is fine. One cross-reference per subclause is reasonable ;)]
 
 TS (offline): [This definition] permits a member `begin` to be paired with a non-member `end`. Do we care or is the concept checks enough? [*I* don't care about member vs. non-member if they satisfy the concepts.]
@@ -358,25 +358,38 @@ AM: [Question on whether final bullet in each customization-point disables SFINA
 
 AM: update notes [here and in `cend`, `rend`, and `crend`] to clarify `Sentinel` usage of both types. [fixed]
 
-[range.access.rbegin]
+#### [range.access.rbegin]
 AM: remove `make_reverse_iterator` to use CTAD. [This would break `ranges::rbegin(x)` when `x` is a range of `reverse_iterator`s; CTAD is dangerous in generic code.]
 
-[range.primitives.size]
+#### [range.primitives.size]
 TS (offline): [The type `T` of an expression is never a reference type; `remove_cvref_t<T>` here could be `remove_cv_t`]. [fixed]
 
 TS (offline): Extract `disable_sized_range` from 1.2 and 1.3 and turn them into sub-bullets. [fixed]
 
 WB/CC: Otherwise, let `RANGE_DIFF` be `DECAY_COPY(ranges::cend(E) - ranges::cbegin(E))` with `E` evaluated exactly once, if `RANGE_DIFF` is a valid expression and the types `I` and `S` of `ranges::cbegin(E)` and `ranges::cend(E)` model `SizedSentinel<S, I>` and `ForwardIterator<I>`. [fixed]
 
-[range.primitives.empty]
+#### [range.primitives.empty]
 RD: p1.2 could be read to dictate that size must be `0`? Suggest adding `()` [done]
 
 AM: 1.3 fix as above [for `ranges::size`]. [done]
 
-[range.primitives.data]
+#### [range.primitives.data]
 AM: Delete p1.3 as p1.4 subsumes it?
 CC: for an empty range 1.3 returns a pointer. p1.4 always returns nullptr for an empty range.
 AM: So whether vector hits 1.3 depends on whether it uses pointers or fancy iterators?
 CC: yes. This helps it match the result of calling `begin()`.
 AM: I read this to say the opposite. Having iterators as pointers would ensure that I get something different.
 Group: Strike p1.3 [struck what is now p1.2]
+
+#### [range.requirements.general]
+AM: Strike "of containers". Sentence 2 should be like "Calling begin on a range object produces an iterator. Calling end on a range object produces a sentinel." Sentence 3 "The library formalizes the interfaces, semantics, and complexity of ranges to enable algorithm and range adaptors that work efficiently on different types of sequences." [so changed]
+
+Group: Strike p2 [and Table 76]. [struck]
+
+WB: p3 sentence append ", respectively." [appended]
+
+WB: "In addition, several refinements of `Range` group requirements that arise frequently." [rephrased]
+
+CC: Get rid of italics. Strike "range categories" from last sentence. [fixed]
+
+TS (offline): Missing mentions of `ContiguousRange` and `ViewableRange`. [mentioned]
