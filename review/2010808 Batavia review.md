@@ -393,3 +393,19 @@ WB: "In addition, several refinements of `Range` group requirements that arise f
 CC: Get rid of italics. Strike "range categories" from last sentence. [fixed]
 
 TS (offline): Missing mentions of `ContiguousRange` and `ViewableRange`. [mentioned]
+
+[range.range]
+AM: strike note. [struck]
+
+WB: Comment in synopsis says "equality preserving"; I confused this to talk about the note in p4.
+CC: Applies to p2.3.
+WB: change "see below" to "see below for clarifications". [Changed to "sometimes equality preserving"]
+
+DS: Add "and" to the end of the bullets
+WB: Instead, change "only if" to "only [if] each of the following is true:" [clarified]
+
+TS (offline): [`begin` and `end` don't require implicit expression variations] even when `T` is a `const &`? We really need to get the implicit-variation rules clear. [Ugh, this normative non-requirement cannot be a note.]
+
+CC (Drive-by): `ranges::begin(static_cast<T&>(E))` is ill-formed when `E` is an rvalue; *`forwarding-range`* is broken. [fixed]
+
+AM: Would be good to have a note following p4 to describe the purpose of *`forwarding-range`*. [add a note *and* an example]

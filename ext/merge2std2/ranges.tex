@@ -731,19 +731,21 @@ input \oldtxt{ranges}, and output ranges are defined similarly.)
 
 \pnum
 The \libconcept{Range} concept defines the requirements of a type that allows
-iteration over its elements by providing a \tcode{begin} iterator and an
-\tcode{end} sentinel.
+iteration over its elements by providing an \oldtxt{\tcode{begin}} iterator and
+an \oldtxt{\tcode{end}} sentinel \newtxt{that denote the elements of the range}.
+{\color{oldclr}
 \begin{note}
-Most algorithms requiring this concept simply forward to an
-\libconcept{Iterator}-based algorithm by calling \tcode{begin} and \tcode{end}.
+\oldtxt{Most algorithms requiring this concept simply forward to an
+\libconcept{Iterator}-based algorithm by calling \tcode{begin} and \tcode{end}.}
 \end{note}
+} %% \color{oldclr}
 
 \indexlibrary{\idxcode{Range}}%
 \begin{itemdecl}
 template<class T>
   concept @\placeholder{range-impl}@ = // \expos
     requires(T&& t) {
-      ranges::begin(std::forward<T>(t)); // not necessarily equality-preserving (see below)
+      ranges::begin(std::forward<T>(t)); // \oldtxt{not necessarily} \newtxt{sometimes} equality-preserving (see below)
       ranges::end(std::forward<T>(t));
     };
 
@@ -757,40 +759,30 @@ template<class T>
 
 \begin{itemdescr}
 \pnum
-Given an expression \tcode{E} such that \tcode{decltype((E))} is \tcode{T},
-\tcode{T} models \tcode{\placeholdernc{range-impl}} only if
-
-\begin{itemize}
-\item \range{ranges::begin(E)}{ranges::end(E)} denotes a range.
-
-\item Both
-\tcode{ranges::begin(E)}
+\newtxt{The required expressions
+\tcode{ranges::begin(std::forward<T>(t))}
 and
-\tcode{ranges::end(E)}
-are amortized constant time and non-modifying.
-\begin{note}
-\tcode{ranges::begin(E)}
-and
-\tcode{ranges::end(E)}
-do not require implicit expression
-variations\cxxiref{concepts.equality}.
-\end{note}
-
-\item If the type of \tcode{ranges::begin(E)} models
-\libconcept{ForwardIterator}, \tcode{ranges::begin(E)} is equality-preserving.
-\end{itemize}
+\tcode{ranges::end(std::forward<T>(t))}
+of the \tcode{\placeholder{range-impl}} concept
+do not require implicit expression variations\cxxiref{concepts.equality}.}
 
 \pnum
 Given an expression \tcode{E} such that \tcode{decltype((E))} is \tcode{T},
-\tcode{T} models \tcode{\placeholdernc{forwarding-range}} only if
-\begin{itemize}
-\item The expressions \tcode{ranges::begin(E)} and \tcode{ranges::begin(static_cast<T\&>(E))}
-are expression-equivalent.
+\tcode{T} models \tcode{\placeholder{range-impl}} only if
 
-\item The expressions \tcode{ranges::end(E)} and \tcode{ranges::end(static_cast<T\&>(E))}
-are expression-equivalent.
+\begin{itemize}
+\item \range{ranges::begin(E)}{ranges::end(E)}
+  denotes a range\iref{iterator.requirements.general},
+
+\item both
+\tcode{ranges::begin(E)}
+and
+\tcode{ranges::end(E)}
+are amortized constant time and non-modifying, and
+
+\item if the type of \tcode{ranges::begin(E)} models
+\libconcept{ForwardIterator}, \tcode{ranges::begin(E)} is equality-preserving.
 \end{itemize}
-\end{itemdescr}
 
 \pnum
 \begin{note}
@@ -804,6 +796,41 @@ when the return type does not model \libconcept{ForwardIterator}, repeated calls
 might not return equal values or might not be well-defined;
 \tcode{ranges::begin} should be called at most once for such a range.
 \end{note}
+
+\pnum
+Given an expression \tcode{E} such that \tcode{decltype((E))} is \tcode{T}
+\newtxt{and an lvalue \tcode{t} that denotes the same object as \tcode{E}},
+\tcode{T} models \tcode{\placeholdernc{forwarding-range}} only if
+\begin{itemize}
+\item \oldtxt{The expressions} \tcode{ranges::begin(E)} and
+  \tcode{ranges::begin(\oldtxt{static_cast<T\&>(E)} \newtxt{t})}
+  are expression-equivalent, and
+\item \oldtxt{The expressions} \tcode{ranges::end(E)} and
+  \tcode{ranges::end(\oldtxt{static_cast<T\&>(E)} \newtxt{t})}
+  are expression-equivalent, and
+\item \newtxt{the validity of iterators obtained from the object denoted
+  by \tcode{E} is not tied to the lifetime of that object.}
+\end{itemize}
+
+{\color{newclr}
+\pnum
+\begin{note}
+Since the validity of iterators is not tied to the lifetime of a model of
+\tcode{\placeholder{forwarding-range}}, a function can accept a model by value
+and return iterators obtained from it without danger of dangling.
+\end{note}
+
+\pnum
+\begin{example}
+Specializations of class template \tcode{subrange}\iref{range.subranges}
+model \tcode{\placeholder{forwarding-range}}. \tcode{subrange} provides
+non-member rvalue overloads of \tcode{begin} and \tcode{end} with the same
+semantics as its member lvalue overloads, and \tcode{subrange}'s iterators
+- since they are ``borrowed'' from some other range -
+do not have validity tied to the lifetime of a \tcode{subrange} object.
+\end{example}
+} %% \color{newclr}
+\end{itemdescr}
 
 \rSec2[range.sized]{Sized ranges}
 
