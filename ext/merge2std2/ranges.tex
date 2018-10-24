@@ -1075,7 +1075,7 @@ namespace std::ranges {
       typename @\placeholdernc{range-common-iterator-impl}@<R>::type;
 
   template<class D>
-    requires is_class_v<D>
+    requires is_class_v<D> @\newtxt{\&\& Same<D, remove_cv_t<D>>}@
   class view_interface : public view_base {
   private:
     constexpr D& derived() noexcept { // \expos
@@ -1085,38 +1085,65 @@ namespace std::ranges {
       return static_cast<const D&>(*this);
     }
   public:
-    constexpr bool empty() const requires ForwardRange<const D>;
+    constexpr bool empty() const requires ForwardRange<const D> @\newtxt{\{}@
+      @\newtxt{return ranges::begin(derived()) == ranges::end(derived())}@;
+    @\newtxt{\}}@
+
     constexpr explicit operator bool() const
-      requires requires { ranges::empty(derived()); };
+      requires requires { ranges::empty(derived()); } @\newtxt{\{}@
+      @\newtxt{return !ranges::empty(derived())}@;
+    @\newtxt{\}}@
 
     constexpr auto data()
-      requires ContiguousIterator<iterator_t<D>>;
+      requires ContiguousIterator<iterator_t<D>> @\newtxt{\{}@
+      @\newtxt{return ranges::empty(derived()) ? nullptr : addressof(*ranges::begin(derived()))}@;
+    @\newtxt{\}}@
     constexpr auto data() const
-      requires Range<const D> && ContiguousIterator<iterator_t<const D>>;
+      requires Range<const D> && ContiguousIterator<iterator_t<const D>> @\newtxt{\{}@
+      @\newtxt{return ranges::empty(derived()) ? nullptr : addressof(*ranges::begin(derived()))}@;
+    @\newtxt{\}}@
 
     constexpr auto size() const requires ForwardRange<const D> &&
-      SizedSentinel<sentinel_t<const D>, iterator_t<const D>>;
+      SizedSentinel<sentinel_t<const D>, iterator_t<const D>> @\newtxt{\{}@
+      @\newtxt{return ranges::end(derived()) - ranges::begin(derived())}@;
+    @\newtxt{\}}@
 
-    constexpr decltype(auto) front() requires ForwardRange<D>;
-    constexpr decltype(auto) front() const requires ForwardRange<const D>;
+    constexpr decltype(auto) front() requires ForwardRange<D> @\newtxt{\{}@
+      @\newtxt{// \expects \tcode{!empty()}.}@
+      @\newtxt{return *ranges::begin(derived())}@;
+    @\newtxt{\}}@
+    constexpr decltype(auto) front() const requires ForwardRange<const D> @\newtxt{\{}@
+      @\newtxt{// \expects \tcode{!empty()}.}@
+      @\newtxt{return *ranges::begin(derived())}@;
+    @\newtxt{\}}@
 
     constexpr decltype(auto) back()
-      requires BidirectionalRange<D> && CommonRange<D>;
+      requires BidirectionalRange<D> && CommonRange<D> @\newtxt{\{}@
+      @\newtxt{// \expects \tcode{!empty()}.}@
+      @\newtxt{return *ranges::prev(ranges::end(derived()))}@;
+    @\newtxt{\}}@
     constexpr decltype(auto) back() const
-      requires BidirectionalRange<const D> && CommonRange<const D>;
+      requires BidirectionalRange<const D> && CommonRange<const D> @\newtxt{\{}@
+      @\newtxt{// \expects \tcode{!empty()}.}@
+      @\newtxt{return *ranges::prev(ranges::end(derived()))}@;
+    @\newtxt{\}}@
 
     template<RandomAccessRange R = D>
-      constexpr decltype(auto) operator[](iter_difference_t<iterator_t<R>> n);
+      constexpr decltype(auto) operator[](iter_difference_t<iterator_t<R>> n) @\newtxt{\{}@
+      @\newtxt{return ranges::begin(derived())[n]}@;
+    @\newtxt{\}}@
     template<RandomAccessRange R = const D>
-      constexpr decltype(auto) operator[](iter_difference_t<iterator_t<R>> n) const;
+      constexpr decltype(auto) operator[](iter_difference_t<iterator_t<R>> n) const @\newtxt{\{}@
+      @\newtxt{return ranges::begin(derived())[n]}@;
+    @\newtxt{\}}@
 
-    template<ForwardRange C>
-        requires @\newtxt{(}@!View<C>@\newtxt{)}@ &&
-          ConvertibleTo<iter_reference_t<iterator_t<const D>>,
-            iter_value_t<iterator_t<C>>> &&
-          Constructible<C, @\placeholder{range-common-iterator}@<const D>,
-            @\placeholder{range-common-iterator}@<const D>>
-      operator C() const;
+    @\oldtxt{template<ForwardRange C>}@
+      @\oldtxt{requires !View<C> \&\&}@
+          @\oldtxt{ConvertibleTo<iter_reference_t<iterator_t<const D>>,}@
+            @\oldtxt{iter_value_t<iterator_t<C>>> \&\&}@
+          @\oldtxt{Constructible<C, \placeholder{range-common-iterator}<const D>,}@
+            @\oldtxt{\placeholder{range-common-iterator}<const D>>}@
+      @\oldtxt{operator C() const;}@
   };
 }
 \end{codeblock}
@@ -1124,10 +1151,13 @@ namespace std::ranges {
 \pnum
 The template parameter \tcode{D} for \tcode{view_interface} may be an
 incomplete type. \newtxt{Before any member of the resulting specialization of
-\tcode{view_interface} other than special member functions is referenced,
-\tcode{D} shall be complete, publicly and unambiguously derived from
-\tcode{view_interface<D>}, and model the \libconcept{View} concept.}
+}\tcode{\newtxt{view_interface}}\newtxt{ other than special member functions
+is referenced, \tcode{D} shall be complete,
+publicly and unambiguously derived from
+}\tcode{\newtxt{view_interface<D>}}\newtxt{,
+and model the \libconcept{View} concept.}
 
+{\color{oldclr}
 \rSec3[range.view_interface.accessors]{\tcode{view_interface} accessors}
 
 \indexlibrary{\idxcode{empty}!\idxcode{view_interface}}%
@@ -1226,7 +1256,7 @@ template<RandomAccessRange R = const D>
 \indexlibrary{\idxcode{at}!\idxcode{view_interface}}%
 \begin{itemdecl}
 template<ForwardRange C>
-  requires @\newtxt{(}@!View<C>@\newtxt{)}@ &&
+  requires !View<C> &&
     ConvertibleTo<iter_reference_t<iterator_t<const D>>,
       iter_value_t<iterator_t<C>>> &&
     Constructible<C, @\placeholder{range-common-iterator}@<const D>,
@@ -1242,6 +1272,7 @@ using I = @\placeholder{range-common-iterator}@<const D>;
 return C(I{ranges::begin(derived())}, I{ranges::end(derived())});
 \end{codeblock}
 \end{itemdescr}
+} %% \color{oldclr}
 
 
 \rSec2[range.subranges]{Sub-ranges}

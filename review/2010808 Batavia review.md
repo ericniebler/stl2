@@ -445,3 +445,9 @@ AM: Is `ranges::data(t);` [requirement of `ContiguousRange`] redundant with `Con
 
 [range.view_interface]
 CC: missing requirements on `D`; must be publicly and unambiguously derived from `view_interface`. [fixed]
+
+AM: I don't like forward-declared autos. [Inline all the things.]
+
+TS: Can we require [`D` to be] a *cv-unqualified* class type? [fixed]
+
+Group: Strike "container" conversion operator for now. [struck]
