@@ -431,3 +431,8 @@ AM: Reword to "Program-defined specializations of `enable_view` shall have a bas
 RD: "shall be" -> "is". [fixed]
 
 RD: Change line ending ";"s to "."s [in p4]. [fixed]
+
+[range.common]
+RD: Please qualify `begin` and `end` with `range::` [audited all these subclauses]
+
+TS (offline): [Tiny subclauses, merge them]. [`ranges::merge`d]
