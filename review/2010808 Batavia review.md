@@ -6,11 +6,15 @@ CC: Casey Carter
 
 DS: Dan S
 
+MC: Marshall Clow
+
 MH: Mark Hoemmen
 
 RD: Rob Douglas
 
 TS: Tim Song
+
+VV: Ville Voutilainen
 
 WB: Walter Brown
 
@@ -436,3 +440,8 @@ RD: Change line ending ";"s to "."s [in p4]. [fixed]
 RD: Please qualify `begin` and `end` with `range::` [audited all these subclauses]
 
 TS (offline): [Tiny subclauses, merge them]. [`ranges::merge`d]
+
+AM: Is `ranges::data(t);` [requirement of `ContiguousRange`] redundant with `ContiguousIterator`? [`data` is certainly very convenient.]
+
+[range.view_interface]
+CC: missing requirements on `D`; must be publicly and unambiguously derived from `view_interface`. [fixed]
