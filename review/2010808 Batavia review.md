@@ -475,3 +475,10 @@ AM: Should we add a note to the ctor described in paras 2 and 3, explaining what
 CC: Would we rather depict para 7 as a delegating ctor? [group agrees] CC: OK; I will do that with all of these. [Change 3 detailed constructor specifications into delegation declarations.]
 
 TS (offline): Perhaps make [the conversion operator] conditionally explicit?
+
+
+
+
+
+#### [range.adaptors.join_view.iterator.inc]
+EN ([stl2/#574](https://github.com/ericniebler/stl2/issues/574)): [`operator++` incorrectly passes `*outer_` - which may be an xvalue - to `ranges::begin` instead of passing an lvalue denoting the same object]. [fixed]
