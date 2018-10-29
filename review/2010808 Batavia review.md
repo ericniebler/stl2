@@ -484,9 +484,16 @@ TS: Para 1: Expressions don't "return" things -- "yield"/"produce". ["yield"]
 
 AM,CC: Para 3 and 4 "if the adaptor" -> "If a range adaptor object". [fixed]
 
+#### [range.semi.wrap]
+TS: Shorten the stable name, please. [fixed]
 
+TS: Para 1.2: broken markup. [fixed]
 
+AM: Para 1: Helper class, helper ...? TS: "helper class template". CC: "helper" seems redundant with "exposition only". [Change "helper called *`semiregular`*" to "class template *`semiregular`*".]
 
+CC: Para 1: "This type" -> "semiregular". [fixed]
+
+AM: "exceptions" or "differences"? ["differences"]
 
 #### [range.adaptors.join_view.iterator.inc]
 EN ([stl2/#574](https://github.com/ericniebler/stl2/issues/574)): [`operator++` incorrectly passes `*outer_` - which may be an xvalue - to `ranges::begin` instead of passing an lvalue denoting the same object]. [fixed]
