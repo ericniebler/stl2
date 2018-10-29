@@ -479,13 +479,10 @@ TS (offline): Perhaps make [the conversion operator] conditionally explicit? [No
 #### [range.subrange.access]
 TS: [Use of "satisfy" instead of "model" in P5]. [Fixed, along with several other occurrences in the proposal.]
 
+#### [range.adaptor.object]
+TS: Para 1: Expressions don't "return" things -- "yield"/"produce". ["yield"]
 
-
-
-
-
-
-
+AM,CC: Para 3 and 4 "if the adaptor" -> "If a range adaptor object". [fixed]
 
 
 
