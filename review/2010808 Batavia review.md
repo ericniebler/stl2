@@ -474,7 +474,18 @@ AM: Should we add a note to the ctor described in paras 2 and 3, explaining what
 
 CC: Would we rather depict para 7 as a delegating ctor? [group agrees] CC: OK; I will do that with all of these. [Change 3 detailed constructor specifications into delegation declarations.]
 
-TS (offline): Perhaps make [the conversion operator] conditionally explicit?
+TS (offline): Perhaps make [the conversion operator] conditionally explicit? [Not touching this for now: I have no idea how explicit-specifiers interact with associated constraints. LWG: File an issue?]
+
+#### [range.subrange.access]
+TS: [Use of "satisfy" instead of "model" in P5]. [Fixed, along with several other occurrences in the proposal.]
+
+
+
+
+
+
+
+
 
 
 
