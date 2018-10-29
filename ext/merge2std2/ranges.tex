@@ -1291,31 +1291,34 @@ iterator and a sentinel into a single object that models the
 namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace ranges \{}@
   template<class T>
     concept @\placeholder{pair-like}@ = // \expos
-      requires(T t) {
-        { tuple_size<T>::value } -> Integral;
-        requires tuple_size<T>::value == 2;
-        typename tuple_element_t<0, T>;
-        typename tuple_element_t<1, T>;
+      @\newtxt{!is_reference_v<T> \&\&}@ requires(T t) {
+        @\newtxt{typename tuple_size<T>::type; // ensures tuple_size<T> is complete}@
+        @\newtxt{requires DerivedFrom<tuple_size<T>, integral_constant<size_t, 2>>;}@
+        @\oldtxt{\{ tuple_size<T>::value \} -> Integral;}@
+        @\oldtxt{requires tuple_size<T>::value == 2;}@
+        typename tuple_element_t<0, @\newtxt{remove_const_t<}@T@\newtxt{>}@>;
+        typename tuple_element_t<1, @\newtxt{remove_const_t<}@T@\newtxt{>}@>;
         { get<0>(t) } -> const tuple_element_t<0, T>&;
         { get<1>(t) } -> const tuple_element_t<1, T>&;
       };
 
   template<class T, class U, class V>
     concept @\placeholder{pair-like-convertible-to}@ = // \expos
-      !Range<T> && @\placeholder{pair-like}@<decay_t<T>> &&
+      !Range<T> && @\placeholder{pair-like}@<@\oldtxt{decay_t}\newtxt{remove_reference_t}@<T>> &&
       requires(T&& t) {
-        { get<0>(std::forward<T>(t)) } -> ConvertibleTo<U>;
-        { get<1>(std::forward<T>(t)) } -> ConvertibleTo<V>;
+        @\oldtxt{\{}@ get<0>(std::forward<T>(t)) @\oldtxt{\} -> ConvertibleTo<U>}@;
+        @\newtxt{requires ConvertibleTo<decltype(get<0>(std::forward<T>(t))), U>;}@
+        @\oldtxt{\{}@ get<1>(std::forward<T>(t)) @\oldtxt{\} -> ConvertibleTo<V>}@;
+        @\newtxt{requires ConvertibleTo<decltype(get<1>(std::forward<T>(t))), V>;}@
       };
 
   template<class T, class U, class V>
     concept @\placeholder{pair-like-convertible-from}@ = // \expos
-      !Range<T> && Same<T, decay_t<T>> && @\placeholder{pair-like}@<T> &&
-      Constructible<T, U, V>;
+      !Range<T> @\oldtxt{\&\& Same<T, decay_t<T>>}@ && @\placeholder{pair-like}@<T> && Constructible<T, U, V>;
 
   template<class T>
     concept @\placeholder{iterator-sentinel-pair}@ = // \expos
-      !Range<T> && Same<T, decay_t<T>> && @\placeholder{pair-like}@<T> &&
+      !Range<T> @\oldtxt{\&\& Same<T, decay_t<T>>}@ && @\placeholder{pair-like}@<T> &&
       Sentinel<tuple_element_t<1, T>, tuple_element_t<0, T>>;
 
   template<class T, class U>

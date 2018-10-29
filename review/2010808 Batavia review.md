@@ -426,7 +426,7 @@ WB: Please move "for example" to start of the sentence. [moved]
 CC: p3 needs same cleanup just like `disable_sized_sentinel`. [so cleaned]
 
 [range.view]
-RD: Ask Core for another Oxford comma. [,]
+RD: Ask Core for another Oxford comma. [Got one: ,]
 
 AM: "A container" to "Most containers". [changed]
 
@@ -451,3 +451,14 @@ AM: I don't like forward-declared autos. [Inline all the things.]
 TS: Can we require [`D` to be] a *cv-unqualified* class type? [fixed]
 
 Group: Strike "container" conversion operator for now. [struck]
+
+[range.subrange]
+CC: Change `namespace std { namespace ranges {` to `namespace std::ranges {`. [fixed]
+
+CC: In *`pair-like`*, the `-> Integral` should be changed to make the constraint correct. TS: `requires DerivedFrom<tuple_size<T>, integral_constant<size_t, 2>>`. [changed; also added a `typename tuple_size<T>::type` requirement to guard against incomplete `tuple_size<T>`.]
+
+TS: `remove_reference_t` [in *`pair-like-convertible-to`*]? CC: Yes; I think that's sufficient. [fixed]
+
+TS: Deduction constraints [in *`pair-like-convertible-to`*] should not decay. [Break up compound requirements `{ E } -> ConvertibleTo<T>;` into simple requirement `E;` and nested requirement `requires ConvertibleTo<decltype(E), T>;`.]
+
+CC: Replace `Same<T, decay_t<T>>` with `!is_reference_v<T>`, in *`iterator-sentinel-pair`* and *`pair-like-convertible-from`*. [replaced, and moved this requirement into the definition of *`pair-like`*]
