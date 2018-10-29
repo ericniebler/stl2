@@ -462,3 +462,7 @@ TS: `remove_reference_t` [in *`pair-like-convertible-to`*]? CC: Yes; I think tha
 TS: Deduction constraints [in *`pair-like-convertible-to`*] should not decay. [Break up compound requirements `{ E } -> ConvertibleTo<T>;` into simple requirement `E;` and nested requirement `requires ConvertibleTo<decltype(E), T>;`.]
 
 CC: Replace `Same<T, decay_t<T>>` with `!is_reference_v<T>`, in *`iterator-sentinel-pair`* and *`pair-like-convertible-from`*. [replaced, and moved this requirement into the definition of *`pair-like`*]
+
+TS: There is an extra angle bracket after `unsized` [in the template-head for `subrange]. The requires stuff needs parens. [fixed]
+
+TS (offline): The pervasive use of `{}`-initializers here and elsewhere suggests that we need to make `DefaultConstructible` check it, as does *`Cpp17DefaultConstructible`*. [I've [submitted a PR](https://github.com/cplusplus/LWG/pull/251) to add this requirement to `DefaultConstructible` in the [LWG 3149 P/R](https://wg21.link/lwg3149). Also, I've changed all `T foo {};` member declarations to `T foo = T();` in the meantime.]
