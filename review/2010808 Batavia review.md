@@ -398,7 +398,7 @@ CC: Get rid of italics. Strike "range categories" from last sentence. [fixed]
 
 TS (offline): Missing mentions of `ContiguousRange` and `ViewableRange`. [mentioned]
 
-[range.range]
+#### [range.range]
 AM: strike note. [struck]
 
 WB: Comment in synopsis says "equality preserving"; I confused this to talk about the note in p4.
@@ -414,7 +414,7 @@ CC (Drive-by): `ranges::begin(static_cast<T&>(E))` is ill-formed when `E` is an 
 
 AM: Would be good to have a note following p4 to describe the purpose of *`forwarding-range`*. [add a note *and* an example]
 
-[range.sized]
+#### [range.sized]
 CC: Strike deduction constraint in requires expression. TS (offline): Is this `ConvertibleTo` requirement useful? [struck]
 
 DS: add ", and" to end of p2.1. [added]
@@ -425,7 +425,7 @@ WB: Please move "for example" to start of the sentence. [moved]
 
 CC: p3 needs same cleanup just like `disable_sized_sentinel`. [so cleaned]
 
-[range.view]
+#### [range.view]
 RD: Ask Core for another Oxford comma. [Got one: ,]
 
 AM: "A container" to "Most containers". [changed]
@@ -436,14 +436,14 @@ RD: "shall be" -> "is". [fixed]
 
 RD: Change line ending ";"s to "."s [in p4]. [fixed]
 
-[range.common]
+#### [range.common]
 RD: Please qualify `begin` and `end` with `range::` [audited all these subclauses]
 
 TS (offline): [Tiny subclauses, merge them]. [`ranges::merge`d]
 
 AM: Is `ranges::data(t);` [requirement of `ContiguousRange`] redundant with `ContiguousIterator`? [`data` is certainly very convenient.]
 
-[range.view_interface]
+#### [range.view_interface]
 CC: missing requirements on `D`; must be publicly and unambiguously derived from `view_interface`. [fixed]
 
 AM: I don't like forward-declared autos. [Inline all the things.]
@@ -452,7 +452,9 @@ TS: Can we require [`D` to be] a *cv-unqualified* class type? [fixed]
 
 Group: Strike "container" conversion operator for now. [struck]
 
-[range.subrange]
+#### [range.subrange]
+CC (Drive-by): Reorganize and retitle subclauses. [done]
+
 CC: Change `namespace std { namespace ranges {` to `namespace std::ranges {`. [fixed]
 
 CC: In *`pair-like`*, the `-> Integral` should be changed to make the constraint correct. TS: `requires DerivedFrom<tuple_size<T>, integral_constant<size_t, 2>>`. [changed; also added a `typename tuple_size<T>::type` requirement to guard against incomplete `tuple_size<T>`.]
@@ -467,7 +469,9 @@ TS: There is an extra angle bracket after `unsized` [in the template-head for `s
 
 TS (offline): The pervasive use of `{}`-initializers here and elsewhere suggests that we need to make `DefaultConstructible` check it, as does *`Cpp17DefaultConstructible`*. [I've [submitted a PR](https://github.com/cplusplus/LWG/pull/251) to add this requirement to `DefaultConstructible` in the [LWG 3149 P/R](https://wg21.link/lwg3149). Also, I've changed all `T foo {};` member declarations to `T foo = T();` in the meantime.]
 
-[range.subrange.ctor]
+#### [range.subrange.ctor]
 AM: Should we add a note to the ctor described in paras 2 and 3, explaining what the `n` is for? MC: I would be happy with it. [added note]
 
 CC: Would we rather depict para 7 as a delegating ctor? [group agrees] CC: OK; I will do that with all of these. [Change 3 detailed constructor specifications into delegation declarations.]
+
+TS (offline): Perhaps make [the conversion operator] conditionally explicit?
