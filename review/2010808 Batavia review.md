@@ -466,3 +466,8 @@ CC: Replace `Same<T, decay_t<T>>` with `!is_reference_v<T>`, in *`iterator-senti
 TS: There is an extra angle bracket after `unsized` [in the template-head for `subrange]. The requires stuff needs parens. [fixed]
 
 TS (offline): The pervasive use of `{}`-initializers here and elsewhere suggests that we need to make `DefaultConstructible` check it, as does *`Cpp17DefaultConstructible`*. [I've [submitted a PR](https://github.com/cplusplus/LWG/pull/251) to add this requirement to `DefaultConstructible` in the [LWG 3149 P/R](https://wg21.link/lwg3149). Also, I've changed all `T foo {};` member declarations to `T foo = T();` in the meantime.]
+
+[range.subrange.ctor]
+AM: Should we add a note to the ctor described in paras 2 and 3, explaining what the `n` is for? MC: I would be happy with it. [added note]
+
+CC: Would we rather depict para 7 as a delegating ctor? [group agrees] CC: OK; I will do that with all of these. [Change 3 detailed constructor specifications into delegation declarations.]

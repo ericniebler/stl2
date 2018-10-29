@@ -1330,7 +1330,7 @@ namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace ranges \{}@
     requires @\newtxt{(}@K == subrange_kind::sized || !SizedSentinel<S, I>@\newtxt{)}@
   class subrange : public view_interface<subrange<I, S, K>> {
   private:
-    static constexpr bool StoreSize =  // \expos
+    static constexpr bool StoreSize = // \expos
       K == subrange_kind::sized && !SizedSentinel<S, I>;
     I begin_ @\oldtxt{\{\}} \newtxt{= I()}@; // \expos
     S end_ @\oldtxt{\{\}} \newtxt{= S()}@;   // \expos
@@ -1354,15 +1354,23 @@ namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace ranges \{}@
     template<@\placeholdernc{forwarding-range}@ R>
       requires ConvertibleTo<iterator_t<R>, I> && ConvertibleTo<sentinel_t<R>, S>
     constexpr subrange(R&& r, iter_difference_t<I> n)
-      requires @\newtxt{(}@K == subrange_kind::sized@\newtxt{)}@;
+      requires @\newtxt{(}@K == subrange_kind::sized@\newtxt{)}\oldtxt{;}@
+        @\newtxt{: subrange\{ranges::begin(r), ranges::end(r), n\}}@
+    @\newtxt{\{\}}@
 
     template<@\placeholdernc{not-same-as}@<subrange> PairLike>
       requires @\placeholdernc{pair-like-convertible-to}@<PairLike, I, S>
-    constexpr subrange(PairLike&& r) requires @\newtxt{(}@!StoreSize@\newtxt{)}@;
+    constexpr subrange(PairLike&& r) requires @\newtxt{(}@!StoreSize@\newtxt{)}\oldtxt{;}@
+      @\newtxt{: subrange\{std::get<0>(std::forward<PairLike>(r)),}@
+                  @\newtxt{std::get<1>(std::forward<PairLike>(r))\}}@
+    @\newtxt{\{\}}@
 
     template<@\placeholdernc{pair-like-convertible-to}@<I, S> PairLike>
     constexpr subrange(PairLike&& r, iter_difference_t<I> n)
-      requires @\newtxt{(}@K == subrange_kind::sized@\newtxt{)}@;
+      requires @\newtxt{(}@K == subrange_kind::sized@\newtxt{)}\oldtxt{;}@
+      @\newtxt{: subrange\{std::get<0>(std::forward<PairLike>(r)),}@
+                  @\newtxt{std::get<1>(std::forward<PairLike>(r)), n\}}@
+    @\newtxt{\{\}}@
 
     template<@\placeholdernc{not-same-as}@<subrange> PairLike>
       requires @\placeholdernc{pair-like-convertible-from}@<PairLike, const I&, const S&>
@@ -1385,8 +1393,7 @@ namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace ranges \{}@
   };
 
   template<Iterator I, Sentinel<I> S>
-    subrange(I, S, iter_difference_t<I>) ->
-      subrange<I, S, subrange_kind::sized>;
+    subrange(I, S, iter_difference_t<I>) -> subrange<I, S, subrange_kind::sized>;
 
   template<@\placeholder{iterator-sentinel-pair}@ P>
     subrange(P) -> subrange<tuple_element_t<0, P>, tuple_element_t<1, P>>;
@@ -1396,9 +1403,10 @@ namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace ranges \{}@
       subrange<tuple_element_t<0, P>, tuple_element_t<1, P>, subrange_kind::sized>;
 
   template<@\placeholder{forwarding-range}@ R>
-    subrange(R&&) -> subrange<iterator_t<R>, sentinel_t<R>@\newtxt{,}@
-      @\newtxt{(SizedRange<R> || SizedSentinel<sentinel_t<R>, iterator_t<R>>)}@
-        @\newtxt{? subrange_kind::sized : subrange_kind::unsized}@>;
+    subrange(R&&) ->
+      subrange<iterator_t<R>, sentinel_t<R>@\newtxt{,}@
+               @\newtxt{(SizedRange<R> || SizedSentinel<sentinel_t<R>, iterator_t<R>>)}@
+                 @\newtxt{? subrange_kind::sized : subrange_kind::unsized}@>;
 
   @\oldtxt{template<\placeholder{forwarding-range} R>}@
     @\oldtxt{requires SizedRange<R>}@
@@ -1445,9 +1453,19 @@ constexpr subrange(I i, S s, iter_difference_t<I> n)
 \expects \tcode{n == ranges::distance(i, s)}.
 
 \pnum
-\effects Initializes \tcode{begin_} with \tcode{i}, \tcode{end_} with
+\effects Initializes \tcode{begin_} with \tcode{i} and \tcode{end_} with
 \tcode{s}. If \tcode{StoreSize} is \tcode{true}, initializes \tcode{size_} with
 \tcode{n}.
+
+{\color{newclr}
+\pnum
+\begin{note}
+Accepting the length of the range and storing it to later return  from
+\tcode{size()} enables \tcode{subrange} to model \libconcept{SizedRange} even
+when it stores an iterator and sentinel that do not model
+\libconcept{SizedSentinel}.
+\end{note}
+} %% \color{newclr}
 \end{itemdescr}
 
 \indexlibrary{\idxcode{subrange}!\idxcode{subrange}}%
@@ -1468,6 +1486,7 @@ constexpr subrange(R&& r) requires @\newtxt{(}@!StoreSize@\newtxt{)}@ || SizedRa
 \end{itemize}
 \end{itemdescr}
 
+{\color{oldclr}
 \indexlibrary{\idxcode{subrange}!\idxcode{subrange}}%
 \begin{itemdecl}
 template<@\placeholder{forwarding-range}@ R>
@@ -1510,6 +1529,7 @@ constexpr subrange(PairLike&& r, iter_difference_t<I> n)
 subrange{get<0>(std::forward<PairLike>(r)), get<1>(std::forward<PairLike>(r)), n}
 \end{codeblock}
 \end{itemdescr}
+} %% \color{oldclr}
 
 \rSec4[range.subrange.ops]{\tcode{subrange} operators}
 
