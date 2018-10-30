@@ -500,5 +500,9 @@ AM,CC: Would be useful to specify in the Note that `view::all(E)` is a `View` of
 
 MC: `DECAY_COPY` is not my favorite thing, but I'm not going to object at this moment. (In the Std, we say it's equivalent to a chunk of code...). CC: We say it's equivalent to a different chunk of code. I plan to harmonize this. [Add conditional `noexcept` and `constexpr` to `decay_copy` in [thread.decaycopy].]
 
+#### [range.view.ref]
+
+TS (offline): s/ref_view/ref-view/g. [fixed]
+
 #### [range.adaptors.join_view.iterator.inc]
 EN ([stl2/#574](https://github.com/ericniebler/stl2/issues/574)): [`operator++` incorrectly passes `*outer_` - which may be an xvalue - to `ranges::begin` instead of passing an lvalue denoting the same object]. [fixed]
