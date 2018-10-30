@@ -1847,7 +1847,11 @@ namespace std::ranges {
     R* r_ = nullptr; // \expos
   public:
     constexpr @\placeholdernc{ref-view}@() noexcept = default;
-    constexpr @\placeholdernc{ref-view}@(R& r) noexcept;
+    @\oldtxt{constexpr \placeholdernc{ref-view}(R\& r) noexcept;}@
+
+    @\newtxt{template<\placeholder{not-same-as}<\placeholder{ref-view}> T>}@
+      @\newtxt{requires \seebelow}@
+    @\newtxt{constexpr \placeholder{ref-view}(T\&\& t) noexcept(is_nothrow_convertible_v<T, R\&>);}@
 
     constexpr R& base() const;
 
@@ -1878,12 +1882,28 @@ namespace std::ranges {
 
 \indexlibrary{\idxcode{\placeholder{ref-view}}!\idxcode{\placeholder{ref-view}}}%
 \begin{itemdecl}
-constexpr @\placeholdernc{ref-view}@(R& r) noexcept;
+@\oldtxt{constexpr \placeholdernc{ref-view}(R\& r) noexcept;}@
+@\newtxt{template<\placeholder{not-same-as}<\placeholder{ref-view}> T>}@
+  @\newtxt{requires \seebelow}@
+@\newtxt{constexpr \placeholder{ref-view}(T\&\& t) noexcept(is_nothrow_convertible_v<T, R\&>);}@
 \end{itemdecl}
 
 \begin{itemdescr}
+{\color{newclr}
 \pnum
-\effects Initializes \tcode{r_} with \tcode{addressof(r)}.
+\remarks Let \tcode{\placeholder{FUN}} denote the exposition-only functions
+\begin{codeblock}
+void FUN(R&) noexcept;
+void FUN(R&&) = delete;
+\end{codeblock}
+The expression in the \grammarterm{requires-clause} is equivalent to
+\begin{codeblock}
+requires { FUN(std::declval<T>()); }
+\end{codeblock}
+} %% \color{newclr}
+
+\pnum
+\effects Initializes \tcode{r_} with \tcode{addressof(\oldtxt{r}\newtxt{static_cast<R\&>(std::forward<T>(t))})}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{base}!\idxcode{\placeholder{ref-view}}}%

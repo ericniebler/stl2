@@ -505,5 +505,7 @@ TS (offline): s/ref_view/ref-view/g. [fixed]
 
 CC: Strike the conditional `noexcept` if I can't find a good reason for it to be there. [struck]
 
+AM: `ref-view<const X>` is unfortunately constructible from `X&&`. [Give *`ref-view`* the LWG 2993 treatment.]
+
 #### [range.adaptors.join_view.iterator.inc]
 EN ([stl2/#574](https://github.com/ericniebler/stl2/issues/574)): [`operator++` incorrectly passes `*outer_` - which may be an xvalue - to `ranges::begin` instead of passing an lvalue denoting the same object]. [fixed]
