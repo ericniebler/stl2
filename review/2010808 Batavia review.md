@@ -495,5 +495,8 @@ CC: Para 1: "This type" -> "semiregular". [fixed]
 
 AM: "exceptions" or "differences"? ["differences"]
 
+#### [range.view.all]
+AM,CC: Would be useful to specify in the Note that `view::all(E)` is a `View` of all the elements of `E`. [That's literally what p1 already says. Striking the note as useless.]
+
 #### [range.adaptors.join_view.iterator.inc]
 EN ([stl2/#574](https://github.com/ericniebler/stl2/issues/574)): [`operator++` incorrectly passes `*outer_` - which may be an xvalue - to `ranges::begin` instead of passing an lvalue denoting the same object]. [fixed]
