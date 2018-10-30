@@ -1051,6 +1051,27 @@ template<class T>
 The components in this subclause are general utilities for representing and
 manipulating ranges.
 
+\rSec2[range.utility.helpers]{Helper concepts}
+
+\pnum
+Many of the types in this subclause are specified in terms of
+the following exposition-only concepts:
+
+\begin{codeblock}
+template<class R>
+  concept @\placeholder{simple-view}@ =
+    View<R> && Range<const R> &&
+    Same<iterator_t<R>, iterator_t<const R>> &&
+    Same<sentinel_t<R>, sentinel_t<const R>>;
+
+template<InputIterator I>
+  concept @\placeholder{has-arrow}@ =
+    is_pointer_v<I> || requires(I i) { i.operator->(); };
+
+template<class T, class U>
+  concept @\placeholder{not-same-as}@ =
+    !Same<remove_cvref_t<T>, remove_cvref_t<U>>;
+\end{codeblock}
 
 \rSec2[range.view_interface]{View interface}
 
@@ -1318,10 +1339,6 @@ namespace std@\newtxt{::ranges}@ { @\oldtxt{namespace ranges \{}@
     concept @\placeholder{iterator-sentinel-pair}@ = // \expos
       !Range<T> @\oldtxt{\&\& Same<T, decay_t<T>>}@ && @\placeholder{pair-like}@<T> &&
       Sentinel<tuple_element_t<1, T>, tuple_element_t<0, T>>;
-
-  template<class T, class U>
-    concept @\placeholder{not-same-as}@ = // \expos
-      !Same<remove_cvref_t<T>, remove_cvref_t<U>>;
 
   template<Iterator I, Sentinel<I> S = I, subrange_kind K =
       SizedSentinel<S, I> ? subrange_kind::sized : subrange_kind::unsized>
@@ -1789,24 +1806,6 @@ the move assignment operator is equivalent to:
 }
 \end{codeblock}
 \end{itemize}
-
-\rSec2[range.adaptor.helpers]{Helper concepts}
-
-\pnum
-Many of the types in this subclause are specified in terms of
-the following exposition-only concepts:
-
-\begin{codeblock}
-template<class R>
-  concept @\placeholder{simple-view}@ =
-    View<R> && Range<const R> &&
-    Same<iterator_t<R>, iterator_t<const R>> &&
-    Same<sentinel_t<R>, sentinel_t<const R>>;
-
-template<InputIterator I>
-  concept @\placeholder{has-arrow}@ =
-    is_pointer_v<I> || requires(I i) { i.operator->(); };
-\end{codeblock}
 
 \rSec2[range.view.all]{\tcode{view::all}}
 
