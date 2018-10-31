@@ -509,7 +509,7 @@ AM: `ref-view<const X>` is unfortunately constructible from `X&&`. [Give *`ref-v
 
 AM: For `size` and `data`, can we say what return type is? [Let's just merge these one-line "Effects: equivalent to" specs into the class body, so it's clear that `ref-view::foo` returns whatever `ranges::foo` returns for the underlying range.]
 
-TS: Why are [the parameters to *`ref-view`*'s non-member `begin` and `end` overloads] rvalue references? CC: No good reason. I will change to by-value.
+TS: Why are [the parameters to *`ref-view`*'s non-member `begin` and `end` overloads] rvalue references? CC: No good reason. I will change to by-value. [fixed]
 
 #### [range.adaptors.join_view.iterator.inc]
 EN ([stl2/#574](https://github.com/ericniebler/stl2/issues/574)): [`operator++` incorrectly passes `*outer_` - which may be an xvalue - to `ranges::begin` instead of passing an lvalue denoting the same object]. [fixed]
