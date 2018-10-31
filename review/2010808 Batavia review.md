@@ -501,11 +501,15 @@ AM,CC: Would be useful to specify in the Note that `view::all(E)` is a `View` of
 MC: `DECAY_COPY` is not my favorite thing, but I'm not going to object at this moment. (In the Std, we say it's equivalent to a chunk of code...). CC: We say it's equivalent to a different chunk of code. I plan to harmonize this. [Add conditional `noexcept` and `constexpr` to `decay_copy` in [thread.decaycopy].]
 
 #### [range.view.ref]
-TS (offline): s/ref_view/ref-view/g. [fixed]
+TS: *`ref_view`* should be *`ref-view`*. [fixed]
 
 CC: Strike the conditional `noexcept` if I can't find a good reason for it to be there. [struck]
 
 AM: `ref-view<const X>` is unfortunately constructible from `X&&`. [Give *`ref-view`* the LWG 2993 treatment.]
+
+AM: For `size` and `data`, can we say what return type is? [Let's just merge these one-line "Effects: equivalent to" specs into the class body, so it's clear that `ref-view::foo` returns whatever `ranges::foo` returns for the underlying range.]
+
+TS: Why are [the parameters to *`ref-view`*'s non-member `begin` and `end` overloads] rvalue references? CC: No good reason. I will change to by-value.
 
 #### [range.adaptors.join_view.iterator.inc]
 EN ([stl2/#574](https://github.com/ericniebler/stl2/issues/574)): [`operator++` incorrectly passes `*outer_` - which may be an xvalue - to `ranges::begin` instead of passing an lvalue denoting the same object]. [fixed]
