@@ -1,5 +1,5 @@
 P0896:
-* [ ] Tim's feedback from [common.iterator.traits]
+* [ ] Tim's feedback from [range.adaptors.transform_view] on
 * [ ] `reverse_iterator` needs to use `ranges::prev` and not `std::prev`. I *think* this is valid, but need to verify that *`Cpp17BidirectionalIterator`*s model `BidirectionalIterator`. Fully audit `reverse_iterator` and `move_iterator` for similar SNAFUs.
 * [ ] If we require that contiguous allocator-aware containers have contiguous iterators without requiring that Allocator pointers are contiguous iterators, we effectively forbid such a container from using the pointer type directly as an iterator.
 * [ ] The magic for returning sentinels needs to be expanded to include arithmetic, and possibly copied to [specialized.algorithms]. Also `i - n` needs to make sense, or I need to eradicate it.
@@ -12,13 +12,13 @@ P0896:
 * [ ] Define "models", and use it throughout to replace both "`foo` satisfies `Concept`" and the "syntactic requirements...otherwise ill-formed NDR" dance.
 * [ ] `Decrementable` doesn't constrain the behavior of objects that aren't both *incrementable* and *decrementable*.
 * [ ] Why are `single_view::begin`, `::end`, and `::data` declared `noexcept` when they have a precondition?
-* [ ] Add `operator[]` to *ref-view*?
-* [ ] Consider merging the view and corresponding range adaptor into a single subclause: "view::common is ... common_view is..."
+* [ ] Add `operator[]` to *ref-view*? (Other `view_interface` operations?)
 * [ ] Shorten new stable names.
 * [ ] Fix the intro - it hasn't been updated since P0!
 * [ ] Consider constraining the template parameters of the "named tuples" returned by algorithms.
 * [ ] https://github.com/ericniebler/stl2/issues/553
 * [ ] Reformulate `noexcept(E1) && noexcept(E2)` as `noexcept(E1, E2)`?
+* [X] Consider merging the view and corresponding range adaptor into a single subclause: "view::common is ... common_view is..."
 * [X] Feature test macro `__cpp_lib_ranges` defined in `<algorithm>`, `<functional>`, `<iterator>`, `<memory>`, and `<ranges>`
 * [X] Audit all concepts for P0717
 * [X] Update concept stable names as in the P0898 merge.

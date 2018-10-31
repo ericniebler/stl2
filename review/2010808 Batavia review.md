@@ -495,7 +495,7 @@ CC: Para 1: "This type" -> "semiregular". [fixed]
 
 AM: "exceptions" or "differences"? ["differences"]
 
-#### [range.view.all]
+#### [range.all]
 AM,CC: Would be useful to specify in the Note that `view::all(E)` is a `View` of all the elements of `E`. [That's literally what p1 already says. Striking the note as useless.]
 
 MC: `DECAY_COPY` is not my favorite thing, but I'm not going to object at this moment. (In the Std, we say it's equivalent to a chunk of code...). CC: We say it's equivalent to a different chunk of code. I plan to harmonize this. [Add conditional `noexcept` and `constexpr` to `decay_copy` in [thread.decaycopy].]
@@ -510,6 +510,19 @@ AM: `ref-view<const X>` is unfortunately constructible from `X&&`. [Give *`ref-v
 AM: For `size` and `data`, can we say what return type is? [Let's just merge these one-line "Effects: equivalent to" specs into the class body, so it's clear that `ref-view::foo` returns whatever `ranges::foo` returns for the underlying range.]
 
 TS: Why are [the parameters to *`ref-view`*'s non-member `begin` and `end` overloads] rvalue references? CC: No good reason. I will change to by-value. [fixed]
+
+CC: Para 3 bad formatting; I will split them. Ditto for para 4. [struck instead of split]
+
+#### [range.filter.view]
+AM: Why is `base_` value-initialized and `pred_` default-initialized? [Like `optional`, default and value init are equivalent for *`semiregular`*s.]
+
+AM: `iterator` and `sentinel` are exposition-only but appear in the public interface [followed by inconclusive discussion]. [No change?]
+
+AM: We probably want them to be public names. Do I have to use `auto` in expressions? [No, use `iterator_t` and `sentinel_t`.]
+
+AM: Can `pred_` be empty [when calling `begin`]? CC: No; I will call out the precondition in *Expects*. [fixed]
+
+MH: We're fusing the two `end`s, right? CC: Yes, so we get public names for `iterator` and `sentinel`, and the two `end` functions fuse into one. [Despite that I've broken the premise by *not* naming `iterator` and `sentinel`, this is still a righteous change.]
 
 #### [range.adaptors.join_view.iterator.inc]
 EN ([stl2/#574](https://github.com/ericniebler/stl2/issues/574)): [`operator++` incorrectly passes `*outer_` - which may be an xvalue - to `ranges::begin` instead of passing an lvalue denoting the same object]. [fixed]
