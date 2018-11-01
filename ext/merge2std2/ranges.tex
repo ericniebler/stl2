@@ -2452,7 +2452,7 @@ The expression \tcode{view::filter(E, P)} for subexpressions
 
 \rSec2[range.transform]{Transform view}
 
-\rSec3[range.transform.view]{Class template \tcode{transform_view}}
+\rSec3[range.transform.overview]{Overview}
 
 \pnum
 \tcode{transform_view} presents
@@ -2468,6 +2468,8 @@ for (int i : squares)
   cout << i << ' '; // prints: 0 1 4 9 16
 \end{codeblock}
 \end{example}
+
+\rSec3[range.transform.view]{Class template \tcode{transform_view}}
 
 \begin{codeblock}
 namespace std::ranges {
@@ -2490,19 +2492,21 @@ namespace std::ranges {
 
     constexpr R base() const;
 
-    constexpr auto begin();
-    constexpr auto begin() const requires Range<const R> &&
+    constexpr @\oldtxt{auto}\newtxt{iterator<false>}@ begin();
+    constexpr @\oldtxt{auto}\newtxt{iterator<true>}@ begin() const requires Range<const R> &&
       @\newtxt{Regular}@Invocable<const F&, iter_reference_t<iterator_t<const R>>>;
 
-    constexpr auto end();
-    constexpr auto end() const requires Range<const R> &&
+    constexpr @\oldtxt{auto}\newtxt{sentinel<false>}@ end();
+    constexpr @\oldtxt{auto}\newtxt{iterator<false>}@ end() requires CommonRange<R>;
+    constexpr @\oldtxt{auto}\newtxt{sentinel<true>}@ end() const requires Range<const R> &&
       @\newtxt{Regular}@Invocable<const F&, iter_reference_t<iterator_t<const R>>>;
-    constexpr auto end() requires CommonRange<R>;
-    constexpr auto end() const requires CommonRange<const R> &&
+    constexpr @\oldtxt{auto}\newtxt{iterator<true>}@ end() const requires CommonRange<const R> &&
       @\newtxt{Regular}@Invocable<const F&, iter_reference_t<iterator_t<const R>>>;
 
-    constexpr auto size() requires SizedRange<R>;
-    constexpr auto size() const requires SizedRange<const R>;
+    constexpr auto size() requires SizedRange<R>@\oldtxt{;}@
+    @\newtxt{\{ return ranges::size(base_); \}}@
+    constexpr auto size() const requires SizedRange<const R>@\oldtxt{;}@
+    @\newtxt{\{ return ranges::size(base_); \}}@
   };
 
   template<class R, class F>
@@ -2546,9 +2550,7 @@ constexpr R base() const;
 
 \indexlibrary{\idxcode{begin}!\idxcode{transform_view}}%
 \begin{itemdecl}
-constexpr auto begin();
-constexpr auto begin() const requires Range<const R> &&
-  @\newtxt{Regular}@Invocable<const F&, iter_reference_t<iterator_t<const R>>>;
+constexpr @\oldtxt{auto}\newtxt{iterator<false>}@ begin();
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2557,18 +2559,25 @@ constexpr auto begin() const requires Range<const R> &&
 \begin{codeblock}
 return iterator<false>{*this, ranges::begin(base_)};
 \end{codeblock}
-  and
+\end{itemdescr}
+
+\indexlibrary{\idxcode{begin}!\idxcode{transform_view}}%
+\begin{itemdecl}
+constexpr @\oldtxt{auto}\newtxt{iterator<true>}@ begin() const requires Range<const R> &&
+  @\newtxt{Regular}@Invocable<const F&, iter_reference_t<iterator_t<const R>>>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
 \begin{codeblock}
 return iterator<true>{*this, ranges::begin(base_)};
 \end{codeblock}
-for the first and second overload, respectively.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{end}!\idxcode{transform_view}}%
 \begin{itemdecl}
-constexpr auto end();
-constexpr auto end() const requires Range<const R> &&
-  @\newtxt{Regular}@Invocable<const F&, iter_reference_t<iterator_t<const R>>>;
+constexpr @\oldtxt{auto}\newtxt{sentinel<false>}@ end();
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2577,18 +2586,11 @@ constexpr auto end() const requires Range<const R> &&
 \begin{codeblock}
 return sentinel<false>{ranges::end(base_)};
 \end{codeblock}
-  and
-\begin{codeblock}
-return sentinel<true>{ranges::end(base_)};
-\end{codeblock}
-for the first and second overload, respectively.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{end}!\idxcode{transform_view}}%
 \begin{itemdecl}
-constexpr auto end() requires CommonRange<R>;
-constexpr auto end() const requires CommonRange<const R> &&
-  @\newtxt{Regular}@Invocable<const F&, iter_reference_t<iterator_t<const R>>>;
+constexpr @\oldtxt{auto}\newtxt{iterator<false>}@ end() requires CommonRange<R>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2597,13 +2599,37 @@ constexpr auto end() const requires CommonRange<const R> &&
 \begin{codeblock}
 return iterator<false>{*this, ranges::end(base_)};
 \end{codeblock}
-  and
+\end{itemdescr}
+
+\indexlibrary{\idxcode{end}!\idxcode{transform_view}}%
+\begin{itemdecl}
+constexpr @\oldtxt{auto}\newtxt{sentinel<true>}@ end() const requires Range<const R> &&
+  @\newtxt{Regular}@Invocable<const F&, iter_reference_t<iterator_t<const R>>>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+return sentinel<true>{ranges::end(base_)};
+\end{codeblock}
+\end{itemdescr}
+
+\indexlibrary{\idxcode{end}!\idxcode{transform_view}}%
+\begin{itemdecl}
+constexpr @\oldtxt{auto}\newtxt{iterator<true>}@ end() const requires CommonRange<const R> &&
+  @\newtxt{Regular}@Invocable<const F&, iter_reference_t<iterator_t<const R>>>;
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
 \begin{codeblock}
 return iterator<true>{*this, ranges::end(base_)};
 \end{codeblock}
-for the first and second overload, respectively.
 \end{itemdescr}
 
+{\color{oldclr}
 \indexlibrary{\idxcode{size}!\idxcode{transform_view}}%
 \begin{itemdecl}
 constexpr auto size() requires SizedRange<R>;
@@ -2614,6 +2640,7 @@ constexpr auto size() const requires SizedRange<const R>;
 \pnum
 \effects Equivalent to: \tcode{return ranges::size(base_);}
 \end{itemdescr}
+} %% \color{oldclr}
 
 \rSec3[range.transform.iterator]{Class template \tcode{transform_view::iterator}}
 
@@ -2625,7 +2652,8 @@ namespace std::ranges {
   private:
     using Parent =                 // \expos
       conditional_t<Const, const transform_view, transform_view>;
-    using Base   = conditional_t<  // \expos
+    using Base   =                 // \expos
+      conditional_t<Const, const R, R>;
     iterator_t<Base> current_ @\oldtxt{\{\}} \newtxt{= iterator_t<Base>()}@;  // \expos
     Parent* parent_ = nullptr;     // \expos
   public:
@@ -2641,7 +2669,8 @@ namespace std::ranges {
       requires Const && ConvertibleTo<iterator_t<R>, iterator_t<Base>>;
 
     constexpr iterator_t<Base> base() const;
-    constexpr decltype(auto) operator*() const;
+    constexpr decltype(auto) operator*() const@\oldtxt{;}@
+    @\newtxt{\{ return invoke(*parent_->fun_, *current_); \}}@
 
     constexpr iterator& operator++();
     constexpr void operator++(int);
@@ -2655,7 +2684,8 @@ namespace std::ranges {
     constexpr iterator& operator-=(difference_type n)
       requires RandomAccessRange<Base>;
     constexpr decltype(auto) operator[](difference_type n) const
-      requires RandomAccessRange<Base>;
+      requires RandomAccessRange<Base>@\oldtxt{;}@
+    @\newtxt{\{ return invoke(*parent_->fun_, current_[n]); \}}@
 
     friend constexpr bool operator==(const iterator& x, const iterator& y)
       requires EqualityComparable<iterator_t<Base>>;
@@ -2682,7 +2712,14 @@ namespace std::ranges {
       requires RandomAccessRange<Base>;
 
     friend constexpr decltype(auto) iter_move(const iterator& i)
-      noexcept(noexcept(invoke(*i.parent_->fun_, *i.current_)));
+      noexcept(noexcept(invoke(*i.parent_->fun_, *i.current_)))@\oldtxt{;}@
+    @\newtxt{\{}@
+      @\newtxt{if constexpr (is_lvalue_reference(decltype(*i)))}@
+        @\newtxt{return std::move(*i);}@
+      @\newtxt{else}@
+        @\newtxt{return *i;}@
+    @\newtxt{\}}@
+
     friend constexpr void iter_swap(const iterator& x, const iterator& y)
       noexcept(noexcept(ranges::iter_swap(x.current_, y.current_)))
         requires IndirectlySwappable<iterator_t<Base>>;
@@ -2745,6 +2782,7 @@ constexpr iterator_t<Base> base() const;
 \effects Equivalent to: \tcode{return current_;}
 \end{itemdescr}
 
+{\color{oldclr}
 \indexlibrary{\idxcode{operator*}!\idxcode{transform_view::iterator}}
 \begin{itemdecl}
 constexpr decltype(auto) operator*() const;
@@ -2754,6 +2792,7 @@ constexpr decltype(auto) operator*() const;
 \pnum
 \effects Equivalent to: \tcode{return invoke(*parent_->fun_, *current_);}
 \end{itemdescr}
+} %% \color{oldclr}
 
 \indexlibrary{\idxcode{operator++}!\idxcode{transform_view::iterator}}
 \begin{itemdecl}
@@ -2776,10 +2815,7 @@ constexpr void operator++(int);
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to:
-\begin{codeblock}
-++current_;
-\end{codeblock}
+\effects Equivalent to \tcode{++current_}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{operator++}!\idxcode{transform_view::iterator}}
@@ -2856,6 +2892,7 @@ return *this;
 \end{codeblock}
 \end{itemdescr}
 
+{\color{oldclr}
 \indexlibrary{\idxcode{operator[]}!\idxcode{transform_view::iterator}}
 \begin{itemdecl}
 constexpr decltype(auto) operator[](difference_type n) const
@@ -2866,6 +2903,7 @@ constexpr decltype(auto) operator[](difference_type n) const
 \pnum
 \effects Equivalent to: \tcode{return invoke(*parent_->fun_, current_[n]);}
 \end{itemdescr}
+} %% \color{oldclr}
 
 \indexlibrary{\idxcode{operator==}!\idxcode{transform_view::iterator}}
 \begin{itemdecl}
@@ -2968,6 +3006,7 @@ friend constexpr difference_type operator-(const iterator& x, const iterator& y)
 \effects Equivalent to: \tcode{return x.current_ - y.current_;}
 \end{itemdescr}
 
+{\color{oldclr}
 \indexlibrary{\idxcode{iter_move}!\idxcode{transform_view::iterator}}
 \begin{itemdecl}
 friend constexpr decltype(auto) iter_move(const iterator& i)
@@ -2983,6 +3022,7 @@ friend constexpr decltype(auto) iter_move(const iterator& i)
 \item Otherwise, equivalent to: \tcode{return *i;}
 \end{itemize}
 \end{itemdescr}
+} %% \color{oldclr}
 
 \indexlibrary{\idxcode{iter_swap}!\idxcode{transform_view::iterator}}
 \begin{itemdecl}

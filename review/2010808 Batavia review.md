@@ -534,5 +534,12 @@ CC (Drive-by): Rearrange subclauses. [fixed]
 
 TS (offline): We are - presumably intentionally - allowing non-regular invocables here, but I’m not sure why. [You presume too much sir! This is simply a mistake. fixed.]
 
+DS: Example directly runs into synopsis? [split subclause before synopsis]
+
+### [range.transform.iterator]
+MH & TS (offline): `Base` typedef is broken syntax. [fixed]
+
+DS: Make [`void operator++(int)`'s] "Equivalent to" a one-liner [instead of a codeblock]. [fixed]
+
 #### [range.adaptors.join_view.iterator.inc]
 EN ([stl2/#574](https://github.com/ericniebler/stl2/issues/574)): [`operator++` incorrectly passes `*outer_` - which may be an xvalue - to `ranges::begin` instead of passing an lvalue denoting the same object]. [fixed]
