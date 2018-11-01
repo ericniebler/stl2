@@ -436,7 +436,7 @@ RD: "shall be" -> "is". [fixed]
 
 RD: Change line ending ";"s to "."s [in p4]. [fixed]
 
-#### [range.common]
+#### [range.refinements]
 RD: Please qualify `begin` and `end` with `range::` [audited all these subclauses]
 
 TS (offline): [Tiny subclauses, merge them]. [`ranges::merge`d]
@@ -541,5 +541,5 @@ MH & TS (offline): `Base` typedef is broken syntax. [fixed]
 
 DS: Make [`void operator++(int)`'s] "Equivalent to" a one-liner [instead of a codeblock]. [fixed]
 
-#### [range.adaptors.join_view.iterator.inc]
+#### [range.join.iterator]
 EN ([stl2/#574](https://github.com/ericniebler/stl2/issues/574)): [`operator++` incorrectly passes `*outer_` - which may be an xvalue - to `ranges::begin` instead of passing an lvalue denoting the same object]. [fixed]
