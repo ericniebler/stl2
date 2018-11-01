@@ -158,8 +158,8 @@ namespace std@\newtxt{::ranges}@ {
   namespace view { inline constexpr @\unspec@ transform = @\unspecnc@; }
 
   // \ref{range.iota}\newtxt{, iota view}
-  template<WeaklyIncrementable I, Semiregular Bound = unreachable>
-    requires @\placeholder{weakly-equality-comparable-with}@<I, Bound>
+  template<WeaklyIncrementable W, Semiregular Bound = unreachable>
+    requires @\placeholder{weakly-equality-comparable-with}@<W, Bound>
   class iota_view;
 
   namespace view { inline constexpr @\unspec@ iota = @\unspecnc@; }
@@ -3203,30 +3203,30 @@ namespace std::ranges {
     concept @\placeholder{Advanceable}@ = // \expos
       @\seebelownc@;
 
-  template<WeaklyIncrementable I, Semiregular Bound = unreachable>
-    requires @\placeholdernc{weakly-equality-comparable-with}@<I, Bound>
-  class iota_view : public view_interface<iota_view<I, Bound>> {
+  template<WeaklyIncrementable W, Semiregular Bound = unreachable>
+    requires @\placeholdernc{weakly-equality-comparable-with}@<W, Bound>
+  class iota_view : public view_interface<iota_view<W, Bound>> {
   private:
     struct iterator; // \expos
     struct sentinel; // \expos
-    I value_ @\oldtxt{\{\}} \newtxt{= I()}@;     // \expos
+    W value_ @\oldtxt{\{\}} \newtxt{= W()}@;     // \expos
     Bound bound_ @\oldtxt{\{\}} \newtxt{= Bound()}@; // \expos
   public:
     iota_view() = default;
-    constexpr explicit iota_view(I value);
-    constexpr iota_view(I value, Bound bound); // \seebelow
+    constexpr explicit iota_view(W value);
+    constexpr iota_view(W value, Bound bound); // \seebelow
 
     constexpr iterator begin() const;
     constexpr sentinel end() const;
-    constexpr iterator end() const requires Same<I, Bound>;
+    constexpr iterator end() const requires Same<W, Bound>;
 
     constexpr auto size() const requires @\seebelownc@;
   };
 
-  template<class I, class Bound>
+  template<class W, class Bound>
     requires
-      (!Integral<I> || !Integral<Bound> || is_signed_v<I> == is_signed_v<Bound>)
-  iota_view(I, Bound) -> iota_view<I, Bound>;
+      (!Integral<W> || !Integral<Bound> || is_signed_v<W> == is_signed_v<Bound>)
+  iota_view(W, Bound) -> iota_view<W, Bound>;
 }
 \end{codeblock}
 
@@ -3309,7 +3309,7 @@ $M$ is representable by \tcode{iter_difference_t<I>},}
 
 \indexlibrary{\idxcode{iota_view}!\idxcode{iota_view}}%
 \begin{itemdecl}
-constexpr explicit iota_view(I value);
+constexpr explicit iota_view(W value);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3324,7 +3324,7 @@ constexpr explicit iota_view(I value);
 
 \indexlibrary{\idxcode{iota_view}!\idxcode{iota_view}}%
 \begin{itemdecl}
-constexpr iota_view(I value, Bound bound);
+constexpr iota_view(W value, Bound bound);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3365,7 +3365,7 @@ constexpr sentinel end() const;
 
 \indexlibrary{\idxcode{end}!\idxcode{iota_view}}%
 \begin{itemdecl}
-constexpr iterator end() const requires Same<I, Bound>;
+constexpr iterator end() const requires Same<W, Bound>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3376,9 +3376,9 @@ constexpr iterator end() const requires Same<I, Bound>;
 \indexlibrary{\idxcode{size}!\idxcode{iota_view}}%
 \begin{itemdecl}
 constexpr auto size() const requires
-  (Same<I, Bound> && @\placeholdernc{Advanceable}@<I>) ||
-  (Integral<I> && Integral<Bound>) ||
-  SizedSentinel<Bound, I>;
+  (Same<W, Bound> && @\placeholdernc{Advanceable}@<W>) ||
+  (Integral<W> && Integral<Bound>) ||
+  SizedSentinel<Bound, W>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3390,57 +3390,57 @@ constexpr auto size() const requires
 
 \begin{codeblock}
 namespace std::ranges {
-  template<class I, class Bound>
-  struct iota_view<I, Bound>::iterator {
+  template<class W, class Bound>
+  struct iota_view<W, Bound>::iterator {
   private:
-    I value_ @\oldtxt{\{\}} \newtxt{= I()}@; // \expos
+    W value_ @\oldtxt{\{\}} \newtxt{= W()}@; // \expos
   public:
     using iterator_category = @\seebelownc@;
-    using value_type = I;
-    using difference_type = iter_difference_t<I>;
+    using value_type = W;
+    using difference_type = iter_difference_t<W>;
 
     iterator() = default;
-    explicit constexpr iterator(I value);
+    explicit constexpr iterator(W value);
 
-    constexpr I operator*() const noexcept(is_nothrow_copy_constructible_v<I>);
+    constexpr W operator*() const noexcept(is_nothrow_copy_constructible_v<W>);
 
     constexpr iterator& operator++();
     constexpr void operator++(int);
-    constexpr iterator operator++(int) requires Incrementable<I>;
+    constexpr iterator operator++(int) requires Incrementable<W>;
 
-    constexpr iterator& operator--() requires @\placeholdernc{Decrementable}@<I>;
-    constexpr iterator operator--(int) requires @\placeholdernc{Decrementable}@<I>;
+    constexpr iterator& operator--() requires @\placeholdernc{Decrementable}@<W>;
+    constexpr iterator operator--(int) requires @\placeholdernc{Decrementable}@<W>;
 
     constexpr iterator& operator+=(difference_type n)
-      requires @\placeholdernc{Advanceable}@<I>;
+      requires @\placeholdernc{Advanceable}@<W>;
     constexpr iterator& operator-=(difference_type n)
-      requires @\placeholdernc{Advanceable}@<I>;
-    constexpr I operator[](difference_type n) const
-      requires @\placeholdernc{Advanceable}@<I>;
+      requires @\placeholdernc{Advanceable}@<W>;
+    constexpr W operator[](difference_type n) const
+      requires @\placeholdernc{Advanceable}@<W>;
 
     friend constexpr bool operator==(const iterator& x, const iterator& y)
-      requires EqualityComparable<I>;
+      requires EqualityComparable<W>;
     friend constexpr bool operator!=(const iterator& x, const iterator& y)
-      requires EqualityComparable<I>;
+      requires EqualityComparable<W>;
 
     friend constexpr bool operator<(const iterator& x, const iterator& y)
-      requires StrictTotallyOrdered<I>;
+      requires StrictTotallyOrdered<W>;
     friend constexpr bool operator>(const iterator& x, const iterator& y)
-      requires StrictTotallyOrdered<I>;
+      requires StrictTotallyOrdered<W>;
     friend constexpr bool operator<=(const iterator& x, const iterator& y)
-      requires StrictTotallyOrdered<I>;
+      requires StrictTotallyOrdered<W>;
     friend constexpr bool operator>=(const iterator& x, const iterator& y)
-      requires StrictTotallyOrdered<I>;
+      requires StrictTotallyOrdered<W>;
 
     friend constexpr iterator operator+(iterator i, difference_type n)
-      requires @\placeholdernc{Advanceable}@<I>;
+      requires @\placeholdernc{Advanceable}@<W>;
     friend constexpr iterator operator+(difference_type n, iterator i)
-      requires @\placeholdernc{Advanceable}@<I>;
+      requires @\placeholdernc{Advanceable}@<W>;
 
     friend constexpr iterator operator-(iterator i, difference_type n)
-      requires @\placeholdernc{Advanceable}@<I>;
+      requires @\placeholdernc{Advanceable}@<W>;
     friend constexpr difference_type operator-(const iterator& x, const iterator& y)
-      requires @\placeholdernc{Advanceable}@<I>;
+      requires @\placeholdernc{Advanceable}@<W>;
   };
 }
 \end{codeblock}
@@ -3448,11 +3448,11 @@ namespace std::ranges {
 \pnum
 \tcode{iterator::iterator_category} is defined as follows:
 \begin{itemize}
-\item If \tcode{I} models \tcode{\placeholder{Advanceable}}, then
+\item If \tcode{W} models \tcode{\placeholder{Advanceable}}, then
 \tcode{iterator_category} is \tcode{random_access_iterator_tag}.
-\item Otherwise, if \tcode{I} models \tcode{\placeholder{Decrementable}}, then
+\item Otherwise, if \tcode{W} models \tcode{\placeholder{Decrementable}}, then
 \tcode{iterator_category} is \tcode{bidirectional_iterator_tag}.
-\item Otherwise, if \tcode{I} models \libconcept{Incrementable}, then
+\item Otherwise, if \tcode{W} models \libconcept{Incrementable}, then
 \tcode{iterator_category} is \tcode{forward_iterator_tag}.
 \item Otherwise, \tcode{iterator_category} is \tcode{input_iterator_tag}.
 \end{itemize}
@@ -3464,7 +3464,7 @@ Overloads for \tcode{iter_move} and \tcode{iter_swap} are omitted intentionally.
 
 \indexlibrary{\idxcode{iterator}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
-explicit constexpr iterator(I value);
+explicit constexpr iterator(W value);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3474,7 +3474,7 @@ explicit constexpr iterator(I value);
 
 \indexlibrary{\idxcode{operator*}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
-constexpr I operator*() const noexcept(is_nothrow_copy_constructible_v<I>);
+constexpr W operator*() const noexcept(is_nothrow_copy_constructible_v<W>);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3514,7 +3514,7 @@ constexpr void operator++(int);
 
 \indexlibrary{\idxcode{operator++}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
-constexpr iterator operator++(int) requires Incrementable<I>;
+constexpr iterator operator++(int) requires Incrementable<W>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3529,7 +3529,7 @@ return tmp;
 
 \indexlibrary{\idxcode{operator\dcr}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
-constexpr iterator& operator--() requires @\placeholdernc{Decrementable}@<I>;
+constexpr iterator& operator--() requires @\placeholdernc{Decrementable}@<W>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3543,7 +3543,7 @@ return *this;
 
 \indexlibrary{\idxcode{operator\dcr}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
-constexpr iterator operator--(int) requires @\placeholdernc{Decrementable}@<I>;
+constexpr iterator operator--(int) requires @\placeholdernc{Decrementable}@<W>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3559,7 +3559,7 @@ return tmp;
 \indexlibrary{\idxcode{operator+=}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
 constexpr iterator& operator+=(difference_type n)
-  requires @\placeholdernc{Advanceable}@<I>;
+  requires @\placeholdernc{Advanceable}@<W>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3574,7 +3574,7 @@ return *this;
 \indexlibrary{\idxcode{operator-=}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
 constexpr iterator& operator-=(difference_type n)
-  requires @\placeholdernc{Advanceable}@<I>;
+  requires @\placeholdernc{Advanceable}@<W>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3588,8 +3588,8 @@ return *this;
 
 \indexlibrary{\idxcode{operator[]}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
-constexpr I operator[](difference_type n) const
-  requires @\placeholdernc{Advanceable}@<I>;
+constexpr W operator[](difference_type n) const
+  requires @\placeholdernc{Advanceable}@<W>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3600,7 +3600,7 @@ constexpr I operator[](difference_type n) const
 \indexlibrary{\idxcode{operator==}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
 friend constexpr bool operator==(const iterator& x, const iterator& y)
-  requires EqualityComparable<I>;
+  requires EqualityComparable<W>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3611,7 +3611,7 @@ friend constexpr bool operator==(const iterator& x, const iterator& y)
 \indexlibrary{\idxcode{operator!=}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
 friend constexpr bool operator!=(const iterator& x, const iterator& y)
-  requires EqualityComparable<I>;
+  requires EqualityComparable<W>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3622,7 +3622,7 @@ friend constexpr bool operator!=(const iterator& x, const iterator& y)
 \indexlibrary{\idxcode{operator<}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
 friend constexpr bool operator<(const iterator& x, const iterator& y)
-  requires StrictTotallyOrdered<I>;
+  requires StrictTotallyOrdered<W>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3633,7 +3633,7 @@ friend constexpr bool operator<(const iterator& x, const iterator& y)
 \indexlibrary{\idxcode{operator>}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
 friend constexpr bool operator>(const iterator& x, const iterator& y)
-  requires StrictTotallyOrdered<I>;
+  requires StrictTotallyOrdered<W>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3644,7 +3644,7 @@ friend constexpr bool operator>(const iterator& x, const iterator& y)
 \indexlibrary{\idxcode{operator<=}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
 friend constexpr bool operator<=(const iterator& x, const iterator& y)
-  requires StrictTotallyOrdered<I>;
+  requires StrictTotallyOrdered<W>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3655,7 +3655,7 @@ friend constexpr bool operator<=(const iterator& x, const iterator& y)
 \indexlibrary{\idxcode{operator>=}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
 friend constexpr bool operator>=(const iterator& x, const iterator& y)
-  requires StrictTotallyOrdered<I>;
+  requires StrictTotallyOrdered<W>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3666,7 +3666,7 @@ friend constexpr bool operator>=(const iterator& x, const iterator& y)
 \indexlibrary{\idxcode{operator+}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
 friend constexpr iterator operator+(iterator i, difference_type n)
-  requires @\placeholdernc{Advanceable}@<I>;
+  requires @\placeholdernc{Advanceable}@<W>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3677,7 +3677,7 @@ friend constexpr iterator operator+(iterator i, difference_type n)
 \indexlibrary{\idxcode{operator+}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
 friend constexpr iterator operator+(difference_type n, iterator i)
-  requires @\placeholdernc{Advanceable}@<I>;
+  requires @\placeholdernc{Advanceable}@<W>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3688,7 +3688,7 @@ friend constexpr iterator operator+(difference_type n, iterator i)
 \indexlibrary{\idxcode{operator-}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
 friend constexpr iterator operator-(iterator i, difference_type n)
-  requires @\placeholdernc{Advanceable}@<I>;
+  requires @\placeholdernc{Advanceable}@<W>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3699,7 +3699,7 @@ friend constexpr iterator operator-(iterator i, difference_type n)
 \indexlibrary{\idxcode{operator-}!\idxcode{iota_view::iterator}}
 \begin{itemdecl}
 friend constexpr difference_type operator-(const iterator& x, const iterator& y)
-  requires @\placeholdernc{Advanceable}@<I>;
+  requires @\placeholdernc{Advanceable}@<W>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -3711,8 +3711,8 @@ friend constexpr difference_type operator-(const iterator& x, const iterator& y)
 
 \begin{codeblock}
 namespace std::ranges {
-  template<class I, class Bound>
-  struct iota_view<I, Bound>::sentinel {
+  template<class W, class Bound>
+  struct iota_view<W, Bound>::sentinel {
   private:
     Bound bound_ @\oldtxt{\{\}} \newtxt{= Bound()}@; // \expos
   public:

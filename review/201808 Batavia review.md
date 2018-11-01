@@ -560,3 +560,6 @@ CC (Drive-by): `a <= b` here should be "`bool(a <= b)` is `true`". [fixed]
 TS (offline): Maybe we can define [`RandomAccessIterator`] using *`Advanceable`* and reduce the duplication. [and `Bidi`/*`Decrementable`. This looks large enough to be followup work.]
 
 DS,CC: Change from `Bound{}` to `Bound()` [in the `iota_view` constructor]. [fixed]
+
+#### [range.iota.iterator]
+DS: Suggest changing `I` to `W` for `WeaklyIncrementable`. [changed (with no diff markup)]

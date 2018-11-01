@@ -1,4 +1,5 @@
 P0896:
+* [ ]
 * [ ] Tim's feedback from [`Decrementable`] on
 * [ ] Make `iota` helper concepts public, and factor out commonality with the iterator concepts
 * [ ] `reverse_iterator` needs to use `ranges::prev` and not `std::prev`. I *think* this is valid, but need to verify that *`Cpp17BidirectionalIterator`*s model `BidirectionalIterator`. Fully audit `reverse_iterator` and `move_iterator` for similar SNAFUs.
@@ -15,11 +16,24 @@ P0896:
 * [ ] Why are `single_view::begin`, `::end`, and `::data` declared `noexcept` when they have a precondition?
 * [ ] Add `operator[]` to *ref-view*? (Other `view_interface` operations?)
 * [ ] Shorten new stable names.
-* [ ] Fix the intro - it hasn't been updated since P0!
 * [ ] Consider constraining the template parameters of the "named tuples" returned by algorithms.
 * [ ] https://github.com/ericniebler/stl2/issues/553
-* [ ] Reformulate `noexcept(E1) && noexcept(E2)` as `noexcept(E1, E2)`?
+* [ ] Discussion with Alisdair in Batavia:
+  > AM: `iota_view::operator[]` -- if not unbounded, don't I need constraint. I don't think that falls out of the Returns.
+  >
+  > CC: True. This may return a value that's outside of the range. Do we care, as long as the value is well-defined?
+  >
+  > AM: That feels to be the precondition of `operator[]` in general. I find it surprising that we define `operator[]` over a larger range than the view supports. Typically, when you do effects equivalent to, it would invoke UB in the places you would expect. This one would not do that. I would like an impl to be able to look for bugs.
+  >
+  > CC: Right. We can't do that here because it's defined. I would not object to making that change. Do we want something similar for everything else?
+  >
+  > AM: This is the first time I've found that.
+  >
+  > CC: Every operation on the iterator type could feasibly move outside of the range.
+  >
+  > AM: File it as an open question. It goes deeper than I had thought.
 * [X] Consider merging the view and corresponding range adaptor into a single subclause: "view::common is ... common_view is..."
+* [ ] Fix the intro - it hasn't been updated since P0!
 * [X] Feature test macro `__cpp_lib_ranges` defined in `<algorithm>`, `<functional>`, `<iterator>`, `<memory>`, and `<ranges>`
 * [X] Audit all concepts for P0717
 * [X] Update concept stable names as in the P0898 merge.
