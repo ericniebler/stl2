@@ -527,7 +527,7 @@ MH: We're fusing the two `end`s, right? CC: Yes, so we get public names for `ite
 #### [range.filter.iterator]
 MH: [In `operator--`], should negate the [result of the] predicate. [fixed]
 
-CC: We need global wording saying that "modifications to the values of the elements that would observably alter the value that the predicate would return for those" result in UB. This would go somewhere high up in `filter_view`.
+CC: We need global wording saying that "modifications to the values of the elements that would observably alter the value that the predicate would return for those" result in UB. This would go somewhere high up in `filter_view`. [Added new para here.]
 
 #### [range.adaptors.join_view.iterator.inc]
 EN ([stl2/#574](https://github.com/ericniebler/stl2/issues/574)): [`operator++` incorrectly passes `*outer_` - which may be an xvalue - to `ranges::begin` instead of passing an lvalue denoting the same object]. [fixed]
