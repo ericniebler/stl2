@@ -198,7 +198,7 @@ TS (offline): Presumably we need a similar rule [specifying that an rvalue RHS i
 #### [commonalgoreq.indirectlyswappable]
 RD: p2 here differs from previous subclauses with usage of "only". [Rephrased.]
 
-TS (offline): It looks like `I1` and `I2` can't be reference types, so why are we forwarding? [They are references [to avoid decay](https://github.com/ericniebler/stl2/issues/241). We went too far making them *rvalue* references, however. Changed to lvalue reference types.]
+TS (offline): It looks like `I1` and `I2` can't be reference types, so why are we forwarding? [The requires-expression paramers are references [to avoid decay](https://github.com/ericniebler/stl2/issues/241). We went too far making them *rvalue* references, however. Changed to lvalue reference types.]
 
 TS (offline): vice-versa here appears to fail to cover `iter_swap(i2, i1)` [Fixed.].
 
@@ -543,3 +543,8 @@ DS: Make [`void operator++(int)`'s] "Equivalent to" a one-liner [instead of a co
 
 #### [range.join.iterator]
 EN ([stl2/#574](https://github.com/ericniebler/stl2/issues/574)): [`operator++` incorrectly passes `*outer_` - which may be an xvalue - to `ranges::begin` instead of passing an lvalue denoting the same object]. [fixed]
+
+#### [range.iota.view]
+TS (offline): [In the semantic requirements for `Decrementable`, the expression `bool((a--, a) == --b)` is subject to `,`-hijacking]. DS: [same comment]. [`(void)`ed]
+
+TS (offline): [The `iter_difference_t` typename requirement in `Advanceable`] is implied by `WeaklyIncrementable`. [struck]
