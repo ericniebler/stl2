@@ -556,3 +556,7 @@ TS (offline): What are the types of `x`, `y`, and `x + y`? `(n - one)` may not b
 TS (offline): We didn't do the `zero` / `one` dance for `RandomAccessIterator`; seems like we should do both or neither. [harmonized]
 
 CC (Drive-by): `a <= b` here should be "`bool(a <= b)` is `true`". [fixed]
+
+TS (offline): Maybe we can define [`RandomAccessIterator`] using *`Advanceable`* and reduce the duplication. [and `Bidi`/*`Decrementable`. This looks large enough to be followup work.]
+
+DS,CC: Change from `Bound{}` to `Bound()` [in the `iota_view` constructor]. [fixed]
