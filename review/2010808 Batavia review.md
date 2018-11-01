@@ -529,5 +529,10 @@ MH: [In `operator--`], should negate the [result of the] predicate. [fixed]
 
 CC: We need global wording saying that "modifications to the values of the elements that would observably alter the value that the predicate would return for those" result in UB. This would go somewhere high up in `filter_view`. [Added new para here.]
 
+#### [range.transform.view]
+CC (Drive-by): Rearrange subclauses. [fixed]
+
+TS (offline): We are - presumably intentionally - allowing non-regular invocables here, but I’m not sure why. [You presume too much sir! This is simply a mistake. fixed.]
+
 #### [range.adaptors.join_view.iterator.inc]
 EN ([stl2/#574](https://github.com/ericniebler/stl2/issues/574)): [`operator++` incorrectly passes `*outer_` - which may be an xvalue - to `ranges::begin` instead of passing an lvalue denoting the same object]. [fixed]
