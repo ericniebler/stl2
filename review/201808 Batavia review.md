@@ -532,7 +532,7 @@ CC: We need global wording saying that "modifications to the values of the eleme
 #### [range.transform.view]
 CC (Drive-by): Rearrange subclauses. [fixed]
 
-TS (offline): We are - presumably intentionally - allowing non-regular invocables here, but I’m not sure why. [You presume too much sir! This is simply a mistake. fixed.]
+TS (offline): We are - presumably intentionally - allowing non-regular invocables here, but I'm not sure why. [You presume too much sir! This is simply a mistake. fixed.]
 
 DS: Example directly runs into synopsis? [split subclause before synopsis]
 
@@ -548,3 +548,11 @@ EN ([stl2/#574](https://github.com/ericniebler/stl2/issues/574)): [`operator++` 
 TS (offline): [In the semantic requirements for `Decrementable`, the expression `bool((a--, a) == --b)` is subject to `,`-hijacking]. DS: [same comment]. [`(void)`ed]
 
 TS (offline): [The `iter_difference_t` typename requirement in `Advanceable`] is implied by `WeaklyIncrementable`. [struck]
+
+TS (offline): I think we only defined reachable for iterator/sentinel pairs. [I'd prefer to file a post-merge issue for this: it needs a short paper. We need to define "reachable" as a property of two values `i` and `b` of types `I` and `B` that model `WeaklyIncrementable<I>` and `weakly-equality-comparable-with<I, B>` such that for some non-negative integer `N`, `N` applications of `++` make `bool(i == b)` be `true`. We can than use that property uniformly in the `Sentinel` relationship, here in *`Advanceable`*, and in the definitions of the `iota` classes.]
+
+TS (offline): What are the types of `x`, `y`, and `x + y`? `(n - one)` may not be of the difference type. [fixed to convert all integer expressions to the difference type.]
+
+TS (offline): We didn't do the `zero` / `one` dance for `RandomAccessIterator`; seems like we should do both or neither. [harmonized]
+
+CC (Drive-by): `a <= b` here should be "`bool(a <= b)` is `true`". [fixed]

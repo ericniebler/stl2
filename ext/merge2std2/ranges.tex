@@ -3252,7 +3252,7 @@ Let \tcode{a} and \tcode{b} be incrementable and decrementable objects of type
 \begin{itemize}
 \item \tcode{addressof(--a) == addressof(a)}.
 \item If \tcode{bool(a == b)} then \tcode{bool(a-- == b)}.
-\item If \tcode{bool(a == b)} then \tcode{bool((a--, a) == --b)}.
+\item If \tcode{bool(a == b)} then \tcode{bool((\newtxt{(void)}a--, a) == --b)}.
 \item If \tcode{bool(a == b)} then \tcode{bool(--(++a) == b)} and
 \tcode{bool(++(--a) == b)}.
 \end{itemize}
@@ -3264,7 +3264,7 @@ The exposition-only \tcode{\placeholder{Advanceable}} concept is equivalent to:
 template<class I>
   concept @\placeholder{Advanceable}@ =
     @\placeholdernc{Decrementable}@<I> && StrictTotallyOrdered<I> &&
-    requires { typename iter_difference_t<I>; } &&
+    @\oldtxt{requires { typename iter_difference_t<I>; } \&\&}@
     requires(I i, const I j, const iter_difference_t<I> n) {
       { i += n } -> Same<I>&;
       { i -= n } -> Same<I>&;
@@ -3275,31 +3275,36 @@ template<class I>
     };
 \end{itemdecl}
 
-Let \tcode{a} and \tcode{b} be objects of type \tcode{I} such that \tcode{b} is
-reachable from \tcode{a}. Let $M$ be the smallest number of applications
+Let \tcode{a} and \tcode{b} be objects of type \tcode{I} such that
+\tcode{b} is reachable from \tcode{a}
+\newtxt{after \tcode{n} applications of \tcode{++a},
+for some value \tcode{n} of type }\tcode{\newtxt{iter_difference_t<I>}}\newtxt{,
+and let \tcode{D} be }\tcode{\newtxt{iter_difference_t<I>}}.
+\oldtxt{Let $M$ be the smallest number of applications
 of \tcode{++a} necessary to make \tcode{bool(a == b)} be \tcode{true}. Let
 \tcode{n}, \tcode{zero}, and \tcode{one} be objects of type
 \tcode{iter_difference_t<I>}
 initialized with $M$, \tcode{0}, and \tcode{1}, respectively. Then if
-$M$ is representable by \tcode{iter_difference_t<I>},
+$M$ is representable by \tcode{iter_difference_t<I>},}
 \tcode{I} models \tcode{\placeholdernc{Advanceable}} only if
 \begin{itemize}
 \item \tcode{(a += n)} is equal to \tcode{b}.
 \item \tcode{addressof(a += n)} is equal to \tcode{addressof(a)}.
 \item \tcode{(a + n)} is equal to \tcode{(a += n)}.
-\item For any two positive integers \tcode{x} and \tcode{y}, if
-\tcode{a + (x + y)} is valid, then \tcode{a + (x + y)} is equal to
-\tcode{(a + x) + y}.
-\item \tcode{a + zero} is equal to \tcode{a}.
-\item If \tcode{(a + (n - one))} is valid, then \tcode{a + n} is equal to
-\tcode{++(a + (n - one))}.
+\item For any two positive \oldtxt{integers} \newtxt{values}
+  \tcode{x} and \tcode{y} \newtxt{of type \tcode{D}},
+  if \tcode{(a + \newtxt{D}(x + y)} is valid, then
+  \tcode{(a + \newtxt{D}(x + y))} is equal to \tcode{((a + x) + y)}.
+\item \tcode{(a + \newtxt{D(0)}\oldtxt{zero})} is equal to \tcode{a}.
+\item If \tcode{(a + \newtxt{D}(n - \oldtxt{one}\newtxt{1}))} is valid, then
+  \tcode{(a + n)} is equal to \tcode{++(a + \newtxt{D}(n - \oldtxt{one}\newtxt{1}))}.
 \item \tcode{(b += -n)} is equal to \tcode{a}.
 \item \tcode{(b -= n)} is equal to \tcode{a}.
 \item \tcode{addressof(b -= n)} is equal to \tcode{addressof(b)}.
 \item \tcode{(b - n)} is equal to \tcode{(b -= n)}.
-\item \tcode{b - a} is equal to \tcode{n}.
-\item \tcode{a - b} is equal to \tcode{-n}.
-\item \tcode{a <= b} is \tcode{true}.
+\item \tcode{(b - a)} is equal to \tcode{n}.
+\item \tcode{(a - b)} is equal to \tcode{-n}.
+\item \tcode{\newtxt{bool}(a <= b)} \newtxt{is \tcode{true}}.
 \end{itemize}
 
 \indexlibrary{\idxcode{iota_view}!\idxcode{iota_view}}%
