@@ -567,3 +567,6 @@ DS: Suggest changing `I` to `W` for `WeaklyIncrementable`. [changed (with no dif
 AM: Why use `+ -n`? Aren't the requirements strict enough that we could use `- n`? [style preference: encode operations in terms of other operations when possible, (e.g., `return !(x == y);`) for consistency between types.]
 
 CC: `operator-` uses `*x` instead of `x.value_`, which is inconsistent with others. [change all friends to use `.value_`]
+
+#### [range.iota.adaptor]
+DS,CC: "For some subexpressions `E` and `F`, the expressions...." [changed]
