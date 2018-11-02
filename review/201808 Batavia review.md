@@ -584,6 +584,8 @@ CC (Drive-by): Inline bodies of functions with deduced return types. [fixed]
 
 EN ([stl2/#574](https://github.com/ericniebler/stl2/issues/574)): [`operator++` incorrectly passes `*outer_` - which may be an xvalue - to `ranges::begin` instead of passing an lvalue denoting the same object]. [fixed]
 
+TS (offline): [`reference_t` in `satisfy` should be `iter_reference_t`]. [fixed]
+
 #### [range.split.view]
 CC (Drive-by): Inline bodies of functions with deduced return types. [fixed]
 
