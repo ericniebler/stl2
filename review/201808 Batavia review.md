@@ -563,3 +563,7 @@ DS,CC: Change from `Bound{}` to `Bound()` [in the `iota_view` constructor]. [fix
 
 #### [range.iota.iterator]
 DS: Suggest changing `I` to `W` for `WeaklyIncrementable`. [changed (with no diff markup)]
+
+AM: Why use `+ -n`? Aren't the requirements strict enough that we could use `- n`? [style preference: encode operations in terms of other operations when possible, (e.g., `return !(x == y);`) for consistency between types.]
+
+CC: `operator-` uses `*x` instead of `x.value_`, which is inconsistent with others. [change all friends to use `.value_`]
