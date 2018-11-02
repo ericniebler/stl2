@@ -619,8 +619,18 @@ CC: ["Effects" on `iter_move` doesn't `return` anything]. [fixed]
 
 CC: [`iter_swap`] incorrectly uses *`current`* as a function instead of a member variable.
 
+#### [range.split.adaptor]
+MH: See above: "for some subexpressions `E` and `F`" should go to beginning of that sentence. [Yes, seriously - I changed them all.]
+
+#### [range.counted]
+TS (offline): Should we do the `ConvertibleTo` check on the decayed type rather than the real type/value cat of `F`? [We are incorrectly checking the decayed type of `F`, when we should be checking that `F` converts to `iter_difference_t<T>`.]
+
+CC: I am almost convinced that the `static_cast` of `F` is unnecessary. [True for 1.1.2, but 1.1.1 *does* need an explicit conversion.]
+
 #### [range.common.view]
 CC (Drive-by): Inline bodies of functions with deduced return types. [fixed]
 
 #### [range.reverse.view]
 CC (Drive-by): Inline body of size, specify return types of other functions with deduced return types. [fixed]
+
+DS,CC: Change "for some subexpression `E`" everywhere. [I get it already.]
