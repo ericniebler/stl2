@@ -640,3 +640,8 @@ TS (offline): The `reverse_iterator` CTAD below will break if the range’s iter
 
 #### [range.reverse.adaptor]
 DS,CC: Change "for some subexpression `E`" everywhere. [I get it already.]
+
+#### [algorithms.requirements]
+AM: Could we use an existing function that does the same thing as [the code sequence in p12]? [Yes, use `ranges::next`]
+
+AM,CC: To para 13, add "...dispatching to the overload *in namespace `ranges`* that takes...". [fixed]
