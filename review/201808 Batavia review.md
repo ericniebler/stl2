@@ -645,3 +645,5 @@ DS,CC: Change "for some subexpression `E`" everywhere. [I get it already.]
 AM: Could we use an existing function that does the same thing as [the code sequence in p12]? [Yes, use `ranges::next`]
 
 AM,CC: To para 13, add "...dispatching to the overload *in namespace `ranges`* that takes...". [fixed]
+
+CC: We need Annex C wording for para 14, because this is a breaking change.
