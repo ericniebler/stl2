@@ -570,3 +570,6 @@ CC: `operator-` uses `*x` instead of `x.value_`, which is inconsistent with othe
 
 #### [range.iota.adaptor]
 DS,CC: "For some subexpressions `E` and `F`, the expressions...." [changed]
+
+#### [range.take.overview]
+DS: Add to description in para 1, that it takes at most N elements. [fixed]
