@@ -636,4 +636,7 @@ CC: Rewrite 1.1: "`view::all(E)`, if `decltype((EE))` models...". [fixed]
 #### [range.reverse.view]
 CC (Drive-by): Inline body of size, specify return types of other functions with deduced return types. [fixed]
 
+TS (offline): The `reverse_iterator` CTAD below will break if the range’s iterator type is a `reverse_iterator` itself.
+
+#### [range.reverse.adaptor]
 DS,CC: Change "for some subexpression `E`" everywhere. [I get it already.]

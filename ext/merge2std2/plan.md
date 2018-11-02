@@ -1,5 +1,5 @@
 P0896:
-* [ ] Tim's feedback from [range.adaptors.reverse_view] on
+* [ ] Tim's feedback from [algorithms] on
 * [ ] Make `iota` helper concepts public, and factor out commonality with the iterator concepts
 * [ ] `reverse_iterator` needs to use `ranges::prev` and not `std::prev`. I *think* this is valid, but need to verify that *`Cpp17BidirectionalIterator`*s model `BidirectionalIterator`. Fully audit `reverse_iterator` and `move_iterator` for similar SNAFUs.
 * [ ] If we require that contiguous allocator-aware containers have contiguous iterators without requiring that Allocator pointers are contiguous iterators, we effectively forbid such a container from using the pointer type directly as an iterator.
@@ -31,8 +31,8 @@ P0896:
   > CC: Every operation on the iterator type could feasibly move outside of the range.
   >
   > AM: File it as an open question. It goes deeper than I had thought.
-* [X] Consider merging the view and corresponding range adaptor into a single subclause: "view::common is ... common_view is..."
 * [ ] Fix the intro - it hasn't been updated since P0!
+* [X] Consider merging the view and corresponding range adaptor into a single subclause: "view::common is ... common_view is..."
 * [X] Feature test macro `__cpp_lib_ranges` defined in `<algorithm>`, `<functional>`, `<iterator>`, `<memory>`, and `<ranges>`
 * [X] Audit all concepts for P0717
 * [X] Update concept stable names as in the P0898 merge.
