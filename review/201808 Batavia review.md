@@ -665,3 +665,5 @@ AM,CC: "and any projection" (Change this generally where appropriate). [fixed - 
 
 #### [alg.for_each]
 MW,CC: Change "nonconstant" in the Note in para 11 to be hyphenated. [fixed]
+
+TS (offline): This requires `CopyConstructible<Fun>`, unlike the unconstrained overload which just requires *`Cpp17MoveConstructible`*. [Added a note]
