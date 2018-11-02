@@ -541,9 +541,6 @@ MH & TS (offline): `Base` typedef is broken syntax. [fixed]
 
 DS: Make [`void operator++(int)`'s] "Equivalent to" a one-liner [instead of a codeblock]. [fixed]
 
-#### [range.join.iterator]
-EN ([stl2/#574](https://github.com/ericniebler/stl2/issues/574)): [`operator++` incorrectly passes `*outer_` - which may be an xvalue - to `ranges::begin` instead of passing an lvalue denoting the same object]. [fixed]
-
 #### [range.iota.view]
 TS (offline): [In the semantic requirements for `Decrementable`, the expression `bool((a--, a) == --b)` is subject to `,`-hijacking]. DS: [same comment]. [`(void)`ed]
 
@@ -575,3 +572,29 @@ DS,CC: "For some subexpressions `E` and `F`, the expressions...." [changed]
 DS: Add to description in para 1, that it takes at most N elements. [fixed]
 
 CC: If we're using the letter `R` everywhere for `Range` parameters, it's weird to use `R` [in the adaptors] for something that models `View`. Should I change `R`'s to `V`'s? Group: Yes. [changed; also s/O/R/g for `Range` parameters that previously would have conflicted. (NO DIFF MARKS)]
+
+#### [range.take.view]
+CC (Drive-by): Inline bodies of functions with deduced return types. [fixed]
+
+#### [range.join.view]
+CC (Drive-by): Inline bodies of functions with deduced return types. [fixed]
+
+#### [range.join.iterator]
+CC (Drive-by): Inline bodies of functions with deduced return types. [fixed]
+
+EN ([stl2/#574](https://github.com/ericniebler/stl2/issues/574)): [`operator++` incorrectly passes `*outer_` - which may be an xvalue - to `ranges::begin` instead of passing an lvalue denoting the same object]. [fixed]
+
+#### [range.split.view]
+CC (Drive-by): Inline bodies of functions with deduced return types. [fixed]
+
+#### [range.split.outer]
+CC (Drive-by): Inline bodies of functions with deduced return types. [fixed]
+
+#### [range.split.inner]
+CC (Drive-by): Inline bodies of functions with deduced return types. [fixed]
+
+#### [range.common.view]
+CC (Drive-by): Inline bodies of functions with deduced return types. [fixed]
+
+#### [range.reverse.view]
+CC (Drive-by): Inline body of size, specify return types of other functions with deduced return types. [fixed]

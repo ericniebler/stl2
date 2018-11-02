@@ -3831,14 +3831,61 @@ namespace std::ranges {
 
     constexpr V base() const;
 
-    constexpr auto begin() requires @\newtxt{(}@!@\placeholder{simple-view}@<V>@\newtxt{)}@;
-    constexpr auto begin() const requires Range<const V>;
+    constexpr auto begin() requires @\newtxt{(}@!@\placeholder{simple-view}@<V>@\newtxt{)}@@\oldtxt{;}@
+    @\newtxt{\{}@
+      @\newtxt{if constexpr (SizedRange<V>) \{}@
+        @\newtxt{if constexpr (RandomAccessRange<V>)}@
+          @\newtxt{return ranges::begin(base_);}@
+        @\newtxt{else}@
+          @\newtxt{return counted_iterator\{ranges::begin(base_), size()\};}@
+      @\newtxt{\} else}@
+        @\newtxt{return counted_iterator\{ranges::begin(base_), count_\};}@
+    @\newtxt{\}}@
 
-    constexpr auto end() requires @\newtxt{(}@!@\placeholder{simple-view}@<V>@\newtxt{)}@;
-    constexpr auto end() const requires Range<const V>;
+    constexpr auto begin() const requires Range<const V>@\oldtxt{;}@
+    @\newtxt{\{}@
+      @\newtxt{if constexpr (SizedRange<const V>) \{}@
+        @\newtxt{if constexpr (RandomAccessRange<const V>)}@
+          @\newtxt{return ranges::begin(base_);}@
+        @\newtxt{else}@
+          @\newtxt{return counted_iterator\{ranges::begin(base_), size()\};}@
+      @\newtxt{\} else}@
+        @\newtxt{return counted_iterator\{ranges::begin(base_), count_\};}@
+    @\newtxt{\}}@
 
-    constexpr auto size() requires SizedRange<V>;
-    constexpr auto size() const requires SizedRange<const V>;
+    constexpr auto end() requires @\newtxt{(}@!@\placeholder{simple-view}@<V>@\newtxt{)}@@\oldtxt{;}@
+    @\newtxt{\{}@
+      @\newtxt{if constexpr (SizedRange<V>) \{}@
+        @\newtxt{if constexpr (RandomAccessRange<V>)}@
+          @\newtxt{return ranges::begin(base_) + size();}@
+        @\newtxt{else}@
+          @\newtxt{return default_sentinel\{\};}@
+      @\newtxt{\} else}@
+        @\newtxt{return sentinel<false>\{ranges::end(base_)\};}@
+    @\newtxt{\}}@
+
+    constexpr auto end() const requires Range<const V>@\oldtxt{;}@
+    @\newtxt{\{}@
+      @\newtxt{if constexpr (SizedRange<const V>) \{}@
+        @\newtxt{if constexpr (RandomAccessRange<const V>)}@
+          @\newtxt{return ranges::begin(base_) + size();}@
+        @\newtxt{else}@
+          @\newtxt{return default_sentinel\{\};}@
+      @\newtxt{\} else}@
+        @\newtxt{return sentinel<true>\{ranges::end(base_)\};}@
+    @\newtxt{\}}@
+
+    constexpr auto size() requires SizedRange<V>@\oldtxt{;}@
+    @\newtxt{\{}@
+      @\newtxt{auto n = ranges::size(base_);}@
+      @\newtxt{return ranges::min(n, static_cast<decltype(n)>(count_));}@
+    @\newtxt{\}}@
+
+    constexpr auto size() const requires SizedRange<const V>@\oldtxt{;}@
+    @\newtxt{\{}@
+      @\newtxt{auto n = ranges::size(base_);}@
+      @\newtxt{return ranges::min(n, static_cast<decltype(n)>(count_));}@
+    @\newtxt{\}}@
   };
 
   template<Range R>
@@ -3881,6 +3928,7 @@ constexpr V base() const;
 \effects Equivalent to: \tcode{return base_;}
 \end{itemdescr}
 
+{\color{oldclr}
 \indexlibrary{\idxcode{begin}!\idxcode{take_view}}%
 \begin{itemdecl}
 constexpr auto begin() requires @\newtxt{(}@!@\placeholder{simple-view}@<V>@\newtxt{)}@;
@@ -3943,6 +3991,7 @@ auto n = ranges::size(base_);
 return ranges::min(n, static_cast<decltype(n)>(count_));
 \end{codeblock}
 \end{itemdescr}
+} %% \color{oldclr}
 
 \rSec3[range.take.sentinel]{Class template \tcode{take_view::sentinel}}
 
@@ -4079,24 +4128,48 @@ namespace std::ranges {
       requires ViewableRange<R> && Constructible<V, all_view<R>>
     constexpr explicit join_view(R&& r);
 
-    constexpr auto begin();
+    constexpr auto begin()@\oldtxt{;}@
+    @\newtxt{\{}@
+      @\newtxt{return iterator<\placeholder{simple-view}<V>>\{*this, ranges::begin(base_)\};}@
+    @\newtxt{\}}@
 
     constexpr auto begin() const requires InputRange<const V> &&
-      is_reference_v<iter_reference_t<iterator_t<const V>>>;
+      is_reference_v<iter_reference_t<iterator_t<const V>>>@\oldtxt{;}@
+    @\newtxt{\{}@
+      @\newtxt{return iterator<true>\{*this, ranges::begin(base_)\};}@
+    @\newtxt{\}}@
 
-    constexpr auto end();
+    constexpr auto end()@\oldtxt{;}@
+    @\newtxt{\{}@
+      @\newtxt{if constexpr (ForwardRange<V> \&\&}@
+                    @\newtxt{is_reference_v<InnerRng> \&\& ForwardRange<InnerRng> \&\&}@
+                    @\newtxt{CommonRange<V> \&\& CommonRange<InnerRng>)}@
+        @\newtxt{return iterator<\placeholder{simple-view}<V>>\{*this, ranges::end(base_)\};}@
+      @\newtxt{else}@
+        @\newtxt{return sentinel<\placeholder{simple-view}<V>>\{*this\};}@
+    @\newtxt{\}}@
 
     constexpr auto end() const requires InputRange<const V> &&
-      is_reference_v<iter_reference_t<iterator_t<const V>>>;
+      is_reference_v<iter_reference_t<iterator_t<const V>>>@\oldtxt{;}@
+    @\newtxt{\{}@
+      @\newtxt{if constexpr (ForwardRange<const V> \&\&}@
+                    @\newtxt{is_reference_v<iter_reference_t<iterator_t<const V>>> \&\&}@
+                    @\newtxt{ForwardRange<iter_reference_t<iterator_t<const V>>> \&\&}@
+                    @\newtxt{CommonRange<const V> \&\&}@
+                    @\newtxt{CommonRange<iter_reference_t<iterator_t<const V>>>)}@
+        @\newtxt{return iterator<true>\{*this, ranges::end(base_)\};}@
+      @\newtxt{else}@
+        @\newtxt{return sentinel<true>\{*this\};}@
+    @\newtxt{\}}@
 
-    constexpr auto end() requires ForwardRange<V> &&
-      is_reference_v<InnerRng> && ForwardRange<InnerRng> &&
-      CommonRange<V> && CommonRange<InnerRng>;
+    @\oldtxt{constexpr auto end() requires ForwardRange<V> \&\&}@
+      @\oldtxt{is_reference_v<InnerRng> \&\& ForwardRange<InnerRng> \&\&}@
+      @\oldtxt{CommonRange<V> \&\& CommonRange<InnerRng>;}@
 
-    constexpr auto end() const requires ForwardRange<const V> &&
-      is_reference_v<iter_reference_t<iterator_t<const V>>> &&
-      ForwardRange<iter_reference_t<iterator_t<const V>>> &&
-      CommonRange<const V> && CommonRange<iter_reference_t<iterator_t<const V>>>;
+    @\oldtxt{constexpr auto end() const requires ForwardRange<const V> \&\&}@
+      @\oldtxt{is_reference_v<iter_reference_t<iterator_t<const V>>> \&\&}@
+      @\oldtxt{ForwardRange<iter_reference_t<iterator_t<const V>>> \&\&}@
+      @\oldtxt{CommonRange<const V> \&\& CommonRange<iter_reference_t<iterator_t<const V>>>;}@
   };
 
   template<class R>
@@ -4126,6 +4199,7 @@ constexpr explicit join_view(R&& r);
 \effects Initializes \tcode{base_} with \tcode{view::all(std::forward<R>(r))}.
 \end{itemdescr}
 
+{\color{oldclr}
 \indexlibrary{\idxcode{begin}!\idxcode{join_view}}%
 \begin{itemdecl}
 constexpr auto begin();
@@ -4173,6 +4247,7 @@ constexpr auto end() const requires ForwardRange<const V> &&
 where $C$ is \tcode{\placeholder{simple-view}<V>} or \tcode{true}
 for the first and second overloads, respectively.
 \end{itemdescr}
+} %% \color{oldclr}
 
 \rSec3[range.join.iterator]{Class template \tcode{join_view::iterator}}
 
@@ -4190,8 +4265,9 @@ template<class V>
     static constexpr bool ref_is_glvalue =                    // \expos
       is_reference_v<iter_reference_t<iterator_t<Base>>>;
 
-    iterator_t<Base> outer_ @\oldtxt{\{\}} \newtxt{= iterator_t<Base>()}@;                               // \expos
-    iterator_t<iter_reference_t<iterator_t<Base>>> inner_ @\oldtxt{\{\}} \newtxt{= iterator_t<iter_reference_t<iterator_t<Base>>>()}@; // \expos
+    iterator_t<Base> outer_ @\oldtxt{\{\}} \newtxt{= iterator_t<Base>()}@;          // \expos
+    iterator_t<iter_reference_t<iterator_t<Base>>> inner_ @\oldtxt{\{\}} \newtxt{=}@
+      @\newtxt{iterator_t<iter_reference_t<iterator_t<Base>>>()}@;       // \expos
     Parent* parent_ = nullptr;                                // \expos
 
     constexpr void satisfy();                                 // \expos
@@ -4209,7 +4285,9 @@ template<class V>
       ConvertibleTo<iterator_t<InnerRng>,
         iterator_t<iter_reference_t<iterator_t<Base>>>>;
 
-    constexpr decltype(auto) operator*() const;
+    constexpr decltype(auto) operator*() const@\oldtxt{;}@
+    @\newtxt{\{ return *inner_; \}}@
+
     constexpr iterator_t<Base> operator->() const
       requires @\placeholder{has-arrow}@<iterator_t<Base>>;
 
@@ -4236,7 +4314,8 @@ template<class V>
         EqualityComparable<iterator_t<iter_reference_t<iterator_t<Base>>>>;
 
     friend constexpr decltype(auto) iter_move(const iterator& i)
-      noexcept(noexcept(ranges::iter_move(i.inner_)));
+      noexcept(noexcept(ranges::iter_move(i.inner_)))@\oldtxt{;}@
+    @\newtxt{\{ return ranges::iter_move(i.inner_); \}}@
 
     friend constexpr void iter_swap(const iterator& x, const iterator& y)
       noexcept(noexcept(ranges::iter_swap(x.inner_, y.inner_)));
@@ -4342,6 +4421,7 @@ constexpr iterator(iterator<!Const> i) requires Const &&
 \tcode{parent_} with \tcode{i.parent_}.
 \end{itemdescr}
 
+{\color{oldclr}
 \indexlibrary{\idxcode{operator*}!\idxcode{join_view::iterator}}
 \begin{itemdecl}
 constexpr decltype(auto) operator*() const;
@@ -4351,6 +4431,7 @@ constexpr decltype(auto) operator*() const;
 \pnum
 \effects Equivalent to: \tcode{return *inner_;}
 \end{itemdescr}
+} %% \color{oldclr}
 
 \indexlibrary{\idxcode{operator->}!\idxcode{join_view::iterator}}
 \begin{itemdecl}
@@ -4477,6 +4558,7 @@ friend constexpr bool operator!=(const iterator& x, const iterator& y)
 \effects Equivalent to: \tcode{return !(x == y);}
 \end{itemdescr}
 
+{\color{oldclr}
 \indexlibrary{\idxcode{iter_move}!\idxcode{join_view::iterator}}
 \begin{itemdecl}
 friend constexpr decltype(auto) iter_move(const iterator& i)
@@ -4487,6 +4569,7 @@ friend constexpr decltype(auto) iter_move(const iterator& i)
 \pnum
 \effects Equivalent to: \tcode{return ranges::iter_move(i.inner_);}
 \end{itemdescr}
+} %% \color{oldclr}
 
 \indexlibrary{\idxcode{iter_swap}!\idxcode{join_view::iterator}}
 \begin{itemdecl}
@@ -4824,13 +4907,36 @@ namespace std::ranges {
         Constructible<Pattern, single_view<iter_value_t<iterator_t<R>>>>
     constexpr split_view(R&& r, iter_value_t<iterator_t<R>> e);
 
-    constexpr auto begin();
+    constexpr auto begin()@\oldtxt{;}@
+    @\newtxt{\{}@
+      @\newtxt{if constexpr (ForwardRange<V>)}@
+        @\newtxt{return outer_iterator<\placeholder{simple-view}<V>>\{*this, ranges::begin(base_)\};}@
+      @\newtxt{else \{}@
+        @\newtxt{current_ = ranges::begin(base_);}@
+        @\newtxt{return outer_iterator<false>\{*this\};}@
+      @\newtxt{\}}@
+    @\newtxt{\}}@
+
     constexpr auto begin() const
-      requires ForwardRange<V> && ForwardRange<const V>;
+      requires ForwardRange<V> && ForwardRange<const V>@\oldtxt{;}@
+    @\newtxt{\{}@
+      @\newtxt{return outer_iterator<true>\{*this, ranges::begin(base_)\};}@
+    @\newtxt{\}}@
 
     constexpr auto end()
-      requires ForwardRange<V> && CommonRange<V>;
-    constexpr auto end() const;
+      requires ForwardRange<V> && CommonRange<V>@\oldtxt{;}@
+    @\newtxt{\{}@
+      @\newtxt{return outer_iterator<\placeholder{simple-view}<V>>\{*this, ranges::end(base_)\};}@
+    @\newtxt{\}}@
+
+    constexpr auto end() const@\oldtxt{;}@
+    @\newtxt{\{}@
+      @\newtxt{if constexpr (ForwardRange<V> \&\& ForwardRange<const V> \&\& CommonRange<const V>)}@
+        @\newtxt{return outer_iterator<true>\{*this, ranges::end(base_)\};}@
+      @\newtxt{else}@
+        @\newtxt{return default_sentinel\{\};}@
+    @\newtxt{\}}@
+
   };
 
   template<class R, class P>
@@ -4885,6 +4991,7 @@ Initializes \tcode{base_} with \tcode{view::all(std::forward<R>(r))} and
 \tcode{pattern_} with \tcode{single_view\{\brk{}std::move(e)\}}.
 \end{itemdescr}
 
+{\color{oldclr}
 \indexlibrary{\idxcode{begin}!\idxcode{split_view}}%
 \begin{itemdecl}
 constexpr auto begin();
@@ -4906,7 +5013,6 @@ return outer_iterator<false>{*this};
 
 \indexlibrary{\idxcode{begin}!\idxcode{split_view}}%
 \begin{itemdecl}
-constexpr auto begin() requires ForwardRange<V>;
 constexpr auto begin() const
   requires ForwardRange<V> && ForwardRange<const V>;
 \end{itemdecl}
@@ -4943,6 +5049,7 @@ equivalent to:
 \tcode{return outer_iterator<true>\{*this, ranges::end(base_)\};}
 Otherwise, equivalent to: \tcode{return default_sentinel\{\};}
 \end{itemdescr}
+} %% \color{oldclr}
 
 \rSec3[range.split.outer]{Class template \tcode{split_view::outer_iterator}}
 
@@ -4976,7 +5083,15 @@ namespace std::ranges {
     constexpr value_type operator*() const;
 
     constexpr outer_iterator& operator++();
-    constexpr decltype(auto) operator++(int);
+    constexpr decltype(auto) operator++(int)@\oldtxt{;}@
+    @\newtxt{\{}@
+      @\newtxt{if constexpr (ForwardRange<Base>) \{}@
+        @\newtxt{auto tmp = *this;}@
+        @\newtxt{++*this;}@
+        @\newtxt{return tmp;}@
+      @\newtxt{\} else}@
+        @\newtxt{++*this;}@
+    @\newtxt{\}}@
 
     friend constexpr bool operator==(const outer_iterator& x, const outer_iterator& y)
       requires ForwardRange<Base>;
@@ -5068,6 +5183,7 @@ return *this;
 \end{codeblock}
 \end{itemdescr}
 
+{\color{oldclr}
 \indexlibrary{\idxcode{operator++}!\idxcode{split_view::outer_iterator}}%
 \begin{itemdecl}
 constexpr decltype(auto) operator++(int);
@@ -5084,6 +5200,7 @@ return tmp;
 \end{codeblock}
 Otherwise, equivalent to \tcode{++*this}.
 \end{itemdescr}
+} %% \color{oldclr}
 
 \indexlibrary{\idxcode{operator==}!\idxcode{split_view::outer_iterator}}%
 \begin{itemdecl}
@@ -5200,10 +5317,19 @@ namespace std::ranges {
     inner_iterator() = default;
     constexpr explicit inner_iterator(outer_iterator<Const> i);
 
-    constexpr decltype(auto) operator*() const;
+    constexpr decltype(auto) operator*() const@\oldtxt{;}@
+    @\newtxt{\{ return *i_.\placeholdernc{current}; \}}@
 
     constexpr inner_iterator& operator++();
-    constexpr decltype(auto) operator++(int);
+    constexpr decltype(auto) operator++(int)@\oldtxt{;}@
+    @\newtxt{\{}@
+      @\newtxt{if constexpr (ForwardRange<V>) \{}@
+        @\newtxt{auto tmp = *this;}@
+        @\newtxt{++*this;}@
+        @\newtxt{return tmp;}@
+      @\newtxt{\} else}@
+        @\newtxt{++*this;}@
+    @\newtxt{\}}@
 
     friend constexpr bool operator==(const inner_iterator& x, const inner_iterator& y)
       requires ForwardRange<Base>;
@@ -5216,7 +5342,9 @@ namespace std::ranges {
     friend constexpr bool operator!=(default_sentinel y, const inner_iterator& x);
 
     friend constexpr decltype(auto) iter_move(const inner_iterator& i)
-      noexcept(noexcept(ranges::iter_move(i.i_.@\placeholdernc{current}@)));
+      noexcept(noexcept(ranges::iter_move(i.i_.@\placeholdernc{current}@)))@\oldtxt{;}@
+    @\newtxt{\{ return ranges::iter_move(i.i_.\placeholdernc{current}); \}}@
+
     friend constexpr void iter_swap(const inner_iterator& x, const inner_iterator& y)
       noexcept(noexcept(ranges::iter_swap(x.i_.@\placeholdernc{current}, y.i_.\placeholdernc{current}@)))
         requires IndirectlySwappable<iterator_t<Base>>;
@@ -5241,6 +5369,7 @@ constexpr explicit inner_iterator(outer_iterator<Const> i);
 \effects Initializes \tcode{i_} with \tcode{i}.
 \end{itemdescr}
 
+{\color{oldclr}
 \indexlibrary{\idxcode{operator*}!\idxcode{split_view::inner_iterator}}%
 \begin{itemdecl}
 constexpr decltype(auto) operator*() const;
@@ -5250,6 +5379,7 @@ constexpr decltype(auto) operator*() const;
 \pnum
 \effects Equivalent to: \tcode{return *i_.\placeholdernc{current};}
 \end{itemdescr}
+} %% \color{oldclr}
 
 \indexlibrary{\idxcode{operator++}!\idxcode{split_view::inner_iterator}}%
 \begin{itemdecl}
@@ -5271,6 +5401,7 @@ return *this;
 \end{codeblock}
 \end{itemdescr}
 
+{\color{oldclr}
 \indexlibrary{\idxcode{operator++}!\idxcode{split_view::inner_iterator}}%
 \begin{itemdecl}
 constexpr decltype(auto) operator++(int);
@@ -5287,6 +5418,7 @@ return tmp;
 \end{codeblock}
 Otherwise, equivalent to \tcode{++*this}.
 \end{itemdescr}
+} %% \color{oldclr}
 
 \indexlibrary{\idxcode{operator==}!\idxcode{split_view::inner_iterator}}%
 \begin{itemdecl}
@@ -5344,6 +5476,7 @@ friend constexpr bool operator!=(default_sentinel y, const inner_iterator& x);
 \effects Equivalent to: \tcode{return !(x == y);}
 \end{itemdescr}
 
+{\color{oldclr}
 \indexlibrary{\idxcode{iter_move}!\idxcode{split_view::inner_iterator}}%
 \begin{itemdecl}
 friend constexpr decltype(auto) iter_move(const inner_iterator& i)
@@ -5355,6 +5488,7 @@ friend constexpr decltype(auto) iter_move(const inner_iterator& i)
 \effects Equivalent to:
 \tcode{return ranges::iter_move(i.i_.\placeholdernc{current});}
 \end{itemdescr}
+} %% \color{oldclr}
 
 \indexlibrary{\idxcode{iter_swap}!\idxcode{split_view::inner_iterator}}%
 \begin{itemdecl}
@@ -5459,23 +5593,50 @@ namespace std::ranges {
 
     constexpr V base() const;
 
-    constexpr auto size() const requires SizedRange<const V>;
+    constexpr auto size() const requires SizedRange<const V>@\oldtxt{;}@
+    @\newtxt{\{ return ranges::size(base_); \}}@
 
-    constexpr auto begin();
-    constexpr auto begin() const requires Range<const V>;
+    constexpr auto begin()@\oldtxt{;}@
+    @\newtxt{\{}@
+      @\newtxt{if constexpr (RandomAccessRange<V> \&\& SizedRange<V>)}@
+        @\newtxt{return ranges::begin(base_);}@
+      @\newtxt{else}@
+        @\newtxt{return common_iterator<iterator_t<V>, sentinel_t<V>>(ranges::begin(base_));}@
+    @\newtxt{\}}@
 
-    constexpr auto begin()
-      requires RandomAccessRange<V> && SizedRange<V>;
-    constexpr auto begin() const
-      requires RandomAccessRange<const V> && SizedRange<const V>;
+    constexpr auto begin() const requires Range<const V>@\oldtxt{;}@
+    @\newtxt{\{}@
+      @\newtxt{if constexpr (RandomAccessRange<const V> \&\& SizedRange<const V>)}@
+        @\newtxt{return ranges::begin(base_);}@
+      @\newtxt{else}@
+        @\newtxt{return common_iterator<iterator_t<const V>, sentinel_t<const V>>(ranges::begin(base_));}@
+    @\newtxt{\}}@
 
-    constexpr auto end();
-    constexpr auto end() const requires Range<const V>;
+    @\newtxt{constexpr auto begin()}@
+      @\newtxt{requires RandomAccessRange<V> \&\& SizedRange<V>;}@
+    @\newtxt{constexpr auto begin() const}@
+      @\newtxt{requires RandomAccessRange<const V> \&\& SizedRange<const V>;}@
 
-    constexpr auto end()
-      requires RandomAccessRange<V> && SizedRange<V>;
-    constexpr auto end() const
-      requires RandomAccessRange<const V> && SizedRange<V>;
+    constexpr auto end()@\oldtxt{;}@
+    @\newtxt{\{}@
+      @\newtxt{if constexpr (RandomAccessRange<V> \&\& SizedRange<V>)}@
+        @\newtxt{return ranges::begin(base_) + ranges::size(base_);}@
+      @\newtxt{else}@
+        @\newtxt{return common_iterator<iterator_t<V>, sentinel_t<V>>(ranges::end(base_));}@
+    @\newtxt{\}}@
+
+    constexpr auto end() const requires Range<const V>@\oldtxt{;}@
+    @\newtxt{\{}@
+      @\newtxt{if constexpr (RandomAccessRange<const V> \&\& SizedRange<const V>)}@
+        @\newtxt{return ranges::begin(base_) + ranges::size(base_);}@
+      @\newtxt{else}@
+        @\newtxt{return common_iterator<iterator_t<const V>, sentinel_t<const V>>(ranges::end(base_));}@
+    @\newtxt{\}}@
+
+    @\oldtxt{constexpr auto end()}@
+      @\oldtxt{requires RandomAccessRange<V> \&\& SizedRange<V>;}@
+    @\oldtxt{constexpr auto end() const}@
+      @\oldtxt{requires RandomAccessRange<const V> \&\& SizedRange<V>;}@
   };
 
   template<class R>
@@ -5515,6 +5676,7 @@ constexpr V base() const;
 \effects Equivalent to: \tcode{return base_;}
 \end{itemdescr}
 
+{\color{oldclr}
 \indexlibrary{\idxcode{size}!\idxcode{common_view}}%
 \begin{itemdecl}
 constexpr auto size() const requires SizedRange<const V>;
@@ -5586,6 +5748,7 @@ constexpr auto end() const
 \pnum
 \effects Equivalent to: \tcode{return ranges::begin(base_) + ranges::size(base_);}
 \end{itemdescr}
+} %% \color{oldclr}
 
 \rSec3[range.common.adaptor]{\tcode{view::common}}
 
@@ -5643,14 +5806,17 @@ namespace std::ranges {
 
     constexpr V base() const;
 
-    constexpr auto begin();
-    constexpr auto begin() requires CommonRange<V>;
-    constexpr auto begin() const requires CommonRange<const V>;
+    constexpr @\oldtxt{auto}\newtxt{reverse_iterator<iterator_t<V>>}@ begin();
+    constexpr @\oldtxt{auto}\newtxt{reverse_iterator<iterator_t<V>>}@ begin() requires CommonRange<V>;
+    constexpr @\oldtxt{auto}\newtxt{reverse_iterator<iterator_t<const V>>}@ begin() const
+      requires CommonRange<const V>;
 
-    constexpr auto end();
-    constexpr auto end() const requires CommonRange<const V>;
+    constexpr @\oldtxt{auto}\newtxt{reverse_iterator<iterator_t<V>>}@ end();
+    constexpr @\oldtxt{auto}\newtxt{reverse_iterator<iterator_t<const V>>}@ end() const
+      requires CommonRange<const V>;
 
-    constexpr auto size() const requires SizedRange<const V>;
+    constexpr auto size() const requires SizedRange<const V>@\oldtxt{;}@
+    @\newtxt{\{ return ranges::size(base_); \}}@
   };
 
   template<class R>
@@ -5692,7 +5858,7 @@ constexpr V base() const;
 
 \indexlibrary{\idxcode{begin}!\idxcode{reverse_view}}%
 \begin{itemdecl}
-constexpr auto begin();
+constexpr @\oldtxt{auto}\newtxt{reverse_iterator<iterator_t<V>>}@ begin();
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -5708,8 +5874,9 @@ the \libconcept{Range} concept, this function caches the result within the
 
 \indexlibrary{\idxcode{begin}!\idxcode{reverse_view}}%
 \begin{itemdecl}
-constexpr auto begin() requires CommonRange<V>;
-constexpr auto begin() const requires CommonRange<const V>;
+constexpr @\oldtxt{auto}\newtxt{reverse_iterator<iterator_t<V>>}@ begin() requires CommonRange<V>;
+constexpr @\oldtxt{auto}\newtxt{reverse_iterator<iterator_t<const V>>}@ begin() const
+  requires CommonRange<const V>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -5719,8 +5886,9 @@ constexpr auto begin() const requires CommonRange<const V>;
 
 \indexlibrary{\idxcode{end}!\idxcode{reverse_view}}%
 \begin{itemdecl}
-constexpr auto end() requires CommonRange<V>;
-constexpr auto end() const requires CommonRange<const V>;
+constexpr @\oldtxt{auto}\newtxt{reverse_iterator<iterator_t<V>>}@ end();
+constexpr @\oldtxt{auto}\newtxt{reverse_iterator<iterator_t<const V>>}@ end() const
+  requires CommonRange<const V>;
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -5728,6 +5896,7 @@ constexpr auto end() const requires CommonRange<const V>;
 \effects Equivalent to: \tcode{return reverse_iterator\{ranges::begin(base_)\};}
 \end{itemdescr}
 
+{\color{oldclr}
 \indexlibrary{\idxcode{size}!\idxcode{reverse_view}}%
 \begin{itemdecl}
 constexpr auto size() const requires SizedRange<const V>;
@@ -5737,6 +5906,7 @@ constexpr auto size() const requires SizedRange<const V>;
 \pnum
 \effects Equivalent to: \tcode{return ranges::size(base_);}
 \end{itemdescr}
+} %% \color{oldclr}
 
 \rSec3[range.reverse.adaptor]{\tcode{view::reverse}}
 
