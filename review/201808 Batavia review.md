@@ -667,3 +667,16 @@ AM,CC: "and any projection" (Change this generally where appropriate). [fixed - 
 MW,CC: Change "nonconstant" in the Note in para 11 to be hyphenated. [fixed]
 
 TS (offline): This requires `CopyConstructible<Fun>`, unlike the unconstrained overload which just requires *`Cpp17MoveConstructible`*. [Added a note]
+
+#### [alg.find]
+DS: Group the non-`ranges` and `ranges` versions of `find`, `find_if`, and `find_if_not` together? [I think repeatedly opening and closing `ranges` in the declarations would obfuscate this.]
+
+Group: [Discussion about the value of `std` predicates being required to be contextually convertible to `bool`, culminating in "Casey should forcibly convert everything to `bool` in the algorithms"]. [I did this with many of the algorithms in the post-Batavia work that was reviewed on the reflector, but I don't think it's worth doing with the remainder now since (a) it will add a great many changes to review, and (b) I don't have *every* standard algorithm in the proposal to fix. I'd prefer to do this in a followup issue ]
+
+#### [alg.find_end]
+CC: Change `P` to `E`. [This was the last `P` occurence in [algorithms].]
+
+TS (offline): "and each projection" is used below. Harmonize? [These are all "and any projection(s)" now.]
+
+#### [alg.find.first.of]
+AM,CC: Change "`E` holds" to "`E` is `true`" for consistency. [Ditto, this should be an IS-wide followup.]
