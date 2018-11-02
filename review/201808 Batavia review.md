@@ -566,7 +566,7 @@ AM: Why use `+ -n`? Aren't the requirements strict enough that we could use `- n
 CC: `operator-` uses `*x` instead of `x.value_`, which is inconsistent with others. [change all friends to use `.value_`]
 
 #### [range.iota.adaptor]
-DS,CC: "For some subexpressions `E` and `F`, the expressions...." [changed]
+DS,CC: "For some subexpressions `E` and `F`, the expressions...." [changed. And everywhere else.]
 
 #### [range.take.overview]
 DS: Add to description in para 1, that it takes at most N elements. [fixed]
