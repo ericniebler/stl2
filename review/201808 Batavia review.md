@@ -573,3 +573,5 @@ DS,CC: "For some subexpressions `E` and `F`, the expressions...." [changed]
 
 #### [range.take.overview]
 DS: Add to description in para 1, that it takes at most N elements. [fixed]
+
+CC: If we're using the letter `R` everywhere for `Range` parameters, it's weird to use `R` [in the adaptors] for something that models `View`. Should I change `R`'s to `V`'s? Group: Yes. [changed; also s/O/R/g for `Range` parameters that previously would have conflicted. (NO DIFF MARKS)]
