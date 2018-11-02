@@ -662,3 +662,6 @@ TS (offline):  Why is this one `P` and not `E`? [I wanted LWG's opinion on `E` f
 AM,CC: Change `P` to `E`. [See? Lots of people noticed and preferred `E`. Fixed.]
 
 AM,CC: "and any projection" (Change this generally where appropriate). [fixed - think I got all of them.]
+
+#### [alg.for_each]
+MW,CC: Change "nonconstant" in the Note in para 11 to be hyphenated. [fixed]
