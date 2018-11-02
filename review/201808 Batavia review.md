@@ -630,6 +630,9 @@ CC: I am almost convinced that the `static_cast` of `F` is unnecessary. [True fo
 #### [range.common.view]
 CC (Drive-by): Inline bodies of functions with deduced return types. [fixed]
 
+#### [range.common.adaptor]
+CC: Rewrite 1.1: "`view::all(E)`, if `decltype((EE))` models...". [fixed]
+
 #### [range.reverse.view]
 CC (Drive-by): Inline body of size, specify return types of other functions with deduced return types. [fixed]
 
