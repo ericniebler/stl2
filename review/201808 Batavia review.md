@@ -650,3 +650,15 @@ CC: We need Annex C wording for para 14, because this is a breaking change. [add
 
 #### [alg.all_of]
 AM,CC: "and any projection" (no projection for the old non-ranges versions). [fixed]
+
+TS (offline): Maybe explicitly parameterize as `E(i)` rather than relying on a macro-like expansion? [I don't think this improves readability; feel free to propose a separate change.]
+
+#### [alg.any_of]
+AM,CC: "and any projection". [fixed]
+
+#### [alg.none_of]
+TS (offline):  Why is this one `P` and not `E`? [I wanted LWG's opinion on `E` for "expression" vs. `P` for "predicate". Also the inconsistency shows if people are actually paying attention ;)]
+
+AM,CC: Change `P` to `E`. [See? Lots of people noticed and preferred `E`. Fixed.]
+
+AM,CC: "and any projection" (Change this generally where appropriate). [fixed - think I got all of them.]
