@@ -615,6 +615,10 @@ CC (Drive-by): Inline bodies of functions with deduced return types. [fixed]
 
 DS,MW: Variable name `zero_` [for a `bool`]? It could be equal to one at some point. [Rename to `incremented_`.]
 
+CC: ["Effects" on `iter_move` doesn't `return` anything]. [fixed]
+
+CC: [`iter_swap`] incorrectly uses *`current`* as a function instead of a member variable.
+
 #### [range.common.view]
 CC (Drive-by): Inline bodies of functions with deduced return types. [fixed]
 
