@@ -603,11 +603,17 @@ TS (offline): Why not just `explicit single_view(T) -> single_view<T>;`? [Why no
 #### [range.split.view]
 CC (Drive-by): Inline bodies of functions with deduced return types. [fixed]
 
+MW,CC: Paras 5 and 7, p. 124, has another hyphenation bug. [no longer an issue after inlining.]
+
 #### [range.split.outer]
 CC (Drive-by): Inline bodies of functions with deduced return types. [fixed]
 
+MH,CC: I'll add a forward reference to the section that explains where `value_type` is defined. [Added `// See [range.split.outer.value]` to declaration.]
+
 #### [range.split.inner]
 CC (Drive-by): Inline bodies of functions with deduced return types. [fixed]
+
+DS,MW: Variable name `zero_` [for a `bool`]? It could be equal to one at some point. [Rename to `incremented_`.]
 
 #### [range.common.view]
 CC (Drive-by): Inline bodies of functions with deduced return types. [fixed]
