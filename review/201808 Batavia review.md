@@ -579,12 +579,26 @@ CC (Drive-by): Inline bodies of functions with deduced return types. [fixed]
 #### [range.join.view]
 CC (Drive-by): Inline bodies of functions with deduced return types. [fixed]
 
+CC: Merge two overloads of `end` and `end const`. [merged]
+
+MH,DS: In [`begin`'s "Effects"], should specify `C` by its conditions rather than by the order of overloads. CC: I would like to specify this like in `take_view`. DS: Please make them look similarly. [obviated by inlining into class body.]
+
 #### [range.join.iterator]
 CC (Drive-by): Inline bodies of functions with deduced return types. [fixed]
 
 EN ([stl2/#574](https://github.com/ericniebler/stl2/issues/574)): [`operator++` incorrectly passes `*outer_` - which may be an xvalue - to `ranges::begin` instead of passing an lvalue denoting the same object]. [fixed]
 
 TS (offline): [`reference_t` in `satisfy` should be `iter_reference_t`]. [fixed]
+
+MW,CC: [In the converting constructor], "`parent_`-" is a LaTeX bug. [This disappeared after another fix changed line breaking.]
+
+#### [range.join.adaptor]
+MH: See above: Put "for some subexpression `E`" at beginning of sentence. [changed all occurrences]
+
+#### [range.single.view]
+CC: I need to fix [*`tiny-range`* to ensure that `remove_reference_t<R>::size()`] is a compile-time expression [as in [LWG 3150](https://cplusplus.github.io/LWG/issue3150)]. [fixed]
+
+TS (offline): Why not just `explicit single_view(T) -> single_view<T>;`? [Why not simply strike the guide?]
 
 #### [range.split.view]
 CC (Drive-by): Inline bodies of functions with deduced return types. [fixed]
