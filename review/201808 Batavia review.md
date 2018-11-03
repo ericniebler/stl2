@@ -649,7 +649,7 @@ CC: Rewrite 1.1: "`view::all(E)`, if `decltype((EE))` models...". [fixed]
 #### [range.reverse.view]
 CC (Drive-by): Inline body of size, specify return types of other functions with deduced return types. [fixed]
 
-TS (offline): The `reverse_iterator` CTAD below will break if the range’s iterator type is a `reverse_iterator` itself.
+TS (offline): The `reverse_iterator` CTAD below will break if the range's iterator type is a `reverse_iterator` itself.
 
 #### [range.reverse.adaptor]
 DS,CC: Change "for some subexpression `E`" everywhere. [I get it already.]
@@ -702,6 +702,9 @@ TS (offline): There are two projections here. [fixed]
 
 #### [equal.range]
 TS (offline): ["`bool(invoke(comp, invoke(proj, e), value))` shall imply `!invoke(comp, value, invoke(proj, e))` for the overloads in namespace `ranges`." is implied by the `IndirectStrictWeakOrder` requirement]. [struck]
+
+#### [alg.partitions]
+TS (offline): ["The relative order of the elements in both groups is preserved." is an effect, not a returned value]. [fixed]
 
 ## Unaddressed Comments
 #### [alg.find_end]
@@ -767,3 +770,16 @@ TS (offline): We are missing "with respect to `comp` (and any `proj`)" [in "*Eff
 
 #### [alg.partial_sort_copy]
 TS (offline): The project part is mind-bending. We copy from input to output, with a possible conversion, then you separately project the input and output ranges. But is the copying required to preserve the ordering? Which projection are we sorting with respect to?
+
+#### [alg.partitions]
+TS (offline): [For `partition_copy`] `OutputIterator<iter_reference_t<I>> O1` and ditto for `O2`.
+
+TS (offline): [For `partition_point`] I like this. We can use this phrasing for partition and stable_partition ?
+
+#### [alg.merge]
+TS (offline): We should require `OutputIterator` here, but we can change `Mergeable` maybe?
+
+TS (offline): [For `inplace_merge`'s "Effects", isn't this simply] "sorted with respect to `comp` (and any `proj`)"?
+
+#### [alg.set.operations]
+TS (offline): I think we need to define "equivalent elements" better now that we have projections in the picture.
