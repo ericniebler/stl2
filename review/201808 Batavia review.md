@@ -777,9 +777,37 @@ TS (offline): [For `partition_copy`] `OutputIterator<iter_reference_t<I>> O1` an
 TS (offline): [For `partition_point`] I like this. We can use this phrasing for partition and stable_partition ?
 
 #### [alg.merge]
-TS (offline): We should require `OutputIterator` here, but we can change `Mergeable` maybe?
+TS (offline): We should require `OutputIterator` here, but we can change `Mergeable` maybe? Also in [set.union], [set.intersection], [set.difference], and [set.symmetric_difference].
 
 TS (offline): [For `inplace_merge`'s "Effects", isn't this simply] "sorted with respect to `comp` (and any `proj`)"?
 
 #### [alg.set.operations]
 TS (offline): I think we need to define "equivalent elements" better now that we have projections in the picture.
+
+TS (offline): [None of these make any sense with projections.]
+
+TS (offline): The sorted-output business is rather silly with projections and unreadable output. CC: Arguably this wording is no more broken than it was before.
+
+TS (offline): [Pre-existing: Several "Effects" clauses say "The elements in the constructed range are sorted." and not "sorted with respect to XXX"].
+
+#### [includes]
+CC (Drive-by): "shall be sorted with respect to `comp`, and `proj`" - what's `proj`?
+
+TS (offline): [The "subsequence" notion in Returns is completely broken by projections].
+
+#### [set.union]
+TS (offline): We should fix the pre-existing "shall" in the Remarks.
+
+#### [heap.operations]
+TS (offline): The definition of "heap" needs to be updated for projections.
+
+#### [alg.min.max]
+TS (offline): `Copyable` isn't enough, right? You need to be able to construct `iter_value_t<iterator_t<Rng>>` from its reference type and have it preserve the value, and ditto for assignment from reference.
+
+TS (offline): [Pre-existing: "leftmost argument" and "rightmost argument" makes no sense for a range].
+
+#### [alg.lex.comparison]
+TS (offline): "prefix" [pre-existing in remarks should be] "proper prefix".
+
+#### [alg.permutation.generators]
+TS (offline): [Pre-existing "Otherwise, it transforms the sequence" in both algorithms] isn't really a Returns [it's an effect].
