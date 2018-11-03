@@ -19,11 +19,11 @@ namespace std {
 \end{codeblock}
 \begin{addedblock}
 \begin{codeblock}
-  @\newtxt{namespace ranges \{}@
-    @\newtxt{inline namespace \unspec{} \{}@
-      @\newtxt{inline constexpr \unspec{} swap = \unspecnc{};}@
-    @\newtxt{\}}@
-  @\newtxt{\}}@
+  namespace ranges {
+    inline namespace @\unspec@ {
+      inline constexpr @\unspec@ swap = @\unspecnc@;
+    }
+  }
 \end{codeblock}
 \end{addedblock}
 \begin{codeblock}
@@ -42,7 +42,6 @@ namespace std {
 \rSec2[concept.swappable]{Concept \libconcept{Swappable}}
 
 \begin{addedblock}
-{\color{newclr}
 \pnum
 Let \tcode{t1} and \tcode{t2} be equality-preserving expressions that denote
 distinct equal objects of type \tcode{T}, and let \tcode{u1} and \tcode{u2}
@@ -61,7 +60,6 @@ if the operation modifies neither \tcode{t2} nor \tcode{u2} and:
   \tcode{C(u1)} equals \tcode{C(t2)}
   where \tcode{C} is \tcode{common_reference_t<const T\&, const U\&>}.
 \end{itemize}
-} %% \color{newclr}
 
 \indexlibrary{\idxcode{ranges::swap}}%
 \pnum The name \tcode{ranges::swap} denotes a customization point
@@ -72,8 +70,8 @@ and \tcode{E2} is expression-equivalent to:
 \begin{itemize}
 \item
   \tcode{(void)swap(E1, E2)}\footnote{The name \tcode{swap} is used
-  here unqualified.}, if \newtxt{\tcode{E1} or \tcode{E2}
-  has class type\cxxiref{basic.compound} and} that expression is valid, with
+  here unqualified.}, if \tcode{E1} or \tcode{E2}
+  has class type\cxxiref{basic.compound} and that expression is valid, with
   overload resolution performed in a context that includes the declarations
 \begin{codeblock}
   template<class T>
@@ -83,30 +81,23 @@ and \tcode{E2} is expression-equivalent to:
 \end{codeblock}
   and does not include a declaration of \tcode{ranges::swap}.
   If the function selected by overload resolution does not
-  exchange the values \oldtxt{referenced} \newtxt{denoted} by
+  exchange the values denoted by
   \tcode{E1} and \tcode{E2},
   the program is ill-formed with no diagnostic required.
 
 \item
   Otherwise, \tcode{(void)ranges::swap_ranges(E1, E2)} if \tcode{E1} and
   \tcode{E2} are lvalues of array types\cxxiref{basic.compound}
-  with equal extent and \tcode{ranges::swap(*\oldtxt{(}E1\oldtxt{)}, *\oldtxt{(}E2\oldtxt{)})}
+  with equal extent and \tcode{ranges::swap(*E1, *E2)}
   is a valid expression, except that
   \tcode{noexcept(\brk{}ranges::swap(E1, E2))} is equal to
-  \tcode{noexcept(\brk{}ranges::swap(*\oldtxt{(}E1\oldtxt{)}, *\oldtxt{(}E2\oldtxt{)}))}.
+  \tcode{noexcept(\brk{}ranges::swap(*E1, *E2))}.
 
 \item
   Otherwise, if \tcode{E1} and \tcode{E2} are lvalues of the
-  same type \tcode{T} that \oldtxt{meets the syntactic requirements of}
-  \newtxt{models} \libconcept{MoveConstructible<T>} and
-  \libconcept{Assignable<T\&, T>}, exchanges the \oldtxt{referenced}
-  \newtxt{denoted} values.
+  same type \tcode{T} that models \libconcept{MoveConstructible<T>} and
+  \libconcept{Assignable<T\&, T>}, exchanges the denoted values.
   \tcode{ranges::swap(\brk{}E1, E2)} is a constant expression if
-  \oldtxt{the constructor selected by overload resolution for
-  \tcode{T\{std::move(E1)\}} is a constexpr constructor and
-  \oldtxt{the expression} \tcode{E1 = std::move(E2)} can appear in a
-  constexpr function.}
-  {\color{newclr}
   \begin{itemize}
   \item \tcode{T} is a literal type\cxxiref{basic.types},
   \item both \tcode{E1 = std::move(E2)} and \tcode{E2 = std::move(E1)} are
@@ -118,28 +109,22 @@ and \tcode{E2} is expression-equivalent to:
     \end{codeblock}
     are constant subexpressions.
   \end{itemize}
-  } %% \color{newclr}
   \tcode{noexcept(ranges::swap(E1, E2))} is equal to
   \tcode{is_nothrow_move_constructible_v<T> \&\&
-  is_nothrow_move_assignable_v<T>}. \oldtxt{If either
-  \libconcept{MoveConstructible} or
-  \libconcept{Assignable} is not satisfied, the program
-  is ill-formed with no diagnostic required.}
+  is_nothrow_move_assignable_v<T>}.
 
 \item
   Otherwise, \tcode{ranges::swap(E1, E2)} is ill-formed.
-  {\color{newclr}
   \begin{note}
   This case can result in substitution failure when \tcode{ranges::swap(E1, E2)}
   appears in the immediate context of a template instantiation.
   \end{note}
-  } %% \color{newclr}
 \end{itemize}
 
 \pnum
 \begin{note}
 Whenever \tcode{ranges::swap(E1, E2)} is a valid expression, it
-exchanges the values \oldtxt{referenced} \newtxt{denoted} by
+exchanges the values denoted by
 \tcode{E1} and \tcode{E2} and has type \tcode{void}.
 \end{note}
 \end{addedblock}
@@ -229,34 +214,11 @@ includes:
 \end{removedblock}
 
 \begin{addedblock}
-{\color{oldclr}
-\begin{itemdescr}
-\pnum
-This subclause provides definitions for swappable types and expressions.
-In these definitions, let \tcode{t} denote an expression of type \tcode{T}, and
-let \tcode{u} denote an expression of type \tcode{U}.
-
-\pnum
-An object \tcode{t} is \defn{swappable with} an object \tcode{u} if and only if
-\tcode{SwappableWith<T, U>} is satisfied. \tcode{SwappableWith<T, U>} is
-satisfied only if given distinct objects \tcode{t2} equal to \tcode{t}
-and \tcode{u2} equal to \tcode{u}, after evaluating either
-\tcode{ranges::swap(t, u)} or \tcode{ranges::swap(u, t)}, \tcode{t2} is equal to
-\tcode{u} and \tcode{u2} is equal to \tcode{t}.
-
-\pnum
-An rvalue or lvalue \tcode{t} is \defn{swappable} if and only if \tcode{t} is
-swappable with any rvalue or lvalue, respectively, of type \tcode{T}.
-\end{itemdescr}
-} %% \color{oldclr}
-
-{\color{newclr}
 \pnum
 \begin{note}
 The semantics of the \libconcept{Swappable} and \libconcept{SwappableWith}
 concepts are fully defined by the \tcode{ranges::swap} customization point.
 \end{note}
-} %% \color{newclr}
 \end{addedblock}
 
 \pnum
@@ -268,20 +230,20 @@ is performed in an appropriate context under the various conditions as follows:
 #include <concepts>
 #include <utility>
 
-@\newtxt{namespace ranges = std::ranges;}@
+@\added{namespace ranges = std::ranges;}@
 
 template<class T, std::SwappableWith<T> U>
 void value_swap(T&& t, U&& u) {
   @\removed{using std::swap;}@
-  @\added{ranges::}@swap(std::forward<T>(t), std::forward<U>(u)); @\oldoldtxt{// OK: uses ``swappable with'' conditions}@
-                                                        @\oldoldtxt{// for rvalues and lvalues}@
+  @\added{ranges::}@swap(std::forward<T>(t), std::forward<U>(u)); @\removed{// OK: uses ``swappable with'' conditions}@
+                                                        @\removed{// for rvalues and lvalues}@
 }
 
 template<std::Swappable T>
 void lv_swap(T& t1, T& t2) {
   @\removed{using std::swap;}@
-  @\added{ranges::}@swap(t1, t2);                                 @\oldoldtxt{// OK: uses swappable conditions for}@
-}                                                       @\oldoldtxt{// lvalues of type \tcode{T}}@
+  @\added{ranges::}@swap(t1, t2);                                 @\removed{// OK: uses swappable conditions for}@
+}                                                       @\removed{// lvalues of type \tcode{T}}@
 
 namespace N {
   struct A { int m; };
@@ -289,10 +251,10 @@ namespace N {
   Proxy proxy(A& a) { return Proxy{ &a }; }
 
   void swap(A& x, Proxy p) {
-    @\changed{std}{ranges}@::swap(x.m, p.a->m);                       @\oldoldtxt{// OK: uses context equivalent to swappable}@
-                                                        @\oldoldtxt{// conditions for fundamental types}@
+    @\changed{std}{ranges}@::swap(x.m, p.a->m);                       @\removed{// OK: uses context equivalent to swappable}@
+                                                        @\removed{// conditions for fundamental types}@
   }
-  void swap(Proxy p, A& x) { swap(x, p); }              // satisfy symmetry \oldoldtxt{constraint}\newnewtxt{requirement}
+  void swap(Proxy p, A& x) { swap(x, p); }              // satisfy symmetry \changed{constraint}{requirement}
 }
 
 int main() {
