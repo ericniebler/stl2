@@ -1,5 +1,6 @@
 P0896:
 * [ ] Tim's feedback from [alg.find_end] on
+* [ ] [alg.find_end] What if [`[first1, last1 - (last2 - first2))`] isn't a valid range, i.e., `last1 - first1 < last2 - first2`?
 * [ ] Fix `bool` conversions in *all* of the algorithms. Also change "`E` holds" to "`E` is `true`".
 * [ ] Make `iota` helper concepts public, and factor out commonality with the iterator concepts
 * [ ] `reverse_iterator` needs to use `ranges::prev` and not `std::prev`. I *think* this is valid, but need to verify that *`Cpp17BidirectionalIterator`*s model `BidirectionalIterator`. Fully audit `reverse_iterator` and `move_iterator` for similar SNAFUs.
