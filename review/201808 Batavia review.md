@@ -697,6 +697,9 @@ AM,CC: Change "`E` holds" to "`E` is `true`" for consistency. [Ditto, this shoul
 #### [alg.copy]
 TS (offline): `last + M` should be `first + M` [for `copy_n`'s "Returns"].
 
+#### [partial.sort.copy]
+TS (offline): There are two projections here. [fixed]
+
 ## Unaddressed Comments
 #### [alg.find_end]
 TS (offline): What if [`[first1, last1 - (last2 - first2))`] isn't a valid range, i.e., `last1 - first1 < last2 - first2`?
@@ -710,7 +713,7 @@ for e.g. `find_end` and `equal`.
 AM: Why not collapse overloads via equal predicate?
 
 #### [alg.mismatch]
-AM: Should we fully qualify `min` (here and in general)? CC: change to code font. CC: Should I do that only to the algorithms I'm touching, or to all complexity statements in the standard library? AM: Ask LWG. Add as a Note to the editors, so the editors could make it consistent.
+AM: Should we fully qualify `min` (here and in general)? CC: change to math font. CC: Should I do that [and for `max`, as well] only to the algorithms I'm touching, or to all complexity statements in the standard library? AM: Ask LWG.
 
 #### [alg.is_permutation]
 CC: `range` version is in terms of range-and-a-half `equal`, which isn't being proposed.
@@ -721,4 +724,40 @@ TS (offline): `first2 + (last1 - first1)` should be `last2`.
 TS (offline): Do we really need [bullet 5.1] or is the next bullet OK for this case too (the condition is vacuously true)?
 
 #### [alg.copy]
-TS (offline):  Instead of `WeaklyIncrementable O` and `requires IndirectlyCopyable<I, O>`, consider `OutputIterator<iter_reference_t<I>> O`.
+TS (offline):  Instead of `WeaklyIncrementable O` and `requires IndirectlyCopyable<I, O>`, consider `OutputIterator<iter_reference_t<I>> O`. Also in [alg.move].
+
+#### [alg.move]
+TS (offline): ["move assignments" is redundant].
+
+TS (offline): "starting from first and proceeding to last" is missing code font.
+
+#### [alg.transform]
+TS (offline): `OutputIterator<indirect_result_t<F&, ...> O`; have to move `O` to the end though so that the other parameters are in scope. Alternatively, s/`Writable`/`OutputIterator`/ and s/`WeaklyIncrementable`/`class`/.
+
+#### [alg.replace]
+TS (offline): [For `replace_copy_if`]  Instead of `IndirectlyCopyable<I, O>`, we should perhaps use `OutputIterator<O, iter_reference_t<I>>` to codify that you can assign both `*first` and `new_value` to `*r++`. Or perhaps this is an indication that we should reconsider `IndirectlyCopyable`?
+
+#### [alg.generate]
+TS (offline): [For `generate_n`] s/`Writable`/`OutputIterator`/ and remove the `Iterator`.
+
+#### [alg.remove]
+TS (offline): [For `remove_copy_if`] `OutputIterator<iter_reference_t<I>> O` and drop the `IndirectlyCopyable`.
+
+#### [alg.unique_copy]
+TS (offline): `OutputIterator<iter_reference_t<I>> O` and drop the `IndirectlyCopyable`. Also maybe add `OutputIterator<O, const iter_value_t<I>&>` to the `IndirectlyCopyableStorable` clause.
+
+#### [alg.reverse]
+TS (offline): `OutputIterator<iter_reference_t<I>> O` and drop the `IndirectlyCopyable`.
+
+#### [alg.rotate]
+TS (offline): ["Complexity" says "swaps", but] `Permutable` grants permission to use moves instead of swaps. Do we care?
+
+TS (offline): [For `rotate_copy`] `OutputIterator<iter_reference_t<I>> O` and drop the `IndirectlyCopyable`.
+
+#### [alg.random.shuffle]
+TS (offline): The `ConvertibleTo` is implied.
+
+TS (offline): What if `remove_reference_t<Gen>` does not meet the uniform random bit generator requirements?
+
+#### [sort]
+TS (offline): We are missing "with respect to `comp` (and any `proj`)" [in "*Effects:* Sorts the elements in the range `[first, last)`."] here and elsewhere.
