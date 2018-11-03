@@ -1,5 +1,8 @@
+Followup:
+* [ ] Fix `bool` conversions in algorithms IS-wide. Also change "`E` holds" to "`E` is `true`".
+
 P0896:
-* [ ] Fix `bool` conversions in *all* of the algorithms. Also change "`E` holds" to "`E` is `true`".
+* [ ] Remove conditional `noexcept` from *`ref-view`*'s constructor, and require `ConvertibleTo`.
 * [ ] Make `iota` helper concepts public, and factor out commonality with the iterator concepts
 * [ ] `reverse_iterator` needs to use `ranges::prev` and not `std::prev`. I *think* this is valid, but need to verify that *`Cpp17BidirectionalIterator`*s model `BidirectionalIterator`. Fully audit `reverse_iterator` and `move_iterator` for similar SNAFUs.
 * [ ] If we require that contiguous allocator-aware containers have contiguous iterators without requiring that Allocator pointers are contiguous iterators, we effectively forbid such a container from using the pointer type directly as an iterator.
@@ -13,7 +16,7 @@ P0896:
 * [ ] Define "models", and use it throughout to replace both "`foo` satisfies `Concept`" and the "syntactic requirements...otherwise ill-formed NDR" dance.
 * [ ] `Decrementable` doesn't constrain the behavior of objects that aren't both *incrementable* and *decrementable*.
 * [ ] Why are `single_view::begin`, `::end`, and `::data` declared `noexcept` when they have a precondition?
-* [ ] Add `operator[]` to *ref-view*? (Other `view_interface` operations?)
+* [ ] Add `operator[]` (and other `view_interface` operations) to *ref-view*?
 * [ ] Shorten new stable names.
 * [ ] Consider constraining the template parameters of the "named tuples" returned by algorithms.
 * [ ] https://github.com/ericniebler/stl2/issues/553
