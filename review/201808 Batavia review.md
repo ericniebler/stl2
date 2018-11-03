@@ -700,6 +700,9 @@ TS (offline): `last + M` should be `first + M` [for `copy_n`'s "Returns"].
 #### [partial.sort.copy]
 TS (offline): There are two projections here. [fixed]
 
+#### [equal.range]
+TS (offline): ["`bool(invoke(comp, invoke(proj, e), value))` shall imply `!invoke(comp, value, invoke(proj, e))` for the overloads in namespace `ranges`." is implied by the `IndirectStrictWeakOrder` requirement]. [struck]
+
 ## Unaddressed Comments
 #### [alg.find_end]
 TS (offline): What if [`[first1, last1 - (last2 - first2))`] isn't a valid range, i.e., `last1 - first1 < last2 - first2`?
@@ -761,3 +764,6 @@ TS (offline): What if `remove_reference_t<Gen>` does not meet the uniform random
 
 #### [sort]
 TS (offline): We are missing "with respect to `comp` (and any `proj`)" [in "*Effects:* Sorts the elements in the range `[first, last)`."] here and elsewhere.
+
+#### [alg.partial_sort_copy]
+TS (offline): The project part is mind-bending. We copy from input to output, with a possible conversion, then you separately project the input and output ranges. But is the copying required to preserve the ordering? Which projection are we sorting with respect to?
