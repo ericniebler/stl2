@@ -2,6 +2,7 @@ Followup:
 * [ ] Fix `bool` conversions in algorithms IS-wide. Also change "`E` holds" to "`E` is `true`".
 
 P0896:
+* [ ] The new "no explicitly specified template parameters" policy applies to both `std` and `std::ranges` `<algorithms>`, but inconsistently only to [specialized.algorithms] in `std::ranges`.
 * [ ] Remove conditional `noexcept` from *`ref-view`*'s constructor, and require `ConvertibleTo`.
 * [ ] Make `iota` helper concepts public, and factor out commonality with the iterator concepts
 * [ ] `reverse_iterator` needs to use `ranges::prev` and not `std::prev`. I *think* this is valid, but need to verify that *`Cpp17BidirectionalIterator`*s model `BidirectionalIterator`. Fully audit `reverse_iterator` and `move_iterator` for similar SNAFUs.
