@@ -23,3 +23,6 @@ STL: A note mentioning we don't cover all the possible operations with nothrow. 
 
 #### [iterator.synopsis]
 STL: In the synopsis, we lost the template header before `iter_rvalue_reference_t`. CC: It's correct but the formatting is unfortunate. [altered formatting]
+
+#### [iterator.requirements.general]
+Marshall: [In p14] incrementing "`i` `n` times" is odd typographically. [Rephrase "the result of `n` applications of `++i`"]
