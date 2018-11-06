@@ -17,3 +17,6 @@ STL: I'm uncomfortable with "function templates" that aren't actually function t
 STL: 4.3 has a typo: "explicitly template arguments". JW: Should be "explicitly-specified template argument lists". [Changed here, and note duplicated for the identical requirement in [algorithms.requirements]]
 
 STL: We are using `addressof` then `static_cast` to `void*` in algorithms [in namespace `std`]. Should those algorithms also use `voidify`? [changed]
+
+#### [special.mem.concepts]
+STL: A note mentioning we don't cover all the possible operations with nothrow. [added notes]
