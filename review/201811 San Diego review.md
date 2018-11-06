@@ -26,3 +26,6 @@ STL: In the synopsis, we lost the template header before `iter_rvalue_reference_
 
 #### [iterator.requirements.general]
 Marshall: [In p14] incrementing "`i` `n` times" is odd typographically. [Rephrase "the result of `n` applications of `++i`"]
+
+#### [iterator.traits]
+STL: Should ["instantiation of the primary template"] be "specialization"? MC: Core uses "[specialization/instantiation] generated from template" [for example, in [temp.class.spec.match]/1]. [Changed to "names a specialization generated from the primary template" in [incrementable.traits]/2, [readable.traits]/2, [iterator.traits]/3, [iterator.traits]/4, [iterator.concepts.general]/1 (two places)]
