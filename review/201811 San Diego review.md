@@ -29,3 +29,7 @@ Marshall: [In p14] incrementing "`i` `n` times" is odd typographically. [Rephras
 
 #### [iterator.traits]
 STL: Should ["instantiation of the primary template"] be "specialization"? MC: Core uses "[specialization/instantiation] generated from template" [for example, in [temp.class.spec.match]/1]. [Changed to "names a specialization generated from the primary template" in [incrementable.traits]/2, [readable.traits]/2, [iterator.traits]/3, [iterator.traits]/4, [iterator.concepts.general]/1 (two places)]
+
+MC: Is there supposed to be a definition of `value_type`? It is only mentioned it could be `void`. [The `difference_type`/"difference type" and `value_type`/"value type" associations are established in [incrementable.traits] and [readable.traits] for `WeaklyIncrementable` and `Readable` types.]
+
+JW: [In p3.3] why is it "if `incrementable_traits<I>::difference_type` is well-formed" [which is nonsense], rather than "If the *qualified-id* ... is valid and denotes a type"? [fixed]
