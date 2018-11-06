@@ -20,3 +20,6 @@ STL: We are using `addressof` then `static_cast` to `void*` in algorithms [in na
 
 #### [special.mem.concepts]
 STL: A note mentioning we don't cover all the possible operations with nothrow. [added notes]
+
+#### [iterator.synopsis]
+STL: In the synopsis, we lost the template header before `iter_rvalue_reference_t`. CC: It's correct but the formatting is unfortunate. [altered formatting]
