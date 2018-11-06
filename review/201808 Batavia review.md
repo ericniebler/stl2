@@ -87,9 +87,7 @@ ALL: `-> auto&&` is a bogus deduction constraint. [Replaced with a valid constra
 AM: Recommend putting Permutable, Mergeable, and Sortable into Algorithms header [not changing at this time, rationale on the reflectors.]
 
 #### [iterator.requirements.general]
-TS: P12 & P14 "Up to but not including the element pointed to by the…" -> "Up to but not including the element, if any, pointed to by the…" [so changed]
-
-TS: last sentence of p13 duplicates first sentence of p15.
+TS: P12 & P14 "Up to but not including the element pointed to by the..." -> "Up to but not including the element, if any, pointed to by the..." [so changed]
 
 TS: last sentence of p13 duplicates first sentence of p15. [fixed]
 
