@@ -54,3 +54,6 @@ JW: "need not require" could be a problem [for ISO]. [change to "does not need"]
 STL: In P2, can you choose a different letter besides `s`, such as `q`? `s` usually means sentinel. [fixed]
 
 STL: In P3 is there a hole in the requirements. 3.4 talks abouts going forward and going back. It should possibly be split out. You've excluded the very beginning. [fixed]
+
+#### [projected]
+JW: "bundles"? CC: "Combines" is fine, if Stephan doesn't like "aggregates". [fixed; also in [range.subrange]]
