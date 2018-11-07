@@ -456,7 +456,7 @@ TS (offline): [Tiny subclauses, merge them]. [`ranges::merge`d]
 
 AM: Is `ranges::data(t);` [requirement of `ContiguousRange`] redundant with `ContiguousIterator`? [`data` is certainly very convenient.]
 
-#### [range.view_interface]
+#### [view.interface]
 CC: missing requirements on `D`; must be publicly and unambiguously derived from `view_interface`. [fixed]
 
 AM: I don't like forward-declared autos. [Inline all the things.]
