@@ -34,4 +34,4 @@ MC: Is there supposed to be a definition of `value_type`? It is only mentioned i
 
 JW: [In p3.3] why is it "if `incrementable_traits<I>::difference_type` is well-formed" [which is nonsense], rather than "If the *qualified-id* ... is valid and denotes a type"? [fixed]
 
-STL: P4, "opt in or out of conformance."
+STL: P4, "opt in or out of conformance." [changed to "indicate conformance"]
