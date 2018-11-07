@@ -49,3 +49,8 @@ STL: Can we say "[`disable_sized_sentinel`] allows" instead of "enables"? [fixed
 
 #### [iterator.concept.input]
 JW: "need not require" could be a problem [for ISO]. [change to "does not need"]
+
+#### [iterator.concept.bidirectional]
+STL: In P2, can you choose a different letter besides `s`, such as `q`? `s` usually means sentinel. [fixed]
+
+STL: In P3 is there a hole in the requirements. 3.4 talks abouts going forward and going back. It should possibly be split out. You've excluded the very beginning. [fixed]
