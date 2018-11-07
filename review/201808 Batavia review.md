@@ -710,23 +710,23 @@ TS (offline): ["The relative order of the elements in both groups is preserved."
 #### [alg.find_end]
 TS (offline): What if [`[first1, last1 - (last2 - first2))`] isn't a valid range, i.e., `last1 - first1 < last2 - first2`? [fixed]
 
+#### [alg.count]
+AM: Why not collapse overloads via equal predicate? [Because we have all permutations of "call with `value`" and "call `invoke`"; there's no way to compress these 4 unique]
+
+#### [alg.mismatch]
+AM: Should we fully qualify `min` (here and in general)? CC: change to math font? CC: Should I do that [and for `max`, as well] only to the algorithms I'm touching, or to all complexity statements in the standard library? AM: Ask LWG. [I so no need for a general qualification: both `std::min` and `std::ranges::min` are equivalent for integral arguments, which we're talking about here, so there's no potential for confusion. File editorial issue to ask about changing uniformly to math-mode https://github.com/cplusplus/draft/issues/2385.]
+
+#### [alg.is_permutation]
+CC: `range` version is in terms of range-and-a-half `equal`, which isn't being proposed. [fixed]
+
+TS (offline): `first2 + (last1 - first1)` should be `last2`. [Equivalent, but clearer - changed.]
+
 ## Unaddressed Comments
 #### [alg.find_end]
 TS (offline): `IndirectRelation<Pred, projected<I1, Proj1>, projected<I2, Proj2>>` is just an-
 other way to spell `IndirectlyComparable<I1, I2, Pred, Proj1, Proj2>`. We should probably pick one
 and consistently use it rather than using the former for e.g. `find_first_of` and `mismatch`, and the latter
 for e.g. `find_end` and `equal`.
-
-#### [alg.count]
-AM: Why not collapse overloads via equal predicate?
-
-#### [alg.mismatch]
-AM: Should we fully qualify `min` (here and in general)? CC: change to math font. CC: Should I do that [and for `max`, as well] only to the algorithms I'm touching, or to all complexity statements in the standard library? AM: Ask LWG.
-
-#### [alg.is_permutation]
-CC: `range` version is in terms of range-and-a-half `equal`, which isn't being proposed.
-
-TS (offline): `first2 + (last1 - first1)` should be `last2`.
 
 #### [alg.search]
 TS (offline): Do we really need [bullet 5.1] or is the next bullet OK for this case too (the condition is vacuously true)?

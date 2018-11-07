@@ -1,6 +1,7 @@
 Followup:
 * [ ] Fix `bool` conversions in algorithms IS-wide. Also change "`E` holds" to "`E` is `true`".
 * [ ] Add something about potential SFINAE to the definition of expression-equivalent, and remove the notes from the CPOs.
+* [ ] Editorial issue: Consider using mathmode `\max` and `\min` uniformly in the algorithm specifications.
 
 P0896:
 * [ ] The new "no explicitly specified template parameters" policy applies to both `std` and `std::ranges` `<algorithms>`, but inconsistently only to [specialized.algorithms] in `std::ranges`.
