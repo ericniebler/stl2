@@ -706,10 +706,12 @@ TS (offline): ["`bool(invoke(comp, invoke(proj, e), value))` shall imply `!invok
 #### [alg.partitions]
 TS (offline): ["The relative order of the elements in both groups is preserved." is an effect, not a returned value]. [fixed]
 
+## Newly-addressed
+#### [alg.find_end]
+TS (offline): What if [`[first1, last1 - (last2 - first2))`] isn't a valid range, i.e., `last1 - first1 < last2 - first2`? [fixed]
+
 ## Unaddressed Comments
 #### [alg.find_end]
-TS (offline): What if [`[first1, last1 - (last2 - first2))`] isn't a valid range, i.e., `last1 - first1 < last2 - first2`?
-
 TS (offline): `IndirectRelation<Pred, projected<I1, Proj1>, projected<I2, Proj2>>` is just an-
 other way to spell `IndirectlyComparable<I1, I2, Pred, Proj1, Proj2>`. We should probably pick one
 and consistently use it rather than using the former for e.g. `find_first_of` and `mismatch`, and the latter
