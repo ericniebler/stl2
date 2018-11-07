@@ -724,49 +724,49 @@ TS (offline): `first2 + (last1 - first1)` should be `last2`. [Equivalent, but cl
 #### [alg.search]
 TS (offline): Do we really need [bullet 5.1] or is the next bullet OK for this case too (the condition is vacuously true)? [struck]
 
-## Unaddressed Comments
+#### [alg.copy]
+TS (offline):  Instead of `WeaklyIncrementable O` and `requires IndirectlyCopyable<I, O>`, consider `OutputIterator<iter_reference_t<I>> O`. Also in [alg.move]. [Considered; don't care.]
+
+#### [alg.move]
+TS (offline): ["move assignments" is redundant]. [struck]
+
+TS (offline): "starting from first and proceeding to last" is missing code font. [fixed; and in [alg.move]/12, and the `copy_backward` and `move_backward` footnotes.]
+
+#### [alg.transform]
+TS (offline): `OutputIterator<indirect_result_t<F&, ...> O`; have to move `O` to the end though so that the other parameters are in scope. Alternatively, s/`Writable`/`OutputIterator`/ and s/`WeaklyIncrementable`/`class`/. [Not changed: I prefer that implementations aren't allowed to use post-increment. Feel free to send a proposal to LEWG to change these.]
+
+#### [alg.replace]
+TS (offline): [For `replace_copy_if`]  Instead of `IndirectlyCopyable<I, O>`, we should perhaps use `OutputIterator<O, iter_reference_t<I>>` to codify that you can assign both `*first` and `new_value` to `*r++`. Or perhaps this is an indication that we should reconsider `IndirectlyCopyable`? [Ditto "post-increment"]
+
 #### [alg.find_end]
 TS (offline): `IndirectRelation<Pred, projected<I1, Proj1>, projected<I2, Proj2>>` is just an-
 other way to spell `IndirectlyComparable<I1, I2, Pred, Proj1, Proj2>`. We should probably pick one
 and consistently use it rather than using the former for e.g. `find_first_of` and `mismatch`, and the latter
 for e.g. `find_end` and `equal`.
 
-#### [alg.copy]
-TS (offline):  Instead of `WeaklyIncrementable O` and `requires IndirectlyCopyable<I, O>`, consider `OutputIterator<iter_reference_t<I>> O`. Also in [alg.move].
-
-#### [alg.move]
-TS (offline): ["move assignments" is redundant].
-
-TS (offline): "starting from first and proceeding to last" is missing code font.
-
-#### [alg.transform]
-TS (offline): `OutputIterator<indirect_result_t<F&, ...> O`; have to move `O` to the end though so that the other parameters are in scope. Alternatively, s/`Writable`/`OutputIterator`/ and s/`WeaklyIncrementable`/`class`/.
-
-#### [alg.replace]
-TS (offline): [For `replace_copy_if`]  Instead of `IndirectlyCopyable<I, O>`, we should perhaps use `OutputIterator<O, iter_reference_t<I>>` to codify that you can assign both `*first` and `new_value` to `*r++`. Or perhaps this is an indication that we should reconsider `IndirectlyCopyable`?
-
 #### [alg.generate]
-TS (offline): [For `generate_n`] s/`Writable`/`OutputIterator`/ and remove the `Iterator`.
+TS (offline): [For `generate_n`] s/`Writable`/`OutputIterator`/ and remove the `Iterator`. [Ditto "post-increment"]
 
 #### [alg.remove]
-TS (offline): [For `remove_copy_if`] `OutputIterator<iter_reference_t<I>> O` and drop the `IndirectlyCopyable`.
+TS (offline): [For `remove_copy_if`] `OutputIterator<iter_reference_t<I>> O` and drop the `IndirectlyCopyable`. [Ditto "post-increment"]
 
 #### [alg.unique_copy]
-TS (offline): `OutputIterator<iter_reference_t<I>> O` and drop the `IndirectlyCopyable`. Also maybe add `OutputIterator<O, const iter_value_t<I>&>` to the `IndirectlyCopyableStorable` clause.
+TS (offline): `OutputIterator<iter_reference_t<I>> O` and drop the `IndirectlyCopyable`. Also maybe add `OutputIterator<O, const iter_value_t<I>&>` to the `IndirectlyCopyableStorable` clause. [Ditto "post-increment"]
 
 #### [alg.reverse]
-TS (offline): `OutputIterator<iter_reference_t<I>> O` and drop the `IndirectlyCopyable`.
+TS (offline): `OutputIterator<iter_reference_t<I>> O` and drop the `IndirectlyCopyable`. [Ditto "post-increment"]
 
 #### [alg.rotate]
-TS (offline): ["Complexity" says "swaps", but] `Permutable` grants permission to use moves instead of swaps. Do we care?
+TS (offline): ["Complexity" says "swaps", but] `Permutable` grants permission to use moves instead of swaps. Do we care? [...and create **temporaries**, ick. I don't care now, but I may soon. This is captured in https://github.com/ericniebler/stl2/issues/577.]
 
-TS (offline): [For `rotate_copy`] `OutputIterator<iter_reference_t<I>> O` and drop the `IndirectlyCopyable`.
+TS (offline): [For `rotate_copy`] `OutputIterator<iter_reference_t<I>> O` and drop the `IndirectlyCopyable`. [Ditto "post-increment"]
 
 #### [alg.random.shuffle]
-TS (offline): The `ConvertibleTo` is implied.
+TS (offline): The `ConvertibleTo` is implied. [Yes - blind carryover from conversion requirements on `std` algorithms. Struck. (WTF? I *already* struck the requirement for the `std` algorithms.)]
 
-TS (offline): What if `remove_reference_t<Gen>` does not meet the uniform random bit generator requirements?
+TS (offline): What if `remove_reference_t<Gen>` does not meet the uniform random bit generator requirements? [LWG opinion is that implementors make it work.]
 
+## Unaddressed Comments
 #### [sort]
 TS (offline): We are missing "with respect to `comp` (and any `proj`)" [in "*Effects:* Sorts the elements in the range `[first, last)`."] here and elsewhere.
 
@@ -774,7 +774,7 @@ TS (offline): We are missing "with respect to `comp` (and any `proj`)" [in "*Eff
 TS (offline): The project part is mind-bending. We copy from input to output, with a possible conversion, then you separately project the input and output ranges. But is the copying required to preserve the ordering? Which projection are we sorting with respect to?
 
 #### [alg.partitions]
-TS (offline): [For `partition_copy`] `OutputIterator<iter_reference_t<I>> O1` and ditto for `O2`.
+TS (offline): [For `partition_copy`] `OutputIterator<iter_reference_t<I>> O1` and ditto for `O2`. [Ditto "post-increment"]
 
 TS (offline): [For `partition_point`] I like this. We can use this phrasing for partition and stable_partition ?
 
