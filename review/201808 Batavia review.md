@@ -777,12 +777,12 @@ TS (offline): [For `partition_copy`] `OutputIterator<iter_reference_t<I>> O1` an
 
 TS (offline): [For `partition_point`] Can we use this phrasing for `partition` and `stable_partition`? [Not anymore with the merged wording.]
 
-## Unaddressed Comments
 #### [alg.merge]
 TS (offline): We should require `OutputIterator` here, but we can change `Mergeable` maybe? Also in [set.union], [set.intersection], [set.difference], and [set.symmetric_difference]. [Ditto "post-increment"]
 
-TS (offline): [For `inplace_merge`'s "Effects", isn't this simply] "sorted with respect to `comp` (and any `proj`)"?
+TS (offline): [For `inplace_merge`'s "Effects", isn't this simply] "sorted with respect to `comp` (and any `proj`)"? [Yip - replaced]
 
+## Unaddressed Comments
 #### [alg.set.operations]
 TS (offline): I think we need to define "equivalent elements" better now that we have projections in the picture.
 
