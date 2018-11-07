@@ -36,7 +36,10 @@ JW: [In p3.3] why is it "if `incrementable_traits<I>::difference_type` is well-f
 
 STL: P4, "opt in or out of conformance." [changed to "indicate conformance"]
 
-Jonathan: In P4, we can reduce words by using "explicit specializations or partial specializations may have members". [changed]
+JW: In P4, we can reduce words by using "explicit specializations or partial specializations may have members". [changed]
 
 #### [iterator.cust]
 CC: [Stable names are weird and long]. [iterator.custpoints.iter_move] should be [iter.move] (iterator.custpoints). [Simplify stable names]
+
+#### [iterator.concept.writable]
+JW: Use of "requires" in a note would be a problem [for ISO]. [change to "has"]
