@@ -806,10 +806,10 @@ TS (offline): The definition of "heap" needs to be updated for projections.
 #### [alg.min.max]
 TS (offline): `Copyable` isn't enough, right? You need to be able to construct `iter_value_t<iterator_t<Rng>>` from its reference type and have it preserve the value, and ditto for assignment from reference.
 
-TS (offline): [Pre-existing: "leftmost argument" and "rightmost argument" makes no sense for a range].
+TS (offline): ["leftmost argument" and "rightmost argument" makes no sense for a range]. [fixed]
 
 #### [alg.lex.comparison]
-TS (offline): "prefix" [pre-existing in remarks should be] "proper prefix".
+TS (offline): "prefix" [pre-existing in remarks should be] "proper prefix". [fixed]
 
 #### [alg.permutation.generators]
 TS (offline): [Pre-existing "Otherwise, it transforms the sequence" in both algorithms] isn't really a Returns [it's an effect].
