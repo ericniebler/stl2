@@ -375,7 +375,8 @@ namespace std {
     struct iterator_traits<common_iterator<I, S>>;
 
   // \ref{default.sentinels}, default sentinels
-  class default_sentinel;
+  struct default_sentinel_t;
+  inline constexpr default_sentinel_t default_sentinel{};
 
   // \ref{iterators.counted}, counted iterators
   template<Iterator I> class counted_iterator;
@@ -3408,12 +3409,9 @@ void fun(ForwardIterator begin, ForwardIterator end);
 
 list<int> s;
 // populate the list \tcode{s}
-using CI =
-  common_iterator<counted_iterator<list<int>::iterator>,
-                  default_sentinel>;
+using CI = common_iterator<counted_iterator<list<int>::iterator>, default_sentinel_t>;
 // call \tcode{fun} on a range of 10 ints
-fun(CI(counted_iterator(s.begin(), 10)),
-    CI(default_sentinel()));
+fun(CI(counted_iterator(s.begin(), 10)), CI(default_sentinel));
 \end{codeblock}
 \end{example}
 
@@ -3813,16 +3811,17 @@ are each \tcode{true}.
 
 \rSec2[default.sentinels]{Default sentinels}
 
+\indexlibrary{\idxcode{default_sentinel_t}}%
 \indexlibrary{\idxcode{default_sentinel}}%
 \begin{itemdecl}
 namespace std {
-  class default_sentinel { };
+  struct default_sentinel { };
 }
 \end{itemdecl}
 
 \pnum
-Class \tcode{default_sentinel} is an empty type used to denote the end of a
-range. It is intended to be used together with iterator types that know the bound
+Class \tcode{default_sentinel_t} is an empty type used to denote the end of a
+range. It can be used together with iterator types that know the bound
 of their range (e.g., \tcode{counted_iterator}\iref{counted.iterator}).
 
 
@@ -3833,7 +3832,7 @@ of their range (e.g., \tcode{counted_iterator}\iref{counted.iterator}).
 Class template \tcode{counted_iterator} is an iterator adaptor
 with the same behavior as the underlying iterator except that
 it keeps track of the distance to the end of its range.
-It can be used together with class \tcode{default_sentinel}
+It can be used together with \tcode{default_sentinel}
 in calls to generic algorithms to operate on
 a range of $N$ elements starting at a given position
 without needing to know the end position a priori.
@@ -3848,7 +3847,7 @@ list<string> s;
 // populate the list \tcode{s} with at least 10 strings
 vector<string> v;
 // copies 10 strings into \tcode{v}:
-ranges::copy(counted_iterator(s.begin(), 10), default_sentinel(), back_inserter(v));
+ranges::copy(counted_iterator(s.begin(), 10), default_sentinel, back_inserter(v));
 \end{codeblock}
 \end{example}
 
@@ -3910,9 +3909,9 @@ namespace std {
       friend constexpr iter_difference_t<I2> operator-(
         const counted_iterator& x, const counted_iterator<I2>& y);
     friend constexpr iter_difference_t<I> operator-(
-      const counted_iterator& x, default_sentinel);
+      const counted_iterator& x, default_sentinel_t);
     friend constexpr iter_difference_t<I> operator-(
-      default_sentinel, const counted_iterator& y);
+      default_sentinel_t, const counted_iterator& y);
     constexpr counted_iterator& operator-=(iter_difference_t<I> n)
       requires RandomAccessIterator<I>;
 
@@ -3923,17 +3922,17 @@ namespace std {
       friend constexpr bool operator==(
         const counted_iterator& x, const counted_iterator<I2>& y);
     friend constexpr bool operator==(
-      const counted_iterator& x, default_sentinel);
+      const counted_iterator& x, default_sentinel_t);
     friend constexpr bool operator==(
-      default_sentinel, const counted_iterator& x);
+      default_sentinel_t, const counted_iterator& x);
 
     template<Common<I> I2>
       friend constexpr bool operator!=(
         const counted_iterator& x, const counted_iterator<I2>& y);
     friend constexpr bool operator!=(
-      const counted_iterator& x, default_sentinel y);
+      const counted_iterator& x, default_sentinel_t y);
     friend constexpr bool operator!=(
-      default_sentinel x, const counted_iterator& y);
+      default_sentinel_t x, const counted_iterator& y);
 
     template<Common<I> I2>
       friend constexpr bool operator<(
@@ -4241,7 +4240,7 @@ sequence\iref{counted.iterator}.
 
 \begin{itemdecl}
 friend constexpr iter_difference_t<I> operator-(
-  const counted_iterator& x, default_sentinel);
+  const counted_iterator& x, default_sentinel_t);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4252,7 +4251,7 @@ friend constexpr iter_difference_t<I> operator-(
 
 \begin{itemdecl}
 friend constexpr iter_difference_t<I> operator-(
-  default_sentinel, const counted_iterator& y);
+  default_sentinel_t, const counted_iterator& y);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4302,9 +4301,9 @@ elements of the same sequence\iref{counted.iterator}.
 
 \begin{itemdecl}
 friend constexpr bool operator==(
-  const counted_iterator& x, default_sentinel);
+  const counted_iterator& x, default_sentinel_t);
 friend constexpr bool operator==(
-  default_sentinel, const counted_iterator& x);
+  default_sentinel_t, const counted_iterator& x);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4319,9 +4318,9 @@ template<Common<I> I2>
   friend constexpr bool operator!=(
     const counted_iterator& x, const counted_iterator<I2>& y);
 friend constexpr bool operator!=(
-  const counted_iterator& x, default_sentinel y);
+  const counted_iterator& x, default_sentinel_t y);
 friend constexpr bool operator!=(
-  default_sentinel x, const counted_iterator& y);
+  default_sentinel_t x, const counted_iterator& y);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4512,17 +4511,17 @@ namespace std {
     [...]
 
     constexpr istream_iterator();
-    @\added{constexpr istream_iterator(default_sentinel);}@
+    @\added{constexpr istream_iterator(default_sentinel_t);}@
     istream_iterator(istream_type& s);
 
     [...]
 
     istream_iterator  operator++(int);
 
-    @\added{friend bool operator==(const istream_iterator\& i, default_sentinel);}@
-    @\added{friend bool operator==(default_sentinel, const istream_iterator\& i);}@
-    @\added{friend bool operator!=(const istream_iterator\& x, default_sentinel y);}@
-    @\added{friend bool operator!=(default_sentinel x, const istream_iterator\& y);}@
+    @\added{friend bool operator==(const istream_iterator\& i, default_sentinel_t);}@
+    @\added{friend bool operator==(default_sentinel_t, const istream_iterator\& i);}@
+    @\added{friend bool operator!=(const istream_iterator\& x, default_sentinel_t y);}@
+    @\added{friend bool operator!=(default_sentinel_t x, const istream_iterator\& y);}@
 
   private:
     [...]
@@ -4537,7 +4536,7 @@ namespace std {
 \indexlibrary{\idxcode{istream_iterator}!constructor}%
 \begin{itemdecl}
 constexpr istream_iterator();
-@\added{constexpr istream_iterator(default_sentinel);}@
+@\added{constexpr istream_iterator(default_sentinel_t);}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4575,8 +4574,8 @@ template<class T, class charT, class traits, class Distance>
 \begin{addedblock}
 \indexlibrarymember{operator==}{istream_iterator}%
 \begin{itemdecl}
-friend bool operator==(default_sentinel, const istream_iterator& i);
-friend bool operator==(const istream_iterator& i, default_sentinel);
+friend bool operator==(default_sentinel_t, const istream_iterator& i);
+friend bool operator==(const istream_iterator& i, default_sentinel_t);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4591,8 +4590,8 @@ friend bool operator==(const istream_iterator& i, default_sentinel);
 template<class T, class charT, class traits, class Distance>
   bool operator!=(const istream_iterator<T,charT,traits,Distance>& x,
                   const istream_iterator<T,charT,traits,Distance>& y);
-@\added{friend bool operator!=(default_sentinel x, const istream_iterator\& y);}@
-@\added{friend bool operator!=(const istream_iterator\& x, default_sentinel y);}@
+@\added{friend bool operator!=(default_sentinel_t x, const istream_iterator\& y);}@
+@\added{friend bool operator!=(const istream_iterator\& x, default_sentinel_t y);}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4650,17 +4649,17 @@ namespace std {
     [...]
 
     constexpr istreambuf_iterator() noexcept;
-    @\added{constexpr istreambuf_iterator(default_sentinel) noexcept;}@
+    @\added{constexpr istreambuf_iterator(default_sentinel_t) noexcept;}@
     istreambuf_iterator(const istreambuf_iterator&) noexcept = default;
 
     [...]
 
     bool equal(const istreambuf_iterator& b) const;
 
-    @\added{friend bool operator==(default_sentinel s, const istreambuf_iterator\& i);}@
-    @\added{friend bool operator==(const istreambuf_iterator\& i, default_sentinel s);}@
-    @\added{friend bool operator!=(default_sentinel a, const istreambuf_iterator\& b);}@
-    @\added{friend bool operator!=(const istreambuf_iterator\& a, default_sentinel b);}@
+    @\added{friend bool operator==(default_sentinel_t s, const istreambuf_iterator\& i);}@
+    @\added{friend bool operator==(const istreambuf_iterator\& i, default_sentinel_t s);}@
+    @\added{friend bool operator!=(default_sentinel_t a, const istreambuf_iterator\& b);}@
+    @\added{friend bool operator!=(const istreambuf_iterator\& a, default_sentinel_t b);}@
 
   private:
     streambuf_type* sbuf_;                // \expos
@@ -4681,7 +4680,7 @@ namespace std {
 \indexlibrary{\idxcode{istreambuf_iterator}!constructor}%
 \begin{itemdecl}
 constexpr istreambuf_iterator() noexcept;
-@\added{constexpr istreambuf_iterator(default_sentinel) noexcept;}@
+@\added{constexpr istreambuf_iterator(default_sentinel_t) noexcept;}@
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4713,8 +4712,8 @@ template<class charT, class traits>
 \begin{addedblock}
 \indexlibrarymember{operator==}{istreambuf_iterator}%
 \begin{itemdecl}
-friend bool operator==(default_sentinel s, const istreambuf_iterator& i);
-friend bool operator==(const istreambuf_iterator& i, default_sentinel s);
+friend bool operator==(default_sentinel_t s, const istreambuf_iterator& i);
+friend bool operator==(const istreambuf_iterator& i, default_sentinel_t s);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4728,8 +4727,8 @@ friend bool operator==(const istreambuf_iterator& i, default_sentinel s);
 template<class charT, class traits>
   bool operator!=(const istreambuf_iterator<charT,traits>& a,
                   const istreambuf_iterator<charT,traits>& b);
-@\added{friend bool operator!=(default_sentinel a, const istreambuf_iterator\& b);}@
-@\added{friend bool operator!=(const istreambuf_iterator\& a, default_sentinel b);}@
+@\added{friend bool operator!=(default_sentinel_t a, const istreambuf_iterator\& b);}@
+@\added{friend bool operator!=(const istreambuf_iterator\& a, default_sentinel_t b);}@
 \end{itemdecl}
 
 \begin{itemdescr}

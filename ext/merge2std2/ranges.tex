@@ -3394,7 +3394,7 @@ namespace std::ranges {
         if constexpr (RandomAccessRange<V>)
           return ranges::begin(base_) + size();
         else
-          return default_sentinel{};
+          return default_sentinel;
       } else
         return sentinel<false>{ranges::end(base_)};
     }
@@ -3404,7 +3404,7 @@ namespace std::ranges {
         if constexpr (RandomAccessRange<const V>)
           return ranges::begin(base_) + size();
         else
-          return default_sentinel{};
+          return default_sentinel;
       } else
         return sentinel<true>{ranges::end(base_)};
     }
@@ -4314,7 +4314,7 @@ namespace std::ranges {
       if constexpr (ForwardRange<V> && ForwardRange<const V> && CommonRange<const V>)
         return outer_iterator<true>{*this, ranges::end(base_)};
       else
-        return default_sentinel{};
+        return default_sentinel;
     }
   };
 
@@ -4417,10 +4417,10 @@ namespace std::ranges {
     friend constexpr bool operator!=(const outer_iterator& x, const outer_iterator& y)
       requires ForwardRange<Base>;
 
-    friend constexpr bool operator==(const outer_iterator& x, default_sentinel);
-    friend constexpr bool operator==(default_sentinel, const outer_iterator& x);
-    friend constexpr bool operator!=(const outer_iterator& x, default_sentinel y);
-    friend constexpr bool operator!=(default_sentinel y, const outer_iterator& x);
+    friend constexpr bool operator==(const outer_iterator& x, default_sentinel_t);
+    friend constexpr bool operator==(default_sentinel_t, const outer_iterator& x);
+    friend constexpr bool operator!=(const outer_iterator& x, default_sentinel_t y);
+    friend constexpr bool operator!=(default_sentinel_t y, const outer_iterator& x);
   };
 }
 \end{codeblock}
@@ -4526,8 +4526,8 @@ friend constexpr bool operator!=(const outer_iterator& x, const outer_iterator& 
 
 \indexlibrary{\idxcode{operator==}!\idxcode{split_view::outer_iterator}}%
 \begin{itemdecl}
-friend constexpr bool operator==(const outer_iterator& x, default_sentinel);
-friend constexpr bool operator==(default_sentinel, const outer_iterator& x);
+friend constexpr bool operator==(const outer_iterator& x, default_sentinel_t);
+friend constexpr bool operator==(default_sentinel_t, const outer_iterator& x);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4538,8 +4538,8 @@ Equivalent to: \tcode{return x.\placeholder{current} == ranges::end(x.parent_->b
 
 \indexlibrary{\idxcode{operator!=}!\idxcode{split_view::outer_iterator}}%
 \begin{itemdecl}
-friend constexpr bool operator!=(const outer_iterator& x, default_sentinel y);
-friend constexpr bool operator!=(default_sentinel y, const outer_iterator& x);
+friend constexpr bool operator!=(const outer_iterator& x, default_sentinel_t y);
+friend constexpr bool operator!=(default_sentinel_t y, const outer_iterator& x);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4561,7 +4561,7 @@ namespace std::ranges {
     constexpr explicit value_type(outer_iterator i);
 
     constexpr inner_iterator<Const> begin() const;
-    constexpr default_sentinel end() const;
+    constexpr default_sentinel_t end() const;
   };
 }
 \end{codeblock}
@@ -4588,12 +4588,12 @@ constexpr inner_iterator<Const> begin() const;
 
 \indexlibrary{\idxcode{end}!\idxcode{split_view::outer_iterator::value_type}}%
 \begin{itemdecl}
-constexpr default_sentinel end() const;
+constexpr default_sentinel_t end() const;
 \end{itemdecl}
 
 \begin{itemdescr}
 \pnum
-\effects Equivalent to: \tcode{return \{\};}
+\effects Equivalent to: \tcode{return default_sentinel;}
 \end{itemdescr}
 
 \rSec3[range.split.inner]{Class template \tcode{split_view::inner_iterator}}
@@ -4634,10 +4634,10 @@ namespace std::ranges {
     friend constexpr bool operator!=(const inner_iterator& x, const inner_iterator& y)
       requires ForwardRange<Base>;
 
-    friend constexpr bool operator==(const inner_iterator& x, default_sentinel);
-    friend constexpr bool operator==(default_sentinel, const inner_iterator& x);
-    friend constexpr bool operator!=(const inner_iterator& x, default_sentinel y);
-    friend constexpr bool operator!=(default_sentinel y, const inner_iterator& x);
+    friend constexpr bool operator==(const inner_iterator& x, default_sentinel_t);
+    friend constexpr bool operator==(default_sentinel_t, const inner_iterator& x);
+    friend constexpr bool operator!=(const inner_iterator& x, default_sentinel_t y);
+    friend constexpr bool operator!=(default_sentinel_t y, const inner_iterator& x);
 
     friend constexpr decltype(auto) iter_move(const inner_iterator& i)
       noexcept(noexcept(ranges::iter_move(i.i_.@\placeholdernc{current}@))) {
@@ -4712,8 +4712,8 @@ friend constexpr bool operator!=(const inner_iterator& x, const inner_iterator& 
 
 \indexlibrary{\idxcode{operator==}!\idxcode{split_view::inner_iterator}}%
 \begin{itemdecl}
-friend constexpr bool operator==(const inner_iterator& x, default_sentinel);
-friend constexpr bool operator==(default_sentinel, const inner_iterator& x);
+friend constexpr bool operator==(const inner_iterator& x, default_sentinel_t);
+friend constexpr bool operator==(default_sentinel_t, const inner_iterator& x);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4735,8 +4735,8 @@ return false;
 
 \indexlibrary{\idxcode{operator!=}!\idxcode{split_view::inner_iterator}}%
 \begin{itemdecl}
-friend constexpr bool operator!=(const inner_iterator& x, default_sentinel y);
-friend constexpr bool operator!=(default_sentinel y, const inner_iterator& x);
+friend constexpr bool operator!=(const inner_iterator& x, default_sentinel_t y);
+friend constexpr bool operator!=(default_sentinel_t y, const inner_iterator& x);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -4783,8 +4783,7 @@ Then the expression \tcode{view::counted(E, F)} is expression-equivalent to:
   \item \tcode{subrange\{E, E + static_cast<iter_difference_t<T>>(F)\}}
     if \tcode{T} models \libconcept{ContiguousIterator}.
   \item Otherwise,
-    \tcode{subrange\{counted_iterator\{E, F\},
-    default_sentinel\{\}\}}.
+    \tcode{subrange\{counted_iterator\{E, F\}, default_sentinel\}}.
 \end{itemize}
 
 \item Otherwise, \tcode{view::counted(E, F)} is ill-formed.
