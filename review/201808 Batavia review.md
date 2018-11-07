@@ -812,4 +812,4 @@ TS (offline): ["leftmost argument" and "rightmost argument" makes no sense for a
 TS (offline): "prefix" [pre-existing in remarks should be] "proper prefix". [fixed]
 
 #### [alg.permutation.generators]
-TS (offline): [Pre-existing "Otherwise, it transforms the sequence" in both algorithms] isn't really a Returns [it's an effect].
+TS (offline): [Pre-existing "Otherwise, it transforms the sequence" in both algorithms] isn't really a Returns [it's an effect]. [fixed]
