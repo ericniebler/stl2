@@ -57,3 +57,5 @@ STL: In P3 is there a hole in the requirements. 3.4 talks abouts going forward a
 
 #### [projected]
 JW: "bundles"? CC: "Combines" is fine, if Stephan doesn't like "aggregates". [fixed; also in [range.subrange]]
+
+Jeff: There's another requires [in a note] here. [fixed; also in [special.mem.concepts],[iterator.concept.incrementable]. I'm not going to audit all 952 occurrences of "require" here in SD - I'll do so when ISO complains.]
