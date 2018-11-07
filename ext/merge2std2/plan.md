@@ -17,6 +17,7 @@ P0896:
   * [ ] Reconcile the `common_iterator` and *has-arrow* `operator->` styles.
 * [ ] Forbid explicit template arguments for quasi-CPOs (algorithms, iterator operations, specialized memory algorithms)
 * [ ] Define "models", and use it throughout to replace both "`foo` satisfies `Concept`" and the "syntactic requirements...otherwise ill-formed NDR" dance.
+* [ ] `split_view` on `ForwardRange`s has complexity problems
 * [ ] `Decrementable` doesn't constrain the behavior of objects that aren't both *incrementable* and *decrementable*.
 * [ ] Why are `single_view::begin`, `::end`, and `::data` declared `noexcept` when they have a precondition?
 * [ ] Add `operator[]` (and other `view_interface` operations) to *ref-view*?
