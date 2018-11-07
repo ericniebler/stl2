@@ -721,15 +721,15 @@ CC: `range` version is in terms of range-and-a-half `equal`, which isn't being p
 
 TS (offline): `first2 + (last1 - first1)` should be `last2`. [Equivalent, but clearer - changed.]
 
+#### [alg.search]
+TS (offline): Do we really need [bullet 5.1] or is the next bullet OK for this case too (the condition is vacuously true)? [struck]
+
 ## Unaddressed Comments
 #### [alg.find_end]
 TS (offline): `IndirectRelation<Pred, projected<I1, Proj1>, projected<I2, Proj2>>` is just an-
 other way to spell `IndirectlyComparable<I1, I2, Pred, Proj1, Proj2>`. We should probably pick one
 and consistently use it rather than using the former for e.g. `find_first_of` and `mismatch`, and the latter
 for e.g. `find_end` and `equal`.
-
-#### [alg.search]
-TS (offline): Do we really need [bullet 5.1] or is the next bullet OK for this case too (the condition is vacuously true)?
 
 #### [alg.copy]
 TS (offline):  Instead of `WeaklyIncrementable O` and `requires IndirectlyCopyable<I, O>`, consider `OutputIterator<iter_reference_t<I>> O`. Also in [alg.move].
