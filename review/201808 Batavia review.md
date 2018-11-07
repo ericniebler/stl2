@@ -782,6 +782,17 @@ TS (offline): We should require `OutputIterator` here, but we can change `Mergea
 
 TS (offline): [For `inplace_merge`'s "Effects", isn't this simply] "sorted with respect to `comp` (and any `proj`)"? [Yip - replaced]
 
+#### [alg.min.max]
+TS (offline): `Copyable` isn't enough, right? You need to be able to construct `iter_value_t<iterator_t<Rng>>` from its reference type and have it preserve the value, and ditto for assignment from reference. [yes, this is very wrong - we need the parts of `IndirectlyCopyableStorable` that don't involve the output iterator. fixed]
+
+TS (offline): ["leftmost argument" and "rightmost argument" makes no sense for a range]. [fixed]
+
+#### [alg.lex.comparison]
+TS (offline): "prefix" [pre-existing in remarks should be] "proper prefix". [fixed]
+
+#### [alg.permutation.generators]
+TS (offline): [Pre-existing "Otherwise, it transforms the sequence" in both algorithms] isn't really a Returns [it's an effect]. [fixed]
+
 ## Unaddressed Comments
 #### [alg.set.operations]
 TS (offline): I think we need to define "equivalent elements" better now that we have projections in the picture.
@@ -802,14 +813,3 @@ TS (offline): We should fix the pre-existing "shall" in the Remarks.
 
 #### [heap.operations]
 TS (offline): The definition of "heap" needs to be updated for projections.
-
-#### [alg.min.max]
-TS (offline): `Copyable` isn't enough, right? You need to be able to construct `iter_value_t<iterator_t<Rng>>` from its reference type and have it preserve the value, and ditto for assignment from reference.
-
-TS (offline): ["leftmost argument" and "rightmost argument" makes no sense for a range]. [fixed]
-
-#### [alg.lex.comparison]
-TS (offline): "prefix" [pre-existing in remarks should be] "proper prefix". [fixed]
-
-#### [alg.permutation.generators]
-TS (offline): [Pre-existing "Otherwise, it transforms the sequence" in both algorithms] isn't really a Returns [it's an effect]. [fixed]
