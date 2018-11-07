@@ -766,20 +766,20 @@ TS (offline): The `ConvertibleTo` is implied. [Yes - blind carryover from conver
 
 TS (offline): What if `remove_reference_t<Gen>` does not meet the uniform random bit generator requirements? [LWG opinion is that implementors make it work.]
 
-## Unaddressed Comments
 #### [sort]
-TS (offline): We are missing "with respect to `comp` (and any `proj`)" [in "*Effects:* Sorts the elements in the range `[first, last)`."] here and elsewhere.
+TS (offline): We are missing "with respect to `comp` (and any `proj`)" [in "*Effects:* Sorts the elements in the range `[first, last)`."] here and elsewhere. [fixed in [sort],[stable.sort],[partial.sort],[partial.sort.copy],[is.sorted], and [alg.nth.element]]
 
 #### [alg.partial_sort_copy]
-TS (offline): The project part is mind-bending. We copy from input to output, with a possible conversion, then you separately project the input and output ranges. But is the copying required to preserve the ordering? Which projection are we sorting with respect to?
+TS (offline): The project part is mind-bending. We copy from input to output, with a possible conversion, then you separately project the input and output ranges. But is the copying required to preserve the ordering? Which projection are we sorting with respect to? [clarified]
 
 #### [alg.partitions]
 TS (offline): [For `partition_copy`] `OutputIterator<iter_reference_t<I>> O1` and ditto for `O2`. [Ditto "post-increment"]
 
-TS (offline): [For `partition_point`] I like this. We can use this phrasing for partition and stable_partition ?
+TS (offline): [For `partition_point`] Can we use this phrasing for `partition` and `stable_partition`? [Not anymore with the merged wording.]
 
+## Unaddressed Comments
 #### [alg.merge]
-TS (offline): We should require `OutputIterator` here, but we can change `Mergeable` maybe? Also in [set.union], [set.intersection], [set.difference], and [set.symmetric_difference].
+TS (offline): We should require `OutputIterator` here, but we can change `Mergeable` maybe? Also in [set.union], [set.intersection], [set.difference], and [set.symmetric_difference]. [Ditto "post-increment"]
 
 TS (offline): [For `inplace_merge`'s "Effects", isn't this simply] "sorted with respect to `comp` (and any `proj`)"?
 

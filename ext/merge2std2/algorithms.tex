@@ -5349,6 +5349,12 @@ namespace ranges {
 \end{addedblock}
 
 \begin{itemdescr}
+\begin{addedblock}
+\pnum
+Let \tcode{comp} be \tcode{equal_to\{\}} for the overloads
+with no parameter \tcode{comp}.
+\end{addedblock}
+
 \pnum
 \requires
 \added{For the overloads in namespace \tcode{std},}
@@ -5360,8 +5366,8 @@ The}{ and the} type of \tcode{*first} shall \changed{satisfy}{meet} the
 
 \pnum
 \effects
-Sorts the elements in the range
-\range{first}{last}.
+Sorts the elements in the range \range{first}{last}
+\added{with respect to \tcode{comp}, and \tcode{proj} if present}.
 
 \begin{addedblock}
 \pnum
@@ -5370,7 +5376,7 @@ Sorts the elements in the range
 
 \pnum
 \complexity
-\added{Let $N$ be \tcode{last - first}.} \bigoh{N \log\added{(}N\added{)}}
+\added{Let $N$ be \tcode{last - first}.} \bigoh{N \log N}
 comparisons\added{ and twice as many applications of any
 projection.}\removed{, where $N = \tcode{last - first}$.}
 \end{itemdescr}
@@ -5410,6 +5416,12 @@ namespace ranges {
 \end{addedblock}
 
 \begin{itemdescr}
+\begin{addedblock}
+\pnum
+Let \tcode{comp} be \tcode{equal_to\{\}} for the overloads
+with no parameter \tcode{comp}.
+\end{addedblock}
+
 \pnum
 \requires
 \added{For the overloads in namespace \tcode{std},}
@@ -5422,7 +5434,8 @@ The} \added{and the} type of \tcode{*first} shall
 
 \pnum
 \effects
-Sorts the elements in the range \range{first}{last}.
+Sorts the elements in the range \range{first}{last}
+\added{with respect to \tcode{comp}, and \tcode{proj} if present}.
 
 \begin{addedblock}
 \pnum
@@ -5488,6 +5501,12 @@ namespace ranges {
 \end{addedblock}
 
 \begin{itemdescr}
+\begin{addedblock}
+\pnum
+Let \tcode{comp} be \tcode{equal_to\{\}} for the overloads
+with no parameter \tcode{comp}.
+\end{addedblock}
+
 \pnum
 \requires
 \added{For the overloads in namespace \tcode{std},}
@@ -5502,8 +5521,9 @@ the} type of \tcode{*first} shall \changed{satisfy}{meet} the
 \effects
 Places the first
 \tcode{middle - first}
-sorted elements from the range
+\removed{sorted} elements from the range
 \range{first}{last}
+\added{as sorted with respect to \tcode{comp}, and \tcode{proj} if present,}
 into the range
 \range{first}{middle}.
 The rest of the elements in the range
@@ -5581,33 +5601,59 @@ namespace ranges {
 \end{addedblock}
 
 \begin{itemdescr}
+\begin{addedblock}
+\pnum
+Let $N$ be \tcode{min(last - first, result_last - result_first)}.
+Let \tcode{comp} be \tcode{less\{\}}, and
+\tcode{proj1} and \tcode{proj2} be \tcode{identity\{\}}
+for the overloads with no parameters by those names.
+\end{addedblock}
+
 \pnum
 \requires
 \added{For the overloads in namespace \tcode{std},}
 \tcode{RandomAccessIterator} shall \changed{satisfy}{meet} the
 \oldconcept{ValueSwappable} requirements\cxxiref{swappable.requirements}\removed{.
-The} \added{and the} type of \tcode{*result_first} shall
+The} \added{, the} type of \tcode{*result_first} shall
 \changed{satisfy}{meet} the
 \oldconcept{MoveConstructible}\cxxiref{tab:moveconstructible} and
-\oldconcept{MoveAssignable}\cxxiref{tab:moveassignable} requirements.
+\oldconcept{MoveAssignable}\cxxiref{tab:moveassignable} requirements\added{,
+and the expression \tcode{*first}
+shall be writable\iref{iterator.requirements.general} to \tcode{result_first}}.
+
+\begin{addedblock}
+\pnum
+\expects
+For iterators \tcode{i1} and \tcode{i2} in \range{first}{last}, and
+iterators \tcode{j1} and \tcode{j2} in \range{result_first}{result_last},
+after evaluating the assignment \tcode{*j2 = *i2},
+\tcode{bool(invoke(comp, invoke(proj1, *i1), invoke(proj2, *j2)))}
+shall be equal to
+\tcode{bool(invoke(comp, invoke(proj2, *j1), invoke(proj2, *j2)))}
+after evaluating the assignment \tcode{*j1 = *i1}.
+\begin{note}
+Writing a value from the input range into the output range does not affect
+how it is ordered by \tcode{comp}.
+\end{note}
+\end{addedblock}
 
 \pnum
 \effects
 Places the first
-\tcode{min(last - first, result_last - result_first)}
-sorted elements into the range
-\range{result_first}{result_first + min(last - first, result_last - result_first)}.
+\changed{\tcode{min(last - first, result_last - result_first)}}{$N$}
+\removed{sorted} elements \added{as sorted with respect to \tcode{comp} and \tcode{proj2}} into the range
+\range{result_first}{result_first + \changed{min(last - first, result_last - result_first)}{$N$}}.
 
 \pnum
 \returns
-The smaller of:
-\tcode{result_last} or
-\tcode{result_first + (last - first)}.
+\removed{The smaller of:
+\tcode{result_last} or}
+\tcode{result_first + \changed{(last - first)}{$N$}}.
 
 \pnum
 \complexity
 Approximately
-\tcode{(last - first) * log(min(last - first, result_last - result_first))}
+\tcode{(last - first) * log\changed{(min(last - first, result_last - result_first))}{ $N$}}
 comparisons\added{, and exactly twice as many applications of any projections}.
 \end{itemdescr}
 
@@ -5728,7 +5774,7 @@ namespace ranges {
 \returns If \tcode{(last - first) < 2}, returns
 \tcode{last}. Otherwise, returns
 the last iterator \tcode{i} in \crange{first}{last} for which the
-range \range{first}{i} is sorted.
+range \range{first}{i} is sorted \added{with respect to \tcode{comp}, and \tcode{proj} if present}.
 
 \pnum
 \complexity Linear.
@@ -5794,7 +5840,9 @@ After
 \tcode{nth_element}
 the element in the position pointed to by \tcode{nth}
 is the element that would be
-in that position if the whole range were sorted, unless \tcode{nth == last}.
+in that position if the whole range were
+sorted \added{with respect to \tcode{comp}, and \tcode{proj} if present},
+unless \tcode{nth == last}.
 Also for every iterator
 \tcode{i}
 in the range
