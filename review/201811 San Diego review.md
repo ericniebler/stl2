@@ -43,3 +43,6 @@ CC: [Stable names are weird and long]. [iterator.custpoints.iter_move] should be
 
 #### [iterator.concept.writable]
 JW: Use of "requires" in a note would be a problem [for ISO]. [change to "has"]
+
+#### [iterator.concept.sentinel]
+STL: Can we say "[`disable_sized_sentinel`] allows" instead of "enables"? [fixed; also in [range.sized]]
