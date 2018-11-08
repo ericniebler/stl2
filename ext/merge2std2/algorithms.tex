@@ -7383,7 +7383,39 @@ $n - m$ of these elements from \range{first2}{last2} if $m < n$.
 
 \rSec2[alg.heap.operations]{Heap operations}
 
-[...]
+\pnum
+\removed{A
+\term{heap}
+is a particular organization of elements in a range between two random access iterators
+\range{a}{b} such that:}
+\added{A random access range \range{a}{b} is a
+\term{heap with respect to a comparator and projection}
+\tcode{comp} and \tcode{proj}
+if its elements are organized such that:}
+
+\begin{itemize}
+\item With \tcode{$N$ = b - a}, for all $i$, $0 < i < N$,
+\tcode{\added{bool(invoke(}comp\removed{(}\added{, invoke(proj,} a[$\left \lfloor{\frac{i - 1}{2}}\right \rfloor$]\added{)}, \added{invoke(proj,} a[$i$])\added{))}}
+is \tcode{false}.
+\item \tcode{*a}
+may be removed by
+\tcode{pop_heap\removed{()}},
+or a new element added by
+\tcode{push_heap\removed{()}},
+in
+\bigoh{\log N}
+time.
+\end{itemize}
+
+\pnum
+These properties make heaps useful as priority queues.
+
+\pnum
+\tcode{make_heap\removed{()}}
+converts a range into a heap and
+\tcode{sort_heap\removed{()}}
+turns a heap into a sorted sequence.
+
 
 \rSec3[push.heap]{\tcode{push_heap}}
 
@@ -7413,11 +7445,18 @@ namespace ranges {
 \end{addedblock}
 
 \begin{itemdescr}
+\begin{addedblock}
+\pnum
+Let \tcode{comp} be \tcode{less\{\}}
+and \tcode{proj} be \tcode{identity\{\}}
+for the overloads with no parameters by those names.
+\end{addedblock}
+
 \pnum
 \requires
 The range
 \range{first}{last - 1}
-shall be a valid heap.
+shall be a valid heap \added{with respect to \tcode{comp} and \tcode{proj}}.
 \removed{T}\added{For the overloads in namespace \tcode{std}, t}he type of
 \tcode{*first} shall \changed{satisfy}{meet}
 the \oldconcept{MoveConstructible} requirements\cxxiref{tab:moveconstructible}
@@ -7440,7 +7479,7 @@ into the resulting heap
 \complexity
 At most
 $\log(\tcode{last - first})$
-comparisons \added{and twice as many applications of any projection}.
+comparisons \added{and twice as many projections}.
 \end{itemdescr}
 
 
@@ -7472,11 +7511,18 @@ namespace ranges {
 \end{addedblock}
 
 \begin{itemdescr}
+\begin{addedblock}
+\pnum
+Let \tcode{comp} be \tcode{less\{\}}
+and \tcode{proj} be \tcode{identity\{\}}
+for the overloads with no parameters by those names.
+\end{addedblock}
+
 \pnum
 \requires
 The range
 \range{first}{last}
-shall be a valid non-empty heap.
+shall be a valid non-empty heap \added{with respect to \tcode{comp} and \tcode{proj}}.
 \added{For the overloads in namespace \tcode{std},}
 \tcode{RandomAccessIterator} shall \changed{satisfy}{meet} the
 \oldconcept{ValueSwappable} requirements\cxxiref{swappable.requirements}\removed{.
@@ -7492,7 +7538,7 @@ with the value in the location
 \tcode{last - 1}
 and makes
 \range{first}{last - 1}
-into a heap.
+into a heap \added{with respect to \tcode{comp} and \tcode{proj}}.
 
 \begin{addedblock}
 \pnum
@@ -7504,7 +7550,7 @@ into a heap.
 \complexity
 At most
 $2 \log(\tcode{last - first})$
-comparisons \added{and twice as many applications of any projection}.
+comparisons \added{and twice as many projections}.
 \end{itemdescr}
 
 
@@ -7536,6 +7582,13 @@ namespace ranges {
 \end{addedblock}
 
 \begin{itemdescr}
+\begin{addedblock}
+\pnum
+Let \tcode{comp} be \tcode{less\{\}}
+and \tcode{proj} be \tcode{identity\{\}}
+for the overloads with no parameters by those names.
+\end{addedblock}
+
 \pnum
 \requires
 \added{For the overloads in namespace \tcode{std}, t}\removed{T}he type of
@@ -7545,8 +7598,8 @@ and the \oldconcept{MoveAssignable} requirements\cxxiref{tab:moveassignable}.
 
 \pnum
 \effects
-Constructs a heap out of the range
-\range{first}{last}.
+Constructs a heap \added{with respect to \tcode{comp} and \tcode{proj}}
+out of the range \range{first}{last}.
 
 \begin{addedblock}
 \pnum
@@ -7558,7 +7611,7 @@ Constructs a heap out of the range
 \complexity
 At most
 $3(\tcode{last - first})$
-comparisons \added{and twice as many applications of any projection}.
+comparisons \added{and twice as many projections}.
 \end{itemdescr}
 
 
@@ -7590,8 +7643,16 @@ namespace ranges {
 \end{addedblock}
 
 \begin{itemdescr}
+\begin{addedblock}
 \pnum
-\requires The range \range{first}{last} shall be a valid heap.
+Let \tcode{comp} be \tcode{less\{\}}
+and \tcode{proj} be \tcode{identity\{\}}
+for the overloads with no parameters by those names.
+\end{addedblock}
+
+\pnum
+\requires The range \range{first}{last} shall be a valid heap
+\added{with respect to \tcode{comp} and \tcode{proj}}.
 \added{For the overloads in namespace \tcode{std}, }
 \tcode{RandomAccessIterator} shall \changed{satisfy}{meet} the
 \oldconcept{ValueSwappable} requirements~(\cxxref{swappable.requirements})\removed{.
@@ -7603,7 +7664,8 @@ of \tcode{*first} shall \changed{satisfy}{meet} the
 \pnum
 \effects
 Sorts elements in the heap
-\range{first}{last}.
+\range{first}{last}
+\added{with respect to \tcode{comp} and \tcode{proj}}.
 
 \begin{addedblock}
 \pnum
@@ -7616,7 +7678,7 @@ Sorts elements in the heap
 At most $2N \log N$
 comparisons, where
 $N = \tcode{last - first}$\added{,
-and exactly twice as many applications of any projection}.
+and exactly twice as many projections}.
 \end{itemdescr}
 
 
@@ -7732,11 +7794,19 @@ namespace ranges {
 \end{addedblock}
 
 \begin{itemdescr}
+\begin{addedblock}
 \pnum
-\returns If \tcode{(last - first) < 2}, returns
-\tcode{last}. Otherwise, returns
+Let \tcode{comp} be \tcode{less\{\}}
+and \tcode{proj} be \tcode{identity\{\}}
+for the overloads with no parameters by those names.
+\end{addedblock}
+
+\pnum
+\returns \removed{If \tcode{(last - first) < 2}, returns
+\tcode{last}. Otherwise, returns}
 the last iterator \tcode{i} in \crange{first}{last} for which the
-range \range{first}{i} is a heap.
+range \range{first}{i} is a heap
+\added{with respect to \tcode{comp} and \tcode{proj}}.
 
 \pnum
 \complexity Linear.
@@ -8257,7 +8327,7 @@ otherwise}.
 \complexity
 At most
 $2 \min(\tcode{last1 - first1}, \ \tcode{last2 - first2})$
-applications of the corresponding comparison \added{and any projections}.
+applications of the corresponding comparison \added{and each projection, if any}.
 
 \pnum
 \remarks
