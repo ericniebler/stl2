@@ -7,7 +7,6 @@ Followup:
 
 P0896:
 * [ ] The new "no explicitly specified template parameters" policy applies to both `std` and `std::ranges` `<algorithms>`, but inconsistently only to [specialized.algorithms] in `std::ranges`.
-* [ ] Remove conditional `noexcept` from *`ref-view`*'s constructor, and require `ConvertibleTo`.
 * [ ] Make `iota` helper concepts public, and factor out commonality with the iterator concepts
 * [ ] `reverse_iterator` needs to use `ranges::prev` and not `std::prev`. I *think* this is valid, but need to verify that *`Cpp17BidirectionalIterator`*s model `BidirectionalIterator`. Fully audit `reverse_iterator` and `move_iterator` for similar SNAFUs.
 * [ ] If we require that contiguous allocator-aware containers have contiguous iterators without requiring that Allocator pointers are contiguous iterators, we effectively forbid such a container from using the pointer type directly as an iterator.
@@ -41,6 +40,7 @@ P0896:
   >
   > AM: File it as an open question. It goes deeper than I had thought.
 * [ ] Fix the intro - it hasn't been updated since P0!
+* [X] Remove conditional `noexcept` from *`ref-view`*'s constructor, and require `ConvertibleTo`.
 * [X] Consider merging the view and corresponding range adaptor into a single subclause: "view::common is ... common_view is..."
 * [X] Feature test macro `__cpp_lib_ranges` defined in `<algorithm>`, `<functional>`, `<iterator>`, `<memory>`, and `<ranges>`
 * [X] Audit all concepts for P0717
