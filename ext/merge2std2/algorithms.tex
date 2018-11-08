@@ -5008,9 +5008,6 @@ template<class ExecutionPolicy, class ForwardIterator>
 namespace ranges {
   template<Permutable I, Sentinel<I> S>
     constexpr subrange<I> rotate(I first, I middle, S last);
-  template<ForwardRange R>
-    requires Permutable<iterator_t<R>>
-    constexpr safe_subrange_t<R> rotate(R&& r, iterator_t<R> middle);
 }
 \end{itemdecl}
 \end{addedblock}
@@ -5049,7 +5046,7 @@ This is a left rotate.
 \begin{itemize}
 \item \tcode{first + (last - middle)} \added{for the overloads in
   namespace \tcode{std}, or}
-\item \added{\tcode{\{first + (last - middle), last\}} for the overloads in
+\item \added{\tcode{\{first + (last - middle), last\}} for the overload in
   namespace \tcode{ranges}}.
 \end{itemize}
 
@@ -5063,6 +5060,22 @@ At most
 \tcode{last - first}
 swaps.
 \end{itemdescr}
+
+\begin{addedblock}
+\begin{itemdecl}
+namespace ranges {
+  template<ForwardRange R>
+    requires Permutable<iterator_t<R>>
+    constexpr safe_subrange_t<R> rotate(R&& r, iterator_t<R> middle);
+}
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\tcode{return ranges::rotate(ranges::begin(r), middle, ranges::end(r));}
+\end{itemdescr}
+\end{addedblock}
 
 
 \indexlibrary{\idxcode{rotate_copy}}%
@@ -5084,10 +5097,6 @@ namespace ranges {
     requires IndirectlyCopyable<I, O>
     constexpr rotate_copy_result<I, O>
       rotate_copy(I first, I middle, S last, O result);
-  template<ForwardRange R, WeaklyIncrementable O>
-    requires IndirectlyCopyable<iterator_t<R>, O>
-    constexpr rotate_copy_result<safe_iterator_t<R>, O>
-      rotate_copy(R&& r, iterator_t<R> middle, O result);
 }
 \end{itemdecl}
 \end{addedblock}
@@ -5100,6 +5109,10 @@ Let $N$ be \tcode{last - first}.
 
 \pnum
 \requires
+\added{\range{first}{middle}
+and
+\range{middle}{last}
+shall be valid ranges.}
 The ranges
 \range{first}{last}
 and
@@ -5123,7 +5136,7 @@ the following assignment takes place:
 \begin{itemize}
 \item \tcode{result + \changed{(last - first)}{$N$}} \added{for the overloads in
   namespace \tcode{std}, or}
-\item \added{\tcode{\{last, result + $N$\}} for the overloads in
+\item \added{\tcode{\{last, result + $N$\}} for the overload in
   namespace \tcode{ranges}}.
 \end{itemize}
 
@@ -5133,6 +5146,25 @@ Exactly
 \changed{last - first}{$N$}
 assignments.
 \end{itemdescr}
+
+\begin{addedblock}
+\begin{itemdecl}
+namespace ranges {
+  template<ForwardRange R, WeaklyIncrementable O>
+    requires IndirectlyCopyable<iterator_t<R>, O>
+    constexpr rotate_copy_result<safe_iterator_t<R>, O>
+      rotate_copy(R&& r, iterator_t<R> middle, O result);
+}
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+return ranges::rotate_copy(ranges::begin(r), middle, ranges::end(r), result);
+\end{codeblock}
+\end{itemdescr}
+\end{addedblock}
 
 
 \rSec2[alg.random.sample]{Sample}
@@ -5523,11 +5555,6 @@ namespace ranges {
     requires Sortable<I, Comp, Proj>
     constexpr I
       partial_sort(I first, I middle, S last, Comp comp = {}, Proj proj = {});
-  template<RandomAccessRange R, class Comp = ranges::less<>, class Proj = identity>
-    requires Sortable<iterator_t<R>, Comp, Proj>
-    constexpr safe_iterator_t<R>
-      partial_sort(R&& r, iterator_t<R> middle, Comp comp = {},
-                   Proj proj = {});
 }
 \end{itemdecl}
 \end{addedblock}
@@ -5541,7 +5568,8 @@ with no parameter \tcode{comp}.
 
 \pnum
 \requires
-\added{For the overloads in namespace \tcode{std},}
+\added{\range{first}{middle} and \range{middle}{last} shall be valid ranges.
+For the overloads in namespace \tcode{std},}
 \tcode{RandomAccessIterator} shall \changed{satisfy}{meet} the
 \oldconcept{ValueSwappable}
 requirements\cxxiref{swappable.requirements}\removed{. The} \added{and
@@ -5565,7 +5593,7 @@ are placed in an unspecified order.
 
 \begin{addedblock}
 \pnum
-\returns \tcode{last} for the overloads in namespace \tcode{ranges}.
+\returns \tcode{last} for the overload in namespace \tcode{ranges}.
 \end{addedblock}
 
 \pnum
@@ -5575,6 +5603,26 @@ Approximately
 comparisons\added{, and exactly twice as many applications
 of any projection}.
 \end{itemdescr}
+
+
+\begin{addedblock}
+\begin{itemdecl}
+namespace ranges {
+  template<RandomAccessRange R, class Comp = ranges::less<>, class Proj = identity>
+    requires Sortable<iterator_t<R>, Comp, Proj>
+    constexpr safe_iterator_t<R>
+      partial_sort(R&& r, iterator_t<R> middle, Comp comp = {}, Proj proj = {});
+}
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+return ranges::partial_sort(ranges::begin(r), middle, ranges::end(r), comp, proj);
+\end{codeblock}
+\end{itemdescr}
+\end{addedblock}
 
 
 \rSec3[partial.sort.copy]{\tcode{partial_sort_copy}}
@@ -5841,10 +5889,6 @@ namespace ranges {
     requires Sortable<I, Comp, Proj>
     constexpr I
       nth_element(I first, I nth, S last, Comp comp = {}, Proj proj = {});
-  template<RandomAccessRange R, class Comp = ranges::less<>, class Proj = identity>
-    requires Sortable<iterator_t<R>, Comp, Proj>
-    constexpr safe_iterator_t<R>
-      nth_element(R&& r, iterator_t<R> nth, Comp comp = {}, Proj proj = {});
 }
 \end{itemdecl}
 \end{addedblock}
@@ -5858,7 +5902,8 @@ named \tcode{comp}.
 
 \pnum
 \requires
-\added{For the overloads in namespace \tcode{std},}
+\added{\range{first}{nth} and \range{nth}{last} shall be valid ranges.
+For the overloads in namespace \tcode{std},}
 \tcode{RandomAccessIterator} shall \changed{satisfy}{meet} the
 \oldconcept{ValueSwappable} requirements\cxxiref{swappable.requirements}\removed{.
 The}\added{and the} type of \tcode{*first} shall
@@ -5892,11 +5937,11 @@ or
 \item \tcode{bool(comp(*j, *i))} is \tcode{false} for the overloads in namespace
   \tcode{std}, or
 \item \tcode{bool(invoke(comp, invoke(proj, *j), invoke(proj, *i)))} is
-  \tcode{false} for the overloads in namespace \tcode{ranges}.
+  \tcode{false} for the overload in namespace \tcode{ranges}.
 \end{itemize}
 
 \pnum
-\returns \tcode{last} for the overloads in namespace \tcode{ranges}.
+\returns \tcode{last} for the overload in namespace \tcode{ranges}.
 \end{addedblock}
 
 \pnum
@@ -5905,6 +5950,25 @@ For the overloads with no \tcode{ExecutionPolicy}, linear on average.
 For the overloads with an \tcode{ExecutionPolicy}, \bigoh{N} applications of
 the predicate, and \bigoh{N \log N} swaps, where $N = \tcode{last - first}$.
 \end{itemdescr}
+
+\begin{addedblock}
+\begin{itemdecl}
+namespace ranges {
+  template<RandomAccessRange R, class Comp = ranges::less<>, class Proj = identity>
+    requires Sortable<iterator_t<R>, Comp, Proj>
+    constexpr safe_iterator_t<R>
+      nth_element(R&& r, iterator_t<R> nth, Comp comp = {}, Proj proj = {});
+}
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+return ranges::nth_element(ranges::begin(r), nth, ranges::end(r), comp, proj);
+\end{codeblock}
+\end{itemdescr}
+\end{addedblock}
 
 
 \rSec2[alg.binary.search]{Binary search}
@@ -6829,11 +6893,6 @@ namespace ranges {
       class Proj = identity>
     requires Sortable<I, Comp, Proj>
     I inplace_merge(I first, I middle, S last, Comp comp = {}, Proj proj = {});
-  template<BidirectionalRange R, class Comp = ranges::less<>, class Proj = identity>
-    requires Sortable<iterator_t<R>, Comp, Proj>
-    safe_iterator_t<R>
-      inplace_merge(R&& r, iterator_t<R> middle, Comp comp = {},
-                    Proj proj = {});
 }
 \end{itemdecl}
 \end{addedblock}
@@ -6847,9 +6906,8 @@ Let \tcode{comp} be \tcode{less\{\}} for the overloads with no parameter
 
 \pnum
 \requires
-The ranges \range{first}{middle} and \range{middle}{last} shall be
-sorted with respect to \removed{\tcode{operator<} or} \tcode{comp}\added{,
-and \tcode{proj} for the overloads in namespace \tcode{ranges}}.
+\removed{The ranges} \range{first}{middle} and \range{middle}{last} shall be \added{valid ranges}
+sorted with respect to \removed{\tcode{operator<} or} \tcode{comp} \added{and any projection}.
 \added{For the overloads in namespace \tcode{std},}
 \tcode{BidirectionalIterator} shall \changed{satisfy}{meet} the
 \oldconcept{ValueSwappable} requirements\cxxiref{swappable.requirements}\removed{.
@@ -6883,7 +6941,7 @@ will be \tcode{false}.}
 
 \begin{addedblock}
 \pnum
-\returns \tcode{last} for the overloads in namespace \tcode{ranges}.
+\returns \tcode{last} for the overload in namespace \tcode{ranges}.
 \end{addedblock}
 
 \pnum
@@ -6901,6 +6959,25 @@ the number of comparisons.}
 \pnum
 \remarks Stable\cxxiref{algorithm.stable}.
 \end{itemdescr}
+
+\begin{addedblock}
+\begin{itemdecl}
+namespace ranges {
+  template<BidirectionalRange R, class Comp = ranges::less<>, class Proj = identity>
+    requires Sortable<iterator_t<R>, Comp, Proj>
+    safe_iterator_t<R>
+      inplace_merge(R&& r, iterator_t<R> middle, Comp comp = {}, Proj proj = {});
+}
+\end{itemdecl}
+
+\begin{itemdescr}
+\pnum
+\effects Equivalent to:
+\begin{codeblock}
+return ranges::inplace_merge(ranges::begin(r), middle, ranges::end(r), comp, proj);
+\end{codeblock}
+\end{itemdescr}
+\end{addedblock}
 
 
 \rSec2[alg.set.operations]{Set operations on sorted structures}
