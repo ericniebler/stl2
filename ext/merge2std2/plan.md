@@ -2,6 +2,7 @@ Followup:
 * [ ] Fix `bool` conversions in algorithms IS-wide. Also change "`E` holds" to "`E` is `true`".
 * [ ] Add something about potential SFINAE to the definition of expression-equivalent, and remove the notes from the CPOs.
 * [ ] Editorial issue: Consider using mathmode `\max` and `\min` uniformly in the algorithm specifications.
+* [ ] LWG issue: `copy_backward` and `move_backard` are "range-and-a-half" algorithms; we should add two range versions (and possibly drop the range-and-a-half versions in `std::ranges` before C++20).
 
 P0896:
 * [ ] The new "no explicitly specified template parameters" policy applies to both `std` and `std::ranges` `<algorithms>`, but inconsistently only to [specialized.algorithms] in `std::ranges`.
