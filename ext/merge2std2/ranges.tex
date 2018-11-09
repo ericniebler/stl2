@@ -2801,7 +2801,8 @@ namespace std::ranges {
   public:
     iota_view() = default;
     constexpr explicit iota_view(W value);
-    constexpr iota_view(W value, Bound bound); // \seebelow
+    constexpr iota_view(type_identity_t<W> value,
+                        type_identity_t<Bound> bound);
 
     constexpr iterator begin() const;
     constexpr sentinel end() const;
@@ -2838,14 +2839,20 @@ When an object is in the domain of both pre- and post-decrement,
 the object is said to be \term{decrementable}.
 
 \pnum
-Let \tcode{a} and \tcode{b} be incrementable and decrementable objects of type
-\tcode{I}. \tcode{I} models \tcode{\placeholdernc{Decrementable}} only if
+Let \tcode{a} and \tcode{b} be equal incrementable and decrementable objects
+of type \tcode{I}.
+\tcode{I} models \tcode{\placeholdernc{Decrementable}} only if
 \begin{itemize}
-\item \tcode{addressof(--a) == addressof(a)}.
-\item If \tcode{bool(a == b)} then \tcode{bool(a-- == b)}.
-\item If \tcode{bool(a == b)} then \tcode{bool(((void)a--, a) == --b)}.
-\item If \tcode{bool(a == b)} then \tcode{bool(--(++a) == b)} and
-\tcode{bool(++(--a) == b)}.
+\item If \tcode{a} and \tcode{b} are decrementable,
+  then the following are all true:
+  \begin{itemize}
+  \item \tcode{addressof(--a) == addressof(a)}
+  \item \tcode{bool(a-- == b)}
+  \item \tcode{bool(((void)a--, a) == --b)}
+  \item \tcode{bool(++(--a) == b)}.
+  \end{itemize}
+\item If \tcode{a} and \tcode{b} are incrementable,
+  then \tcode{bool(--(++a) == b)}.
 \end{itemize}
 \end{itemdescr}
 
@@ -2877,10 +2884,10 @@ and let \tcode{D} be \tcode{iter_difference_t<I>}.
 \item \tcode{(a + n)} is equal to \tcode{(a += n)}.
 \item For any two positive values
   \tcode{x} and \tcode{y} of type \tcode{D},
-  if \tcode{(a + D(x + y))} is valid, then
+  if \tcode{(a + D(x + y))} is well-defined, then
   \tcode{(a + D(x + y))} is equal to \tcode{((a + x) + y)}.
 \item \tcode{(a + D(0))} is equal to \tcode{a}.
-\item If \tcode{(a + D(n - 1))} is valid, then
+\item If \tcode{(a + D(n - 1))} is well-defined, then
   \tcode{(a + n)} is equal to \tcode{++(a + D(n - 1))}.
 \item \tcode{(b += -n)} is equal to \tcode{a}.
 \item \tcode{(b -= n)} is equal to \tcode{a}.
@@ -2908,7 +2915,7 @@ constexpr explicit iota_view(W value);
 
 \indexlibrary{\idxcode{iota_view}!\idxcode{iota_view}}%
 \begin{itemdecl}
-constexpr iota_view(W value, Bound bound);
+constexpr iota_view(type_identity_t<W> value, type_identity_t<Bound> bound);
 \end{itemdecl}
 
 \begin{itemdescr}
@@ -2920,11 +2927,6 @@ constexpr iota_view(W value, Bound bound);
 \pnum
 \effects Initializes \tcode{value_} with \tcode{value} and
 \tcode{bound_} with \tcode{bound}.
-
-\pnum
-\remarks This constructor does not contribute a function template to the overload
-set used when resolving a placeholder for a deduced class
-type\cxxiref{over.match.class.deduct}.
 \end{itemdescr}
 
 \indexlibrary{\idxcode{begin}!\idxcode{iota_view}}%
