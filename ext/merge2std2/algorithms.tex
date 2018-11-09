@@ -5333,8 +5333,13 @@ The induced relation is a strict total ordering.
 
 \pnum
 A sequence is
-\term{sorted with respect to a comparator \added{and projection}}
-\tcode{comp} \added{and \tcode{proj}} if for every iterator
+\removed{\term{sorted with respect to a comparator}
+\tcode{comp}}
+\defnx{\added{sorted with respect to \tcode{comp} and \tcode{proj}}}
+{sorted with respect to comp and proj@sorted with respect to \tcode{comp} and \tcode{proj}}\added{
+for a comparator and projection
+\tcode{comp} and \tcode{proj}}
+if for every iterator
 \tcode{i}
 pointing to the sequence and every non-negative integer
 \tcode{n}
@@ -5342,7 +5347,10 @@ such that
 \tcode{i + n}
 is a valid iterator pointing to an element of the sequence,
 \removed{\tcode{comp(*(i + n), *i) == false}.}
-\added{\tcode{bool(invoke(comp, invoke(proj, *(i + n)), invoke(proj, *i)))} is \tcode{false}.}
+\begin{codeblock}
+@\added{bool(invoke(comp, invoke(proj, *(i + n)), invoke(proj, *i)))}@
+\end{codeblock}
+\added{is \tcode{false}.}
 
 \begin{addedblock}
 \pnum
@@ -5707,16 +5715,20 @@ shall be writable\iref{iterator.requirements.general} to \tcode{result_first}}.
 \begin{addedblock}
 \pnum
 \expects
-For iterators \tcode{i1} and \tcode{i2} in \range{first}{last}, and
-iterators \tcode{j1} and \tcode{j2} in \range{result_first}{result_last},
-after evaluating the assignment \tcode{*j2 = *i2},
-\tcode{bool(invoke(comp, invoke(proj1, *i1), invoke(proj2, *j2)))}
+For iterators \tcode{a1} and \tcode{b1} in \range{first}{last}, and
+iterators \tcode{x2} and \tcode{y2} in \range{result_first}{result_last},
+after evaluating the assignment \tcode{*y2 = *b1},
+\begin{codeblock}
+bool(invoke(comp, invoke(proj1, *a1), invoke(proj2, *y2)))
+\end{codeblock}
 shall be equal to
-\tcode{bool(invoke(comp, invoke(proj2, *j1), invoke(proj2, *j2)))}
-after evaluating the assignment \tcode{*j1 = *i1}.
+\begin{codeblock}
+bool(invoke(comp, invoke(proj2, *x2), invoke(proj2, *y2)))
+\end{codeblock}
+after evaluating the assignment \tcode{*x2 = *a1}.
 \begin{note}
 Writing a value from the input range into the output range does not affect
-how it is ordered by \tcode{comp}.
+how it is ordered by \tcode{comp} and \tcode{proj1} or \tcode{proj2}.
 \end{note}
 \end{addedblock}
 
@@ -6229,7 +6241,7 @@ for the overloads in namespace \tcode{std}}.
 \complexity
 At most
 $2 * \log_2(\tcode{last - first}) + \bigoh{1}$
-comparisons \added{and applications of any projection}.
+comparisons \added{and projections}.
 \end{itemdescr}
 
 
@@ -6314,7 +6326,7 @@ or}
 \complexity
 At most
 $\log_2(\tcode{last - first}) + \bigoh{1}$
-comparisons \added{and applications of any projection}.
+comparisons \added{and projections}.
 \end{itemdescr}
 
 
@@ -6516,7 +6528,7 @@ at most $N \log N$ swaps,
 but only \bigoh{N} swaps if there is enough extra memory.
 Exactly $N$ applications of the predicate \added{and projection}.
 \item For the overload with an \tcode{ExecutionPolicy},
-\bigoh{N \log N} swaps and \bigoh{N} applications of the predicate \added{and projection}.
+\bigoh{N \log N} swaps and \bigoh{N} applications of the predicate.
 \end{itemize}
 \end{itemdescr}
 
@@ -6563,7 +6575,8 @@ and let $E(x)$ be \tcode{bool(invoke(pred, invoke(proj, $x$)))}.
 
 \pnum
 \requires
-The input range shall not overlap with either of the output ranges.
+The input range \added{and output ranges} shall not overlap
+\removed{with either of the output ranges}.
 For the overloads in namespace \tcode{std},
 the expression \tcode{*first} shall be
 writable\iref{iterator.requirements.general} to
@@ -6774,7 +6787,7 @@ is \tcode{true}.
 \item For the overloads with no \tcode{ExecutionPolicy},
   at most $N - 1$ comparisons \added{and applications of each projection}.
 \item For the overloads with an \tcode{ExecutionPolicy},
-  \bigoh{N} comparisons \added{and applications of each projection}.
+  \bigoh{N} comparisons.
 \end{itemize}
 
 \pnum
@@ -6872,7 +6885,7 @@ memory is available, exactly $N - 1$ comparisons.
 memory is available, \bigoh{N \log N} comparisons.}
 \item \added{Otherwise} \removed{For the overloads with an \tcode{ExecutionPolicy}}, \bigoh{N \log N} comparisons.
 \end{itemize}
-\added{In either case, exactly twice as many projections as comparisons.}
+\added{In either case, twice as many projections as comparisons.}
 
 \pnum
 \remarks Stable\cxxiref{algorithm.stable}.
@@ -7049,11 +7062,18 @@ namespace ranges {
 \end{addedblock}
 
 \begin{itemdescr}
+\begin{addedblock}
+\pnum
+Let \tcode{comp} be \tcode{less\{\}},
+and \tcode{proj1} and \tcode{proj2} be \tcode{identity\{\}}
+for the overloads with no parameters by those names.
+\end{addedblock}
+
 \pnum
 \requires
 \added{The ranges \range{first1}{last1} and \range{first2}{last2} shall be
-sorted with respect to \tcode{comp}, and the corresponding projection
-\tcode{proj1} or \tcode{proj2} for the overloads in namespace \tcode{ranges}}.
+sorted with respect to \tcode{comp} and
+\tcode{proj1} or \tcode{proj2}, respectively.}
 The resulting range shall not overlap with either of the original ranges.
 
 \pnum
@@ -7063,10 +7083,10 @@ that is, the set of elements that are present in one or both of the ranges.
 
 \pnum
 \returns
-\removed{T}\added{Let \tcode{result_last} be t}he end of the
+\added{Let \tcode{result_last} be t}\removed{T}he end of the
 constructed range.
+\added{Returns}
 \begin{addedblock}
-Returns
 \begin{itemize}
 \item \tcode{result_last} for the overloads in namespace \tcode{std}, or
 \item \tcode{\{last1, last2, result_last\}} for the overloads in
@@ -7078,15 +7098,15 @@ Returns
 \complexity
 At most
 \tcode{2 * ((last1 - first1) + (last2 - first2)) - 1}
-comparisons \added{and applications of any projections}.
+comparisons \added{and applications of each projection}.
 
 \pnum
 \remarks \added{Stable\cxxiref{algorithm.stable}.}
 If \range{first1}{last1} contains $m$ elements that are equivalent to
 each other and \range{first2}{last2} contains $n$ elements that are equivalent
-to them, then all $m$ elements from the first range shall be copied to the output
+to them, then all $m$ elements from the first range \changed{shall be}{are} copied to the output
 range, in order, and then \added{the final} $\max(n - m, 0)$
-elements from the second range shall be copied to the output range, in order.
+elements from the second range \changed{shall be}{are} copied to the output range, in order.
 \end{itemdescr}
 
 
@@ -7142,11 +7162,18 @@ namespace ranges {
 \end{addedblock}
 
 \begin{itemdescr}
+\begin{addedblock}
+\pnum
+Let \tcode{comp} be \tcode{less\{\}},
+and \tcode{proj1} and \tcode{proj2} be \tcode{identity\{\}}
+for the overloads with no parameters by those names.
+\end{addedblock}
+
 \pnum
 \requires
 \added{The ranges \range{first1}{last1} and \range{first2}{last2} shall be
-sorted with respect to \tcode{comp}, and the corresponding projection
-\tcode{proj1} or \tcode{proj2} for the overloads in namespace \tcode{ranges}}.
+sorted with respect to \tcode{comp} and
+\tcode{proj1} or \tcode{proj2}, respectively.}
 The resulting range shall not overlap with either of the original ranges.
 
 \pnum
@@ -7156,10 +7183,10 @@ that is, the set of elements that are present in both of the ranges.
 
 \pnum
 \returns
-\removed{T}\added{Let \tcode{result_last} be t}he end of the
+\added{Let \tcode{result_last} be t}\removed{T}he end of the
 constructed range.
+\added{Returns}
 \begin{addedblock}
-Returns
 \begin{itemize}
 \item \tcode{result_last} for the overloads in namespace \tcode{std}, or
 \item \tcode{\{last1, last2, result_last\}} for the overloads in
@@ -7171,13 +7198,13 @@ Returns
 \complexity
 At most
 \tcode{2 * ((last1 - first1) + (last2 - first2)) - 1}
-comparisons \added{and applications of any projections}.
+comparisons \added{and applications of each projection}.
 
 \pnum
 \remarks \added{Stable\cxxiref{algorithm.stable}.}
 If \range{first1}{last1} contains $m$ elements that are equivalent to
 each other and \range{first2}{last2} contains $n$ elements that are equivalent
-to them, the first $\min(m, n)$ elements shall be copied from the first range
+to them, the first $\min(m, n)$ elements \changed{shall be}{are} copied from the first range
 to the output range, in order.
 \end{itemdescr}
 
@@ -7237,8 +7264,8 @@ namespace ranges {
 \pnum
 \requires
 \added{The ranges \range{first1}{last1} and \range{first2}{last2} shall be
-sorted with respect to \tcode{comp}, and the corresponding projection
-\tcode{proj1} or \tcode{proj2} for the overloads in namespace \tcode{ranges}}.
+sorted with respect to \tcode{comp} and
+\tcode{proj1} or \tcode{proj2}, respectively.}
 The resulting range shall not overlap with either of the original ranges.
 
 \pnum
@@ -7253,10 +7280,10 @@ The elements in the constructed range are sorted.
 
 \pnum
 \returns
-\removed{T}\added{Let \tcode{result_last} be t}he end of the
+\added{Let \tcode{result_last} be t}\removed{T}he end of the
 constructed range.
+\added{Returns}
 \begin{addedblock}
-Returns
 \begin{itemize}
 \item \tcode{result_last} for the overloads in namespace \tcode{std}, or
 \item \tcode{\{last1, result_last\}} for the overloads in
@@ -7268,7 +7295,7 @@ Returns
 \complexity
 At most
 \tcode{2 * ((last1 - first1) + (last2 - first2)) - 1}
-comparisons \added{and applications of any projections}.
+comparisons \added{and applications of each projection}.
 
 \pnum
 \remarks
@@ -7282,7 +7309,7 @@ elements that are equivalent to them, the last
 $\max(m - n, 0)$
 elements from
 \range{first1}{last1}
-shall be copied to the output range.
+\changed{shall be}{are} copied to the output range.
 \end{itemdescr}
 
 
@@ -7342,8 +7369,8 @@ namespace ranges {
 \pnum
 \requires
 \added{The ranges \range{first1}{last1} and \range{first2}{last2} shall be
-sorted with respect to \tcode{comp}, and the corresponding projection
-\tcode{proj1} or \tcode{proj2} for the overloads in namespace \tcode{ranges}}.
+sorted with respect to \tcode{comp} and
+\tcode{proj1} or \tcode{proj2}, respectively.}
 The resulting range shall not overlap with either of the original ranges.
 
 \pnum
@@ -7362,10 +7389,10 @@ The elements in the constructed range are sorted.
 
 \pnum
 \returns
-\removed{T}\added{Let \tcode{result_last} be t}he end of the
+\added{Let \tcode{result_last} be t}\removed{T}he end of the
 constructed range.
+\added{Returns}
 \begin{addedblock}
-Returns
 \begin{itemize}
 \item \tcode{result_last} for the overloads in namespace \tcode{std}, or
 \item \tcode{\{last1, last2, result_last\}} for the overloads in
@@ -7377,13 +7404,13 @@ Returns
 \complexity
 At most
 \tcode{2 * ((last1 - first1) + (last2 - first2)) - 1}
-comparisons \added{and applications of any projections}.
+comparisons \added{and applications of each projection}.
 
 \pnum
 \remarks
 If \range{first1}{last1} contains $m$ elements that are equivalent to each other and
 \range{first2}{last2} contains $n$ elements that are equivalent to them, then
-$|m - n|$ of those elements shall be copied to the output range: the last
+$|m - n|$ of those elements \changed{shall be}{are} copied to the output range: the last
 $m - n$ of these elements from \range{first1}{last1} if $m > n$, and the last
 $n - m$ of these elements from \range{first2}{last2} if $m < n$.
 \end{itemdescr}
@@ -7391,15 +7418,22 @@ $n - m$ of these elements from \range{first2}{last2} if $m < n$.
 
 \rSec2[alg.heap.operations]{Heap operations}
 
+\begin{removedblock}
 \pnum
-\removed{A
+A
 \term{heap}
 is a particular organization of elements in a range between two random access iterators
-\range{a}{b} such that:}
-\added{A random access range \range{a}{b} is a
-\term{heap with respect to a comparator and projection}
-\tcode{comp} and \tcode{proj}
-if its elements are organized such that:}
+\range{a}{b} such that:
+\end{removedblock}
+
+\begin{addedblock}
+\pnum
+A random access range \range{a}{b} is a
+\defnx{heap with respect to \tcode{comp} and \tcode{proj}}
+{heap with respect to comp and proj@heap with respect to \tcode{comp} and \tcode{proj}}
+for a comparator and projection \tcode{comp} and \tcode{proj}
+if its elements are organized such that:
+\end{addedblock}
 
 \begin{itemize}
 \item With \tcode{$N$ = b - a}, for all $i$, $0 < i < N$,
@@ -7686,7 +7720,7 @@ Sorts elements in the heap
 At most $2N \log N$
 comparisons, where
 $N = \tcode{last - first}$\added{,
-and exactly twice as many projections}.
+and twice as many projections}.
 \end{itemdescr}
 
 
@@ -8122,13 +8156,9 @@ namespace ranges {
 \begin{itemdescr}
 \begin{addedblock}
 \pnum
-Let \tcode{comp} be \tcode{less\{\}} for the overloads with no parameter
-\tcode{comp}, and let $E$ be
-\begin{itemize}
-\item \tcode{bool(comp(*j, *i))} for the overloads in namespace \tcode{std}, or
-\item \tcode{bool(invoke(comp, invoke(proj, *j), invoke(proj, *i)))}
-  for the overloads in namespace \tcode{ranges}.
-\end{itemize}
+Let \tcode{comp} be \tcode{less\{\}}
+and \tcode{proj} be \tcode{identity\{\}}
+for the overloads with no parameters by those names.
 \end{addedblock}
 
 \pnum
@@ -8140,8 +8170,11 @@ in the range
 such that for every iterator
 \tcode{j}
 in the range
-\range{first}{last}\added{,
-$E$ is \tcode{false}.}
+\range{first}{last}\added{,}
+\begin{codeblock}
+@\added{bool(invoke(comp, invoke(proj, *j), invoke(proj, *i)))}@
+\end{codeblock}
+\added{is \tcode{false}.}
 \removed{the following corresponding conditions hold:
 \tcode{!(*j < *i)}
 or
@@ -8156,7 +8189,7 @@ if
 Exactly
 $\max(\tcode{last - first - 1}, 0)$
 \removed{applications of the corresponding} comparisons
-\added{and twice as many applications of the projection, if any}.
+\added{and twice as many projections}.
 \end{itemdescr}
 
 
@@ -8193,13 +8226,9 @@ namespace ranges {
 \begin{itemdescr}
 \begin{addedblock}
 \pnum
-Let \tcode{comp} be \tcode{less\{\}} for the overloads with no parameter
-\tcode{comp}, and let $E$ be
-\begin{itemize}
-\item \tcode{bool(comp(*i, *j))} for the overloads in namespace \tcode{std}, or
-\item \tcode{bool(invoke(comp, invoke(proj, *i), invoke(proj, *j)))}
-  for the overloads in namespace \tcode{ranges}.
-\end{itemize}
+Let \tcode{comp} be \tcode{less\{\}}
+and \tcode{proj} be \tcode{identity\{\}}
+for the overloads with no parameters by those names.
 \end{addedblock}
 
 \pnum
@@ -8211,8 +8240,11 @@ in the range
 such that for every iterator
 \tcode{j}
 in the range
-\range{first}{last}\added{,
-$E$ is \tcode{false}.}
+\range{first}{last}\added{,}
+\begin{codeblock}
+@\added{bool(invoke(comp, invoke(proj, *i), invoke(proj, *j)))}@
+\end{codeblock}
+\added{is \tcode{false}.}
 \removed{the following corresponding conditions hold:
 \tcode{!(*i < *j)}
 or
@@ -8227,7 +8259,7 @@ if
 Exactly
 $\max(\tcode{last - first - 1}, 0)$
 \removed{applications of the corresponding} comparisons
-\added{and twice as many applications of the projection, if any}.
+\added{and twice as many projections}.
 \end{itemdescr}
 
 
@@ -8365,8 +8397,8 @@ elements that are not equivalent.
 
 \pnum
 \begin{example}
-\removed{The following sample implementation satisfies these requirements:}
-\added{\tcode{ranges::lexicographical_compare(I1, S1, I2, S2, Comp, Proj1, Proj2)}
+\removed{The following sample implementation satisfies these requirements:} \\
+\tcode{\added{ranges::lexicographical_compare(I1, S1, I2, S2, Comp, Proj1, Proj2)}}\added{
 could be implemented as:}
 \begin{codeblock}
 for ( ; first1 != last1 && first2 != last2; ++first1, (void) ++first2) {
@@ -8424,8 +8456,8 @@ namespace ranges {
 \begin{addedblock}
 \pnum
 Let \tcode{comp} be \tcode{less\{\}}
-and \tcode{proj} be \tcode{identity\{\}} for overloads
-with no parameters by those names.
+and \tcode{proj} be \tcode{identity\{\}}
+for overloads with no parameters by those names.
 \end{addedblock}
 
 \pnum
@@ -8444,8 +8476,8 @@ lexicographically sorted with respect to
 \removed{\tcode{operator<} or}
 \tcode{comp} \added{and \tcode{proj}}.
 \added{If no such permutation exists,
-transforms the sequence into the smallest permutation;
-that is, the ascendingly sorted one.}
+transforms the sequence into the first permutation;
+that is, the ascendingly-sorted one.}
 
 \pnum
 \returns
@@ -8494,8 +8526,8 @@ namespace ranges {
 \begin{addedblock}
 \pnum
 Let \tcode{comp} be \tcode{less\{\}}
-and \tcode{proj} be \tcode{identity\{\}} for overloads
-with no parameters by those names.
+and \tcode{proj} be \tcode{identity\{\}}
+for overloads with no parameters by those names.
 \end{addedblock}
 
 \pnum
@@ -8514,8 +8546,8 @@ lexicographically sorted with respect to
 \removed{\tcode{operator<} or}
 \tcode{comp} \added{and \tcode{proj}}.
 \added{If no such permutation exists,
-transforms the sequence into the largest permutation;
-that is, the descendingly sorted one.}
+transforms the sequence into the last permutation;
+that is, the descendingly-sorted one.}
 
 \pnum
 \returns
