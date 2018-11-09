@@ -1054,6 +1054,10 @@ namespace std::ranges {
         return ranges::empty(derived()) ? nullptr : addressof(*ranges::begin(derived()));
       }
 
+    constexpr auto size() requires ForwardRange<D> &&
+      SizedSentinel<sentinel_t<D>, iterator_t<D>> {
+        return ranges::end(derived()) - ranges::begin(derived());
+      }
     constexpr auto size() const requires ForwardRange<const D> &&
       SizedSentinel<sentinel_t<const D>, iterator_t<const D>> {
         return ranges::end(derived()) - ranges::begin(derived());
@@ -4276,9 +4280,9 @@ split_view sentence{str, ' '};
 for (auto word : sentence) {
   for (char ch : word)
     cout << ch;
-  cout << " *";
+  cout << '*';
 }
-// The above prints: the *quick *brown *fox *
+// The above prints: the*quick*brown*fox*
 \end{codeblock}
 \end{example}
 
@@ -4811,7 +4815,7 @@ Then the expression \tcode{view::counted(E, F)} is expression-equivalent to:
   \tcode{decltype((F))} models \libconcept{ConvertibleTo<iter_difference_t<T>>},
   \begin{itemize}
   \item \tcode{subrange\{E, E + static_cast<iter_difference_t<T>>(F)\}}
-    if \tcode{T} models \libconcept{ContiguousIterator}.
+    if \tcode{T} models \libconcept{RandomAccessIterator}.
   \item Otherwise,
     \tcode{subrange\{counted_iterator\{E, F\}, default_sentinel\}}.
 \end{itemize}
@@ -4830,8 +4834,8 @@ Then the expression \tcode{view::counted(E, F)} is expression-equivalent to:
 
 \pnum
 \tcode{common_view} takes a \libconcept{View} which has different types for
-its iterator and sentinel and turns it into an equivalent \libconcept{View}
-where the iterator and sentinel have the same type.
+its iterator and sentinel and turns it into a \libconcept{View} of the same
+elements with an iterator and sentinel of the same type.
 
 \pnum
 \begin{note}
@@ -4875,6 +4879,9 @@ namespace std::ranges {
 
     constexpr V base() const;
 
+    constexpr auto size() requires SizedRange<V> {
+      return ranges::size(base_);
+    }
     constexpr auto size() const requires SizedRange<const V> {
       return ranges::size(base_);
     }
@@ -5010,6 +5017,9 @@ namespace std::ranges {
     constexpr reverse_iterator<iterator_t<const V>> end() const
       requires CommonRange<const V>;
 
+    constexpr auto size() requires SizedRange<V> {
+      return ranges::size(base_);
+    }
     constexpr auto size() const requires SizedRange<const V> {
       return ranges::size(base_);
     }
