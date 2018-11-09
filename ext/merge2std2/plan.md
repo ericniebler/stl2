@@ -2,7 +2,7 @@ Followup:
 * [ ] Fix `bool` conversions in algorithms IS-wide. Also change "`E` holds" to "`E` is `true`".
 * [ ] Add something about potential SFINAE to the definition of expression-equivalent, and remove the notes from the CPOs.
 * [ ] Editorial issue: Consider using mathmode `\max` and `\min` uniformly in the algorithm specifications.
-* [ ] LWG issue: `copy_backward` and `move_backard` are "range-and-a-half" algorithms; we should add two range versions (and possibly drop the range-and-a-half versions in `std::ranges` before C++20).
+* [ ] LWG issue: `copy_backward` and `move_backward` are "range-and-a-half" algorithms; we should add two range versions (and possibly drop the range-and-a-half versions in `std::ranges` before C++20).
 * [ ] Editorial issue: audit algorithms for more cases where "Let $N$ be `last - first`" could cleanup wording.
 * [ ] MC: We have concerns about the words of `is_permutation`. AM: There is an issue with the created iterator interacting with the projection.
 * [ ] Should `<numeric>` export `__cpp_lib_concepts` since it defines `UniformRandomNumberGenerator`?
