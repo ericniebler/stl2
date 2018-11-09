@@ -2332,10 +2332,11 @@ return @\changed{distance(a, b)}{n}@;
 
 \begin{addedblock}
 \pnum
-In the description of algorithm return values, sentinel values are sometimes
+In the description of algorithm return values, a sentinel value \tcode{s}
+denoting the end of a range \range{i}{s} is sometimes
 returned where an iterator is expected. In these cases, the semantics are as
 if the sentinel is converted into an iterator using
-\tcode{ranges::next(first, last)}.
+\tcode{ranges::next(i, s)}.
 
 \pnum
 Overloads of algorithms that take \libconcept{Range} arguments\iref{range.range}
@@ -4437,7 +4438,7 @@ and \tcode{first} for negative values.}
 Exactly \added{$N$}
 \removed{\tcode{last - first},
 \tcode{n}, or 0}
-invocations of \tcode{gen} and assignments\removed{, respectively}.
+\changed{invocations}{evaluations} of \tcode{gen\added{()}} and assignments\removed{, respectively}.
 \end{itemdescr}
 
 
@@ -5416,8 +5417,9 @@ namespace ranges {
 \begin{itemdescr}
 \begin{addedblock}
 \pnum
-Let \tcode{comp} be \tcode{equal_to\{\}} for the overloads
-with no parameter \tcode{comp}.
+Let \tcode{comp} be \tcode{less\{\}}
+and \tcode{proj} be \tcode{identity\{\}}
+for the overloads with no parameters by those names.
 \end{addedblock}
 
 \pnum
@@ -5432,7 +5434,7 @@ The}{ and the} type of \tcode{*first} shall \changed{satisfy}{meet} the
 \pnum
 \effects
 Sorts the elements in the range \range{first}{last}
-\added{with respect to \tcode{comp} and any projection}.
+\added{with respect to \tcode{comp} and \tcode{proj}}.
 
 \begin{addedblock}
 \pnum
@@ -5442,8 +5444,7 @@ Sorts the elements in the range \range{first}{last}
 \pnum
 \complexity
 \added{Let $N$ be \tcode{last - first}.} \bigoh{N \log N}
-comparisons\added{ and twice as many applications of any
-projection.}\removed{, where $N = \tcode{last - first}$.}
+comparisons \added{and projections.}\removed{, where $N = \tcode{last - first}$.}
 \end{itemdescr}
 
 
@@ -5483,8 +5484,9 @@ namespace ranges {
 \begin{itemdescr}
 \begin{addedblock}
 \pnum
-Let \tcode{comp} be \tcode{equal_to\{\}} for the overloads
-with no parameter \tcode{comp}.
+Let \tcode{comp} be \tcode{less\{\}}
+and \tcode{proj} be \tcode{identity\{\}}
+for the overloads with no parameters by those names.
 \end{addedblock}
 
 \pnum
@@ -5500,7 +5502,7 @@ The} \added{and the} type of \tcode{*first} shall
 \pnum
 \effects
 Sorts the elements in the range \range{first}{last}
-\added{with respect to \tcode{comp} and any projection}.
+\added{with respect to \tcode{comp} and \tcode{proj}}.
 
 \begin{addedblock}
 \pnum
@@ -5512,7 +5514,7 @@ Sorts the elements in the range \range{first}{last}
 \added{Let $N$ be \tcode{last - first}.
 If enough extra memory is available, $N \log(N)$ comparisons.
 Otherwise, at most $N \log^2(N)$ comparisons.
-In either case, twice as many applications of any projection as
+In either case, twice as many projections as
 the number of comparisons.} \removed{At most $N \log^2(N)$
 comparisons, where $N = \tcode{last - first}$,
 but only $N \log N$ comparisons if there is enough extra memory.}
@@ -5563,8 +5565,9 @@ namespace ranges {
 \begin{itemdescr}
 \begin{addedblock}
 \pnum
-Let \tcode{comp} be \tcode{equal_to\{\}} for the overloads
-with no parameter \tcode{comp}.
+Let \tcode{comp} be \tcode{less\{\}}
+and \tcode{proj} be \tcode{identity\{\}}
+for the overloads with no parameters by those names.
 \end{addedblock}
 
 \pnum
@@ -5584,7 +5587,7 @@ Places the first
 \tcode{middle - first}
 \removed{sorted} elements from the range
 \range{first}{last}
-\added{as sorted with respect to \tcode{comp} and any projection,}
+\added{as sorted with respect to \tcode{comp} and \tcode{proj},}
 into the range
 \range{first}{middle}.
 The rest of the elements in the range
@@ -5601,8 +5604,7 @@ are placed in an unspecified order.
 \complexity
 Approximately
 \tcode{(last - first) * log(middle - first)}
-comparisons\added{, and exactly twice as many applications
-of any projection}.
+comparisons\added{, and twice as many projections}.
 \end{itemdescr}
 
 
@@ -5735,7 +5737,7 @@ Places the first
 \complexity
 Approximately
 \tcode{(last - first) * log\changed{(min(last - first, result_last - result_first))}{ $N$}}
-comparisons\added{, and exactly twice as many applications of any projections}.
+comparisons\added{, and twice as many projections}.
 \end{itemdescr}
 
 
@@ -5853,11 +5855,19 @@ namespace ranges {
 \end{addedblock}
 
 \begin{itemdescr}
+\begin{addedblock}
 \pnum
-\returns If \tcode{(last - first) < 2}, returns
-\tcode{last}. Otherwise, returns
-the last iterator \tcode{i} in \crange{first}{last} for which the
-range \range{first}{i} is sorted \added{with respect to \tcode{comp} and any projection}.
+Let \tcode{comp} be \tcode{less\{\}}
+and \tcode{proj} be \tcode{identity\{\}}
+for the overloads with no parameters by those names.
+\end{addedblock}
+
+\pnum
+\returns \removed{If \tcode{(last - first) < 2}, returns
+\tcode{last}. Otherwise, returns t}\added{T}he last iterator
+\tcode{i} in \crange{first}{last} for which
+the range \range{first}{i} is
+sorted \added{with respect to \tcode{comp} and \tcode{proj}}.
 
 \pnum
 \complexity Linear.
@@ -5899,8 +5909,9 @@ namespace ranges {
 \begin{itemdescr}
 \begin{addedblock}
 \pnum
-Let \tcode{comp} be \tcode{less\{\}} for the overloads with no parameter
-named \tcode{comp}.
+Let \tcode{comp} be \tcode{less\{\}}
+and \tcode{proj} be \tcode{identity\{\}}
+for the overloads with no parameters by those names.
 \end{addedblock}
 
 \pnum
@@ -5921,7 +5932,7 @@ After
 the element in the position pointed to by \tcode{nth}
 is the element that would be
 in that position if the whole range were
-sorted \added{with respect to \tcode{comp} and any projection},
+sorted \added{with respect to \tcode{comp} and \tcode{proj}},
 unless \tcode{nth == last}.
 Also for every iterator
 \tcode{i}
@@ -5935,14 +5946,10 @@ it holds that:
 \removed{\tcode{!(*j < *i)}
 or
 \tcode{comp(*j, *i) == false}.}
-\begin{addedblock}
-\begin{itemize}
-\item \tcode{bool(comp(*j, *i))} is \tcode{false} for the overloads in namespace
-  \tcode{std}, or
-\item \tcode{bool(invoke(comp, invoke(proj, *j), invoke(proj, *i)))} is
-  \tcode{false} for the overload in namespace \tcode{ranges}.
-\end{itemize}
+\added{\tcode{bool(invoke(comp, invoke(proj, *j), invoke(proj, *i)))}
+is \tcode{false}.}
 
+\begin{addedblock}
 \pnum
 \returns \tcode{last} for the overload in namespace \tcode{ranges}.
 \end{addedblock}
