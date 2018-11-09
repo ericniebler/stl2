@@ -202,13 +202,13 @@ WB: "is intended for use" -> "is used to constrain" [so changed.]
 
 CC: Delete the note [Replaced by `// not defined` comment.]
 
-#### [commonalgoreq.general]
+#### [common.alg.req.general]
 WB: "on their arguments" -> "on its arguments". [This is correct, but unclear: replaced "their" with its antecedent "the concepts'". Also strike the noise word "explicitly".]
 
-#### [commonalgoreq.indirectlymovable]
+#### [common.alg.req.indirectlymovable]
 TS (offline): Presumably we need a similar rule [specifying that an rvalue RHS is valid-but-unspecified] for the `Assignable` part as well? [Nope: `Assignable` already has that semantic.]
 
-#### [commonalgoreq.indirectlyswappable]
+#### [common.alg.req.indirectlyswappable]
 RD: p2 here differs from previous subclauses with usage of "only". [Rephrased.]
 
 TS (offline): It looks like `I1` and `I2` can't be reference types, so why are we forwarding? [The requires-expression paramers are references [to avoid decay](https://github.com/ericniebler/stl2/issues/241). We went too far making them *rvalue* references, however. Changed to lvalue reference types.]

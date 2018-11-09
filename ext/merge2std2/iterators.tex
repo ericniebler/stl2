@@ -176,34 +176,34 @@ namespace std {
   template<WeaklyIncrementable I, class Proj>
     struct incrementable_traits<projected<I, Proj>>;
 
-  // \ref{commonalgoreq}, common algorithm requirements
-  // \ref{commonalgoreq.indirectlymovable} IndirectlyMovable
+  // \ref{common.alg.req}, common algorithm requirements
+  // \ref{common.alg.req.indirectlymovable} IndirectlyMovable
   template<class In, class Out>
     concept IndirectlyMovable = @\seebelownc@;
 
   template<class In, class Out>
     concept IndirectlyMovableStorable = @\seebelownc@;
 
-  // \ref{commonalgoreq.indirectlycopyable} IndirectlyCopyable
+  // \ref{common.alg.req.indirectlycopyable} IndirectlyCopyable
   template<class In, class Out>
     concept IndirectlyCopyable = @\seebelownc@;
 
   template<class In, class Out>
     concept IndirectlyCopyableStorable = @\seebelownc@;
 
-  // \ref{commonalgoreq.indirectlyswappable} IndirectlySwappable
+  // \ref{common.alg.req.indirectlyswappable} IndirectlySwappable
   template<class I1, class I2 = I1>
     concept IndirectlySwappable = @\seebelownc@;
 
-  // \ref{commonalgoreq.indirectlycomparable} IndirectlyComparable
+  // \ref{common.alg.req.indirectlycomparable} IndirectlyComparable
   template<class I1, class I2, class R, class P1 = identity, class P2 = identity>
     concept IndirectlyComparable = @\seebelownc@;
 
-  // \ref{commonalgoreq.permutable} Permutable
+  // \ref{common.alg.req.permutable} Permutable
   template<class I>
     concept Permutable = @\seebelownc@;
 
-  // \ref{commonalgoreq.mergeable} Mergeable
+  // \ref{common.alg.req.mergeable} Mergeable
   template<class I1, class I2, class Out,
       class R = ranges::less<>, class P1 = identity, class P2 = identity>
     concept Mergeable = @\seebelownc@;
@@ -800,8 +800,9 @@ be defined as the readable type's value type.
 
   template<class I>
     requires is_array_v<I>
-  struct readable_traits<I>
-    : readable_traits<decay_t<I>> { };
+  struct readable_traits<I> {
+    using value_type = remove_cv_t<remove_extent_t<I>>;
+  };
 
   template<class I>
   struct readable_traits<const I>
@@ -1233,7 +1234,7 @@ struct I {
 };
 \end{codeblock}
 \tcode{iterator_traits<I>::iterator_category} denotes \tcode{input_iterator_tag},
-and \tcode{\placeholder{ITER_CONCEPT}(I)} denotes \tcode{random_access_iterator}.
+and \tcode{\placeholder{ITER_CONCEPT}(I)} denotes \tcode{random_access_iterator_tag}.
 \end{example}
 
 \rSec3[iterator.concept.readable]{Concept \libconcept{Readable}}
@@ -1653,13 +1654,14 @@ Let \tcode{a} and \tcode{b} be equal objects of type \tcode{I}.
 \tcode{I} models \libconcept{BidirectionalIterator} only if:
 
 \begin{itemize}
-\item If \tcode{a} and \tcode{b} are decrementable, then
+\item If \tcode{a} and \tcode{b} are decrementable,
+  then all of the following are \tcode{true}:
   \begin{itemize}
-  \item \tcode{addressof(--a) == addressof(a)},
-  \item \tcode{bool(a-- == b)},
-  \item after evaluating both \tcode{a--} and \tcode{--b},
-    \tcode{bool(a == b)} is still \tcode{true}, and
-  \item \tcode{bool(++(--a) == b)}.
+  \item \tcode{addressof(--a) == addressof(a)}
+  \item \tcode{bool(a-- == b)}
+  \item after evaluating both \tcode{a--} and \tcode{--b}
+    \tcode{bool(a == b)} is still \tcode{true}
+  \item \tcode{bool(++(--a) == b)}
   \end{itemize}
   \item If \tcode{a} and \tcode{b} are incrementable, then
     \tcode{bool(--(++a) == b)}.
@@ -1695,8 +1697,8 @@ template<class I>
 Let \tcode{a} and \tcode{b} be valid iterators of type \tcode{I}
 such that \tcode{b} is reachable from \tcode{a}
 after \tcode{n} applications of \tcode{++a},
-for some value \tcode{n} of type \tcode{iter_difference_t<I>},
-and let \tcode{D} be \tcode{iter_difference_t<I>}.
+let \tcode{D} be \tcode{iter_difference_t<I>},
+and let \tcode{n} denote a value of type \tcode{D}.
 \tcode{I} models \libconcept{RandomAccessIterator} only if
 
 \begin{itemize}
@@ -1880,7 +1882,7 @@ namespace std {
 Class template \tcode{projected} is used to constrain algorithms
 that accept callable objects and projections\iref{defns.projection}.
 It combines a \libconcept{Readable} type \tcode{I} and
-a function \tcode{Proj} into a new \libconcept{Readable} type
+a callable object type \tcode{Proj} into a new \libconcept{Readable} type
 whose \tcode{reference} type is the result of applying
 \tcode{Proj} to the \tcode{iter_reference_t} of \tcode{I}.
 
@@ -1901,8 +1903,8 @@ namespace std {
 \end{codeblock}
 
 
-\rSec2[commonalgoreq]{Common algorithm requirements}
-\rSec3[commonalgoreq.general]{General}
+\rSec2[common.alg.req]{Common algorithm requirements}
+\rSec3[common.alg.req.general]{General}
 
 \pnum
 There are several additional iterator concepts that are commonly applied
@@ -1928,7 +1930,7 @@ used in the concepts below imposes constraints on the concepts' arguments
 in addition to those that appear in the concepts' bodies\iref{range.comparisons}.
 \end{note}
 
-\rSec3[commonalgoreq.indirectlymovable]{Concept \libconcept{IndirectlyMovable}}
+\rSec3[common.alg.req.indirectlymovable]{Concept \libconcept{IndirectlyMovable}}
 
 \pnum
 The \libconcept{IndirectlyMovable} concept specifies the relationship between
@@ -1972,7 +1974,7 @@ iter_value_t<In> obj(ranges::iter_move(i));
 the resulting state of the value denoted by \tcode{*i} is
 valid but unspecified\cxxiref{lib.types.movedfrom}.
 
-\rSec3[commonalgoreq.indirectlycopyable]{Concept \libconcept{IndirectlyCopyable}}
+\rSec3[common.alg.req.indirectlycopyable]{Concept \libconcept{IndirectlyCopyable}}
 
 \pnum
 The \libconcept{IndirectlyCopyable} concept specifies the relationship between
@@ -2017,7 +2019,7 @@ iter_value_t<In> obj(*i);
 of the value denoted by \tcode{*i} is
 valid but unspecified\cxxiref{lib.types.movedfrom}.
 
-\rSec3[commonalgoreq.indirectlyswappable]{Concept \libconcept{IndirectlySwappable}}
+\rSec3[common.alg.req.indirectlyswappable]{Concept \libconcept{IndirectlySwappable}}
 
 \pnum
 The \libconcept{IndirectlySwappable} concept specifies a swappable relationship
@@ -2036,7 +2038,7 @@ template<class I1, class I2 = I1>
     };
 \end{codeblock}
 
-\rSec3[commonalgoreq.indirectlycomparable]{Concept \libconcept{IndirectlyComparable}}
+\rSec3[common.alg.req.indirectlycomparable]{Concept \libconcept{IndirectlyComparable}}
 
 \pnum
 The \libconcept{IndirectlyComparable} concept specifies
@@ -2051,7 +2053,7 @@ template<class I1, class I2, class R, class P1 = identity,
     IndirectRelation<R, projected<I1, P1>, projected<I2, P2>>;
 \end{codeblock}
 
-\rSec3[commonalgoreq.permutable]{Concept \libconcept{Permutable}}
+\rSec3[common.alg.req.permutable]{Concept \libconcept{Permutable}}
 
 \pnum
 The \libconcept{Permutable} concept specifies the common requirements
@@ -2066,7 +2068,7 @@ template<class I>
     IndirectlySwappable<I, I>;
 \end{codeblock}
 
-\rSec3[commonalgoreq.mergeable]{Concept \libconcept{Mergeable}}
+\rSec3[common.alg.req.mergeable]{Concept \libconcept{Mergeable}}
 
 \pnum
 The \libconcept{Mergeable} concept specifies the requirements of algorithms
@@ -2085,7 +2087,7 @@ template<class I1, class I2, class Out, class R = ranges::less<>,
     IndirectStrictWeakOrder<R, projected<I1, P1>, projected<I2, P2>>;
 \end{codeblock}
 
-\rSec3[commonalgoreq.sortable]{Concept \libconcept{Sortable}}
+\rSec3[common.alg.req.sortable]{Concept \libconcept{Sortable}}
 
 \pnum
 The \libconcept{Sortable} concept specifies the common requirements of
@@ -2136,7 +2138,7 @@ They are:
 For every iterator of type
 \tcode{\changed{Iterator}{I}},
 \tcode{iterator_traits<\changed{Iterator}{I}>::it\-er\-a\-tor_ca\-te\-go\-ry}
-shall be defined to be the most specific category tag that describes the
+shall be defined to be a category tag that describes the
 iterator's behavior. \added{Additionally,
 }\tcode{\added{iterator_traits<I>::it\-er\-a\-tor_con\-cept}}\added{
 may be used to indicate conformance to
@@ -2756,14 +2758,15 @@ template<IndirectlySwappable<Iterator> Iterator2>
 \begin{codeblock}
 auto xtmp = x.current;
 auto ytmp = y.current;
-ranges::iter_swap(std::move(--xtmp), std::move(--ytmp));
+ranges::iter_swap(--xtmp, --ytmp);
 \end{codeblock}
 
 \pnum
 \remarks The expression in \tcode{noexcept} is equivalent to:
 \begin{codeblock}
   is_nothrow_copy_constructible_v<Iterator> &&
-    noexcept(ranges::iter_swap(std::move(--declval<Iterator&>()), declval<Iterator>()))
+  is_nothrow_copy_constructible_v<Iterator2> &&
+    noexcept(ranges::iter_swap(--declval<Iterator&>(), --declval<Iterator2&>()))
 \end{codeblock}
 \end{itemdescr}
 \end{addedblock}
@@ -2860,8 +2863,8 @@ namespace std {
   class insert_iterator {
   protected:
     Container* container @\added{= nullptr}@;
-    @\changed{typename Container::iterator}{iterator_t<Container>}@ iter @\added{\{\}}@;
-
+    @\changed{typename Container::iterator}{iterator_t<Container>}@ iter @\added{=}@
+      @\added{iterator_t<Container>()}@;
   public:
     using iterator_category = output_iterator_tag;
     using value_type        = void;
@@ -3219,13 +3222,6 @@ template<class Iterator1, class Iterator2>
 \end{itemdecl}
 
 \begin{itemdescr}
-\begin{addedblock}
-\pnum
-\constraints
-The expression \tcode{x.base() - y.base()} shall be valid and
-convertible to \tcode{bool}.
-\end{addedblock}
-
 \pnum
 \returns \tcode{x.base() - y.base()}.
 \end{itemdescr}
@@ -3815,7 +3811,7 @@ are each \tcode{true}.
 \indexlibrary{\idxcode{default_sentinel}}%
 \begin{itemdecl}
 namespace std {
-  struct default_sentinel { };
+  struct default_sentinel_t { };
 }
 \end{itemdecl}
 
@@ -4421,7 +4417,7 @@ template<IndirectlySwappable<I> I2>
 
 
 \rSec2[unreachable.sentinels]{Unreachable sentinel}
-\rSec3[unreachable.sentinel]{Class \tcode{unreachable}}
+\rSec3[unreachable.sentinel]{Class \tcode{unreachable_t}}
 
 \ednote{This wording integrates the PR for
 \href{https://github.com/ericniebler/stl2/issues/507}{stl2\#507}):}
@@ -4429,7 +4425,7 @@ template<IndirectlySwappable<I> I2>
 \pnum
 \indexlibrary{\idxcode{unreachable_t}}%
 \indexlibrary{\idxcode{unreachable}}%
-Class \tcode{unreachable} can be used with
+Class \tcode{unreachable_t} can be used with
 any \libconcept{WeaklyIncrementable} type
 to denote the ``upper bound'' of an open interval.
 
@@ -4546,6 +4542,10 @@ Constructs the end-of-stream iterator.
 If \tcode{is_trivially_default_constructible_v<T>} is \tcode{true},
 then \changed{this constructor is a}{these constructors are} constexpr
 constructor\added{s}.
+\\ \ednote{If P0738 "I Stream, You Stream, We All Stream for \tcode{istream_iterator}"
+lands at the same time as this proposal, the recommended merge for this sentence
+is "If \tcode{is_trivially_default_constructible_v<T>} is \tcode{true},
+then these constructors are \tcode{constexpr} constructors."}
 
 \pnum
 \ensures \tcode{in_stream == 0}.
